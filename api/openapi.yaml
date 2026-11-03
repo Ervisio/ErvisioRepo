@@ -1,0 +1,74 @@
+openapi: 3.1.0
+info:
+  title: ErvisioRepo API
+  version: 0.1.0
+  description: REST API v1 of ErvisioRepo. The SPA, the CLI and the plugin use only this contract.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: /api/v1
+tags:
+  - name: meta
+paths:
+  /meta:
+    get:
+      operationId: getMeta
+      tags: [meta]
+      summary: Public information about this instance
+      responses:
+        "200":
+          description: Instance metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Problem"
+components:
+  responses:
+    Problem:
+      description: Error in RFC 9457 format
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    Meta:
+      type: object
+      required: [name, version, instanceId, publicUrl, registration]
+      properties:
+        name:
+          type: string
+          example: ErvisioRepo
+        version:
+          type: string
+          example: 0.1.0
+        commit:
+          type: string
+          description: VCS revision the binary was built from, if known
+        instanceId:
+          type: string
+          format: uuid
+          description: Stable UUID v7 generated on first start and stored in the settings table
+        publicUrl:
+          type: string
+          format: uri
+        registration:
+          type: string
+          enum: [open, invite, closed]
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string

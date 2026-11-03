@@ -1,0 +1,35 @@
+# Development configuration, used by `make dev`.
+# Every key can be overridden with EREPO_<SECTION>_<KEY>, e.g. EREPO_DATABASE_URL.
+
+[server]
+public_url = "http://localhost:5173"
+listen = "127.0.0.1:3400"
+ssh_listen = "127.0.0.1:2222"
+plugin_socket = ""
+
+[database]
+url = "postgres://ervisio_repo:ervisio_repo@localhost:5432/ervisio_repo?sslmode=disable"
+max_conns = 10
+
+[security]
+# Generate it once: see deploy/dev/master.key.example.
+master_key_file = "deploy/dev/master.key"
+registration = "open"
+
+[actions]
+enabled = true
+default_actions_url = "github"
+
+[log]
+level = "debug"
+format = "text"
+
+# Local-only storage: no protection against disk failures. Fine for development.
+[[storage.target]]
+name = "hot"
+kind = "local"
+path = "/tmp/ervisio-repo/hot"
+budget = "5GB"
+
+[storage.policy.git]
+primary = "hot"
