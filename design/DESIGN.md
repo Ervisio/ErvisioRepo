@@ -4,7 +4,7 @@ Riferimento per la Fase UI (docs/PLAN.md §11). Il kit in `web/src/ui` parte da 
 
 ## Stato
 
-- Direzione visiva: **in attesa di scelta** tra A Console, B Foglio, C Corsie (round `001-direzione-visiva`).
+- Direzione visiva: **A Console** come default. B Foglio e C Corsie restano disponibili come layout che l'admin attiva dalle impostazioni (round `001-direzione-visiva`).
 - Token: `design/tokens.css`. Parte dei valori è ricostruita, vedi sotto.
 - Mock: `design/mock/direzione-{a,b,c}.html`, generati da `design/mock/build.py` (contenuti in `content.py`, base comune in `shared.css`, icone e navigazione in `mock.js`).
 
@@ -68,4 +68,29 @@ Gli stati usano i colori di stato e mai la hue: verde passato o aggiunto, rosso 
 
 ## Direzione scelta
 
-In attesa.
+**A Console come default.** L'utente l'ha approvata il 2026-11-03 con questa nota: "Default su A ma l'admin dalle impostazioni può decidere quale visuale attivare anche tra B e C".
+
+### Layout selezionabile dall'admin
+
+- In Impostazioni istanza c'è un'opzione Aspetto con tre valori: `console` (default), `foglio` e `corsie`. Il server la salva a livello di istanza e la serve nella config iniziale.
+- Il kit legge l'opzione e imposta `data-layout` su `<html>`. Il valore `console` è anche il fallback quando manca.
+- I tre layout condividono token, hue di sezione, primitive di codice, diff e log e copy. Cambiano solo la shell e la composizione di ogni pagina.
+- Struttura in `web/src/ui`: componenti base comuni (Button, Card, Tabs, Pill, FileRow, CodeView, DiffView, LogView, JobRow, TagRow, LayerBar) e tre shell (`ConsoleShell`, `FoglioShell`, `CorsieShell`). Ogni pagina dichiara le sue zone (titolo, azioni, contenuto, lato) e la shell attiva le dispone.
+- Gli screenshot Playwright di riferimento coprono A a 1280 e 390 px. B e C hanno uno smoke test a 1280 px.
+
+### A Console: regole
+
+- Shell desktop:
+  - Rail Ervisio da 72 px: logo, dashboard, repository, revisioni, notifiche e tile dei repo recenti. Le icone sono tonde a 44 px e diventano quadrate (14 px) quando sono attive.
+  - Colonna repo da 248 px: owner/nome, chip di visibilità, voci di sezione e card Storage.
+  - Pannello contenuti su `--surface` con raggio 20.
+- Voci di sezione alte 44 px, con tile da 32 px su `--hue-s` e icona in hue. La voce attiva ha la tile piena in hue con icona nera e la riga su `--sunk`.
+- Il contenuto sta in card `--sunk` con raggio 18 e padding 6. Le righe dentro le card hanno raggio 12 e passano a `--raise` all'hover.
+- Testata di pagina: h1 a 26 px peso 800, controlli `--sunk` alti 36 px, una CTA piena in hue.
+- Layout tipici:
+  - Home e pacchetto: griglia contenuto + colonna da 280 px.
+  - PR diff e Actions: colonna da 240 px (file della PR o job) + contenuto.
+- Sotto i 900 px la rail e la colonna repo spariscono. In alto restano una barra con menu e repo e una fila di chip di sezione scorrevole. La griglia passa a una colonna e nelle righe dei file il messaggio di commit sparisce.
+- Accessibilità: le icone della rail hanno `aria-label` e la voce attiva ha `aria-current`. I target sono di almeno 44 px su desktop e 38 px nei chip mobile.
+
+Riferimento visivo: `design/mock/direzione-a.html` e lo screenshot approvato in `design/.variant-studio/rounds/001-direzione-visiva/_shots/`. B e C restano in `direzione-b.html` e `direzione-c.html` come specifica dei layout alternativi.

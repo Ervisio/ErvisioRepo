@@ -160,14 +160,14 @@ def variant_a():
 </style>"""
     rail = f"""<nav class="a-rail" aria-label="Ervisio">
   <div class="a-logo">E</div>
-  <a href="#" class="a-ri" title="Dashboard">{ic("grid")}</a>
-  <a href="#" class="a-ri on" title="Repository">{ic("book")}</a>
-  <a href="#" class="a-ri" title="Revisioni">{ic("pr")}</a>
-  <a href="#" class="a-ri" title="Notifiche">{ic("bell")}</a>
-  <a href="#" class="a-ri tile" style="background:var(--h-usr)" title="fonlogen/ervisio-core">EC</a>
-  <a href="#" class="a-ri tile" style="background:var(--h-plg)" title="fonlogen/ervisio-drive">ED</a>
-  <a href="#" class="a-ri tile" style="background:var(--h-log)" title="fonlogen/ervisio-logs">EL</a>
-  <a href="#" class="a-ri" title="Nuovo repository">{ic("plus")}</a>
+  <a href="#" class="a-ri" title="Dashboard" aria-label="Dashboard">{ic("grid")}</a>
+  <a href="#" class="a-ri on" title="Repository" aria-label="Repository" aria-current="true">{ic("book")}</a>
+  <a href="#" class="a-ri" title="Revisioni" aria-label="Revisioni">{ic("pr")}</a>
+  <a href="#" class="a-ri" title="Notifiche" aria-label="Notifiche">{ic("bell")}</a>
+  <a href="#" class="a-ri tile" style="background:var(--h-usr)" title="fonlogen/ervisio-core" aria-label="fonlogen/ervisio-core">EC</a>
+  <a href="#" class="a-ri tile" style="background:var(--h-plg)" title="fonlogen/ervisio-drive" aria-label="fonlogen/ervisio-drive">ED</a>
+  <a href="#" class="a-ri tile" style="background:var(--h-log)" title="fonlogen/ervisio-logs" aria-label="fonlogen/ervisio-logs">EL</a>
+  <a href="#" class="a-ri" title="Nuovo repository" aria-label="Nuovo repository">{ic("plus")}</a>
   <div class="a-sp"></div>
   <span class="av lg av-rc">RC</span>
 </nav>"""
