@@ -1,0 +1,11 @@
+.DS_Store
+/bin/
+/dist/
+node_modules/
+/web/dist/*
+!/web/dist/.keep
+coverage.out
+/tmp/
+.env
+*.local.toml
+/plugin/dist/
