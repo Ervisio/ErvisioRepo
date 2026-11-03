@@ -160,6 +160,7 @@ host = "uXXXXX.your-storagebox.de"
 port = 23
 user = "uXXXXX-sub1"
 key_file = "/etc/ervisio-repo/storagebox_ed25519"
+known_hosts_file = "/etc/ervisio-repo/storagebox_known_hosts"
 max_conns = 8
 encrypt = true
 

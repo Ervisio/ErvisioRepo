@@ -9,9 +9,24 @@ import (
 )
 
 type Querier interface {
+	DeleteStorageObject(ctx context.Context, arg DeleteStorageObjectParams) error
 	GetSetting(ctx context.Context, key string) (Setting, error)
+	GetStorageObject(ctx context.Context, arg GetStorageObjectParams) (StorageObject, error)
 	InsertSettingIfAbsent(ctx context.Context, arg InsertSettingIfAbsentParams) error
+	ListStorageObjectsByKeys(ctx context.Context, arg ListStorageObjectsByKeysParams) ([]StorageObject, error)
+	ListStorageObjectsPendingReplicas(ctx context.Context, arg ListStorageObjectsPendingReplicasParams) ([]StorageObject, error)
+	MarkStorageObjectReplicated(ctx context.Context, arg MarkStorageObjectReplicatedParams) error
+	MarkStorageObjectVerified(ctx context.Context, arg MarkStorageObjectVerifiedParams) error
+	// Oldest-verified first, random within the same age, so repeated runs cover
+	// every object over time.
+	SampleStorageObjectsForVerify(ctx context.Context, arg SampleStorageObjectsForVerifyParams) ([]StorageObject, error)
+	SetStorageObjectError(ctx context.Context, arg SetStorageObjectErrorParams) error
+	SetStorageObjectReplicasPending(ctx context.Context, arg SetStorageObjectReplicasPendingParams) error
+	StorageObjectStats(ctx context.Context) ([]StorageObjectStatsRow, error)
 	UpsertSetting(ctx context.Context, arg UpsertSettingParams) error
+	// Called only after the object is confirmed on the primary. Re-uploading an
+	// existing key with the same content keeps its replica and verification state.
+	UpsertStorageObject(ctx context.Context, arg UpsertStorageObjectParams) (StorageObject, error)
 }
 
 var _ Querier = (*Queries)(nil)

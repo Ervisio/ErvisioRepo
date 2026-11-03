@@ -157,10 +157,17 @@ func (v *validator) target(p string, t *Target) {
 			v.httpURL(p+".endpoint", t.Endpoint)
 		}
 		v.required(p+".bucket", t.Bucket)
+		if t.Prefix != "" && !strings.HasSuffix(t.Prefix, "/") {
+			v.add(p+".prefix", "must end with '/', got %q", t.Prefix)
+		}
+		if t.CredentialsFile != "" && !filepath.IsAbs(t.CredentialsFile) {
+			v.add(p+".credentials_file", "must be an absolute path")
+		}
 	case "sftp":
 		v.required(p+".host", t.Host)
 		v.required(p+".user", t.User)
 		v.absPath(p+".key_file", t.KeyFile)
+		v.absPath(p+".known_hosts_file", t.KnownHostsFile)
 		if t.Port < 1 || t.Port > 65535 {
 			v.add(p+".port", "must be between 1 and 65535, got %d", t.Port)
 		}

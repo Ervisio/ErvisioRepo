@@ -80,13 +80,19 @@ type Target struct {
 	Region          string `toml:"region"`
 	PathStyle       bool   `toml:"path_style"`
 	CredentialsFile string `toml:"credentials_file"`
+	// Prefix is an optional key prefix inside the bucket, ending with '/'.
+	Prefix string `toml:"prefix"`
 
 	// sftp and webdav
-	Host         string `toml:"host"`
-	Port         int    `toml:"port"`
-	User         string `toml:"user"`
-	KeyFile      string `toml:"key_file"`
-	MaxConns     int    `toml:"max_conns"`
+	Host     string `toml:"host"`
+	Port     int    `toml:"port"`
+	User     string `toml:"user"`
+	KeyFile  string `toml:"key_file"`
+	MaxConns int    `toml:"max_conns"`
+	// KnownHostsFile verifies the SFTP server key (OpenSSH known_hosts format).
+	KnownHostsFile string `toml:"known_hosts_file"`
+	// Root is the remote SFTP directory holding the objects (default: login directory).
+	Root         string `toml:"root"`
 	URL          string `toml:"url"`
 	PasswordFile string `toml:"password_file"`
 }

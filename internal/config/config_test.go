@@ -39,6 +39,7 @@ host = "u1.your-storagebox.de"
 port = 23
 user = "u1-sub1"
 key_file = "/etc/ervisio-repo/storagebox_ed25519"
+known_hosts_file = "/etc/ervisio-repo/storagebox_known_hosts"
 max_conns = 8
 encrypt = true
 
@@ -185,6 +186,7 @@ primary = "hot"
 			"storage.target[3].host: is required",
 			"storage.target[3].port: must be between 1 and 65535",
 			"storage.target[3].key_file: is required",
+			"storage.target[3].known_hosts_file: is required",
 			"storage.target[4].url: must be an absolute http(s) URL",
 			"storage.target[4].password_file: is required",
 			"storage.policy.git.primary: is required",

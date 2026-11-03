@@ -13,3 +13,16 @@ type Setting struct {
 	Value     []byte
 	UpdatedAt pgtype.Timestamptz
 }
+
+type StorageObject struct {
+	Target     string
+	Key        string
+	Policy     string
+	Size       int64
+	Sha256     []byte
+	ReplicasOk bool
+	VerifiedAt pgtype.Timestamptz
+	LastError  pgtype.Text
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+}

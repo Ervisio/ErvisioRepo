@@ -29,23 +29,36 @@ type Runner struct {
 	running atomic.Bool
 }
 
+// Option registers additional workers and periodic jobs on the client.
+type Option func(*Registry)
+
+// Registry collects the workers and periodic jobs passed to the client.
+type Registry struct {
+	Workers  *river.Workers
+	Periodic []*river.PeriodicJob
+}
+
 // New configures the River client and registers every worker.
 // The River schema must already be migrated (see db.Migrate).
-func New(pool *pgxpool.Pool, log *slog.Logger) (*Runner, error) {
+func New(pool *pgxpool.Pool, log *slog.Logger, opts ...Option) (*Runner, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &HeartbeatWorker{Settings: dbgen.New(pool)})
+	reg := &Registry{Workers: workers, Periodic: []*river.PeriodicJob{
+		river.NewPeriodicJob(
+			river.PeriodicInterval(HeartbeatInterval),
+			func() (river.JobArgs, *river.InsertOpts) { return HeartbeatArgs{}, nil },
+			&river.PeriodicJobOpts{RunOnStart: true},
+		),
+	}}
+	for _, o := range opts {
+		o(reg)
+	}
 
 	client, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
-		Logger:  log,
-		Queues:  map[string]river.QueueConfig{river.QueueDefault: {MaxWorkers: 10}},
-		Workers: workers,
-		PeriodicJobs: []*river.PeriodicJob{
-			river.NewPeriodicJob(
-				river.PeriodicInterval(HeartbeatInterval),
-				func() (river.JobArgs, *river.InsertOpts) { return HeartbeatArgs{}, nil },
-				&river.PeriodicJobOpts{RunOnStart: true},
-			),
-		},
+		Logger:       log,
+		Queues:       map[string]river.QueueConfig{river.QueueDefault: {MaxWorkers: 10}},
+		Workers:      workers,
+		PeriodicJobs: reg.Periodic,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("river client: %w", err)
