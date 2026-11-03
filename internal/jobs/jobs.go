@@ -4,6 +4,7 @@ package jobs
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"sync/atomic"
@@ -92,6 +93,17 @@ func (r *Runner) Running() bool { return r.running.Load() }
 
 // Client exposes the River client to insert jobs.
 func (r *Runner) Client() *river.Client[pgx.Tx] { return r.client }
+
+// Enqueue inserts one job. The job's InsertOpts (if any) apply.
+func (r *Runner) Enqueue(ctx context.Context, args river.JobArgs) error {
+	if r == nil || r.client == nil {
+		return errors.New("enqueue: job runner not configured")
+	}
+	if _, err := r.client.Insert(ctx, args, nil); err != nil {
+		return fmt.Errorf("enqueue %s: %w", args.Kind(), err)
+	}
+	return nil
+}
 
 // HeartbeatArgs are the (empty) arguments of the heartbeat job.
 type HeartbeatArgs struct{}

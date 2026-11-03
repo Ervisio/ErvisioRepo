@@ -1,0 +1,8 @@
+Subject: Confirm your email address for {{.Instance}}
+Hello {{.Username}},
+
+please confirm that this address belongs to your account on {{.Instance}} by opening this link:
+
+{{.Link}}
+
+The link expires in {{.Expires}}. If you did not create this account you can ignore this message.

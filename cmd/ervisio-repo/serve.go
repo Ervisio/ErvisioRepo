@@ -7,17 +7,22 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 
+	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/buildinfo"
 	"github.com/Ervisio/ErvisioRepo/internal/config"
 	"github.com/Ervisio/ErvisioRepo/internal/db"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi"
+	"github.com/Ervisio/ErvisioRepo/internal/identity"
 	"github.com/Ervisio/ErvisioRepo/internal/jobs"
+	"github.com/Ervisio/ErvisioRepo/internal/mail"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
 	"github.com/Ervisio/ErvisioRepo/web"
 )
@@ -57,9 +62,30 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	}
 	defer tier.CloseStores(stores)
 
-	runner, err = jobs.New(pool, log, jobs.WithStorage(storage, log))
+	mailPassword, err := readSecretFile(cfg.Mail.PasswordFile)
+	if err != nil {
+		return fmt.Errorf("mail password: %w", err)
+	}
+	sender, err := mail.New(cfg.Mail, mailPassword, log)
 	if err != nil {
 		return err
+	}
+	mailer := identity.MailerFor(cfg, dbgen.New(pool), sender, log)
+
+	runner, err = jobs.New(pool, log, jobs.WithStorage(storage, log), identity.JobsOption(mailer))
+	if err != nil {
+		return err
+	}
+	ids, err := identity.Setup(cfg, pool, runner, log, nil)
+	if err != nil {
+		return err
+	}
+	proxies, err := auth.ParseTrustedProxies(cfg.Server.TrustedProxies)
+	if err != nil {
+		return err
+	}
+	if n, err := ids.Service.CountUsers(ctx); err == nil && n == 0 {
+		log.Warn("no accounts yet: the first user to register becomes the instance admin")
 	}
 	if err := runner.Start(ctx); err != nil {
 		return err
@@ -90,6 +116,11 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		HasIndex: web.HasIndex(),
 		Registry: registry,
 		Storage:  storage,
+		Identity: ids.Service,
+		Auth: &auth.Middleware{
+			Sessions: ids.Sessions, Cookies: auth.CookiesFor(cfg.Server.PublicURL),
+			TrustedProxies: proxies, Log: log,
+		},
 	})
 
 	if ln == nil {
@@ -122,4 +153,17 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		return fmt.Errorf("http shutdown: %w", err)
 	}
 	return nil
+}
+
+// readSecretFile returns the trimmed content of an operator-configured
+// secret file, or "" when path is empty.
+func readSecretFile(path string) (string, error) {
+	if path == "" {
+		return "", nil
+	}
+	raw, err := os.ReadFile(path) //nolint:gosec // operator-configured secret file, not request data
+	if err != nil {
+		return "", fmt.Errorf("read %s: %w", path, err)
+	}
+	return strings.TrimRight(string(raw), "\r\n"), nil
 }

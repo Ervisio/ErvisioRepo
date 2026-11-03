@@ -109,7 +109,51 @@ func TestServeAndMigrate(t *testing.T) {
 	if resp.StatusCode != 200 || !strings.Contains(string(body), `"instanceId"`) {
 		t.Fatalf("meta: %d %s", resp.StatusCode, body)
 	}
+	// Anonymous callers do not reach admin endpoints.
 	resp, err = http.Get(base + "/api/v1/admin/storage")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("anonymous admin storage: %d", resp.StatusCode)
+	}
+
+	// The first account becomes admin. Cookies are set by hand: the
+	// loopback public URL makes them __Host- and Secure, which a jar would
+	// not send over plain http.
+	csrf := cookieFrom(t, resp, "__Host-erepo_csrf")
+	post := func(path, sessionTok, csrfTok string, body any) *http.Response {
+		raw, _ := json.Marshal(body)
+		req, _ := http.NewRequest(http.MethodPost, base+path, bytes.NewReader(raw))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-CSRF-Token", csrfTok)
+		req.AddCookie(&http.Cookie{Name: "__Host-erepo_csrf", Value: csrfTok})
+		if sessionTok != "" {
+			req.AddCookie(&http.Cookie{Name: "__Host-erepo_session", Value: sessionTok})
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return resp
+	}
+	resp = post("/api/v1/auth/register", "", csrf, map[string]string{
+		"username": "boss", "email": "boss@example.com", "password": "correct horse battery staple"})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("register: %d", resp.StatusCode)
+	}
+	resp = post("/api/v1/auth/login", "", csrf, map[string]string{"login": "boss", "password": "correct horse battery staple"})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("login: %d", resp.StatusCode)
+	}
+	session := cookieFrom(t, resp, "__Host-erepo_session")
+
+	req, _ := http.NewRequest(http.MethodGet, base+"/api/v1/admin/storage", nil)
+	req.AddCookie(&http.Cookie{Name: "__Host-erepo_session", Value: session})
+	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,6 +172,17 @@ func TestServeAndMigrate(t *testing.T) {
 	case <-time.After(40 * time.Second):
 		t.Fatal("serve did not shut down")
 	}
+}
+
+func cookieFrom(t *testing.T, resp *http.Response, name string) string {
+	t.Helper()
+	for _, c := range resp.Cookies() {
+		if c.Name == name && c.Value != "" {
+			return c.Value
+		}
+	}
+	t.Fatalf("no %s cookie in %v", name, resp.Header.Values("Set-Cookie"))
+	return ""
 }
 
 func waitFor(t *testing.T, url string) {

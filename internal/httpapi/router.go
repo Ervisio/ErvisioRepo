@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -17,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 )
 
@@ -52,6 +54,12 @@ type Deps struct {
 	HasIndex bool
 	Registry *prometheus.Registry // nil creates one with Go and process collectors
 	Storage  Storage              // nil makes the storage admin endpoints answer 503
+	// Identity serves the account endpoints; nil makes them answer 503.
+	Identity Identity
+	// Auth loads sessions and enforces CSRF and authorization on /api/v1.
+	// Nil uses cookies derived from Meta.PublicURL and no sessions, so
+	// every caller is anonymous.
+	Auth *auth.Middleware
 }
 
 // NewRouter builds the root handler.
@@ -64,6 +72,15 @@ func NewRouter(d Deps) http.Handler {
 		d.Registry.MustRegister(collectors.NewGoCollector(), collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 	}
 	metrics := newHTTPMetrics(d.Registry)
+	if d.Auth == nil {
+		d.Auth = &auth.Middleware{Cookies: auth.CookiesFor(d.Meta.PublicURL)}
+	}
+	if d.Auth.Problem == nil {
+		d.Auth.Problem = writeProblem
+	}
+	if d.Auth.Log == nil {
+		d.Auth.Log = d.Log
+	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID, accessLog(d.Log), recoverer(d.Log), securityHeaders, metrics.middleware)
@@ -133,8 +150,14 @@ func directLoopback(r *http.Request) bool {
 	return err == nil && ip != nil && ip.IsLoopback() && !forwarded
 }
 
+// mountV1 mounts the REST API. Every request loads the session and passes
+// the CSRF check; each operation then enforces its OpenAPI security
+// requirement (public, signed-in user or instance admin). The admin prefix
+// is also guarded as a whole, so that a misdeclared operation cannot leak.
 func mountV1(r chi.Router, d Deps) {
-	strict := v1gen.NewStrictHandlerWithOptions(&v1Server{meta: d.Meta, storage: d.Storage}, nil, v1gen.StrictHTTPServerOptions{
+	r.Use(d.Auth.LoadSession, d.Auth.CSRF, adminOnly(d.Auth))
+	srv := &v1Server{meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies}
+	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())
 		},
@@ -146,9 +169,30 @@ func mountV1(r chi.Router, d Deps) {
 	})
 	v1gen.HandlerWithOptions(strict, v1gen.ChiServerOptions{
 		BaseRouter:  r,
-		Middlewares: []v1gen.MiddlewareFunc{adminGuard},
+		Middlewares: []v1gen.MiddlewareFunc{d.Auth.Scopes(operationScopes)},
 		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())
 		},
 	})
+}
+
+// operationScopes returns the scopes the generated router stored for the
+// operation; ok is false for public operations (security: []).
+func operationScopes(ctx context.Context) ([]string, bool) {
+	s, ok := ctx.Value(v1gen.SessionScopes).([]string)
+	return s, ok
+}
+
+// adminOnly requires an instance admin on the whole admin prefix.
+func adminOnly(m *auth.Middleware) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		admin := m.RequireAdmin(next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasPrefix(r.URL.Path, adminPrefix) {
+				admin.ServeHTTP(w, r)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
 }

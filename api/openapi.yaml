@@ -10,13 +10,21 @@ servers:
   - url: /api/v1
 tags:
   - name: meta
+  - name: auth
+  - name: users
   - name: admin
+# Every operation needs a session unless it declares `security: []`. The
+# "admin" scope means an instance admin. Unsafe methods also need the
+# X-CSRF-Token header (see components.securitySchemes.session).
+security:
+  - session: []
 paths:
   /meta:
     get:
       operationId: getMeta
       tags: [meta]
       summary: Public information about this instance
+      security: []
       responses:
         "200":
           description: Instance metadata
@@ -31,7 +39,9 @@ paths:
       operationId: getAdminStorage
       tags: [admin]
       summary: Storage targets, policies, cache usage and permanent warnings
-      description: Admin only. Until admin authentication exists it is served only to direct loopback connections.
+      description: Instance admins only.
+      security:
+        - session: [admin]
       responses:
         "200":
           description: Storage status
@@ -46,7 +56,9 @@ paths:
       operationId: testAdminStorageTarget
       tags: [admin]
       summary: Run a write/read/list/delete round trip on a storage target
-      description: Admin only. Writes a random probe object under erepo-storage-test/ and always deletes it.
+      description: Instance admins only. Writes a random probe object under erepo-storage-test/ and always deletes it.
+      security:
+        - session: [admin]
       parameters:
         - name: target
           in: path
@@ -65,7 +77,220 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/invites:
+    post:
+      operationId: createInvite
+      tags: [admin]
+      summary: Create an instance invitation
+      description: Instance admins only. The token is returned once and only its hash is stored.
+      security:
+        - session: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteRequest"
+      responses:
+        "201":
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+        "400":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Create an account
+      description: |
+        The answer does not reveal whether the email address is already
+        registered: in that case nothing is created and the owner of the
+        address receives a notice by mail. The first account of the instance
+        becomes an instance admin and is accepted whatever the registration
+        policy.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "202":
+          description: Registration accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterAccepted"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Sign in with a password
+      description: |
+        Sets a new session cookie (the previous session of this browser is
+        revoked) and a new CSRF cookie. Every credential failure answers the
+        same 401. Repeated failures are slowed down per account and per IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Sign out and revoke the current session
+      security: []
+      responses:
+        "204":
+          description: Signed out
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/email/verify:
+    post:
+      operationId: verifyEmail
+      tags: [auth]
+      summary: Confirm an email address with the token sent by mail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRequest"
+      responses:
+        "204":
+          description: Address verified
+        "400":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/email/resend:
+    post:
+      operationId: resendVerification
+      tags: [auth]
+      summary: Send the verification mail again
+      description: Always accepted, whether or not the address is registered.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailRequest"
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/password/reset:
+    post:
+      operationId: requestPasswordReset
+      tags: [auth]
+      summary: Send a password reset link
+      description: Always accepted, whether or not the address is registered.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailRequest"
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/password/reset/confirm:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      summary: Set a new password with the token sent by mail
+      description: Revokes every session of the account.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "204":
+          description: Password changed
+        "400":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user:
+    get:
+      operationId: getCurrentUser
+      tags: [users]
+      summary: The signed-in user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
 components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: __Host-erepo_session
+      description: |
+        Opaque session cookie set by POST /auth/login. When the public URL is
+        plain http on a non-loopback host the cookie is named erepo_session.
+        Requests with an unsafe method must send the X-CSRF-Token header with
+        the value of the erepo_csrf cookie (__Host-erepo_csrf on https).
   responses:
     Problem:
       description: Error in RFC 9457 format
@@ -73,7 +298,137 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
+    TooManyRequests:
+      description: Too many attempts; retry after the given number of seconds
+      headers:
+        Retry-After:
+          required: true
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
   schemas:
+    RegisterRequest:
+      type: object
+      required: [username, email, password]
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 39
+          description: Letters, digits and single inner hyphens; shared namespace with organizations
+        email:
+          type: string
+          minLength: 3
+          maxLength: 254
+        password:
+          type: string
+          minLength: 1
+          maxLength: 1024
+        inviteToken:
+          type: string
+          maxLength: 128
+          description: Required when registration is "invite"
+        locale:
+          type: string
+          enum: [en, it]
+    RegisterAccepted:
+      type: object
+      required: [verificationRequired]
+      properties:
+        verificationRequired:
+          type: boolean
+          description: True when the address must be confirmed by mail before signing in
+    LoginRequest:
+      type: object
+      required: [login, password]
+      properties:
+        login:
+          type: string
+          minLength: 1
+          maxLength: 254
+          description: Username or email address
+        password:
+          type: string
+          minLength: 1
+          maxLength: 1024
+    TokenRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 128
+    EmailRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          minLength: 3
+          maxLength: 254
+    ResetPasswordRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 128
+        password:
+          type: string
+          minLength: 1
+          maxLength: 1024
+    InviteRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          maxLength: 254
+          description: When set, only this address can use the invitation
+    Invite:
+      type: object
+      required: [id, token, expiresAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        token:
+          type: string
+          description: Shown only once
+        email:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+    User:
+      type: object
+      required: [id, username, displayName, role, locale, emailVerified, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [admin, user, restricted]
+        locale:
+          type: string
+          enum: [en, it]
+        email:
+          type: string
+          description: Primary email address
+        emailVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
     StorageStatus:
       type: object
       required: [targets, policies, caches, warnings]

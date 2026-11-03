@@ -1,0 +1,6 @@
+Subject: Sign-up attempt on {{.Instance}}
+Hello {{.Username}},
+
+someone tried to create a new account on {{.Instance}} with this email address, which already belongs to your account. No new account was created.
+
+If it was you, you can sign in at {{.Link}} or reset your password from there. Otherwise you can ignore this message.

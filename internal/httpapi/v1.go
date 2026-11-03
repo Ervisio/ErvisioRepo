@@ -3,13 +3,16 @@ package httpapi
 import (
 	"context"
 
+	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 )
 
 // v1Server implements the strict server generated from api/openapi.yaml.
 type v1Server struct {
-	meta    Meta
-	storage Storage
+	meta     Meta
+	storage  Storage
+	identity Identity
+	cookies  auth.Cookies
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

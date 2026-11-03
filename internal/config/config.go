@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/BurntSushi/toml"
 )
@@ -19,6 +20,8 @@ type Config struct {
 	Actions  Actions  `toml:"actions"`
 	Log      Log      `toml:"log"`
 	Storage  Storage  `toml:"storage"`
+	Auth     Auth     `toml:"auth"`
+	Mail     Mail     `toml:"mail"`
 }
 
 type Server struct {
@@ -26,6 +29,9 @@ type Server struct {
 	Listen       string `toml:"listen"`
 	SSHListen    string `toml:"ssh_listen"`
 	PluginSocket string `toml:"plugin_socket"` // empty disables the plugin API
+	// TrustedProxies are the CIDRs of reverse proxies (Caddy) whose
+	// X-Forwarded-For header is believed when computing the client IP.
+	TrustedProxies []string `toml:"trusted_proxies"`
 }
 
 type Database struct {
@@ -53,6 +59,54 @@ type Actions struct {
 type Log struct {
 	Level  string `toml:"level"`  // debug | info | warn | error
 	Format string `toml:"format"` // json | text
+}
+
+// Auth configures local authentication and sessions (PLAN §8.1).
+type Auth struct {
+	// Argon2id cost parameters for password hashes. Existing hashes made with
+	// other parameters are upgraded at the next successful login.
+	Argon2Memory      Size `toml:"argon2_memory"`
+	Argon2Iterations  int  `toml:"argon2_iterations"`
+	Argon2Parallelism int  `toml:"argon2_parallelism"`
+	// Argon2MaxConcurrent bounds simultaneous hash computations (memory DoS).
+	Argon2MaxConcurrent int `toml:"argon2_max_concurrent"`
+	PasswordMinLength   int `toml:"password_min_length"`
+
+	SessionIdleTimeout Duration `toml:"session_idle_timeout"`
+	SessionMaxAge      Duration `toml:"session_max_age"`
+
+	// RequireVerifiedEmail refuses login until the address is verified. It
+	// only applies when [mail] is enabled.
+	RequireVerifiedEmail bool `toml:"require_verified_email"`
+
+	// Brute-force protection: after the free failures each further failure
+	// doubles the wait, from LoginBackoffBase up to LoginBackoffMax.
+	LoginFreeFailuresAccount int      `toml:"login_free_failures_account"`
+	LoginFreeFailuresIP      int      `toml:"login_free_failures_ip"`
+	LoginBackoffBase         Duration `toml:"login_backoff_base"`
+	LoginBackoffMax          Duration `toml:"login_backoff_max"`
+	// ActionsPerIPPerHour limits registrations and mail-sending requests.
+	ActionsPerIPPerHour int `toml:"actions_per_ip_per_hour"`
+
+	VerifyTokenTTL Duration `toml:"verify_token_ttl"`
+	ResetTokenTTL  Duration `toml:"reset_token_ttl"`
+	InviteTTL      Duration `toml:"invite_ttl"`
+}
+
+// Mail configures outgoing SMTP mail (verification and password reset).
+type Mail struct {
+	Enabled bool   `toml:"enabled"`
+	Host    string `toml:"host"`
+	Port    int    `toml:"port"`
+	// TLS is "starttls" (required), "tls" (implicit TLS) or "none" (only for
+	// local relays such as Mailpit).
+	TLS          string `toml:"tls"`
+	Username     string `toml:"username"`
+	PasswordFile string `toml:"password_file"`
+	From         string `toml:"from"`
+	// HeloName defaults to the host of server.public_url.
+	HeloName string   `toml:"helo_name"`
+	Timeout  Duration `toml:"timeout"`
 }
 
 // Storage describes the physical targets and, for each data type, the policy
@@ -123,6 +177,25 @@ func Default() Config {
 		},
 		Actions: Actions{Enabled: true, DefaultActionsURL: "github"},
 		Log:     Log{Level: "info", Format: "json"},
+		Auth: Auth{
+			Argon2Memory:             64 << 20,
+			Argon2Iterations:         3,
+			Argon2Parallelism:        2,
+			Argon2MaxConcurrent:      4,
+			PasswordMinLength:        10,
+			SessionIdleTimeout:       Duration(14 * 24 * time.Hour),
+			SessionMaxAge:            Duration(30 * 24 * time.Hour),
+			RequireVerifiedEmail:     true,
+			LoginFreeFailuresAccount: 5,
+			LoginFreeFailuresIP:      20,
+			LoginBackoffBase:         Duration(time.Second),
+			LoginBackoffMax:          Duration(15 * time.Minute),
+			ActionsPerIPPerHour:      20,
+			VerifyTokenTTL:           Duration(48 * time.Hour),
+			ResetTokenTTL:            Duration(time.Hour),
+			InviteTTL:                Duration(7 * 24 * time.Hour),
+		},
+		Mail: Mail{Port: 587, TLS: "starttls", Timeout: Duration(30 * time.Second)},
 	}
 }
 

@@ -14,6 +14,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/Ervisio/ErvisioRepo/internal/auth"
+	"github.com/Ervisio/ErvisioRepo/internal/auth/authtest"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 )
 
@@ -120,7 +122,7 @@ func TestMeta(t *testing.T) {
 		t.Fatal(err)
 	}
 	if m.Name != "ErvisioRepo" || m.Version != "0.1.0" || m.Commit == nil || *m.Commit != "abc" ||
-		m.InstanceId != testID || m.PublicUrl != "https://git.example.com" || m.Registration != v1gen.Invite {
+		m.InstanceId != testID || m.PublicUrl != "https://git.example.com" || m.Registration != v1gen.MetaRegistrationInvite {
 		t.Fatalf("meta = %+v", m)
 	}
 
@@ -135,7 +137,9 @@ func TestAPIErrorsAreProblems(t *testing.T) {
 	assertProblem(t, do(h, "GET", "/api/v1/nope"), 404)
 	assertProblem(t, do(h, "GET", "/api/v3/repos"), 404)
 	assertProblem(t, do(h, "GET", "/api"), 404)
-	assertProblem(t, do(h, "POST", "/api/v1/meta"), 405)
+	assertProblem(t, do(h, "POST", "/api/v1/meta", authtest.AnonCSRF(auth.CookiesFor("https://git.example.com"))), 405)
+	// Without a CSRF token an unsafe request is refused before routing.
+	assertProblem(t, do(h, "POST", "/api/v1/meta"), 403)
 }
 
 func TestPanicIsProblem(t *testing.T) {

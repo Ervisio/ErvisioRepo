@@ -1,0 +1,8 @@
+Subject: Conferma il tuo indirizzo email su {{.Instance}}
+Ciao {{.Username}},
+
+conferma che questo indirizzo appartiene al tuo account su {{.Instance}} aprendo questo link:
+
+{{.Link}}
+
+Il link scade tra {{.Expires}}. Se non hai creato tu questo account puoi ignorare questo messaggio.

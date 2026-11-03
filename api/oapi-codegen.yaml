@@ -8,3 +8,7 @@ generate:
   embedded-spec: false
 output-options:
   skip-prune: false
+compatibility:
+  # Puts the security scopes of each operation in the request context
+  # (v1gen.SessionScopes), read by the authorization middleware.
+  enable-auth-scopes-on-context: true

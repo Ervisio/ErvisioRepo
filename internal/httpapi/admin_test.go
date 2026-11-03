@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Ervisio/ErvisioRepo/internal/auth"
+	"github.com/Ervisio/ErvisioRepo/internal/auth/authtest"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/blob"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
@@ -39,12 +41,25 @@ func (f *fakeStorage) CheckTarget(_ context.Context, name string) (tier.CheckRes
 	}}, nil
 }
 
-func fromLoopback(r *http.Request) { r.RemoteAddr = "127.0.0.1:4000"; r.Host = "127.0.0.1:3400" }
+// adminRouter returns a router whose auth is backed by an in-memory store,
+// and a request modifier that authenticates as an instance admin.
+func adminRouter(t *testing.T, mod func(*Deps)) (http.Handler, *authtest.Env, func(*http.Request)) {
+	t.Helper()
+	env := authtest.New("https://git.example.com")
+	_, asAdmin := env.Login(t, "root", auth.RoleAdmin)
+	h := newTestRouter(t, func(d *Deps) {
+		d.Auth = env.Middleware
+		if mod != nil {
+			mod(d)
+		}
+	})
+	return h, env, asAdmin
+}
 
 func TestAdminStorageStatus(t *testing.T) {
 	fs := &fakeStorage{}
-	h := newTestRouter(t, func(d *Deps) { d.Storage = fs })
-	rec := do(h, http.MethodGet, "/api/v1/admin/storage", fromLoopback)
+	h, _, asAdmin := adminRouter(t, func(d *Deps) { d.Storage = fs })
+	rec := do(h, http.MethodGet, "/api/v1/admin/storage", asAdmin)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d: %s", rec.Code, rec.Body)
 	}
@@ -61,13 +76,13 @@ func TestAdminStorageStatus(t *testing.T) {
 	}
 
 	fs.statusErr = errors.New("db down")
-	assertProblem(t, do(h, http.MethodGet, "/api/v1/admin/storage", fromLoopback), http.StatusInternalServerError)
+	assertProblem(t, do(h, http.MethodGet, "/api/v1/admin/storage", asAdmin), http.StatusInternalServerError)
 }
 
 func TestAdminStorageTest(t *testing.T) {
 	fs := &fakeStorage{}
-	h := newTestRouter(t, func(d *Deps) { d.Storage = fs })
-	rec := do(h, http.MethodPost, "/api/v1/admin/storage/disk/test", fromLoopback)
+	h, _, asAdmin := adminRouter(t, func(d *Deps) { d.Storage = fs })
+	rec := do(h, http.MethodPost, "/api/v1/admin/storage/disk/test", asAdmin)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status %d: %s", rec.Code, rec.Body)
 	}
@@ -78,12 +93,12 @@ func TestAdminStorageTest(t *testing.T) {
 	if res.Ok || res.DurationMs != 1500 || len(res.Steps) != 2 || *res.Steps[0].Error != "permission denied" || res.Steps[1].Error != nil {
 		t.Fatalf("result = %+v", res)
 	}
-	assertProblem(t, do(h, http.MethodPost, "/api/v1/admin/storage/nope/test", fromLoopback), http.StatusNotFound)
-	assertProblem(t, do(h, http.MethodGet, "/api/v1/admin/storage/disk/test", fromLoopback), http.StatusMethodNotAllowed)
+	assertProblem(t, do(h, http.MethodPost, "/api/v1/admin/storage/nope/test", asAdmin), http.StatusNotFound)
+	assertProblem(t, do(h, http.MethodGet, "/api/v1/admin/storage/disk/test", asAdmin), http.StatusMethodNotAllowed)
 }
 
 func TestAdminStorageUnconfigured(t *testing.T) {
-	h := newTestRouter(t, nil)
-	assertProblem(t, do(h, http.MethodGet, "/api/v1/admin/storage", fromLoopback), http.StatusServiceUnavailable)
-	assertProblem(t, do(h, http.MethodPost, "/api/v1/admin/storage/disk/test", fromLoopback), http.StatusServiceUnavailable)
+	h, _, asAdmin := adminRouter(t, nil)
+	assertProblem(t, do(h, http.MethodGet, "/api/v1/admin/storage", asAdmin), http.StatusServiceUnavailable)
+	assertProblem(t, do(h, http.MethodPost, "/api/v1/admin/storage/disk/test", asAdmin), http.StatusServiceUnavailable)
 }

@@ -3,9 +3,7 @@ package httpapi
 import (
 	"context"
 	"errors"
-	"net"
 	"net/http"
-	"strings"
 
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
@@ -20,47 +18,6 @@ type Storage interface {
 
 // adminPrefix is the path prefix of the admin API, relative to the router.
 const adminPrefix = "/api/v1/admin/"
-
-// adminGuard restricts the admin API to direct loopback connections. The
-// Host must be a loopback name too, so that a page whose domain was rebound
-// to 127.0.0.1 cannot read the API, and unsafe methods refuse requests that a
-// browser marks as coming from another site (no CSRF tokens before phase 2).
-//
-// TODO(phase 2): replace with admin authentication, authorization and CSRF.
-func adminGuard(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.URL.Path, adminPrefix) {
-			next.ServeHTTP(w, r)
-			return
-		}
-		if !directLoopback(r) || !loopbackHost(r.Host) {
-			writeProblem(w, http.StatusForbidden, "the admin API is only available from localhost")
-			return
-		}
-		if r.Method != http.MethodGet && r.Method != http.MethodHead {
-			switch r.Header.Get("Sec-Fetch-Site") {
-			case "", "same-origin", "none":
-			default:
-				writeProblem(w, http.StatusForbidden, "cross-site requests to the admin API are not allowed")
-				return
-			}
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-// loopbackHost reports whether the Host header names the local host.
-func loopbackHost(host string) bool {
-	if h, _, err := net.SplitHostPort(host); err == nil {
-		host = h
-	}
-	host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
-	if strings.EqualFold(host, "localhost") {
-		return true
-	}
-	ip := net.ParseIP(host)
-	return ip != nil && ip.IsLoopback()
-}
 
 func problem(status int, detail string) v1gen.Problem {
 	p := v1gen.Problem{Type: "about:blank", Title: http.StatusText(status), Status: status}

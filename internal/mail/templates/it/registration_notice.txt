@@ -1,0 +1,6 @@
+Subject: Tentativo di registrazione su {{.Instance}}
+Ciao {{.Username}},
+
+qualcuno ha provato a creare un nuovo account su {{.Instance}} con questo indirizzo email, che appartiene già al tuo account. Non è stato creato nessun account.
+
+Se eri tu, puoi accedere da {{.Link}} o reimpostare la password da lì. Altrimenti puoi ignorare questo messaggio.

@@ -6,23 +6,74 @@ package dbgen
 
 import (
 	"context"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
+	// Users, emails, passwords, one-time tokens, invites and organizations.
+	// Serializes registrations inside a transaction, so that exactly one first
+	// user becomes the instance admin.
+	AcquireRegistrationLock(ctx context.Context) error
+	ConsumeInvite(ctx context.Context, arg ConsumeInviteParams) (ConsumeInviteRow, error)
+	// Deletes and returns a token; the caller checks expires_at.
+	ConsumeOneTimeToken(ctx context.Context, arg ConsumeOneTimeTokenParams) (ConsumeOneTimeTokenRow, error)
+	CountUsers(ctx context.Context) (int64, error)
+	DeleteExpiredOneTimeTokens(ctx context.Context) (int64, error)
+	DeleteExpiredSessions(ctx context.Context, idleBefore pgtype.Timestamptz) (int64, error)
+	// Invalidates the outstanding tokens of one purpose for a user.
+	DeleteOneTimeTokens(ctx context.Context, arg DeleteOneTimeTokensParams) error
+	DeleteSession(ctx context.Context, id uuid.UUID) error
 	DeleteStorageObject(ctx context.Context, arg DeleteStorageObjectParams) error
+	DeleteUserSessions(ctx context.Context, userID uuid.UUID) (int64, error)
+	DeleteUserSessionsExcept(ctx context.Context, arg DeleteUserSessionsExceptParams) (int64, error)
+	EmailTaken(ctx context.Context, address string) (bool, error)
+	GetEmailByAddress(ctx context.Context, address string) (GetEmailByAddressRow, error)
+	GetEmailByID(ctx context.Context, id uuid.UUID) (GetEmailByIDRow, error)
+	// Credentials for a login by email address; any verified address of the user works.
+	GetLoginByEmail(ctx context.Context, address string) (GetLoginByEmailRow, error)
+	// Credentials for a login by username; the email is the primary address.
+	GetLoginByUsername(ctx context.Context, username string) (GetLoginByUsernameRow, error)
+	GetNamespaceByName(ctx context.Context, name string) (GetNamespaceByNameRow, error)
+	GetOrgByName(ctx context.Context, name string) (GetOrgByNameRow, error)
+	GetOrgMemberRole(ctx context.Context, arg GetOrgMemberRoleParams) (string, error)
+	GetSessionByTokenHash(ctx context.Context, tokenHash []byte) (GetSessionByTokenHashRow, error)
 	GetSetting(ctx context.Context, key string) (Setting, error)
 	GetStorageObject(ctx context.Context, arg GetStorageObjectParams) (StorageObject, error)
+	GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error)
+	GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error)
+	GetValidInvite(ctx context.Context, tokenHash []byte) (GetValidInviteRow, error)
+	InsertAuditEvent(ctx context.Context, arg InsertAuditEventParams) error
+	InsertEmail(ctx context.Context, arg InsertEmailParams) error
+	InsertInvite(ctx context.Context, arg InsertInviteParams) error
+	InsertNamespace(ctx context.Context, arg InsertNamespaceParams) error
+	InsertOneTimeToken(ctx context.Context, arg InsertOneTimeTokenParams) error
+	InsertOrg(ctx context.Context, arg InsertOrgParams) error
+	InsertSession(ctx context.Context, arg InsertSessionParams) error
 	InsertSettingIfAbsent(ctx context.Context, arg InsertSettingIfAbsentParams) error
+	InsertUser(ctx context.Context, arg InsertUserParams) error
+	// Newest first; pass the last id of a page as before to get the next one.
+	ListAuditEvents(ctx context.Context, arg ListAuditEventsParams) ([]AuditLog, error)
 	ListStorageObjectsByKeys(ctx context.Context, arg ListStorageObjectsByKeysParams) ([]StorageObject, error)
 	ListStorageObjectsPendingReplicas(ctx context.Context, arg ListStorageObjectsPendingReplicasParams) ([]StorageObject, error)
+	ListUserSessions(ctx context.Context, userID uuid.UUID) ([]ListUserSessionsRow, error)
+	MarkEmailVerified(ctx context.Context, arg MarkEmailVerifiedParams) (int64, error)
 	MarkStorageObjectReplicated(ctx context.Context, arg MarkStorageObjectReplicatedParams) error
 	MarkStorageObjectVerified(ctx context.Context, arg MarkStorageObjectVerifiedParams) error
+	NamespaceTaken(ctx context.Context, name string) (bool, error)
 	// Oldest-verified first, random within the same age, so repeated runs cover
 	// every object over time.
 	SampleStorageObjectsForVerify(ctx context.Context, arg SampleStorageObjectsForVerifyParams) ([]StorageObject, error)
 	SetStorageObjectError(ctx context.Context, arg SetStorageObjectErrorParams) error
 	SetStorageObjectReplicasPending(ctx context.Context, arg SetStorageObjectReplicasPendingParams) error
+	SetUserRole(ctx context.Context, arg SetUserRoleParams) error
+	SetUserSuspended(ctx context.Context, arg SetUserSuspendedParams) error
 	StorageObjectStats(ctx context.Context) ([]StorageObjectStatsRow, error)
+	// Records activity at most once a minute to keep writes low.
+	TouchSession(ctx context.Context, id uuid.UUID) error
+	UpsertOrgMember(ctx context.Context, arg UpsertOrgMemberParams) error
+	UpsertPassword(ctx context.Context, arg UpsertPasswordParams) error
 	UpsertSetting(ctx context.Context, arg UpsertSettingParams) error
 	// Called only after the object is confirmed on the primary. Re-uploading an
 	// existing key with the same content keeps its replica and verification state.

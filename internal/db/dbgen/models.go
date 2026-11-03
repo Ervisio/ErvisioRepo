@@ -5,8 +5,92 @@
 package dbgen
 
 import (
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type AuditLog struct {
+	ID         uuid.UUID
+	At         pgtype.Timestamptz
+	ActorID    uuid.NullUUID
+	Action     string
+	TargetType string
+	TargetID   string
+	Ip         string
+	Data       []byte
+}
+
+type Email struct {
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	Address      string
+	AddressLower pgtype.Text
+	IsPrimary    bool
+	VerifiedAt   pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+}
+
+type Invite struct {
+	ID        uuid.UUID
+	TokenHash []byte
+	Email     pgtype.Text
+	CreatedBy uuid.NullUUID
+	ExpiresAt pgtype.Timestamptz
+	UsedAt    pgtype.Timestamptz
+	UsedBy    uuid.NullUUID
+	CreatedAt pgtype.Timestamptz
+}
+
+type Namespace struct {
+	ID        uuid.UUID
+	Kind      string
+	Name      string
+	NameLower pgtype.Text
+	CreatedAt pgtype.Timestamptz
+}
+
+type OneTimeToken struct {
+	TokenHash []byte
+	Purpose   string
+	UserID    uuid.UUID
+	EmailID   uuid.NullUUID
+	ExpiresAt pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
+}
+
+type Org struct {
+	ID          uuid.UUID
+	DisplayName string
+	Description string
+	VerifiedAt  pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type OrgMember struct {
+	OrgID     uuid.UUID
+	UserID    uuid.UUID
+	Role      string
+	CreatedAt pgtype.Timestamptz
+}
+
+type Password struct {
+	UserID    uuid.UUID
+	Hash      string
+	UpdatedAt pgtype.Timestamptz
+}
+
+type Session struct {
+	ID         uuid.UUID
+	TokenHash  []byte
+	UserID     uuid.UUID
+	CsrfToken  string
+	Ip         string
+	UserAgent  string
+	CreatedAt  pgtype.Timestamptz
+	LastSeenAt pgtype.Timestamptz
+	ExpiresAt  pgtype.Timestamptz
+}
 
 type Setting struct {
 	Key       string
@@ -25,4 +109,14 @@ type StorageObject struct {
 	LastError  pgtype.Text
 	CreatedAt  pgtype.Timestamptz
 	UpdatedAt  pgtype.Timestamptz
+}
+
+type User struct {
+	ID          uuid.UUID
+	DisplayName string
+	Role        string
+	Locale      string
+	SuspendedAt pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
 }

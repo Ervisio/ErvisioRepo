@@ -33,3 +33,11 @@ budget = "5GB"
 
 [storage.policy.git]
 primary = "hot"
+
+# Mailpit from deploy/docker/compose.dev.yaml: messages at http://localhost:8025.
+[mail]
+enabled = true
+host = "localhost"
+port = 1025
+tls = "none"
+from = "Ervisio Repo <git@localhost>"

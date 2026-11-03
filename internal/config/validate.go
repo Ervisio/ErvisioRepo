@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"net"
+	"net/mail"
 	"net/url"
 	"path/filepath"
 	"regexp"
@@ -87,7 +88,15 @@ func (c *Config) validate() []error {
 	v.oneOf("log.level", c.Log.Level, "debug", "info", "warn", "error")
 	v.oneOf("log.format", c.Log.Format, "json", "text")
 
+	for i, cidr := range c.Server.TrustedProxies {
+		if _, _, err := net.ParseCIDR(cidr); err != nil {
+			v.add(fmt.Sprintf("server.trusted_proxies[%d]", i), "must be a CIDR such as 127.0.0.1/32, got %q", cidr)
+		}
+	}
+
 	v.storage(&c.Storage)
+	v.auth(&c.Auth)
+	v.mail(&c.Mail)
 	return v.errs
 }
 
@@ -184,3 +193,63 @@ func (v *validator) target(p string, t *Target) {
 		v.add(p+".kind", "must be one of local, s3, sftp, webdav, got %q", t.Kind)
 	}
 }
+
+func (v *validator) intRange(path string, n, lo, hi int) {
+	if n < lo || n > hi {
+		v.add(path, "must be between %d and %d, got %d", lo, hi, n)
+	}
+}
+
+func (v *validator) positive(path string, d Duration) {
+	if d <= 0 {
+		v.add(path, "must be a positive duration")
+	}
+}
+
+func (v *validator) auth(a *Auth) {
+	if a.Argon2Memory < 8<<10 || a.Argon2Memory > 4<<30 {
+		v.add("auth.argon2_memory", "must be between 8KiB and 4GiB, got %s", a.Argon2Memory)
+	}
+	v.intRange("auth.argon2_iterations", a.Argon2Iterations, 1, 100)
+	v.intRange("auth.argon2_parallelism", a.Argon2Parallelism, 1, 255)
+	v.intRange("auth.argon2_max_concurrent", a.Argon2MaxConcurrent, 1, 1024)
+	v.intRange("auth.password_min_length", a.PasswordMinLength, 8, 128)
+	v.positive("auth.session_idle_timeout", a.SessionIdleTimeout)
+	v.positive("auth.session_max_age", a.SessionMaxAge)
+	if a.SessionIdleTimeout > a.SessionMaxAge {
+		v.add("auth.session_idle_timeout", "must not exceed auth.session_max_age")
+	}
+	v.intRange("auth.login_free_failures_account", a.LoginFreeFailuresAccount, 1, 1000)
+	v.intRange("auth.login_free_failures_ip", a.LoginFreeFailuresIP, 1, 100000)
+	v.positive("auth.login_backoff_base", a.LoginBackoffBase)
+	if a.LoginBackoffMax < a.LoginBackoffBase {
+		v.add("auth.login_backoff_max", "must be at least auth.login_backoff_base")
+	}
+	v.intRange("auth.actions_per_ip_per_hour", a.ActionsPerIPPerHour, 1, 1000000)
+	v.positive("auth.verify_token_ttl", a.VerifyTokenTTL)
+	v.positive("auth.reset_token_ttl", a.ResetTokenTTL)
+	v.positive("auth.invite_ttl", a.InviteTTL)
+}
+
+func (v *validator) mail(m *Mail) {
+	v.oneOf("mail.tls", m.TLS, "starttls", "tls", "none")
+	v.positive("mail.timeout", m.Timeout)
+	if !m.Enabled {
+		return
+	}
+	v.required("mail.host", m.Host)
+	v.intRange("mail.port", m.Port, 1, 65535)
+	if v.required("mail.from", m.From) {
+		if _, err := mailAddress(m.From); err != nil {
+			v.add("mail.from", "must be an email address such as \"Ervisio Repo <git@example.com>\"")
+		}
+	}
+	if m.PasswordFile != "" && !filepath.IsAbs(m.PasswordFile) {
+		v.add("mail.password_file", "must be an absolute path")
+	}
+	if m.PasswordFile != "" && m.Username == "" {
+		v.add("mail.username", "is required when mail.password_file is set")
+	}
+}
+
+func mailAddress(s string) (*mail.Address, error) { return mail.ParseAddress(s) }
