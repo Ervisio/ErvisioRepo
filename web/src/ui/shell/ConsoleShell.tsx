@@ -5,6 +5,7 @@ import { Icon } from "../Icon.tsx";
 import { Menu, MenuItem } from "../Menu.tsx";
 import { Link } from "@tanstack/react-router";
 import { NavLink, useNavItems } from "./nav.tsx";
+import { SearchTrigger } from "./SearchPalette.tsx";
 
 /** Direction A: 72 px rail, 248 px column, content on a --surface panel. Below 900 px: top bar + chips. */
 export function ConsoleShell({ children }: { children: ReactNode }) {
@@ -20,6 +21,7 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
             <Icon name={item.icon} />
           </NavLink>
         ))}
+        <SearchTrigger className="cs-ri" iconOnly />
       </nav>
       <aside className="cs-nav" aria-label={t("nav.main")}>
         <div className="cs-brand">
@@ -46,6 +48,7 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
               ))}
             </Menu>
             <b><small>{t("brand.org")}</small>{t("brand.name")}</b>
+            <SearchTrigger className="ui-iconbtn cs-search" iconOnly />
           </div>
           <nav className="cs-chips" aria-label={t("nav.main")}>
             {items.map(({ item, label }) => (

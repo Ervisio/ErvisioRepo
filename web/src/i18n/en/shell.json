@@ -15,5 +15,15 @@
   "nav.audit": "Audit",
   "nav.account": "Account",
   "nav.signIn": "Sign in",
-  "nav.repos": "Repositories"
+  "nav.repos": "Repositories",
+  "search.button": "Search",
+  "search.open": "Search repositories",
+  "search.shortcut": "Search repositories (Ctrl+K)",
+  "search.title": "Search repositories",
+  "search.placeholder": "Repository name…",
+  "search.results": "Repositories",
+  "search.hint": "Type to search; ↑ ↓ to move, Enter to open.",
+  "search.loading": "Searching…",
+  "search.none": "No repositories found",
+  "search.error": "Search failed"
 }

@@ -15,5 +15,15 @@
   "nav.audit": "Audit",
   "nav.account": "Account",
   "nav.signIn": "Accedi",
-  "nav.repos": "Repository"
+  "nav.repos": "Repository",
+  "search.button": "Cerca",
+  "search.open": "Cerca repository",
+  "search.shortcut": "Cerca repository (Ctrl+K)",
+  "search.title": "Cerca repository",
+  "search.placeholder": "Nome del repository…",
+  "search.results": "Repository",
+  "search.hint": "Scrivi per cercare; ↑ ↓ per spostarti, Invio per aprire.",
+  "search.loading": "Ricerca…",
+  "search.none": "Nessun repository trovato",
+  "search.error": "Ricerca non riuscita"
 }

@@ -690,11 +690,11 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 
 ### Fase 4 — Navigazione del codice e LFS
 
-- [ ] Vista del repo: albero, file con evidenziazione Shiki, README, blame, cronologia, commit con diff, branch, tag, confronto tra ref, download di archivi.
-- [ ] Ricerca nel repo (`git grep` sul ref di default) e ricerca globale per nome.
-- [ ] Edit dal web (CodeMirror) con commit diretto o su un nuovo branch.
-- [ ] Git LFS: batch API, upload e download prefirmati o in proxy, locks, quote (§4.4).
-- [ ] Release con asset sullo storage a livelli.
+- [x] Vista del repo: albero, file con evidenziazione Shiki, README, blame, cronologia, commit con diff, branch, tag, confronto tra ref, download di archivi.
+- [x] Ricerca nel repo (`git grep` sul ref di default) e ricerca globale per nome.
+- [x] Edit dal web (CodeMirror) con commit diretto o su un nuovo branch.
+- [x] Git LFS: batch API, upload e download prefirmati o in proxy, locks, quote (§4.4).
+- [x] Release con asset sullo storage a livelli.
 
 **Accettazione**: `git lfs push` e `pull` di 5 GB funzionano su Object Storage (presign) e StorageBox (proxy); un diff da 10.000 righe resta fluido nel browser.
 

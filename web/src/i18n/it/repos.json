@@ -47,5 +47,7 @@
   "delete.confirm": "Elimina questo repository",
   "delete.done": "Repository eliminato",
   "confirm.type": "Scrivi {name} per confermare",
-  "cancel": "Annulla"
+  "cancel": "Annulla",
+  "clone.button": "Clona",
+  "clone.title": "Clona questo repository"
 }

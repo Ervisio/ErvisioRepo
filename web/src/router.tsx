@@ -13,12 +13,24 @@ import { Catalog } from "./pages/Catalog.tsx";
 import { Home } from "./pages/Home.tsx";
 import { OrgPage } from "./pages/Org.tsx";
 import { OrgInviteAccept } from "./pages/OrgInvite.tsx";
+import { BlobPage, type BlobMode } from "./pages/code/BlobPage.tsx";
+import { ComparePage } from "./pages/code/ComparePage.tsx";
+import { EditPage } from "./pages/code/EditPage.tsx";
+import { BranchesPage, CommitPage, CommitsPage, TagsPage } from "./pages/code/HistoryPages.tsx";
+import { SearchPage, type CodeSearchParams } from "./pages/code/SearchPage.tsx";
+import { TreePage } from "./pages/code/TreePage.tsx";
+import { ReleaseFormPage, ReleasePage, ReleasesPage } from "./pages/releases/ReleasesPages.tsx";
 import { MyReposPage } from "./pages/repos/MyReposPage.tsx";
-import { RepoPage } from "./pages/repos/RepoPage.tsx";
 import { RepoSettings } from "./pages/repos/RepoSettings.tsx";
 import { AppShell, ToastProvider } from "./ui/index.ts";
 
-const str = (v: unknown) => (typeof v === "string" ? v : undefined);
+// The default search parser JSON-decodes values, so "1" arrives as a number: accept both forms.
+const str = (v: unknown) => (typeof v === "string" ? v : typeof v === "number" ? String(v) : undefined);
+const num = (v: unknown) => {
+  const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+  return Number.isInteger(n) && n > 1 ? n : undefined;
+};
+const bool = (v: unknown) => (v === true || v === "true" ? true : v === false || v === "false" ? false : undefined);
 const nextSearch = (s: Record<string, unknown>): { next?: string } => ({ next: str(s.next) });
 const tokenSearch = (s: Record<string, unknown>): { token?: string } => ({ token: str(s.token) });
 
@@ -68,7 +80,147 @@ const settingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/se
 const orgInviteRoute = createRoute({ getParentRoute: () => shellRoute, path: "/org-invite", validateSearch: tokenSearch, component: () => guard(<OrgInviteAccept token={orgInviteRoute.useSearch().token} />) });
 const orgRoute = createRoute({ getParentRoute: () => shellRoute, path: "/orgs/$org", component: () => guard(<OrgPage name={orgRoute.useParams().org} />) });
 const reposRoute = createRoute({ getParentRoute: () => shellRoute, path: "/repos", component: () => guard(<MyReposPage />) });
-const repoRoute = createRoute({ getParentRoute: () => shellRoute, path: "/$owner/$name", component: () => guard(<RepoPage owner={repoRoute.useParams().owner} name={repoRoute.useParams().name} />) });
+type RefPath = { ref?: string; path?: string };
+const refPathSearch = (s: Record<string, unknown>): RefPath => ({ ref: str(s.ref), path: str(s.path) });
+const pageSearch = (s: Record<string, unknown>): { page?: number } => ({ page: num(s.page) });
+const blobModes: BlobMode[] = ["code", "blame", "preview"];
+const repoRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name",
+  validateSearch: refPathSearch,
+  component: function RepoHome() {
+    const p = repoRoute.useParams();
+    const s = repoRoute.useSearch();
+    return guard(<TreePage owner={p.owner} name={p.name} refName={s.ref} path={s.path} />);
+  },
+});
+const blobRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/blob",
+  validateSearch: (s: Record<string, unknown>): RefPath & { view?: BlobMode } => ({
+    ...refPathSearch(s),
+    view: blobModes.find((m) => m === s.view),
+  }),
+  component: function Blob() {
+    const p = blobRoute.useParams();
+    const s = blobRoute.useSearch();
+    return guard(<BlobPage owner={p.owner} name={p.name} refName={s.ref} path={s.path ?? ""} view={s.view} />);
+  },
+});
+const commitsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/commits",
+  validateSearch: (s: Record<string, unknown>) => ({ ...refPathSearch(s), ...pageSearch(s) }),
+  component: function Commits() {
+    const p = commitsRoute.useParams();
+    const s = commitsRoute.useSearch();
+    return guard(<CommitsPage owner={p.owner} name={p.name} refName={s.ref} path={s.path} page={s.page} />);
+  },
+});
+const commitRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/commit/$sha",
+  component: function Commit() {
+    const p = commitRoute.useParams();
+    return guard(<CommitPage owner={p.owner} name={p.name} sha={p.sha} />);
+  },
+});
+const branchesRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/branches",
+  validateSearch: pageSearch,
+  component: function Branches() {
+    const p = branchesRoute.useParams();
+    return guard(<BranchesPage owner={p.owner} name={p.name} page={branchesRoute.useSearch().page} />);
+  },
+});
+const tagsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/tags",
+  validateSearch: pageSearch,
+  component: function Tags() {
+    const p = tagsRoute.useParams();
+    return guard(<TagsPage owner={p.owner} name={p.name} page={tagsRoute.useSearch().page} />);
+  },
+});
+const compareRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/compare",
+  validateSearch: (s: Record<string, unknown>): { base?: string; head?: string } => ({ base: str(s.base), head: str(s.head) }),
+  component: function Compare() {
+    const p = compareRoute.useParams();
+    const s = compareRoute.useSearch();
+    return guard(<ComparePage owner={p.owner} name={p.name} base={s.base} head={s.head} />);
+  },
+});
+const codeSearchRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/search",
+  validateSearch: (s: Record<string, unknown>): CodeSearchParams => ({
+    q: str(s.q),
+    ref: str(s.ref),
+    path: str(s.path),
+    regexp: bool(s.regexp),
+    ignoreCase: bool(s.ignoreCase),
+  }),
+  component: function CodeSearch() {
+    const p = codeSearchRoute.useParams();
+    return guard(<SearchPage owner={p.owner} name={p.name} params={codeSearchRoute.useSearch()} />);
+  },
+});
+const editRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/edit",
+  validateSearch: refPathSearch,
+  component: function Edit() {
+    const p = editRoute.useParams();
+    const s = editRoute.useSearch();
+    return guard(<EditPage owner={p.owner} name={p.name} refName={s.ref} path={s.path} mode="edit" />);
+  },
+});
+const newFileRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/new",
+  validateSearch: refPathSearch,
+  component: function NewFile() {
+    const p = newFileRoute.useParams();
+    const s = newFileRoute.useSearch();
+    return guard(<EditPage owner={p.owner} name={p.name} refName={s.ref} path={s.path} mode="new" />);
+  },
+});
+const releasesRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/releases",
+  validateSearch: pageSearch,
+  component: function Releases() {
+    const p = releasesRoute.useParams();
+    return guard(<ReleasesPage owner={p.owner} name={p.name} page={releasesRoute.useSearch().page} />);
+  },
+});
+const releaseNewRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/releases/new",
+  component: function ReleaseNew() {
+    const p = releaseNewRoute.useParams();
+    return guard(<ReleaseFormPage owner={p.owner} name={p.name} />);
+  },
+});
+const releaseRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/releases/$id",
+  component: function ReleaseOne() {
+    const p = releaseRoute.useParams();
+    return guard(<ReleasePage owner={p.owner} name={p.name} id={p.id} />);
+  },
+});
+const releaseEditRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/releases/$id/edit",
+  component: function ReleaseEdit() {
+    const p = releaseEditRoute.useParams();
+    return guard(<ReleaseFormPage owner={p.owner} name={p.name} id={p.id} />);
+  },
+});
 const repoSettingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/$owner/$name/settings", component: () => guard(<RepoSettings owner={repoSettingsRoute.useParams().owner} name={repoSettingsRoute.useParams().name} />) });
 // Component catalog for the design kit (Fase UI).
 const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui", component: Catalog });
@@ -76,7 +228,24 @@ const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
     bareRoute.addChildren([loginRoute, twoFactorRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
-    shellRoute.addChildren([homeRoute, storageRoute, auditRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute, repoRoute, repoSettingsRoute, catalogRoute]),
+    shellRoute.addChildren([homeRoute, storageRoute, auditRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute,
+      repoRoute,
+      blobRoute,
+      commitsRoute,
+      commitRoute,
+      branchesRoute,
+      tagsRoute,
+      compareRoute,
+      codeSearchRoute,
+      editRoute,
+      newFileRoute,
+      releasesRoute,
+      releaseNewRoute,
+      releaseRoute,
+      releaseEditRoute,
+      repoSettingsRoute,
+      catalogRoute,
+    ]),
   ]),
 });
 

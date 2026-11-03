@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useT } from "../../i18n/useT.ts";
 import { Icon } from "../Icon.tsx";
 import { NavLink, useNavItems } from "./nav.tsx";
+import { SearchTrigger } from "./SearchPalette.tsx";
 
 /** Direction C: top band with a segmented section switch; page side zone becomes a sticky lane. */
 export function CorsieShell({ children }: { children: ReactNode }) {
@@ -23,6 +24,7 @@ export function CorsieShell({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
         </nav>
+        <SearchTrigger className="ui-btn ui-btn-ghost ui-btn-sm sp-trigger" />
       </header>
       <main className="rs-main">{children}</main>
     </div>

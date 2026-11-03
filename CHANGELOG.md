@@ -109,6 +109,17 @@ Phase 4, releases:
 - Asset upload (raw body) and download (single Range, download counter) as streaming routes outside the request timeout; bytes stored with the `releases` storage policy (fallback `lfs`) and charged to the owner's quota.
 - `releases_cleanup` job removes orphaned asset objects older than 2 hours.
 
+Phase 4, web UI:
+
+- Code view: repository sub-navigation, tree with last commit per entry, branch/tag switcher, breadcrumb, clone dialog, archive menu (zip, tar.gz) and README rendered by an in-house safe Markdown renderer (no raw HTML, same-ref relative links, images from `/raw`).
+- File view: Shiki highlighting with the JavaScript regex engine (no WASM, CSP-safe) mapped to the `--syn-*` tokens, lazy-loaded per language; line links (`#L`), blame, Markdown preview, raw, download, image/LFS/binary notes; virtualized rows above 1500 lines.
+- History (paginated, optionally per path), commit page with message and diff, branches with ahead/behind, tags, compare with swap.
+- Own diff renderer: unified on narrow screens, unified or split on desktop, file list, collapsible files, `--ok-s`/`--err-s` rows, virtualized per file.
+- In-repo code search (regexp, case, path) and a global repository search palette (Ctrl/Cmd+K) in all three shells.
+- Web edit with lazy-loaded CodeMirror 6 (CSP nonce): create, edit and delete a file, commit to the branch or to a new branch, conflict dialog on a stale `sha` (409).
+- Releases: list, detail with notes and assets, create/edit form, asset upload with progress and cancel, download, delete.
+- New dependencies: `shiki`, the `@codemirror/*` packages needed for the editor and `@lezer/highlight` (previously transitive).
+
 ### Removed
 
 - Organization role `billing` (existing members become `member`).
