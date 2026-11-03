@@ -109,6 +109,8 @@ type Deps struct {
 
 	// Pulls serves the pull request, review and fork endpoints; nil answers 503.
 	Pulls Pulls
+	// Statuses serves the commit status and checks endpoints; nil answers 503.
+	Statuses Statuses
 }
 
 // NewRouter builds the root handler.
@@ -188,6 +190,9 @@ func mountGitHubAPI(r chi.Router, d Deps) {
 	if d.Releases != nil {
 		g.Releases = d.Releases
 	}
+	if d.Statuses != nil {
+		g.Statuses = d.Statuses
+	}
 	ghapi.Mount(r, g)
 }
 
@@ -246,6 +251,7 @@ func mountV1(r chi.Router, d Deps) {
 		protection: d.Protection, github: d.GitHub, issues: d.Issues}
 	srv.webhooks, srv.notify = d.Webhooks, d.Notify
 	srv.pulls = d.Pulls
+	srv.statuses = d.Statuses
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())

@@ -6,8 +6,8 @@ lo stesso percorso di GitHub Enterprise Server. Script, `go-github`,
 host GitHub Enterprise. La API nativa resta su `/api/v1`; `/api/v3` è uno
 strato di compatibilità sopra gli stessi servizi e gli stessi permessi.
 
-GraphQL **non** è implementato: `POST /api/graphql` risponde `501` con un
-errore in formato GitHub.
+GraphQL è servito su `/api/graphql` (e `/api/v3/graphql`) per il
+sottoinsieme usato da `gh`; vedi [GraphQL](#graphql-apigraphql).
 
 ## Convenzioni
 
@@ -137,16 +137,25 @@ Legenda: **sì** supportato; **parziale** supportato con i limiti indicati;
 
 ### Stati e check
 
-ErvisioRepo non ha ancora un'integrazione CI: questi endpoint restituiscono
-risultati vuoti e i client vedono "nessun check".
+Gli stati dei commit e i check run sono salvati per commit; l'ultimo stato
+di ogni context e l'ultimo run di ogni nome contano come status check
+richiesti dalla protezione dei branch (un run passa con `success`, `neutral`
+o `skipped`) e rivalutano l'auto-merge. Una check suite raggruppa i run di
+un commit per mittente (`app`, lo username di chi chiama): ErvisioRepo non
+ha GitHub App, quindi `app.slug` e `app.name` sono quel nome.
 
 | Endpoint | Stato | Note |
 |---|---|---|
-| `GET .../commits/{ref}/status` | stub | `state: pending`, nessuno stato. |
-| `GET .../commits/{ref}/statuses`, `GET .../statuses/{sha}` | stub | Lista vuota. |
-| `POST .../statuses/{sha}` | no | `501`. |
-| `GET .../commits/{ref}/check-runs`, `.../check-suites` | stub | `total_count: 0`. |
-| `POST .../check-runs`, `POST .../check-suites` | no | `501`. |
+| `GET .../commits/{ref}/status` | sì | L'ultimo stato di ogni context; `state` è `failure`, `pending` (anche senza stati) o `success`. I check run non sono inclusi, come su GitHub. |
+| `GET .../commits/{ref}/statuses`, `GET .../statuses/{ref}` | sì | Dal più recente. |
+| `POST .../statuses/{ref}` | sì | `state`, `target_url` (http/https), `description`, `context`. Al massimo 1000 stati per commit e context. Commit sconosciuto: `422`. |
+| `POST .../check-runs` | parziale | `name`, `head_sha` (anche un branch o un tag), `status`, `conclusion`, `started_at`, `completed_at`, `details_url`, `external_id`, `output` (`title`, `summary`, `text`, `annotations`; `images` ignorato). `actions` è ignorato. |
+| `GET/PATCH .../check-runs/{id}` | sì | `PATCH` mantiene i campi omessi e aggiunge le annotazioni (50 per richiesta, 1000 per run). |
+| `GET .../check-runs/{id}/annotations` | sì | |
+| `GET .../commits/{ref}/check-runs` | sì | `check_name`, `status`, `filter` (`latest`, predefinito, o `all`); `app_id` è ignorato. |
+| `GET .../commits/{ref}/check-suites` | sì | Filtro `app_slug`; `app_id` e `check_name` sono ignorati. |
+| `GET .../check-suites/{id}`, `GET .../check-suites/{id}/check-runs` | sì | |
+| `POST .../check-suites` | no | `501`: una suite nasce con il suo primo check run. Le ri-richieste e le preferenze delle check suite non sono disponibili. |
 
 ### Non disponibili
 
@@ -154,35 +163,84 @@ Ricerca, gist, notifiche, eventi, actions, package, project, deployment,
 webhook (usare `/api/v1/.../hooks`), gestione dei collaboratori, fork, team,
 app e installazioni.
 
+## GraphQL (`/api/graphql`)
+
+`POST /api/graphql` e `POST /api/v3/graphql` espongono il sottoinsieme della
+API GraphQL di GitHub usato da `gh` (`internal/ghapi/graphql`). La richiesta è
+`{"query", "variables", "operationName"}`; la risposta è `{"data"}` e, in caso
+di errore, `{"errors":[{"type","message","path"}]}` (`NOT_FOUND`,
+`FORBIDDEN`, `UNPROCESSABLE`, ...) con i dati parziali, come fa GitHub. Usa
+gli stessi servizi e gli stessi controlli dei permessi di `/api/v3`. Gli id
+globali sono i valori `node_id` delle risposte REST.
+
+- **Query**: `viewer`, `repository(owner, name)`, `repositoryOwner(login)`,
+  `node(id)`, `nodes(ids)`, `search(query, type: ISSUE)` con i qualificatori
+  `repo:`, `is:`, `state:`, `author:`, `assignee:`, `mentions:`, `label:`,
+  `milestone:`, `base:`, `head:`, `no:`, `sort:` e `review-requested:`
+  (`@me` funziona; `type: REPOSITORY` è limitato), `__typename` e una
+  introspezione minima `__type`/`__schema` (solo i nomi dei campi, che `gh`
+  usa per capire quali funzioni sono disponibili).
+- **Oggetti**: `User`, `Organization`, `Repository` (branch, `ref`, label,
+  milestone, release, issue, pull request, collaboratori), `Issue`,
+  `PullRequest` (commit con lo status check rollup, review, richieste di
+  review, file, stato del merge), `IssueComment`, `Label`, `Milestone`,
+  `Release`, `Ref`, `Commit`, connection con i cursori `first`, `last` e
+  `after` e `totalCount`.
+- **Mutation**: `createIssue`, `updateIssue`, `closeIssue`, `reopenIssue`,
+  `addComment`, `updateIssueComment`, `deleteIssueComment`,
+  `createPullRequest`, `updatePullRequest`, `closePullRequest`,
+  `reopenPullRequest`, `mergePullRequest`, `markPullRequestReadyForReview`,
+  `convertPullRequestToDraft`, `requestReviews` (solo utenti),
+  `addPullRequestReview`, `enablePullRequestAutoMerge`,
+  `disablePullRequestAutoMerge`, `addLabelsToLabelable`,
+  `removeLabelsFromLabelable`, `addAssigneesToAssignable`,
+  `removeAssigneesFromAssignable`.
+
+La lettura richiede un token con `repo:read`, le mutation `repo:write`. Ogni
+risposta autenticata sotto `/api` porta l'header `X-OAuth-Scopes` con i nomi
+classici di GitHub degli scope del token (`repo:write` diventa `repo`,
+`user:read` diventa `read:user, read:org`, `packages:read` diventa
+`read:packages`, `actions:write` diventa `workflow`, `admin` diventa
+`admin:org`).
+
 ## Usare `gh`
 
 `gh` tratta ogni host diverso da github.com come GitHub Enterprise e chiama
-`https://<host>/api/v3/` e `https://<host>/api/graphql`. Gran parte dei
-sottocomandi di `gh` usa GraphQL, quindi ne funziona solo una parte.
-`gh auth login` legge il nome utente via GraphQL e fallisce: impostare il
-token nell'ambiente.
+`https://<host>/api/v3/` e `https://<host>/api/graphql`. `gh` verifica che il
+token abbia gli scope `repo` e `read:org`, quindi serve un token con
+`repo:write` e `user:read`.
 
 ```sh
-export GH_HOST=git.example.com
-export GH_ENTERPRISE_TOKEN=<token di accesso>
-gh api repos/alice/demo/pulls
+gh auth login --hostname git.example.com --with-token < token.txt
+gh auth status --hostname git.example.com
+gh pr list -R git.example.com/alice/demo
 ```
 
-Passare `-R git.example.com/owner/repo` per saltare la ricerca del
-repository dai remote git, che può usare GraphQL.
+Funzionano anche `GH_HOST=git.example.com` e `GH_ENTERPRISE_TOKEN=<token>`
+nell'ambiente. In un clone il cui remote punta all'host, `-R` non serve.
 
-| Comando | Funziona | Motivo |
+| Comando | Funziona | Note |
 |---|---|---|
-| `gh api <percorso REST>` (anche `--paginate`) | sì | REST semplice con paginazione `Link`. |
-| `gh release view`, `upload`, `download`, `delete`, `delete-asset` | sì | REST. |
-| `gh release create` | parziale | REST, ma alcune versioni verificano prima il tag via GraphQL. |
-| `gh release list` | no | GraphQL. |
-| `gh label create`, `edit`, `delete` | sì | REST. |
-| `gh label list`, `clone` | no | GraphQL. |
-| `gh auth login`, `gh auth status` | no | GraphQL. |
-| `gh repo view/create/clone/fork/list` | no | GraphQL (`gh repo clone` funziona con l'URL git completo, perché è git puro). |
-| `gh pr ...`, `gh issue ...` (tutti) | no | GraphQL. Usare `gh api` con gli endpoint sopra. |
-| `gh run`, `gh workflow`, `gh search`, `gh gist`, `gh codespace` | no | Non implementati. |
+| `gh auth login --hostname`, `gh auth status` | sì | `GET /api/v3/` con `X-OAuth-Scopes`, poi `viewer { login }`. |
+| `gh repo view` | sì | Il README non viene mostrato (manca la rotta `/readme`). |
+| `gh repo list` | sì | `repositoryOwner { repositories }`. |
+| `gh repo clone` | sì | Git puro. |
+| `gh repo create`, `fork`, `edit`, `delete` | no | Non implementati via GraphQL. |
+| `gh pr list`, `view`, `status` | sì | `status` usa `search` con `author:@me` e `review-requested:@me`. |
+| `gh pr create` (anche `--draft`, `--label`, `--assignee`, `--reviewer` utenti) | sì | Team come reviewer e project vengono rifiutati. |
+| `gh pr checkout` | sì | Scarica il branch head dal repository base. |
+| `gh pr merge` (`--merge`, `--squash`, `--rebase`, `--auto`) | sì | `--delete-branch` fallisce dopo il merge (manca `DELETE /git/refs`). Merge queue non supportata. |
+| `gh pr comment`, `close`, `reopen`, `ready`, `edit`, `review` | sì | |
+| `gh pr checks` | parziale | Status check rollup dal servizio statuses; nessun link alle esecuzioni dei workflow. |
+| `gh pr diff` | no | Il media type diff di `GET /pulls/{number}` non è servito. |
+| `gh issue list`, `view`, `create`, `close`, `reopen`, `comment`, `edit` | sì | I project vengono ignorati. |
+| `gh issue status` | sì | `search` con `repo:`. |
+| `gh release list` | sì | GraphQL `releases`. |
+| `gh release view`, `create`, `upload`, `download`, `delete`, `delete-asset` | sì | REST. |
+| `gh label list` | sì | GraphQL `labels`. |
+| `gh label create`, `edit`, `delete`, `clone` | sì | REST. |
+| `gh api <percorso REST>` (anche `--paginate`), `gh api graphql` | sì | |
+| `gh run`, `gh workflow`, `gh search`, `gh gist`, `gh codespace`, `gh project` | no | Non implementati (`search` richiede un qualificatore `repo:`). |
 
 Sono attese ricavate dal sorgente di `gh` e dagli endpoint implementati; non
 sono state verificate con test automatici.

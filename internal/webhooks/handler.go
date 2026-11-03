@@ -18,6 +18,7 @@ import (
 var EventKinds = []string{
 	events.KindIssue, events.KindIssueComment, events.KindLabel, events.KindMilestone, events.KindPush,
 	events.KindPull, events.KindPullReview, events.KindPullReviewComment, events.KindRelease, events.KindStatus,
+	events.KindCheckRun, events.KindCheckSuite,
 }
 
 // Namespaces of the delivery ids and GUIDs derived from an event.

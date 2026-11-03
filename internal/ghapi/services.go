@@ -14,6 +14,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/pulls"
 	"github.com/Ervisio/ErvisioRepo/internal/releases"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
+	"github.com/Ervisio/ErvisioRepo/internal/statuses"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/blob"
 )
 
@@ -105,4 +106,20 @@ type Releases interface {
 	DeleteAsset(ctx context.Context, who auth.Principal, owner, name string, releaseID, assetID uuid.UUID, c identity.Client) error
 	GetAsset(ctx context.Context, who auth.Principal, owner, name string, releaseID, assetID uuid.UUID) (releases.Asset, error)
 	OpenAsset(ctx context.Context, who auth.Principal, owner, name string, releaseID, assetID uuid.UUID, rng *blob.Range) (io.ReadCloser, releases.Asset, error)
+}
+
+// Statuses is the subset of the commit status and checks service used by
+// the API.
+type Statuses interface {
+	CreateStatus(ctx context.Context, who auth.Principal, owner, name, ref string, in statuses.StatusInput) (statuses.Status, error)
+	ListStatuses(ctx context.Context, who auth.Principal, owner, name, ref string, offset, limit int) ([]statuses.Status, string, error)
+	CombinedStatus(ctx context.Context, who auth.Principal, owner, name, ref string) (statuses.Combined, error)
+	CreateCheckRun(ctx context.Context, who auth.Principal, owner, name string, in statuses.CheckRunInput) (statuses.CheckRun, error)
+	UpdateCheckRun(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID, p statuses.CheckRunPatch) (statuses.CheckRun, error)
+	GetCheckRun(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID) (statuses.CheckRun, error)
+	ListCheckRunAnnotations(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID, offset, limit int) ([]statuses.Annotation, error)
+	ListCheckRuns(ctx context.Context, who auth.Principal, owner, name, ref string, f statuses.CheckRunFilter) ([]statuses.CheckRun, int, string, error)
+	ListSuiteCheckRuns(ctx context.Context, who auth.Principal, owner, name string, suiteID uuid.UUID, f statuses.CheckRunFilter) ([]statuses.CheckRun, int, error)
+	GetCheckSuite(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID) (statuses.CheckSuite, error)
+	ListCheckSuites(ctx context.Context, who auth.Principal, owner, name, ref, app string, offset, limit int) ([]statuses.CheckSuite, int, string, error)
 }

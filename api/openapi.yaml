@@ -20,6 +20,7 @@ tags:
   - name: protection
   - name: webhooks
   - name: notifications
+  - name: checks
 # Every operation needs a session unless it declares `security: []`. The
 # "admin" scope means an instance admin. Unsafe methods also need the
 # X-CSRF-Token header (see components.securitySchemes.session).
@@ -6550,6 +6551,377 @@ paths:
         default:
           $ref: "#/components/responses/Problem"
   # --- end notifications ---
+  # --- commit statuses and checks ---
+  /repos/{owner}/{name}/statuses/{sha}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/CommitRef"
+    get:
+      operationId: listCommitStatuses
+      tags: [checks]
+      summary: Statuses of a commit, newest first
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Statuses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommitStatus"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createCommitStatus
+      tags: [checks]
+      summary: Report a commit status
+      description: |
+        Needs the write permission. The ref is resolved to its commit; at most
+        1000 statuses are kept per commit and context. The latest status of a
+        context counts as a required status check of branch protection.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommitStatusCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommitStatus"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/commits/{sha}/status:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/CommitRef"
+    get:
+      operationId: getCombinedStatus
+      tags: [checks]
+      summary: Combined status of a commit
+      description: |
+        The latest status of each context and their aggregate state: failure
+        when any is error or failure, pending when any is pending or there is
+        none, success otherwise. Check runs are listed separately.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Combined status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CombinedStatus"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/commits/{sha}/check-runs:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/CommitRef"
+    get:
+      operationId: listCheckRunsForRef
+      tags: [checks]
+      summary: Check runs of a commit, oldest first
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/CheckNameFilter"
+        - $ref: "#/components/parameters/CheckStatusFilter"
+        - $ref: "#/components/parameters/CheckAppFilter"
+        - $ref: "#/components/parameters/CheckLatestFilter"
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Check runs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckRunList"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/commits/{sha}/check-suites:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/CommitRef"
+    get:
+      operationId: listCheckSuitesForRef
+      tags: [checks]
+      summary: Check suites of a commit
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/CheckAppFilter"
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Check suites
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckSuiteList"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/check-runs:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    post:
+      operationId: createCheckRun
+      tags: [checks]
+      summary: Report a check run
+      description: |
+        Needs the write permission. The run joins the check suite of its
+        commit and app (the caller's username unless `app` is given). A
+        conclusion completes the run. The latest run of each name counts as a
+        required status check of branch protection: success, neutral and
+        skipped pass.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckRunCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckRun"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/check-runs/{checkRunId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/CheckRunId"
+    get:
+      operationId: getCheckRun
+      tags: [checks]
+      summary: A check run
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Check run
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckRun"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateCheckRun
+      tags: [checks]
+      summary: Update a check run
+      description: |
+        Needs the write permission. Omitted fields are kept; a conclusion
+        completes the run; output annotations are appended (at most 50 per
+        request and 1000 per run).
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckRunUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckRun"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/check-runs/{checkRunId}/annotations:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/CheckRunId"
+    get:
+      operationId: listCheckRunAnnotations
+      tags: [checks]
+      summary: Annotations of a check run
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Annotations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CheckAnnotation"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/check-suites/{checkSuiteId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/CheckSuiteId"
+    get:
+      operationId: getCheckSuite
+      tags: [checks]
+      summary: A check suite
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Check suite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckSuite"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/check-suites/{checkSuiteId}/check-runs:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/CheckSuiteId"
+    get:
+      operationId: listCheckSuiteRuns
+      tags: [checks]
+      summary: Check runs of a check suite, oldest first
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/CheckNameFilter"
+        - $ref: "#/components/parameters/CheckStatusFilter"
+        - $ref: "#/components/parameters/CheckLatestFilter"
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Check runs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckRunList"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  # --- end commit statuses and checks ---
 components:
   securitySchemes:
     session:
@@ -6569,6 +6941,59 @@ components:
         operations that list the token scheme accept it, and the token must
         hold every scope listed there. Tokens skip the CSRF check.
   parameters:
+    # --- commit statuses and checks parameters ---
+    CommitRef:
+      name: sha
+      in: path
+      required: true
+      description: Commit id (full or abbreviated), branch or tag
+      schema:
+        type: string
+        maxLength: 255
+    CheckRunId:
+      name: checkRunId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CheckSuiteId:
+      name: checkSuiteId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CheckNameFilter:
+      name: checkName
+      in: query
+      description: Only the runs of this exact name
+      schema:
+        type: string
+        maxLength: 255
+    CheckStatusFilter:
+      name: status
+      in: query
+      description: Only the runs in this status
+      schema:
+        type: string
+        enum: [queued, in_progress, completed]
+    CheckAppFilter:
+      name: app
+      in: query
+      description: Only the runs or suites of this app
+      schema:
+        type: string
+        maxLength: 255
+    CheckLatestFilter:
+      name: filter
+      in: query
+      description: latest keeps the newest run of each name; all lists every run
+      schema:
+        type: string
+        enum: [latest, all]
+        default: latest
+    # --- end commit statuses and checks parameters ---
     # --- branch protection parameters ---
     ProtectionRuleId:
       name: ruleId
@@ -6749,6 +7174,148 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    # --- commit statuses and checks schemas ---
+    CommitStatus:
+      type: object
+      required: [id, sha, state, context, description, targetUrl, creator, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        sha: {type: string}
+        state: {type: string, enum: [error, failure, pending, success]}
+        context: {type: string}
+        description: {type: string}
+        targetUrl: {type: string}
+        creator: {type: string, description: Username of the reporter; empty when unknown}
+        createdAt: {type: string, format: date-time}
+    CommitStatusCreate:
+      type: object
+      required: [state]
+      properties:
+        state: {type: string, enum: [error, failure, pending, success]}
+        context: {type: string, maxLength: 255, description: Defaults to "default"}
+        description: {type: string, maxLength: 1024}
+        targetUrl: {type: string, maxLength: 2048, description: An http or https URL}
+    CombinedStatus:
+      type: object
+      required: [sha, state, totalCount, statuses]
+      properties:
+        sha: {type: string}
+        state: {type: string, enum: [failure, pending, success]}
+        totalCount: {type: integer}
+        statuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommitStatus"
+    CheckAnnotation:
+      type: object
+      required: [path, startLine, endLine, level, message]
+      properties:
+        path: {type: string, maxLength: 4096}
+        startLine: {type: integer, minimum: 1}
+        endLine: {type: integer, minimum: 1}
+        startColumn: {type: integer, minimum: 1}
+        endColumn: {type: integer, minimum: 1}
+        level: {type: string, enum: [notice, warning, failure]}
+        message: {type: string, maxLength: 65535}
+        title: {type: string, maxLength: 255}
+        rawDetails: {type: string, maxLength: 65535}
+    CheckRunOutput:
+      type: object
+      properties:
+        title: {type: string, maxLength: 1024}
+        summary: {type: string, maxLength: 65535}
+        text: {type: string, maxLength: 65535}
+        annotations:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/CheckAnnotation"
+    CheckRun:
+      type: object
+      required: [id, suiteId, headSha, headBranch, name, app, status, conclusion, externalId, detailsUrl,
+        title, summary, text, annotationsCount, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        suiteId: {type: string, format: uuid}
+        headSha: {type: string}
+        headBranch: {type: string, description: Branch the suite was first reported for; may be empty}
+        name: {type: string}
+        app: {type: string, description: Reporter of the suite}
+        status: {type: string, enum: [queued, in_progress, completed]}
+        conclusion: {type: string, description: Empty unless completed}
+        externalId: {type: string}
+        detailsUrl: {type: string}
+        title: {type: string}
+        summary: {type: string}
+        text: {type: string}
+        annotationsCount: {type: integer}
+        startedAt: {type: string, format: date-time, nullable: true}
+        completedAt: {type: string, format: date-time, nullable: true}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    CheckRunCreate:
+      type: object
+      required: [name, headSha]
+      properties:
+        name: {type: string, maxLength: 255}
+        headSha: {type: string, maxLength: 255, description: Commit id or any ref}
+        status: {type: string, enum: [queued, in_progress, completed]}
+        conclusion:
+          type: string
+          enum: [success, failure, neutral, cancelled, skipped, timed_out, action_required, stale, startup_failure]
+        externalId: {type: string, maxLength: 255}
+        detailsUrl: {type: string, maxLength: 2048}
+        startedAt: {type: string, format: date-time}
+        completedAt: {type: string, format: date-time}
+        app: {type: string, maxLength: 255, description: Reporter; defaults to the caller's username}
+        output:
+          $ref: "#/components/schemas/CheckRunOutput"
+    CheckRunUpdate:
+      type: object
+      properties:
+        name: {type: string, maxLength: 255}
+        status: {type: string, enum: [queued, in_progress, completed]}
+        conclusion:
+          type: string
+          enum: [success, failure, neutral, cancelled, skipped, timed_out, action_required, stale, startup_failure]
+        externalId: {type: string, maxLength: 255}
+        detailsUrl: {type: string, maxLength: 2048}
+        startedAt: {type: string, format: date-time}
+        completedAt: {type: string, format: date-time}
+        output:
+          $ref: "#/components/schemas/CheckRunOutput"
+    CheckRunList:
+      type: object
+      required: [totalCount, checkRuns]
+      properties:
+        totalCount: {type: integer}
+        checkRuns:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckRun"
+    CheckSuite:
+      type: object
+      required: [id, headSha, headBranch, app, status, conclusion, runsCount, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        headSha: {type: string}
+        headBranch: {type: string}
+        app: {type: string}
+        status: {type: string, enum: [queued, in_progress, completed]}
+        conclusion: {type: string, description: Empty unless completed}
+        runsCount: {type: integer, description: Number of distinct check run names}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    CheckSuiteList:
+      type: object
+      required: [totalCount, checkSuites]
+      properties:
+        totalCount: {type: integer}
+        checkSuites:
+          type: array
+          items:
+            $ref: "#/components/schemas/CheckSuite"
+    # --- end commit statuses and checks schemas ---
     # --- github sync schemas ---
     GitHubConnection:
       type: object

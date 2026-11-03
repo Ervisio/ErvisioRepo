@@ -37,6 +37,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/pulls"
 	"github.com/Ervisio/ErvisioRepo/internal/releases"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
+	"github.com/Ervisio/ErvisioRepo/internal/statuses"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
 	"github.com/Ervisio/ErvisioRepo/internal/webhooks"
@@ -245,11 +246,17 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		}
 		pullSvc := pulls.New(pullOpts)
 		bus.Register("pulls.sync", pullSvc.PushHandler(), events.KindPush)
-		bus.Register("pulls.automerge", pullSvc.AutoMergeHandler(), events.KindStatus, events.KindPullReview)
+		// Commit statuses and checks: the required status checks of branch
+		// protection, and a new status or check re-evaluates auto-merge.
+		statusSvc := statuses.New(statuses.Options{Pool: pool, Repos: repoSvc, Browse: browse, Bus: bus,
+			Log: log.With("component", "statuses")})
+		bus.Register("pulls.automerge", pullSvc.AutoMergeHandler(), events.KindStatus, events.KindCheckRun,
+			events.KindCheckSuite, events.KindPullReview)
 		if journal != nil {
-			journal.Protection.SetSources(pullSvc, nil)
+			journal.Protection.SetSources(pullSvc, statusSvc)
 		}
 		deps.Pulls = pullSvc
+		deps.Statuses = statusSvc
 
 		hooks.SetRepos(repoSvc)
 		notifier.SetRepos(repoSvc)

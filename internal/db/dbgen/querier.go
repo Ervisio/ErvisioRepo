@@ -53,6 +53,9 @@ type Querier interface {
 	ConsumeMFAChallenge(ctx context.Context, id uuid.UUID) (int64, error)
 	// Deletes and returns a token; the caller checks expires_at.
 	ConsumeOneTimeToken(ctx context.Context, arg ConsumeOneTimeTokenParams) (ConsumeOneTimeTokenRow, error)
+	CountCheckRuns(ctx context.Context, arg CountCheckRunsParams) (int64, error)
+	CountCheckSuites(ctx context.Context, arg CountCheckSuitesParams) (int64, error)
+	CountCommitStatuses(ctx context.Context, arg CountCommitStatusesParams) (int64, error)
 	CountGitHubConnectionLinks(ctx context.Context, connectionID uuid.UUID) (int64, error)
 	// Repositories (existing or not yet collected) that reference an object.
 	CountLFSObjectRefs(ctx context.Context, oid string) (int64, error)
@@ -63,6 +66,8 @@ type Querier interface {
 	CountRecoveryCodes(ctx context.Context, userID uuid.UUID) (CountRecoveryCodesRow, error)
 	CountRepoForks(ctx context.Context, parentID uuid.NullUUID) (int64, error)
 	CountRepoWebhooks(ctx context.Context, repoID uuid.NullUUID) (int64, error)
+	// Number of distinct run names of each suite.
+	CountSuiteRuns(ctx context.Context, suiteIds []uuid.UUID) ([]CountSuiteRunsRow, error)
 	CountTeamsInOrg(ctx context.Context, arg CountTeamsInOrgParams) (int64, error)
 	CountUnreadNotifications(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserEmails(ctx context.Context, userID uuid.UUID) (int64, error)
@@ -145,6 +150,10 @@ type Querier interface {
 	ForceRepoStorageState(ctx context.Context, arg ForceRepoStorageStateParams) error
 	GPGKeyFingerprintTaken(ctx context.Context, fingerprint string) (bool, error)
 	GetBranchProtection(ctx context.Context, arg GetBranchProtectionParams) (BranchProtection, error)
+	GetCheckRun(ctx context.Context, arg GetCheckRunParams) (GetCheckRunRow, error)
+	GetCheckRunForUpdate(ctx context.Context, arg GetCheckRunForUpdateParams) (CheckRun, error)
+	GetCheckSuite(ctx context.Context, arg GetCheckSuiteParams) (CheckSuite, error)
+	GetCheckSuiteForUpdate(ctx context.Context, id uuid.UUID) (CheckSuite, error)
 	// Quotas per user and organization, and their usage counters (PLAN §8.2).
 	// Limits of a namespace (override, else instance default; -1 = unlimited)
 	// and its current usage.
@@ -268,6 +277,9 @@ type Querier interface {
 	IncRepoPushes(ctx context.Context, id uuid.UUID) (int32, error)
 	InsertAuditEvent(ctx context.Context, arg InsertAuditEventParams) error
 	InsertBranchProtection(ctx context.Context, arg InsertBranchProtectionParams) (BranchProtection, error)
+	InsertCheckRun(ctx context.Context, arg InsertCheckRunParams) (uuid.UUID, error)
+	// Commit statuses, check suites and check runs (PLAN §5).
+	InsertCommitStatus(ctx context.Context, arg InsertCommitStatusParams) (CommitStatus, error)
 	InsertEmail(ctx context.Context, arg InsertEmailParams) error
 	InsertGPGKey(ctx context.Context, arg InsertGPGKeyParams) error
 	// GitHub code sync (internal/ghsync).
@@ -343,6 +355,10 @@ type Querier interface {
 	// Active users among the given lowercase names.
 	IssueUsersByNames(ctx context.Context, names []string) ([]IssueUsersByNamesRow, error)
 	LastWebhookDelivery(ctx context.Context, webhookID uuid.UUID) (LastWebhookDeliveryRow, error)
+	// The latest run of each name on a commit, across suites, for protection.
+	LatestCheckRunStates(ctx context.Context, arg LatestCheckRunStatesParams) ([]LatestCheckRunStatesRow, error)
+	// The latest status of each context of a commit.
+	LatestCommitStatuses(ctx context.Context, arg LatestCommitStatusesParams) ([]LatestCommitStatusesRow, error)
 	// The latest decisive review (approved, changes_requested or dismissed) of
 	// each reviewer of a pull request.
 	LatestPullReviews(ctx context.Context, pullID uuid.UUID) ([]LatestPullReviewsRow, error)
@@ -351,6 +367,12 @@ type Querier interface {
 	ListAuditEvents(ctx context.Context, arg ListAuditEventsParams) ([]ListAuditEventsRow, error)
 	// Branch protection and tag rules (internal/protection).
 	ListBranchProtections(ctx context.Context, repoID uuid.UUID) ([]BranchProtection, error)
+	// The check runs of a commit (or of a suite), filtered by name and status.
+	// latest_only keeps the newest run of each name in its suite.
+	ListCheckRuns(ctx context.Context, arg ListCheckRunsParams) ([]ListCheckRunsRow, error)
+	ListCheckSuites(ctx context.Context, arg ListCheckSuitesParams) ([]CheckSuite, error)
+	// Every status of a commit, newest first, with the creator's name.
+	ListCommitStatuses(ctx context.Context, arg ListCommitStatusesParams) ([]ListCommitStatusesRow, error)
 	// Repositories still waiting for replication since before "before".
 	ListDirtyRepos(ctx context.Context, arg ListDirtyReposParams) ([]uuid.UUID, error)
 	// Enabled links whose scheduled run is due and not held by a backoff.
@@ -610,6 +632,8 @@ type Querier interface {
 	SetUserSuspended(ctx context.Context, arg SetUserSuspendedParams) error
 	StorageObjectStats(ctx context.Context) ([]StorageObjectStatsRow, error)
 	SubmitPullReview(ctx context.Context, arg SubmitPullReviewParams) (PullReview, error)
+	// Status and conclusion of the latest run of each name in a suite.
+	SuiteRunStates(ctx context.Context, suiteID uuid.UUID) ([]SuiteRunStatesRow, error)
 	// Bytes held by the issue attachments of a repository (released from the
 	// owner quota when the repository is deleted).
 	SumRepoIssueAttachmentBytes(ctx context.Context, repoID uuid.UUID) (int64, error)
@@ -635,6 +659,8 @@ type Querier interface {
 	TryLockRepoSession(ctx context.Context, repoID uuid.UUID) (bool, error)
 	UnlockRepoSession(ctx context.Context, repoID uuid.UUID) (bool, error)
 	UpdateBranchProtection(ctx context.Context, arg UpdateBranchProtectionParams) (BranchProtection, error)
+	UpdateCheckRun(ctx context.Context, arg UpdateCheckRunParams) error
+	UpdateCheckSuiteState(ctx context.Context, arg UpdateCheckSuiteStateParams) error
 	UpdateGitHubConnection(ctx context.Context, arg UpdateGitHubConnectionParams) (GithubConnection, error)
 	UpdateIssueCommentBody(ctx context.Context, arg UpdateIssueCommentBodyParams) (IssueComment, error)
 	UpdateIssueContent(ctx context.Context, arg UpdateIssueContentParams) (Issue, error)
@@ -651,6 +677,8 @@ type Querier interface {
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error
 	UpdateWebAuthnCredentialUse(ctx context.Context, arg UpdateWebAuthnCredentialUseParams) error
 	UpdateWebhook(ctx context.Context, arg UpdateWebhookParams) (Webhook, error)
+	// The suite of (commit, app), created queued when missing.
+	UpsertCheckSuite(ctx context.Context, arg UpsertCheckSuiteParams) (CheckSuite, error)
 	UpsertGitHubSyncLink(ctx context.Context, arg UpsertGitHubSyncLinkParams) (GithubSyncLink, error)
 	UpsertGitHubSyncRef(ctx context.Context, arg UpsertGitHubSyncRefParams) error
 	// Creates or refreshes the thread of a user for a subject. A repeated

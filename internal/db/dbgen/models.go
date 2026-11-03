@@ -43,6 +43,51 @@ type BranchProtection struct {
 	UpdatedAt               pgtype.Timestamptz
 }
 
+type CheckRun struct {
+	ID            uuid.UUID
+	SuiteID       uuid.UUID
+	RepoID        uuid.UUID
+	HeadSha       string
+	Name          string
+	Status        string
+	Conclusion    string
+	ExternalID    string
+	DetailsUrl    string
+	OutputTitle   string
+	OutputSummary string
+	OutputText    string
+	Annotations   []byte
+	CreatorID     uuid.NullUUID
+	StartedAt     pgtype.Timestamptz
+	CompletedAt   pgtype.Timestamptz
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+}
+
+type CheckSuite struct {
+	ID         uuid.UUID
+	RepoID     uuid.UUID
+	HeadSha    string
+	HeadBranch string
+	App        string
+	Status     string
+	Conclusion string
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+}
+
+type CommitStatus struct {
+	ID          uuid.UUID
+	RepoID      uuid.UUID
+	Sha         string
+	State       string
+	Context     string
+	Description string
+	TargetUrl   string
+	CreatorID   uuid.NullUUID
+	CreatedAt   pgtype.Timestamptz
+}
+
 type Email struct {
 	ID           uuid.UUID
 	UserID       uuid.UUID

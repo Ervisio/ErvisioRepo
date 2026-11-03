@@ -3631,10 +3631,370 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repos/{owner}/{name}/statuses/{sha}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Commit id (full or abbreviated), branch or tag */
+                sha: components["parameters"]["CommitRef"];
+            };
+            cookie?: never;
+        };
+        /** Statuses of a commit, newest first */
+        get: operations["listCommitStatuses"];
+        put?: never;
+        /**
+         * Report a commit status
+         * @description Needs the write permission. The ref is resolved to its commit; at most
+         *     1000 statuses are kept per commit and context. The latest status of a
+         *     context counts as a required status check of branch protection.
+         */
+        post: operations["createCommitStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/commits/{sha}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Commit id (full or abbreviated), branch or tag */
+                sha: components["parameters"]["CommitRef"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Combined status of a commit
+         * @description The latest status of each context and their aggregate state: failure
+         *     when any is error or failure, pending when any is pending or there is
+         *     none, success otherwise. Check runs are listed separately.
+         */
+        get: operations["getCombinedStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/commits/{sha}/check-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Commit id (full or abbreviated), branch or tag */
+                sha: components["parameters"]["CommitRef"];
+            };
+            cookie?: never;
+        };
+        /** Check runs of a commit, oldest first */
+        get: operations["listCheckRunsForRef"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/commits/{sha}/check-suites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Commit id (full or abbreviated), branch or tag */
+                sha: components["parameters"]["CommitRef"];
+            };
+            cookie?: never;
+        };
+        /** Check suites of a commit */
+        get: operations["listCheckSuitesForRef"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/check-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report a check run
+         * @description Needs the write permission. The run joins the check suite of its
+         *     commit and app (the caller's username unless `app` is given). A
+         *     conclusion completes the run. The latest run of each name counts as a
+         *     required status check of branch protection: success, neutral and
+         *     skipped pass.
+         */
+        post: operations["createCheckRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/check-runs/{checkRunId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                checkRunId: components["parameters"]["CheckRunId"];
+            };
+            cookie?: never;
+        };
+        /** A check run */
+        get: operations["getCheckRun"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a check run
+         * @description Needs the write permission. Omitted fields are kept; a conclusion
+         *     completes the run; output annotations are appended (at most 50 per
+         *     request and 1000 per run).
+         */
+        patch: operations["updateCheckRun"];
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/check-runs/{checkRunId}/annotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                checkRunId: components["parameters"]["CheckRunId"];
+            };
+            cookie?: never;
+        };
+        /** Annotations of a check run */
+        get: operations["listCheckRunAnnotations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/check-suites/{checkSuiteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                checkSuiteId: components["parameters"]["CheckSuiteId"];
+            };
+            cookie?: never;
+        };
+        /** A check suite */
+        get: operations["getCheckSuite"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/check-suites/{checkSuiteId}/check-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                checkSuiteId: components["parameters"]["CheckSuiteId"];
+            };
+            cookie?: never;
+        };
+        /** Check runs of a check suite, oldest first */
+        get: operations["listCheckSuiteRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        CommitStatus: {
+            /** Format: uuid */
+            id: string;
+            sha: string;
+            /** @enum {string} */
+            state: "error" | "failure" | "pending" | "success";
+            context: string;
+            description: string;
+            targetUrl: string;
+            /** @description Username of the reporter; empty when unknown */
+            creator: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        CommitStatusCreate: {
+            /** @enum {string} */
+            state: "error" | "failure" | "pending" | "success";
+            /** @description Defaults to "default" */
+            context?: string;
+            description?: string;
+            /** @description An http or https URL */
+            targetUrl?: string;
+        };
+        CombinedStatus: {
+            sha: string;
+            /** @enum {string} */
+            state: "failure" | "pending" | "success";
+            totalCount: number;
+            statuses: components["schemas"]["CommitStatus"][];
+        };
+        CheckAnnotation: {
+            path: string;
+            startLine: number;
+            endLine: number;
+            startColumn?: number;
+            endColumn?: number;
+            /** @enum {string} */
+            level: "notice" | "warning" | "failure";
+            message: string;
+            title?: string;
+            rawDetails?: string;
+        };
+        CheckRunOutput: {
+            title?: string;
+            summary?: string;
+            text?: string;
+            annotations?: components["schemas"]["CheckAnnotation"][];
+        };
+        CheckRun: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            suiteId: string;
+            headSha: string;
+            /** @description Branch the suite was first reported for; may be empty */
+            headBranch: string;
+            name: string;
+            /** @description Reporter of the suite */
+            app: string;
+            /** @enum {string} */
+            status: "queued" | "in_progress" | "completed";
+            /** @description Empty unless completed */
+            conclusion: string;
+            externalId: string;
+            detailsUrl: string;
+            title: string;
+            summary: string;
+            text: string;
+            annotationsCount: number;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CheckRunCreate: {
+            name: string;
+            /** @description Commit id or any ref */
+            headSha: string;
+            /** @enum {string} */
+            status?: "queued" | "in_progress" | "completed";
+            /** @enum {string} */
+            conclusion?: "success" | "failure" | "neutral" | "cancelled" | "skipped" | "timed_out" | "action_required" | "stale" | "startup_failure";
+            externalId?: string;
+            detailsUrl?: string;
+            /** Format: date-time */
+            startedAt?: string;
+            /** Format: date-time */
+            completedAt?: string;
+            /** @description Reporter; defaults to the caller's username */
+            app?: string;
+            output?: components["schemas"]["CheckRunOutput"];
+        };
+        CheckRunUpdate: {
+            name?: string;
+            /** @enum {string} */
+            status?: "queued" | "in_progress" | "completed";
+            /** @enum {string} */
+            conclusion?: "success" | "failure" | "neutral" | "cancelled" | "skipped" | "timed_out" | "action_required" | "stale" | "startup_failure";
+            externalId?: string;
+            detailsUrl?: string;
+            /** Format: date-time */
+            startedAt?: string;
+            /** Format: date-time */
+            completedAt?: string;
+            output?: components["schemas"]["CheckRunOutput"];
+        };
+        CheckRunList: {
+            totalCount: number;
+            checkRuns: components["schemas"]["CheckRun"][];
+        };
+        CheckSuite: {
+            /** Format: uuid */
+            id: string;
+            headSha: string;
+            headBranch: string;
+            app: string;
+            /** @enum {string} */
+            status: "queued" | "in_progress" | "completed";
+            /** @description Empty unless completed */
+            conclusion: string;
+            /** @description Number of distinct check run names */
+            runsCount: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CheckSuiteList: {
+            totalCount: number;
+            checkSuites: components["schemas"]["CheckSuite"][];
+        };
         GitHubConnection: {
             /** Format: uuid */
             id: string;
@@ -5438,6 +5798,18 @@ export interface components {
         };
     };
     parameters: {
+        /** @description Commit id (full or abbreviated), branch or tag */
+        CommitRef: string;
+        CheckRunId: string;
+        CheckSuiteId: string;
+        /** @description Only the runs of this exact name */
+        CheckNameFilter: string;
+        /** @description Only the runs in this status */
+        CheckStatusFilter: "queued" | "in_progress" | "completed";
+        /** @description Only the runs or suites of this app */
+        CheckAppFilter: string;
+        /** @description latest keeps the newest run of each name; all lists every run */
+        CheckLatestFilter: "latest" | "all";
         ProtectionRuleId: string;
         /** @description Pull request number */
         PullNumber: number;
@@ -12091,6 +12463,382 @@ export interface operations {
             400: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listCommitStatuses: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Commit id (full or abbreviated), branch or tag */
+                sha: components["parameters"]["CommitRef"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Statuses */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitStatus"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createCommitStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Commit id (full or abbreviated), branch or tag */
+                sha: components["parameters"]["CommitRef"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommitStatusCreate"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitStatus"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getCombinedStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Commit id (full or abbreviated), branch or tag */
+                sha: components["parameters"]["CommitRef"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Combined status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CombinedStatus"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listCheckRunsForRef: {
+        parameters: {
+            query?: {
+                /** @description Only the runs of this exact name */
+                checkName?: components["parameters"]["CheckNameFilter"];
+                /** @description Only the runs in this status */
+                status?: components["parameters"]["CheckStatusFilter"];
+                /** @description Only the runs or suites of this app */
+                app?: components["parameters"]["CheckAppFilter"];
+                /** @description latest keeps the newest run of each name; all lists every run */
+                filter?: components["parameters"]["CheckLatestFilter"];
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Commit id (full or abbreviated), branch or tag */
+                sha: components["parameters"]["CommitRef"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check runs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckRunList"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listCheckSuitesForRef: {
+        parameters: {
+            query?: {
+                /** @description Only the runs or suites of this app */
+                app?: components["parameters"]["CheckAppFilter"];
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Commit id (full or abbreviated), branch or tag */
+                sha: components["parameters"]["CommitRef"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check suites */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckSuiteList"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createCheckRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckRunCreate"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckRun"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getCheckRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                checkRunId: components["parameters"]["CheckRunId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check run */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckRun"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateCheckRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                checkRunId: components["parameters"]["CheckRunId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckRunUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckRun"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listCheckRunAnnotations: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                checkRunId: components["parameters"]["CheckRunId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Annotations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckAnnotation"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getCheckSuite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                checkSuiteId: components["parameters"]["CheckSuiteId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check suite */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckSuite"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listCheckSuiteRuns: {
+        parameters: {
+            query?: {
+                /** @description Only the runs of this exact name */
+                checkName?: components["parameters"]["CheckNameFilter"];
+                /** @description Only the runs in this status */
+                status?: components["parameters"]["CheckStatusFilter"];
+                /** @description latest keeps the newest run of each name; all lists every run */
+                filter?: components["parameters"]["CheckLatestFilter"];
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                checkSuiteId: components["parameters"]["CheckSuiteId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Check runs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckRunList"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
             default: components["responses"]["Problem"];
         };
     };

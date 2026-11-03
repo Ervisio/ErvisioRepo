@@ -1,7 +1,9 @@
 // Package ghapi serves the GitHub REST v3 compatible subset under /api/v3
 // (PLAN §6): enough of repositories, contents, pull requests, issues,
 // releases and commit statuses for gh api, go-github and octokit based
-// tools. GraphQL is not implemented. docs/api-v3.md lists every endpoint.
+// tools, plus the GraphQL subset used by the gh CLI (package graphql,
+// mounted at /api/graphql and /api/v3/graphql). docs/api-v3.md lists every
+// endpoint.
 //
 // The handlers call the same services as /api/v1 and authenticate with
 // personal access tokens only ("Authorization: token|Bearer <pat>", or
@@ -19,6 +21,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +32,7 @@ import (
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
+	"github.com/Ervisio/ErvisioRepo/internal/ghapi/graphql"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
@@ -62,6 +66,9 @@ type Deps struct {
 	Pulls    Pulls
 	Releases Releases
 	Browse   *gitbrowse.Service
+	// Statuses stores commit statuses and checks; nil answers empty lists
+	// and 501 on writes.
+	Statuses Statuses
 	// Timeout bounds the non-streaming requests (0 = none).
 	Timeout time.Duration
 }
@@ -93,6 +100,7 @@ func Mount(r chi.Router, d Deps) {
 	}
 	base := strings.TrimRight(d.PublicURL, "/")
 	s := &Server{d: d, base: base, api: base + Prefix, q: dbgen.New(d.DB)}
+	gql := s.graphql()
 	r.Route(Prefix, func(v3 chi.Router) {
 		v3.Use(s.authenticate)
 		v3.NotFound(func(w http.ResponseWriter, _ *http.Request) { writeError(w, http.StatusNotFound, "Not Found") })
@@ -107,14 +115,52 @@ func Mount(r chi.Router, d Deps) {
 				g.Use(middleware.Timeout(d.Timeout))
 			}
 			s.routes(g)
+			g.Handle("/graphql", gql)
 		})
 	})
 	r.With(s.authenticate).Post(uploadPrefix+"/repos/{owner}/{repo}/releases/{id}/assets", s.h((*call).uploadAsset))
-	// gh sends most of its commands to GraphQL, which is not implemented:
-	// answer in the GitHub shape so that it prints a readable error.
-	r.Post("/api/graphql", func(w http.ResponseWriter, _ *http.Request) {
-		writeError(w, http.StatusNotImplemented, "GraphQL is not supported by this server; use the REST API under "+Prefix)
-	})
+	// gh sends most of its commands to GraphQL: /api/graphql on GitHub
+	// Enterprise Server, /api/v3/graphql for some clients.
+	mw := []func(http.Handler) http.Handler{s.authenticate}
+	if d.Timeout > 0 {
+		mw = append(mw, middleware.Timeout(d.Timeout))
+	}
+	r.With(mw...).Handle("/api/graphql", gql)
+}
+
+// graphql builds the GraphQL endpoint over the same services; it answers
+// 501 when a service lacks a method the resolvers need.
+func (s *Server) graphql() http.Handler {
+	d := s.d
+	gd := graphql.Deps{Log: d.Log, DB: d.DB, PublicURL: d.PublicURL, Orgs: d.Orgs, Identity: d.Identity,
+		Releases: d.Releases, Classify: func(err error) (int, string) {
+			if e := classify(err); e != nil {
+				return e.status, e.msg
+			}
+			return http.StatusInternalServerError, ""
+		}}
+	var ok1, ok2, ok3 bool
+	gd.Repos, ok1 = d.Repos.(graphql.Repos)
+	gd.Issues, ok2 = d.Issues.(graphql.Issues)
+	gd.Pulls, ok3 = d.Pulls.(graphql.Pulls)
+	if d.Statuses != nil {
+		gd.Checks = d.Statuses
+	}
+	var h http.Handler
+	if ok1 && ok2 && ok3 {
+		srv, err := graphql.New(gd)
+		if err == nil {
+			h = srv
+		} else {
+			d.Log.Warn("ghapi: graphql not available", "error", err)
+		}
+	}
+	if h == nil {
+		h = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			writeError(w, http.StatusNotImplemented, "GraphQL is not supported by this server; use the REST API under "+Prefix)
+		})
+	}
+	return h
 }
 
 func (s *Server) routes(r chi.Router) {
@@ -156,8 +202,13 @@ func (s *Server) routes(r chi.Router) {
 		r.Post("/statuses/{ref}", s.h((*call).createStatus))
 		r.Get("/commits/{ref}/check-runs", s.h((*call).listCheckRuns))
 		r.Get("/commits/{ref}/check-suites", s.h((*call).listCheckSuites))
-		r.Post("/check-runs", s.h((*call).unsupportedChecks))
+		r.Post("/check-runs", s.h((*call).createCheckRun))
+		r.Get("/check-runs/{id}", s.h((*call).getCheckRun))
+		r.Patch("/check-runs/{id}", s.h((*call).updateCheckRun))
+		r.Get("/check-runs/{id}/annotations", s.h((*call).listCheckRunAnnotations))
 		r.Post("/check-suites", s.h((*call).unsupportedChecks))
+		r.Get("/check-suites/{id}", s.h((*call).getCheckSuite))
+		r.Get("/check-suites/{id}/check-runs", s.h((*call).listSuiteCheckRuns))
 
 		r.Get("/issues", s.h((*call).listIssues))
 		r.Post("/issues", s.h((*call).createIssue))
@@ -249,9 +300,35 @@ func (s *Server) authenticate(next http.Handler) http.Handler {
 				return
 			}
 			ctx = auth.WithPrincipal(ctx, p)
+			w.Header().Set("X-OAuth-Scopes", oauthScopes(p.Scopes))
 		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// githubScopes maps the token scopes to the classic GitHub scopes that
+// clients check in X-OAuth-Scopes (gh requires repo and read:org).
+var githubScopes = map[string][]string{
+	auth.ScopeWriteRepo:     {"repo"},
+	auth.ScopeReadUser:      {"read:user", "read:org"},
+	auth.ScopeWriteUser:     {"user", "read:org"},
+	auth.ScopeReadPackages:  {"read:packages"},
+	auth.ScopeWritePackages: {"write:packages"},
+	auth.ScopeWriteActions:  {"workflow"},
+	auth.ScopeAdmin:         {"admin:org"},
+}
+
+// oauthScopes is the X-OAuth-Scopes value of a token.
+func oauthScopes(scopes []string) string {
+	var out []string
+	for _, sc := range scopes {
+		for _, g := range githubScopes[sc] {
+			if !slices.Contains(out, g) {
+				out = append(out, g)
+			}
+		}
+	}
+	return strings.Join(out, ", ")
 }
 
 // credential returns the access token of the Authorization header:

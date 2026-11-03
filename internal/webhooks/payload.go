@@ -483,9 +483,23 @@ func (b *builder) items(ev events.Event) ([]item, error) {
 		}
 		add(ev.Kind, body)
 	case events.KindStatus:
-		m := obj{}
-		_ = json.Unmarshal(ev.Payload, &m)
-		add(events.KindStatus, m)
+		var p events.StatusPayload
+		if err := ev.Decode(&p); err != nil {
+			return nil, err
+		}
+		add(events.KindStatus, b.statusBody(ev, p))
+	case events.KindCheckRun:
+		var p events.CheckRunPayload
+		if err := ev.Decode(&p); err != nil {
+			return nil, err
+		}
+		add(events.KindCheckRun, obj{"action": ev.Action, "check_run": b.checkRun(p)})
+	case events.KindCheckSuite:
+		var p events.CheckSuitePayload
+		if err := ev.Decode(&p); err != nil {
+			return nil, err
+		}
+		add(events.KindCheckSuite, obj{"action": ev.Action, "check_suite": b.checkSuite(p)})
 	default:
 		return nil, nil
 	}

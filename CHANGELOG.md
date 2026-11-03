@@ -185,9 +185,23 @@ Phase 5, GitHub import of issues, pull requests and releases:
 
 Phase 5, GitHub compatible REST API:
 
-- `/api/v3` (`internal/ghapi`) serves a subset of the GitHub REST API over the existing services and permissions: repositories, contents, commits, branches, tags and refs, pull requests with reviews, review comments and requested reviewers, issues with comments, labels, assignees and milestones, releases with asset upload (`/api/uploads/...`, the `upload_url`) and download (`Accept: application/octet-stream`, ranges), plus `/user`, `/meta` and `/rate_limit`. Commit statuses and checks answer empty results; writing them answers 501. GraphQL is not implemented (`POST /api/graphql` answers 501).
+- `/api/v3` (`internal/ghapi`) serves a subset of the GitHub REST API over the existing services and permissions: repositories, contents, commits, branches, tags and refs, pull requests with reviews, review comments and requested reviewers, issues with comments, labels, assignees and milestones, releases with asset upload (`/api/uploads/...`, the `upload_url`) and download (`Accept: application/octet-stream`, ranges), plus `/user`, `/meta` and `/rate_limit`. Commit statuses and checks are served by the statuses service (see below). GraphQL is served by the subset described below.
 - GitHub-shaped JSON (snake_case, `node_id`, URLs from the public URL), `Link` pagination with `page`/`per_page`, and errors as `{"message", "documentation_url"}`, the documented exception to `application/problem+json`. Stable numeric ids for UUID objects in `ghapi_ids` (migration 00175).
 - Compatibility table and the list of working `gh` commands in `docs/api-v3.md` and `docs/api-v3.it.md`.
+
+Phase 5, commit statuses and checks:
+
+- Commit statuses (`state`, `context`, `description`, `target_url`; at most 1000 per commit and context) and check runs grouped in check suites per commit and reporter, with output and annotations (50 per request, 1000 per run), stored by `internal/statuses` (tables `commit_statuses`, `check_suites`, `check_runs`, migration 00180). Refs are resolved to their commit; writing needs the write permission, reading the read permission.
+- The latest status of each context and the latest check run of each name are the required status checks of branch protection (`success`, `neutral` and `skipped` runs pass); a new status, check run or completed suite re-evaluates auto-merge.
+- `/api/v1`: `GET/POST /repos/{owner}/{name}/statuses/{sha}`, `GET .../commits/{sha}/status`, `.../commits/{sha}/check-runs`, `.../commits/{sha}/check-suites`, `POST .../check-runs`, `GET/PATCH .../check-runs/{checkRunId}`, `GET .../check-runs/{checkRunId}/annotations`, `GET .../check-suites/{checkSuiteId}` and `.../check-suites/{checkSuiteId}/check-runs`.
+- `/api/v3`: the GitHub-shaped statuses and check runs and suites endpoints replace the stubs (`POST .../check-suites` still answers 501); see `docs/api-v3.md`.
+- Events `status` (`created`), `check_run` (`created`, `completed`) and `check_suite` (`completed`) on the bus, delivered to webhooks with GitHub-shaped payloads; hooks can subscribe to `check_run` and `check_suite`.
+
+Phase 5, GitHub compatible GraphQL for `gh`:
+
+- `POST /api/graphql` and `/api/v3/graphql` (`internal/ghapi/graphql`, standard library lexer, parser and executor) serve the subset of the GitHub GraphQL API used by `gh`: `viewer`, `repository`, `repositoryOwner`, `node`/`nodes`, `search` (issues and pull requests with `repo:` and the usual qualifiers, `@me`), minimal `__type`/`__schema` introspection, and the issue, comment, pull request, review, auto-merge, label and assignee mutations. Global ids are the REST `node_id` values; the same services and permission checks as `/api/v3` apply; errors as `{"errors":[{"type","message","path"}]}` with partial data. Reading needs `repo:read`, mutations `repo:write`.
+- Authenticated `/api` answers carry `X-OAuth-Scopes` with the classic GitHub scope names, so `gh auth login --hostname` and `gh auth status` accept the token (it needs `repo:write` and `user:read`).
+- `gh repo view/list`, `gh pr list/view/create/checkout/merge/status/comment`, `gh issue list/view/create/close/reopen/comment`, `gh release list` and `gh label list` are expected to work; matrix and known gaps in `docs/api-v3.md` and `docs/api-v3.it.md`.
 
 ### Removed
 

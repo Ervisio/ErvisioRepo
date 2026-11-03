@@ -41,8 +41,12 @@ const (
 	KindPullReviewComment = "pull_request_review_comment"
 	// KindRelease: published, edited, deleted.
 	KindRelease = "release"
-	// KindStatus: created (commit status or check run state change).
+	// KindStatus: created (a commit status was reported).
 	KindStatus = "status"
+	// KindCheckRun: created, completed (a check run was reported or finished).
+	KindCheckRun = "check_run"
+	// KindCheckSuite: completed (every run of the suite is completed).
+	KindCheckSuite = "check_suite"
 )
 
 // Event is one fact recorded by a producer. RepoID, ActorID and SubjectID

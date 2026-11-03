@@ -59,6 +59,258 @@ func (e AccessTokenCreateScopes) Valid() bool {
 	}
 }
 
+// Defines values for CheckAnnotationLevel.
+const (
+	CheckAnnotationLevelFailure CheckAnnotationLevel = "failure"
+	CheckAnnotationLevelNotice  CheckAnnotationLevel = "notice"
+	CheckAnnotationLevelWarning CheckAnnotationLevel = "warning"
+)
+
+// Valid indicates whether the value is a known member of the CheckAnnotationLevel enum.
+func (e CheckAnnotationLevel) Valid() bool {
+	switch e {
+	case CheckAnnotationLevelFailure:
+		return true
+	case CheckAnnotationLevelNotice:
+		return true
+	case CheckAnnotationLevelWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CheckRunStatus.
+const (
+	CheckRunStatusCompleted  CheckRunStatus = "completed"
+	CheckRunStatusInProgress CheckRunStatus = "in_progress"
+	CheckRunStatusQueued     CheckRunStatus = "queued"
+)
+
+// Valid indicates whether the value is a known member of the CheckRunStatus enum.
+func (e CheckRunStatus) Valid() bool {
+	switch e {
+	case CheckRunStatusCompleted:
+		return true
+	case CheckRunStatusInProgress:
+		return true
+	case CheckRunStatusQueued:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CheckRunCreateConclusion.
+const (
+	CheckRunCreateConclusionActionRequired CheckRunCreateConclusion = "action_required"
+	CheckRunCreateConclusionCancelled      CheckRunCreateConclusion = "cancelled"
+	CheckRunCreateConclusionFailure        CheckRunCreateConclusion = "failure"
+	CheckRunCreateConclusionNeutral        CheckRunCreateConclusion = "neutral"
+	CheckRunCreateConclusionSkipped        CheckRunCreateConclusion = "skipped"
+	CheckRunCreateConclusionStale          CheckRunCreateConclusion = "stale"
+	CheckRunCreateConclusionStartupFailure CheckRunCreateConclusion = "startup_failure"
+	CheckRunCreateConclusionSuccess        CheckRunCreateConclusion = "success"
+	CheckRunCreateConclusionTimedOut       CheckRunCreateConclusion = "timed_out"
+)
+
+// Valid indicates whether the value is a known member of the CheckRunCreateConclusion enum.
+func (e CheckRunCreateConclusion) Valid() bool {
+	switch e {
+	case CheckRunCreateConclusionActionRequired:
+		return true
+	case CheckRunCreateConclusionCancelled:
+		return true
+	case CheckRunCreateConclusionFailure:
+		return true
+	case CheckRunCreateConclusionNeutral:
+		return true
+	case CheckRunCreateConclusionSkipped:
+		return true
+	case CheckRunCreateConclusionStale:
+		return true
+	case CheckRunCreateConclusionStartupFailure:
+		return true
+	case CheckRunCreateConclusionSuccess:
+		return true
+	case CheckRunCreateConclusionTimedOut:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CheckRunCreateStatus.
+const (
+	CheckRunCreateStatusCompleted  CheckRunCreateStatus = "completed"
+	CheckRunCreateStatusInProgress CheckRunCreateStatus = "in_progress"
+	CheckRunCreateStatusQueued     CheckRunCreateStatus = "queued"
+)
+
+// Valid indicates whether the value is a known member of the CheckRunCreateStatus enum.
+func (e CheckRunCreateStatus) Valid() bool {
+	switch e {
+	case CheckRunCreateStatusCompleted:
+		return true
+	case CheckRunCreateStatusInProgress:
+		return true
+	case CheckRunCreateStatusQueued:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CheckRunUpdateConclusion.
+const (
+	CheckRunUpdateConclusionActionRequired CheckRunUpdateConclusion = "action_required"
+	CheckRunUpdateConclusionCancelled      CheckRunUpdateConclusion = "cancelled"
+	CheckRunUpdateConclusionFailure        CheckRunUpdateConclusion = "failure"
+	CheckRunUpdateConclusionNeutral        CheckRunUpdateConclusion = "neutral"
+	CheckRunUpdateConclusionSkipped        CheckRunUpdateConclusion = "skipped"
+	CheckRunUpdateConclusionStale          CheckRunUpdateConclusion = "stale"
+	CheckRunUpdateConclusionStartupFailure CheckRunUpdateConclusion = "startup_failure"
+	CheckRunUpdateConclusionSuccess        CheckRunUpdateConclusion = "success"
+	CheckRunUpdateConclusionTimedOut       CheckRunUpdateConclusion = "timed_out"
+)
+
+// Valid indicates whether the value is a known member of the CheckRunUpdateConclusion enum.
+func (e CheckRunUpdateConclusion) Valid() bool {
+	switch e {
+	case CheckRunUpdateConclusionActionRequired:
+		return true
+	case CheckRunUpdateConclusionCancelled:
+		return true
+	case CheckRunUpdateConclusionFailure:
+		return true
+	case CheckRunUpdateConclusionNeutral:
+		return true
+	case CheckRunUpdateConclusionSkipped:
+		return true
+	case CheckRunUpdateConclusionStale:
+		return true
+	case CheckRunUpdateConclusionStartupFailure:
+		return true
+	case CheckRunUpdateConclusionSuccess:
+		return true
+	case CheckRunUpdateConclusionTimedOut:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CheckRunUpdateStatus.
+const (
+	CheckRunUpdateStatusCompleted  CheckRunUpdateStatus = "completed"
+	CheckRunUpdateStatusInProgress CheckRunUpdateStatus = "in_progress"
+	CheckRunUpdateStatusQueued     CheckRunUpdateStatus = "queued"
+)
+
+// Valid indicates whether the value is a known member of the CheckRunUpdateStatus enum.
+func (e CheckRunUpdateStatus) Valid() bool {
+	switch e {
+	case CheckRunUpdateStatusCompleted:
+		return true
+	case CheckRunUpdateStatusInProgress:
+		return true
+	case CheckRunUpdateStatusQueued:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CheckSuiteStatus.
+const (
+	CheckSuiteStatusCompleted  CheckSuiteStatus = "completed"
+	CheckSuiteStatusInProgress CheckSuiteStatus = "in_progress"
+	CheckSuiteStatusQueued     CheckSuiteStatus = "queued"
+)
+
+// Valid indicates whether the value is a known member of the CheckSuiteStatus enum.
+func (e CheckSuiteStatus) Valid() bool {
+	switch e {
+	case CheckSuiteStatusCompleted:
+		return true
+	case CheckSuiteStatusInProgress:
+		return true
+	case CheckSuiteStatusQueued:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CombinedStatusState.
+const (
+	CombinedStatusStateFailure CombinedStatusState = "failure"
+	CombinedStatusStatePending CombinedStatusState = "pending"
+	CombinedStatusStateSuccess CombinedStatusState = "success"
+)
+
+// Valid indicates whether the value is a known member of the CombinedStatusState enum.
+func (e CombinedStatusState) Valid() bool {
+	switch e {
+	case CombinedStatusStateFailure:
+		return true
+	case CombinedStatusStatePending:
+		return true
+	case CombinedStatusStateSuccess:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CommitStatusState.
+const (
+	CommitStatusStateError   CommitStatusState = "error"
+	CommitStatusStateFailure CommitStatusState = "failure"
+	CommitStatusStatePending CommitStatusState = "pending"
+	CommitStatusStateSuccess CommitStatusState = "success"
+)
+
+// Valid indicates whether the value is a known member of the CommitStatusState enum.
+func (e CommitStatusState) Valid() bool {
+	switch e {
+	case CommitStatusStateError:
+		return true
+	case CommitStatusStateFailure:
+		return true
+	case CommitStatusStatePending:
+		return true
+	case CommitStatusStateSuccess:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CommitStatusCreateState.
+const (
+	CommitStatusCreateStateError   CommitStatusCreateState = "error"
+	CommitStatusCreateStateFailure CommitStatusCreateState = "failure"
+	CommitStatusCreateStatePending CommitStatusCreateState = "pending"
+	CommitStatusCreateStateSuccess CommitStatusCreateState = "success"
+)
+
+// Valid indicates whether the value is a known member of the CommitStatusCreateState enum.
+func (e CommitStatusCreateState) Valid() bool {
+	switch e {
+	case CommitStatusCreateStateError:
+		return true
+	case CommitStatusCreateStateFailure:
+		return true
+	case CommitStatusCreateStatePending:
+		return true
+	case CommitStatusCreateStateSuccess:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DiffLineType.
 const (
 	DiffLineTypeAdd       DiffLineType = "add"
@@ -1415,6 +1667,123 @@ func (e WebhookFormat) Valid() bool {
 	}
 }
 
+// Defines values for CheckLatestFilter.
+const (
+	CheckLatestFilterAll    CheckLatestFilter = "all"
+	CheckLatestFilterLatest CheckLatestFilter = "latest"
+)
+
+// Valid indicates whether the value is a known member of the CheckLatestFilter enum.
+func (e CheckLatestFilter) Valid() bool {
+	switch e {
+	case CheckLatestFilterAll:
+		return true
+	case CheckLatestFilterLatest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CheckStatusFilter.
+const (
+	CheckStatusFilterCompleted  CheckStatusFilter = "completed"
+	CheckStatusFilterInProgress CheckStatusFilter = "in_progress"
+	CheckStatusFilterQueued     CheckStatusFilter = "queued"
+)
+
+// Valid indicates whether the value is a known member of the CheckStatusFilter enum.
+func (e CheckStatusFilter) Valid() bool {
+	switch e {
+	case CheckStatusFilterCompleted:
+		return true
+	case CheckStatusFilterInProgress:
+		return true
+	case CheckStatusFilterQueued:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListCheckSuiteRunsParamsStatus.
+const (
+	ListCheckSuiteRunsParamsStatusCompleted  ListCheckSuiteRunsParamsStatus = "completed"
+	ListCheckSuiteRunsParamsStatusInProgress ListCheckSuiteRunsParamsStatus = "in_progress"
+	ListCheckSuiteRunsParamsStatusQueued     ListCheckSuiteRunsParamsStatus = "queued"
+)
+
+// Valid indicates whether the value is a known member of the ListCheckSuiteRunsParamsStatus enum.
+func (e ListCheckSuiteRunsParamsStatus) Valid() bool {
+	switch e {
+	case ListCheckSuiteRunsParamsStatusCompleted:
+		return true
+	case ListCheckSuiteRunsParamsStatusInProgress:
+		return true
+	case ListCheckSuiteRunsParamsStatusQueued:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListCheckSuiteRunsParamsFilter.
+const (
+	ListCheckSuiteRunsParamsFilterAll    ListCheckSuiteRunsParamsFilter = "all"
+	ListCheckSuiteRunsParamsFilterLatest ListCheckSuiteRunsParamsFilter = "latest"
+)
+
+// Valid indicates whether the value is a known member of the ListCheckSuiteRunsParamsFilter enum.
+func (e ListCheckSuiteRunsParamsFilter) Valid() bool {
+	switch e {
+	case ListCheckSuiteRunsParamsFilterAll:
+		return true
+	case ListCheckSuiteRunsParamsFilterLatest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListCheckRunsForRefParamsStatus.
+const (
+	ListCheckRunsForRefParamsStatusCompleted  ListCheckRunsForRefParamsStatus = "completed"
+	ListCheckRunsForRefParamsStatusInProgress ListCheckRunsForRefParamsStatus = "in_progress"
+	ListCheckRunsForRefParamsStatusQueued     ListCheckRunsForRefParamsStatus = "queued"
+)
+
+// Valid indicates whether the value is a known member of the ListCheckRunsForRefParamsStatus enum.
+func (e ListCheckRunsForRefParamsStatus) Valid() bool {
+	switch e {
+	case ListCheckRunsForRefParamsStatusCompleted:
+		return true
+	case ListCheckRunsForRefParamsStatusInProgress:
+		return true
+	case ListCheckRunsForRefParamsStatusQueued:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListCheckRunsForRefParamsFilter.
+const (
+	ListCheckRunsForRefParamsFilterAll    ListCheckRunsForRefParamsFilter = "all"
+	ListCheckRunsForRefParamsFilterLatest ListCheckRunsForRefParamsFilter = "latest"
+)
+
+// Valid indicates whether the value is a known member of the ListCheckRunsForRefParamsFilter enum.
+func (e ListCheckRunsForRefParamsFilter) Valid() bool {
+	switch e {
+	case ListCheckRunsForRefParamsFilterAll:
+		return true
+	case ListCheckRunsForRefParamsFilterLatest:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListIssuesParamsState.
 const (
 	ListIssuesParamsStateAll    ListIssuesParamsState = "all"
@@ -1721,6 +2090,134 @@ type BranchProtectionInput struct {
 	StrictStatusChecks *bool `json:"strictStatusChecks,omitempty"`
 }
 
+// CheckAnnotation defines model for CheckAnnotation.
+type CheckAnnotation struct {
+	EndColumn   *int                 `json:"endColumn,omitempty"`
+	EndLine     int                  `json:"endLine"`
+	Level       CheckAnnotationLevel `json:"level"`
+	Message     string               `json:"message"`
+	Path        string               `json:"path"`
+	RawDetails  *string              `json:"rawDetails,omitempty"`
+	StartColumn *int                 `json:"startColumn,omitempty"`
+	StartLine   int                  `json:"startLine"`
+	Title       *string              `json:"title,omitempty"`
+}
+
+// CheckAnnotationLevel defines model for CheckAnnotation.Level.
+type CheckAnnotationLevel string
+
+// CheckRun defines model for CheckRun.
+type CheckRun struct {
+	AnnotationsCount int `json:"annotationsCount"`
+
+	// App Reporter of the suite
+	App         string     `json:"app"`
+	CompletedAt *time.Time `json:"completedAt,omitempty"`
+
+	// Conclusion Empty unless completed
+	Conclusion string    `json:"conclusion"`
+	CreatedAt  time.Time `json:"createdAt"`
+	DetailsUrl string    `json:"detailsUrl"`
+	ExternalId string    `json:"externalId"`
+
+	// HeadBranch Branch the suite was first reported for; may be empty
+	HeadBranch string             `json:"headBranch"`
+	HeadSha    string             `json:"headSha"`
+	Id         openapi_types.UUID `json:"id"`
+	Name       string             `json:"name"`
+	StartedAt  *time.Time         `json:"startedAt,omitempty"`
+	Status     CheckRunStatus     `json:"status"`
+	SuiteId    openapi_types.UUID `json:"suiteId"`
+	Summary    string             `json:"summary"`
+	Text       string             `json:"text"`
+	Title      string             `json:"title"`
+	UpdatedAt  time.Time          `json:"updatedAt"`
+}
+
+// CheckRunStatus defines model for CheckRun.Status.
+type CheckRunStatus string
+
+// CheckRunCreate defines model for CheckRunCreate.
+type CheckRunCreate struct {
+	// App Reporter; defaults to the caller's username
+	App         *string                   `json:"app,omitempty"`
+	CompletedAt *time.Time                `json:"completedAt,omitempty"`
+	Conclusion  *CheckRunCreateConclusion `json:"conclusion,omitempty"`
+	DetailsUrl  *string                   `json:"detailsUrl,omitempty"`
+	ExternalId  *string                   `json:"externalId,omitempty"`
+
+	// HeadSha Commit id or any ref
+	HeadSha   string                `json:"headSha"`
+	Name      string                `json:"name"`
+	Output    *CheckRunOutput       `json:"output,omitempty"`
+	StartedAt *time.Time            `json:"startedAt,omitempty"`
+	Status    *CheckRunCreateStatus `json:"status,omitempty"`
+}
+
+// CheckRunCreateConclusion defines model for CheckRunCreate.Conclusion.
+type CheckRunCreateConclusion string
+
+// CheckRunCreateStatus defines model for CheckRunCreate.Status.
+type CheckRunCreateStatus string
+
+// CheckRunList defines model for CheckRunList.
+type CheckRunList struct {
+	CheckRuns  []CheckRun `json:"checkRuns"`
+	TotalCount int        `json:"totalCount"`
+}
+
+// CheckRunOutput defines model for CheckRunOutput.
+type CheckRunOutput struct {
+	Annotations *[]CheckAnnotation `json:"annotations,omitempty"`
+	Summary     *string            `json:"summary,omitempty"`
+	Text        *string            `json:"text,omitempty"`
+	Title       *string            `json:"title,omitempty"`
+}
+
+// CheckRunUpdate defines model for CheckRunUpdate.
+type CheckRunUpdate struct {
+	CompletedAt *time.Time                `json:"completedAt,omitempty"`
+	Conclusion  *CheckRunUpdateConclusion `json:"conclusion,omitempty"`
+	DetailsUrl  *string                   `json:"detailsUrl,omitempty"`
+	ExternalId  *string                   `json:"externalId,omitempty"`
+	Name        *string                   `json:"name,omitempty"`
+	Output      *CheckRunOutput           `json:"output,omitempty"`
+	StartedAt   *time.Time                `json:"startedAt,omitempty"`
+	Status      *CheckRunUpdateStatus     `json:"status,omitempty"`
+}
+
+// CheckRunUpdateConclusion defines model for CheckRunUpdate.Conclusion.
+type CheckRunUpdateConclusion string
+
+// CheckRunUpdateStatus defines model for CheckRunUpdate.Status.
+type CheckRunUpdateStatus string
+
+// CheckSuite defines model for CheckSuite.
+type CheckSuite struct {
+	App string `json:"app"`
+
+	// Conclusion Empty unless completed
+	Conclusion string             `json:"conclusion"`
+	CreatedAt  time.Time          `json:"createdAt"`
+	HeadBranch string             `json:"headBranch"`
+	HeadSha    string             `json:"headSha"`
+	Id         openapi_types.UUID `json:"id"`
+
+	// RunsCount Number of distinct check run names
+	RunsCount int              `json:"runsCount"`
+	Status    CheckSuiteStatus `json:"status"`
+	UpdatedAt time.Time        `json:"updatedAt"`
+}
+
+// CheckSuiteStatus defines model for CheckSuite.Status.
+type CheckSuiteStatus string
+
+// CheckSuiteList defines model for CheckSuiteList.
+type CheckSuiteList struct {
+	CheckSuites []CheckSuite `json:"checkSuites"`
+	TotalCount  int          `json:"totalCount"`
+}
+
 // CodeMatch defines model for CodeMatch.
 type CodeMatch struct {
 	Line int    `json:"line"`
@@ -1740,6 +2237,17 @@ type CodeSearchResult struct {
 	Truncated bool        `json:"truncated"`
 }
 
+// CombinedStatus defines model for CombinedStatus.
+type CombinedStatus struct {
+	Sha        string              `json:"sha"`
+	State      CombinedStatusState `json:"state"`
+	Statuses   []CommitStatus      `json:"statuses"`
+	TotalCount int                 `json:"totalCount"`
+}
+
+// CombinedStatusState defines model for CombinedStatus.State.
+type CombinedStatusState string
+
 // CommentBody defines model for CommentBody.
 type CommentBody struct {
 	Body string `json:"body"`
@@ -1757,6 +2265,37 @@ type CommitPage struct {
 	HasMore bool        `json:"hasMore"`
 	Ref     ResolvedRef `json:"ref"`
 }
+
+// CommitStatus defines model for CommitStatus.
+type CommitStatus struct {
+	Context   string    `json:"context"`
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Creator Username of the reporter; empty when unknown
+	Creator     string             `json:"creator"`
+	Description string             `json:"description"`
+	Id          openapi_types.UUID `json:"id"`
+	Sha         string             `json:"sha"`
+	State       CommitStatusState  `json:"state"`
+	TargetUrl   string             `json:"targetUrl"`
+}
+
+// CommitStatusState defines model for CommitStatus.State.
+type CommitStatusState string
+
+// CommitStatusCreate defines model for CommitStatusCreate.
+type CommitStatusCreate struct {
+	// Context Defaults to "default"
+	Context     *string                 `json:"context,omitempty"`
+	Description *string                 `json:"description,omitempty"`
+	State       CommitStatusCreateState `json:"state"`
+
+	// TargetUrl An http or https URL
+	TargetUrl *string `json:"targetUrl,omitempty"`
+}
+
+// CommitStatusCreateState defines model for CommitStatusCreate.State.
+type CommitStatusCreateState string
 
 // Comparison defines model for Comparison.
 type Comparison struct {
@@ -3659,6 +4198,24 @@ type AuditBefore = openapi_types.UUID
 // AuditLimit defines model for AuditLimit.
 type AuditLimit = int
 
+// CheckAppFilter defines model for CheckAppFilter.
+type CheckAppFilter = string
+
+// CheckLatestFilter defines model for CheckLatestFilter.
+type CheckLatestFilter string
+
+// CheckNameFilter defines model for CheckNameFilter.
+type CheckNameFilter = string
+
+// CheckRunId defines model for CheckRunId.
+type CheckRunId = openapi_types.UUID
+
+// CheckStatusFilter defines model for CheckStatusFilter.
+type CheckStatusFilter string
+
+// CheckSuiteId defines model for CheckSuiteId.
+type CheckSuiteId = openapi_types.UUID
+
 // CodeFilePath defines model for CodeFilePath.
 type CodeFilePath = string
 
@@ -3667,6 +4224,9 @@ type CodePath = string
 
 // CodeRef defines model for CodeRef.
 type CodeRef = string
+
+// CommitRef defines model for CommitRef.
+type CommitRef = string
 
 // CredentialID defines model for CredentialID.
 type CredentialID = openapi_types.UUID
@@ -3799,6 +4359,32 @@ type ListBranchesParams struct {
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListCheckRunAnnotationsParams defines parameters for ListCheckRunAnnotations.
+type ListCheckRunAnnotationsParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListCheckSuiteRunsParams defines parameters for ListCheckSuiteRuns.
+type ListCheckSuiteRunsParams struct {
+	// CheckName Only the runs of this exact name
+	CheckName *CheckNameFilter `form:"checkName,omitempty" json:"checkName,omitempty"`
+
+	// Status Only the runs in this status
+	Status *ListCheckSuiteRunsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+
+	// Filter latest keeps the newest run of each name; all lists every run
+	Filter *ListCheckSuiteRunsParamsFilter `form:"filter,omitempty" json:"filter,omitempty"`
+	Offset *PageOffset                     `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit                      `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListCheckSuiteRunsParamsStatus defines parameters for ListCheckSuiteRuns.
+type ListCheckSuiteRunsParamsStatus string
+
+// ListCheckSuiteRunsParamsFilter defines parameters for ListCheckSuiteRuns.
+type ListCheckSuiteRunsParamsFilter string
+
 // ListCommitsParams defines parameters for ListCommits.
 type ListCommitsParams struct {
 	// Ref Branch, tag or commit id; empty means the default branch
@@ -3808,6 +4394,37 @@ type ListCommitsParams struct {
 	Path   *string     `form:"path,omitempty" json:"path,omitempty"`
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListCheckRunsForRefParams defines parameters for ListCheckRunsForRef.
+type ListCheckRunsForRefParams struct {
+	// CheckName Only the runs of this exact name
+	CheckName *CheckNameFilter `form:"checkName,omitempty" json:"checkName,omitempty"`
+
+	// Status Only the runs in this status
+	Status *ListCheckRunsForRefParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+
+	// App Only the runs or suites of this app
+	App *CheckAppFilter `form:"app,omitempty" json:"app,omitempty"`
+
+	// Filter latest keeps the newest run of each name; all lists every run
+	Filter *ListCheckRunsForRefParamsFilter `form:"filter,omitempty" json:"filter,omitempty"`
+	Offset *PageOffset                      `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit                       `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListCheckRunsForRefParamsStatus defines parameters for ListCheckRunsForRef.
+type ListCheckRunsForRefParamsStatus string
+
+// ListCheckRunsForRefParamsFilter defines parameters for ListCheckRunsForRef.
+type ListCheckRunsForRefParamsFilter string
+
+// ListCheckSuitesForRefParams defines parameters for ListCheckSuitesForRef.
+type ListCheckSuitesForRefParams struct {
+	// App Only the runs or suites of this app
+	App    *CheckAppFilter `form:"app,omitempty" json:"app,omitempty"`
+	Offset *PageOffset     `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit      `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // CompareRefsParams defines parameters for CompareRefs.
@@ -4027,6 +4644,12 @@ type SearchCodeParams struct {
 	Limit      *int  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListCommitStatusesParams defines parameters for ListCommitStatuses.
+type ListCommitStatusesParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListTagsParams defines parameters for ListTags.
 type ListTagsParams struct {
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
@@ -4161,6 +4784,12 @@ type EvaluateRefUpdateJSONRequestBody = RefUpdateCheck
 // UpdateBranchProtectionJSONRequestBody defines body for UpdateBranchProtection for application/json ContentType.
 type UpdateBranchProtectionJSONRequestBody = BranchProtectionInput
 
+// CreateCheckRunJSONRequestBody defines body for CreateCheckRun for application/json ContentType.
+type CreateCheckRunJSONRequestBody = CheckRunCreate
+
+// UpdateCheckRunJSONRequestBody defines body for UpdateCheckRun for application/json ContentType.
+type UpdateCheckRunJSONRequestBody = CheckRunUpdate
+
 // SetRepoCollaboratorJSONRequestBody defines body for SetRepoCollaborator for application/json ContentType.
 type SetRepoCollaboratorJSONRequestBody = RepoPermissionRequest
 
@@ -4256,6 +4885,9 @@ type UpdateReleaseJSONRequestBody = ReleaseUpdate
 
 // UpdateReleaseAssetJSONRequestBody defines body for UpdateReleaseAsset for application/json ContentType.
 type UpdateReleaseAssetJSONRequestBody = ReleaseAssetUpdate
+
+// CreateCommitStatusJSONRequestBody defines body for CreateCommitStatus for application/json ContentType.
+type CreateCommitStatusJSONRequestBody = CommitStatusCreate
 
 // SetRepoSubscriptionJSONRequestBody defines body for SetRepoSubscription for application/json ContentType.
 type SetRepoSubscriptionJSONRequestBody = RepoSubscriptionUpdate
@@ -4580,6 +5212,24 @@ type ServerInterface interface {
 	// ListBranches Branches, most recently committed first
 	// (GET /repos/{owner}/{name}/branches)
 	ListBranches(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListBranchesParams)
+	// CreateCheckRun Report a check run
+	// (POST /repos/{owner}/{name}/check-runs)
+	CreateCheckRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// GetCheckRun A check run
+	// (GET /repos/{owner}/{name}/check-runs/{checkRunId})
+	GetCheckRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkRunId CheckRunId)
+	// UpdateCheckRun Update a check run
+	// (PATCH /repos/{owner}/{name}/check-runs/{checkRunId})
+	UpdateCheckRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkRunId CheckRunId)
+	// ListCheckRunAnnotations Annotations of a check run
+	// (GET /repos/{owner}/{name}/check-runs/{checkRunId}/annotations)
+	ListCheckRunAnnotations(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkRunId CheckRunId, params ListCheckRunAnnotationsParams)
+	// GetCheckSuite A check suite
+	// (GET /repos/{owner}/{name}/check-suites/{checkSuiteId})
+	GetCheckSuite(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkSuiteId CheckSuiteId)
+	// ListCheckSuiteRuns Check runs of a check suite, oldest first
+	// (GET /repos/{owner}/{name}/check-suites/{checkSuiteId}/check-runs)
+	ListCheckSuiteRuns(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkSuiteId CheckSuiteId, params ListCheckSuiteRunsParams)
 	// ListRepoCollaborators Users granted a permission on the repository directly
 	// (GET /repos/{owner}/{name}/collaborators)
 	ListRepoCollaborators(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
@@ -4595,6 +5245,15 @@ type ServerInterface interface {
 	// GetCommit A commit with its diff against the first parent
 	// (GET /repos/{owner}/{name}/commits/{sha})
 	GetCommit(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha string)
+	// ListCheckRunsForRef Check runs of a commit, oldest first
+	// (GET /repos/{owner}/{name}/commits/{sha}/check-runs)
+	ListCheckRunsForRef(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCheckRunsForRefParams)
+	// ListCheckSuitesForRef Check suites of a commit
+	// (GET /repos/{owner}/{name}/commits/{sha}/check-suites)
+	ListCheckSuitesForRef(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCheckSuitesForRefParams)
+	// GetCombinedStatus Combined status of a commit
+	// (GET /repos/{owner}/{name}/commits/{sha}/status)
+	GetCombinedStatus(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef)
 	// CompareRefs Compare two refs from their merge base
 	// (GET /repos/{owner}/{name}/compare)
 	CompareRefs(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params CompareRefsParams)
@@ -4862,6 +5521,12 @@ type ServerInterface interface {
 	// SearchCode Search the text files of a ref (git grep)
 	// (GET /repos/{owner}/{name}/search/code)
 	SearchCode(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params SearchCodeParams)
+	// ListCommitStatuses Statuses of a commit, newest first
+	// (GET /repos/{owner}/{name}/statuses/{sha})
+	ListCommitStatuses(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCommitStatusesParams)
+	// CreateCommitStatus Report a commit status
+	// (POST /repos/{owner}/{name}/statuses/{sha})
+	CreateCommitStatus(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef)
 	// GetRepoSubscription Watch level of the caller on the repository
 	// (GET /repos/{owner}/{name}/subscription)
 	GetRepoSubscription(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
@@ -5531,6 +6196,42 @@ func (_ Unimplemented) ListBranches(w http.ResponseWriter, r *http.Request, owne
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// CreateCheckRun Report a check run
+// (POST /repos/{owner}/{name}/check-runs)
+func (_ Unimplemented) CreateCheckRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCheckRun A check run
+// (GET /repos/{owner}/{name}/check-runs/{checkRunId})
+func (_ Unimplemented) GetCheckRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkRunId CheckRunId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateCheckRun Update a check run
+// (PATCH /repos/{owner}/{name}/check-runs/{checkRunId})
+func (_ Unimplemented) UpdateCheckRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkRunId CheckRunId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListCheckRunAnnotations Annotations of a check run
+// (GET /repos/{owner}/{name}/check-runs/{checkRunId}/annotations)
+func (_ Unimplemented) ListCheckRunAnnotations(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkRunId CheckRunId, params ListCheckRunAnnotationsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCheckSuite A check suite
+// (GET /repos/{owner}/{name}/check-suites/{checkSuiteId})
+func (_ Unimplemented) GetCheckSuite(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkSuiteId CheckSuiteId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListCheckSuiteRuns Check runs of a check suite, oldest first
+// (GET /repos/{owner}/{name}/check-suites/{checkSuiteId}/check-runs)
+func (_ Unimplemented) ListCheckSuiteRuns(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkSuiteId CheckSuiteId, params ListCheckSuiteRunsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListRepoCollaborators Users granted a permission on the repository directly
 // (GET /repos/{owner}/{name}/collaborators)
 func (_ Unimplemented) ListRepoCollaborators(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
@@ -5558,6 +6259,24 @@ func (_ Unimplemented) ListCommits(w http.ResponseWriter, r *http.Request, owner
 // GetCommit A commit with its diff against the first parent
 // (GET /repos/{owner}/{name}/commits/{sha})
 func (_ Unimplemented) GetCommit(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListCheckRunsForRef Check runs of a commit, oldest first
+// (GET /repos/{owner}/{name}/commits/{sha}/check-runs)
+func (_ Unimplemented) ListCheckRunsForRef(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCheckRunsForRefParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListCheckSuitesForRef Check suites of a commit
+// (GET /repos/{owner}/{name}/commits/{sha}/check-suites)
+func (_ Unimplemented) ListCheckSuitesForRef(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCheckSuitesForRefParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCombinedStatus Combined status of a commit
+// (GET /repos/{owner}/{name}/commits/{sha}/status)
+func (_ Unimplemented) GetCombinedStatus(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6092,6 +6811,18 @@ func (_ Unimplemented) UpdateReleaseAsset(w http.ResponseWriter, r *http.Request
 // SearchCode Search the text files of a ref (git grep)
 // (GET /repos/{owner}/{name}/search/code)
 func (_ Unimplemented) SearchCode(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params SearchCodeParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListCommitStatuses Statuses of a commit, newest first
+// (GET /repos/{owner}/{name}/statuses/{sha})
+func (_ Unimplemented) ListCommitStatuses(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCommitStatusesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateCommitStatus Report a commit status
+// (POST /repos/{owner}/{name}/statuses/{sha})
+func (_ Unimplemented) CreateCommitStatus(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9452,6 +10183,406 @@ func (siw *ServerInterfaceWrapper) ListBranches(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// CreateCheckRun operation middleware
+func (siw *ServerInterfaceWrapper) CreateCheckRun(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateCheckRun(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCheckRun operation middleware
+func (siw *ServerInterfaceWrapper) GetCheckRun(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "checkRunId" -------------
+	var checkRunId CheckRunId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "checkRunId", chi.URLParam(r, "checkRunId"), &checkRunId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "checkRunId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCheckRun(w, r, owner, name, checkRunId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateCheckRun operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCheckRun(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "checkRunId" -------------
+	var checkRunId CheckRunId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "checkRunId", chi.URLParam(r, "checkRunId"), &checkRunId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "checkRunId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateCheckRun(w, r, owner, name, checkRunId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCheckRunAnnotations operation middleware
+func (siw *ServerInterfaceWrapper) ListCheckRunAnnotations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "checkRunId" -------------
+	var checkRunId CheckRunId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "checkRunId", chi.URLParam(r, "checkRunId"), &checkRunId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "checkRunId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCheckRunAnnotationsParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCheckRunAnnotations(w, r, owner, name, checkRunId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCheckSuite operation middleware
+func (siw *ServerInterfaceWrapper) GetCheckSuite(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "checkSuiteId" -------------
+	var checkSuiteId CheckSuiteId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "checkSuiteId", chi.URLParam(r, "checkSuiteId"), &checkSuiteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "checkSuiteId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCheckSuite(w, r, owner, name, checkSuiteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCheckSuiteRuns operation middleware
+func (siw *ServerInterfaceWrapper) ListCheckSuiteRuns(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "checkSuiteId" -------------
+	var checkSuiteId CheckSuiteId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "checkSuiteId", chi.URLParam(r, "checkSuiteId"), &checkSuiteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "checkSuiteId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCheckSuiteRunsParams
+
+	// ------------- Optional query parameter "checkName" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "checkName", r.URL.Query(), &params.CheckName, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "checkName"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "checkName", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCheckSuiteRuns(w, r, owner, name, checkSuiteId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListRepoCollaborators operation middleware
 func (siw *ServerInterfaceWrapper) ListRepoCollaborators(w http.ResponseWriter, r *http.Request) {
 
@@ -9740,6 +10871,285 @@ func (siw *ServerInterfaceWrapper) GetCommit(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetCommit(w, r, owner, name, sha)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCheckRunsForRef operation middleware
+func (siw *ServerInterfaceWrapper) ListCheckRunsForRef(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "sha" -------------
+	var sha CommitRef
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sha", chi.URLParam(r, "sha"), &sha, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sha", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCheckRunsForRefParams
+
+	// ------------- Optional query parameter "checkName" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "checkName", r.URL.Query(), &params.CheckName, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "checkName"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "checkName", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "app" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "app", r.URL.Query(), &params.App, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "app"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "app", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCheckRunsForRef(w, r, owner, name, sha, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCheckSuitesForRef operation middleware
+func (siw *ServerInterfaceWrapper) ListCheckSuitesForRef(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "sha" -------------
+	var sha CommitRef
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sha", chi.URLParam(r, "sha"), &sha, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sha", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCheckSuitesForRefParams
+
+	// ------------- Optional query parameter "app" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "app", r.URL.Query(), &params.App, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "app"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "app", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCheckSuitesForRef(w, r, owner, name, sha, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCombinedStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetCombinedStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "sha" -------------
+	var sha CommitRef
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sha", chi.URLParam(r, "sha"), &sha, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sha", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCombinedStatus(w, r, owner, name, sha)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -15138,6 +16548,139 @@ func (siw *ServerInterfaceWrapper) SearchCode(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// ListCommitStatuses operation middleware
+func (siw *ServerInterfaceWrapper) ListCommitStatuses(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "sha" -------------
+	var sha CommitRef
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sha", chi.URLParam(r, "sha"), &sha, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sha", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCommitStatusesParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCommitStatuses(w, r, owner, name, sha, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateCommitStatus operation middleware
+func (siw *ServerInterfaceWrapper) CreateCommitStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "sha" -------------
+	var sha CommitRef
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sha", chi.URLParam(r, "sha"), &sha, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sha", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateCommitStatus(w, r, owner, name, sha)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetRepoSubscription operation middleware
 func (siw *ServerInterfaceWrapper) GetRepoSubscription(w http.ResponseWriter, r *http.Request) {
 
@@ -17419,6 +18962,39 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/repos/{owner}/{name}/subscription", wrapper.SetRepoSubscription)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/statuses/{sha}", wrapper.ListCommitStatuses)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/statuses/{sha}", wrapper.CreateCommitStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/commits/{sha}/status", wrapper.GetCombinedStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/commits/{sha}/check-runs", wrapper.ListCheckRunsForRef)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/commits/{sha}/check-suites", wrapper.ListCheckSuitesForRef)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/check-runs", wrapper.CreateCheckRun)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/check-runs/{checkRunId}", wrapper.GetCheckRun)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/repos/{owner}/{name}/check-runs/{checkRunId}", wrapper.UpdateCheckRun)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/check-runs/{checkRunId}/annotations", wrapper.ListCheckRunAnnotations)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/check-suites/{checkSuiteId}", wrapper.GetCheckSuite)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/check-suites/{checkSuiteId}/check-runs", wrapper.ListCheckSuiteRuns)
 	})
 
 	return r
@@ -24203,6 +25779,651 @@ func (response ListBranchesdefaultApplicationProblemPlusJSONResponse) VisitListB
 	return err
 }
 
+type CreateCheckRunRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *CreateCheckRunJSONRequestBody
+}
+
+type CreateCheckRunResponseObject interface {
+	VisitCreateCheckRunResponse(w http.ResponseWriter) error
+}
+
+type CreateCheckRun201JSONResponse CheckRun
+
+func (response CreateCheckRun201JSONResponse) VisitCreateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCheckRun307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateCheckRun307ApplicationProblemPlusJSONResponse) VisitCreateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCheckRun400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateCheckRun400ApplicationProblemPlusJSONResponse) VisitCreateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCheckRun403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateCheckRun403ApplicationProblemPlusJSONResponse) VisitCreateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCheckRun404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateCheckRun404ApplicationProblemPlusJSONResponse) VisitCreateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCheckRun422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateCheckRun422ApplicationProblemPlusJSONResponse) VisitCreateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCheckRun503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response CreateCheckRun503ApplicationProblemPlusJSONResponse) VisitCreateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCheckRundefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateCheckRundefaultApplicationProblemPlusJSONResponse) VisitCreateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCheckRunRequestObject struct {
+	Owner      RepoOwner  `json:"owner"`
+	Name       RepoName   `json:"name"`
+	CheckRunId CheckRunId `json:"checkRunId"`
+}
+
+type GetCheckRunResponseObject interface {
+	VisitGetCheckRunResponse(w http.ResponseWriter) error
+}
+
+type GetCheckRun200JSONResponse CheckRun
+
+func (response GetCheckRun200JSONResponse) VisitGetCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCheckRun307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetCheckRun307ApplicationProblemPlusJSONResponse) VisitGetCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCheckRun404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetCheckRun404ApplicationProblemPlusJSONResponse) VisitGetCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCheckRun503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response GetCheckRun503ApplicationProblemPlusJSONResponse) VisitGetCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCheckRundefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetCheckRundefaultApplicationProblemPlusJSONResponse) VisitGetCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCheckRunRequestObject struct {
+	Owner      RepoOwner  `json:"owner"`
+	Name       RepoName   `json:"name"`
+	CheckRunId CheckRunId `json:"checkRunId"`
+	Body       *UpdateCheckRunJSONRequestBody
+}
+
+type UpdateCheckRunResponseObject interface {
+	VisitUpdateCheckRunResponse(w http.ResponseWriter) error
+}
+
+type UpdateCheckRun200JSONResponse CheckRun
+
+func (response UpdateCheckRun200JSONResponse) VisitUpdateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCheckRun307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateCheckRun307ApplicationProblemPlusJSONResponse) VisitUpdateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCheckRun400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateCheckRun400ApplicationProblemPlusJSONResponse) VisitUpdateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCheckRun403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateCheckRun403ApplicationProblemPlusJSONResponse) VisitUpdateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCheckRun404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateCheckRun404ApplicationProblemPlusJSONResponse) VisitUpdateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCheckRun503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateCheckRun503ApplicationProblemPlusJSONResponse) VisitUpdateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCheckRundefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateCheckRundefaultApplicationProblemPlusJSONResponse) VisitUpdateCheckRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckRunAnnotationsRequestObject struct {
+	Owner      RepoOwner  `json:"owner"`
+	Name       RepoName   `json:"name"`
+	CheckRunId CheckRunId `json:"checkRunId"`
+	Params     ListCheckRunAnnotationsParams
+}
+
+type ListCheckRunAnnotationsResponseObject interface {
+	VisitListCheckRunAnnotationsResponse(w http.ResponseWriter) error
+}
+
+type ListCheckRunAnnotations200JSONResponse []CheckAnnotation
+
+func (response ListCheckRunAnnotations200JSONResponse) VisitListCheckRunAnnotationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckRunAnnotations307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckRunAnnotations307ApplicationProblemPlusJSONResponse) VisitListCheckRunAnnotationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckRunAnnotations404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckRunAnnotations404ApplicationProblemPlusJSONResponse) VisitListCheckRunAnnotationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckRunAnnotations503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckRunAnnotations503ApplicationProblemPlusJSONResponse) VisitListCheckRunAnnotationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckRunAnnotationsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListCheckRunAnnotationsdefaultApplicationProblemPlusJSONResponse) VisitListCheckRunAnnotationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCheckSuiteRequestObject struct {
+	Owner        RepoOwner    `json:"owner"`
+	Name         RepoName     `json:"name"`
+	CheckSuiteId CheckSuiteId `json:"checkSuiteId"`
+}
+
+type GetCheckSuiteResponseObject interface {
+	VisitGetCheckSuiteResponse(w http.ResponseWriter) error
+}
+
+type GetCheckSuite200JSONResponse CheckSuite
+
+func (response GetCheckSuite200JSONResponse) VisitGetCheckSuiteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCheckSuite307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetCheckSuite307ApplicationProblemPlusJSONResponse) VisitGetCheckSuiteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCheckSuite404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetCheckSuite404ApplicationProblemPlusJSONResponse) VisitGetCheckSuiteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCheckSuite503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response GetCheckSuite503ApplicationProblemPlusJSONResponse) VisitGetCheckSuiteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCheckSuitedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetCheckSuitedefaultApplicationProblemPlusJSONResponse) VisitGetCheckSuiteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckSuiteRunsRequestObject struct {
+	Owner        RepoOwner    `json:"owner"`
+	Name         RepoName     `json:"name"`
+	CheckSuiteId CheckSuiteId `json:"checkSuiteId"`
+	Params       ListCheckSuiteRunsParams
+}
+
+type ListCheckSuiteRunsResponseObject interface {
+	VisitListCheckSuiteRunsResponse(w http.ResponseWriter) error
+}
+
+type ListCheckSuiteRuns200JSONResponse CheckRunList
+
+func (response ListCheckSuiteRuns200JSONResponse) VisitListCheckSuiteRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckSuiteRuns307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckSuiteRuns307ApplicationProblemPlusJSONResponse) VisitListCheckSuiteRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckSuiteRuns400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckSuiteRuns400ApplicationProblemPlusJSONResponse) VisitListCheckSuiteRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckSuiteRuns404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListCheckSuiteRuns404ApplicationProblemPlusJSONResponse) VisitListCheckSuiteRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckSuiteRuns503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckSuiteRuns503ApplicationProblemPlusJSONResponse) VisitListCheckSuiteRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckSuiteRunsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListCheckSuiteRunsdefaultApplicationProblemPlusJSONResponse) VisitListCheckSuiteRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListRepoCollaboratorsRequestObject struct {
 	Owner RepoOwner `json:"owner"`
 	Name  RepoName  `json:"name"`
@@ -24644,6 +26865,301 @@ type GetCommitdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response GetCommitdefaultApplicationProblemPlusJSONResponse) VisitGetCommitResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckRunsForRefRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Sha    CommitRef `json:"sha"`
+	Params ListCheckRunsForRefParams
+}
+
+type ListCheckRunsForRefResponseObject interface {
+	VisitListCheckRunsForRefResponse(w http.ResponseWriter) error
+}
+
+type ListCheckRunsForRef200JSONResponse CheckRunList
+
+func (response ListCheckRunsForRef200JSONResponse) VisitListCheckRunsForRefResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckRunsForRef307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckRunsForRef307ApplicationProblemPlusJSONResponse) VisitListCheckRunsForRefResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckRunsForRef400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckRunsForRef400ApplicationProblemPlusJSONResponse) VisitListCheckRunsForRefResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckRunsForRef404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListCheckRunsForRef404ApplicationProblemPlusJSONResponse) VisitListCheckRunsForRefResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckRunsForRef503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckRunsForRef503ApplicationProblemPlusJSONResponse) VisitListCheckRunsForRefResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckRunsForRefdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListCheckRunsForRefdefaultApplicationProblemPlusJSONResponse) VisitListCheckRunsForRefResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckSuitesForRefRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Sha    CommitRef `json:"sha"`
+	Params ListCheckSuitesForRefParams
+}
+
+type ListCheckSuitesForRefResponseObject interface {
+	VisitListCheckSuitesForRefResponse(w http.ResponseWriter) error
+}
+
+type ListCheckSuitesForRef200JSONResponse CheckSuiteList
+
+func (response ListCheckSuitesForRef200JSONResponse) VisitListCheckSuitesForRefResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckSuitesForRef307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckSuitesForRef307ApplicationProblemPlusJSONResponse) VisitListCheckSuitesForRefResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckSuitesForRef404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckSuitesForRef404ApplicationProblemPlusJSONResponse) VisitListCheckSuitesForRefResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckSuitesForRef503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListCheckSuitesForRef503ApplicationProblemPlusJSONResponse) VisitListCheckSuitesForRefResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCheckSuitesForRefdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListCheckSuitesForRefdefaultApplicationProblemPlusJSONResponse) VisitListCheckSuitesForRefResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCombinedStatusRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Sha   CommitRef `json:"sha"`
+}
+
+type GetCombinedStatusResponseObject interface {
+	VisitGetCombinedStatusResponse(w http.ResponseWriter) error
+}
+
+type GetCombinedStatus200JSONResponse CombinedStatus
+
+func (response GetCombinedStatus200JSONResponse) VisitGetCombinedStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCombinedStatus307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetCombinedStatus307ApplicationProblemPlusJSONResponse) VisitGetCombinedStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCombinedStatus404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetCombinedStatus404ApplicationProblemPlusJSONResponse) VisitGetCombinedStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCombinedStatus503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response GetCombinedStatus503ApplicationProblemPlusJSONResponse) VisitGetCombinedStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCombinedStatusdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetCombinedStatusdefaultApplicationProblemPlusJSONResponse) VisitGetCombinedStatusResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -33441,6 +35957,236 @@ func (response SearchCodedefaultApplicationProblemPlusJSONResponse) VisitSearchC
 	return err
 }
 
+type ListCommitStatusesRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Sha    CommitRef `json:"sha"`
+	Params ListCommitStatusesParams
+}
+
+type ListCommitStatusesResponseObject interface {
+	VisitListCommitStatusesResponse(w http.ResponseWriter) error
+}
+
+type ListCommitStatuses200JSONResponse []CommitStatus
+
+func (response ListCommitStatuses200JSONResponse) VisitListCommitStatusesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCommitStatuses307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListCommitStatuses307ApplicationProblemPlusJSONResponse) VisitListCommitStatusesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCommitStatuses404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListCommitStatuses404ApplicationProblemPlusJSONResponse) VisitListCommitStatusesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCommitStatuses503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListCommitStatuses503ApplicationProblemPlusJSONResponse) VisitListCommitStatusesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCommitStatusesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListCommitStatusesdefaultApplicationProblemPlusJSONResponse) VisitListCommitStatusesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCommitStatusRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Sha   CommitRef `json:"sha"`
+	Body  *CreateCommitStatusJSONRequestBody
+}
+
+type CreateCommitStatusResponseObject interface {
+	VisitCreateCommitStatusResponse(w http.ResponseWriter) error
+}
+
+type CreateCommitStatus201JSONResponse CommitStatus
+
+func (response CreateCommitStatus201JSONResponse) VisitCreateCommitStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCommitStatus307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateCommitStatus307ApplicationProblemPlusJSONResponse) VisitCreateCommitStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCommitStatus400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateCommitStatus400ApplicationProblemPlusJSONResponse) VisitCreateCommitStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCommitStatus403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateCommitStatus403ApplicationProblemPlusJSONResponse) VisitCreateCommitStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCommitStatus404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateCommitStatus404ApplicationProblemPlusJSONResponse) VisitCreateCommitStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCommitStatus422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateCommitStatus422ApplicationProblemPlusJSONResponse) VisitCreateCommitStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCommitStatus503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response CreateCommitStatus503ApplicationProblemPlusJSONResponse) VisitCreateCommitStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCommitStatusdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateCommitStatusdefaultApplicationProblemPlusJSONResponse) VisitCreateCommitStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetRepoSubscriptionRequestObject struct {
 	Owner RepoOwner `json:"owner"`
 	Name  RepoName  `json:"name"`
@@ -37347,6 +40093,24 @@ type StrictServerInterface interface {
 	// ListBranches Branches, most recently committed first
 	// (GET /repos/{owner}/{name}/branches)
 	ListBranches(ctx context.Context, request ListBranchesRequestObject) (ListBranchesResponseObject, error)
+	// CreateCheckRun Report a check run
+	// (POST /repos/{owner}/{name}/check-runs)
+	CreateCheckRun(ctx context.Context, request CreateCheckRunRequestObject) (CreateCheckRunResponseObject, error)
+	// GetCheckRun A check run
+	// (GET /repos/{owner}/{name}/check-runs/{checkRunId})
+	GetCheckRun(ctx context.Context, request GetCheckRunRequestObject) (GetCheckRunResponseObject, error)
+	// UpdateCheckRun Update a check run
+	// (PATCH /repos/{owner}/{name}/check-runs/{checkRunId})
+	UpdateCheckRun(ctx context.Context, request UpdateCheckRunRequestObject) (UpdateCheckRunResponseObject, error)
+	// ListCheckRunAnnotations Annotations of a check run
+	// (GET /repos/{owner}/{name}/check-runs/{checkRunId}/annotations)
+	ListCheckRunAnnotations(ctx context.Context, request ListCheckRunAnnotationsRequestObject) (ListCheckRunAnnotationsResponseObject, error)
+	// GetCheckSuite A check suite
+	// (GET /repos/{owner}/{name}/check-suites/{checkSuiteId})
+	GetCheckSuite(ctx context.Context, request GetCheckSuiteRequestObject) (GetCheckSuiteResponseObject, error)
+	// ListCheckSuiteRuns Check runs of a check suite, oldest first
+	// (GET /repos/{owner}/{name}/check-suites/{checkSuiteId}/check-runs)
+	ListCheckSuiteRuns(ctx context.Context, request ListCheckSuiteRunsRequestObject) (ListCheckSuiteRunsResponseObject, error)
 	// ListRepoCollaborators Users granted a permission on the repository directly
 	// (GET /repos/{owner}/{name}/collaborators)
 	ListRepoCollaborators(ctx context.Context, request ListRepoCollaboratorsRequestObject) (ListRepoCollaboratorsResponseObject, error)
@@ -37362,6 +40126,15 @@ type StrictServerInterface interface {
 	// GetCommit A commit with its diff against the first parent
 	// (GET /repos/{owner}/{name}/commits/{sha})
 	GetCommit(ctx context.Context, request GetCommitRequestObject) (GetCommitResponseObject, error)
+	// ListCheckRunsForRef Check runs of a commit, oldest first
+	// (GET /repos/{owner}/{name}/commits/{sha}/check-runs)
+	ListCheckRunsForRef(ctx context.Context, request ListCheckRunsForRefRequestObject) (ListCheckRunsForRefResponseObject, error)
+	// ListCheckSuitesForRef Check suites of a commit
+	// (GET /repos/{owner}/{name}/commits/{sha}/check-suites)
+	ListCheckSuitesForRef(ctx context.Context, request ListCheckSuitesForRefRequestObject) (ListCheckSuitesForRefResponseObject, error)
+	// GetCombinedStatus Combined status of a commit
+	// (GET /repos/{owner}/{name}/commits/{sha}/status)
+	GetCombinedStatus(ctx context.Context, request GetCombinedStatusRequestObject) (GetCombinedStatusResponseObject, error)
 	// CompareRefs Compare two refs from their merge base
 	// (GET /repos/{owner}/{name}/compare)
 	CompareRefs(ctx context.Context, request CompareRefsRequestObject) (CompareRefsResponseObject, error)
@@ -37629,6 +40402,12 @@ type StrictServerInterface interface {
 	// SearchCode Search the text files of a ref (git grep)
 	// (GET /repos/{owner}/{name}/search/code)
 	SearchCode(ctx context.Context, request SearchCodeRequestObject) (SearchCodeResponseObject, error)
+	// ListCommitStatuses Statuses of a commit, newest first
+	// (GET /repos/{owner}/{name}/statuses/{sha})
+	ListCommitStatuses(ctx context.Context, request ListCommitStatusesRequestObject) (ListCommitStatusesResponseObject, error)
+	// CreateCommitStatus Report a commit status
+	// (POST /repos/{owner}/{name}/statuses/{sha})
+	CreateCommitStatus(ctx context.Context, request CreateCommitStatusRequestObject) (CreateCommitStatusResponseObject, error)
 	// GetRepoSubscription Watch level of the caller on the repository
 	// (GET /repos/{owner}/{name}/subscription)
 	GetRepoSubscription(ctx context.Context, request GetRepoSubscriptionRequestObject) (GetRepoSubscriptionResponseObject, error)
@@ -40313,6 +43092,189 @@ func (sh *strictHandler) ListBranches(w http.ResponseWriter, r *http.Request, ow
 	}
 }
 
+// CreateCheckRun operation middleware
+func (sh *strictHandler) CreateCheckRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request CreateCheckRunRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body CreateCheckRunJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateCheckRun(ctx, request.(CreateCheckRunRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateCheckRun")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateCheckRunResponseObject); ok {
+		if err := validResponse.VisitCreateCheckRunResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCheckRun operation middleware
+func (sh *strictHandler) GetCheckRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkRunId CheckRunId) {
+	var request GetCheckRunRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CheckRunId = checkRunId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCheckRun(ctx, request.(GetCheckRunRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCheckRun")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCheckRunResponseObject); ok {
+		if err := validResponse.VisitGetCheckRunResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateCheckRun operation middleware
+func (sh *strictHandler) UpdateCheckRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkRunId CheckRunId) {
+	var request UpdateCheckRunRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CheckRunId = checkRunId
+
+	var body UpdateCheckRunJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateCheckRun(ctx, request.(UpdateCheckRunRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateCheckRun")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateCheckRunResponseObject); ok {
+		if err := validResponse.VisitUpdateCheckRunResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListCheckRunAnnotations operation middleware
+func (sh *strictHandler) ListCheckRunAnnotations(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkRunId CheckRunId, params ListCheckRunAnnotationsParams) {
+	var request ListCheckRunAnnotationsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CheckRunId = checkRunId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCheckRunAnnotations(ctx, request.(ListCheckRunAnnotationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCheckRunAnnotations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListCheckRunAnnotationsResponseObject); ok {
+		if err := validResponse.VisitListCheckRunAnnotationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCheckSuite operation middleware
+func (sh *strictHandler) GetCheckSuite(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkSuiteId CheckSuiteId) {
+	var request GetCheckSuiteRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CheckSuiteId = checkSuiteId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCheckSuite(ctx, request.(GetCheckSuiteRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCheckSuite")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCheckSuiteResponseObject); ok {
+		if err := validResponse.VisitGetCheckSuiteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListCheckSuiteRuns operation middleware
+func (sh *strictHandler) ListCheckSuiteRuns(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, checkSuiteId CheckSuiteId, params ListCheckSuiteRunsParams) {
+	var request ListCheckSuiteRunsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CheckSuiteId = checkSuiteId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCheckSuiteRuns(ctx, request.(ListCheckSuiteRunsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCheckSuiteRuns")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListCheckSuiteRunsResponseObject); ok {
+		if err := validResponse.VisitListCheckSuiteRunsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListRepoCollaborators operation middleware
 func (sh *strictHandler) ListRepoCollaborators(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
 	var request ListRepoCollaboratorsRequestObject
@@ -40452,6 +43414,92 @@ func (sh *strictHandler) GetCommit(w http.ResponseWriter, r *http.Request, owner
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetCommitResponseObject); ok {
 		if err := validResponse.VisitGetCommitResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListCheckRunsForRef operation middleware
+func (sh *strictHandler) ListCheckRunsForRef(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCheckRunsForRefParams) {
+	var request ListCheckRunsForRefRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Sha = sha
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCheckRunsForRef(ctx, request.(ListCheckRunsForRefRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCheckRunsForRef")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListCheckRunsForRefResponseObject); ok {
+		if err := validResponse.VisitListCheckRunsForRefResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListCheckSuitesForRef operation middleware
+func (sh *strictHandler) ListCheckSuitesForRef(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCheckSuitesForRefParams) {
+	var request ListCheckSuitesForRefRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Sha = sha
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCheckSuitesForRef(ctx, request.(ListCheckSuitesForRefRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCheckSuitesForRef")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListCheckSuitesForRefResponseObject); ok {
+		if err := validResponse.VisitListCheckSuitesForRefResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCombinedStatus operation middleware
+func (sh *strictHandler) GetCombinedStatus(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef) {
+	var request GetCombinedStatusRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Sha = sha
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCombinedStatus(ctx, request.(GetCombinedStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCombinedStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCombinedStatusResponseObject); ok {
+		if err := validResponse.VisitGetCombinedStatusResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -43167,6 +46215,70 @@ func (sh *strictHandler) SearchCode(w http.ResponseWriter, r *http.Request, owne
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SearchCodeResponseObject); ok {
 		if err := validResponse.VisitSearchCodeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListCommitStatuses operation middleware
+func (sh *strictHandler) ListCommitStatuses(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCommitStatusesParams) {
+	var request ListCommitStatusesRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Sha = sha
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCommitStatuses(ctx, request.(ListCommitStatusesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCommitStatuses")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListCommitStatusesResponseObject); ok {
+		if err := validResponse.VisitListCommitStatusesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateCommitStatus operation middleware
+func (sh *strictHandler) CreateCommitStatus(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef) {
+	var request CreateCommitStatusRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Sha = sha
+
+	var body CreateCommitStatusJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateCommitStatus(ctx, request.(CreateCommitStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateCommitStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateCommitStatusResponseObject); ok {
+		if err := validResponse.VisitCreateCommitStatusResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

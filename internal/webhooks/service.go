@@ -65,6 +65,7 @@ const (
 var knownEvents = []string{
 	"*", "push", "create", "delete", "issues", "issue_comment", "label", "milestone", "release",
 	"pull_request", "pull_request_review", "pull_request_review_comment", "status",
+	"check_run", "check_suite",
 }
 
 var (
