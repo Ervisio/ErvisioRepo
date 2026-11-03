@@ -109,6 +109,15 @@ func TestServeAndMigrate(t *testing.T) {
 	if resp.StatusCode != 200 || !strings.Contains(string(body), `"instanceId"`) {
 		t.Fatalf("meta: %d %s", resp.StatusCode, body)
 	}
+	resp, err = http.Get(base + "/api/v1/admin/storage")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ = io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != 200 || !strings.Contains(string(body), `"storage_not_configured"`) {
+		t.Fatalf("admin storage: %d %s", resp.StatusCode, body)
+	}
 
 	cancel()
 	select {

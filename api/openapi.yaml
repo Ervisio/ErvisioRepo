@@ -10,6 +10,7 @@ servers:
   - url: /api/v1
 tags:
   - name: meta
+  - name: admin
 paths:
   /meta:
     get:
@@ -25,6 +26,45 @@ paths:
                 $ref: "#/components/schemas/Meta"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/storage:
+    get:
+      operationId: getAdminStorage
+      tags: [admin]
+      summary: Storage targets, policies, cache usage and permanent warnings
+      description: Admin only. Until admin authentication exists it is served only to direct loopback connections.
+      responses:
+        "200":
+          description: Storage status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageStatus"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/storage/{target}/test:
+    post:
+      operationId: testAdminStorageTarget
+      tags: [admin]
+      summary: Run a write/read/list/delete round trip on a storage target
+      description: Admin only. Writes a random probe object under erepo-storage-test/ and always deletes it.
+      parameters:
+        - name: target
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-z0-9][a-z0-9_-]{0,62}$"
+      responses:
+        "200":
+          description: Test outcome; ok is false when a step failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageCheckResult"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
 components:
   responses:
     Problem:
@@ -34,6 +74,165 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    StorageStatus:
+      type: object
+      required: [targets, policies, caches, warnings]
+      properties:
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorageTarget"
+        policies:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoragePolicy"
+        caches:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorageCache"
+        warnings:
+          type: array
+          description: Permanent configuration warnings, such as storage_local_only
+          items:
+            $ref: "#/components/schemas/StorageWarning"
+    StorageTarget:
+      type: object
+      required: [name, kind, encrypted, roles, caps]
+      properties:
+        name:
+          type: string
+        kind:
+          type: string
+          enum: [local, s3, sftp, webdav]
+        encrypted:
+          type: boolean
+        roles:
+          type: array
+          description: Uses of this target, as primary:<policy>, replica:<policy> or cache:<policy>
+          items:
+            type: string
+        caps:
+          $ref: "#/components/schemas/StorageCaps"
+    StorageCaps:
+      type: object
+      required: [range, presign, multipart, atomicRename, conditionalPut, maxConns]
+      properties:
+        range:
+          type: boolean
+        presign:
+          type: boolean
+        multipart:
+          type: boolean
+        atomicRename:
+          type: boolean
+        conditionalPut:
+          type: boolean
+        maxConns:
+          type: integer
+          description: Connection limit, 0 means unlimited
+    StoragePolicy:
+      type: object
+      required: [name, primary, replicas, cacheTtlSeconds, cacheShare, durability, objects, bytes, pendingReplicas, errors]
+      properties:
+        name:
+          type: string
+          description: Data type, such as git, lfs or registry
+        primary:
+          type: string
+        replicas:
+          type: array
+          items:
+            type: string
+        cache:
+          type: string
+        cacheTtlSeconds:
+          type: integer
+          format: int64
+        cacheShare:
+          type: number
+          format: double
+        durability:
+          type: string
+        objects:
+          type: integer
+          format: int64
+        bytes:
+          type: integer
+          format: int64
+        pendingReplicas:
+          type: integer
+          format: int64
+        errors:
+          type: integer
+          format: int64
+          description: Objects whose last replication or verification failed
+    StorageCache:
+      type: object
+      required: [target, budget, used, entries, highWatermark, lowWatermark, usedBy]
+      properties:
+        target:
+          type: string
+        budget:
+          type: integer
+          format: int64
+          description: Budget in bytes, 0 means unlimited
+        used:
+          type: integer
+          format: int64
+        entries:
+          type: integer
+        highWatermark:
+          type: number
+          format: double
+        lowWatermark:
+          type: number
+          format: double
+        usedBy:
+          type: object
+          description: Bytes used per data type
+          additionalProperties:
+            type: integer
+            format: int64
+    StorageWarning:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum: [storage_not_configured, storage_local_only, storage_policy_local]
+        policy:
+          type: string
+        message:
+          type: string
+    StorageCheckResult:
+      type: object
+      required: [target, ok, durationMs, steps]
+      properties:
+        target:
+          type: string
+        ok:
+          type: boolean
+        durationMs:
+          type: integer
+          format: int64
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorageCheckStep"
+    StorageCheckStep:
+      type: object
+      required: [name, ok, durationMs]
+      properties:
+        name:
+          type: string
+          enum: [put, stat, get, range, list, delete]
+        ok:
+          type: boolean
+        durationMs:
+          type: integer
+          format: int64
+        error:
+          type: string
     Meta:
       type: object
       required: [name, version, instanceId, publicUrl, registration]

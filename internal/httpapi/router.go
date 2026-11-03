@@ -51,6 +51,7 @@ type Deps struct {
 	Web      fs.FS // built SPA, see package web
 	HasIndex bool
 	Registry *prometheus.Registry // nil creates one with Go and process collectors
+	Storage  Storage              // nil makes the storage admin endpoints answer 503
 }
 
 // NewRouter builds the root handler.
@@ -115,11 +116,7 @@ func readyz(d Deps) http.HandlerFunc {
 // forwarding header means the real client is remote.
 func loopbackOnly(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		host, _, err := net.SplitHostPort(r.RemoteAddr)
-		ip := net.ParseIP(host)
-		forwarded := r.Header.Get("X-Forwarded-For") != "" || r.Header.Get("Forwarded") != "" ||
-			r.Header.Get("X-Real-Ip") != ""
-		if err != nil || ip == nil || !ip.IsLoopback() || forwarded {
+		if !directLoopback(r) {
 			writeProblem(w, http.StatusForbidden, "metrics are only available from localhost")
 			return
 		}
@@ -127,8 +124,17 @@ func loopbackOnly(next http.Handler) http.Handler {
 	})
 }
 
+// directLoopback reports whether r comes from the local host without a proxy.
+func directLoopback(r *http.Request) bool {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	ip := net.ParseIP(host)
+	forwarded := r.Header.Get("X-Forwarded-For") != "" || r.Header.Get("Forwarded") != "" ||
+		r.Header.Get("X-Real-Ip") != ""
+	return err == nil && ip != nil && ip.IsLoopback() && !forwarded
+}
+
 func mountV1(r chi.Router, d Deps) {
-	strict := v1gen.NewStrictHandlerWithOptions(&v1Server{meta: d.Meta}, nil, v1gen.StrictHTTPServerOptions{
+	strict := v1gen.NewStrictHandlerWithOptions(&v1Server{meta: d.Meta, storage: d.Storage}, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())
 		},
@@ -139,7 +145,8 @@ func mountV1(r chi.Router, d Deps) {
 		},
 	})
 	v1gen.HandlerWithOptions(strict, v1gen.ChiServerOptions{
-		BaseRouter: r,
+		BaseRouter:  r,
+		Middlewares: []v1gen.MiddlewareFunc{adminGuard},
 		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())
 		},

@@ -9,12 +9,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+
 	"github.com/Ervisio/ErvisioRepo/internal/buildinfo"
 	"github.com/Ervisio/ErvisioRepo/internal/config"
 	"github.com/Ervisio/ErvisioRepo/internal/db"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi"
 	"github.com/Ervisio/ErvisioRepo/internal/jobs"
+	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
 	"github.com/Ervisio/ErvisioRepo/web"
 )
 
@@ -40,7 +44,20 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		return err
 	}
 
-	runner, err := jobs.New(pool, log)
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(collectors.NewGoCollector(), collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+
+	// The tier enqueues replication on the runner, which runs the tier's
+	// jobs: the runner is assigned right after the tier is built.
+	var runner *jobs.Runner
+	storage, stores, err := openStorage(ctx, cfg, dbgen.New(pool), registry, log,
+		func(ctx context.Context, ref tier.ObjectRef) error { return runner.EnqueueReplication(ctx, ref) })
+	if err != nil {
+		return err
+	}
+	defer tier.CloseStores(stores)
+
+	runner, err = jobs.New(pool, log, jobs.WithStorage(storage, log))
 	if err != nil {
 		return err
 	}
@@ -71,6 +88,8 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		},
 		Web:      web.FS(),
 		HasIndex: web.HasIndex(),
+		Registry: registry,
+		Storage:  storage,
 	})
 
 	if ln == nil {

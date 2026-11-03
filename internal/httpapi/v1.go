@@ -8,7 +8,8 @@ import (
 
 // v1Server implements the strict server generated from api/openapi.yaml.
 type v1Server struct {
-	meta Meta
+	meta    Meta
+	storage Storage
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

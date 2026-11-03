@@ -11,6 +11,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -29,6 +30,81 @@ func (e MetaRegistration) Valid() bool {
 	case Invite:
 		return true
 	case Open:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StorageCheckStepName.
+const (
+	Delete StorageCheckStepName = "delete"
+	Get    StorageCheckStepName = "get"
+	List   StorageCheckStepName = "list"
+	Put    StorageCheckStepName = "put"
+	Range  StorageCheckStepName = "range"
+	Stat   StorageCheckStepName = "stat"
+)
+
+// Valid indicates whether the value is a known member of the StorageCheckStepName enum.
+func (e StorageCheckStepName) Valid() bool {
+	switch e {
+	case Delete:
+		return true
+	case Get:
+		return true
+	case List:
+		return true
+	case Put:
+		return true
+	case Range:
+		return true
+	case Stat:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StorageTargetKind.
+const (
+	Local  StorageTargetKind = "local"
+	S3     StorageTargetKind = "s3"
+	Sftp   StorageTargetKind = "sftp"
+	Webdav StorageTargetKind = "webdav"
+)
+
+// Valid indicates whether the value is a known member of the StorageTargetKind enum.
+func (e StorageTargetKind) Valid() bool {
+	switch e {
+	case Local:
+		return true
+	case S3:
+		return true
+	case Sftp:
+		return true
+	case Webdav:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StorageWarningCode.
+const (
+	StorageLocalOnly     StorageWarningCode = "storage_local_only"
+	StorageNotConfigured StorageWarningCode = "storage_not_configured"
+	StoragePolicyLocal   StorageWarningCode = "storage_policy_local"
+)
+
+// Valid indicates whether the value is a known member of the StorageWarningCode enum.
+func (e StorageWarningCode) Valid() bool {
+	switch e {
+	case StorageLocalOnly:
+		return true
+	case StorageNotConfigured:
+		return true
+	case StoragePolicyLocal:
 		return true
 	default:
 		return false
@@ -60,8 +136,112 @@ type Problem struct {
 	Type     string  `json:"type"`
 }
 
+// StorageCache defines model for StorageCache.
+type StorageCache struct {
+	// Budget Budget in bytes, 0 means unlimited
+	Budget        int64   `json:"budget"`
+	Entries       int     `json:"entries"`
+	HighWatermark float64 `json:"highWatermark"`
+	LowWatermark  float64 `json:"lowWatermark"`
+	Target        string  `json:"target"`
+	Used          int64   `json:"used"`
+
+	// UsedBy Bytes used per data type
+	UsedBy map[string]int64 `json:"usedBy"`
+}
+
+// StorageCaps defines model for StorageCaps.
+type StorageCaps struct {
+	AtomicRename   bool `json:"atomicRename"`
+	ConditionalPut bool `json:"conditionalPut"`
+
+	// MaxConns Connection limit, 0 means unlimited
+	MaxConns  int  `json:"maxConns"`
+	Multipart bool `json:"multipart"`
+	Presign   bool `json:"presign"`
+	Range     bool `json:"range"`
+}
+
+// StorageCheckResult defines model for StorageCheckResult.
+type StorageCheckResult struct {
+	DurationMs int64              `json:"durationMs"`
+	Ok         bool               `json:"ok"`
+	Steps      []StorageCheckStep `json:"steps"`
+	Target     string             `json:"target"`
+}
+
+// StorageCheckStep defines model for StorageCheckStep.
+type StorageCheckStep struct {
+	DurationMs int64                `json:"durationMs"`
+	Error      *string              `json:"error,omitempty"`
+	Name       StorageCheckStepName `json:"name"`
+	Ok         bool                 `json:"ok"`
+}
+
+// StorageCheckStepName defines model for StorageCheckStep.Name.
+type StorageCheckStepName string
+
+// StoragePolicy defines model for StoragePolicy.
+type StoragePolicy struct {
+	Bytes           int64   `json:"bytes"`
+	Cache           *string `json:"cache,omitempty"`
+	CacheShare      float64 `json:"cacheShare"`
+	CacheTtlSeconds int64   `json:"cacheTtlSeconds"`
+	Durability      string  `json:"durability"`
+
+	// Errors Objects whose last replication or verification failed
+	Errors int64 `json:"errors"`
+
+	// Name Data type, such as git, lfs or registry
+	Name            string   `json:"name"`
+	Objects         int64    `json:"objects"`
+	PendingReplicas int64    `json:"pendingReplicas"`
+	Primary         string   `json:"primary"`
+	Replicas        []string `json:"replicas"`
+}
+
+// StorageStatus defines model for StorageStatus.
+type StorageStatus struct {
+	Caches   []StorageCache  `json:"caches"`
+	Policies []StoragePolicy `json:"policies"`
+	Targets  []StorageTarget `json:"targets"`
+
+	// Warnings Permanent configuration warnings, such as storage_local_only
+	Warnings []StorageWarning `json:"warnings"`
+}
+
+// StorageTarget defines model for StorageTarget.
+type StorageTarget struct {
+	Caps      StorageCaps       `json:"caps"`
+	Encrypted bool              `json:"encrypted"`
+	Kind      StorageTargetKind `json:"kind"`
+	Name      string            `json:"name"`
+
+	// Roles Uses of this target, as primary:<policy>, replica:<policy> or cache:<policy>
+	Roles []string `json:"roles"`
+}
+
+// StorageTargetKind defines model for StorageTarget.Kind.
+type StorageTargetKind string
+
+// StorageWarning defines model for StorageWarning.
+type StorageWarning struct {
+	Code    StorageWarningCode `json:"code"`
+	Message string             `json:"message"`
+	Policy  *string            `json:"policy,omitempty"`
+}
+
+// StorageWarningCode defines model for StorageWarning.Code.
+type StorageWarningCode string
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// GetAdminStorage Storage targets, policies, cache usage and permanent warnings
+	// (GET /admin/storage)
+	GetAdminStorage(w http.ResponseWriter, r *http.Request)
+	// TestAdminStorageTarget Run a write/read/list/delete round trip on a storage target
+	// (POST /admin/storage/{target}/test)
+	TestAdminStorageTarget(w http.ResponseWriter, r *http.Request, target string)
 	// GetMeta Public information about this instance
 	// (GET /meta)
 	GetMeta(w http.ResponseWriter, r *http.Request)
@@ -70,6 +250,18 @@ type ServerInterface interface {
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
+
+// GetAdminStorage Storage targets, policies, cache usage and permanent warnings
+// (GET /admin/storage)
+func (_ Unimplemented) GetAdminStorage(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// TestAdminStorageTarget Run a write/read/list/delete round trip on a storage target
+// (POST /admin/storage/{target}/test)
+func (_ Unimplemented) TestAdminStorageTarget(w http.ResponseWriter, r *http.Request, target string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // GetMeta Public information about this instance
 // (GET /meta)
@@ -85,6 +277,46 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetAdminStorage operation middleware
+func (siw *ServerInterfaceWrapper) GetAdminStorage(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAdminStorage(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestAdminStorageTarget operation middleware
+func (siw *ServerInterfaceWrapper) TestAdminStorageTarget(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "target" -------------
+	var target string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "target", chi.URLParam(r, "target"), &target, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "target", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestAdminStorageTarget(w, r, target)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetMeta operation middleware
 func (siw *ServerInterfaceWrapper) GetMeta(w http.ResponseWriter, r *http.Request) {
@@ -216,11 +448,110 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/meta", wrapper.GetMeta)
 	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/storage", wrapper.GetAdminStorage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/storage/{target}/test", wrapper.TestAdminStorageTarget)
+	})
 
 	return r
 }
 
 type ProblemApplicationProblemPlusJSONResponse Problem
+
+type GetAdminStorageRequestObject struct {
+}
+
+type GetAdminStorageResponseObject interface {
+	VisitGetAdminStorageResponse(w http.ResponseWriter) error
+}
+
+type GetAdminStorage200JSONResponse StorageStatus
+
+func (response GetAdminStorage200JSONResponse) VisitGetAdminStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAdminStoragedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetAdminStoragedefaultApplicationProblemPlusJSONResponse) VisitGetAdminStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TestAdminStorageTargetRequestObject struct {
+	Target string `json:"target"`
+}
+
+type TestAdminStorageTargetResponseObject interface {
+	VisitTestAdminStorageTargetResponse(w http.ResponseWriter) error
+}
+
+type TestAdminStorageTarget200JSONResponse StorageCheckResult
+
+func (response TestAdminStorageTarget200JSONResponse) VisitTestAdminStorageTargetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TestAdminStorageTarget404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response TestAdminStorageTarget404ApplicationProblemPlusJSONResponse) VisitTestAdminStorageTargetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TestAdminStorageTargetdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response TestAdminStorageTargetdefaultApplicationProblemPlusJSONResponse) VisitTestAdminStorageTargetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
 
 type GetMetaRequestObject struct {
 }
@@ -262,6 +593,12 @@ func (response GetMetadefaultApplicationProblemPlusJSONResponse) VisitGetMetaRes
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// GetAdminStorage Storage targets, policies, cache usage and permanent warnings
+	// (GET /admin/storage)
+	GetAdminStorage(ctx context.Context, request GetAdminStorageRequestObject) (GetAdminStorageResponseObject, error)
+	// TestAdminStorageTarget Run a write/read/list/delete round trip on a storage target
+	// (POST /admin/storage/{target}/test)
+	TestAdminStorageTarget(ctx context.Context, request TestAdminStorageTargetRequestObject) (TestAdminStorageTargetResponseObject, error)
 	// GetMeta Public information about this instance
 	// (GET /meta)
 	GetMeta(ctx context.Context, request GetMetaRequestObject) (GetMetaResponseObject, error)
@@ -304,6 +641,56 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// GetAdminStorage operation middleware
+func (sh *strictHandler) GetAdminStorage(w http.ResponseWriter, r *http.Request) {
+	var request GetAdminStorageRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAdminStorage(ctx, request.(GetAdminStorageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAdminStorage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAdminStorageResponseObject); ok {
+		if err := validResponse.VisitGetAdminStorageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestAdminStorageTarget operation middleware
+func (sh *strictHandler) TestAdminStorageTarget(w http.ResponseWriter, r *http.Request, target string) {
+	var request TestAdminStorageTargetRequestObject
+
+	request.Target = target
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestAdminStorageTarget(ctx, request.(TestAdminStorageTargetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestAdminStorageTarget")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestAdminStorageTargetResponseObject); ok {
+		if err := validResponse.VisitTestAdminStorageTargetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // GetMeta operation middleware

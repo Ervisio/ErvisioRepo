@@ -2,6 +2,7 @@
 //
 //	ervisio-repo serve   --config <path>
 //	ervisio-repo migrate up|status --config <path>
+//	ervisio-repo storage test <target> --config <path>
 //	ervisio-repo version
 package main
 
@@ -27,6 +28,8 @@ const defaultConfig = "/etc/ervisio-repo/config.toml"
 const usage = `Usage:
   ervisio-repo serve   [--config <path>]   run the server
   ervisio-repo migrate up|status [--config <path>]
+  ervisio-repo storage test <target> [--config <path>] [--timeout <dur>]
+                                           write/read/list/delete round trip
   ervisio-repo version
 `
 
@@ -85,6 +88,8 @@ func dispatch(ctx context.Context, args []string, stdout, stderr io.Writer) erro
 			return err
 		}
 		return migrate(ctx, cfg, sub, newLogger(cfg.Log, stderr), stdout)
+	case "storage":
+		return storageCmd(ctx, args, stdout, stderr)
 	case "help", "-h", "--help":
 		fmt.Fprint(stdout, usage)
 		return nil
