@@ -7,7 +7,6 @@
   "tab.invites": "Invitations",
   "role.owner": "Owner",
   "role.member": "Member",
-  "role.billing": "Billing",
   "permission.read": "Read",
   "permission.triage": "Triage",
   "permission.write": "Write",
@@ -63,5 +62,7 @@
   "accept.submit": "Accept the invitation",
   "accept.decline": "Not now",
   "accept.noToken": "Invitation link missing",
-  "accept.noTokenBody": "Open the link from the invitation email again."
+  "accept.noTokenBody": "Open the link from the invitation email again.",
+  "tab.repos": "Repositories",
+  "list.title": "Repositories"
 }

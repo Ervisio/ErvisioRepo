@@ -331,7 +331,7 @@ func (q *Queries) GetOrgMemberRole(ctx context.Context, arg GetOrgMemberRolePara
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT u.id, n.name AS username, u.display_name, u.role, u.locale, u.suspended_at, u.created_at,
+SELECT u.id, n.name AS username, u.display_name, u.avatar_url, u.role, u.locale, u.suspended_at, u.created_at,
        e.id AS email_id, e.address AS email, e.verified_at AS email_verified_at
 FROM users u
 JOIN namespaces n ON n.id = u.id
@@ -343,6 +343,7 @@ type GetUserByIDRow struct {
 	ID              uuid.UUID
 	Username        string
 	DisplayName     string
+	AvatarUrl       string
 	Role            string
 	Locale          string
 	SuspendedAt     pgtype.Timestamptz
@@ -359,6 +360,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 		&i.ID,
 		&i.Username,
 		&i.DisplayName,
+		&i.AvatarUrl,
 		&i.Role,
 		&i.Locale,
 		&i.SuspendedAt,

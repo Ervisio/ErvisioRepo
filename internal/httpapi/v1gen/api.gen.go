@@ -103,18 +103,15 @@ func (e MfaChallengeMethods) Valid() bool {
 
 // Defines values for OrgRole.
 const (
-	OrgRoleAdmin   OrgRole = "admin"
-	OrgRoleBilling OrgRole = "billing"
-	OrgRoleMember  OrgRole = "member"
-	OrgRoleOwner   OrgRole = "owner"
+	OrgRoleAdmin  OrgRole = "admin"
+	OrgRoleMember OrgRole = "member"
+	OrgRoleOwner  OrgRole = "owner"
 )
 
 // Valid indicates whether the value is a known member of the OrgRole enum.
 func (e OrgRole) Valid() bool {
 	switch e {
 	case OrgRoleAdmin:
-		return true
-	case OrgRoleBilling:
 		return true
 	case OrgRoleMember:
 		return true
@@ -149,6 +146,24 @@ func (e Permission) Valid() bool {
 	case PermissionTriage:
 		return true
 	case PermissionWrite:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProfileUpdateLocale.
+const (
+	ProfileUpdateLocaleEn ProfileUpdateLocale = "en"
+	ProfileUpdateLocaleIt ProfileUpdateLocale = "it"
+)
+
+// Valid indicates whether the value is a known member of the ProfileUpdateLocale enum.
+func (e ProfileUpdateLocale) Valid() bool {
+	switch e {
+	case ProfileUpdateLocaleEn:
+		return true
+	case ProfileUpdateLocaleIt:
 		return true
 	default:
 		return false
@@ -193,25 +208,25 @@ func (e RepoOwnerKind) Valid() bool {
 
 // Defines values for RepoStorageState.
 const (
-	Cold      RepoStorageState = "cold"
-	Degraded  RepoStorageState = "degraded"
-	Evicting  RepoStorageState = "evicting"
-	Hot       RepoStorageState = "hot"
-	Hydrating RepoStorageState = "hydrating"
+	RepoStorageStateCold      RepoStorageState = "cold"
+	RepoStorageStateDegraded  RepoStorageState = "degraded"
+	RepoStorageStateEvicting  RepoStorageState = "evicting"
+	RepoStorageStateHot       RepoStorageState = "hot"
+	RepoStorageStateHydrating RepoStorageState = "hydrating"
 )
 
 // Valid indicates whether the value is a known member of the RepoStorageState enum.
 func (e RepoStorageState) Valid() bool {
 	switch e {
-	case Cold:
+	case RepoStorageStateCold:
 		return true
-	case Degraded:
+	case RepoStorageStateDegraded:
 		return true
-	case Evicting:
+	case RepoStorageStateEvicting:
 		return true
-	case Hot:
+	case RepoStorageStateHot:
 		return true
-	case Hydrating:
+	case RepoStorageStateHydrating:
 		return true
 	default:
 		return false
@@ -239,6 +254,33 @@ func (e RepoPermissionRequestPermission) Valid() bool {
 	case RepoPermissionRequestPermissionTriage:
 		return true
 	case RepoPermissionRequestPermissionWrite:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RepoTieringState.
+const (
+	RepoTieringStateCold      RepoTieringState = "cold"
+	RepoTieringStateDegraded  RepoTieringState = "degraded"
+	RepoTieringStateEvicting  RepoTieringState = "evicting"
+	RepoTieringStateHot       RepoTieringState = "hot"
+	RepoTieringStateHydrating RepoTieringState = "hydrating"
+)
+
+// Valid indicates whether the value is a known member of the RepoTieringState enum.
+func (e RepoTieringState) Valid() bool {
+	switch e {
+	case RepoTieringStateCold:
+		return true
+	case RepoTieringStateDegraded:
+		return true
+	case RepoTieringStateEvicting:
+		return true
+	case RepoTieringStateHot:
+		return true
+	case RepoTieringStateHydrating:
 		return true
 	default:
 		return false
@@ -476,6 +518,15 @@ type CreatedAccessToken struct {
 	Token  AccessToken `json:"token"`
 }
 
+// EmailAddress defines model for EmailAddress.
+type EmailAddress struct {
+	Address   string             `json:"address"`
+	CreatedAt time.Time          `json:"createdAt"`
+	Id        openapi_types.UUID `json:"id"`
+	Primary   bool               `json:"primary"`
+	Verified  bool               `json:"verified"`
+}
+
 // EmailRequest defines model for EmailRequest.
 type EmailRequest struct {
 	Email string `json:"email"`
@@ -691,6 +742,12 @@ type PasskeyRegisterRequest struct {
 	Name       string                 `json:"name"`
 }
 
+// PasswordChange defines model for PasswordChange.
+type PasswordChange struct {
+	CurrentPassword *string `json:"currentPassword,omitempty"`
+	NewPassword     string  `json:"newPassword"`
+}
+
 // Permission defines model for Permission.
 type Permission string
 
@@ -702,6 +759,17 @@ type Problem struct {
 	Title    string  `json:"title"`
 	Type     string  `json:"type"`
 }
+
+// ProfileUpdate defines model for ProfileUpdate.
+type ProfileUpdate struct {
+	// AvatarUrl Absolute https URL, or empty to clear
+	AvatarUrl   *string             `json:"avatarUrl,omitempty"`
+	DisplayName string              `json:"displayName"`
+	Locale      ProfileUpdateLocale `json:"locale"`
+}
+
+// ProfileUpdateLocale defines model for ProfileUpdate.Locale.
+type ProfileUpdateLocale string
 
 // Quota defines model for Quota.
 type Quota struct {
@@ -799,6 +867,18 @@ type RepoPermissionRequest struct {
 // RepoPermissionRequestPermission defines model for RepoPermissionRequest.Permission.
 type RepoPermissionRequestPermission string
 
+// RepoTiering defines model for RepoTiering.
+type RepoTiering struct {
+	// ManifestSeq Last pack journal sequence recorded for the repository.
+	ManifestSeq int64            `json:"manifestSeq"`
+	Pinned      bool             `json:"pinned"`
+	SizeBytes   int64            `json:"sizeBytes"`
+	State       RepoTieringState `json:"state"`
+}
+
+// RepoTieringState defines model for RepoTiering.State.
+type RepoTieringState string
+
 // RepoTransfer defines model for RepoTransfer.
 type RepoTransfer struct {
 	// NewName Defaults to the current name
@@ -835,6 +915,17 @@ type SecurityStatus struct {
 	// TotpPending An authenticator app setup waits for its first code
 	TotpPending       bool `json:"totpPending"`
 	WebauthnAvailable bool `json:"webauthnAvailable"`
+}
+
+// SessionInfo defines model for SessionInfo.
+type SessionInfo struct {
+	CreatedAt  time.Time          `json:"createdAt"`
+	Current    bool               `json:"current"`
+	ExpiresAt  time.Time          `json:"expiresAt"`
+	Id         openapi_types.UUID `json:"id"`
+	Ip         string             `json:"ip"`
+	LastSeenAt time.Time          `json:"lastSeenAt"`
+	UserAgent  string             `json:"userAgent"`
 }
 
 // SshKey defines model for SshKey.
@@ -1012,6 +1103,8 @@ type TotpSetup struct {
 
 // User defines model for User.
 type User struct {
+	// AvatarUrl Absolute https URL of the avatar; empty when unset
+	AvatarUrl   *string   `json:"avatarUrl,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
 	DisplayName string    `json:"displayName"`
 
@@ -1206,6 +1299,9 @@ type SetRepoCollaboratorJSONRequestBody = RepoPermissionRequest
 // TransferRepoJSONRequestBody defines body for TransferRepo for application/json ContentType.
 type TransferRepoJSONRequestBody = RepoTransfer
 
+// AddEmailJSONRequestBody defines body for AddEmail for application/json ContentType.
+type AddEmailJSONRequestBody = EmailRequest
+
 // AddGpgKeyJSONRequestBody defines body for AddGpgKey for application/json ContentType.
 type AddGpgKeyJSONRequestBody = GpgKeyCreate
 
@@ -1214,6 +1310,12 @@ type AddSshKeyJSONRequestBody = SshKeyCreate
 
 // BeginOidcLinkJSONRequestBody defines body for BeginOidcLink for application/json ContentType.
 type BeginOidcLinkJSONRequestBody = OidcLinkRequest
+
+// ChangePasswordJSONRequestBody defines body for ChangePassword for application/json ContentType.
+type ChangePasswordJSONRequestBody = PasswordChange
+
+// UpdateProfileJSONRequestBody defines body for UpdateProfile for application/json ContentType.
+type UpdateProfileJSONRequestBody = ProfileUpdate
 
 // CreateUserRepoJSONRequestBody defines body for CreateUserRepo for application/json ContentType.
 type CreateUserRepoJSONRequestBody = RepoCreate
@@ -1250,6 +1352,15 @@ type ServerInterface interface {
 	// CreateInvite Create an instance invitation
 	// (POST /admin/invites)
 	CreateInvite(w http.ResponseWriter, r *http.Request)
+	// EvictAdminRepo Evict a hot repository to the remote tier now
+	// (POST /admin/repos/{owner}/{name}/evict)
+	EvictAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// UnpinAdminRepo Let the eviction job move a repository off the hot tier again
+	// (DELETE /admin/repos/{owner}/{name}/pin)
+	UnpinAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// PinAdminRepo Pin a repository on the hot tier
+	// (PUT /admin/repos/{owner}/{name}/pin)
+	PinAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
 	// GetAdminStorage Storage targets, policies, cache usage and permanent warnings
 	// (GET /admin/storage)
 	GetAdminStorage(w http.ResponseWriter, r *http.Request)
@@ -1406,6 +1517,21 @@ type ServerInterface interface {
 	// GetCurrentUser The signed-in user
 	// (GET /user)
 	GetCurrentUser(w http.ResponseWriter, r *http.Request)
+	// ListEmails Email addresses of the signed-in user
+	// (GET /user/emails)
+	ListEmails(w http.ResponseWriter, r *http.Request)
+	// AddEmail Add an email address
+	// (POST /user/emails)
+	AddEmail(w http.ResponseWriter, r *http.Request)
+	// DeleteEmail Remove an email address
+	// (DELETE /user/emails/{id})
+	DeleteEmail(w http.ResponseWriter, r *http.Request, id CredentialID)
+	// SetPrimaryEmail Make an address the primary one
+	// (POST /user/emails/{id}/primary)
+	SetPrimaryEmail(w http.ResponseWriter, r *http.Request, id CredentialID)
+	// ResendEmailVerification Send the verification link again
+	// (POST /user/emails/{id}/verify)
+	ResendEmailVerification(w http.ResponseWriter, r *http.Request, id CredentialID)
 	// ListGpgKeys GPG public keys of the account
 	// (GET /user/keys/gpg)
 	ListGpgKeys(w http.ResponseWriter, r *http.Request)
@@ -1433,6 +1559,12 @@ type ServerInterface interface {
 	// BeginOidcLink Start linking an external identity
 	// (POST /user/oidc/{provider}/link)
 	BeginOidcLink(w http.ResponseWriter, r *http.Request, provider string)
+	// ChangePassword Change the password
+	// (PUT /user/password)
+	ChangePassword(w http.ResponseWriter, r *http.Request)
+	// UpdateProfile Change display name, avatar and language
+	// (PATCH /user/profile)
+	UpdateProfile(w http.ResponseWriter, r *http.Request)
 	// ListMyRepos Repositories the caller reaches by ownership, membership or grant
 	// (GET /user/repos)
 	ListMyRepos(w http.ResponseWriter, r *http.Request, params ListMyReposParams)
@@ -1463,6 +1595,15 @@ type ServerInterface interface {
 	// ConfirmTotp Enable the authenticator app with a first code
 	// (POST /user/security/totp/confirm)
 	ConfirmTotp(w http.ResponseWriter, r *http.Request)
+	// RevokeOtherSessions Sign out everywhere else
+	// (DELETE /user/sessions)
+	RevokeOtherSessions(w http.ResponseWriter, r *http.Request)
+	// ListSessions Active sessions of the signed-in user
+	// (GET /user/sessions)
+	ListSessions(w http.ResponseWriter, r *http.Request)
+	// RevokeSession Revoke a session
+	// (DELETE /user/sessions/{id})
+	RevokeSession(w http.ResponseWriter, r *http.Request, id CredentialID)
 	// ListAccessTokens Personal access tokens of the account
 	// (GET /user/tokens)
 	ListAccessTokens(w http.ResponseWriter, r *http.Request)
@@ -1490,6 +1631,24 @@ func (_ Unimplemented) ListAdminAudit(w http.ResponseWriter, r *http.Request, pa
 // CreateInvite Create an instance invitation
 // (POST /admin/invites)
 func (_ Unimplemented) CreateInvite(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// EvictAdminRepo Evict a hot repository to the remote tier now
+// (POST /admin/repos/{owner}/{name}/evict)
+func (_ Unimplemented) EvictAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UnpinAdminRepo Let the eviction job move a repository off the hot tier again
+// (DELETE /admin/repos/{owner}/{name}/pin)
+func (_ Unimplemented) UnpinAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PinAdminRepo Pin a repository on the hot tier
+// (PUT /admin/repos/{owner}/{name}/pin)
+func (_ Unimplemented) PinAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1805,6 +1964,36 @@ func (_ Unimplemented) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListEmails Email addresses of the signed-in user
+// (GET /user/emails)
+func (_ Unimplemented) ListEmails(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AddEmail Add an email address
+// (POST /user/emails)
+func (_ Unimplemented) AddEmail(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteEmail Remove an email address
+// (DELETE /user/emails/{id})
+func (_ Unimplemented) DeleteEmail(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetPrimaryEmail Make an address the primary one
+// (POST /user/emails/{id}/primary)
+func (_ Unimplemented) SetPrimaryEmail(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ResendEmailVerification Send the verification link again
+// (POST /user/emails/{id}/verify)
+func (_ Unimplemented) ResendEmailVerification(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListGpgKeys GPG public keys of the account
 // (GET /user/keys/gpg)
 func (_ Unimplemented) ListGpgKeys(w http.ResponseWriter, r *http.Request) {
@@ -1856,6 +2045,18 @@ func (_ Unimplemented) UnlinkOidc(w http.ResponseWriter, r *http.Request, id Cre
 // BeginOidcLink Start linking an external identity
 // (POST /user/oidc/{provider}/link)
 func (_ Unimplemented) BeginOidcLink(w http.ResponseWriter, r *http.Request, provider string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ChangePassword Change the password
+// (PUT /user/password)
+func (_ Unimplemented) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateProfile Change display name, avatar and language
+// (PATCH /user/profile)
+func (_ Unimplemented) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1916,6 +2117,24 @@ func (_ Unimplemented) SetupTotp(w http.ResponseWriter, r *http.Request) {
 // ConfirmTotp Enable the authenticator app with a first code
 // (POST /user/security/totp/confirm)
 func (_ Unimplemented) ConfirmTotp(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RevokeOtherSessions Sign out everywhere else
+// (DELETE /user/sessions)
+func (_ Unimplemented) RevokeOtherSessions(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListSessions Active sessions of the signed-in user
+// (GET /user/sessions)
+func (_ Unimplemented) ListSessions(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RevokeSession Revoke a session
+// (DELETE /user/sessions/{id})
+func (_ Unimplemented) RevokeSession(w http.ResponseWriter, r *http.Request, id CredentialID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2054,6 +2273,129 @@ func (siw *ServerInterfaceWrapper) CreateInvite(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateInvite(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EvictAdminRepo operation middleware
+func (siw *ServerInterfaceWrapper) EvictAdminRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EvictAdminRepo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnpinAdminRepo operation middleware
+func (siw *ServerInterfaceWrapper) UnpinAdminRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnpinAdminRepo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PinAdminRepo operation middleware
+func (siw *ServerInterfaceWrapper) PinAdminRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PinAdminRepo(w, r, owner, name)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3614,6 +3956,142 @@ func (siw *ServerInterfaceWrapper) GetCurrentUser(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// ListEmails operation middleware
+func (siw *ServerInterfaceWrapper) ListEmails(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListEmails(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddEmail operation middleware
+func (siw *ServerInterfaceWrapper) AddEmail(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddEmail(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteEmail operation middleware
+func (siw *ServerInterfaceWrapper) DeleteEmail(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id CredentialID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteEmail(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetPrimaryEmail operation middleware
+func (siw *ServerInterfaceWrapper) SetPrimaryEmail(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id CredentialID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetPrimaryEmail(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResendEmailVerification operation middleware
+func (siw *ServerInterfaceWrapper) ResendEmailVerification(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id CredentialID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResendEmailVerification(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListGpgKeys operation middleware
 func (siw *ServerInterfaceWrapper) ListGpgKeys(w http.ResponseWriter, r *http.Request) {
 
@@ -3845,6 +4323,46 @@ func (siw *ServerInterfaceWrapper) BeginOidcLink(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.BeginOidcLink(w, r, provider)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ChangePassword operation middleware
+func (siw *ServerInterfaceWrapper) ChangePassword(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ChangePassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateProfile operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProfile(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4093,6 +4611,78 @@ func (siw *ServerInterfaceWrapper) ConfirmTotp(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ConfirmTotp(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeOtherSessions operation middleware
+func (siw *ServerInterfaceWrapper) RevokeOtherSessions(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeOtherSessions(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSessions operation middleware
+func (siw *ServerInterfaceWrapper) ListSessions(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSessions(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeSession operation middleware
+func (siw *ServerInterfaceWrapper) RevokeSession(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id CredentialID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeSession(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4360,6 +4950,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/admin/storage/{target}/test", wrapper.TestAdminStorageTarget)
 	})
 	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/admin/repos/{owner}/{name}/pin", wrapper.UnpinAdminRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/admin/repos/{owner}/{name}/pin", wrapper.PinAdminRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/repos/{owner}/{name}/evict", wrapper.EvictAdminRepo)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/admin/invites", wrapper.CreateInvite)
 	})
 	r.Group(func(r chi.Router) {
@@ -4385,6 +4984,36 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/user", wrapper.GetCurrentUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/user/profile", wrapper.UpdateProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/user/password", wrapper.ChangePassword)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/sessions", wrapper.RevokeOtherSessions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/sessions", wrapper.ListSessions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/sessions/{id}", wrapper.RevokeSession)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/emails", wrapper.ListEmails)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/emails", wrapper.AddEmail)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/emails/{id}", wrapper.DeleteEmail)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/emails/{id}/primary", wrapper.SetPrimaryEmail)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/emails/{id}/verify", wrapper.ResendEmailVerification)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/auth/mfa", wrapper.GetMfaChallenge)
@@ -4688,6 +5317,188 @@ type CreateInvitedefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response CreateInvitedefaultApplicationProblemPlusJSONResponse) VisitCreateInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvictAdminRepoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type EvictAdminRepoResponseObject interface {
+	VisitEvictAdminRepoResponse(w http.ResponseWriter) error
+}
+
+type EvictAdminRepo200JSONResponse RepoTiering
+
+func (response EvictAdminRepo200JSONResponse) VisitEvictAdminRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvictAdminRepo404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response EvictAdminRepo404ApplicationProblemPlusJSONResponse) VisitEvictAdminRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvictAdminRepo409ApplicationProblemPlusJSONResponse Problem
+
+func (response EvictAdminRepo409ApplicationProblemPlusJSONResponse) VisitEvictAdminRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvictAdminRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response EvictAdminRepodefaultApplicationProblemPlusJSONResponse) VisitEvictAdminRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnpinAdminRepoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type UnpinAdminRepoResponseObject interface {
+	VisitUnpinAdminRepoResponse(w http.ResponseWriter) error
+}
+
+type UnpinAdminRepo200JSONResponse RepoTiering
+
+func (response UnpinAdminRepo200JSONResponse) VisitUnpinAdminRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnpinAdminRepo404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UnpinAdminRepo404ApplicationProblemPlusJSONResponse) VisitUnpinAdminRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnpinAdminRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UnpinAdminRepodefaultApplicationProblemPlusJSONResponse) VisitUnpinAdminRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PinAdminRepoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type PinAdminRepoResponseObject interface {
+	VisitPinAdminRepoResponse(w http.ResponseWriter) error
+}
+
+type PinAdminRepo200JSONResponse RepoTiering
+
+func (response PinAdminRepo200JSONResponse) VisitPinAdminRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PinAdminRepo404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PinAdminRepo404ApplicationProblemPlusJSONResponse) VisitPinAdminRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PinAdminRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PinAdminRepodefaultApplicationProblemPlusJSONResponse) VisitPinAdminRepoResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -8549,6 +9360,394 @@ func (response GetCurrentUserdefaultApplicationProblemPlusJSONResponse) VisitGet
 	return err
 }
 
+type ListEmailsRequestObject struct {
+}
+
+type ListEmailsResponseObject interface {
+	VisitListEmailsResponse(w http.ResponseWriter) error
+}
+
+type ListEmails200JSONResponse []EmailAddress
+
+func (response ListEmails200JSONResponse) VisitListEmailsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEmails401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListEmails401ApplicationProblemPlusJSONResponse) VisitListEmailsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEmailsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListEmailsdefaultApplicationProblemPlusJSONResponse) VisitListEmailsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddEmailRequestObject struct {
+	Body *AddEmailJSONRequestBody
+}
+
+type AddEmailResponseObject interface {
+	VisitAddEmailResponse(w http.ResponseWriter) error
+}
+
+type AddEmail201JSONResponse EmailAddress
+
+func (response AddEmail201JSONResponse) VisitAddEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddEmail400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AddEmail400ApplicationProblemPlusJSONResponse) VisitAddEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddEmail401ApplicationProblemPlusJSONResponse Problem
+
+func (response AddEmail401ApplicationProblemPlusJSONResponse) VisitAddEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddEmail409ApplicationProblemPlusJSONResponse Problem
+
+func (response AddEmail409ApplicationProblemPlusJSONResponse) VisitAddEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddEmail429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response AddEmail429ApplicationProblemPlusJSONResponse) VisitAddEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddEmaildefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response AddEmaildefaultApplicationProblemPlusJSONResponse) VisitAddEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteEmailRequestObject struct {
+	Id CredentialID `json:"id"`
+}
+
+type DeleteEmailResponseObject interface {
+	VisitDeleteEmailResponse(w http.ResponseWriter) error
+}
+
+type DeleteEmail204Response struct {
+}
+
+func (response DeleteEmail204Response) VisitDeleteEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteEmail401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteEmail401ApplicationProblemPlusJSONResponse) VisitDeleteEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteEmail404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteEmail404ApplicationProblemPlusJSONResponse) VisitDeleteEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteEmail409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteEmail409ApplicationProblemPlusJSONResponse) VisitDeleteEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteEmaildefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteEmaildefaultApplicationProblemPlusJSONResponse) VisitDeleteEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetPrimaryEmailRequestObject struct {
+	Id CredentialID `json:"id"`
+}
+
+type SetPrimaryEmailResponseObject interface {
+	VisitSetPrimaryEmailResponse(w http.ResponseWriter) error
+}
+
+type SetPrimaryEmail204Response struct {
+}
+
+func (response SetPrimaryEmail204Response) VisitSetPrimaryEmailResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SetPrimaryEmail401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetPrimaryEmail401ApplicationProblemPlusJSONResponse) VisitSetPrimaryEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetPrimaryEmail404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetPrimaryEmail404ApplicationProblemPlusJSONResponse) VisitSetPrimaryEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetPrimaryEmail409ApplicationProblemPlusJSONResponse Problem
+
+func (response SetPrimaryEmail409ApplicationProblemPlusJSONResponse) VisitSetPrimaryEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetPrimaryEmaildefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetPrimaryEmaildefaultApplicationProblemPlusJSONResponse) VisitSetPrimaryEmailResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResendEmailVerificationRequestObject struct {
+	Id CredentialID `json:"id"`
+}
+
+type ResendEmailVerificationResponseObject interface {
+	VisitResendEmailVerificationResponse(w http.ResponseWriter) error
+}
+
+type ResendEmailVerification202Response struct {
+}
+
+func (response ResendEmailVerification202Response) VisitResendEmailVerificationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type ResendEmailVerification401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ResendEmailVerification401ApplicationProblemPlusJSONResponse) VisitResendEmailVerificationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResendEmailVerification404ApplicationProblemPlusJSONResponse Problem
+
+func (response ResendEmailVerification404ApplicationProblemPlusJSONResponse) VisitResendEmailVerificationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResendEmailVerification429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response ResendEmailVerification429ApplicationProblemPlusJSONResponse) VisitResendEmailVerificationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResendEmailVerificationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ResendEmailVerificationdefaultApplicationProblemPlusJSONResponse) VisitResendEmailVerificationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListGpgKeysRequestObject struct {
 }
 
@@ -9133,6 +10332,23 @@ func (response BeginOidcLink404ApplicationProblemPlusJSONResponse) VisitBeginOid
 	return err
 }
 
+type BeginOidcLink429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response BeginOidcLink429ApplicationProblemPlusJSONResponse) VisitBeginOidcLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type BeginOidcLink502ApplicationProblemPlusJSONResponse Problem
 
 func (response BeginOidcLink502ApplicationProblemPlusJSONResponse) VisitBeginOidcLinkResponse(w http.ResponseWriter) error {
@@ -9153,6 +10369,155 @@ type BeginOidcLinkdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response BeginOidcLinkdefaultApplicationProblemPlusJSONResponse) VisitBeginOidcLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangePasswordRequestObject struct {
+	Body *ChangePasswordJSONRequestBody
+}
+
+type ChangePasswordResponseObject interface {
+	VisitChangePasswordResponse(w http.ResponseWriter) error
+}
+
+type ChangePassword204Response struct {
+}
+
+func (response ChangePassword204Response) VisitChangePasswordResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ChangePassword400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ChangePassword400ApplicationProblemPlusJSONResponse) VisitChangePasswordResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangePassword401ApplicationProblemPlusJSONResponse Problem
+
+func (response ChangePassword401ApplicationProblemPlusJSONResponse) VisitChangePasswordResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangePassword429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response ChangePassword429ApplicationProblemPlusJSONResponse) VisitChangePasswordResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangePassworddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ChangePassworddefaultApplicationProblemPlusJSONResponse) VisitChangePasswordResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateProfileRequestObject struct {
+	Body *UpdateProfileJSONRequestBody
+}
+
+type UpdateProfileResponseObject interface {
+	VisitUpdateProfileResponse(w http.ResponseWriter) error
+}
+
+type UpdateProfile200JSONResponse User
+
+func (response UpdateProfile200JSONResponse) VisitUpdateProfileResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateProfile400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateProfile400ApplicationProblemPlusJSONResponse) VisitUpdateProfileResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateProfile401ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateProfile401ApplicationProblemPlusJSONResponse) VisitUpdateProfileResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateProfiledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateProfiledefaultApplicationProblemPlusJSONResponse) VisitUpdateProfileResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -10096,6 +11461,171 @@ func (response ConfirmTotpdefaultApplicationProblemPlusJSONResponse) VisitConfir
 	return err
 }
 
+type RevokeOtherSessionsRequestObject struct {
+}
+
+type RevokeOtherSessionsResponseObject interface {
+	VisitRevokeOtherSessionsResponse(w http.ResponseWriter) error
+}
+
+type RevokeOtherSessions204Response struct {
+}
+
+func (response RevokeOtherSessions204Response) VisitRevokeOtherSessionsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeOtherSessions401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeOtherSessions401ApplicationProblemPlusJSONResponse) VisitRevokeOtherSessionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeOtherSessionsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RevokeOtherSessionsdefaultApplicationProblemPlusJSONResponse) VisitRevokeOtherSessionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSessionsRequestObject struct {
+}
+
+type ListSessionsResponseObject interface {
+	VisitListSessionsResponse(w http.ResponseWriter) error
+}
+
+type ListSessions200JSONResponse []SessionInfo
+
+func (response ListSessions200JSONResponse) VisitListSessionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSessions401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSessions401ApplicationProblemPlusJSONResponse) VisitListSessionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSessionsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListSessionsdefaultApplicationProblemPlusJSONResponse) VisitListSessionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeSessionRequestObject struct {
+	Id CredentialID `json:"id"`
+}
+
+type RevokeSessionResponseObject interface {
+	VisitRevokeSessionResponse(w http.ResponseWriter) error
+}
+
+type RevokeSession204Response struct {
+}
+
+func (response RevokeSession204Response) VisitRevokeSessionResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeSession401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeSession401ApplicationProblemPlusJSONResponse) VisitRevokeSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeSession404ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeSession404ApplicationProblemPlusJSONResponse) VisitRevokeSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeSessiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RevokeSessiondefaultApplicationProblemPlusJSONResponse) VisitRevokeSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListAccessTokensRequestObject struct {
 }
 
@@ -10374,6 +11904,15 @@ type StrictServerInterface interface {
 	// CreateInvite Create an instance invitation
 	// (POST /admin/invites)
 	CreateInvite(ctx context.Context, request CreateInviteRequestObject) (CreateInviteResponseObject, error)
+	// EvictAdminRepo Evict a hot repository to the remote tier now
+	// (POST /admin/repos/{owner}/{name}/evict)
+	EvictAdminRepo(ctx context.Context, request EvictAdminRepoRequestObject) (EvictAdminRepoResponseObject, error)
+	// UnpinAdminRepo Let the eviction job move a repository off the hot tier again
+	// (DELETE /admin/repos/{owner}/{name}/pin)
+	UnpinAdminRepo(ctx context.Context, request UnpinAdminRepoRequestObject) (UnpinAdminRepoResponseObject, error)
+	// PinAdminRepo Pin a repository on the hot tier
+	// (PUT /admin/repos/{owner}/{name}/pin)
+	PinAdminRepo(ctx context.Context, request PinAdminRepoRequestObject) (PinAdminRepoResponseObject, error)
 	// GetAdminStorage Storage targets, policies, cache usage and permanent warnings
 	// (GET /admin/storage)
 	GetAdminStorage(ctx context.Context, request GetAdminStorageRequestObject) (GetAdminStorageResponseObject, error)
@@ -10530,6 +12069,21 @@ type StrictServerInterface interface {
 	// GetCurrentUser The signed-in user
 	// (GET /user)
 	GetCurrentUser(ctx context.Context, request GetCurrentUserRequestObject) (GetCurrentUserResponseObject, error)
+	// ListEmails Email addresses of the signed-in user
+	// (GET /user/emails)
+	ListEmails(ctx context.Context, request ListEmailsRequestObject) (ListEmailsResponseObject, error)
+	// AddEmail Add an email address
+	// (POST /user/emails)
+	AddEmail(ctx context.Context, request AddEmailRequestObject) (AddEmailResponseObject, error)
+	// DeleteEmail Remove an email address
+	// (DELETE /user/emails/{id})
+	DeleteEmail(ctx context.Context, request DeleteEmailRequestObject) (DeleteEmailResponseObject, error)
+	// SetPrimaryEmail Make an address the primary one
+	// (POST /user/emails/{id}/primary)
+	SetPrimaryEmail(ctx context.Context, request SetPrimaryEmailRequestObject) (SetPrimaryEmailResponseObject, error)
+	// ResendEmailVerification Send the verification link again
+	// (POST /user/emails/{id}/verify)
+	ResendEmailVerification(ctx context.Context, request ResendEmailVerificationRequestObject) (ResendEmailVerificationResponseObject, error)
 	// ListGpgKeys GPG public keys of the account
 	// (GET /user/keys/gpg)
 	ListGpgKeys(ctx context.Context, request ListGpgKeysRequestObject) (ListGpgKeysResponseObject, error)
@@ -10557,6 +12111,12 @@ type StrictServerInterface interface {
 	// BeginOidcLink Start linking an external identity
 	// (POST /user/oidc/{provider}/link)
 	BeginOidcLink(ctx context.Context, request BeginOidcLinkRequestObject) (BeginOidcLinkResponseObject, error)
+	// ChangePassword Change the password
+	// (PUT /user/password)
+	ChangePassword(ctx context.Context, request ChangePasswordRequestObject) (ChangePasswordResponseObject, error)
+	// UpdateProfile Change display name, avatar and language
+	// (PATCH /user/profile)
+	UpdateProfile(ctx context.Context, request UpdateProfileRequestObject) (UpdateProfileResponseObject, error)
 	// ListMyRepos Repositories the caller reaches by ownership, membership or grant
 	// (GET /user/repos)
 	ListMyRepos(ctx context.Context, request ListMyReposRequestObject) (ListMyReposResponseObject, error)
@@ -10587,6 +12147,15 @@ type StrictServerInterface interface {
 	// ConfirmTotp Enable the authenticator app with a first code
 	// (POST /user/security/totp/confirm)
 	ConfirmTotp(ctx context.Context, request ConfirmTotpRequestObject) (ConfirmTotpResponseObject, error)
+	// RevokeOtherSessions Sign out everywhere else
+	// (DELETE /user/sessions)
+	RevokeOtherSessions(ctx context.Context, request RevokeOtherSessionsRequestObject) (RevokeOtherSessionsResponseObject, error)
+	// ListSessions Active sessions of the signed-in user
+	// (GET /user/sessions)
+	ListSessions(ctx context.Context, request ListSessionsRequestObject) (ListSessionsResponseObject, error)
+	// RevokeSession Revoke a session
+	// (DELETE /user/sessions/{id})
+	RevokeSession(ctx context.Context, request RevokeSessionRequestObject) (RevokeSessionResponseObject, error)
 	// ListAccessTokens Personal access tokens of the account
 	// (GET /user/tokens)
 	ListAccessTokens(ctx context.Context, request ListAccessTokensRequestObject) (ListAccessTokensResponseObject, error)
@@ -10690,6 +12259,87 @@ func (sh *strictHandler) CreateInvite(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateInviteResponseObject); ok {
 		if err := validResponse.VisitCreateInviteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EvictAdminRepo operation middleware
+func (sh *strictHandler) EvictAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request EvictAdminRepoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EvictAdminRepo(ctx, request.(EvictAdminRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EvictAdminRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EvictAdminRepoResponseObject); ok {
+		if err := validResponse.VisitEvictAdminRepoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnpinAdminRepo operation middleware
+func (sh *strictHandler) UnpinAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request UnpinAdminRepoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnpinAdminRepo(ctx, request.(UnpinAdminRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnpinAdminRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnpinAdminRepoResponseObject); ok {
+		if err := validResponse.VisitUnpinAdminRepoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PinAdminRepo operation middleware
+func (sh *strictHandler) PinAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request PinAdminRepoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PinAdminRepo(ctx, request.(PinAdminRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PinAdminRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PinAdminRepoResponseObject); ok {
+		if err := validResponse.VisitPinAdminRepoResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -12186,6 +13836,139 @@ func (sh *strictHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// ListEmails operation middleware
+func (sh *strictHandler) ListEmails(w http.ResponseWriter, r *http.Request) {
+	var request ListEmailsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListEmails(ctx, request.(ListEmailsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListEmails")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListEmailsResponseObject); ok {
+		if err := validResponse.VisitListEmailsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddEmail operation middleware
+func (sh *strictHandler) AddEmail(w http.ResponseWriter, r *http.Request) {
+	var request AddEmailRequestObject
+
+	var body AddEmailJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddEmail(ctx, request.(AddEmailRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddEmail")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddEmailResponseObject); ok {
+		if err := validResponse.VisitAddEmailResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteEmail operation middleware
+func (sh *strictHandler) DeleteEmail(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	var request DeleteEmailRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteEmail(ctx, request.(DeleteEmailRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteEmail")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteEmailResponseObject); ok {
+		if err := validResponse.VisitDeleteEmailResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetPrimaryEmail operation middleware
+func (sh *strictHandler) SetPrimaryEmail(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	var request SetPrimaryEmailRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetPrimaryEmail(ctx, request.(SetPrimaryEmailRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetPrimaryEmail")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetPrimaryEmailResponseObject); ok {
+		if err := validResponse.VisitSetPrimaryEmailResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ResendEmailVerification operation middleware
+func (sh *strictHandler) ResendEmailVerification(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	var request ResendEmailVerificationRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResendEmailVerification(ctx, request.(ResendEmailVerificationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResendEmailVerification")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResendEmailVerificationResponseObject); ok {
+		if err := validResponse.VisitResendEmailVerificationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListGpgKeys operation middleware
 func (sh *strictHandler) ListGpgKeys(w http.ResponseWriter, r *http.Request) {
 	var request ListGpgKeysRequestObject
@@ -12427,6 +14210,68 @@ func (sh *strictHandler) BeginOidcLink(w http.ResponseWriter, r *http.Request, p
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(BeginOidcLinkResponseObject); ok {
 		if err := validResponse.VisitBeginOidcLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ChangePassword operation middleware
+func (sh *strictHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	var request ChangePasswordRequestObject
+
+	var body ChangePasswordJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ChangePassword(ctx, request.(ChangePasswordRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ChangePassword")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ChangePasswordResponseObject); ok {
+		if err := validResponse.VisitChangePasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateProfile operation middleware
+func (sh *strictHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	var request UpdateProfileRequestObject
+
+	var body UpdateProfileJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateProfile(ctx, request.(UpdateProfileRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateProfile")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateProfileResponseObject); ok {
+		if err := validResponse.VisitUpdateProfileResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -12727,6 +14572,80 @@ func (sh *strictHandler) ConfirmTotp(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ConfirmTotpResponseObject); ok {
 		if err := validResponse.VisitConfirmTotpResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeOtherSessions operation middleware
+func (sh *strictHandler) RevokeOtherSessions(w http.ResponseWriter, r *http.Request) {
+	var request RevokeOtherSessionsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeOtherSessions(ctx, request.(RevokeOtherSessionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeOtherSessions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeOtherSessionsResponseObject); ok {
+		if err := validResponse.VisitRevokeOtherSessionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSessions operation middleware
+func (sh *strictHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
+	var request ListSessionsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSessions(ctx, request.(ListSessionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSessions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSessionsResponseObject); ok {
+		if err := validResponse.VisitListSessionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeSession operation middleware
+func (sh *strictHandler) RevokeSession(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	var request RevokeSessionRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeSession(ctx, request.(RevokeSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeSession")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeSessionResponseObject); ok {
+		if err := validResponse.VisitRevokeSessionResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

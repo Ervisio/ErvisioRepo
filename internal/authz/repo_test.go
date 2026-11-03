@@ -45,7 +45,6 @@ func TestRepoPermission(t *testing.T) {
 		{"org admin", RepoFacts{Signed: true, OrgRole: OrgAdmin}, PermAdmin},
 		{"org member base", RepoFacts{Signed: true, OrgRole: OrgMember, BasePermission: PermWrite}, PermWrite},
 		{"org member base none", RepoFacts{Signed: true, OrgRole: OrgMember, BasePermission: PermNone}, PermNone},
-		{"billing gets nothing", RepoFacts{Signed: true, OrgRole: OrgBilling, BasePermission: PermWrite}, PermNone},
 		{"team max", RepoFacts{Signed: true, OrgRole: OrgMember, BasePermission: PermRead, Teams: []Permission{PermTriage, PermMaintain}}, PermMaintain},
 		{"collaborator", RepoFacts{Signed: true, Collaborator: PermWrite}, PermWrite},
 		{"outside org member base ignored", RepoFacts{Signed: true, BasePermission: PermAdmin}, PermNone},

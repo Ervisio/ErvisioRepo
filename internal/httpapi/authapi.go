@@ -116,6 +116,9 @@ func userDTO(u identity.User) v1gen.User {
 	if u.Email != "" {
 		out.Email = &u.Email
 	}
+	if u.AvatarURL != "" {
+		out.AvatarUrl = &u.AvatarURL
+	}
 	return out
 }
 

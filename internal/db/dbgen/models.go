@@ -31,6 +31,13 @@ type Email struct {
 	CreatedAt    pgtype.Timestamptz
 }
 
+type GitGenerationsRetired struct {
+	RepoID     uuid.UUID
+	Generation int64
+	Keys       []string
+	RetiredAt  pgtype.Timestamptz
+}
+
 type GpgKey struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
@@ -178,22 +185,24 @@ type QuotaDefault struct {
 }
 
 type Repo struct {
-	ID             uuid.UUID
-	OwnerID        uuid.UUID
-	Name           string
-	NameLower      pgtype.Text
-	Description    string
-	Visibility     string
-	DefaultBranch  string
-	StorageState   string
-	StateChangedAt pgtype.Timestamptz
-	Pinned         bool
-	SizeBytes      int64
-	LastAccessAt   pgtype.Timestamptz
-	ManifestSeq    int64
-	CreatedBy      uuid.NullUUID
-	CreatedAt      pgtype.Timestamptz
-	UpdatedAt      pgtype.Timestamptz
+	ID                     uuid.UUID
+	OwnerID                uuid.UUID
+	Name                   string
+	NameLower              pgtype.Text
+	Description            string
+	Visibility             string
+	DefaultBranch          string
+	StorageState           string
+	StateChangedAt         pgtype.Timestamptz
+	Pinned                 bool
+	SizeBytes              int64
+	LastAccessAt           pgtype.Timestamptz
+	ManifestSeq            int64
+	CreatedBy              uuid.NullUUID
+	CreatedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+	JournalDirtySince      pgtype.Timestamptz
+	PushesSinceMaintenance int32
 }
 
 type RepoCollaborator struct {
@@ -306,6 +315,7 @@ type User struct {
 	SuspendedAt pgtype.Timestamptz
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
+	AvatarUrl   string
 }
 
 type WebauthnCredential struct {

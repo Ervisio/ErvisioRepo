@@ -3,7 +3,7 @@ package authz
 import "testing"
 
 func TestParseOrgRole(t *testing.T) {
-	for _, s := range []string{"owner", "admin", "member", "billing"} {
+	for _, s := range []string{"owner", "admin", "member"} {
 		if r, err := ParseOrgRole(s); err != nil || string(r) != s {
 			t.Fatalf("ParseOrgRole(%q) = %q, %v", s, r, err)
 		}
@@ -23,7 +23,6 @@ func TestOrgActor(t *testing.T) {
 		{Actor{Role: OrgOwner}, true, true, true},
 		{Actor{Role: OrgAdmin}, true, true, false},
 		{Actor{Role: OrgMember}, true, false, false},
-		{Actor{Role: OrgBilling}, true, false, false},
 		{Actor{}, false, false, false},
 		{Actor{Role: "bogus"}, false, false, false},
 		{Actor{InstanceAdmin: true}, true, true, true},
@@ -36,8 +35,8 @@ func TestOrgActor(t *testing.T) {
 }
 
 func TestCanAssignRole(t *testing.T) {
-	roles := []OrgRole{OrgNone, OrgOwner, OrgAdmin, OrgMember, OrgBilling}
-	for _, actor := range []Actor{{Role: OrgOwner}, {Role: OrgAdmin}, {Role: OrgMember}, {Role: OrgBilling}, {}, {InstanceAdmin: true}} {
+	roles := []OrgRole{OrgNone, OrgOwner, OrgAdmin, OrgMember}
+	for _, actor := range []Actor{{Role: OrgOwner}, {Role: OrgAdmin}, {Role: OrgMember}, {}, {InstanceAdmin: true}} {
 		for _, cur := range roles {
 			for _, next := range roles {
 				got := actor.CanAssignRole(cur, next)
@@ -74,7 +73,6 @@ func TestCanRemoveMember(t *testing.T) {
 		{Actor{Role: OrgAdmin}, OrgMember, false, true},
 		{Actor{Role: OrgMember}, OrgMember, false, false},
 		{Actor{Role: OrgMember}, OrgMember, true, true},
-		{Actor{Role: OrgBilling}, OrgBilling, true, true},
 		{Actor{}, OrgMember, false, false},
 		{Actor{}, OrgMember, true, false},
 		{Actor{InstanceAdmin: true}, OrgOwner, false, true},

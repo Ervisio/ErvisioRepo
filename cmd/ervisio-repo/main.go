@@ -3,6 +3,9 @@
 //	ervisio-repo serve   --config <path>
 //	ervisio-repo migrate up|status --config <path>
 //	ervisio-repo storage test <target> --config <path>
+//	ervisio-repo prewarm --all | <owner>/<repo> --config <path>
+//	ervisio-repo restore [--dump <key>] [--skip-db] --config <path>
+//	ervisio-repo recovery-kit export|import ...
 //	ervisio-repo version
 package main
 
@@ -30,7 +33,14 @@ const usage = `Usage:
   ervisio-repo migrate up|status [--config <path>]
   ervisio-repo storage test <target> [--config <path>] [--timeout <dur>]
                                            write/read/list/delete round trip
+  ervisio-repo prewarm --all | <owner>/<repo> [--config <path>]
+                                           hydrate cold repositories
+  ervisio-repo restore [--config <path>] [--dump <key>] [--skip-db]
+                                           restore the database, reconcile repositories
+  ervisio-repo recovery-kit export --out <file> [--config <path>] [--passphrase-file <f>]
+  ervisio-repo recovery-kit import --in <file> [--root <dir>] [--force] [--passphrase-file <f>]
   ervisio-repo version
+  ervisio-repo hook <name> [args]          internal: run by the managed git hooks
 `
 
 // errUsage marks command-line mistakes (exit status 2).
@@ -43,6 +53,9 @@ func main() {
 }
 
 func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	if len(args) > 0 && args[0] == "hook" {
+		return hookCmd(ctx, args[1:], os.Stdin, stderr)
+	}
 	err := dispatch(ctx, args, stdout, stderr)
 	switch {
 	case err == nil:
@@ -90,6 +103,12 @@ func dispatch(ctx context.Context, args []string, stdout, stderr io.Writer) erro
 		return migrate(ctx, cfg, sub, newLogger(cfg.Log, stderr), stdout)
 	case "storage":
 		return storageCmd(ctx, args, stdout, stderr)
+	case "prewarm":
+		return prewarmCmd(ctx, args, stdout, stderr)
+	case "restore":
+		return restoreCmd(ctx, args, stdout, stderr)
+	case "recovery-kit":
+		return recoveryKitCmd(ctx, args, os.Stdin, stdout, stderr)
 	case "help", "-h", "--help":
 		fmt.Fprint(stdout, usage)
 		return nil

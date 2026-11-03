@@ -32,6 +32,7 @@ import (
 
 	"github.com/Ervisio/ErvisioRepo/internal/audit"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
+	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/config"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
@@ -95,7 +96,15 @@ type Options struct {
 	HTTPClient *http.Client
 	Log        *slog.Logger
 	Now        func() time.Time
+	// Limiter bounds how often a client may start a flow; nil disables it.
+	Limiter *auth.Limiter
+	// Gate runs the local second-factor check for providers with
+	// require_local_2fa (mfa.Service.Gate); nil skips it.
+	Gate GateFunc
 }
+
+// GateFunc is the second step of a first-factor login, see mfa.Service.Gate.
+type GateFunc func(ctx context.Context, p auth.Principal, oldToken string, c identity.Client, method string) (mfa.Outcome, error)
 
 // Manager runs the OIDC flows of the configured providers.
 type Manager struct {
@@ -107,6 +116,8 @@ type Manager struct {
 	client    *http.Client
 	log       *slog.Logger
 	now       func() time.Time
+	limiter   *auth.Limiter
+	gate      GateFunc
 	order     []string
 	providers map[string]*provider
 }
@@ -124,7 +135,7 @@ type provider struct {
 // provider does not prevent the server from starting.
 func New(o Options) *Manager {
 	m := &Manager{pool: o.Pool, ids: o.Identity, publicURL: strings.TrimRight(o.PublicURL, "/"), cookies: o.Cookies,
-		client: o.HTTPClient, log: o.Log, now: o.Now, providers: map[string]*provider{}}
+		client: o.HTTPClient, log: o.Log, now: o.Now, providers: map[string]*provider{}, limiter: o.Limiter, gate: o.Gate}
 	if o.Pool != nil {
 		m.q = dbgen.New(o.Pool)
 	}
@@ -314,8 +325,10 @@ type Callback struct {
 type Result struct {
 	Mode     string
 	ReturnTo string
-	// Login is set for ModeLogin.
+	// Login is set for ModeLogin when the session was started.
 	Login *identity.LoginResult
+	// Pending is set instead of Login when the local second factor is due.
+	Pending *mfa.Pending
 }
 
 type claims struct {
@@ -360,11 +373,11 @@ func (m *Manager) Complete(ctx context.Context, cb Callback) (Result, error) {
 	if flow.Mode == ModeLink {
 		return res, m.link(ctx, p, cl, flow.UserID.UUID, cb.Client)
 	}
-	lr, err := m.login(ctx, p, cl, cb)
+	lr, pending, err := m.login(ctx, p, cl, cb)
 	if err != nil {
 		return Result{}, err
 	}
-	res.Login = &lr
+	res.Login, res.Pending = lr, pending
 	return res, nil
 }
 
@@ -417,21 +430,21 @@ func str(v any) string {
 	return strings.TrimSpace(s)
 }
 
-func (m *Manager) login(ctx context.Context, p *provider, c claims, cb Callback) (identity.LoginResult, error) {
+func (m *Manager) login(ctx context.Context, p *provider, c claims, cb Callback) (*identity.LoginResult, *mfa.Pending, error) {
 	row, err := m.q.GetOIDCLinkBySubject(ctx, dbgen.GetOIDCLinkBySubjectParams{Issuer: c.issuer, Subject: c.subject})
 	var userID uuid.UUID
 	switch {
 	case err == nil:
 		userID = row.UserID
 		if err := m.q.TouchOIDCLink(ctx, dbgen.TouchOIDCLinkParams{ID: row.ID, Email: infoEmail(c)}); err != nil {
-			return identity.LoginResult{}, fmt.Errorf("touch oidc link: %w", err)
+			return nil, nil, fmt.Errorf("touch oidc link: %w", err)
 		}
 	case errors.Is(err, pgx.ErrNoRows):
 		if !p.cfg.AutoRegister {
-			return identity.LoginResult{}, ErrNotLinked
+			return nil, nil, ErrNotLinked
 		}
 		if m.ids.VerificationRequired() && (c.email == "" || !c.emailVerified) {
-			return identity.LoginResult{}, ErrEmailUnverified
+			return nil, nil, ErrEmailUnverified
 		}
 		username := c.username
 		if username == "" {
@@ -447,23 +460,50 @@ func (m *Manager) login(ctx context.Context, p *provider, c claims, cb Callback)
 		}, cb.Client)
 		if errors.Is(err, identity.ErrExternalEmailTaken) {
 			m.log.WarnContext(ctx, "oidc auto-registration refused: email already in use", "provider", p.cfg.Name)
-			return identity.LoginResult{}, ErrEmailTaken
+			return nil, nil, ErrEmailTaken
 		}
 		if err != nil {
-			return identity.LoginResult{}, err
+			return nil, nil, err
 		}
 	default:
-		return identity.LoginResult{}, fmt.Errorf("get oidc link: %w", err)
+		return nil, nil, fmt.Errorf("get oidc link: %w", err)
 	}
-	lr, err := m.ids.StartSession(ctx, userID, cb.OldToken, cb.Client, "oidc:"+p.cfg.Name)
-	if err != nil {
-		return identity.LoginResult{}, err
+	var lr identity.LoginResult
+	method := "oidc:" + p.cfg.Name
+	if p.cfg.RequireLocal2FA && m.gate != nil {
+		u, err := m.ids.User(ctx, userID)
+		if err != nil {
+			return nil, nil, err
+		}
+		out, err := m.gate(ctx, auth.Principal{UserID: u.ID, Username: u.Username, Role: u.Role, Method: auth.MethodSession},
+			cb.OldToken, cb.Client, method)
+		if err != nil {
+			return nil, nil, err
+		}
+		if out.Pending != nil {
+			return nil, out.Pending, nil
+		}
+		lr = *out.Session
+	} else {
+		lr, err = m.ids.StartSession(ctx, userID, cb.OldToken, cb.Client, method)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 	if err := audit.Record(ctx, m.q, audit.Event{Actor: userID, Action: ActionLogin, TargetType: "session",
 		TargetID: lr.Session.ID.String(), IP: cb.Client.IP, Data: map[string]any{"provider": p.cfg.Name}}); err != nil {
 		m.log.WarnContext(ctx, "audit oidc login", "err", err)
 	}
-	return lr, nil
+	return &lr, nil, nil
+}
+
+// Allow counts one flow start from ip against the hourly action budget of
+// the limiter and reports whether it may proceed, or how long to wait.
+func (m *Manager) Allow(ip string) (bool, time.Duration) {
+	if m == nil || m.limiter == nil {
+		return true, 0
+	}
+	return m.limiter.AllowAction("oidc:" + ip)
 }
 
 // infoEmail is the address stored on the link for display.

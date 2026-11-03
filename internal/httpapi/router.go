@@ -72,6 +72,13 @@ type Deps struct {
 	Credentials *credentials.Service
 	// SSO runs the OIDC sign-in and linking; nil means no providers.
 	SSO *sso.Manager
+	// Tiering serves the admin pin/unpin/evict endpoints; nil answers 503.
+	Tiering Tiering
+	// Hydration streams the hydration progress; nil answers 503.
+	Hydration Hydration
+	// Git serves the Smart HTTP transport (internal/githttp) on
+	// /<owner>/<repo>.git; nil leaves those paths to the SPA.
+	Git http.Handler
 	// Auth loads sessions and enforces CSRF and authorization on /api/v1.
 	// Nil uses cookies derived from Meta.PublicURL and no sessions, so
 	// every caller is anonymous.
@@ -109,6 +116,8 @@ func NewRouter(d Deps) http.Handler {
 
 	// Streaming routes (SSE under /api/events, git transports) will be
 	// mounted outside this group so that they are not cut by the timeout.
+	mountHydration(r, d)
+	mountGit(r, d)
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Timeout(RequestTimeout))
 		r.Get("/readyz", readyz(d))
@@ -174,7 +183,7 @@ func directLoopback(r *http.Request) bool {
 func mountV1(r chi.Router, d Deps) {
 	r.Use(d.Auth.LoadSession, d.Auth.CSRF, adminOnly(d.Auth), mfaCookie(d.Auth.Cookies))
 	srv := &v1Server{meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies, mfa: d.MFA, orgs: d.Orgs, repos: d.Repos, audit: d.Audit,
-		creds: d.Credentials, sso: d.SSO}
+		creds: d.Credentials, sso: d.SSO, tiering: d.Tiering}
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())
@@ -220,4 +229,16 @@ func adminOnly(m *auth.Middleware) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// mountGit mounts the Smart HTTP endpoints outside the request timeout: a
+// clone or push can stream for hours (bounded by [git] limits instead).
+func mountGit(r chi.Router, d Deps) {
+	if d.Git == nil {
+		return
+	}
+	r.Get("/{owner}/{repo}/info/refs", d.Git.ServeHTTP)
+	r.Head("/{owner}/{repo}/info/refs", d.Git.ServeHTTP)
+	r.Post("/{owner}/{repo}/git-upload-pack", d.Git.ServeHTTP)
+	r.Post("/{owner}/{repo}/git-receive-pack", d.Git.ServeHTTP)
 }

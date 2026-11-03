@@ -78,6 +78,20 @@ Phase 2, web interface:
 - The Vite dev server proxies `/auth/oidc` to the backend.
 - Playwright visual baselines for every new page at 1280x800 and 390x844.
 
+Phase 3, Git hosting:
+
+- Repositories with CRUD, visibility, rename redirects and transfer; Git wrapper over `internal/sys`.
+- Smart HTTP (protocol v2, PAT or session auth, gzip, rate limits) and SSH server on port 2222 (user `git`, ed25519 and RSA host keys).
+- Pack journal: managed hooks over a unix socket, self-contained push segments, sync or async durability, compaction, orphan GC, git maintenance, 100 MiB file limit outside LFS.
+- Hydration with progress (SSE and SSH stderr), eviction by TTL and watermarks with a 1 hour trash, admin pin/unpin/evict.
+- `prewarm`, `restore` and `recovery-kit export/import` commands; daily pg_dump backup to storage, wal-g docs.
+- Account API and screens for profile, password, sessions and emails; OIDC start rate limit; per-provider `require_local_2fa`.
+- Self-hosted Figtree and JetBrains Mono fonts; repository list, creation, empty page with clone instructions and settings.
+
+### Removed
+
+- Organization role `billing` (existing members become `member`).
+
 ### Security
 
 - The SPA `index.html` is served with a per-response CSP nonce in `style-src`, so the `<style>` elements injected by Radix (scroll lock) are allowed without `'unsafe-inline'`; `script-src` stays `'self'`.

@@ -105,6 +105,7 @@ type User struct {
 	ID            uuid.UUID
 	Username      string
 	DisplayName   string
+	AvatarURL     string
 	Role          string
 	Locale        string
 	Email         string
@@ -504,7 +505,7 @@ func (s *Service) User(ctx context.Context, id uuid.UUID) (User, error) {
 	if err != nil {
 		return User{}, fmt.Errorf("get user: %w", err)
 	}
-	return User{ID: row.ID, Username: row.Username, DisplayName: row.DisplayName, Role: row.Role, Locale: row.Locale,
+	return User{ID: row.ID, Username: row.Username, DisplayName: row.DisplayName, AvatarURL: row.AvatarUrl, Role: row.Role, Locale: row.Locale,
 		Email: row.Email.String, EmailVerified: row.EmailVerifiedAt.Valid, CreatedAt: row.CreatedAt.Time}, nil
 }
 

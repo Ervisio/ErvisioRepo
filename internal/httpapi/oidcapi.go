@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"math"
 	"net/http"
 	"net/url"
+	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
+	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
 )
@@ -96,6 +100,9 @@ func (s *v1Server) BeginOidcLink(ctx context.Context, req v1gen.BeginOidcLinkReq
 	if !s.sso.Has(req.Provider) {
 		return errSSOUnavailable, nil
 	}
+	if ok, wait := s.sso.Allow(clientOf(ctx).IP); !ok {
+		return rateLimited(wait), nil
+	}
 	returnTo := "/settings"
 	if req.Body != nil && req.Body.ReturnTo != nil {
 		returnTo = *req.Body.ReturnTo
@@ -141,6 +148,11 @@ func mountOIDC(r chi.Router, d Deps) {
 		r.Use(d.Auth.LoadSession)
 		r.Get("/login", func(w http.ResponseWriter, r *http.Request) {
 			name := chi.URLParam(r, "provider")
+			if ok, wait := m.Allow(auth.RequestInfoFrom(r.Context()).IP); !ok {
+				w.Header().Set("Retry-After", strconv.Itoa(retryAfterSeconds(wait)))
+				oidcFailure(w, r, log, "/login", &sso.Error{Code: "rate_limited", Msg: "too many attempts, retry later"})
+				return
+			}
 			redirect, state, err := m.Begin(r.Context(), name, sso.ModeLogin, nil, r.URL.Query().Get("return_to"))
 			if err != nil {
 				oidcFailure(w, r, log, "/login", err)
@@ -164,6 +176,11 @@ func mountOIDC(r chi.Router, d Deps) {
 			res, err := m.Complete(ctx, cb)
 			if err != nil {
 				oidcFailure(w, r, log, fallback, err)
+				return
+			}
+			if res.Pending != nil {
+				mfa.SetCookie(w, cookies.Secure, res.Pending.Token, res.Pending.ExpiresAt)
+				noStoreRedirect(w, r, "/login/2fa?"+url.Values{"next": {res.ReturnTo}}.Encode())
 				return
 			}
 			if res.Login != nil {
@@ -195,4 +212,12 @@ func noStoreRedirect(w http.ResponseWriter, r *http.Request, to string) {
 	w.Header().Set("Cache-Control", "no-store")
 	http.Redirect(w, r, to, http.StatusFound) //nolint:gosec // target is sanitized, see above
 
+}
+
+func retryAfterSeconds(wait time.Duration) int { return max(1, int(math.Ceil(wait.Seconds()))) }
+
+// rateLimited answers 429 with Retry-After.
+func rateLimited(wait time.Duration) problemResponse {
+	return problemResponse{status: http.StatusTooManyRequests, detail: "too many attempts, retry later",
+		retryAfter: retryAfterSeconds(wait)}
 }

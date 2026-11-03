@@ -18,9 +18,11 @@ import {
 } from "../api/identity.ts";
 import { useT } from "../i18n/useT.ts";
 import { Badge, Button, Card, EmptyState, Input, Page, Select, Table, TableBody, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, Td, Th, Tr } from "../ui/index.ts";
+import { useOwnerRepos } from "../api/repos.ts";
+import { CreateRepoDialog, RepoRows } from "./repos/RepoList.tsx";
 import { Async, formatDate, Secret, useNotify } from "./account/common.tsx";
 
-const roles: OrgRole[] = ["owner", "admin", "member", "billing"];
+const roles: OrgRole[] = ["owner", "admin", "member"];
 const permissions: Permission[] = ["none", "read", "triage", "write", "maintain", "admin"];
 
 function Members({ org, canManage }: { org: string; canManage: boolean }) {
@@ -211,6 +213,16 @@ function Invites({ org, canManage }: { org: string; canManage: boolean }) {
   );
 }
 
+function OrgRepos({ org }: { org: string }) {
+  const t = useT("org");
+  const repos = useOwnerRepos(org, "org");
+  return (
+    <Card title={t("list.title")} actions={<CreateRepoDialog org={org} />}>
+      <RepoRows query={repos} />
+    </Card>
+  );
+}
+
 function Settings({ org }: { org: Org }) {
   const t = useT("org");
   const notify = useNotify();
@@ -292,13 +304,15 @@ export function OrgPage({ name }: { name: string }) {
       }
     >
       {o.description && <p className="acc-desc">{o.description}</p>}
-      <Tabs defaultValue="members">
+      <Tabs defaultValue="repos">
         <TabsList aria-label={t("tabs")}>
+          <TabsTrigger value="repos">{t("tab.repos")}</TabsTrigger>
           <TabsTrigger value="members">{t("tab.members")}</TabsTrigger>
           <TabsTrigger value="teams">{t("tab.teams")}</TabsTrigger>
           {canManage && <TabsTrigger value="invites">{t("tab.invites")}</TabsTrigger>}
           {isOwner && <TabsTrigger value="settings">{t("tab.settings")}</TabsTrigger>}
         </TabsList>
+        <TabsContent value="repos"><OrgRepos org={o.name} /></TabsContent>
         <TabsContent value="members"><Members org={o.name} canManage={canManage} /></TabsContent>
         <TabsContent value="teams"><Teams org={o.name} canManage={canManage} /></TabsContent>
         {canManage && <TabsContent value="invites"><Invites org={o.name} canManage={canManage} /></TabsContent>}

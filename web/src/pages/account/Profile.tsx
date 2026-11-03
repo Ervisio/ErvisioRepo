@@ -1,24 +1,51 @@
 import { Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { useCreateOrg, useMyOrgs, type User } from "../../api/identity.ts";
+import { useCreateOrg, useMyOrgs, useUpdateProfile, type User } from "../../api/identity.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, Button, Card, Input } from "../../ui/index.ts";
+import { Badge, Button, Card, Input, Select } from "../../ui/index.ts";
 import { Async, useNotify } from "./common.tsx";
+import { Emails } from "./Emails.tsx";
 
 function ProfileCard({ user }: { user: User }) {
   const t = useT("account");
+  const notify = useNotify();
+  const update = useUpdateProfile();
+  const [displayName, setDisplayName] = useState(user.displayName);
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? "");
+  const [locale, setLocale] = useState<User["locale"]>(user.locale);
+  const options = [
+    { value: "en", label: t("profile.locale.en") },
+    { value: "it", label: t("profile.locale.it") },
+  ];
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    update.mutate(
+      { displayName: displayName.trim(), avatarUrl: avatarUrl.trim(), locale },
+      { onSuccess: () => notify.ok(t("profile.saved")), onError: notify.fail },
+    );
+  }
+
   return (
     <Card title={t("profile.title")}>
-      <div className="acc-form">
+      <form className="acc-form" onSubmit={submit}>
         <Input label={t("profile.username")} value={user.username} readOnly mono hint={t("profile.username.hint")} />
-        <Input label={t("profile.displayName")} value={user.displayName} readOnly />
+        <Input label={t("profile.displayName")} maxLength={100} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
         <Input
-          label={t("profile.email")}
-          value={user.email ?? ""}
-          readOnly
-          hint={user.emailVerified ? t("profile.emailVerified") : t("profile.emailUnverified")}
+          label={t("profile.avatarUrl")}
+          type="url"
+          inputMode="url"
+          maxLength={2048}
+          placeholder="https://"
+          hint={t("profile.avatarUrl.hint")}
+          value={avatarUrl}
+          onChange={(e) => setAvatarUrl(e.target.value)}
         />
-      </div>
+        <Select label={t("profile.locale")} value={locale} onValueChange={(v) => setLocale(v as User["locale"])} options={options} />
+        <div className="acc-actions">
+          <Button variant="primary" type="submit" disabled={update.isPending}>{t("profile.save")}</Button>
+        </div>
+      </form>
     </Card>
   );
 }
@@ -69,6 +96,7 @@ export function Profile({ user }: { user: User }) {
   return (
     <>
       <ProfileCard user={user} />
+      <Emails />
       <Orgs />
     </>
   );

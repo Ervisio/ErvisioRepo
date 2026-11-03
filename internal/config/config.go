@@ -23,6 +23,8 @@ type Config struct {
 	Storage  Storage  `toml:"storage"`
 	Auth     Auth     `toml:"auth"`
 	Mail     Mail     `toml:"mail"`
+	Git      Git      `toml:"git"`
+	SSH      SSH      `toml:"ssh"`
 }
 
 type Server struct {
@@ -137,6 +139,8 @@ type Storage struct {
 	// when empty it defaults to "<path>/.hot" of the local target that is the
 	// git policy's cache, or else its primary (blob keys never start with '.').
 	HotPath string `toml:"hot_path"`
+	// Paranoid runs git fsck on every hydrated repository before serving it.
+	Paranoid bool `toml:"paranoid"`
 }
 
 // HotDirName is the directory created inside a local target when
@@ -225,6 +229,8 @@ func Default() Config {
 			TokenMaxTTL:              Duration(366 * 24 * time.Hour),
 		},
 		Mail: Mail{Port: 587, TLS: "starttls", Timeout: Duration(30 * time.Second)},
+		Git:  defaultGit(),
+		SSH:  defaultSSH(),
 	}
 }
 

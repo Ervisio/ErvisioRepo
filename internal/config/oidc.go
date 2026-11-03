@@ -34,6 +34,11 @@ type OIDCProvider struct {
 	// it, users must sign in first and link the provider from their
 	// settings.
 	AutoRegister bool `toml:"auto_register"`
+	// RequireLocal2FA applies the local second-factor policy to sign-ins
+	// through this provider: an account with a TOTP app or passkey must
+	// still present it, and accounts that policy requires to have one must
+	// set it up. Default false: the provider is trusted to do its own MFA.
+	RequireLocal2FA bool `toml:"require_local_2fa"`
 }
 
 // Label is the name shown to users.

@@ -97,6 +97,8 @@ func (c *Config) validate() []error {
 	v.storage(&c.Storage)
 	v.auth(&c.Auth)
 	v.mail(&c.Mail)
+	v.git(&c.Git)
+	v.ssh(&c.SSH)
 	return v.errs
 }
 

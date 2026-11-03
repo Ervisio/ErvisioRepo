@@ -6,8 +6,10 @@ import { useT } from "../../i18n/useT.ts";
 import { Button, Page, Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/index.ts";
 import { Keys } from "./Keys.tsx";
 import { Linked } from "./Linked.tsx";
+import { Password } from "./Password.tsx";
 import { Profile } from "./Profile.tsx";
 import { Security } from "./Security.tsx";
+import { Sessions } from "./Sessions.tsx";
 import { Tokens } from "./Tokens.tsx";
 
 /** Account settings. Rendered inside <Protected>, so the session is already loaded. */
@@ -36,7 +38,7 @@ export function Account({ oidcError }: { oidcError?: string }) {
           <TabsTrigger value="linked">{t("tab.linked")}</TabsTrigger>
         </TabsList>
         <TabsContent value="profile"><Profile user={user} /></TabsContent>
-        <TabsContent value="security"><Security /></TabsContent>
+        <TabsContent value="security"><Password /><Security /><Sessions /></TabsContent>
         <TabsContent value="tokens"><Tokens /></TabsContent>
         <TabsContent value="keys"><Keys /></TabsContent>
         <TabsContent value="linked"><Linked oidcError={oidcError} /></TabsContent>

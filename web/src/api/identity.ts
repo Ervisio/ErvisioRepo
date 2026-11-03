@@ -7,6 +7,8 @@ import type { components } from "./schema";
 type S = components["schemas"];
 export type User = S["User"];
 export type Invite = S["Invite"];
+export type SessionInfo = S["SessionInfo"];
+export type EmailAddress = S["EmailAddress"];
 export type Provider = S["OidcProvider"];
 export type MfaChallenge = S["MfaChallenge"];
 export type LoginResult = User | MfaChallenge;
@@ -166,3 +168,26 @@ export function useAudit(filter: { action: string; actor: string }, before: stri
   if (before) q.set("before", before);
   return useQuery({ queryKey: ["admin", "audit", filter, before], queryFn: () => request<AuditPage>("GET", `/admin/audit?${q}`) });
 }
+
+// Account self-service: profile, password, sessions, email addresses.
+export function useUpdateProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (b: S["ProfileUpdate"]) => request<User>("PATCH", "/user/profile", b),
+    onSuccess: (u) => qc.setQueryData(["user"], u),
+  });
+}
+export const changePassword = (b: S["PasswordChange"]) => request("PUT", "/user/password", b);
+export const useSessions = () => useList<SessionInfo>("sessions", "/user/sessions");
+export const useRevokeSession = () =>
+  useInvalidating<string, void>([["user", "sessions"]], (id) => request("DELETE", `/user/sessions/${enc(id)}`));
+export const useRevokeOtherSessions = () =>
+  useInvalidating<void, void>([["user", "sessions"]], () => request("DELETE", "/user/sessions"));
+export const useEmails = () => useList<EmailAddress>("emails", "/user/emails");
+export const useAddEmail = () =>
+  useInvalidating<string, EmailAddress>([["user", "emails"]], (email) => request("POST", "/user/emails", { email }));
+export const useSetPrimaryEmail = () =>
+  useInvalidating<string, void>([["user", "emails"], ["user"]], (id) => request("POST", `/user/emails/${enc(id)}/primary`));
+export const useDeleteEmail = () =>
+  useInvalidating<string, void>([["user", "emails"]], (id) => request("DELETE", `/user/emails/${enc(id)}`));
+export const resendEmailVerification = (id: string) => request("POST", `/user/emails/${enc(id)}/verify`);

@@ -23,7 +23,7 @@ func FuzzParsePermission(f *testing.F) {
 }
 
 func FuzzParseOrgRole(f *testing.F) {
-	for _, s := range []string{"owner", "admin", "member", "billing", "", "Owner"} {
+	for _, s := range []string{"owner", "admin", "member", "", "Owner"} {
 		f.Add(s)
 	}
 	f.Fuzz(func(t *testing.T, s string) {
@@ -43,7 +43,7 @@ func factsFrom(flags uint16, vis, role, base, collab uint8, teams []byte) RepoFa
 		Signed: flags&1 != 0, InstanceAdmin: flags&2 != 0, Restricted: flags&4 != 0, Suspended: flags&8 != 0,
 		PersonalOwner:  flags&16 != 0,
 		Visibility:     []Visibility{Public, Internal, Private, ""}[vis%4],
-		OrgRole:        []OrgRole{OrgNone, OrgOwner, OrgAdmin, OrgMember, OrgBilling, "x"}[role%6],
+		OrgRole:        []OrgRole{OrgNone, OrgOwner, OrgAdmin, OrgMember, "x"}[role%5],
 		BasePermission: Permission(int8(base)), Collaborator: Permission(int8(collab)), Teams: ts,
 	}
 }
@@ -69,10 +69,6 @@ func FuzzRepoPermission(f *testing.F) {
 		}
 		if fa.Suspended && p != PermNone {
 			t.Fatalf("suspended got %v", p)
-		}
-		if fa.OrgRole == OrgBilling && !fa.InstanceAdmin && !fa.PersonalOwner && fa.Visibility == Private &&
-			fa.Collaborator <= PermNone && len(fa.Teams) == 0 && p != PermNone {
-			t.Fatalf("billing got %v", p)
 		}
 		more := fa
 		more.Teams = append(append([]Permission{}, fa.Teams...), Permission(int8(collab^base)))

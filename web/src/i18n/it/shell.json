@@ -14,5 +14,6 @@
   "layout.corsie": "Corsie",
   "nav.audit": "Audit",
   "nav.account": "Account",
-  "nav.signIn": "Accedi"
+  "nav.signIn": "Accedi",
+  "nav.repos": "Repository"
 }

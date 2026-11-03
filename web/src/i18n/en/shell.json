@@ -14,5 +14,6 @@
   "layout.corsie": "Lanes",
   "nav.audit": "Audit",
   "nav.account": "Account",
-  "nav.signIn": "Sign in"
+  "nav.signIn": "Sign in",
+  "nav.repos": "Repositories"
 }

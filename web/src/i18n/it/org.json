@@ -7,7 +7,6 @@
   "tab.invites": "Inviti",
   "role.owner": "Proprietario",
   "role.member": "Membro",
-  "role.billing": "Fatturazione",
   "permission.read": "Lettura",
   "permission.triage": "Triage",
   "permission.write": "Scrittura",
@@ -63,5 +62,7 @@
   "accept.submit": "Accetta l'invito",
   "accept.decline": "Non ora",
   "accept.noToken": "Link di invito mancante",
-  "accept.noTokenBody": "Apri di nuovo il link dall'email di invito."
+  "accept.noTokenBody": "Apri di nuovo il link dall'email di invito.",
+  "tab.repos": "Repository",
+  "list.title": "Repository"
 }

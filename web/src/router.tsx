@@ -13,6 +13,9 @@ import { Catalog } from "./pages/Catalog.tsx";
 import { Home } from "./pages/Home.tsx";
 import { OrgPage } from "./pages/Org.tsx";
 import { OrgInviteAccept } from "./pages/OrgInvite.tsx";
+import { MyReposPage } from "./pages/repos/MyReposPage.tsx";
+import { RepoPage } from "./pages/repos/RepoPage.tsx";
+import { RepoSettings } from "./pages/repos/RepoSettings.tsx";
 import { AppShell, ToastProvider } from "./ui/index.ts";
 
 const str = (v: unknown) => (typeof v === "string" ? v : undefined);
@@ -64,13 +67,16 @@ const auditRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin
 const settingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/settings", validateSearch: oidcSearch, component: () => guard(<Account oidcError={settingsRoute.useSearch().oidc_error} />) });
 const orgInviteRoute = createRoute({ getParentRoute: () => shellRoute, path: "/org-invite", validateSearch: tokenSearch, component: () => guard(<OrgInviteAccept token={orgInviteRoute.useSearch().token} />) });
 const orgRoute = createRoute({ getParentRoute: () => shellRoute, path: "/orgs/$org", component: () => guard(<OrgPage name={orgRoute.useParams().org} />) });
+const reposRoute = createRoute({ getParentRoute: () => shellRoute, path: "/repos", component: () => guard(<MyReposPage />) });
+const repoRoute = createRoute({ getParentRoute: () => shellRoute, path: "/$owner/$name", component: () => guard(<RepoPage owner={repoRoute.useParams().owner} name={repoRoute.useParams().name} />) });
+const repoSettingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/$owner/$name/settings", component: () => guard(<RepoSettings owner={repoSettingsRoute.useParams().owner} name={repoSettingsRoute.useParams().name} />) });
 // Component catalog for the design kit (Fase UI).
 const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui", component: Catalog });
 
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
     bareRoute.addChildren([loginRoute, twoFactorRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
-    shellRoute.addChildren([homeRoute, storageRoute, auditRoute, settingsRoute, orgInviteRoute, orgRoute, catalogRoute]),
+    shellRoute.addChildren([homeRoute, storageRoute, auditRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute, repoRoute, repoSettingsRoute, catalogRoute]),
   ]),
 });
 

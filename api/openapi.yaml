@@ -79,6 +79,73 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/repos/{owner}/{name}/pin:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    put:
+      operationId: pinAdminRepo
+      tags: [admin]
+      summary: Pin a repository on the hot tier
+      description: Instance admins only. A pinned repository is never evicted.
+      security:
+        - session: [admin]
+      responses:
+        "200":
+          description: Tiering state after the change
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepoTiering"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: unpinAdminRepo
+      tags: [admin]
+      summary: Let the eviction job move a repository off the hot tier again
+      description: Instance admins only.
+      security:
+        - session: [admin]
+      responses:
+        "200":
+          description: Tiering state after the change
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepoTiering"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/repos/{owner}/{name}/evict:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    post:
+      operationId: evictAdminRepo
+      tags: [admin]
+      summary: Evict a hot repository to the remote tier now
+      description: |
+        Instance admins only. Applies the same checks as the eviction job
+        (remote journal up to date and verified, lock free) but ignores the
+        TTL and the pin. 409 when the repository is not hot or a check fails.
+      security:
+        - session: [admin]
+      responses:
+        "200":
+          description: Tiering state after the eviction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepoTiering"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
   /admin/invites:
     post:
       operationId: createInvite
@@ -292,6 +359,204 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/profile:
+    patch:
+      operationId: updateProfile
+      tags: [users]
+      summary: Change display name, avatar and language
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/password:
+    put:
+      operationId: changePassword
+      tags: [users]
+      summary: Change the password
+      description: |
+        Needs the current password (omitted only by accounts that have none
+        yet, for example created through an external identity). Every other
+        session of the user is revoked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordChange"
+      responses:
+        "204":
+          description: Password changed
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/sessions:
+    get:
+      operationId: listSessions
+      tags: [users]
+      summary: Active sessions of the signed-in user
+      responses:
+        "200":
+          description: Sessions, most recently used first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SessionInfo"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: revokeOtherSessions
+      tags: [users]
+      summary: Sign out everywhere else
+      description: Revokes every session except the current one.
+      responses:
+        "204":
+          description: Revoked
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/sessions/{id}:
+    delete:
+      operationId: revokeSession
+      tags: [users]
+      summary: Revoke a session
+      parameters:
+        - $ref: "#/components/parameters/CredentialID"
+      responses:
+        "204":
+          description: Revoked
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/emails:
+    get:
+      operationId: listEmails
+      tags: [users]
+      summary: Email addresses of the signed-in user
+      responses:
+        "200":
+          description: Addresses, the primary one first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EmailAddress"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: addEmail
+      tags: [users]
+      summary: Add an email address
+      description: The address stays unverified until the link sent to it is opened.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailRequest"
+      responses:
+        "201":
+          description: Added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmailAddress"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/emails/{id}:
+    delete:
+      operationId: deleteEmail
+      tags: [users]
+      summary: Remove an email address
+      description: The primary address cannot be removed (409); make another one primary first.
+      parameters:
+        - $ref: "#/components/parameters/CredentialID"
+      responses:
+        "204":
+          description: Removed
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/emails/{id}/primary:
+    post:
+      operationId: setPrimaryEmail
+      tags: [users]
+      summary: Make an address the primary one
+      description: With mail enabled the address must be verified (409 otherwise).
+      parameters:
+        - $ref: "#/components/parameters/CredentialID"
+      responses:
+        "204":
+          description: Done
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/emails/{id}/verify:
+    post:
+      operationId: resendEmailVerification
+      tags: [users]
+      summary: Send the verification link again
+      parameters:
+        - $ref: "#/components/parameters/CredentialID"
+      responses:
+        "202":
+          description: Queued
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
         default:
           $ref: "#/components/responses/Problem"
   /auth/mfa:
@@ -828,6 +1093,8 @@ paths:
           $ref: "#/components/responses/Problem"
         "404":
           $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
         "502":
           $ref: "#/components/responses/Problem"
         default:
@@ -2325,10 +2592,76 @@ components:
         locale:
           type: string
           enum: [en, it]
+        avatarUrl:
+          type: string
+          description: Absolute https URL of the avatar; empty when unset
         email:
           type: string
           description: Primary email address
         emailVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    ProfileUpdate:
+      type: object
+      required: [displayName, locale]
+      properties:
+        displayName:
+          type: string
+          maxLength: 100
+        avatarUrl:
+          type: string
+          maxLength: 2048
+          description: Absolute https URL, or empty to clear
+        locale:
+          type: string
+          enum: [en, it]
+    PasswordChange:
+      type: object
+      required: [newPassword]
+      properties:
+        currentPassword:
+          type: string
+          maxLength: 1024
+        newPassword:
+          type: string
+          minLength: 1
+          maxLength: 1024
+    SessionInfo:
+      type: object
+      required: [id, current, ip, userAgent, createdAt, lastSeenAt, expiresAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        current:
+          type: boolean
+        ip:
+          type: string
+        userAgent:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastSeenAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+    EmailAddress:
+      type: object
+      required: [id, address, primary, verified, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        address:
+          type: string
+        primary:
+          type: boolean
+        verified:
           type: boolean
         createdAt:
           type: string
@@ -2463,6 +2796,22 @@ components:
           type: string
         message:
           type: string
+    RepoTiering:
+      type: object
+      required: [state, pinned, sizeBytes, manifestSeq]
+      properties:
+        state:
+          type: string
+          enum: [hot, cold, hydrating, evicting, degraded]
+        pinned:
+          type: boolean
+        sizeBytes:
+          type: integer
+          format: int64
+        manifestSeq:
+          type: integer
+          format: int64
+          description: Last pack journal sequence recorded for the repository.
     StorageCheckResult:
       type: object
       required: [target, ok, durationMs, steps]
@@ -2775,7 +3124,7 @@ components:
           enum: [read, triage, write, maintain, admin]
     OrgRole:
       type: string
-      enum: [owner, admin, member, billing]
+      enum: [owner, admin, member]
     Permission:
       type: string
       enum: [none, read, triage, write, maintain, admin]

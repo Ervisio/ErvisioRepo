@@ -23,6 +23,7 @@ type v1Server struct {
 	audit    audit.Lister
 	creds    *credentials.Service
 	sso      *sso.Manager
+	tiering  Tiering
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

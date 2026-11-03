@@ -11,19 +11,18 @@ type OrgRole string
 
 // Organization roles. Owners can do everything, admins manage the
 // organization except its owners, members get the base permission on its
-// repositories, billing members see billing only.
+// repositories.
 const (
-	OrgNone    OrgRole = ""
-	OrgOwner   OrgRole = "owner"
-	OrgAdmin   OrgRole = "admin"
-	OrgMember  OrgRole = "member"
-	OrgBilling OrgRole = "billing"
+	OrgNone   OrgRole = ""
+	OrgOwner  OrgRole = "owner"
+	OrgAdmin  OrgRole = "admin"
+	OrgMember OrgRole = "member"
 )
 
 // ParseOrgRole parses an assignable organization role.
 func ParseOrgRole(s string) (OrgRole, error) {
 	switch r := OrgRole(s); r {
-	case OrgOwner, OrgAdmin, OrgMember, OrgBilling:
+	case OrgOwner, OrgAdmin, OrgMember:
 		return r, nil
 	}
 	return OrgNone, fmt.Errorf("unknown organization role %q", s)

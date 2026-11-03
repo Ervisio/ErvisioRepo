@@ -28,7 +28,7 @@ UPDATE users SET suspended_at = CASE WHEN sqlc.arg(suspended)::boolean THEN now(
 WHERE id = $1;
 
 -- name: GetUserByID :one
-SELECT u.id, n.name AS username, u.display_name, u.role, u.locale, u.suspended_at, u.created_at,
+SELECT u.id, n.name AS username, u.display_name, u.avatar_url, u.role, u.locale, u.suspended_at, u.created_at,
        e.id AS email_id, e.address AS email, e.verified_at AS email_verified_at
 FROM users u
 JOIN namespaces n ON n.id = u.id
