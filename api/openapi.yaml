@@ -3978,6 +3978,1019 @@ paths:
         default:
           $ref: "#/components/responses/Problem"
   # --- end issues ---
+  # --- pulls (tag: pulls) ---
+  /repos/{owner}/{name}/pulls:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listPulls
+      tags: [pulls]
+      summary: List the pull requests of the repository
+      description: |
+        Newest first by default. The pull requests are issues too: their comments,
+        labels, assignees and milestone are served by the issue endpoints.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: state
+          in: query
+          description: "Default open"
+          schema:
+            type: string
+            enum: [open, closed, merged, all]
+        - name: base
+          in: query
+          description: "Base branch name"
+          schema:
+            type: string
+        - name: head
+          in: query
+          description: "Head branch name"
+          schema:
+            type: string
+        - name: author
+          in: query
+          description: "Username of the author"
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: "Default created"
+          schema:
+            type: string
+            enum: [created, updated]
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PullRequest"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createPull
+      tags: [pulls]
+      summary: Open a pull request
+      description: |
+        Needs read access to both repositories. head names a branch of headRepo
+        (owner/name; default this repository), which must be this repository or a
+        fork of it. Labels, assignees and the milestone are set with the issue
+        endpoints.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PullRequestCreate"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullRequest"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+    get:
+      operationId: getPull
+      tags: [pulls]
+      summary: A pull request
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullRequest"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updatePull
+      tags: [pulls]
+      summary: Edit, close, reopen or retarget a pull request
+      description: |
+        The author can edit the title and body, close and reopen and toggle the
+        draft state; changing the base needs the write permission.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PullRequestUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullRequest"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/commits:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+    get:
+      operationId: listPullCommits
+      tags: [pulls]
+      summary: The commits of a pull request
+      description: |
+        Newest first, at most 250 per page.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullCommitPage"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/files:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+    get:
+      operationId: listPullFiles
+      tags: [pulls]
+      summary: The files changed by a pull request
+      description: |
+        Compared with the merge base of the head and the base branch.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PullFile"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/diff:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+    get:
+      operationId: getPullDiff
+      tags: [pulls]
+      summary: The diff of a pull request
+      description: |
+        Compared with the merge base; path limits it to the given files.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: path
+          in: query
+          description: "Literal file paths (repeatable)"
+          schema:
+            type: array
+            items: {type: string}
+          explode: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Diff"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/mergeability:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+    get:
+      operationId: getPullMergeability
+      tags: [pulls]
+      summary: Whether a pull request can be merged
+      description: |
+        Combines the conflict check with the branch protection requirements
+        (reviews, status checks, code owners).
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullMergeability"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/merge:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+    put:
+      operationId: mergePull
+      tags: [pulls]
+      summary: Merge a pull request
+      description: |
+        Needs the write permission. 405 when a requirement is not met, 409 when
+        the head moved (sha) or the branches conflict.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PullMergeRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullMergeResult"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "405":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/auto-merge:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+    put:
+      operationId: enablePullAutoMerge
+      tags: [pulls]
+      summary: Merge a pull request once its requirements are met
+      description: |
+        Needs the write permission. The pull request is merged as soon as the
+        required reviews and status checks pass.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PullAutoMergeRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullRequest"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: disablePullAutoMerge
+      tags: [pulls]
+      summary: Cancel the auto-merge of a pull request
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullRequest"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/requested-reviewers:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+    post:
+      operationId: requestPullReviewers
+      tags: [pulls]
+      summary: Request reviews
+      description: |
+        Needs the triage permission (the author may request too). Reviewers
+        must be able to read the repository.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PullReviewers"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullRequest"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: removePullReviewers
+      tags: [pulls]
+      summary: Withdraw review requests
+      security:
+        - session: []
+        - token: [repo:write]
+      parameters:
+        - name: reviewers
+          in: query
+          required: true
+          description: "Comma-separated usernames"
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullRequest"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/reviews:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+    get:
+      operationId: listPullReviews
+      tags: [pulls]
+      summary: The reviews of a pull request
+      description: |
+        Oldest first; the pending review of the caller is included.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PullReview"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createPullReview
+      tags: [pulls]
+      summary: Start or submit a review
+      description: |
+        Without event the review stays pending (visible to its author only) and
+        more comments can be added to it; with event it is submitted at once.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PullReviewCreate"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullReview"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+      - $ref: "#/components/parameters/PullReviewId"
+    get:
+      operationId: getPullReview
+      tags: [pulls]
+      summary: A review
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullReview"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deletePullReview
+      tags: [pulls]
+      summary: Discard a pending review
+      description: |
+        Only pending reviews of the caller can be discarded.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: No Content
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/comments:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+      - $ref: "#/components/parameters/PullReviewId"
+    get:
+      operationId: listPullReviewCommentsOfReview
+      tags: [pulls]
+      summary: The comments of a review
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PullReviewComment"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/submit:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+      - $ref: "#/components/parameters/PullReviewId"
+    post:
+      operationId: submitPullReview
+      tags: [pulls]
+      summary: Submit a pending review
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PullReviewSubmit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullReview"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/dismiss:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+      - $ref: "#/components/parameters/PullReviewId"
+    put:
+      operationId: dismissPullReview
+      tags: [pulls]
+      summary: Dismiss a review
+      description: |
+        Needs the write permission.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PullReviewDismiss"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullReview"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/{number}/comments:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullNumber"
+    get:
+      operationId: listPullReviewComments
+      tags: [pulls]
+      summary: The inline comments of a pull request
+      description: |
+        Submitted comments plus the caller's pending ones, by thread then date.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PullReviewComment"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createPullReviewComment
+      tags: [pulls]
+      summary: Comment on a line, a range or reply to a thread
+      description: |
+        Without inReplyTo it starts a thread on path at line (and startLine for a
+        range) of side; RIGHT lines are in the head, LEFT lines in the merge base.
+        The comment joins the caller's pending review when there is one,
+        otherwise it is published at once.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PullReviewCommentCreate"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullReviewComment"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/comments/{commentId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullCommentId"
+    patch:
+      operationId: updatePullReviewComment
+      tags: [pulls]
+      summary: Edit an inline comment
+      description: |
+        Only the author can edit it.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullReviewComment"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deletePullReviewComment
+      tags: [pulls]
+      summary: Delete an inline comment
+      description: |
+        The author or a user with the triage permission. Deleting the first
+        comment of a thread deletes its replies too.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: No Content
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/comments/{commentId}/resolve:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullCommentId"
+    put:
+      operationId: resolvePullThread
+      tags: [pulls]
+      summary: Resolve a thread
+      description: |
+        commentId is any comment of the thread. The pull request author or a
+        user with the triage permission.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullReviewComment"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: unresolvePullThread
+      tags: [pulls]
+      summary: Unresolve a thread
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullReviewComment"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/pulls/comments/{commentId}/apply-suggestion:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/PullCommentId"
+    post:
+      operationId: applyPullSuggestion
+      tags: [pulls]
+      summary: Commit the suggested change of a comment
+      description: |
+        The suggestion block of the comment replaces its lines in the head
+        branch, as a commit by the caller, who needs write access to the head
+        repository.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PullSuggestionApply"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullMergeResult"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/forks:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listForks
+      tags: [pulls]
+      summary: The forks of a repository
+      description: |
+        Only the forks the caller can read.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repo"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createFork
+      tags: [pulls]
+      summary: Fork a repository
+      description: |
+        Copies the branches and tags into a new repository of the caller or of
+        one of their organizations. A fork of a private repository is private.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForkCreate"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repo"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  # --- end pulls ---
   # --- branch protection (tag: protection) ---
   /repos/{owner}/{name}/branch-protections:
     parameters:
@@ -5558,6 +6571,30 @@ components:
         type: string
         format: uuid
     # --- end branch protection parameters ---
+    # --- pulls parameters ---
+    PullNumber:
+      name: number
+      in: path
+      required: true
+      description: Pull request number
+      schema:
+        type: integer
+        format: int64
+    PullReviewId:
+      name: reviewId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PullCommentId:
+      name: commentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    # --- end pulls parameters ---
     RepoOwner:
       name: owner
       in: path
@@ -7466,6 +8503,243 @@ components:
         url: {type: string, description: Download path, to use in Markdown}
         createdAt: {type: string, format: date-time}
     # --- end issues schemas ---
+    # --- pulls schemas ---
+    PullRef:
+      type: object
+      required: [repo, ref, sha]
+      properties:
+        repo: {type: string, description: owner/name; empty when the head repository is gone}
+        ref: {type: string, description: Branch name}
+        sha: {type: string}
+    PullRequest:
+      type: object
+      required: [issue, state, draft, head, base, mergeBase, mergeable, conflictFiles, mergedBy, mergeCommit, mergeMethod,
+        requestedReviewers]
+      properties:
+        issue: {$ref: "#/components/schemas/Issue"}
+        state: {type: string, enum: [open, closed, merged]}
+        draft: {type: boolean}
+        head: {$ref: "#/components/schemas/PullRef"}
+        base: {$ref: "#/components/schemas/PullRef"}
+        mergeBase: {type: string}
+        mergeable: {type: string, enum: [unknown, clean, conflict, error]}
+        conflictFiles:
+          type: array
+          items: {type: string}
+        mergedAt: {type: string, format: date-time, nullable: true}
+        mergedBy: {type: string}
+        mergeCommit: {type: string, description: The commit the base branch was moved to}
+        mergeMethod: {type: string, description: "merge, squash or rebase; empty when not merged"}
+        autoMerge: {$ref: "#/components/schemas/PullAutoMerge"}
+        requestedReviewers:
+          type: array
+          items: {type: string}
+    PullRequestCreate:
+      type: object
+      required: [title, head, base]
+      properties:
+        title: {type: string, maxLength: 255}
+        body: {type: string, maxLength: 65536}
+        head: {type: string, description: Branch of headRepo}
+        headRepo: {type: string, description: owner/name of the head repository; default this repository}
+        base: {type: string, description: Branch of this repository}
+        draft: {type: boolean}
+    PullRequestUpdate:
+      type: object
+      properties:
+        title: {type: string, maxLength: 255}
+        body: {type: string, maxLength: 65536}
+        state: {type: string, enum: [open, closed]}
+        base: {type: string}
+        draft: {type: boolean}
+    PullCommitPage:
+      type: object
+      required: [items, hasMore]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/GitCommit"}
+        hasMore: {type: boolean}
+    PullFile:
+      type: object
+      required: [status, oldPath, newPath, additions, deletions, binary]
+      properties:
+        status: {type: string, enum: [added, modified, deleted, renamed, copied]}
+        oldPath: {type: string}
+        newPath: {type: string}
+        additions: {type: integer}
+        deletions: {type: integer}
+        binary: {type: boolean}
+    PullCodeOwners:
+      type: object
+      required: [pattern, owners, paths, approved]
+      properties:
+        pattern: {type: string}
+        owners:
+          type: array
+          items: {type: string}
+        paths:
+          type: array
+          items: {type: string}
+        approved: {type: boolean}
+    PullMergeability:
+      type: object
+      required: [state, mergeable, canMerge, conflictFiles, headSha, baseSha, mergeBase, rule, requiredApprovals, approvals,
+        missingChecks, behind, codeOwners, codeOwnersErrors, violations]
+      properties:
+        state: {type: string, enum: [open, closed, merged]}
+        mergeable: {type: string, enum: [unknown, clean, conflict, error], description: Whether the branches merge without conflicts}
+        canMerge: {type: boolean, description: Open, without conflicts and every requirement met}
+        conflictFiles:
+          type: array
+          items: {type: string}
+        headSha: {type: string}
+        baseSha: {type: string}
+        mergeBase: {type: string}
+        rule: {type: string, description: Pattern of the protection rule of the base; empty when none}
+        requiredApprovals: {type: integer}
+        approvals: {type: integer}
+        missingChecks:
+          type: array
+          items: {type: string}
+        behind: {type: boolean}
+        codeOwners:
+          type: array
+          items: {$ref: "#/components/schemas/PullCodeOwners"}
+        codeOwnersFile: {type: string}
+        codeOwnersErrors:
+          type: array
+          items: {type: string}
+        violations:
+          type: array
+          items: {$ref: "#/components/schemas/ProtectionViolation"}
+    PullMergeRequest:
+      type: object
+      properties:
+        method: {type: string, enum: [merge, squash, rebase], description: Default merge}
+        title: {type: string, maxLength: 255, description: Subject of the merge or squash commit}
+        message: {type: string, maxLength: 65536}
+        sha: {type: string, description: Expected head commit; 409 when the head moved}
+        deleteBranch: {type: boolean, description: Delete the head branch after the merge}
+    PullMergeResult:
+      type: object
+      required: [sha]
+      properties:
+        sha: {type: string, description: The new tip of the branch}
+    PullAutoMerge:
+      type: object
+      required: [method, enabledBy, title, message, deleteBranch]
+      properties:
+        method: {type: string, enum: [merge, squash, rebase]}
+        enabledBy: {type: string}
+        title: {type: string}
+        message: {type: string}
+        deleteBranch: {type: boolean}
+    PullAutoMergeRequest:
+      type: object
+      properties:
+        method: {type: string, enum: [merge, squash, rebase], description: Default merge}
+        title: {type: string, maxLength: 255}
+        message: {type: string, maxLength: 65536}
+        deleteBranch: {type: boolean}
+    PullReviewers:
+      type: object
+      required: [reviewers]
+      properties:
+        reviewers:
+          type: array
+          maxItems: 50
+          items: {type: string}
+    PullReview:
+      type: object
+      required: [id, reviewer, state, body, commitSha, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        reviewer: {type: string}
+        state: {type: string, enum: [pending, commented, approved, changes_requested, dismissed]}
+        body: {type: string}
+        commitSha: {type: string, description: Head commit the review was given on}
+        submittedAt: {type: string, format: date-time, nullable: true}
+        dismissedAt: {type: string, format: date-time, nullable: true}
+        dismissedBy: {type: string}
+        dismissMessage: {type: string}
+        createdAt: {type: string, format: date-time}
+    PullReviewDraftComment:
+      type: object
+      required: [path, line, body]
+      properties:
+        path: {type: string}
+        side: {type: string, enum: [LEFT, RIGHT], description: Default RIGHT}
+        line: {type: integer, minimum: 1, description: Last line of the commented range}
+        startLine: {type: integer, minimum: 1, description: First line of a multi-line range}
+        body: {type: string, maxLength: 65536}
+    PullReviewCreate:
+      type: object
+      properties:
+        event: {type: string, enum: [approve, request_changes, comment], description: Submit at once; empty leaves the review pending}
+        body: {type: string, maxLength: 65536}
+        commitSha: {type: string, description: Head commit reviewed; default the current head}
+        comments:
+          type: array
+          maxItems: 100
+          items: {$ref: "#/components/schemas/PullReviewDraftComment"}
+    PullReviewSubmit:
+      type: object
+      required: [event]
+      properties:
+        event: {type: string, enum: [approve, request_changes, comment]}
+        body: {type: string, maxLength: 65536}
+    PullReviewDismiss:
+      type: object
+      required: [message]
+      properties:
+        message: {type: string, maxLength: 1000}
+    PullReviewComment:
+      type: object
+      required: [id, reviewId, author, path, side, originalLine, originalCommitSha, commitSha, diffHunk, body, outdated,
+        resolved, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        reviewId: {type: string, description: Empty for a reply published outside a review}
+        pending: {type: boolean, description: Part of the caller's pending review}
+        inReplyTo: {type: string, description: First comment of the thread; empty for the first one}
+        author: {type: string}
+        path: {type: string}
+        side: {type: string, enum: [LEFT, RIGHT]}
+        line: {type: integer, nullable: true, description: Line at the current head; null when outdated}
+        startLine: {type: integer, nullable: true}
+        originalLine: {type: integer}
+        originalStartLine: {type: integer, nullable: true}
+        originalCommitSha: {type: string}
+        commitSha: {type: string, description: Head commit line refers to}
+        diffHunk: {type: string, description: The lines around the comment when it was written}
+        body: {type: string}
+        outdated: {type: boolean}
+        resolved: {type: boolean}
+        resolvedBy: {type: string}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    PullReviewCommentCreate:
+      type: object
+      required: [body]
+      properties:
+        body: {type: string, maxLength: 65536}
+        inReplyTo: {type: string, format: uuid, description: Any comment of the thread to reply to}
+        path: {type: string}
+        side: {type: string, enum: [LEFT, RIGHT], description: Default RIGHT}
+        line: {type: integer, minimum: 1}
+        startLine: {type: integer, minimum: 1}
+        commitSha: {type: string, description: Head commit the line refers to; default the current head}
+    PullSuggestionApply:
+      type: object
+      properties:
+        message: {type: string, maxLength: 65536, description: Commit message; a default one names the comment}
+    ForkCreate:
+      type: object
+      properties:
+        owner: {type: string, description: User or organization; default the caller}
+        name: {type: string, description: Default the name of the parent}
+    # --- end pulls schemas ---
     # --- branch protection schemas ---
     BranchProtectionInput:
       type: object

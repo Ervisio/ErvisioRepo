@@ -1,0 +1,9 @@
+Subject: [{{.Repo}}] {{.Title}} ({{.Ref}})
+{{.Actor}} {{if eq .Action "opened"}}ha aperto{{else if eq .Action "closed"}}ha chiuso{{else if eq .Action "reopened"}}ha riaperto{{else if eq .Action "merged"}}ha unito{{else if eq .Action "commented"}}ha commentato{{else if eq .Action "assigned"}}ti ha assegnato{{else if eq .Action "review_requested"}}ti ha chiesto una revisione di{{else if eq .Action "reviewed"}}ha revisionato{{else if eq .Action "ready_for_review"}}ha segnato come pronta per la revisione{{else if eq .Action "published"}}ha pubblicato{{else}}ha aggiornato{{end}} {{.Ref}} in {{.Repo}}:
+
+    {{.Title}}
+
+{{.Link}}
+
+Ricevi questo messaggio perché {{if eq .Reason "author"}}ne sei l'autore{{else if eq .Reason "assigned"}}ti è stato assegnato{{else if eq .Reason "mentioned"}}sei stato menzionato{{else if eq .Reason "review_requested"}}ti è stata chiesta una revisione{{else if eq .Reason "comment"}}hai partecipato con un commento{{else if eq .Reason "state_change"}}hai partecipato alla discussione{{else}}segui {{.Repo}}{{end}}.
+Gestisci le notifiche su {{.Instance}}: {{.Settings}}

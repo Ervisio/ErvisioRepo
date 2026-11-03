@@ -32,11 +32,14 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/issues"
 	"github.com/Ervisio/ErvisioRepo/internal/jobs"
 	"github.com/Ervisio/ErvisioRepo/internal/mail"
+	"github.com/Ervisio/ErvisioRepo/internal/notify"
 	"github.com/Ervisio/ErvisioRepo/internal/orgs"
+	"github.com/Ervisio/ErvisioRepo/internal/pulls"
 	"github.com/Ervisio/ErvisioRepo/internal/releases"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
+	"github.com/Ervisio/ErvisioRepo/internal/webhooks"
 	"github.com/Ervisio/ErvisioRepo/web"
 )
 
@@ -112,6 +115,11 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	}
 	bus := events.NewBus(pool, log.With("component", "events"))
 	jobOpts = append(jobOpts, bus.JobsOption(), issues.JobsOption(dbgen.New(pool), storage, log))
+	hooks, notifier, err := setupNotifications(cfg, pool, sender, log)
+	if err != nil {
+		return err
+	}
+	jobOpts = append(jobOpts, hooks.JobsOption(), notifier.JobsOption())
 	journal, err := setupGitJournal(ctx, cfg, pool, gitTier, bus, log)
 	if err != nil {
 		return err
@@ -128,6 +136,8 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		return err
 	}
 	bus.SetClient(runner.Client())
+	hooks.SetEnqueuer(runner)
+	notifier.SetEnqueuer(runner)
 	if journal != nil && journal.Journal != nil {
 		journal.Journal.SetEnqueuer(runner)
 	}
@@ -211,7 +221,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		if journal != nil && journal.Journal != nil {
 			rj = journal.Journal
 		}
-		deps.Releases = releases.New(releases.Options{Pool: pool, Repos: repoSvc, Git: gitTier, Journal: rj, Storage: storage, Log: log})
+		deps.Releases = releases.New(releases.Options{Pool: pool, Repos: repoSvc, Git: gitTier, Journal: rj, Storage: storage, Bus: bus, Log: log})
 		deps.Git = git.HTTP
 		deps.Tiering = tiering.Admin
 		deps.Hydration = tiering.Hydrator
@@ -225,6 +235,26 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 			MaxAttachmentSize: issues.DefaultMaxAttachmentSize, Log: log.With("component", "issues")})
 		bus.Register("issues.autoclose", issueSvc.PushHandler(), events.KindPush)
 		deps.Issues = issueSvc
+
+		// Pull requests, reviews and forks.
+		pullOpts := pulls.Options{Pool: pool, Repos: repoSvc, Browse: browse, Tier: gitTier, Issues: issueSvc, Bus: bus,
+			Log: log.With("component", "pulls")}
+		if journal != nil {
+			pullOpts.Hooks, pullOpts.Protection = journal.Hooks, journal.Protection
+		}
+		pullSvc := pulls.New(pullOpts)
+		bus.Register("pulls.sync", pullSvc.PushHandler(), events.KindPush)
+		bus.Register("pulls.automerge", pullSvc.AutoMergeHandler(), events.KindStatus, events.KindPullReview)
+		if journal != nil {
+			journal.Protection.SetSources(pullSvc, nil)
+		}
+		deps.Pulls = pullSvc
+
+		hooks.SetRepos(repoSvc)
+		notifier.SetRepos(repoSvc)
+		bus.Register("webhooks.deliver", hooks.EventHandler(), webhooks.EventKinds...)
+		bus.Register("notify", notifier.EventHandler(), notify.EventKinds...)
+		deps.Webhooks, deps.Notify = hooks, notifier
 		if journal != nil {
 			journal.Protection.SetRepos(repoSvc)
 			deps.Protection = journal.Protection

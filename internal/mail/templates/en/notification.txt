@@ -1,0 +1,9 @@
+Subject: [{{.Repo}}] {{.Title}} ({{.Ref}})
+{{.Actor}} {{if eq .Action "opened"}}opened{{else if eq .Action "closed"}}closed{{else if eq .Action "reopened"}}reopened{{else if eq .Action "merged"}}merged{{else if eq .Action "commented"}}commented on{{else if eq .Action "assigned"}}assigned you to{{else if eq .Action "review_requested"}}requested your review on{{else if eq .Action "reviewed"}}reviewed{{else if eq .Action "ready_for_review"}}marked as ready for review{{else if eq .Action "published"}}published{{else}}updated{{end}} {{.Ref}} in {{.Repo}}:
+
+    {{.Title}}
+
+{{.Link}}
+
+You are receiving this because {{if eq .Reason "author"}}you are the author{{else if eq .Reason "assigned"}}you are assigned{{else if eq .Reason "mentioned"}}you were mentioned{{else if eq .Reason "review_requested"}}your review was requested{{else if eq .Reason "comment"}}you commented{{else if eq .Reason "state_change"}}you took part in the discussion{{else}}you are watching {{.Repo}}{{end}}.
+Manage your notifications on {{.Instance}}: {{.Settings}}

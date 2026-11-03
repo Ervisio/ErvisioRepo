@@ -85,25 +85,25 @@ func (e DiffLineType) Valid() bool {
 
 // Defines values for FileDiffStatus.
 const (
-	Added    FileDiffStatus = "added"
-	Copied   FileDiffStatus = "copied"
-	Deleted  FileDiffStatus = "deleted"
-	Modified FileDiffStatus = "modified"
-	Renamed  FileDiffStatus = "renamed"
+	FileDiffStatusAdded    FileDiffStatus = "added"
+	FileDiffStatusCopied   FileDiffStatus = "copied"
+	FileDiffStatusDeleted  FileDiffStatus = "deleted"
+	FileDiffStatusModified FileDiffStatus = "modified"
+	FileDiffStatusRenamed  FileDiffStatus = "renamed"
 )
 
 // Valid indicates whether the value is a known member of the FileDiffStatus enum.
 func (e FileDiffStatus) Valid() bool {
 	switch e {
-	case Added:
+	case FileDiffStatusAdded:
 		return true
-	case Copied:
+	case FileDiffStatusCopied:
 		return true
-	case Deleted:
+	case FileDiffStatusDeleted:
 		return true
-	case Modified:
+	case FileDiffStatusModified:
 		return true
-	case Renamed:
+	case FileDiffStatusRenamed:
 		return true
 	default:
 		return false
@@ -466,31 +466,31 @@ func (e MilestoneUpdateState) Valid() bool {
 
 // Defines values for NotificationReason.
 const (
-	Assigned        NotificationReason = "assigned"
-	Author          NotificationReason = "author"
-	Comment         NotificationReason = "comment"
-	Mentioned       NotificationReason = "mentioned"
-	ReviewRequested NotificationReason = "review_requested"
-	StateChange     NotificationReason = "state_change"
-	Subscribed      NotificationReason = "subscribed"
+	NotificationReasonAssigned        NotificationReason = "assigned"
+	NotificationReasonAuthor          NotificationReason = "author"
+	NotificationReasonComment         NotificationReason = "comment"
+	NotificationReasonMentioned       NotificationReason = "mentioned"
+	NotificationReasonReviewRequested NotificationReason = "review_requested"
+	NotificationReasonStateChange     NotificationReason = "state_change"
+	NotificationReasonSubscribed      NotificationReason = "subscribed"
 )
 
 // Valid indicates whether the value is a known member of the NotificationReason enum.
 func (e NotificationReason) Valid() bool {
 	switch e {
-	case Assigned:
+	case NotificationReasonAssigned:
 		return true
-	case Author:
+	case NotificationReasonAuthor:
 		return true
-	case Comment:
+	case NotificationReasonComment:
 		return true
-	case Mentioned:
+	case NotificationReasonMentioned:
 		return true
-	case ReviewRequested:
+	case NotificationReasonReviewRequested:
 		return true
-	case StateChange:
+	case NotificationReasonStateChange:
 		return true
-	case Subscribed:
+	case NotificationReasonSubscribed:
 		return true
 	default:
 		return false
@@ -584,6 +584,327 @@ func (e ProfileUpdateLocale) Valid() bool {
 	case ProfileUpdateLocaleEn:
 		return true
 	case ProfileUpdateLocaleIt:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullAutoMergeMethod.
+const (
+	PullAutoMergeMethodMerge  PullAutoMergeMethod = "merge"
+	PullAutoMergeMethodRebase PullAutoMergeMethod = "rebase"
+	PullAutoMergeMethodSquash PullAutoMergeMethod = "squash"
+)
+
+// Valid indicates whether the value is a known member of the PullAutoMergeMethod enum.
+func (e PullAutoMergeMethod) Valid() bool {
+	switch e {
+	case PullAutoMergeMethodMerge:
+		return true
+	case PullAutoMergeMethodRebase:
+		return true
+	case PullAutoMergeMethodSquash:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullAutoMergeRequestMethod.
+const (
+	PullAutoMergeRequestMethodMerge  PullAutoMergeRequestMethod = "merge"
+	PullAutoMergeRequestMethodRebase PullAutoMergeRequestMethod = "rebase"
+	PullAutoMergeRequestMethodSquash PullAutoMergeRequestMethod = "squash"
+)
+
+// Valid indicates whether the value is a known member of the PullAutoMergeRequestMethod enum.
+func (e PullAutoMergeRequestMethod) Valid() bool {
+	switch e {
+	case PullAutoMergeRequestMethodMerge:
+		return true
+	case PullAutoMergeRequestMethodRebase:
+		return true
+	case PullAutoMergeRequestMethodSquash:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullFileStatus.
+const (
+	PullFileStatusAdded    PullFileStatus = "added"
+	PullFileStatusCopied   PullFileStatus = "copied"
+	PullFileStatusDeleted  PullFileStatus = "deleted"
+	PullFileStatusModified PullFileStatus = "modified"
+	PullFileStatusRenamed  PullFileStatus = "renamed"
+)
+
+// Valid indicates whether the value is a known member of the PullFileStatus enum.
+func (e PullFileStatus) Valid() bool {
+	switch e {
+	case PullFileStatusAdded:
+		return true
+	case PullFileStatusCopied:
+		return true
+	case PullFileStatusDeleted:
+		return true
+	case PullFileStatusModified:
+		return true
+	case PullFileStatusRenamed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullMergeRequestMethod.
+const (
+	PullMergeRequestMethodMerge  PullMergeRequestMethod = "merge"
+	PullMergeRequestMethodRebase PullMergeRequestMethod = "rebase"
+	PullMergeRequestMethodSquash PullMergeRequestMethod = "squash"
+)
+
+// Valid indicates whether the value is a known member of the PullMergeRequestMethod enum.
+func (e PullMergeRequestMethod) Valid() bool {
+	switch e {
+	case PullMergeRequestMethodMerge:
+		return true
+	case PullMergeRequestMethodRebase:
+		return true
+	case PullMergeRequestMethodSquash:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullMergeabilityMergeable.
+const (
+	PullMergeabilityMergeableClean    PullMergeabilityMergeable = "clean"
+	PullMergeabilityMergeableConflict PullMergeabilityMergeable = "conflict"
+	PullMergeabilityMergeableError    PullMergeabilityMergeable = "error"
+	PullMergeabilityMergeableUnknown  PullMergeabilityMergeable = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the PullMergeabilityMergeable enum.
+func (e PullMergeabilityMergeable) Valid() bool {
+	switch e {
+	case PullMergeabilityMergeableClean:
+		return true
+	case PullMergeabilityMergeableConflict:
+		return true
+	case PullMergeabilityMergeableError:
+		return true
+	case PullMergeabilityMergeableUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullMergeabilityState.
+const (
+	PullMergeabilityStateClosed PullMergeabilityState = "closed"
+	PullMergeabilityStateMerged PullMergeabilityState = "merged"
+	PullMergeabilityStateOpen   PullMergeabilityState = "open"
+)
+
+// Valid indicates whether the value is a known member of the PullMergeabilityState enum.
+func (e PullMergeabilityState) Valid() bool {
+	switch e {
+	case PullMergeabilityStateClosed:
+		return true
+	case PullMergeabilityStateMerged:
+		return true
+	case PullMergeabilityStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullRequestMergeable.
+const (
+	PullRequestMergeableClean    PullRequestMergeable = "clean"
+	PullRequestMergeableConflict PullRequestMergeable = "conflict"
+	PullRequestMergeableError    PullRequestMergeable = "error"
+	PullRequestMergeableUnknown  PullRequestMergeable = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the PullRequestMergeable enum.
+func (e PullRequestMergeable) Valid() bool {
+	switch e {
+	case PullRequestMergeableClean:
+		return true
+	case PullRequestMergeableConflict:
+		return true
+	case PullRequestMergeableError:
+		return true
+	case PullRequestMergeableUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullRequestState.
+const (
+	PullRequestStateClosed PullRequestState = "closed"
+	PullRequestStateMerged PullRequestState = "merged"
+	PullRequestStateOpen   PullRequestState = "open"
+)
+
+// Valid indicates whether the value is a known member of the PullRequestState enum.
+func (e PullRequestState) Valid() bool {
+	switch e {
+	case PullRequestStateClosed:
+		return true
+	case PullRequestStateMerged:
+		return true
+	case PullRequestStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullRequestUpdateState.
+const (
+	PullRequestUpdateStateClosed PullRequestUpdateState = "closed"
+	PullRequestUpdateStateOpen   PullRequestUpdateState = "open"
+)
+
+// Valid indicates whether the value is a known member of the PullRequestUpdateState enum.
+func (e PullRequestUpdateState) Valid() bool {
+	switch e {
+	case PullRequestUpdateStateClosed:
+		return true
+	case PullRequestUpdateStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullReviewState.
+const (
+	PullReviewStateApproved         PullReviewState = "approved"
+	PullReviewStateChangesRequested PullReviewState = "changes_requested"
+	PullReviewStateCommented        PullReviewState = "commented"
+	PullReviewStateDismissed        PullReviewState = "dismissed"
+	PullReviewStatePending          PullReviewState = "pending"
+)
+
+// Valid indicates whether the value is a known member of the PullReviewState enum.
+func (e PullReviewState) Valid() bool {
+	switch e {
+	case PullReviewStateApproved:
+		return true
+	case PullReviewStateChangesRequested:
+		return true
+	case PullReviewStateCommented:
+		return true
+	case PullReviewStateDismissed:
+		return true
+	case PullReviewStatePending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullReviewCommentSide.
+const (
+	PullReviewCommentSideLEFT  PullReviewCommentSide = "LEFT"
+	PullReviewCommentSideRIGHT PullReviewCommentSide = "RIGHT"
+)
+
+// Valid indicates whether the value is a known member of the PullReviewCommentSide enum.
+func (e PullReviewCommentSide) Valid() bool {
+	switch e {
+	case PullReviewCommentSideLEFT:
+		return true
+	case PullReviewCommentSideRIGHT:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullReviewCommentCreateSide.
+const (
+	PullReviewCommentCreateSideLEFT  PullReviewCommentCreateSide = "LEFT"
+	PullReviewCommentCreateSideRIGHT PullReviewCommentCreateSide = "RIGHT"
+)
+
+// Valid indicates whether the value is a known member of the PullReviewCommentCreateSide enum.
+func (e PullReviewCommentCreateSide) Valid() bool {
+	switch e {
+	case PullReviewCommentCreateSideLEFT:
+		return true
+	case PullReviewCommentCreateSideRIGHT:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullReviewCreateEvent.
+const (
+	PullReviewCreateEventApprove        PullReviewCreateEvent = "approve"
+	PullReviewCreateEventComment        PullReviewCreateEvent = "comment"
+	PullReviewCreateEventRequestChanges PullReviewCreateEvent = "request_changes"
+)
+
+// Valid indicates whether the value is a known member of the PullReviewCreateEvent enum.
+func (e PullReviewCreateEvent) Valid() bool {
+	switch e {
+	case PullReviewCreateEventApprove:
+		return true
+	case PullReviewCreateEventComment:
+		return true
+	case PullReviewCreateEventRequestChanges:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullReviewDraftCommentSide.
+const (
+	PullReviewDraftCommentSideLEFT  PullReviewDraftCommentSide = "LEFT"
+	PullReviewDraftCommentSideRIGHT PullReviewDraftCommentSide = "RIGHT"
+)
+
+// Valid indicates whether the value is a known member of the PullReviewDraftCommentSide enum.
+func (e PullReviewDraftCommentSide) Valid() bool {
+	switch e {
+	case PullReviewDraftCommentSideLEFT:
+		return true
+	case PullReviewDraftCommentSideRIGHT:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullReviewSubmitEvent.
+const (
+	PullReviewSubmitEventApprove        PullReviewSubmitEvent = "approve"
+	PullReviewSubmitEventComment        PullReviewSubmitEvent = "comment"
+	PullReviewSubmitEventRequestChanges PullReviewSubmitEvent = "request_changes"
+)
+
+// Valid indicates whether the value is a known member of the PullReviewSubmitEvent enum.
+func (e PullReviewSubmitEvent) Valid() bool {
+	switch e {
+	case PullReviewSubmitEventApprove:
+		return true
+	case PullReviewSubmitEventComment:
+		return true
+	case PullReviewSubmitEventRequestChanges:
 		return true
 	default:
 		return false
@@ -1090,22 +1411,22 @@ func (e ListIssuesParamsState) Valid() bool {
 
 // Defines values for ListIssuesParamsSort.
 const (
-	Comments  ListIssuesParamsSort = "comments"
-	Created   ListIssuesParamsSort = "created"
-	Relevance ListIssuesParamsSort = "relevance"
-	Updated   ListIssuesParamsSort = "updated"
+	ListIssuesParamsSortComments  ListIssuesParamsSort = "comments"
+	ListIssuesParamsSortCreated   ListIssuesParamsSort = "created"
+	ListIssuesParamsSortRelevance ListIssuesParamsSort = "relevance"
+	ListIssuesParamsSortUpdated   ListIssuesParamsSort = "updated"
 )
 
 // Valid indicates whether the value is a known member of the ListIssuesParamsSort enum.
 func (e ListIssuesParamsSort) Valid() bool {
 	switch e {
-	case Comments:
+	case ListIssuesParamsSortComments:
 		return true
-	case Created:
+	case ListIssuesParamsSortCreated:
 		return true
-	case Relevance:
+	case ListIssuesParamsSortRelevance:
 		return true
-	case Updated:
+	case ListIssuesParamsSortUpdated:
 		return true
 	default:
 		return false
@@ -1145,6 +1466,48 @@ func (e ListMilestonesParamsState) Valid() bool {
 	case ListMilestonesParamsStateClosed:
 		return true
 	case ListMilestonesParamsStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPullsParamsState.
+const (
+	ListPullsParamsStateAll    ListPullsParamsState = "all"
+	ListPullsParamsStateClosed ListPullsParamsState = "closed"
+	ListPullsParamsStateMerged ListPullsParamsState = "merged"
+	ListPullsParamsStateOpen   ListPullsParamsState = "open"
+)
+
+// Valid indicates whether the value is a known member of the ListPullsParamsState enum.
+func (e ListPullsParamsState) Valid() bool {
+	switch e {
+	case ListPullsParamsStateAll:
+		return true
+	case ListPullsParamsStateClosed:
+		return true
+	case ListPullsParamsStateMerged:
+		return true
+	case ListPullsParamsStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPullsParamsSort.
+const (
+	ListPullsParamsSortCreated ListPullsParamsSort = "created"
+	ListPullsParamsSortUpdated ListPullsParamsSort = "updated"
+)
+
+// Valid indicates whether the value is a known member of the ListPullsParamsSort enum.
+func (e ListPullsParamsSort) Valid() bool {
+	switch e {
+	case ListPullsParamsSortCreated:
+		return true
+	case ListPullsParamsSortUpdated:
 		return true
 	default:
 		return false
@@ -1484,6 +1847,15 @@ type FileEditOp string
 type FileEditResult struct {
 	Branch string    `json:"branch"`
 	Commit GitCommit `json:"commit"`
+}
+
+// ForkCreate defines model for ForkCreate.
+type ForkCreate struct {
+	// Name Default the name of the parent
+	Name *string `json:"name,omitempty"`
+
+	// Owner User or organization; default the caller
+	Owner *string `json:"owner,omitempty"`
 }
 
 // GitCommit defines model for GitCommit.
@@ -2190,6 +2562,316 @@ type ProtectionViolation struct {
 	// Commit Offending commit
 	Commit  *string `json:"commit,omitempty"`
 	Message string  `json:"message"`
+}
+
+// PullAutoMerge defines model for PullAutoMerge.
+type PullAutoMerge struct {
+	DeleteBranch bool                `json:"deleteBranch"`
+	EnabledBy    string              `json:"enabledBy"`
+	Message      string              `json:"message"`
+	Method       PullAutoMergeMethod `json:"method"`
+	Title        string              `json:"title"`
+}
+
+// PullAutoMergeMethod defines model for PullAutoMerge.Method.
+type PullAutoMergeMethod string
+
+// PullAutoMergeRequest defines model for PullAutoMergeRequest.
+type PullAutoMergeRequest struct {
+	DeleteBranch *bool   `json:"deleteBranch,omitempty"`
+	Message      *string `json:"message,omitempty"`
+
+	// Method Default merge
+	Method *PullAutoMergeRequestMethod `json:"method,omitempty"`
+	Title  *string                     `json:"title,omitempty"`
+}
+
+// PullAutoMergeRequestMethod Default merge
+type PullAutoMergeRequestMethod string
+
+// PullCodeOwners defines model for PullCodeOwners.
+type PullCodeOwners struct {
+	Approved bool     `json:"approved"`
+	Owners   []string `json:"owners"`
+	Paths    []string `json:"paths"`
+	Pattern  string   `json:"pattern"`
+}
+
+// PullCommitPage defines model for PullCommitPage.
+type PullCommitPage struct {
+	HasMore bool        `json:"hasMore"`
+	Items   []GitCommit `json:"items"`
+}
+
+// PullFile defines model for PullFile.
+type PullFile struct {
+	Additions int            `json:"additions"`
+	Binary    bool           `json:"binary"`
+	Deletions int            `json:"deletions"`
+	NewPath   string         `json:"newPath"`
+	OldPath   string         `json:"oldPath"`
+	Status    PullFileStatus `json:"status"`
+}
+
+// PullFileStatus defines model for PullFile.Status.
+type PullFileStatus string
+
+// PullMergeRequest defines model for PullMergeRequest.
+type PullMergeRequest struct {
+	// DeleteBranch Delete the head branch after the merge
+	DeleteBranch *bool   `json:"deleteBranch,omitempty"`
+	Message      *string `json:"message,omitempty"`
+
+	// Method Default merge
+	Method *PullMergeRequestMethod `json:"method,omitempty"`
+
+	// Sha Expected head commit; 409 when the head moved
+	Sha *string `json:"sha,omitempty"`
+
+	// Title Subject of the merge or squash commit
+	Title *string `json:"title,omitempty"`
+}
+
+// PullMergeRequestMethod Default merge
+type PullMergeRequestMethod string
+
+// PullMergeResult defines model for PullMergeResult.
+type PullMergeResult struct {
+	// Sha The new tip of the branch
+	Sha string `json:"sha"`
+}
+
+// PullMergeability defines model for PullMergeability.
+type PullMergeability struct {
+	Approvals int    `json:"approvals"`
+	BaseSha   string `json:"baseSha"`
+	Behind    bool   `json:"behind"`
+
+	// CanMerge Open
+	CanMerge         bool             `json:"canMerge"`
+	CodeOwners       []PullCodeOwners `json:"codeOwners"`
+	CodeOwnersErrors []string         `json:"codeOwnersErrors"`
+	CodeOwnersFile   *string          `json:"codeOwnersFile,omitempty"`
+	ConflictFiles    []string         `json:"conflictFiles"`
+	HeadSha          string           `json:"headSha"`
+	MergeBase        string           `json:"mergeBase"`
+
+	// Mergeable Whether the branches merge without conflicts
+	Mergeable         PullMergeabilityMergeable `json:"mergeable"`
+	MissingChecks     []string                  `json:"missingChecks"`
+	RequiredApprovals int                       `json:"requiredApprovals"`
+
+	// Rule Pattern of the protection rule of the base; empty when none
+	Rule       string                `json:"rule"`
+	State      PullMergeabilityState `json:"state"`
+	Violations []ProtectionViolation `json:"violations"`
+}
+
+// PullMergeabilityMergeable Whether the branches merge without conflicts
+type PullMergeabilityMergeable string
+
+// PullMergeabilityState defines model for PullMergeability.State.
+type PullMergeabilityState string
+
+// PullRef defines model for PullRef.
+type PullRef struct {
+	// Ref Branch name
+	Ref string `json:"ref"`
+
+	// Repo owner/name; empty when the head repository is gone
+	Repo string `json:"repo"`
+	Sha  string `json:"sha"`
+}
+
+// PullRequest defines model for PullRequest.
+type PullRequest struct {
+	AutoMerge     *PullAutoMerge `json:"autoMerge,omitempty"`
+	Base          PullRef        `json:"base"`
+	ConflictFiles []string       `json:"conflictFiles"`
+	Draft         bool           `json:"draft"`
+	Head          PullRef        `json:"head"`
+	Issue         Issue          `json:"issue"`
+	MergeBase     string         `json:"mergeBase"`
+
+	// MergeCommit The commit the base branch was moved to
+	MergeCommit string `json:"mergeCommit"`
+
+	// MergeMethod merge, squash or rebase; empty when not merged
+	MergeMethod        string               `json:"mergeMethod"`
+	Mergeable          PullRequestMergeable `json:"mergeable"`
+	MergedAt           *time.Time           `json:"mergedAt,omitempty"`
+	MergedBy           string               `json:"mergedBy"`
+	RequestedReviewers []string             `json:"requestedReviewers"`
+	State              PullRequestState     `json:"state"`
+}
+
+// PullRequestMergeable defines model for PullRequest.Mergeable.
+type PullRequestMergeable string
+
+// PullRequestState defines model for PullRequest.State.
+type PullRequestState string
+
+// PullRequestCreate defines model for PullRequestCreate.
+type PullRequestCreate struct {
+	// Base Branch of this repository
+	Base  string  `json:"base"`
+	Body  *string `json:"body,omitempty"`
+	Draft *bool   `json:"draft,omitempty"`
+
+	// Head Branch of headRepo
+	Head string `json:"head"`
+
+	// HeadRepo owner/name of the head repository; default this repository
+	HeadRepo *string `json:"headRepo,omitempty"`
+	Title    string  `json:"title"`
+}
+
+// PullRequestUpdate defines model for PullRequestUpdate.
+type PullRequestUpdate struct {
+	Base  *string                 `json:"base,omitempty"`
+	Body  *string                 `json:"body,omitempty"`
+	Draft *bool                   `json:"draft,omitempty"`
+	State *PullRequestUpdateState `json:"state,omitempty"`
+	Title *string                 `json:"title,omitempty"`
+}
+
+// PullRequestUpdateState defines model for PullRequestUpdate.State.
+type PullRequestUpdateState string
+
+// PullReview defines model for PullReview.
+type PullReview struct {
+	Body string `json:"body"`
+
+	// CommitSha Head commit the review was given on
+	CommitSha      string             `json:"commitSha"`
+	CreatedAt      time.Time          `json:"createdAt"`
+	DismissMessage *string            `json:"dismissMessage,omitempty"`
+	DismissedAt    *time.Time         `json:"dismissedAt,omitempty"`
+	DismissedBy    *string            `json:"dismissedBy,omitempty"`
+	Id             openapi_types.UUID `json:"id"`
+	Reviewer       string             `json:"reviewer"`
+	State          PullReviewState    `json:"state"`
+	SubmittedAt    *time.Time         `json:"submittedAt,omitempty"`
+}
+
+// PullReviewState defines model for PullReview.State.
+type PullReviewState string
+
+// PullReviewComment defines model for PullReviewComment.
+type PullReviewComment struct {
+	Author string `json:"author"`
+	Body   string `json:"body"`
+
+	// CommitSha Head commit line refers to
+	CommitSha string    `json:"commitSha"`
+	CreatedAt time.Time `json:"createdAt"`
+
+	// DiffHunk The lines around the comment when it was written
+	DiffHunk string             `json:"diffHunk"`
+	Id       openapi_types.UUID `json:"id"`
+
+	// InReplyTo First comment of the thread; empty for the first one
+	InReplyTo *string `json:"inReplyTo,omitempty"`
+
+	// Line Line at the current head; null when outdated
+	Line              *int   `json:"line,omitempty"`
+	OriginalCommitSha string `json:"originalCommitSha"`
+	OriginalLine      int    `json:"originalLine"`
+	OriginalStartLine *int   `json:"originalStartLine,omitempty"`
+	Outdated          bool   `json:"outdated"`
+	Path              string `json:"path"`
+
+	// Pending Part of the caller's pending review
+	Pending    *bool   `json:"pending,omitempty"`
+	Resolved   bool    `json:"resolved"`
+	ResolvedBy *string `json:"resolvedBy,omitempty"`
+
+	// ReviewId Empty for a reply published outside a review
+	ReviewId  string                `json:"reviewId"`
+	Side      PullReviewCommentSide `json:"side"`
+	StartLine *int                  `json:"startLine,omitempty"`
+	UpdatedAt time.Time             `json:"updatedAt"`
+}
+
+// PullReviewCommentSide defines model for PullReviewComment.Side.
+type PullReviewCommentSide string
+
+// PullReviewCommentCreate defines model for PullReviewCommentCreate.
+type PullReviewCommentCreate struct {
+	Body string `json:"body"`
+
+	// CommitSha Head commit the line refers to; default the current head
+	CommitSha *string `json:"commitSha,omitempty"`
+
+	// InReplyTo Any comment of the thread to reply to
+	InReplyTo *openapi_types.UUID `json:"inReplyTo,omitempty"`
+	Line      *int                `json:"line,omitempty"`
+	Path      *string             `json:"path,omitempty"`
+
+	// Side Default RIGHT
+	Side      *PullReviewCommentCreateSide `json:"side,omitempty"`
+	StartLine *int                         `json:"startLine,omitempty"`
+}
+
+// PullReviewCommentCreateSide Default RIGHT
+type PullReviewCommentCreateSide string
+
+// PullReviewCreate defines model for PullReviewCreate.
+type PullReviewCreate struct {
+	Body     *string                   `json:"body,omitempty"`
+	Comments *[]PullReviewDraftComment `json:"comments,omitempty"`
+
+	// CommitSha Head commit reviewed; default the current head
+	CommitSha *string `json:"commitSha,omitempty"`
+
+	// Event Submit at once; empty leaves the review pending
+	Event *PullReviewCreateEvent `json:"event,omitempty"`
+}
+
+// PullReviewCreateEvent Submit at once; empty leaves the review pending
+type PullReviewCreateEvent string
+
+// PullReviewDismiss defines model for PullReviewDismiss.
+type PullReviewDismiss struct {
+	Message string `json:"message"`
+}
+
+// PullReviewDraftComment defines model for PullReviewDraftComment.
+type PullReviewDraftComment struct {
+	Body string `json:"body"`
+
+	// Line Last line of the commented range
+	Line int    `json:"line"`
+	Path string `json:"path"`
+
+	// Side Default RIGHT
+	Side *PullReviewDraftCommentSide `json:"side,omitempty"`
+
+	// StartLine First line of a multi-line range
+	StartLine *int `json:"startLine,omitempty"`
+}
+
+// PullReviewDraftCommentSide Default RIGHT
+type PullReviewDraftCommentSide string
+
+// PullReviewSubmit defines model for PullReviewSubmit.
+type PullReviewSubmit struct {
+	Body  *string               `json:"body,omitempty"`
+	Event PullReviewSubmitEvent `json:"event"`
+}
+
+// PullReviewSubmitEvent defines model for PullReviewSubmit.Event.
+type PullReviewSubmitEvent string
+
+// PullReviewers defines model for PullReviewers.
+type PullReviewers struct {
+	Reviewers []string `json:"reviewers"`
+}
+
+// PullSuggestionApply defines model for PullSuggestionApply.
+type PullSuggestionApply struct {
+	// Message Commit message; a default one names the comment
+	Message *string `json:"message,omitempty"`
 }
 
 // Quota defines model for Quota.
@@ -2965,6 +3647,15 @@ type PageOffset = int
 // ProtectionRuleId defines model for ProtectionRuleId.
 type ProtectionRuleId = openapi_types.UUID
 
+// PullCommentId defines model for PullCommentId.
+type PullCommentId = openapi_types.UUID
+
+// PullNumber defines model for PullNumber.
+type PullNumber = int64
+
+// PullReviewId defines model for PullReviewId.
+type PullReviewId = openapi_types.UUID
+
 // RepoName defines model for RepoName.
 type RepoName = string
 
@@ -3089,6 +3780,12 @@ type CompareRefsParams struct {
 	Head string `form:"head" json:"head"`
 }
 
+// ListForksParams defines parameters for ListForks.
+type ListForksParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListRepoWebhookDeliveriesParams defines parameters for ListRepoWebhookDeliveries.
 type ListRepoWebhookDeliveriesParams struct {
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
@@ -3192,6 +3889,68 @@ type ListMilestonesParams struct {
 
 // ListMilestonesParamsState defines parameters for ListMilestones.
 type ListMilestonesParamsState string
+
+// ListPullsParams defines parameters for ListPulls.
+type ListPullsParams struct {
+	// State Default open
+	State *ListPullsParamsState `form:"state,omitempty" json:"state,omitempty"`
+
+	// Base Base branch name
+	Base *string `form:"base,omitempty" json:"base,omitempty"`
+
+	// Head Head branch name
+	Head *string `form:"head,omitempty" json:"head,omitempty"`
+
+	// Author Username of the author
+	Author *string `form:"author,omitempty" json:"author,omitempty"`
+
+	// Sort Default created
+	Sort   *ListPullsParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+	Offset *PageOffset          `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit           `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListPullsParamsState defines parameters for ListPulls.
+type ListPullsParamsState string
+
+// ListPullsParamsSort defines parameters for ListPulls.
+type ListPullsParamsSort string
+
+// ListPullReviewCommentsParams defines parameters for ListPullReviewComments.
+type ListPullReviewCommentsParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListPullCommitsParams defines parameters for ListPullCommits.
+type ListPullCommitsParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetPullDiffParams defines parameters for GetPullDiff.
+type GetPullDiffParams struct {
+	// Path Literal file paths (repeatable)
+	Path *[]string `form:"path,omitempty" json:"path,omitempty"`
+}
+
+// RemovePullReviewersParams defines parameters for RemovePullReviewers.
+type RemovePullReviewersParams struct {
+	// Reviewers Comma-separated usernames
+	Reviewers string `form:"reviewers" json:"reviewers"`
+}
+
+// ListPullReviewsParams defines parameters for ListPullReviews.
+type ListPullReviewsParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListPullReviewCommentsOfReviewParams defines parameters for ListPullReviewCommentsOfReview.
+type ListPullReviewCommentsOfReviewParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
 
 // GetReadmeParams defines parameters for GetReadme.
 type GetReadmeParams struct {
@@ -3372,6 +4131,9 @@ type SetRepoCollaboratorJSONRequestBody = RepoPermissionRequest
 // EditContentsJSONRequestBody defines body for EditContents for application/json ContentType.
 type EditContentsJSONRequestBody = FileEdit
 
+// CreateForkJSONRequestBody defines body for CreateFork for application/json ContentType.
+type CreateForkJSONRequestBody = ForkCreate
+
 // PutGitHubSyncLinkJSONRequestBody defines body for PutGitHubSyncLink for application/json ContentType.
 type PutGitHubSyncLinkJSONRequestBody = GitHubSyncLinkPut
 
@@ -3416,6 +4178,39 @@ type CreateMilestoneJSONRequestBody = MilestoneCreate
 
 // UpdateMilestoneJSONRequestBody defines body for UpdateMilestone for application/json ContentType.
 type UpdateMilestoneJSONRequestBody = MilestoneUpdate
+
+// CreatePullJSONRequestBody defines body for CreatePull for application/json ContentType.
+type CreatePullJSONRequestBody = PullRequestCreate
+
+// UpdatePullReviewCommentJSONRequestBody defines body for UpdatePullReviewComment for application/json ContentType.
+type UpdatePullReviewCommentJSONRequestBody = CommentBody
+
+// ApplyPullSuggestionJSONRequestBody defines body for ApplyPullSuggestion for application/json ContentType.
+type ApplyPullSuggestionJSONRequestBody = PullSuggestionApply
+
+// UpdatePullJSONRequestBody defines body for UpdatePull for application/json ContentType.
+type UpdatePullJSONRequestBody = PullRequestUpdate
+
+// EnablePullAutoMergeJSONRequestBody defines body for EnablePullAutoMerge for application/json ContentType.
+type EnablePullAutoMergeJSONRequestBody = PullAutoMergeRequest
+
+// CreatePullReviewCommentJSONRequestBody defines body for CreatePullReviewComment for application/json ContentType.
+type CreatePullReviewCommentJSONRequestBody = PullReviewCommentCreate
+
+// MergePullJSONRequestBody defines body for MergePull for application/json ContentType.
+type MergePullJSONRequestBody = PullMergeRequest
+
+// RequestPullReviewersJSONRequestBody defines body for RequestPullReviewers for application/json ContentType.
+type RequestPullReviewersJSONRequestBody = PullReviewers
+
+// CreatePullReviewJSONRequestBody defines body for CreatePullReview for application/json ContentType.
+type CreatePullReviewJSONRequestBody = PullReviewCreate
+
+// DismissPullReviewJSONRequestBody defines body for DismissPullReview for application/json ContentType.
+type DismissPullReviewJSONRequestBody = PullReviewDismiss
+
+// SubmitPullReviewJSONRequestBody defines body for SubmitPullReview for application/json ContentType.
+type SubmitPullReviewJSONRequestBody = PullReviewSubmit
 
 // CreateReleaseJSONRequestBody defines body for CreateRelease for application/json ContentType.
 type CreateReleaseJSONRequestBody = ReleaseCreate
@@ -3770,6 +4565,12 @@ type ServerInterface interface {
 	// EditContents Create, update or delete a file with a commit
 	// (POST /repos/{owner}/{name}/contents)
 	EditContents(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// ListForks The forks of a repository
+	// (GET /repos/{owner}/{name}/forks)
+	ListForks(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListForksParams)
+	// CreateFork Fork a repository
+	// (POST /repos/{owner}/{name}/forks)
+	CreateFork(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
 	// GetGitHubImport Status of the import that created the repository
 	// (GET /repos/{owner}/{name}/github/import)
 	GetGitHubImport(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
@@ -3911,6 +4712,87 @@ type ServerInterface interface {
 	// UpdateMilestone Edit, close or reopen a milestone
 	// (PATCH /repos/{owner}/{name}/milestones/{milestoneId})
 	UpdateMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID)
+	// ListPulls List the pull requests of the repository
+	// (GET /repos/{owner}/{name}/pulls)
+	ListPulls(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListPullsParams)
+	// CreatePull Open a pull request
+	// (POST /repos/{owner}/{name}/pulls)
+	CreatePull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeletePullReviewComment Delete an inline comment
+	// (DELETE /repos/{owner}/{name}/pulls/comments/{commentId})
+	DeletePullReviewComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId)
+	// UpdatePullReviewComment Edit an inline comment
+	// (PATCH /repos/{owner}/{name}/pulls/comments/{commentId})
+	UpdatePullReviewComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId)
+	// ApplyPullSuggestion Commit the suggested change of a comment
+	// (POST /repos/{owner}/{name}/pulls/comments/{commentId}/apply-suggestion)
+	ApplyPullSuggestion(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId)
+	// UnresolvePullThread Unresolve a thread
+	// (DELETE /repos/{owner}/{name}/pulls/comments/{commentId}/resolve)
+	UnresolvePullThread(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId)
+	// ResolvePullThread Resolve a thread
+	// (PUT /repos/{owner}/{name}/pulls/comments/{commentId}/resolve)
+	ResolvePullThread(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId)
+	// GetPull A pull request
+	// (GET /repos/{owner}/{name}/pulls/{number})
+	GetPull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber)
+	// UpdatePull Edit, close, reopen or retarget a pull request
+	// (PATCH /repos/{owner}/{name}/pulls/{number})
+	UpdatePull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber)
+	// DisablePullAutoMerge Cancel the auto-merge of a pull request
+	// (DELETE /repos/{owner}/{name}/pulls/{number}/auto-merge)
+	DisablePullAutoMerge(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber)
+	// EnablePullAutoMerge Merge a pull request once its requirements are met
+	// (PUT /repos/{owner}/{name}/pulls/{number}/auto-merge)
+	EnablePullAutoMerge(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber)
+	// ListPullReviewComments The inline comments of a pull request
+	// (GET /repos/{owner}/{name}/pulls/{number}/comments)
+	ListPullReviewComments(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params ListPullReviewCommentsParams)
+	// CreatePullReviewComment Comment on a line, a range or reply to a thread
+	// (POST /repos/{owner}/{name}/pulls/{number}/comments)
+	CreatePullReviewComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber)
+	// ListPullCommits The commits of a pull request
+	// (GET /repos/{owner}/{name}/pulls/{number}/commits)
+	ListPullCommits(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params ListPullCommitsParams)
+	// GetPullDiff The diff of a pull request
+	// (GET /repos/{owner}/{name}/pulls/{number}/diff)
+	GetPullDiff(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params GetPullDiffParams)
+	// ListPullFiles The files changed by a pull request
+	// (GET /repos/{owner}/{name}/pulls/{number}/files)
+	ListPullFiles(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber)
+	// MergePull Merge a pull request
+	// (PUT /repos/{owner}/{name}/pulls/{number}/merge)
+	MergePull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber)
+	// GetPullMergeability Whether a pull request can be merged
+	// (GET /repos/{owner}/{name}/pulls/{number}/mergeability)
+	GetPullMergeability(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber)
+	// RemovePullReviewers Withdraw review requests
+	// (DELETE /repos/{owner}/{name}/pulls/{number}/requested-reviewers)
+	RemovePullReviewers(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params RemovePullReviewersParams)
+	// RequestPullReviewers Request reviews
+	// (POST /repos/{owner}/{name}/pulls/{number}/requested-reviewers)
+	RequestPullReviewers(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber)
+	// ListPullReviews The reviews of a pull request
+	// (GET /repos/{owner}/{name}/pulls/{number}/reviews)
+	ListPullReviews(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params ListPullReviewsParams)
+	// CreatePullReview Start or submit a review
+	// (POST /repos/{owner}/{name}/pulls/{number}/reviews)
+	CreatePullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber)
+	// DeletePullReview Discard a pending review
+	// (DELETE /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId})
+	DeletePullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId)
+	// GetPullReview A review
+	// (GET /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId})
+	GetPullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId)
+	// ListPullReviewCommentsOfReview The comments of a review
+	// (GET /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/comments)
+	ListPullReviewCommentsOfReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId, params ListPullReviewCommentsOfReviewParams)
+	// DismissPullReview Dismiss a review
+	// (PUT /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/dismiss)
+	DismissPullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId)
+	// SubmitPullReview Submit a pending review
+	// (POST /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/submit)
+	SubmitPullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId)
 	// GetReadme The README of a directory
 	// (GET /repos/{owner}/{name}/readme)
 	GetReadme(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params GetReadmeParams)
@@ -4655,6 +5537,18 @@ func (_ Unimplemented) EditContents(w http.ResponseWriter, r *http.Request, owne
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListForks The forks of a repository
+// (GET /repos/{owner}/{name}/forks)
+func (_ Unimplemented) ListForks(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListForksParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateFork Fork a repository
+// (POST /repos/{owner}/{name}/forks)
+func (_ Unimplemented) CreateFork(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetGitHubImport Status of the import that created the repository
 // (GET /repos/{owner}/{name}/github/import)
 func (_ Unimplemented) GetGitHubImport(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
@@ -4934,6 +5828,168 @@ func (_ Unimplemented) GetMilestone(w http.ResponseWriter, r *http.Request, owne
 // UpdateMilestone Edit, close or reopen a milestone
 // (PATCH /repos/{owner}/{name}/milestones/{milestoneId})
 func (_ Unimplemented) UpdateMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListPulls List the pull requests of the repository
+// (GET /repos/{owner}/{name}/pulls)
+func (_ Unimplemented) ListPulls(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListPullsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreatePull Open a pull request
+// (POST /repos/{owner}/{name}/pulls)
+func (_ Unimplemented) CreatePull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeletePullReviewComment Delete an inline comment
+// (DELETE /repos/{owner}/{name}/pulls/comments/{commentId})
+func (_ Unimplemented) DeletePullReviewComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdatePullReviewComment Edit an inline comment
+// (PATCH /repos/{owner}/{name}/pulls/comments/{commentId})
+func (_ Unimplemented) UpdatePullReviewComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ApplyPullSuggestion Commit the suggested change of a comment
+// (POST /repos/{owner}/{name}/pulls/comments/{commentId}/apply-suggestion)
+func (_ Unimplemented) ApplyPullSuggestion(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UnresolvePullThread Unresolve a thread
+// (DELETE /repos/{owner}/{name}/pulls/comments/{commentId}/resolve)
+func (_ Unimplemented) UnresolvePullThread(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ResolvePullThread Resolve a thread
+// (PUT /repos/{owner}/{name}/pulls/comments/{commentId}/resolve)
+func (_ Unimplemented) ResolvePullThread(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetPull A pull request
+// (GET /repos/{owner}/{name}/pulls/{number})
+func (_ Unimplemented) GetPull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdatePull Edit, close, reopen or retarget a pull request
+// (PATCH /repos/{owner}/{name}/pulls/{number})
+func (_ Unimplemented) UpdatePull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DisablePullAutoMerge Cancel the auto-merge of a pull request
+// (DELETE /repos/{owner}/{name}/pulls/{number}/auto-merge)
+func (_ Unimplemented) DisablePullAutoMerge(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// EnablePullAutoMerge Merge a pull request once its requirements are met
+// (PUT /repos/{owner}/{name}/pulls/{number}/auto-merge)
+func (_ Unimplemented) EnablePullAutoMerge(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListPullReviewComments The inline comments of a pull request
+// (GET /repos/{owner}/{name}/pulls/{number}/comments)
+func (_ Unimplemented) ListPullReviewComments(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params ListPullReviewCommentsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreatePullReviewComment Comment on a line, a range or reply to a thread
+// (POST /repos/{owner}/{name}/pulls/{number}/comments)
+func (_ Unimplemented) CreatePullReviewComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListPullCommits The commits of a pull request
+// (GET /repos/{owner}/{name}/pulls/{number}/commits)
+func (_ Unimplemented) ListPullCommits(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params ListPullCommitsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetPullDiff The diff of a pull request
+// (GET /repos/{owner}/{name}/pulls/{number}/diff)
+func (_ Unimplemented) GetPullDiff(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params GetPullDiffParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListPullFiles The files changed by a pull request
+// (GET /repos/{owner}/{name}/pulls/{number}/files)
+func (_ Unimplemented) ListPullFiles(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// MergePull Merge a pull request
+// (PUT /repos/{owner}/{name}/pulls/{number}/merge)
+func (_ Unimplemented) MergePull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetPullMergeability Whether a pull request can be merged
+// (GET /repos/{owner}/{name}/pulls/{number}/mergeability)
+func (_ Unimplemented) GetPullMergeability(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RemovePullReviewers Withdraw review requests
+// (DELETE /repos/{owner}/{name}/pulls/{number}/requested-reviewers)
+func (_ Unimplemented) RemovePullReviewers(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params RemovePullReviewersParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RequestPullReviewers Request reviews
+// (POST /repos/{owner}/{name}/pulls/{number}/requested-reviewers)
+func (_ Unimplemented) RequestPullReviewers(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListPullReviews The reviews of a pull request
+// (GET /repos/{owner}/{name}/pulls/{number}/reviews)
+func (_ Unimplemented) ListPullReviews(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params ListPullReviewsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreatePullReview Start or submit a review
+// (POST /repos/{owner}/{name}/pulls/{number}/reviews)
+func (_ Unimplemented) CreatePullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeletePullReview Discard a pending review
+// (DELETE /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId})
+func (_ Unimplemented) DeletePullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetPullReview A review
+// (GET /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId})
+func (_ Unimplemented) GetPullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListPullReviewCommentsOfReview The comments of a review
+// (GET /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/comments)
+func (_ Unimplemented) ListPullReviewCommentsOfReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId, params ListPullReviewCommentsOfReviewParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DismissPullReview Dismiss a review
+// (PUT /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/dismiss)
+func (_ Unimplemented) DismissPullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SubmitPullReview Submit a pending review
+// (POST /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/submit)
+func (_ Unimplemented) SubmitPullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -8772,6 +9828,121 @@ func (siw *ServerInterfaceWrapper) EditContents(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// ListForks operation middleware
+func (siw *ServerInterfaceWrapper) ListForks(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListForksParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListForks(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateFork operation middleware
+func (siw *ServerInterfaceWrapper) CreateFork(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateFork(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetGitHubImport operation middleware
 func (siw *ServerInterfaceWrapper) GetGitHubImport(w http.ResponseWriter, r *http.Request) {
 
@@ -11554,6 +12725,1679 @@ func (siw *ServerInterfaceWrapper) UpdateMilestone(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// ListPulls operation middleware
+func (siw *ServerInterfaceWrapper) ListPulls(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPullsParams
+
+	// ------------- Optional query parameter "state" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "state", r.URL.Query(), &params.State, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "state"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "state", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "base" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "base", r.URL.Query(), &params.Base, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "base"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "base", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "head" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "head", r.URL.Query(), &params.Head, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "head"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "head", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "author" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "author", r.URL.Query(), &params.Author, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "author"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "author", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPulls(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePull operation middleware
+func (siw *ServerInterfaceWrapper) CreatePull(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePull(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePullReviewComment operation middleware
+func (siw *ServerInterfaceWrapper) DeletePullReviewComment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId PullCommentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePullReviewComment(w, r, owner, name, commentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdatePullReviewComment operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePullReviewComment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId PullCommentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdatePullReviewComment(w, r, owner, name, commentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ApplyPullSuggestion operation middleware
+func (siw *ServerInterfaceWrapper) ApplyPullSuggestion(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId PullCommentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ApplyPullSuggestion(w, r, owner, name, commentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnresolvePullThread operation middleware
+func (siw *ServerInterfaceWrapper) UnresolvePullThread(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId PullCommentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnresolvePullThread(w, r, owner, name, commentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResolvePullThread operation middleware
+func (siw *ServerInterfaceWrapper) ResolvePullThread(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId PullCommentId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResolvePullThread(w, r, owner, name, commentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPull operation middleware
+func (siw *ServerInterfaceWrapper) GetPull(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPull(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdatePull operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePull(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdatePull(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DisablePullAutoMerge operation middleware
+func (siw *ServerInterfaceWrapper) DisablePullAutoMerge(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DisablePullAutoMerge(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EnablePullAutoMerge operation middleware
+func (siw *ServerInterfaceWrapper) EnablePullAutoMerge(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EnablePullAutoMerge(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPullReviewComments operation middleware
+func (siw *ServerInterfaceWrapper) ListPullReviewComments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPullReviewCommentsParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPullReviewComments(w, r, owner, name, number, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePullReviewComment operation middleware
+func (siw *ServerInterfaceWrapper) CreatePullReviewComment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePullReviewComment(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPullCommits operation middleware
+func (siw *ServerInterfaceWrapper) ListPullCommits(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPullCommitsParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPullCommits(w, r, owner, name, number, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPullDiff operation middleware
+func (siw *ServerInterfaceWrapper) GetPullDiff(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetPullDiffParams
+
+	// ------------- Optional query parameter "path" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "path"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "path", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPullDiff(w, r, owner, name, number, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPullFiles operation middleware
+func (siw *ServerInterfaceWrapper) ListPullFiles(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPullFiles(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// MergePull operation middleware
+func (siw *ServerInterfaceWrapper) MergePull(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MergePull(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPullMergeability operation middleware
+func (siw *ServerInterfaceWrapper) GetPullMergeability(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPullMergeability(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemovePullReviewers operation middleware
+func (siw *ServerInterfaceWrapper) RemovePullReviewers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RemovePullReviewersParams
+
+	// ------------- Required query parameter "reviewers" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "reviewers", r.URL.Query(), &params.Reviewers, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "reviewers"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reviewers", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemovePullReviewers(w, r, owner, name, number, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RequestPullReviewers operation middleware
+func (siw *ServerInterfaceWrapper) RequestPullReviewers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequestPullReviewers(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPullReviews operation middleware
+func (siw *ServerInterfaceWrapper) ListPullReviews(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPullReviewsParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPullReviews(w, r, owner, name, number, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePullReview operation middleware
+func (siw *ServerInterfaceWrapper) CreatePullReview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePullReview(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePullReview operation middleware
+func (siw *ServerInterfaceWrapper) DeletePullReview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "reviewId" -------------
+	var reviewId PullReviewId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reviewId", chi.URLParam(r, "reviewId"), &reviewId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reviewId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePullReview(w, r, owner, name, number, reviewId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPullReview operation middleware
+func (siw *ServerInterfaceWrapper) GetPullReview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "reviewId" -------------
+	var reviewId PullReviewId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reviewId", chi.URLParam(r, "reviewId"), &reviewId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reviewId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPullReview(w, r, owner, name, number, reviewId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPullReviewCommentsOfReview operation middleware
+func (siw *ServerInterfaceWrapper) ListPullReviewCommentsOfReview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "reviewId" -------------
+	var reviewId PullReviewId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reviewId", chi.URLParam(r, "reviewId"), &reviewId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reviewId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPullReviewCommentsOfReviewParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPullReviewCommentsOfReview(w, r, owner, name, number, reviewId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DismissPullReview operation middleware
+func (siw *ServerInterfaceWrapper) DismissPullReview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "reviewId" -------------
+	var reviewId PullReviewId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reviewId", chi.URLParam(r, "reviewId"), &reviewId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reviewId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DismissPullReview(w, r, owner, name, number, reviewId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SubmitPullReview operation middleware
+func (siw *ServerInterfaceWrapper) SubmitPullReview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "reviewId" -------------
+	var reviewId PullReviewId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reviewId", chi.URLParam(r, "reviewId"), &reviewId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reviewId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SubmitPullReview(w, r, owner, name, number, reviewId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetReadme operation middleware
 func (siw *ServerInterfaceWrapper) GetReadme(w http.ResponseWriter, r *http.Request) {
 
@@ -14284,6 +17128,93 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/repos/{owner}/{name}/issues/attachments/{attachmentId}", wrapper.DeleteIssueAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/pulls", wrapper.ListPulls)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/pulls", wrapper.CreatePull)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}", wrapper.GetPull)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}", wrapper.UpdatePull)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/commits", wrapper.ListPullCommits)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/files", wrapper.ListPullFiles)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/diff", wrapper.GetPullDiff)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/mergeability", wrapper.GetPullMergeability)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/merge", wrapper.MergePull)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/auto-merge", wrapper.DisablePullAutoMerge)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/auto-merge", wrapper.EnablePullAutoMerge)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/requested-reviewers", wrapper.RemovePullReviewers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/requested-reviewers", wrapper.RequestPullReviewers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/reviews", wrapper.ListPullReviews)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/reviews", wrapper.CreatePullReview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}", wrapper.DeletePullReview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}", wrapper.GetPullReview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/comments", wrapper.ListPullReviewCommentsOfReview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/submit", wrapper.SubmitPullReview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/dismiss", wrapper.DismissPullReview)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/comments", wrapper.ListPullReviewComments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/comments", wrapper.CreatePullReviewComment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/pulls/comments/{commentId}", wrapper.DeletePullReviewComment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/repos/{owner}/{name}/pulls/comments/{commentId}", wrapper.UpdatePullReviewComment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/pulls/comments/{commentId}/resolve", wrapper.UnresolvePullThread)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/pulls/comments/{commentId}/resolve", wrapper.ResolvePullThread)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/pulls/comments/{commentId}/apply-suggestion", wrapper.ApplyPullSuggestion)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/forks", wrapper.ListForks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/forks", wrapper.CreateFork)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/branch-protections", wrapper.ListBranchProtections)
@@ -21944,6 +24875,229 @@ func (response EditContentsdefaultApplicationProblemPlusJSONResponse) VisitEditC
 	return err
 }
 
+type ListForksRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params ListForksParams
+}
+
+type ListForksResponseObject interface {
+	VisitListForksResponse(w http.ResponseWriter) error
+}
+
+type ListForks200JSONResponse []Repo
+
+func (response ListForks200JSONResponse) VisitListForksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListForks307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListForks307ApplicationProblemPlusJSONResponse) VisitListForksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListForks400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListForks400ApplicationProblemPlusJSONResponse) VisitListForksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListForks404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListForks404ApplicationProblemPlusJSONResponse) VisitListForksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListForksdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListForksdefaultApplicationProblemPlusJSONResponse) VisitListForksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateForkRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *CreateForkJSONRequestBody
+}
+
+type CreateForkResponseObject interface {
+	VisitCreateForkResponse(w http.ResponseWriter) error
+}
+
+type CreateFork201JSONResponse Repo
+
+func (response CreateFork201JSONResponse) VisitCreateForkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFork307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateFork307ApplicationProblemPlusJSONResponse) VisitCreateForkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFork400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateFork400ApplicationProblemPlusJSONResponse) VisitCreateForkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFork403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateFork403ApplicationProblemPlusJSONResponse) VisitCreateForkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFork404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateFork404ApplicationProblemPlusJSONResponse) VisitCreateForkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFork409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateFork409ApplicationProblemPlusJSONResponse) VisitCreateForkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFork503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response CreateFork503ApplicationProblemPlusJSONResponse) VisitCreateForkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateForkdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateForkdefaultApplicationProblemPlusJSONResponse) VisitCreateForkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetGitHubImportRequestObject struct {
 	Owner RepoOwner `json:"owner"`
 	Name  RepoName  `json:"name"`
@@ -26271,6 +29425,2945 @@ type UpdateMilestonedefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response UpdateMilestonedefaultApplicationProblemPlusJSONResponse) VisitUpdateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullsRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params ListPullsParams
+}
+
+type ListPullsResponseObject interface {
+	VisitListPullsResponse(w http.ResponseWriter) error
+}
+
+type ListPulls200JSONResponse []PullRequest
+
+func (response ListPulls200JSONResponse) VisitListPullsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPulls307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListPulls307ApplicationProblemPlusJSONResponse) VisitListPullsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPulls400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListPulls400ApplicationProblemPlusJSONResponse) VisitListPullsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPulls404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPulls404ApplicationProblemPlusJSONResponse) VisitListPullsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListPullsdefaultApplicationProblemPlusJSONResponse) VisitListPullsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *CreatePullJSONRequestBody
+}
+
+type CreatePullResponseObject interface {
+	VisitCreatePullResponse(w http.ResponseWriter) error
+}
+
+type CreatePull201JSONResponse PullRequest
+
+func (response CreatePull201JSONResponse) VisitCreatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePull307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePull307ApplicationProblemPlusJSONResponse) VisitCreatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePull400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePull400ApplicationProblemPlusJSONResponse) VisitCreatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePull403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePull403ApplicationProblemPlusJSONResponse) VisitCreatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePull404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePull404ApplicationProblemPlusJSONResponse) VisitCreatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePull409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePull409ApplicationProblemPlusJSONResponse) VisitCreatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePull503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePull503ApplicationProblemPlusJSONResponse) VisitCreatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePulldefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreatePulldefaultApplicationProblemPlusJSONResponse) VisitCreatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePullReviewCommentRequestObject struct {
+	Owner     RepoOwner     `json:"owner"`
+	Name      RepoName      `json:"name"`
+	CommentId PullCommentId `json:"commentId"`
+}
+
+type DeletePullReviewCommentResponseObject interface {
+	VisitDeletePullReviewCommentResponse(w http.ResponseWriter) error
+}
+
+type DeletePullReviewComment204Response struct {
+}
+
+func (response DeletePullReviewComment204Response) VisitDeletePullReviewCommentResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeletePullReviewComment307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePullReviewComment307ApplicationProblemPlusJSONResponse) VisitDeletePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePullReviewComment400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePullReviewComment400ApplicationProblemPlusJSONResponse) VisitDeletePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePullReviewComment403ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePullReviewComment403ApplicationProblemPlusJSONResponse) VisitDeletePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePullReviewComment404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePullReviewComment404ApplicationProblemPlusJSONResponse) VisitDeletePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePullReviewCommentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeletePullReviewCommentdefaultApplicationProblemPlusJSONResponse) VisitDeletePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullReviewCommentRequestObject struct {
+	Owner     RepoOwner     `json:"owner"`
+	Name      RepoName      `json:"name"`
+	CommentId PullCommentId `json:"commentId"`
+	Body      *UpdatePullReviewCommentJSONRequestBody
+}
+
+type UpdatePullReviewCommentResponseObject interface {
+	VisitUpdatePullReviewCommentResponse(w http.ResponseWriter) error
+}
+
+type UpdatePullReviewComment200JSONResponse PullReviewComment
+
+func (response UpdatePullReviewComment200JSONResponse) VisitUpdatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullReviewComment307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdatePullReviewComment307ApplicationProblemPlusJSONResponse) VisitUpdatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullReviewComment400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdatePullReviewComment400ApplicationProblemPlusJSONResponse) VisitUpdatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullReviewComment403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdatePullReviewComment403ApplicationProblemPlusJSONResponse) VisitUpdatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullReviewComment404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdatePullReviewComment404ApplicationProblemPlusJSONResponse) VisitUpdatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullReviewCommentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdatePullReviewCommentdefaultApplicationProblemPlusJSONResponse) VisitUpdatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyPullSuggestionRequestObject struct {
+	Owner     RepoOwner     `json:"owner"`
+	Name      RepoName      `json:"name"`
+	CommentId PullCommentId `json:"commentId"`
+	Body      *ApplyPullSuggestionJSONRequestBody
+}
+
+type ApplyPullSuggestionResponseObject interface {
+	VisitApplyPullSuggestionResponse(w http.ResponseWriter) error
+}
+
+type ApplyPullSuggestion200JSONResponse PullMergeResult
+
+func (response ApplyPullSuggestion200JSONResponse) VisitApplyPullSuggestionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyPullSuggestion307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ApplyPullSuggestion307ApplicationProblemPlusJSONResponse) VisitApplyPullSuggestionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyPullSuggestion400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ApplyPullSuggestion400ApplicationProblemPlusJSONResponse) VisitApplyPullSuggestionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyPullSuggestion403ApplicationProblemPlusJSONResponse Problem
+
+func (response ApplyPullSuggestion403ApplicationProblemPlusJSONResponse) VisitApplyPullSuggestionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyPullSuggestion404ApplicationProblemPlusJSONResponse Problem
+
+func (response ApplyPullSuggestion404ApplicationProblemPlusJSONResponse) VisitApplyPullSuggestionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyPullSuggestion409ApplicationProblemPlusJSONResponse Problem
+
+func (response ApplyPullSuggestion409ApplicationProblemPlusJSONResponse) VisitApplyPullSuggestionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyPullSuggestion503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ApplyPullSuggestion503ApplicationProblemPlusJSONResponse) VisitApplyPullSuggestionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyPullSuggestiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ApplyPullSuggestiondefaultApplicationProblemPlusJSONResponse) VisitApplyPullSuggestionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnresolvePullThreadRequestObject struct {
+	Owner     RepoOwner     `json:"owner"`
+	Name      RepoName      `json:"name"`
+	CommentId PullCommentId `json:"commentId"`
+}
+
+type UnresolvePullThreadResponseObject interface {
+	VisitUnresolvePullThreadResponse(w http.ResponseWriter) error
+}
+
+type UnresolvePullThread200JSONResponse PullReviewComment
+
+func (response UnresolvePullThread200JSONResponse) VisitUnresolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnresolvePullThread307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UnresolvePullThread307ApplicationProblemPlusJSONResponse) VisitUnresolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnresolvePullThread400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UnresolvePullThread400ApplicationProblemPlusJSONResponse) VisitUnresolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnresolvePullThread403ApplicationProblemPlusJSONResponse Problem
+
+func (response UnresolvePullThread403ApplicationProblemPlusJSONResponse) VisitUnresolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnresolvePullThread404ApplicationProblemPlusJSONResponse Problem
+
+func (response UnresolvePullThread404ApplicationProblemPlusJSONResponse) VisitUnresolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnresolvePullThreaddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UnresolvePullThreaddefaultApplicationProblemPlusJSONResponse) VisitUnresolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolvePullThreadRequestObject struct {
+	Owner     RepoOwner     `json:"owner"`
+	Name      RepoName      `json:"name"`
+	CommentId PullCommentId `json:"commentId"`
+}
+
+type ResolvePullThreadResponseObject interface {
+	VisitResolvePullThreadResponse(w http.ResponseWriter) error
+}
+
+type ResolvePullThread200JSONResponse PullReviewComment
+
+func (response ResolvePullThread200JSONResponse) VisitResolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolvePullThread307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ResolvePullThread307ApplicationProblemPlusJSONResponse) VisitResolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolvePullThread400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ResolvePullThread400ApplicationProblemPlusJSONResponse) VisitResolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolvePullThread403ApplicationProblemPlusJSONResponse Problem
+
+func (response ResolvePullThread403ApplicationProblemPlusJSONResponse) VisitResolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolvePullThread404ApplicationProblemPlusJSONResponse Problem
+
+func (response ResolvePullThread404ApplicationProblemPlusJSONResponse) VisitResolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolvePullThreaddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ResolvePullThreaddefaultApplicationProblemPlusJSONResponse) VisitResolvePullThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+}
+
+type GetPullResponseObject interface {
+	VisitGetPullResponse(w http.ResponseWriter) error
+}
+
+type GetPull200JSONResponse PullRequest
+
+func (response GetPull200JSONResponse) VisitGetPullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPull307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetPull307ApplicationProblemPlusJSONResponse) VisitGetPullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPull404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPull404ApplicationProblemPlusJSONResponse) VisitGetPullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPulldefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetPulldefaultApplicationProblemPlusJSONResponse) VisitGetPullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Body   *UpdatePullJSONRequestBody
+}
+
+type UpdatePullResponseObject interface {
+	VisitUpdatePullResponse(w http.ResponseWriter) error
+}
+
+type UpdatePull200JSONResponse PullRequest
+
+func (response UpdatePull200JSONResponse) VisitUpdatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePull307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdatePull307ApplicationProblemPlusJSONResponse) VisitUpdatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePull400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdatePull400ApplicationProblemPlusJSONResponse) VisitUpdatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePull403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdatePull403ApplicationProblemPlusJSONResponse) VisitUpdatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePull404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdatePull404ApplicationProblemPlusJSONResponse) VisitUpdatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePull409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdatePull409ApplicationProblemPlusJSONResponse) VisitUpdatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePull503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response UpdatePull503ApplicationProblemPlusJSONResponse) VisitUpdatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePulldefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdatePulldefaultApplicationProblemPlusJSONResponse) VisitUpdatePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisablePullAutoMergeRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+}
+
+type DisablePullAutoMergeResponseObject interface {
+	VisitDisablePullAutoMergeResponse(w http.ResponseWriter) error
+}
+
+type DisablePullAutoMerge200JSONResponse PullRequest
+
+func (response DisablePullAutoMerge200JSONResponse) VisitDisablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisablePullAutoMerge307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DisablePullAutoMerge307ApplicationProblemPlusJSONResponse) VisitDisablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisablePullAutoMerge400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DisablePullAutoMerge400ApplicationProblemPlusJSONResponse) VisitDisablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisablePullAutoMerge403ApplicationProblemPlusJSONResponse Problem
+
+func (response DisablePullAutoMerge403ApplicationProblemPlusJSONResponse) VisitDisablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisablePullAutoMerge404ApplicationProblemPlusJSONResponse Problem
+
+func (response DisablePullAutoMerge404ApplicationProblemPlusJSONResponse) VisitDisablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisablePullAutoMergedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DisablePullAutoMergedefaultApplicationProblemPlusJSONResponse) VisitDisablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnablePullAutoMergeRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Body   *EnablePullAutoMergeJSONRequestBody
+}
+
+type EnablePullAutoMergeResponseObject interface {
+	VisitEnablePullAutoMergeResponse(w http.ResponseWriter) error
+}
+
+type EnablePullAutoMerge200JSONResponse PullRequest
+
+func (response EnablePullAutoMerge200JSONResponse) VisitEnablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnablePullAutoMerge307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response EnablePullAutoMerge307ApplicationProblemPlusJSONResponse) VisitEnablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnablePullAutoMerge400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response EnablePullAutoMerge400ApplicationProblemPlusJSONResponse) VisitEnablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnablePullAutoMerge403ApplicationProblemPlusJSONResponse Problem
+
+func (response EnablePullAutoMerge403ApplicationProblemPlusJSONResponse) VisitEnablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnablePullAutoMerge404ApplicationProblemPlusJSONResponse Problem
+
+func (response EnablePullAutoMerge404ApplicationProblemPlusJSONResponse) VisitEnablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnablePullAutoMerge409ApplicationProblemPlusJSONResponse Problem
+
+func (response EnablePullAutoMerge409ApplicationProblemPlusJSONResponse) VisitEnablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnablePullAutoMerge503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response EnablePullAutoMerge503ApplicationProblemPlusJSONResponse) VisitEnablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnablePullAutoMergedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response EnablePullAutoMergedefaultApplicationProblemPlusJSONResponse) VisitEnablePullAutoMergeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewCommentsRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Params ListPullReviewCommentsParams
+}
+
+type ListPullReviewCommentsResponseObject interface {
+	VisitListPullReviewCommentsResponse(w http.ResponseWriter) error
+}
+
+type ListPullReviewComments200JSONResponse []PullReviewComment
+
+func (response ListPullReviewComments200JSONResponse) VisitListPullReviewCommentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewComments307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullReviewComments307ApplicationProblemPlusJSONResponse) VisitListPullReviewCommentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewComments400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullReviewComments400ApplicationProblemPlusJSONResponse) VisitListPullReviewCommentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewComments404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPullReviewComments404ApplicationProblemPlusJSONResponse) VisitListPullReviewCommentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewCommentsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListPullReviewCommentsdefaultApplicationProblemPlusJSONResponse) VisitListPullReviewCommentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReviewCommentRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Body   *CreatePullReviewCommentJSONRequestBody
+}
+
+type CreatePullReviewCommentResponseObject interface {
+	VisitCreatePullReviewCommentResponse(w http.ResponseWriter) error
+}
+
+type CreatePullReviewComment201JSONResponse PullReviewComment
+
+func (response CreatePullReviewComment201JSONResponse) VisitCreatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReviewComment307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePullReviewComment307ApplicationProblemPlusJSONResponse) VisitCreatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReviewComment400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePullReviewComment400ApplicationProblemPlusJSONResponse) VisitCreatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReviewComment403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePullReviewComment403ApplicationProblemPlusJSONResponse) VisitCreatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReviewComment404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePullReviewComment404ApplicationProblemPlusJSONResponse) VisitCreatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReviewComment409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePullReviewComment409ApplicationProblemPlusJSONResponse) VisitCreatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReviewComment503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePullReviewComment503ApplicationProblemPlusJSONResponse) VisitCreatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReviewCommentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreatePullReviewCommentdefaultApplicationProblemPlusJSONResponse) VisitCreatePullReviewCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullCommitsRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Params ListPullCommitsParams
+}
+
+type ListPullCommitsResponseObject interface {
+	VisitListPullCommitsResponse(w http.ResponseWriter) error
+}
+
+type ListPullCommits200JSONResponse PullCommitPage
+
+func (response ListPullCommits200JSONResponse) VisitListPullCommitsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullCommits307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullCommits307ApplicationProblemPlusJSONResponse) VisitListPullCommitsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullCommits400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullCommits400ApplicationProblemPlusJSONResponse) VisitListPullCommitsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullCommits404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPullCommits404ApplicationProblemPlusJSONResponse) VisitListPullCommitsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullCommits503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullCommits503ApplicationProblemPlusJSONResponse) VisitListPullCommitsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullCommitsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListPullCommitsdefaultApplicationProblemPlusJSONResponse) VisitListPullCommitsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullDiffRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Params GetPullDiffParams
+}
+
+type GetPullDiffResponseObject interface {
+	VisitGetPullDiffResponse(w http.ResponseWriter) error
+}
+
+type GetPullDiff200JSONResponse Diff
+
+func (response GetPullDiff200JSONResponse) VisitGetPullDiffResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullDiff307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetPullDiff307ApplicationProblemPlusJSONResponse) VisitGetPullDiffResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullDiff400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPullDiff400ApplicationProblemPlusJSONResponse) VisitGetPullDiffResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullDiff404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetPullDiff404ApplicationProblemPlusJSONResponse) VisitGetPullDiffResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullDiff503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response GetPullDiff503ApplicationProblemPlusJSONResponse) VisitGetPullDiffResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullDiffdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetPullDiffdefaultApplicationProblemPlusJSONResponse) VisitGetPullDiffResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullFilesRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+}
+
+type ListPullFilesResponseObject interface {
+	VisitListPullFilesResponse(w http.ResponseWriter) error
+}
+
+type ListPullFiles200JSONResponse []PullFile
+
+func (response ListPullFiles200JSONResponse) VisitListPullFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullFiles307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullFiles307ApplicationProblemPlusJSONResponse) VisitListPullFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullFiles400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullFiles400ApplicationProblemPlusJSONResponse) VisitListPullFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullFiles404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPullFiles404ApplicationProblemPlusJSONResponse) VisitListPullFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullFiles503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullFiles503ApplicationProblemPlusJSONResponse) VisitListPullFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullFilesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListPullFilesdefaultApplicationProblemPlusJSONResponse) VisitListPullFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergePullRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Body   *MergePullJSONRequestBody
+}
+
+type MergePullResponseObject interface {
+	VisitMergePullResponse(w http.ResponseWriter) error
+}
+
+type MergePull200JSONResponse PullMergeResult
+
+func (response MergePull200JSONResponse) VisitMergePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergePull307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response MergePull307ApplicationProblemPlusJSONResponse) VisitMergePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergePull400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response MergePull400ApplicationProblemPlusJSONResponse) VisitMergePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergePull403ApplicationProblemPlusJSONResponse Problem
+
+func (response MergePull403ApplicationProblemPlusJSONResponse) VisitMergePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergePull404ApplicationProblemPlusJSONResponse Problem
+
+func (response MergePull404ApplicationProblemPlusJSONResponse) VisitMergePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergePull405ApplicationProblemPlusJSONResponse Problem
+
+func (response MergePull405ApplicationProblemPlusJSONResponse) VisitMergePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(405)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergePull409ApplicationProblemPlusJSONResponse Problem
+
+func (response MergePull409ApplicationProblemPlusJSONResponse) VisitMergePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergePull503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response MergePull503ApplicationProblemPlusJSONResponse) VisitMergePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergePulldefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response MergePulldefaultApplicationProblemPlusJSONResponse) VisitMergePullResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullMergeabilityRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+}
+
+type GetPullMergeabilityResponseObject interface {
+	VisitGetPullMergeabilityResponse(w http.ResponseWriter) error
+}
+
+type GetPullMergeability200JSONResponse PullMergeability
+
+func (response GetPullMergeability200JSONResponse) VisitGetPullMergeabilityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullMergeability307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetPullMergeability307ApplicationProblemPlusJSONResponse) VisitGetPullMergeabilityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullMergeability400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPullMergeability400ApplicationProblemPlusJSONResponse) VisitGetPullMergeabilityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullMergeability404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetPullMergeability404ApplicationProblemPlusJSONResponse) VisitGetPullMergeabilityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullMergeability503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response GetPullMergeability503ApplicationProblemPlusJSONResponse) VisitGetPullMergeabilityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullMergeabilitydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetPullMergeabilitydefaultApplicationProblemPlusJSONResponse) VisitGetPullMergeabilityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemovePullReviewersRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Params RemovePullReviewersParams
+}
+
+type RemovePullReviewersResponseObject interface {
+	VisitRemovePullReviewersResponse(w http.ResponseWriter) error
+}
+
+type RemovePullReviewers200JSONResponse PullRequest
+
+func (response RemovePullReviewers200JSONResponse) VisitRemovePullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemovePullReviewers307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response RemovePullReviewers307ApplicationProblemPlusJSONResponse) VisitRemovePullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemovePullReviewers400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RemovePullReviewers400ApplicationProblemPlusJSONResponse) VisitRemovePullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemovePullReviewers403ApplicationProblemPlusJSONResponse Problem
+
+func (response RemovePullReviewers403ApplicationProblemPlusJSONResponse) VisitRemovePullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemovePullReviewers404ApplicationProblemPlusJSONResponse Problem
+
+func (response RemovePullReviewers404ApplicationProblemPlusJSONResponse) VisitRemovePullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemovePullReviewersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RemovePullReviewersdefaultApplicationProblemPlusJSONResponse) VisitRemovePullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RequestPullReviewersRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Body   *RequestPullReviewersJSONRequestBody
+}
+
+type RequestPullReviewersResponseObject interface {
+	VisitRequestPullReviewersResponse(w http.ResponseWriter) error
+}
+
+type RequestPullReviewers200JSONResponse PullRequest
+
+func (response RequestPullReviewers200JSONResponse) VisitRequestPullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RequestPullReviewers307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response RequestPullReviewers307ApplicationProblemPlusJSONResponse) VisitRequestPullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RequestPullReviewers400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RequestPullReviewers400ApplicationProblemPlusJSONResponse) VisitRequestPullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RequestPullReviewers403ApplicationProblemPlusJSONResponse Problem
+
+func (response RequestPullReviewers403ApplicationProblemPlusJSONResponse) VisitRequestPullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RequestPullReviewers404ApplicationProblemPlusJSONResponse Problem
+
+func (response RequestPullReviewers404ApplicationProblemPlusJSONResponse) VisitRequestPullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RequestPullReviewersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RequestPullReviewersdefaultApplicationProblemPlusJSONResponse) VisitRequestPullReviewersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewsRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Params ListPullReviewsParams
+}
+
+type ListPullReviewsResponseObject interface {
+	VisitListPullReviewsResponse(w http.ResponseWriter) error
+}
+
+type ListPullReviews200JSONResponse []PullReview
+
+func (response ListPullReviews200JSONResponse) VisitListPullReviewsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviews307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullReviews307ApplicationProblemPlusJSONResponse) VisitListPullReviewsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviews400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullReviews400ApplicationProblemPlusJSONResponse) VisitListPullReviewsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviews404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPullReviews404ApplicationProblemPlusJSONResponse) VisitListPullReviewsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListPullReviewsdefaultApplicationProblemPlusJSONResponse) VisitListPullReviewsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReviewRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Body   *CreatePullReviewJSONRequestBody
+}
+
+type CreatePullReviewResponseObject interface {
+	VisitCreatePullReviewResponse(w http.ResponseWriter) error
+}
+
+type CreatePullReview201JSONResponse PullReview
+
+func (response CreatePullReview201JSONResponse) VisitCreatePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReview307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePullReview307ApplicationProblemPlusJSONResponse) VisitCreatePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReview400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePullReview400ApplicationProblemPlusJSONResponse) VisitCreatePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReview403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePullReview403ApplicationProblemPlusJSONResponse) VisitCreatePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReview404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePullReview404ApplicationProblemPlusJSONResponse) VisitCreatePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReview409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePullReview409ApplicationProblemPlusJSONResponse) VisitCreatePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePullReviewdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreatePullReviewdefaultApplicationProblemPlusJSONResponse) VisitCreatePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePullReviewRequestObject struct {
+	Owner    RepoOwner    `json:"owner"`
+	Name     RepoName     `json:"name"`
+	Number   PullNumber   `json:"number"`
+	ReviewId PullReviewId `json:"reviewId"`
+}
+
+type DeletePullReviewResponseObject interface {
+	VisitDeletePullReviewResponse(w http.ResponseWriter) error
+}
+
+type DeletePullReview204Response struct {
+}
+
+func (response DeletePullReview204Response) VisitDeletePullReviewResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeletePullReview307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePullReview307ApplicationProblemPlusJSONResponse) VisitDeletePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePullReview400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePullReview400ApplicationProblemPlusJSONResponse) VisitDeletePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePullReview403ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePullReview403ApplicationProblemPlusJSONResponse) VisitDeletePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePullReview404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePullReview404ApplicationProblemPlusJSONResponse) VisitDeletePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePullReview409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePullReview409ApplicationProblemPlusJSONResponse) VisitDeletePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePullReviewdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeletePullReviewdefaultApplicationProblemPlusJSONResponse) VisitDeletePullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullReviewRequestObject struct {
+	Owner    RepoOwner    `json:"owner"`
+	Name     RepoName     `json:"name"`
+	Number   PullNumber   `json:"number"`
+	ReviewId PullReviewId `json:"reviewId"`
+}
+
+type GetPullReviewResponseObject interface {
+	VisitGetPullReviewResponse(w http.ResponseWriter) error
+}
+
+type GetPullReview200JSONResponse PullReview
+
+func (response GetPullReview200JSONResponse) VisitGetPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullReview307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetPullReview307ApplicationProblemPlusJSONResponse) VisitGetPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullReview404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPullReview404ApplicationProblemPlusJSONResponse) VisitGetPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPullReviewdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetPullReviewdefaultApplicationProblemPlusJSONResponse) VisitGetPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewCommentsOfReviewRequestObject struct {
+	Owner    RepoOwner    `json:"owner"`
+	Name     RepoName     `json:"name"`
+	Number   PullNumber   `json:"number"`
+	ReviewId PullReviewId `json:"reviewId"`
+	Params   ListPullReviewCommentsOfReviewParams
+}
+
+type ListPullReviewCommentsOfReviewResponseObject interface {
+	VisitListPullReviewCommentsOfReviewResponse(w http.ResponseWriter) error
+}
+
+type ListPullReviewCommentsOfReview200JSONResponse []PullReviewComment
+
+func (response ListPullReviewCommentsOfReview200JSONResponse) VisitListPullReviewCommentsOfReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewCommentsOfReview307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullReviewCommentsOfReview307ApplicationProblemPlusJSONResponse) VisitListPullReviewCommentsOfReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewCommentsOfReview400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListPullReviewCommentsOfReview400ApplicationProblemPlusJSONResponse) VisitListPullReviewCommentsOfReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewCommentsOfReview404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPullReviewCommentsOfReview404ApplicationProblemPlusJSONResponse) VisitListPullReviewCommentsOfReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPullReviewCommentsOfReviewdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListPullReviewCommentsOfReviewdefaultApplicationProblemPlusJSONResponse) VisitListPullReviewCommentsOfReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DismissPullReviewRequestObject struct {
+	Owner    RepoOwner    `json:"owner"`
+	Name     RepoName     `json:"name"`
+	Number   PullNumber   `json:"number"`
+	ReviewId PullReviewId `json:"reviewId"`
+	Body     *DismissPullReviewJSONRequestBody
+}
+
+type DismissPullReviewResponseObject interface {
+	VisitDismissPullReviewResponse(w http.ResponseWriter) error
+}
+
+type DismissPullReview200JSONResponse PullReview
+
+func (response DismissPullReview200JSONResponse) VisitDismissPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DismissPullReview307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DismissPullReview307ApplicationProblemPlusJSONResponse) VisitDismissPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DismissPullReview400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DismissPullReview400ApplicationProblemPlusJSONResponse) VisitDismissPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DismissPullReview403ApplicationProblemPlusJSONResponse Problem
+
+func (response DismissPullReview403ApplicationProblemPlusJSONResponse) VisitDismissPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DismissPullReview404ApplicationProblemPlusJSONResponse Problem
+
+func (response DismissPullReview404ApplicationProblemPlusJSONResponse) VisitDismissPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DismissPullReview409ApplicationProblemPlusJSONResponse Problem
+
+func (response DismissPullReview409ApplicationProblemPlusJSONResponse) VisitDismissPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DismissPullReviewdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DismissPullReviewdefaultApplicationProblemPlusJSONResponse) VisitDismissPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPullReviewRequestObject struct {
+	Owner    RepoOwner    `json:"owner"`
+	Name     RepoName     `json:"name"`
+	Number   PullNumber   `json:"number"`
+	ReviewId PullReviewId `json:"reviewId"`
+	Body     *SubmitPullReviewJSONRequestBody
+}
+
+type SubmitPullReviewResponseObject interface {
+	VisitSubmitPullReviewResponse(w http.ResponseWriter) error
+}
+
+type SubmitPullReview200JSONResponse PullReview
+
+func (response SubmitPullReview200JSONResponse) VisitSubmitPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPullReview307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response SubmitPullReview307ApplicationProblemPlusJSONResponse) VisitSubmitPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPullReview400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SubmitPullReview400ApplicationProblemPlusJSONResponse) VisitSubmitPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPullReview403ApplicationProblemPlusJSONResponse Problem
+
+func (response SubmitPullReview403ApplicationProblemPlusJSONResponse) VisitSubmitPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPullReview404ApplicationProblemPlusJSONResponse Problem
+
+func (response SubmitPullReview404ApplicationProblemPlusJSONResponse) VisitSubmitPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPullReview409ApplicationProblemPlusJSONResponse Problem
+
+func (response SubmitPullReview409ApplicationProblemPlusJSONResponse) VisitSubmitPullReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPullReviewdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SubmitPullReviewdefaultApplicationProblemPlusJSONResponse) VisitSubmitPullReviewResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -31239,6 +37332,12 @@ type StrictServerInterface interface {
 	// EditContents Create, update or delete a file with a commit
 	// (POST /repos/{owner}/{name}/contents)
 	EditContents(ctx context.Context, request EditContentsRequestObject) (EditContentsResponseObject, error)
+	// ListForks The forks of a repository
+	// (GET /repos/{owner}/{name}/forks)
+	ListForks(ctx context.Context, request ListForksRequestObject) (ListForksResponseObject, error)
+	// CreateFork Fork a repository
+	// (POST /repos/{owner}/{name}/forks)
+	CreateFork(ctx context.Context, request CreateForkRequestObject) (CreateForkResponseObject, error)
 	// GetGitHubImport Status of the import that created the repository
 	// (GET /repos/{owner}/{name}/github/import)
 	GetGitHubImport(ctx context.Context, request GetGitHubImportRequestObject) (GetGitHubImportResponseObject, error)
@@ -31380,6 +37479,87 @@ type StrictServerInterface interface {
 	// UpdateMilestone Edit, close or reopen a milestone
 	// (PATCH /repos/{owner}/{name}/milestones/{milestoneId})
 	UpdateMilestone(ctx context.Context, request UpdateMilestoneRequestObject) (UpdateMilestoneResponseObject, error)
+	// ListPulls List the pull requests of the repository
+	// (GET /repos/{owner}/{name}/pulls)
+	ListPulls(ctx context.Context, request ListPullsRequestObject) (ListPullsResponseObject, error)
+	// CreatePull Open a pull request
+	// (POST /repos/{owner}/{name}/pulls)
+	CreatePull(ctx context.Context, request CreatePullRequestObject) (CreatePullResponseObject, error)
+	// DeletePullReviewComment Delete an inline comment
+	// (DELETE /repos/{owner}/{name}/pulls/comments/{commentId})
+	DeletePullReviewComment(ctx context.Context, request DeletePullReviewCommentRequestObject) (DeletePullReviewCommentResponseObject, error)
+	// UpdatePullReviewComment Edit an inline comment
+	// (PATCH /repos/{owner}/{name}/pulls/comments/{commentId})
+	UpdatePullReviewComment(ctx context.Context, request UpdatePullReviewCommentRequestObject) (UpdatePullReviewCommentResponseObject, error)
+	// ApplyPullSuggestion Commit the suggested change of a comment
+	// (POST /repos/{owner}/{name}/pulls/comments/{commentId}/apply-suggestion)
+	ApplyPullSuggestion(ctx context.Context, request ApplyPullSuggestionRequestObject) (ApplyPullSuggestionResponseObject, error)
+	// UnresolvePullThread Unresolve a thread
+	// (DELETE /repos/{owner}/{name}/pulls/comments/{commentId}/resolve)
+	UnresolvePullThread(ctx context.Context, request UnresolvePullThreadRequestObject) (UnresolvePullThreadResponseObject, error)
+	// ResolvePullThread Resolve a thread
+	// (PUT /repos/{owner}/{name}/pulls/comments/{commentId}/resolve)
+	ResolvePullThread(ctx context.Context, request ResolvePullThreadRequestObject) (ResolvePullThreadResponseObject, error)
+	// GetPull A pull request
+	// (GET /repos/{owner}/{name}/pulls/{number})
+	GetPull(ctx context.Context, request GetPullRequestObject) (GetPullResponseObject, error)
+	// UpdatePull Edit, close, reopen or retarget a pull request
+	// (PATCH /repos/{owner}/{name}/pulls/{number})
+	UpdatePull(ctx context.Context, request UpdatePullRequestObject) (UpdatePullResponseObject, error)
+	// DisablePullAutoMerge Cancel the auto-merge of a pull request
+	// (DELETE /repos/{owner}/{name}/pulls/{number}/auto-merge)
+	DisablePullAutoMerge(ctx context.Context, request DisablePullAutoMergeRequestObject) (DisablePullAutoMergeResponseObject, error)
+	// EnablePullAutoMerge Merge a pull request once its requirements are met
+	// (PUT /repos/{owner}/{name}/pulls/{number}/auto-merge)
+	EnablePullAutoMerge(ctx context.Context, request EnablePullAutoMergeRequestObject) (EnablePullAutoMergeResponseObject, error)
+	// ListPullReviewComments The inline comments of a pull request
+	// (GET /repos/{owner}/{name}/pulls/{number}/comments)
+	ListPullReviewComments(ctx context.Context, request ListPullReviewCommentsRequestObject) (ListPullReviewCommentsResponseObject, error)
+	// CreatePullReviewComment Comment on a line, a range or reply to a thread
+	// (POST /repos/{owner}/{name}/pulls/{number}/comments)
+	CreatePullReviewComment(ctx context.Context, request CreatePullReviewCommentRequestObject) (CreatePullReviewCommentResponseObject, error)
+	// ListPullCommits The commits of a pull request
+	// (GET /repos/{owner}/{name}/pulls/{number}/commits)
+	ListPullCommits(ctx context.Context, request ListPullCommitsRequestObject) (ListPullCommitsResponseObject, error)
+	// GetPullDiff The diff of a pull request
+	// (GET /repos/{owner}/{name}/pulls/{number}/diff)
+	GetPullDiff(ctx context.Context, request GetPullDiffRequestObject) (GetPullDiffResponseObject, error)
+	// ListPullFiles The files changed by a pull request
+	// (GET /repos/{owner}/{name}/pulls/{number}/files)
+	ListPullFiles(ctx context.Context, request ListPullFilesRequestObject) (ListPullFilesResponseObject, error)
+	// MergePull Merge a pull request
+	// (PUT /repos/{owner}/{name}/pulls/{number}/merge)
+	MergePull(ctx context.Context, request MergePullRequestObject) (MergePullResponseObject, error)
+	// GetPullMergeability Whether a pull request can be merged
+	// (GET /repos/{owner}/{name}/pulls/{number}/mergeability)
+	GetPullMergeability(ctx context.Context, request GetPullMergeabilityRequestObject) (GetPullMergeabilityResponseObject, error)
+	// RemovePullReviewers Withdraw review requests
+	// (DELETE /repos/{owner}/{name}/pulls/{number}/requested-reviewers)
+	RemovePullReviewers(ctx context.Context, request RemovePullReviewersRequestObject) (RemovePullReviewersResponseObject, error)
+	// RequestPullReviewers Request reviews
+	// (POST /repos/{owner}/{name}/pulls/{number}/requested-reviewers)
+	RequestPullReviewers(ctx context.Context, request RequestPullReviewersRequestObject) (RequestPullReviewersResponseObject, error)
+	// ListPullReviews The reviews of a pull request
+	// (GET /repos/{owner}/{name}/pulls/{number}/reviews)
+	ListPullReviews(ctx context.Context, request ListPullReviewsRequestObject) (ListPullReviewsResponseObject, error)
+	// CreatePullReview Start or submit a review
+	// (POST /repos/{owner}/{name}/pulls/{number}/reviews)
+	CreatePullReview(ctx context.Context, request CreatePullReviewRequestObject) (CreatePullReviewResponseObject, error)
+	// DeletePullReview Discard a pending review
+	// (DELETE /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId})
+	DeletePullReview(ctx context.Context, request DeletePullReviewRequestObject) (DeletePullReviewResponseObject, error)
+	// GetPullReview A review
+	// (GET /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId})
+	GetPullReview(ctx context.Context, request GetPullReviewRequestObject) (GetPullReviewResponseObject, error)
+	// ListPullReviewCommentsOfReview The comments of a review
+	// (GET /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/comments)
+	ListPullReviewCommentsOfReview(ctx context.Context, request ListPullReviewCommentsOfReviewRequestObject) (ListPullReviewCommentsOfReviewResponseObject, error)
+	// DismissPullReview Dismiss a review
+	// (PUT /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/dismiss)
+	DismissPullReview(ctx context.Context, request DismissPullReviewRequestObject) (DismissPullReviewResponseObject, error)
+	// SubmitPullReview Submit a pending review
+	// (POST /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/submit)
+	SubmitPullReview(ctx context.Context, request SubmitPullReviewRequestObject) (SubmitPullReviewResponseObject, error)
 	// GetReadme The README of a directory
 	// (GET /repos/{owner}/{name}/readme)
 	GetReadme(ctx context.Context, request GetReadmeRequestObject) (GetReadmeResponseObject, error)
@@ -34305,6 +40485,68 @@ func (sh *strictHandler) EditContents(w http.ResponseWriter, r *http.Request, ow
 	}
 }
 
+// ListForks operation middleware
+func (sh *strictHandler) ListForks(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListForksParams) {
+	var request ListForksRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListForks(ctx, request.(ListForksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListForks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListForksResponseObject); ok {
+		if err := validResponse.VisitListForksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateFork operation middleware
+func (sh *strictHandler) CreateFork(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request CreateForkRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body CreateForkJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateFork(ctx, request.(CreateForkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateFork")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateForkResponseObject); ok {
+		if err := validResponse.VisitCreateForkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetGitHubImport operation middleware
 func (sh *strictHandler) GetGitHubImport(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
 	var request GetGitHubImportRequestObject
@@ -35717,6 +41959,849 @@ func (sh *strictHandler) UpdateMilestone(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateMilestoneResponseObject); ok {
 		if err := validResponse.VisitUpdateMilestoneResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPulls operation middleware
+func (sh *strictHandler) ListPulls(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListPullsParams) {
+	var request ListPullsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPulls(ctx, request.(ListPullsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPulls")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPullsResponseObject); ok {
+		if err := validResponse.VisitListPullsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreatePull operation middleware
+func (sh *strictHandler) CreatePull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request CreatePullRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body CreatePullJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreatePull(ctx, request.(CreatePullRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreatePull")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreatePullResponseObject); ok {
+		if err := validResponse.VisitCreatePullResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeletePullReviewComment operation middleware
+func (sh *strictHandler) DeletePullReviewComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId) {
+	var request DeletePullReviewCommentRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeletePullReviewComment(ctx, request.(DeletePullReviewCommentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeletePullReviewComment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeletePullReviewCommentResponseObject); ok {
+		if err := validResponse.VisitDeletePullReviewCommentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdatePullReviewComment operation middleware
+func (sh *strictHandler) UpdatePullReviewComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId) {
+	var request UpdatePullReviewCommentRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+
+	var body UpdatePullReviewCommentJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdatePullReviewComment(ctx, request.(UpdatePullReviewCommentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdatePullReviewComment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdatePullReviewCommentResponseObject); ok {
+		if err := validResponse.VisitUpdatePullReviewCommentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ApplyPullSuggestion operation middleware
+func (sh *strictHandler) ApplyPullSuggestion(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId) {
+	var request ApplyPullSuggestionRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+
+	var body ApplyPullSuggestionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ApplyPullSuggestion(ctx, request.(ApplyPullSuggestionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ApplyPullSuggestion")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ApplyPullSuggestionResponseObject); ok {
+		if err := validResponse.VisitApplyPullSuggestionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnresolvePullThread operation middleware
+func (sh *strictHandler) UnresolvePullThread(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId) {
+	var request UnresolvePullThreadRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnresolvePullThread(ctx, request.(UnresolvePullThreadRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnresolvePullThread")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnresolvePullThreadResponseObject); ok {
+		if err := validResponse.VisitUnresolvePullThreadResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ResolvePullThread operation middleware
+func (sh *strictHandler) ResolvePullThread(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId PullCommentId) {
+	var request ResolvePullThreadRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResolvePullThread(ctx, request.(ResolvePullThreadRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResolvePullThread")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResolvePullThreadResponseObject); ok {
+		if err := validResponse.VisitResolvePullThreadResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPull operation middleware
+func (sh *strictHandler) GetPull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	var request GetPullRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPull(ctx, request.(GetPullRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPull")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPullResponseObject); ok {
+		if err := validResponse.VisitGetPullResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdatePull operation middleware
+func (sh *strictHandler) UpdatePull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	var request UpdatePullRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	var body UpdatePullJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdatePull(ctx, request.(UpdatePullRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdatePull")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdatePullResponseObject); ok {
+		if err := validResponse.VisitUpdatePullResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DisablePullAutoMerge operation middleware
+func (sh *strictHandler) DisablePullAutoMerge(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	var request DisablePullAutoMergeRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DisablePullAutoMerge(ctx, request.(DisablePullAutoMergeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DisablePullAutoMerge")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DisablePullAutoMergeResponseObject); ok {
+		if err := validResponse.VisitDisablePullAutoMergeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EnablePullAutoMerge operation middleware
+func (sh *strictHandler) EnablePullAutoMerge(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	var request EnablePullAutoMergeRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	var body EnablePullAutoMergeJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EnablePullAutoMerge(ctx, request.(EnablePullAutoMergeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EnablePullAutoMerge")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EnablePullAutoMergeResponseObject); ok {
+		if err := validResponse.VisitEnablePullAutoMergeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPullReviewComments operation middleware
+func (sh *strictHandler) ListPullReviewComments(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params ListPullReviewCommentsParams) {
+	var request ListPullReviewCommentsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPullReviewComments(ctx, request.(ListPullReviewCommentsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPullReviewComments")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPullReviewCommentsResponseObject); ok {
+		if err := validResponse.VisitListPullReviewCommentsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreatePullReviewComment operation middleware
+func (sh *strictHandler) CreatePullReviewComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	var request CreatePullReviewCommentRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	var body CreatePullReviewCommentJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreatePullReviewComment(ctx, request.(CreatePullReviewCommentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreatePullReviewComment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreatePullReviewCommentResponseObject); ok {
+		if err := validResponse.VisitCreatePullReviewCommentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPullCommits operation middleware
+func (sh *strictHandler) ListPullCommits(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params ListPullCommitsParams) {
+	var request ListPullCommitsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPullCommits(ctx, request.(ListPullCommitsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPullCommits")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPullCommitsResponseObject); ok {
+		if err := validResponse.VisitListPullCommitsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPullDiff operation middleware
+func (sh *strictHandler) GetPullDiff(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params GetPullDiffParams) {
+	var request GetPullDiffRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPullDiff(ctx, request.(GetPullDiffRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPullDiff")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPullDiffResponseObject); ok {
+		if err := validResponse.VisitGetPullDiffResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPullFiles operation middleware
+func (sh *strictHandler) ListPullFiles(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	var request ListPullFilesRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPullFiles(ctx, request.(ListPullFilesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPullFiles")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPullFilesResponseObject); ok {
+		if err := validResponse.VisitListPullFilesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// MergePull operation middleware
+func (sh *strictHandler) MergePull(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	var request MergePullRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	var body MergePullJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.MergePull(ctx, request.(MergePullRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "MergePull")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(MergePullResponseObject); ok {
+		if err := validResponse.VisitMergePullResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPullMergeability operation middleware
+func (sh *strictHandler) GetPullMergeability(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	var request GetPullMergeabilityRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPullMergeability(ctx, request.(GetPullMergeabilityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPullMergeability")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPullMergeabilityResponseObject); ok {
+		if err := validResponse.VisitGetPullMergeabilityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemovePullReviewers operation middleware
+func (sh *strictHandler) RemovePullReviewers(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params RemovePullReviewersParams) {
+	var request RemovePullReviewersRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemovePullReviewers(ctx, request.(RemovePullReviewersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemovePullReviewers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemovePullReviewersResponseObject); ok {
+		if err := validResponse.VisitRemovePullReviewersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RequestPullReviewers operation middleware
+func (sh *strictHandler) RequestPullReviewers(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	var request RequestPullReviewersRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	var body RequestPullReviewersJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RequestPullReviewers(ctx, request.(RequestPullReviewersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequestPullReviewers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RequestPullReviewersResponseObject); ok {
+		if err := validResponse.VisitRequestPullReviewersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPullReviews operation middleware
+func (sh *strictHandler) ListPullReviews(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, params ListPullReviewsParams) {
+	var request ListPullReviewsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPullReviews(ctx, request.(ListPullReviewsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPullReviews")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPullReviewsResponseObject); ok {
+		if err := validResponse.VisitListPullReviewsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreatePullReview operation middleware
+func (sh *strictHandler) CreatePullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	var request CreatePullReviewRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	var body CreatePullReviewJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreatePullReview(ctx, request.(CreatePullReviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreatePullReview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreatePullReviewResponseObject); ok {
+		if err := validResponse.VisitCreatePullReviewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeletePullReview operation middleware
+func (sh *strictHandler) DeletePullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId) {
+	var request DeletePullReviewRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.ReviewId = reviewId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeletePullReview(ctx, request.(DeletePullReviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeletePullReview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeletePullReviewResponseObject); ok {
+		if err := validResponse.VisitDeletePullReviewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPullReview operation middleware
+func (sh *strictHandler) GetPullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId) {
+	var request GetPullReviewRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.ReviewId = reviewId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPullReview(ctx, request.(GetPullReviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPullReview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPullReviewResponseObject); ok {
+		if err := validResponse.VisitGetPullReviewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPullReviewCommentsOfReview operation middleware
+func (sh *strictHandler) ListPullReviewCommentsOfReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId, params ListPullReviewCommentsOfReviewParams) {
+	var request ListPullReviewCommentsOfReviewRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.ReviewId = reviewId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPullReviewCommentsOfReview(ctx, request.(ListPullReviewCommentsOfReviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPullReviewCommentsOfReview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPullReviewCommentsOfReviewResponseObject); ok {
+		if err := validResponse.VisitListPullReviewCommentsOfReviewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DismissPullReview operation middleware
+func (sh *strictHandler) DismissPullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId) {
+	var request DismissPullReviewRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.ReviewId = reviewId
+
+	var body DismissPullReviewJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DismissPullReview(ctx, request.(DismissPullReviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DismissPullReview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DismissPullReviewResponseObject); ok {
+		if err := validResponse.VisitDismissPullReviewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SubmitPullReview operation middleware
+func (sh *strictHandler) SubmitPullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId) {
+	var request SubmitPullReviewRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.ReviewId = reviewId
+
+	var body SubmitPullReviewJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SubmitPullReview(ctx, request.(SubmitPullReviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SubmitPullReview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SubmitPullReviewResponseObject); ok {
+		if err := validResponse.VisitSubmitPullReviewResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -10,7 +10,9 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/ghsync"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+	"github.com/Ervisio/ErvisioRepo/internal/notify"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
+	"github.com/Ervisio/ErvisioRepo/internal/webhooks"
 )
 
 // v1Server implements the strict server generated from api/openapi.yaml.
@@ -34,6 +36,13 @@ type v1Server struct {
 	github *ghsync.Service
 	// issues serves the issue, label and milestone endpoints; nil answers 503.
 	issues Issues
+	// webhooks serves the repository and organization hook endpoints; nil answers 503.
+	webhooks *webhooks.Service
+	// notify serves the notification and subscription endpoints; nil answers 503.
+	notify *notify.Service
+
+	// pulls serves the pull request, review and fork endpoints; nil answers 503.
+	pulls Pulls
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

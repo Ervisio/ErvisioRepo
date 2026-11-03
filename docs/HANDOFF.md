@@ -39,56 +39,13 @@ Si seguono le fasi di `docs/PLAN.md` §11.
   - Migrazioni 00120–00140.
 - In `internal/events/event.go` sono già dichiarati questi kind: `KindPull`, `KindPullReview`, `KindPullReviewComment`, `KindRelease`, `KindStatus`.
 
-## In corso (WIP in questo commit, interrotto)
+## Fase 5, wave 2 (completata)
 
-### 1. Pull request
-
-Spec in `docs/PLAN.md` §5.4. Parti già scritte:
-
-- migrazione `00150_pulls.sql`;
-- `internal/db/queries/pulls.sql` e il codice dbgen;
-- `internal/gitbrowse/pulls.go`;
-- sezione PR in `api/openapi.yaml`.
-
-Mancano:
-
-- `internal/git/merge.go`, con le funzioni merge-tree `--write-tree` e commit-tree;
-- il package `internal/pulls`;
-- `internal/httpapi/pullsapi.go`;
-- `internal/events/pulls.go`, con `PullPayload`, `PullReviewPayload` e `PullReviewCommentPayload`;
-- `ReviewSource` per protection, collegato via `Engine.SetSources`;
-- fork con pool e `alternates`;
-- i ref `refs/pull/<n>/head|merge`;
-- le review inline e le suggested change;
-- le strategie di merge merge, squash e rebase;
-- l'auto-merge;
-- `CloseFromText` al merge;
-- l'entry nel CHANGELOG.
-
-Da riusare: `issues.NextNumber`, `protection.ProtocolMerge` e la sessione hook come in gitbrowse.
-
-### 2. Webhook e notifiche
-
-Spec in `docs/PLAN.md` §5.7 e §5.5. Parti già scritte:
-
-- migrazione `00160_webhooks_notifications.sql`;
-- le query `webhooks.sql` e `notifications.sql`;
-- la configurazione `[webhooks]` (`allow_private`, allowlist CIDR) in `internal/config` e in `deploy/dev/config.toml`;
-- le sezioni OpenAPI.
-
-Mancano:
-
-- i package `internal/webhooks` e `internal/notify`;
-- `internal/httpapi/webhooksapi.go` e `notificationsapi.go`;
-- la registrazione degli handler sul bus in `serve.go`.
-
-Requisiti da rispettare:
-
-- formati `github` (`X-GitHub-Event`, `X-Hub-Signature-256`) ed `ervisio`;
-- retry esponenziale con River;
-- cronologia delle consegne, redelivery e ping;
-- protezione SSRF al dial, con `net.Dialer.Control`;
-- email con `internal/mail`.
+- **Pull request** (`internal/pulls`, `internal/git/merge.go`, `internal/httpapi/pullsapi.go`, `internal/events/pulls.go`, sezione PR in OpenAPI): CRUD, ref `refs/pull/<n>/head|merge` ricalcolati a ogni push, mergeability con protezione, merge/squash/rebase, auto-merge, review e richieste di review (collegate a protection via `SetSources`), commenti inline con thread, re-anchoring e suggested change, fork.
+  - Rimandati: pool di oggetti condiviso per i fork (ora copia completa), update-branch, quota dei fork, riferimenti incrociati dal body della PR, pulizia del fork se la copia fallisce, re-anchoring dei commenti sul lato sinistro, pulizia alla cancellazione del repo (manca un hook di cancellazione in repos).
+- **Webhook** (`internal/webhooks`) e **notifiche** (`internal/notify`, email in en/it): formati github ed ervisio, retry River, cronologia, redelivery, ping, SSRF al dial, segreti cifrati con la master key.
+  - Rimandato: la lista `commits` nei payload push è vuota.
+- Nota ambiente Windows: usare `GOOS=linux` per build/vet; `make` non è installato, quindi `check-generate` va eseguito a mano (oapi-codegen, sqlc con `CGO_ENABLED=0`, `npm --prefix web run gen:api`, `git diff --exit-code`). golangci-lint va installato per Windows (`go install`) ed eseguito con `GOOS=linux`; i soli errori gofmt residui vengono dai CRLF di `core.autocrlf`.
 
 ### 3. Galleria UI Fase 5
 
@@ -107,7 +64,7 @@ node ~/.claude/skills/variant-studio/scripts/studio.mjs present --project design
 
 ## Prossimi passi
 
-1. Finire le pull request e i webhook con le notifiche, fino ad avere build, vet e lint verdi. Poi commit.
+1. ~~Pull request, webhook e notifiche~~ (fatto).
 2. **API:** completare `/api/v1` e il sottoinsieme compatibile `/api/v3` (repo, contenuti, PR, issue, release, status e check).
 3. **Importer GitHub** via `ghsync.Importer`: issue, PR, label, milestone e release.
 4. **UI della Fase 5:** issue, PR, protezione dei branch, sync GitHub, notifiche, webhook. La UI parte dalla variante approvata in galleria.

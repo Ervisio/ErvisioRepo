@@ -197,7 +197,7 @@ func (q *Queries) InsertWebhook(ctx context.Context, arg InsertWebhookParams) (W
 const insertWebhookDelivery = `-- name: InsertWebhookDelivery :one
 INSERT INTO webhook_deliveries (id, webhook_id, event_id, guid, event, action, redelivery, payload)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-ON CONFLICT (webhook_id, event_id) WHERE event_id IS NOT NULL DO NOTHING
+ON CONFLICT (id) DO NOTHING
 RETURNING id
 `
 
@@ -212,8 +212,8 @@ type InsertWebhookDeliveryParams struct {
 	Payload    []byte
 }
 
-// Records a delivery; for a bus event the conflict makes it idempotent and
-// no row is returned.
+// Records a delivery; for a bus event the id is derived from the event, so
+// a repeated delivery conflicts and no row is returned.
 func (q *Queries) InsertWebhookDelivery(ctx context.Context, arg InsertWebhookDeliveryParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, insertWebhookDelivery,
 		arg.ID,

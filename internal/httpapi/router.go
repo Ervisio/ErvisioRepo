@@ -25,7 +25,9 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/ghsync"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+	"github.com/Ervisio/ErvisioRepo/internal/notify"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
+	"github.com/Ervisio/ErvisioRepo/internal/webhooks"
 )
 
 // RequestTimeout bounds every non-streaming request.
@@ -98,6 +100,13 @@ type Deps struct {
 	Auth *auth.Middleware
 	// GitHub serves the GitHub sync endpoints and webhook; nil answers 503.
 	GitHub *ghsync.Service
+	// Webhooks serves the outgoing webhook endpoints; nil answers 503.
+	Webhooks *webhooks.Service
+	// Notify serves the notification endpoints; nil answers 503.
+	Notify *notify.Service
+
+	// Pulls serves the pull request, review and fork endpoints; nil answers 503.
+	Pulls Pulls
 }
 
 // NewRouter builds the root handler.
@@ -204,6 +213,8 @@ func mountV1(r chi.Router, d Deps) {
 	srv := &v1Server{meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies, mfa: d.MFA, orgs: d.Orgs, repos: d.Repos, audit: d.Audit,
 		creds: d.Credentials, sso: d.SSO, tiering: d.Tiering, releases: d.Releases, browse: d.Browse,
 		protection: d.Protection, github: d.GitHub, issues: d.Issues}
+	srv.webhooks, srv.notify = d.Webhooks, d.Notify
+	srv.pulls = d.Pulls
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())

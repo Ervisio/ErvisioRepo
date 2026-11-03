@@ -32,6 +32,8 @@ type Querier interface {
 	// Accepts a code for step only once: a replay in the same window matches
 	// no row.
 	AdvanceTOTPStep(ctx context.Context, arg AdvanceTOTPStepParams) (int64, error)
+	// Open pull requests of a repository waiting for auto-merge.
+	AutoMergePulls(ctx context.Context, repoID uuid.UUID) ([]PullRequest, error)
 	BumpReleaseAssetDownloads(ctx context.Context, id uuid.UUID) error
 	// Undispatched events, oldest first, locked for the dispatching transaction
 	// (concurrent dispatchers skip each other's rows).
@@ -54,6 +56,7 @@ type Querier interface {
 	CountOrgOwners(ctx context.Context, orgID uuid.UUID) (int64, error)
 	CountOrgWebhooks(ctx context.Context, orgID uuid.NullUUID) (int64, error)
 	CountOwnerRepos(ctx context.Context, ownerID uuid.UUID) (int64, error)
+	CountPendingReviewComments(ctx context.Context, reviewID uuid.NullUUID) (int64, error)
 	CountRecoveryCodes(ctx context.Context, userID uuid.UUID) (CountRecoveryCodesRow, error)
 	CountRepoForks(ctx context.Context, parentID uuid.NullUUID) (int64, error)
 	CountRepoWebhooks(ctx context.Context, repoID uuid.NullUUID) (int64, error)
@@ -93,6 +96,8 @@ type Querier interface {
 	DeleteOrgMember(ctx context.Context, arg DeleteOrgMemberParams) (int64, error)
 	// Deletes the organization with its namespace, members, teams and invites.
 	DeleteOrgNamespace(ctx context.Context, id uuid.UUID) (int64, error)
+	DeletePendingPullReview(ctx context.Context, id uuid.UUID) (int64, error)
+	DeletePullReviewComment(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteQuotaOverride(ctx context.Context, namespaceID uuid.UUID) (int64, error)
 	DeleteRecoveryCodes(ctx context.Context, userID uuid.UUID) error
 	DeleteRelease(ctx context.Context, arg DeleteReleaseParams) (int64, error)
@@ -190,6 +195,7 @@ type Querier interface {
 	GetPullRequestsByIDs(ctx context.Context, ids []uuid.UUID) ([]PullRequest, error)
 	GetPullReview(ctx context.Context, arg GetPullReviewParams) (PullReview, error)
 	GetPullReviewComment(ctx context.Context, arg GetPullReviewCommentParams) (PullReviewComment, error)
+	GetPullReviewCommentInRepo(ctx context.Context, arg GetPullReviewCommentInRepoParams) (PullReviewComment, error)
 	GetQuotaDefaults(ctx context.Context) ([]QuotaDefault, error)
 	GetQuotaOverride(ctx context.Context, namespaceID uuid.UUID) (Quota, error)
 	GetRelease(ctx context.Context, arg GetReleaseParams) (Release, error)
@@ -298,8 +304,8 @@ type Querier interface {
 	InsertWebAuthnHandle(ctx context.Context, arg InsertWebAuthnHandleParams) error
 	// Outgoing webhooks (internal/webhooks).
 	InsertWebhook(ctx context.Context, arg InsertWebhookParams) (Webhook, error)
-	// Records a delivery; for a bus event the conflict makes it idempotent and
-	// no row is returned.
+	// Records a delivery; for a bus event the id is derived from the event, so
+	// a repeated delivery conflicts and no row is returned.
 	InsertWebhookDelivery(ctx context.Context, arg InsertWebhookDeliveryParams) (uuid.UUID, error)
 	// ---- assignees and users ----
 	IssueAssigneesOf(ctx context.Context, issueIds []uuid.UUID) ([]IssueAssigneesOfRow, error)
@@ -383,6 +389,8 @@ type Querier interface {
 	// Newest first; drafts only when include_drafts. An empty tag matches all.
 	ListReleases(ctx context.Context, arg ListReleasesParams) ([]Release, error)
 	ListRepoCollaborators(ctx context.Context, repoID uuid.UUID) ([]ListRepoCollaboratorsRow, error)
+	// ---- service additions ----
+	ListRepoForks(ctx context.Context, arg ListRepoForksParams) ([]uuid.UUID, error)
 	// Keyset pagination over every repository, for the garbage collector.
 	ListRepoIDsAfter(ctx context.Context, arg ListRepoIDsAfterParams) ([]uuid.UUID, error)
 	ListRepoLFSObjects(ctx context.Context, repoID uuid.UUID) ([]ListRepoLFSObjectsRow, error)
@@ -474,6 +482,8 @@ type Querier interface {
 	OpenPullsByBase(ctx context.Context, arg OpenPullsByBaseParams) ([]PullRequest, error)
 	// Open pull requests whose head is ref of repository repo_id.
 	OpenPullsByHead(ctx context.Context, arg OpenPullsByHeadParams) ([]PullRequest, error)
+	// Open pull requests whose head lives in another repository.
+	OpenPullsWithHeadRepo(ctx context.Context, headRepoID uuid.NullUUID) ([]PullRequest, error)
 	// Dispatched events older than "before" (their delivery jobs are done or
 	// have given up).
 	PruneOutboxEvents(ctx context.Context, before pgtype.Timestamptz) (int64, error)
@@ -593,6 +603,7 @@ type Querier interface {
 	UpdateLabel(ctx context.Context, arg UpdateLabelParams) (Label, error)
 	UpdateMilestone(ctx context.Context, arg UpdateMilestoneParams) (Milestone, error)
 	UpdateOrg(ctx context.Context, arg UpdateOrgParams) error
+	UpdatePullReviewCommentBody(ctx context.Context, arg UpdatePullReviewCommentBodyParams) (PullReviewComment, error)
 	UpdateRelease(ctx context.Context, arg UpdateReleaseParams) (Release, error)
 	UpdateReleaseAsset(ctx context.Context, arg UpdateReleaseAssetParams) (ReleaseAsset, error)
 	UpdateRepo(ctx context.Context, arg UpdateRepoParams) error

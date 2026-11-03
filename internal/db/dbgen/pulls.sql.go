@@ -31,6 +31,58 @@ func (q *Queries) AddPullReviewRequest(ctx context.Context, arg AddPullReviewReq
 	return result.RowsAffected(), nil
 }
 
+const autoMergePulls = `-- name: AutoMergePulls :many
+SELECT p.issue_id, p.repo_id, p.number, p.head_repo_id, p.head_ref, p.head_sha, p.base_ref, p.base_sha, p.merge_base_sha, p.draft, p.mergeable_state, p.merge_sha, p.conflict_files, p.merged_at, p.merged_by, p.merge_commit_sha, p.merge_method, p.auto_merge_method, p.auto_merge_by, p.auto_merge_title, p.auto_merge_message, p.auto_merge_delete, p.created_at, p.updated_at FROM pull_requests p JOIN issues i ON i.id = p.issue_id
+WHERE p.repo_id = $1 AND p.auto_merge_method <> '' AND i.state = 'open' AND p.merged_at IS NULL
+ORDER BY p.number
+`
+
+// Open pull requests of a repository waiting for auto-merge.
+func (q *Queries) AutoMergePulls(ctx context.Context, repoID uuid.UUID) ([]PullRequest, error) {
+	rows, err := q.db.Query(ctx, autoMergePulls, repoID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PullRequest{}
+	for rows.Next() {
+		var i PullRequest
+		if err := rows.Scan(
+			&i.IssueID,
+			&i.RepoID,
+			&i.Number,
+			&i.HeadRepoID,
+			&i.HeadRef,
+			&i.HeadSha,
+			&i.BaseRef,
+			&i.BaseSha,
+			&i.MergeBaseSha,
+			&i.Draft,
+			&i.MergeableState,
+			&i.MergeSha,
+			&i.ConflictFiles,
+			&i.MergedAt,
+			&i.MergedBy,
+			&i.MergeCommitSha,
+			&i.MergeMethod,
+			&i.AutoMergeMethod,
+			&i.AutoMergeBy,
+			&i.AutoMergeTitle,
+			&i.AutoMergeMessage,
+			&i.AutoMergeDelete,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const clearPullHeadRepo = `-- name: ClearPullHeadRepo :exec
 UPDATE pull_requests SET head_repo_id = NULL, updated_at = now() WHERE issue_id = $1
 `
@@ -38,6 +90,17 @@ UPDATE pull_requests SET head_repo_id = NULL, updated_at = now() WHERE issue_id 
 func (q *Queries) ClearPullHeadRepo(ctx context.Context, issueID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, clearPullHeadRepo, issueID)
 	return err
+}
+
+const countPendingReviewComments = `-- name: CountPendingReviewComments :one
+SELECT count(*) FROM pull_review_comments WHERE review_id = $1
+`
+
+func (q *Queries) CountPendingReviewComments(ctx context.Context, reviewID uuid.NullUUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPendingReviewComments, reviewID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const countRepoForks = `-- name: CountRepoForks :one
@@ -49,6 +112,30 @@ func (q *Queries) CountRepoForks(ctx context.Context, parentID uuid.NullUUID) (i
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const deletePendingPullReview = `-- name: DeletePendingPullReview :execrows
+DELETE FROM pull_reviews WHERE id = $1 AND state = 'pending'
+`
+
+func (q *Queries) DeletePendingPullReview(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deletePendingPullReview, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deletePullReviewComment = `-- name: DeletePullReviewComment :execrows
+DELETE FROM pull_review_comments WHERE id = $1 OR in_reply_to = $1
+`
+
+func (q *Queries) DeletePullReviewComment(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deletePullReviewComment, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const dismissPullReview = `-- name: DismissPullReview :one
@@ -324,6 +411,44 @@ type GetPullReviewCommentParams struct {
 
 func (q *Queries) GetPullReviewComment(ctx context.Context, arg GetPullReviewCommentParams) (PullReviewComment, error) {
 	row := q.db.QueryRow(ctx, getPullReviewComment, arg.ID, arg.PullID)
+	var i PullReviewComment
+	err := row.Scan(
+		&i.ID,
+		&i.PullID,
+		&i.RepoID,
+		&i.ReviewID,
+		&i.AuthorID,
+		&i.InReplyTo,
+		&i.Path,
+		&i.Side,
+		&i.Line,
+		&i.StartLine,
+		&i.OriginalLine,
+		&i.OriginalStartLine,
+		&i.OriginalCommitSha,
+		&i.CommitSha,
+		&i.DiffHunk,
+		&i.Body,
+		&i.Outdated,
+		&i.ResolvedAt,
+		&i.ResolvedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getPullReviewCommentInRepo = `-- name: GetPullReviewCommentInRepo :one
+SELECT id, pull_id, repo_id, review_id, author_id, in_reply_to, path, side, line, start_line, original_line, original_start_line, original_commit_sha, commit_sha, diff_hunk, body, outdated, resolved_at, resolved_by, created_at, updated_at FROM pull_review_comments WHERE id = $1 AND repo_id = $2
+`
+
+type GetPullReviewCommentInRepoParams struct {
+	ID     uuid.UUID
+	RepoID uuid.UUID
+}
+
+func (q *Queries) GetPullReviewCommentInRepo(ctx context.Context, arg GetPullReviewCommentInRepoParams) (PullReviewComment, error) {
+	row := q.db.QueryRow(ctx, getPullReviewCommentInRepo, arg.ID, arg.RepoID)
 	var i PullReviewComment
 	err := row.Scan(
 		&i.ID,
@@ -722,6 +847,40 @@ func (q *Queries) ListPullReviews(ctx context.Context, arg ListPullReviewsParams
 	return items, nil
 }
 
+const listRepoForks = `-- name: ListRepoForks :many
+
+SELECT repo_id FROM repo_forks WHERE parent_id = $1
+ORDER BY created_at, repo_id
+LIMIT $3 OFFSET $2
+`
+
+type ListRepoForksParams struct {
+	ParentID uuid.NullUUID
+	Off      int32
+	Lim      int32
+}
+
+// ---- service additions ----
+func (q *Queries) ListRepoForks(ctx context.Context, arg ListRepoForksParams) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listRepoForks, arg.ParentID, arg.Off, arg.Lim)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []uuid.UUID{}
+	for rows.Next() {
+		var repo_id uuid.UUID
+		if err := rows.Scan(&repo_id); err != nil {
+			return nil, err
+		}
+		items = append(items, repo_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const openPullExists = `-- name: OpenPullExists :one
 SELECT EXISTS (
   SELECT 1 FROM pull_requests p JOIN issues i ON i.id = p.issue_id
@@ -817,6 +976,57 @@ type OpenPullsByHeadParams struct {
 // Open pull requests whose head is ref of repository repo_id.
 func (q *Queries) OpenPullsByHead(ctx context.Context, arg OpenPullsByHeadParams) ([]PullRequest, error) {
 	rows, err := q.db.Query(ctx, openPullsByHead, arg.HeadRepoID, arg.HeadRef)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PullRequest{}
+	for rows.Next() {
+		var i PullRequest
+		if err := rows.Scan(
+			&i.IssueID,
+			&i.RepoID,
+			&i.Number,
+			&i.HeadRepoID,
+			&i.HeadRef,
+			&i.HeadSha,
+			&i.BaseRef,
+			&i.BaseSha,
+			&i.MergeBaseSha,
+			&i.Draft,
+			&i.MergeableState,
+			&i.MergeSha,
+			&i.ConflictFiles,
+			&i.MergedAt,
+			&i.MergedBy,
+			&i.MergeCommitSha,
+			&i.MergeMethod,
+			&i.AutoMergeMethod,
+			&i.AutoMergeBy,
+			&i.AutoMergeTitle,
+			&i.AutoMergeMessage,
+			&i.AutoMergeDelete,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const openPullsWithHeadRepo = `-- name: OpenPullsWithHeadRepo :many
+SELECT p.issue_id, p.repo_id, p.number, p.head_repo_id, p.head_ref, p.head_sha, p.base_ref, p.base_sha, p.merge_base_sha, p.draft, p.mergeable_state, p.merge_sha, p.conflict_files, p.merged_at, p.merged_by, p.merge_commit_sha, p.merge_method, p.auto_merge_method, p.auto_merge_by, p.auto_merge_title, p.auto_merge_message, p.auto_merge_delete, p.created_at, p.updated_at FROM pull_requests p JOIN issues i ON i.id = p.issue_id
+WHERE p.head_repo_id = $1 AND p.repo_id <> $1 AND i.state = 'open' AND p.merged_at IS NULL
+`
+
+// Open pull requests whose head lives in another repository.
+func (q *Queries) OpenPullsWithHeadRepo(ctx context.Context, headRepoID uuid.NullUUID) ([]PullRequest, error) {
+	rows, err := q.db.Query(ctx, openPullsWithHeadRepo, headRepoID)
 	if err != nil {
 		return nil, err
 	}
@@ -1422,4 +1632,44 @@ func (q *Queries) ThreadCommentsOfPull(ctx context.Context, pullID uuid.UUID) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const updatePullReviewCommentBody = `-- name: UpdatePullReviewCommentBody :one
+UPDATE pull_review_comments SET body = $1, updated_at = now()
+WHERE id = $2
+RETURNING id, pull_id, repo_id, review_id, author_id, in_reply_to, path, side, line, start_line, original_line, original_start_line, original_commit_sha, commit_sha, diff_hunk, body, outdated, resolved_at, resolved_by, created_at, updated_at
+`
+
+type UpdatePullReviewCommentBodyParams struct {
+	Body string
+	ID   uuid.UUID
+}
+
+func (q *Queries) UpdatePullReviewCommentBody(ctx context.Context, arg UpdatePullReviewCommentBodyParams) (PullReviewComment, error) {
+	row := q.db.QueryRow(ctx, updatePullReviewCommentBody, arg.Body, arg.ID)
+	var i PullReviewComment
+	err := row.Scan(
+		&i.ID,
+		&i.PullID,
+		&i.RepoID,
+		&i.ReviewID,
+		&i.AuthorID,
+		&i.InReplyTo,
+		&i.Path,
+		&i.Side,
+		&i.Line,
+		&i.StartLine,
+		&i.OriginalLine,
+		&i.OriginalStartLine,
+		&i.OriginalCommitSha,
+		&i.CommitSha,
+		&i.DiffHunk,
+		&i.Body,
+		&i.Outdated,
+		&i.ResolvedAt,
+		&i.ResolvedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

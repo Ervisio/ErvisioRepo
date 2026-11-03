@@ -148,6 +148,24 @@ Phase 5, issues:
 - Issue attachments: upload (`POST .../issues/attachments?name=`, raw body, 25 MiB by default, charged to the owner quota), download (`GET .../issues/attachments/{id}/download`, range requests, images inline and everything else as a download with a sandboxed CSP) and deletion; a periodic job removes orphaned objects.
 - Transactional event outbox (`internal/events`): producers emit events in the transaction of the change, a River job delivers them to the registered handlers with retries. Pushes (transports and web edits) publish `push` events through the hook server.
 
+Phase 5, pull requests:
+
+- Pull requests (migration 00150) under `/api/v1/repos/{owner}/{name}/pulls`: an issue of kind `pull` plus head and base refs, from the same repository or a fork (`headRepo`); list with state, base, head (`owner:branch`), author and sort filters; create (draft or ready), edit title, body, base, draft and open/closed state; commits, changed files and diff against the merge base.
+- Test merge on every push to the head or base branch (`git merge-tree`), kept in `refs/pull/<n>/head` and `refs/pull/<n>/merge`, with the mergeable state and the conflicting files; a push to the head records a `head_updated` timeline event and a `synchronize` event.
+- `GET .../mergeability` combines the conflict check with the branch protection requirements (approvals, code owners, required checks, up-to-date base). `POST .../merge` merges with the `merge`, `squash` or `rebase` method, through the managed hooks, optionally checking the expected head and deleting the head branch; unmet requirements answer 405. Auto-merge (`PUT`/`DELETE .../auto-merge`) merges as soon as a push, status or review completes the requirements.
+- Reviews: pending reviews with draft comments, submit as approve, request changes or comment, delete a pending review, dismiss (writers); requested reviewers. Reviews feed the branch protection approvals and code owner checks.
+- Inline review comments on the diff (single or multi-line, left or right side), replies, edit, delete, resolve and unresolve threads; comments are re-anchored on new pushes or marked outdated. Suggestions (```` ```suggestion ```` blocks) can be applied as a commit on the head branch.
+- Forks (`/api/v1/repos/{owner}/{name}/forks`): create a fork with the branches and tags of the parent under the caller or an organization, list the forks of a repository.
+
+Phase 5, webhooks and notifications:
+
+- Outgoing webhooks (migration 00160) per repository (`/api/v1/repos/{owner}/{name}/hooks`, repository admins) and per organization (`/api/v1/orgs/{org}/hooks`, owners and instance admins): GitHub format (`X-GitHub-Event`, `X-GitHub-Delivery`, `X-Hub-Signature-256`, GitHub-shaped payloads) or the native `ervisio` envelope; events from the outbox (push, issues, comments, pull requests, releases) plus `ping`.
+- Deliveries run as River jobs with exponential backoff; the delivery history keeps truncated request and response, with redelivery and ping endpoints. Secrets are sealed with the master key (AES-GCM, like the GitHub sync tokens) and never returned or logged.
+- SSRF guard at dial time: loopback, private, link-local and other non-public addresses are refused unless the hook allows private targets or the address is in the `webhooks` CIDR allowlist; redirects are not followed.
+- Releases publish `release` events (published, edited, deleted) through the outbox.
+- Notifications (`internal/notify`) under `/api/v1/notifications`: one thread per user and subject (issue, pull request, release) with a reason (review requested, assigned, mentioned, author, comment, state change, subscribed), read/done state, unread count, mark-all-read, per-thread subscriptions and per-repository watch levels (`/repos/{owner}/{name}/subscription`: watching, participating, ignoring). Recipients that cannot read the repository are skipped.
+- Email notifications through `internal/mail` (templates `notification` in English and Italian), sent unless the thread was read or superseded meanwhile, with an opt-out in the notification settings.
+
 ### Removed
 
 - Organization role `billing` (existing members become `member`).

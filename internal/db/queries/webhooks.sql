@@ -37,11 +37,11 @@ WHERE w.active AND (w.repo_id = @repo_id
 ORDER BY w.created_at, w.id;
 
 -- name: InsertWebhookDelivery :one
--- Records a delivery; for a bus event the conflict makes it idempotent and
--- no row is returned.
+-- Records a delivery; for a bus event the id is derived from the event, so
+-- a repeated delivery conflicts and no row is returned.
 INSERT INTO webhook_deliveries (id, webhook_id, event_id, guid, event, action, redelivery, payload)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-ON CONFLICT (webhook_id, event_id) WHERE event_id IS NOT NULL DO NOTHING
+ON CONFLICT (id) DO NOTHING
 RETURNING id;
 
 -- name: GetWebhookDelivery :one

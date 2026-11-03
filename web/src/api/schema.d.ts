@@ -2345,6 +2345,534 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repos/{owner}/{name}/pulls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List the pull requests of the repository
+         * @description Newest first by default. The pull requests are issues too: their comments,
+         *     labels, assignees and milestone are served by the issue endpoints.
+         */
+        get: operations["listPulls"];
+        put?: never;
+        /**
+         * Open a pull request
+         * @description Needs read access to both repositories. head names a branch of headRepo
+         *     (owner/name; default this repository), which must be this repository or a
+         *     fork of it. Labels, assignees and the milestone are set with the issue
+         *     endpoints.
+         */
+        post: operations["createPull"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        /** A pull request */
+        get: operations["getPull"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit, close, reopen or retarget a pull request
+         * @description The author can edit the title and body, close and reopen and toggle the
+         *     draft state; changing the base needs the write permission.
+         */
+        patch: operations["updatePull"];
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/commits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The commits of a pull request
+         * @description Newest first, at most 250 per page.
+         */
+        get: operations["listPullCommits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The files changed by a pull request
+         * @description Compared with the merge base of the head and the base branch.
+         */
+        get: operations["listPullFiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The diff of a pull request
+         * @description Compared with the merge base; path limits it to the given files.
+         */
+        get: operations["getPullDiff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/mergeability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Whether a pull request can be merged
+         * @description Combines the conflict check with the branch protection requirements
+         *     (reviews, status checks, code owners).
+         */
+        get: operations["getPullMergeability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Merge a pull request
+         * @description Needs the write permission. 405 when a requirement is not met, 409 when
+         *     the head moved (sha) or the branches conflict.
+         */
+        put: operations["mergePull"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/auto-merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Merge a pull request once its requirements are met
+         * @description Needs the write permission. The pull request is merged as soon as the
+         *     required reviews and status checks pass.
+         */
+        put: operations["enablePullAutoMerge"];
+        post?: never;
+        /** Cancel the auto-merge of a pull request */
+        delete: operations["disablePullAutoMerge"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/requested-reviewers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request reviews
+         * @description Needs the triage permission (the author may request too). Reviewers
+         *     must be able to read the repository.
+         */
+        post: operations["requestPullReviewers"];
+        /** Withdraw review requests */
+        delete: operations["removePullReviewers"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The reviews of a pull request
+         * @description Oldest first; the pending review of the caller is included.
+         */
+        get: operations["listPullReviews"];
+        put?: never;
+        /**
+         * Start or submit a review
+         * @description Without event the review stays pending (visible to its author only) and
+         *     more comments can be added to it; with event it is submitted at once.
+         */
+        post: operations["createPullReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+                reviewId: components["parameters"]["PullReviewId"];
+            };
+            cookie?: never;
+        };
+        /** A review */
+        get: operations["getPullReview"];
+        put?: never;
+        post?: never;
+        /**
+         * Discard a pending review
+         * @description Only pending reviews of the caller can be discarded.
+         */
+        delete: operations["deletePullReview"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+                reviewId: components["parameters"]["PullReviewId"];
+            };
+            cookie?: never;
+        };
+        /** The comments of a review */
+        get: operations["listPullReviewCommentsOfReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+                reviewId: components["parameters"]["PullReviewId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit a pending review */
+        post: operations["submitPullReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+                reviewId: components["parameters"]["PullReviewId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Dismiss a review
+         * @description Needs the write permission.
+         */
+        put: operations["dismissPullReview"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The inline comments of a pull request
+         * @description Submitted comments plus the caller's pending ones, by thread then date.
+         */
+        get: operations["listPullReviewComments"];
+        put?: never;
+        /**
+         * Comment on a line, a range or reply to a thread
+         * @description Without inReplyTo it starts a thread on path at line (and startLine for a
+         *     range) of side; RIGHT lines are in the head, LEFT lines in the merge base.
+         *     The comment joins the caller's pending review when there is one,
+         *     otherwise it is published at once.
+         */
+        post: operations["createPullReviewComment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/comments/{commentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: components["parameters"]["PullCommentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete an inline comment
+         * @description The author or a user with the triage permission. Deleting the first
+         *     comment of a thread deletes its replies too.
+         */
+        delete: operations["deletePullReviewComment"];
+        options?: never;
+        head?: never;
+        /**
+         * Edit an inline comment
+         * @description Only the author can edit it.
+         */
+        patch: operations["updatePullReviewComment"];
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/comments/{commentId}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: components["parameters"]["PullCommentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Resolve a thread
+         * @description commentId is any comment of the thread. The pull request author or a
+         *     user with the triage permission.
+         */
+        put: operations["resolvePullThread"];
+        post?: never;
+        /** Unresolve a thread */
+        delete: operations["unresolvePullThread"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/comments/{commentId}/apply-suggestion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: components["parameters"]["PullCommentId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Commit the suggested change of a comment
+         * @description The suggestion block of the comment replaces its lines in the head
+         *     branch, as a commit by the caller, who needs write access to the head
+         *     repository.
+         */
+        post: operations["applyPullSuggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/forks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The forks of a repository
+         * @description Only the forks the caller can read.
+         */
+        get: operations["listForks"];
+        put?: never;
+        /**
+         * Fork a repository
+         * @description Copies the branches and tags into a new repository of the caller or of
+         *     one of their organizations. A fork of a private repository is private.
+         */
+        post: operations["createFork"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/repos/{owner}/{name}/branch-protections": {
         parameters: {
             query?: never;
@@ -4349,6 +4877,246 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        PullRef: {
+            /** @description owner/name; empty when the head repository is gone */
+            repo: string;
+            /** @description Branch name */
+            ref: string;
+            sha: string;
+        };
+        PullRequest: {
+            issue: components["schemas"]["Issue"];
+            /** @enum {string} */
+            state: "open" | "closed" | "merged";
+            draft: boolean;
+            head: components["schemas"]["PullRef"];
+            base: components["schemas"]["PullRef"];
+            mergeBase: string;
+            /** @enum {string} */
+            mergeable: "unknown" | "clean" | "conflict" | "error";
+            conflictFiles: string[];
+            /** Format: date-time */
+            mergedAt?: string | null;
+            mergedBy: string;
+            /** @description The commit the base branch was moved to */
+            mergeCommit: string;
+            /** @description merge, squash or rebase; empty when not merged */
+            mergeMethod: string;
+            autoMerge?: components["schemas"]["PullAutoMerge"];
+            requestedReviewers: string[];
+        };
+        PullRequestCreate: {
+            title: string;
+            body?: string;
+            /** @description Branch of headRepo */
+            head: string;
+            /** @description owner/name of the head repository; default this repository */
+            headRepo?: string;
+            /** @description Branch of this repository */
+            base: string;
+            draft?: boolean;
+        };
+        PullRequestUpdate: {
+            title?: string;
+            body?: string;
+            /** @enum {string} */
+            state?: "open" | "closed";
+            base?: string;
+            draft?: boolean;
+        };
+        PullCommitPage: {
+            items: components["schemas"]["GitCommit"][];
+            hasMore: boolean;
+        };
+        PullFile: {
+            /** @enum {string} */
+            status: "added" | "modified" | "deleted" | "renamed" | "copied";
+            oldPath: string;
+            newPath: string;
+            additions: number;
+            deletions: number;
+            binary: boolean;
+        };
+        PullCodeOwners: {
+            pattern: string;
+            owners: string[];
+            paths: string[];
+            approved: boolean;
+        };
+        PullMergeability: {
+            /** @enum {string} */
+            state: "open" | "closed" | "merged";
+            /**
+             * @description Whether the branches merge without conflicts
+             * @enum {string}
+             */
+            mergeable: "unknown" | "clean" | "conflict" | "error";
+            /** @description Open */
+            canMerge: boolean;
+            conflictFiles: string[];
+            headSha: string;
+            baseSha: string;
+            mergeBase: string;
+            /** @description Pattern of the protection rule of the base; empty when none */
+            rule: string;
+            requiredApprovals: number;
+            approvals: number;
+            missingChecks: string[];
+            behind: boolean;
+            codeOwners: components["schemas"]["PullCodeOwners"][];
+            codeOwnersFile?: string;
+            codeOwnersErrors: string[];
+            violations: components["schemas"]["ProtectionViolation"][];
+        };
+        PullMergeRequest: {
+            /**
+             * @description Default merge
+             * @enum {string}
+             */
+            method?: "merge" | "squash" | "rebase";
+            /** @description Subject of the merge or squash commit */
+            title?: string;
+            message?: string;
+            /** @description Expected head commit; 409 when the head moved */
+            sha?: string;
+            /** @description Delete the head branch after the merge */
+            deleteBranch?: boolean;
+        };
+        PullMergeResult: {
+            /** @description The new tip of the branch */
+            sha: string;
+        };
+        PullAutoMerge: {
+            /** @enum {string} */
+            method: "merge" | "squash" | "rebase";
+            enabledBy: string;
+            title: string;
+            message: string;
+            deleteBranch: boolean;
+        };
+        PullAutoMergeRequest: {
+            /**
+             * @description Default merge
+             * @enum {string}
+             */
+            method?: "merge" | "squash" | "rebase";
+            title?: string;
+            message?: string;
+            deleteBranch?: boolean;
+        };
+        PullReviewers: {
+            reviewers: string[];
+        };
+        PullReview: {
+            /** Format: uuid */
+            id: string;
+            reviewer: string;
+            /** @enum {string} */
+            state: "pending" | "commented" | "approved" | "changes_requested" | "dismissed";
+            body: string;
+            /** @description Head commit the review was given on */
+            commitSha: string;
+            /** Format: date-time */
+            submittedAt?: string | null;
+            /** Format: date-time */
+            dismissedAt?: string | null;
+            dismissedBy?: string;
+            dismissMessage?: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        PullReviewDraftComment: {
+            path: string;
+            /**
+             * @description Default RIGHT
+             * @enum {string}
+             */
+            side?: "LEFT" | "RIGHT";
+            /** @description Last line of the commented range */
+            line: number;
+            /** @description First line of a multi-line range */
+            startLine?: number;
+            body: string;
+        };
+        PullReviewCreate: {
+            /**
+             * @description Submit at once; empty leaves the review pending
+             * @enum {string}
+             */
+            event?: "approve" | "request_changes" | "comment";
+            body?: string;
+            /** @description Head commit reviewed; default the current head */
+            commitSha?: string;
+            comments?: components["schemas"]["PullReviewDraftComment"][];
+        };
+        PullReviewSubmit: {
+            /** @enum {string} */
+            event: "approve" | "request_changes" | "comment";
+            body?: string;
+        };
+        PullReviewDismiss: {
+            message: string;
+        };
+        PullReviewComment: {
+            /** Format: uuid */
+            id: string;
+            /** @description Empty for a reply published outside a review */
+            reviewId: string;
+            /** @description Part of the caller's pending review */
+            pending?: boolean;
+            /** @description First comment of the thread; empty for the first one */
+            inReplyTo?: string;
+            author: string;
+            path: string;
+            /** @enum {string} */
+            side: "LEFT" | "RIGHT";
+            /** @description Line at the current head; null when outdated */
+            line?: number | null;
+            startLine?: number | null;
+            originalLine: number;
+            originalStartLine?: number | null;
+            originalCommitSha: string;
+            /** @description Head commit line refers to */
+            commitSha: string;
+            /** @description The lines around the comment when it was written */
+            diffHunk: string;
+            body: string;
+            outdated: boolean;
+            resolved: boolean;
+            resolvedBy?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PullReviewCommentCreate: {
+            body: string;
+            /**
+             * Format: uuid
+             * @description Any comment of the thread to reply to
+             */
+            inReplyTo?: string;
+            path?: string;
+            /**
+             * @description Default RIGHT
+             * @enum {string}
+             */
+            side?: "LEFT" | "RIGHT";
+            line?: number;
+            startLine?: number;
+            /** @description Head commit the line refers to; default the current head */
+            commitSha?: string;
+        };
+        PullSuggestionApply: {
+            /** @description Commit message; a default one names the comment */
+            message?: string;
+        };
+        ForkCreate: {
+            /** @description User or organization; default the caller */
+            owner?: string;
+            /** @description Default the name of the parent */
+            name?: string;
+        };
         BranchProtectionInput: {
             /** @description Glob on the branch name */
             pattern: string;
@@ -4658,6 +5426,10 @@ export interface components {
     };
     parameters: {
         ProtectionRuleId: string;
+        /** @description Pull request number */
+        PullNumber: number;
+        PullReviewId: string;
+        PullCommentId: string;
         /** @description User or organization name */
         RepoOwner: string;
         RepoName: string;
@@ -8723,6 +9495,985 @@ export interface operations {
             307: components["responses"]["Moved"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listPulls: {
+        parameters: {
+            query?: {
+                /** @description Default open */
+                state?: "open" | "closed" | "merged" | "all";
+                /** @description Base branch name */
+                base?: string;
+                /** @description Head branch name */
+                head?: string;
+                /** @description Username of the author */
+                author?: string;
+                /** @description Default created */
+                sort?: "created" | "updated";
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullRequest"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createPull: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PullRequestCreate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullRequest"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getPull: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullRequest"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updatePull: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PullRequestUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullRequest"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listPullCommits: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullCommitPage"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listPullFiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullFile"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getPullDiff: {
+        parameters: {
+            query?: {
+                /** @description Literal file paths (repeatable) */
+                path?: string[];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Diff"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getPullMergeability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullMergeability"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    mergePull: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PullMergeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullMergeResult"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            405: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    enablePullAutoMerge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PullAutoMergeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullRequest"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    disablePullAutoMerge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullRequest"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    requestPullReviewers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PullReviewers"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullRequest"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    removePullReviewers: {
+        parameters: {
+            query: {
+                /** @description Comma-separated usernames */
+                reviewers: string;
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullRequest"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listPullReviews: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullReview"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createPullReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PullReviewCreate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullReview"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getPullReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+                reviewId: components["parameters"]["PullReviewId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullReview"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deletePullReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+                reviewId: components["parameters"]["PullReviewId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listPullReviewCommentsOfReview: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+                reviewId: components["parameters"]["PullReviewId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullReviewComment"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    submitPullReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+                reviewId: components["parameters"]["PullReviewId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PullReviewSubmit"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullReview"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    dismissPullReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+                reviewId: components["parameters"]["PullReviewId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PullReviewDismiss"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullReview"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listPullReviewComments: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullReviewComment"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createPullReviewComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PullReviewCommentCreate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullReviewComment"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deletePullReviewComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: components["parameters"]["PullCommentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updatePullReviewComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: components["parameters"]["PullCommentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommentBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullReviewComment"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    resolvePullThread: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: components["parameters"]["PullCommentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullReviewComment"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    unresolvePullThread: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: components["parameters"]["PullCommentId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullReviewComment"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    applyPullSuggestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: components["parameters"]["PullCommentId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PullSuggestionApply"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullMergeResult"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listForks: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createFork: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForkCreate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
             default: components["responses"]["Problem"];
         };
     };

@@ -53,9 +53,12 @@ CREATE TABLE webhook_deliveries (
 );
 
 CREATE INDEX webhook_deliveries_hook ON webhook_deliveries (webhook_id, created_at DESC);
--- At-least-once delivery of the bus: one delivery per hook and event.
-CREATE UNIQUE INDEX webhook_deliveries_event ON webhook_deliveries (webhook_id, event_id)
-    WHERE event_id IS NOT NULL;
+-- At-least-once delivery of the bus: the id of a delivery made for an event
+-- is derived from the event, the hook and the index of the delivery (a push
+-- of several refs makes one delivery per ref), so a repeated handler run
+-- conflicts on the primary key.
+CREATE INDEX webhook_deliveries_event ON webhook_deliveries (event_id) WHERE event_id IS NOT NULL;
+CREATE INDEX webhook_deliveries_created ON webhook_deliveries (created_at);
 
 -- Notification threads: one per user and subject.
 CREATE TABLE notification_threads (

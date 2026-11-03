@@ -193,3 +193,38 @@ WHERE id = @id OR in_reply_to = @id;
 -- name: SetPullThreadResolved :execrows
 UPDATE pull_review_comments SET resolved_at = @resolved_at, resolved_by = @resolved_by, updated_at = now()
 WHERE pull_id = @pull_id AND (id = @root_id OR in_reply_to = @root_id);
+
+-- ---- service additions ----
+
+-- name: ListRepoForks :many
+SELECT repo_id FROM repo_forks WHERE parent_id = @parent_id
+ORDER BY created_at, repo_id
+LIMIT @lim OFFSET @off;
+
+-- name: AutoMergePulls :many
+-- Open pull requests of a repository waiting for auto-merge.
+SELECT p.* FROM pull_requests p JOIN issues i ON i.id = p.issue_id
+WHERE p.repo_id = @repo_id AND p.auto_merge_method <> '' AND i.state = 'open' AND p.merged_at IS NULL
+ORDER BY p.number;
+
+-- name: OpenPullsWithHeadRepo :many
+-- Open pull requests whose head lives in another repository.
+SELECT p.* FROM pull_requests p JOIN issues i ON i.id = p.issue_id
+WHERE p.head_repo_id = @head_repo_id AND p.repo_id <> @head_repo_id AND i.state = 'open' AND p.merged_at IS NULL;
+
+-- name: DeletePendingPullReview :execrows
+DELETE FROM pull_reviews WHERE id = @id AND state = 'pending';
+
+-- name: UpdatePullReviewCommentBody :one
+UPDATE pull_review_comments SET body = @body, updated_at = now()
+WHERE id = @id
+RETURNING *;
+
+-- name: DeletePullReviewComment :execrows
+DELETE FROM pull_review_comments WHERE id = @id OR in_reply_to = @id;
+
+-- name: CountPendingReviewComments :one
+SELECT count(*) FROM pull_review_comments WHERE review_id = @review_id;
+
+-- name: GetPullReviewCommentInRepo :one
+SELECT * FROM pull_review_comments WHERE id = @id AND repo_id = @repo_id;

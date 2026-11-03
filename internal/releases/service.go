@@ -28,6 +28,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
+	"github.com/Ervisio/ErvisioRepo/internal/events"
 	"github.com/Ervisio/ErvisioRepo/internal/git"
 	"github.com/Ervisio/ErvisioRepo/internal/gitstore"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
@@ -101,8 +102,10 @@ type Options struct {
 	Storage Storage
 	// MaxAssetSize bounds one upload; 0 uses DefaultMaxAssetSize.
 	MaxAssetSize int64
-	Log          *slog.Logger
-	Now          func() time.Time
+	// Bus receives release events (published, edited, deleted); nil: none.
+	Bus *events.Bus
+	Log *slog.Logger
+	Now func() time.Time
 }
 
 // Service implements the release flows.
@@ -402,11 +405,18 @@ func (s *Service) Create(ctx context.Context, who auth.Principal, owner, name st
 		if err != nil {
 			return fmt.Errorf("insert release: %w", err)
 		}
-		return audit.Record(ctx, q, s.auditEvent(who, ActionCreated, r, id, c, map[string]any{"tag": in.Tag, "draft": in.Draft}))
+		if err := audit.Record(ctx, q, s.auditEvent(who, ActionCreated, r, id, c, map[string]any{"tag": in.Tag, "draft": in.Draft})); err != nil {
+			return err
+		}
+		if in.Draft {
+			return nil
+		}
+		return s.emit(ctx, q, who, r.ID, row, "published")
 	})
 	if err != nil {
 		return Release{}, err
 	}
+	s.o.Bus.Kick(ctx)
 	return s.single(ctx, r.ID, row)
 }
 
@@ -502,11 +512,22 @@ func (s *Service) Update(ctx context.Context, who auth.Principal, owner, name st
 		if err != nil {
 			return fmt.Errorf("update release: %w", err)
 		}
-		return audit.Record(ctx, q, s.auditEvent(who, ActionUpdated, r, id, c, map[string]any{"tag": next.Tag}))
+		if err := audit.Record(ctx, q, s.auditEvent(who, ActionUpdated, r, id, c, map[string]any{"tag": next.Tag})); err != nil {
+			return err
+		}
+		switch {
+		case row.Draft:
+			return nil
+		case cur.Draft:
+			return s.emit(ctx, q, who, r.ID, row, "published")
+		default:
+			return s.emit(ctx, q, who, r.ID, row, "edited")
+		}
 	})
 	if err != nil {
 		return Release{}, err
 	}
+	s.o.Bus.Kick(ctx)
 	return s.single(ctx, r.ID, row)
 }
 
@@ -538,11 +559,18 @@ func (s *Service) Delete(ctx context.Context, who auth.Principal, owner, name st
 		if err := quota.Release(ctx, q, r.OwnerID, quota.Delta{Bytes: total}); err != nil {
 			return err
 		}
-		return audit.Record(ctx, q, s.auditEvent(who, ActionDeleted, r, id, c, map[string]any{"tag": cur.Tag, "assets": len(assets)}))
+		if err := audit.Record(ctx, q, s.auditEvent(who, ActionDeleted, r, id, c, map[string]any{"tag": cur.Tag, "assets": len(assets)})); err != nil {
+			return err
+		}
+		if cur.Draft {
+			return nil
+		}
+		return s.emit(ctx, q, who, r.ID, cur, "deleted")
 	})
 	if err != nil {
 		return err
 	}
+	s.o.Bus.Kick(ctx)
 	for _, a := range assets {
 		s.dropObject(context.WithoutCancel(ctx), a)
 	}
@@ -884,6 +912,19 @@ func (s *Service) OpenAsset(ctx context.Context, who auth.Principal, owner, name
 }
 
 // ---- helpers ----
+
+// emit records a release event in the transaction q belongs to.
+func (s *Service) emit(ctx context.Context, q *dbgen.Queries, who auth.Principal, repoID uuid.UUID, row dbgen.Release, action string) error {
+	if s.o.Bus == nil {
+		return nil
+	}
+	err := events.Emit(ctx, q, events.Event{Kind: events.KindRelease, Action: action, RepoID: repoID,
+		ActorID: who.UserID, SubjectID: row.ID}, map[string]any{"tag": row.Tag, "name": row.Name, "prerelease": row.Prerelease})
+	if err != nil {
+		return fmt.Errorf("emit release event: %w", err)
+	}
+	return nil
+}
 
 func (s *Service) tx(ctx context.Context, fn func(*dbgen.Queries) error) error {
 	tx, err := s.o.Pool.Begin(ctx)
