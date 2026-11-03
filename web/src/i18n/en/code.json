@@ -1,6 +1,8 @@
 {
   "nav.label": "Repository sections",
   "nav.code": "Code",
+  "nav.issues": "Issues",
+  "nav.pulls": "Pull requests",
   "nav.commits": "Commits",
   "nav.branches": "Branches",
   "nav.tags": "Tags",

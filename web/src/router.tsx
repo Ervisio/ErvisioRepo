@@ -21,7 +21,10 @@ import { SearchPage, type CodeSearchParams } from "./pages/code/SearchPage.tsx";
 import { TreePage } from "./pages/code/TreePage.tsx";
 import { ReleaseFormPage, ReleasePage, ReleasesPage } from "./pages/releases/ReleasesPages.tsx";
 import { MyReposPage } from "./pages/repos/MyReposPage.tsx";
-import { RepoSettings } from "./pages/repos/RepoSettings.tsx";
+import { RepoSettings, type SettingsSection } from "./pages/repos/RepoSettings.tsx";
+import { IssuePage, IssuesPage, NewIssuePage, type IssueSearch } from "./pages/issues/IssuesPages.tsx";
+import { NotificationsPage, type InboxSearch } from "./pages/notifications/NotificationsPage.tsx";
+import { PullPage, PullsPage, type PullSearch, type PullTab } from "./pages/pulls/PullsPages.tsx";
 import { AppShell, ToastProvider } from "./ui/index.ts";
 
 // The default search parser JSON-decodes values, so "1" arrives as a number: accept both forms.
@@ -221,7 +224,87 @@ const releaseEditRoute = createRoute({
     return guard(<ReleaseFormPage owner={p.owner} name={p.name} id={p.id} />);
   },
 });
-const repoSettingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/$owner/$name/settings", component: () => guard(<RepoSettings owner={repoSettingsRoute.useParams().owner} name={repoSettingsRoute.useParams().name} />) });
+const issueStates = ["closed", "all"] as const;
+const issuesRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/issues",
+  validateSearch: (s: Record<string, unknown>): IssueSearch => ({
+    state: issueStates.find((x) => x === s.state),
+    q: str(s.q),
+    labels: str(s.labels),
+    milestone: str(s.milestone),
+    assignee: str(s.assignee),
+    author: str(s.author),
+    mentioned: str(s.mentioned),
+    sort: s.sort === "updated" || s.sort === "comments" ? s.sort : undefined,
+    page: num(s.page),
+  }),
+  component: function Issues() {
+    const p = issuesRoute.useParams();
+    return guard(<IssuesPage owner={p.owner} name={p.name} search={issuesRoute.useSearch()} />);
+  },
+});
+const issueNewRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/issues/new",
+  component: function IssueNew() {
+    const p = issueNewRoute.useParams();
+    return guard(<NewIssuePage owner={p.owner} name={p.name} />);
+  },
+});
+const issueRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/issues/$number",
+  component: function IssueOne() {
+    const p = issueRoute.useParams();
+    return guard(<IssuePage owner={p.owner} name={p.name} number={Number(p.number)} />);
+  },
+});
+const pullStates = ["closed", "merged", "all"] as const;
+const pullsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/pulls",
+  validateSearch: (s: Record<string, unknown>): PullSearch => ({
+    state: pullStates.find((x) => x === s.state),
+    author: str(s.author),
+    base: str(s.base),
+    sort: s.sort === "updated" ? "updated" : undefined,
+    compare: bool(s.compare),
+    page: num(s.page),
+  }),
+  component: function Pulls() {
+    const p = pullsRoute.useParams();
+    return guard(<PullsPage owner={p.owner} name={p.name} search={pullsRoute.useSearch()} />);
+  },
+});
+const pullTabs = ["commits", "files"] as const;
+const pullRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/pulls/$number",
+  validateSearch: (s: Record<string, unknown>): { tab?: PullTab; page?: number } => ({ tab: pullTabs.find((x) => x === s.tab), page: num(s.page) }),
+  component: function PullOne() {
+    const p = pullRoute.useParams();
+    const s = pullRoute.useSearch();
+    return guard(<PullPage owner={p.owner} name={p.name} number={Number(p.number)} tab={s.tab} page={s.page} />);
+  },
+});
+const inboxFilters = ["participating", "all"] as const;
+const notificationsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/notifications",
+  validateSearch: (s: Record<string, unknown>): InboxSearch => ({ filter: inboxFilters.find((x) => x === s.filter), page: num(s.page) }),
+  component: () => guard(<NotificationsPage search={notificationsRoute.useSearch()} />),
+});
+const settingsSections = ["protection", "tags", "hooks", "github"] as const;
+const repoSettingsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/settings",
+  validateSearch: (s: Record<string, unknown>): { section?: SettingsSection } => ({ section: settingsSections.find((x) => x === s.section) }),
+  component: function Settings() {
+    const p = repoSettingsRoute.useParams();
+    return guard(<RepoSettings owner={p.owner} name={p.name} section={repoSettingsRoute.useSearch().section} />);
+  },
+});
 // Component catalog for the design kit (Fase UI).
 const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui", component: Catalog });
 
@@ -230,6 +313,12 @@ export const router = createRouter({
     bareRoute.addChildren([loginRoute, twoFactorRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
     shellRoute.addChildren([homeRoute, storageRoute, auditRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute,
       repoRoute,
+      issuesRoute,
+      issueNewRoute,
+      issueRoute,
+      pullsRoute,
+      pullRoute,
+      notificationsRoute,
       blobRoute,
       commitsRoute,
       commitRoute,

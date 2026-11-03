@@ -16,6 +16,7 @@
   "nav.account": "Account",
   "nav.signIn": "Sign in",
   "nav.repos": "Repositories",
+  "nav.notifications": "Notifications",
   "search.button": "Search",
   "search.open": "Search repositories",
   "search.shortcut": "Search repositories (Ctrl+K)",

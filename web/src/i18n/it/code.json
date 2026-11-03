@@ -1,6 +1,8 @@
 {
   "nav.label": "Sezioni del repository",
   "nav.code": "Codice",
+  "nav.issues": "Issue",
+  "nav.pulls": "Pull request",
   "nav.commits": "Commit",
   "nav.branches": "Branch",
   "nav.tags": "Tag",

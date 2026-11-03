@@ -19,7 +19,9 @@ import {
 import { useT } from "../i18n/useT.ts";
 import { Badge, Button, Card, EmptyState, Input, Page, Select, Table, TableBody, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, Td, Th, Tr } from "../ui/index.ts";
 import { useOwnerRepos } from "../api/repos.ts";
+import { orgHooks } from "../api/settings.ts";
 import { CreateRepoDialog, RepoRows } from "./repos/RepoList.tsx";
+import { Webhooks } from "./settings/Webhooks.tsx";
 import { Async, formatDate, Secret, useNotify } from "./account/common.tsx";
 
 const roles: OrgRole[] = ["owner", "admin", "member"];
@@ -310,12 +312,14 @@ export function OrgPage({ name }: { name: string }) {
           <TabsTrigger value="members">{t("tab.members")}</TabsTrigger>
           <TabsTrigger value="teams">{t("tab.teams")}</TabsTrigger>
           {canManage && <TabsTrigger value="invites">{t("tab.invites")}</TabsTrigger>}
+          {isOwner && <TabsTrigger value="hooks">{t("tab.hooks")}</TabsTrigger>}
           {isOwner && <TabsTrigger value="settings">{t("tab.settings")}</TabsTrigger>}
         </TabsList>
         <TabsContent value="repos"><OrgRepos org={o.name} /></TabsContent>
         <TabsContent value="members"><Members org={o.name} canManage={canManage} /></TabsContent>
         <TabsContent value="teams"><Teams org={o.name} canManage={canManage} /></TabsContent>
         {canManage && <TabsContent value="invites"><Invites org={o.name} canManage={canManage} /></TabsContent>}
+        {isOwner && <TabsContent value="hooks"><Webhooks base={orgHooks(o.name)} scope="org" /></TabsContent>}
         {isOwner && <TabsContent value="settings"><Settings org={o} /></TabsContent>}
       </Tabs>
     </Page>

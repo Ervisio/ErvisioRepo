@@ -9,7 +9,7 @@ import { Badge, Button, EmptyState, Icon, Menu, MenuItem, MenuLabel, MenuSeparat
 import type { Section } from "../../ui/shell/nav.tsx";
 import { useProblemText } from "../auth/useProblemText.ts";
 
-export type RepoTab = "code" | "commits" | "branches" | "tags" | "releases" | "search";
+export type RepoTab = "code" | "issues" | "pulls" | "commits" | "branches" | "tags" | "releases" | "search";
 
 export const shortSha = (sha: string) => sha.slice(0, 7);
 
@@ -36,6 +36,8 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
   const r = repo.data;
   const tabs = [
     { id: "code", to: "/$owner/$name", icon: "code" },
+    { id: "issues", to: "/$owner/$name/issues", icon: "issue" },
+    { id: "pulls", to: "/$owner/$name/pulls", icon: "pr" },
     { id: "commits", to: "/$owner/$name/commits", icon: "commit" },
     { id: "branches", to: "/$owner/$name/branches", icon: "branch" },
     { id: "tags", to: "/$owner/$name/tags", icon: "tag" },

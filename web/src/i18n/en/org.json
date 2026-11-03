@@ -44,6 +44,7 @@
   "invites.cancelButton": "Cancel",
   "invites.cancelled": "Invitation cancelled",
   "tab.settings": "Settings",
+  "tab.hooks": "Webhooks",
   "role.admin": "Admin",
   "permission.none": "None",
   "members.since": "Member since",

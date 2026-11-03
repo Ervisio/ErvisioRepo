@@ -166,6 +166,15 @@ Phase 5, webhooks and notifications:
 - Notifications (`internal/notify`) under `/api/v1/notifications`: one thread per user and subject (issue, pull request, release) with a reason (review requested, assigned, mentioned, author, comment, state change, subscribed), read/done state, unread count, mark-all-read, per-thread subscriptions and per-repository watch levels (`/repos/{owner}/{name}/subscription`: watching, participating, ignoring). Recipients that cannot read the repository are skipped.
 - Email notifications through `internal/mail` (templates `notification` in English and Italian), sent unless the thread was read or superseded meanwhile, with an opt-out in the notification settings.
 
+Phase 5, web UI:
+
+- Issues: list with state, label, milestone and sort filters plus search, detail with the conversation (comments, reactions, timeline events, lock), sidebar for assignees, labels, milestone and repository watch level, and a new issue form with issue templates.
+- Pull requests: list, detail with conversation, reviews (dismiss) and merge box (mergeability checks, merge method, delete branch, auto-merge), commits tab, and files tab on the diff viewer with review comment threads (reply, resolve, edit, delete), pending reviews and "apply suggestion".
+- Notifications inbox (`/notifications`) with unread, participating and all filters, mark read, done, ignore and mark all read, plus an inbox entry in the navigation and email opt-out under the account settings.
+- Repository settings sections for branch protection, tag rules, webhooks (deliveries, details, redeliver, ping) and GitHub (connections, sync link and status with divergence resolution, import); organization webhooks for owners.
+- Three list layouts chosen per user and kept in `localStorage`: dense rows (default), filter column, and split view with a preview pane and `j`/`k` navigation. The filter column layout shows a symmetric six-column strip on the detail pages; the split view adds a previous and next bar (`wk-pnav`). Label chips and avatars pick black or white text with at least 4.5:1 contrast.
+- Strings in the new `work`, `issues`, `pulls`, `notifications`, `protection`, `hooks` and `github` catalogs, in English and Italian; styles in `web/src/styles/work.css`.
+
 Phase 5, GitHub import of issues, pull requests and releases:
 
 - The GitHub import (`POST /api/v1/github/imports`, optional `include` subset of `labels`, `milestones`, `pulls`, `issues`, `releases`; all by default) now also imports labels, milestones, issues with comments, assignees and reactions, pull requests with their reviews and review comments, and releases with their assets (streamed into the release storage class and charged to the owner quota).

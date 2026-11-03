@@ -4,7 +4,14 @@ import { useDeleteRepo, useRepo, useTransferRepo, useUpdateRepo, type Repo, type
 import { useT } from "../../i18n/useT.ts";
 import { Button, Card, Dialog, DialogClose, EmptyState, Input, Page, Select } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
+import { repoHooks } from "../../api/settings.ts";
+import { Webhooks } from "../settings/Webhooks.tsx";
+import { GitHubSettings } from "./GitHubSettings.tsx";
 import { visibilities } from "./RepoList.tsx";
+import { BranchProtections, TagRules } from "./RulesSettings.tsx";
+
+export type SettingsSection = "protection" | "tags" | "hooks" | "github";
+const sections: (SettingsSection | undefined)[] = [undefined, "protection", "tags", "hooks", "github"];
 
 function General({ repo }: { repo: Repo }) {
   const t = useT("repos");
@@ -138,7 +145,28 @@ function Danger({ repo }: { repo: Repo }) {
   );
 }
 
-export function RepoSettings({ owner, name }: { owner: string; name: string }) {
+function SectionNav({ owner, name, section }: { owner: string; name: string; section?: SettingsSection }) {
+  const t = useT("repos");
+  return (
+    <nav className="ui-tablist wk-tabs" aria-label={t("settings.sections")}>
+      {sections.map((s) => (
+        <Link
+          key={s ?? "general"}
+          className="ui-tab"
+          data-state={s === section ? "active" : "inactive"}
+          aria-current={s === section ? "page" : undefined}
+          to="/$owner/$name/settings"
+          params={{ owner, name }}
+          search={{ section: s }}
+        >
+          {t(`settings.section.${s ?? "general"}`)}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+export function RepoSettings({ owner, name, section }: { owner: string; name: string; section?: SettingsSection }) {
   const t = useT("repos");
   const tc = useT("common");
   const repo = useRepo(owner, name);
@@ -165,9 +193,18 @@ export function RepoSettings({ owner, name }: { owner: string; name: string }) {
     <Page section="code" title={t("settings.title")} subtitle={r.fullName} actions={<Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }}><Button>{t("settings.back")}</Button></Link>}>
       {r.permission === "admin" ? (
         <>
-          <General key={r.updatedAt} repo={r} />
-          <Transfer repo={r} />
-          <Danger repo={r} />
+          <SectionNav owner={r.owner} name={r.name} section={section} />
+          {section === undefined && (
+            <>
+              <General key={r.updatedAt} repo={r} />
+              <Transfer repo={r} />
+              <Danger repo={r} />
+            </>
+          )}
+          {section === "protection" && <BranchProtections owner={r.owner} name={r.name} />}
+          {section === "tags" && <TagRules owner={r.owner} name={r.name} />}
+          {section === "hooks" && <Webhooks base={repoHooks(r.owner, r.name)} scope="repo" />}
+          {section === "github" && <GitHubSettings owner={r.owner} name={r.name} />}
         </>
       ) : (
         <EmptyState icon="lock" title={t("settings.forbidden")} />

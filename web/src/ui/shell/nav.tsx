@@ -5,7 +5,7 @@ import type { IconName } from "../Icon.tsx";
 
 export type Section = "code" | "pr" | "issue" | "act" | "pkg";
 
-export type NavItem = { to: "/" | "/repos" | "/admin/storage" | "/admin/audit" | "/_ui" | "/settings" | "/login"; icon: IconName; labelKey: string; section: Section };
+export type NavItem = { to: "/" | "/repos" | "/admin/storage" | "/admin/audit" | "/_ui" | "/settings" | "/login" | "/notifications"; icon: IconName; labelKey: string; section: Section };
 
 // Placeholder navigation until the repo pages exist: the hue mapping is already the final one.
 const base: readonly NavItem[] = [
@@ -17,6 +17,7 @@ const adminItems: readonly NavItem[] = [
   { to: "/admin/storage", icon: "pkg", labelKey: "nav.storage", section: "act" },
   { to: "/admin/audit", icon: "clock", labelKey: "nav.audit", section: "act" },
 ];
+const inboxItem: NavItem = { to: "/notifications", icon: "bell", labelKey: "nav.notifications", section: "issue" };
 const accountItem: NavItem = { to: "/settings", icon: "gear", labelKey: "nav.account", section: "issue" };
 const signInItem: NavItem = { to: "/login", icon: "lock", labelKey: "nav.signIn", section: "issue" };
 
@@ -25,7 +26,7 @@ export function useNavItems(): readonly NavItem[] {
   const session = useSession();
   const user = session.data;
   if (!user) return [...base, signInItem];
-  return [base[0]!, reposItem, ...(user.role === "admin" ? adminItems : []), base[1]!, accountItem];
+  return [base[0]!, reposItem, ...(user.role === "admin" ? adminItems : []), inboxItem, base[1]!, accountItem];
 }
 
 export function NavLink({ item, label, className, iconOnly, children }: {
