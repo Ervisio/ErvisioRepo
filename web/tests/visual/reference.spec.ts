@@ -9,6 +9,17 @@ const meta = {
   registration: "invite",
 };
 
+const admin = {
+  id: "00000000-0000-4000-8000-0000000000a1",
+  username: "marta",
+  displayName: "Marta Rossi",
+  role: "admin",
+  locale: "en",
+  email: "marta@example.org",
+  emailVerified: true,
+  createdAt: "2026-01-10T09:00:00Z",
+};
+
 const caps = { range: true, presign: false, multipart: false, atomicRename: true, conditionalPut: true, maxConns: 0 };
 const storage = {
   targets: [
@@ -37,6 +48,7 @@ const check = {
 
 async function open(page: Page, path: string, layout: string) {
   await page.addInitScript((l) => localStorage.setItem("ervisio.layout", l), layout);
+  await page.route("**/api/v1/user", (route) => route.fulfill({ json: admin }));
   await page.route("**/api/v1/meta", (route) => route.fulfill({ json: meta }));
   await page.route("**/api/v1/admin/storage", (route) => route.fulfill({ json: storage }));
   await page.route("**/api/v1/admin/storage/*/test", (route) => route.fulfill({ json: check }));

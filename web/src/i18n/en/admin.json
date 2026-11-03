@@ -49,5 +49,19 @@
   "storage.step.get": "read",
   "storage.step.range": "range read",
   "storage.step.list": "list",
-  "storage.step.delete": "delete"
+  "storage.step.delete": "delete",
+  "audit.title": "Audit log",
+  "audit.subtitle": "Security and administration events",
+  "audit.error": "Could not load the audit log",
+  "audit.empty": "No events match",
+  "audit.time": "Time",
+  "audit.action": "Action",
+  "audit.actor": "Actor",
+  "audit.target": "Target",
+  "audit.ip": "IP address",
+  "audit.filter.action": "Action prefix",
+  "audit.filter.actor": "Actor",
+  "audit.filter.apply": "Filter",
+  "audit.newer": "Newer",
+  "audit.older": "Older"
 }

@@ -11,5 +11,8 @@
   "layout.label": "Layout",
   "layout.console": "Console",
   "layout.foglio": "Sheet",
-  "layout.corsie": "Lanes"
+  "layout.corsie": "Lanes",
+  "nav.audit": "Audit",
+  "nav.account": "Account",
+  "nav.signIn": "Sign in"
 }

@@ -2,11 +2,12 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useT } from "../../i18n/useT.ts";
 import { Icon } from "../Icon.tsx";
-import { navItems, NavLink } from "./nav.tsx";
+import { NavLink, useNavItems } from "./nav.tsx";
 
 /** Direction B: centered sheet, top bar with pill tabs, no side column. */
 export function FoglioShell({ children }: { children: ReactNode }) {
   const t = useT("shell");
+  const navItems = useNavItems();
   return (
     <div className="fs">
       <header className="fs-bar">

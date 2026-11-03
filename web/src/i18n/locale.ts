@@ -18,3 +18,8 @@ export function format(message: string, params?: Record<string, string | number>
   if (!params) return message;
   return message.replace(/\{(\w+)\}/g, (whole, name: string) => String(params[name] ?? whole));
 }
+
+/** The locale of this browser, as picked by useT. */
+export function currentLocale(): Locale {
+  return resolveLocale(navigator.languages?.length ? navigator.languages : [navigator.language]);
+}

@@ -49,5 +49,19 @@
   "storage.step.get": "lettura",
   "storage.step.range": "lettura parziale",
   "storage.step.list": "elenco",
-  "storage.step.delete": "cancellazione"
+  "storage.step.delete": "cancellazione",
+  "audit.title": "Registro di audit",
+  "audit.subtitle": "Eventi di sicurezza e amministrazione",
+  "audit.error": "Impossibile caricare il registro di audit",
+  "audit.empty": "Nessun evento corrispondente",
+  "audit.time": "Ora",
+  "audit.action": "Azione",
+  "audit.actor": "Autore",
+  "audit.target": "Destinazione",
+  "audit.ip": "Indirizzo IP",
+  "audit.filter.action": "Prefisso azione",
+  "audit.filter.actor": "Autore",
+  "audit.filter.apply": "Filtra",
+  "audit.newer": "Più recenti",
+  "audit.older": "Meno recenti"
 }

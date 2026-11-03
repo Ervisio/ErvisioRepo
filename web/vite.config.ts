@@ -25,6 +25,6 @@ export default defineConfig({
   build: { outDir: "dist", emptyOutDir: true },
   server: {
     port: 5173,
-    proxy: { "/api": backend, "/healthz": backend, "/readyz": backend },
+    proxy: { "/api": backend, "/auth/oidc": backend, "/healthz": backend, "/readyz": backend },
   },
 });

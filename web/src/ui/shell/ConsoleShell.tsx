@@ -4,11 +4,12 @@ import { Button } from "../Button.tsx";
 import { Icon } from "../Icon.tsx";
 import { Menu, MenuItem } from "../Menu.tsx";
 import { Link } from "@tanstack/react-router";
-import { navItems, NavLink } from "./nav.tsx";
+import { NavLink, useNavItems } from "./nav.tsx";
 
 /** Direction A: 72 px rail, 248 px column, content on a --surface panel. Below 900 px: top bar + chips. */
 export function ConsoleShell({ children }: { children: ReactNode }) {
   const t = useT("shell");
+  const navItems = useNavItems();
   const items = navItems.map((item) => ({ item, label: t(item.labelKey) }));
   return (
     <div className="cs">
