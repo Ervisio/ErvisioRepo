@@ -41,7 +41,15 @@ Test a target end to end (write, stat, read, range read, list, delete):
 ervisio-repo storage test <target> --config /etc/ervisio-repo/config.toml
 ```
 
-The same test, with the status of policies and caches, is on the admin page `/admin/storage`. Until authentication lands (phase 2), the admin API answers only to direct loopback requests.
+The same test, with the status of policies and caches, is on the admin page `/admin/storage`. It needs an instance admin account.
+
+## Accounts and organizations
+
+- The first registered account becomes instance admin. `[security] registration` is `open`, `invite` (admin invites only) or `closed`; mail goes through the `[mail]` section (Mailpit in development).
+- Two-factor authentication: TOTP, passkeys and recovery codes under *Settings, Security*. `[auth] require_2fa = "off" | "admins" | "all"`; an organization owner can also require it for its members.
+- OIDC sign-in: one `[[auth.oidc]]` block per provider (`name`, `display_name`, `issuer`, `client_id`, `client_secret_file`); the callback URL to register with the provider is `<public_url>/auth/oidc/<name>/callback`. Accounts are linked only from a signed-in session.
+- Personal access tokens (`erp_…`, always with an expiry) are sent as `Authorization: Bearer`.
+- Organization invitations are mailed as a `/org-invite?token=` link.
 
 ## Layout
 

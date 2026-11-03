@@ -41,7 +41,16 @@ Per provare una destinazione da capo a fondo (scrittura, stat, lettura, lettura 
 ervisio-repo storage test <destinazione> --config /etc/ervisio-repo/config.toml
 ```
 
-Lo stesso test, con lo stato di policy e cache, è nella pagina di amministrazione `/admin/storage`. Finché non arriva l'autenticazione (fase 2), l'API di amministrazione risponde solo a richieste dirette da loopback.
+Lo stesso test, con lo stato di policy e cache, è nella pagina di amministrazione `/admin/storage`. Serve un account amministratore dell'istanza.
+
+
+## Account e organizzazioni
+
+- Il primo account registrato diventa amministratore dell'istanza. `[security] registration` vale `open`, `invite` (solo inviti dell'amministratore) o `closed`; la posta passa dalla sezione `[mail]` (Mailpit in sviluppo).
+- Autenticazione a due fattori: TOTP, passkey e codici di recupero in *Impostazioni, Sicurezza*. `[auth] require_2fa = "off" | "admins" | "all"`; anche il proprietario di un'organizzazione può richiederla ai membri.
+- Accesso OIDC: un blocco `[[auth.oidc]]` per provider (`name`, `display_name`, `issuer`, `client_id`, `client_secret_file`); l'URL di callback da registrare presso il provider è `<public_url>/auth/oidc/<name>/callback`. Gli account si collegano solo da una sessione già autenticata.
+- I token di accesso personali (`erp_…`, sempre con scadenza) si inviano come `Authorization: Bearer`.
+- Gli inviti a un'organizzazione arrivano per email come link `/org-invite?token=`.
 
 ## Struttura
 
