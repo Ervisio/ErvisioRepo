@@ -1,0 +1,15 @@
+{
+  "title": "Istanza",
+  "status": "Stato",
+  "status.online": "Online",
+  "name": "Nome",
+  "version": "Versione",
+  "commit": "Commit",
+  "instanceId": "ID istanza",
+  "publicUrl": "URL pubblico",
+  "registration": "Registrazione",
+  "registration.open": "Aperta",
+  "registration.invite": "Solo su invito",
+  "registration.closed": "Chiusa",
+  "error": "Impossibile raggiungere il server: {message}"
+}

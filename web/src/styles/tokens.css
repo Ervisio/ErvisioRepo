@@ -1,0 +1,22 @@
+/* Provisional tokens until the UI phase ("provvisorie fino alla Fase UI"):
+   dark OLED theme, radii 12/18/20, one hue variable per section. */
+:root {
+  color-scheme: dark;
+
+  --bg: #000;
+  --surface: #0d0d0f;
+  --border: #26262b;
+  --text: #f2f2f5;
+  --text-muted: #9a9aa5;
+
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 20px;
+
+  /* Section hue (0-360); each section overrides it. */
+  --hue: 265;
+  --accent: hsl(var(--hue) 85% 66%);
+
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}

@@ -1,0 +1,15 @@
+{
+  "title": "Instance",
+  "status": "Status",
+  "status.online": "Online",
+  "name": "Name",
+  "version": "Version",
+  "commit": "Commit",
+  "instanceId": "Instance ID",
+  "publicUrl": "Public URL",
+  "registration": "Registration",
+  "registration.open": "Open",
+  "registration.invite": "Invite only",
+  "registration.closed": "Closed",
+  "error": "Cannot reach the server: {message}"
+}
