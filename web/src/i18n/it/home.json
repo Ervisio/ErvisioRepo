@@ -11,5 +11,6 @@
   "registration.open": "Aperta",
   "registration.invite": "Solo su invito",
   "registration.closed": "Chiusa",
-  "error": "Impossibile raggiungere il server: {message}"
+  "error": "Impossibile raggiungere il server: {message}",
+  "error.title": "Server non raggiungibile"
 }

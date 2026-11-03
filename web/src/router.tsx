@@ -1,21 +1,24 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
-import { useT } from "./i18n/useT.ts";
+import { AdminStorage } from "./pages/AdminStorage.tsx";
+import { Catalog } from "./pages/Catalog.tsx";
 import { Home } from "./pages/Home.tsx";
+import { AppShell } from "./ui/index.ts";
 
 function Layout() {
-  const t = useT("common");
   return (
-    <main className="shell">
-      <h1>{t("app.name")}</h1>
+    <AppShell>
       <Outlet />
-    </main>
+    </AppShell>
   );
 }
 
 const rootRoute = createRootRoute({ component: Layout });
 const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: Home });
+const storageRoute = createRoute({ getParentRoute: () => rootRoute, path: "/admin/storage", component: AdminStorage });
+// Component catalog for the design kit (Fase UI).
+const catalogRoute = createRoute({ getParentRoute: () => rootRoute, path: "/_ui", component: Catalog });
 
-export const router = createRouter({ routeTree: rootRoute.addChildren([homeRoute]) });
+export const router = createRouter({ routeTree: rootRoute.addChildren([homeRoute, storageRoute, catalogRoute]) });
 
 declare module "@tanstack/react-router" {
   interface Register {

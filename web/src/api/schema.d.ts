@@ -21,10 +21,138 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Storage targets, policies, cache usage and permanent warnings
+         * @description Admin only. Until admin authentication exists it is served only to direct loopback connections.
+         */
+        get: operations["getAdminStorage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/storage/{target}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run a write/read/list/delete round trip on a storage target
+         * @description Admin only. Writes a random probe object under erepo-storage-test/ and always deletes it.
+         */
+        post: operations["testAdminStorageTarget"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        StorageStatus: {
+            targets: components["schemas"]["StorageTarget"][];
+            policies: components["schemas"]["StoragePolicy"][];
+            caches: components["schemas"]["StorageCache"][];
+            /** @description Permanent configuration warnings, such as storage_local_only */
+            warnings: components["schemas"]["StorageWarning"][];
+        };
+        StorageTarget: {
+            name: string;
+            /** @enum {string} */
+            kind: "local" | "s3" | "sftp" | "webdav";
+            encrypted: boolean;
+            /** @description Uses of this target, as primary:<policy>, replica:<policy> or cache:<policy> */
+            roles: string[];
+            caps: components["schemas"]["StorageCaps"];
+        };
+        StorageCaps: {
+            range: boolean;
+            presign: boolean;
+            multipart: boolean;
+            atomicRename: boolean;
+            conditionalPut: boolean;
+            /** @description Connection limit, 0 means unlimited */
+            maxConns: number;
+        };
+        StoragePolicy: {
+            /** @description Data type, such as git, lfs or registry */
+            name: string;
+            primary: string;
+            replicas: string[];
+            cache?: string;
+            /** Format: int64 */
+            cacheTtlSeconds: number;
+            /** Format: double */
+            cacheShare: number;
+            durability: string;
+            /** Format: int64 */
+            objects: number;
+            /** Format: int64 */
+            bytes: number;
+            /** Format: int64 */
+            pendingReplicas: number;
+            /**
+             * Format: int64
+             * @description Objects whose last replication or verification failed
+             */
+            errors: number;
+        };
+        StorageCache: {
+            target: string;
+            /**
+             * Format: int64
+             * @description Budget in bytes, 0 means unlimited
+             */
+            budget: number;
+            /** Format: int64 */
+            used: number;
+            entries: number;
+            /** Format: double */
+            highWatermark: number;
+            /** Format: double */
+            lowWatermark: number;
+            /** @description Bytes used per data type */
+            usedBy: {
+                [key: string]: number;
+            };
+        };
+        StorageWarning: {
+            /** @enum {string} */
+            code: "storage_not_configured" | "storage_local_only" | "storage_policy_local";
+            policy?: string;
+            message: string;
+        };
+        StorageCheckResult: {
+            target: string;
+            ok: boolean;
+            /** Format: int64 */
+            durationMs: number;
+            steps: components["schemas"]["StorageCheckStep"][];
+        };
+        StorageCheckStep: {
+            /** @enum {string} */
+            name: "put" | "stat" | "get" | "range" | "list" | "delete";
+            ok: boolean;
+            /** Format: int64 */
+            durationMs: number;
+            error?: string;
+        };
         Meta: {
             /** @example ErvisioRepo */
             name: string;
@@ -87,6 +215,51 @@ export interface operations {
                     "application/json": components["schemas"]["Meta"];
                 };
             };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getAdminStorage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Storage status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageStatus"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    testAdminStorageTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                target: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Test outcome; ok is false when a step failed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageCheckResult"];
+                };
+            };
+            404: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

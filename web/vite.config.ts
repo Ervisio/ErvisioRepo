@@ -18,6 +18,10 @@ const backend = "http://127.0.0.1:3400";
 
 export default defineConfig({
   plugins: [react(), keepFile()],
+  // The Go server replaces this placeholder with a fresh nonce per response and allows it in the
+  // CSP style-src, so that the <style> tags injected at runtime by Radix (scroll lock, select
+  // viewport) are applied without 'unsafe-inline'. See internal/httpapi/spa.go.
+  html: { cspNonce: "__EREPO_CSP_NONCE__" },
   build: { outDir: "dist", emptyOutDir: true },
   server: {
     port: 5173,

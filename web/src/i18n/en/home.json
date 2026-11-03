@@ -11,5 +11,6 @@
   "registration.open": "Open",
   "registration.invite": "Invite only",
   "registration.closed": "Closed",
-  "error": "Cannot reach the server: {message}"
+  "error": "Cannot reach the server: {message}",
+  "error.title": "Server unavailable"
 }

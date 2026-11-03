@@ -5,6 +5,12 @@ import { createRoot } from "react-dom/client";
 import { router } from "./router.tsx";
 import "./styles/tokens.css";
 import "./styles/app.css";
+import "./ui/ui.css";
+import { initCspNonce } from "./ui/nonce.ts";
+import { initLayout } from "./ui/shell/layout.ts";
+
+initCspNonce();
+initLayout();
 
 const queryClient = new QueryClient();
 

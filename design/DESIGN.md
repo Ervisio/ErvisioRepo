@@ -94,3 +94,18 @@ Gli stati usano i colori di stato e mai la hue: verde passato o aggiunto, rosso 
 - Accessibilità: le icone della rail hanno `aria-label` e la voce attiva ha `aria-current`. I target sono di almeno 44 px su desktop e 38 px nei chip mobile.
 
 Riferimento visivo: `design/mock/direzione-a.html` e lo screenshot approvato in `design/.variant-studio/rounds/001-direzione-visiva/_shots/`. B e C restano in `direzione-b.html` e `direzione-c.html` come specifica dei layout alternativi.
+
+## Decisioni dell'utente (2026-11-03)
+
+- **Token ricostruiti accettati.** `design/tokens.css` (copiato in `web/src/styles/tokens.css`) resta valido; si sostituisce con il `tokens.css` del core quando arriva. I nomi sono stabili.
+- **Mappatura hue confermata.** Codice blu, Pull request viola, Issue rosa, Actions turchese, Pacchetti arancio (tabella Sezioni e hue).
+- **Layout.** Il default lo sceglie l'admin a livello di istanza; ogni utente può sovrascriverlo nelle impostazioni. Per ora la scelta sta in `localStorage` (`ervisio.layout`, vedi `web/src/ui/shell/layout.ts`, con TODO per le due impostazioni).
+- **Screenshot di riferimento.** A Console a 1280x800 e 390x844; B Foglio e C Corsie solo a 1280x800. Stanno in `web/tests/visual/__screenshots__/` e si rigenerano con `npm run test:visual -- --update-snapshots`. I file dipendono dal sistema operativo (suffisso `-darwin`, `-linux`): i riferimenti per la CI vanno generati su Linux.
+
+## Implementazione (web/src/ui)
+
+- Kit sopra primitive Radix: Button, Input, Select, Dialog, Menu, Tabs, Table, Badge, Toast, EmptyState, più Card e Icon. Lo stile è nostro, solo da token (`web/src/ui/ui.css`).
+- Shell: `ConsoleShell`, `FoglioShell`, `CorsieShell` in `web/src/ui/shell`, scelte da `AppShell` leggendo `data-layout` su `<html>`. Ogni pagina usa `Page` (titolo, azioni, contenuto, lato) e la shell attiva più il CSS `data-layout` le dispongono.
+- Catalogo dei componenti alla route `/_ui`.
+- Font: il kit usa lo stack `--font` / `--mono` dei token. Figtree e JetBrains Mono non sono ancora self-hosted (richiederebbe una dipendenza o un asset): senza di loro si ricade su `system-ui`.
+
