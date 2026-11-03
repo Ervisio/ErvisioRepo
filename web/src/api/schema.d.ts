@@ -1459,6 +1459,409 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repos/{owner}/{name}/releases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Releases of the repository, newest first
+         * @description Drafts are only listed for callers who can manage releases.
+         */
+        get: operations["listReleases"];
+        put?: never;
+        /**
+         * Create a release
+         * @description Unless the release is a draft, a missing tag is created at the target
+         *     (default branch by default). Assets are uploaded with
+         *     `POST /api/v1/repos/{owner}/{name}/releases/{releaseId}/assets?name=`
+         *     (raw body, `Content-Length` required) and downloaded from
+         *     `GET /api/v1/repos/{owner}/{name}/releases/{releaseId}/assets/{assetId}/download`.
+         */
+        post: operations["createRelease"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/releases/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** The newest published release that is not a prerelease */
+        get: operations["getLatestRelease"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/releases/{releaseId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                releaseId: string;
+            };
+            cookie?: never;
+        };
+        /** A release */
+        get: operations["getRelease"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a release and its assets
+         * @description The git tag is kept.
+         */
+        delete: operations["deleteRelease"];
+        options?: never;
+        head?: never;
+        /**
+         * Change a release
+         * @description Publishing a draft (draft false) creates the tag when missing. The tag
+         *     can only be changed while the release is a draft.
+         */
+        patch: operations["updateRelease"];
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/releases/{releaseId}/assets/{assetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                releaseId: string;
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an asset and its stored bytes */
+        delete: operations["deleteReleaseAsset"];
+        options?: never;
+        head?: never;
+        /** Rename an asset or change its label */
+        patch: operations["updateReleaseAsset"];
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/refs/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Resolve a branch, tag or commit id to a commit */
+        get: operations["resolveRef"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * A directory of a ref
+         * @description Directories first. With lastCommits the newest commit of each entry
+         *     is filled within a time budget; entries left without lastCommit ran
+         *     out of it. The raw content of a file is served by
+         *     `GET /api/v1/repos/{owner}/{name}/raw?ref=&path=` and an archive by
+         *     `GET /api/v1/repos/{owner}/{name}/archive?ref=&format=zip|tar.gz`.
+         */
+        get: operations["getTree"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/blob": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * A file of a ref
+         * @description Text files within the size limit carry their content; others only the metadata.
+         */
+        get: operations["getBlob"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/readme": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** The README of a directory */
+        get: operations["getReadme"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/blame": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Line authorship of a text file */
+        get: operations["getBlame"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/commits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** History of a ref, newest first */
+        get: operations["listCommits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/commits/{sha}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Commit id (full or abbreviated), branch or tag */
+                sha: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * A commit with its diff against the first parent
+         * @description Huge diffs are truncated (truncated flags on the diff and on the files).
+         */
+        get: operations["getCommit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/branches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Branches, most recently committed first */
+        get: operations["listBranches"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Tags of commits, newest first */
+        get: operations["listTags"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Compare two refs from their merge base */
+        get: operations["compareRefs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/search/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Search the text files of a ref (git grep)
+         * @description Stops at the result limit or after a timeout; truncated tells whether it did.
+         */
+        get: operations["searchCode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/contents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create, update or delete a file with a commit
+         * @description Needs push permission. The commit goes on branch (default branch by
+         *     default) or on a new branch started from it; the author is the
+         *     caller. A stale sha or a concurrent change answers 409.
+         */
+        post: operations["editContents"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/repos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search the visible repositories by name
+         * @description Exact matches first, then prefixes, then substrings.
+         */
+        get: operations["searchRepos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2044,6 +2447,270 @@ export interface components {
              */
             next?: string;
         };
+        ReleaseAsset: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            label: string;
+            contentType: string;
+            /** Format: int64 */
+            size: number;
+            /** @description Hex digest */
+            sha256: string;
+            /** Format: int64 */
+            downloadCount: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ReleaseAssetUpdate: {
+            name?: string;
+            label?: string;
+        };
+        Release: {
+            /** Format: uuid */
+            id: string;
+            tag: string;
+            name: string;
+            /** @description Markdown release notes */
+            body: string;
+            draft: boolean;
+            prerelease: boolean;
+            /** @description True for the release returned by getLatestRelease */
+            latest: boolean;
+            /** @description Branch or commit the tag was or will be created from; empty means the default branch */
+            target: string;
+            /** @description Commit of the tag once published; empty for drafts */
+            commit: string;
+            /** @description Username of the author; empty when unknown */
+            author: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            publishedAt?: string | null;
+            assets: components["schemas"]["ReleaseAsset"][];
+        };
+        ReleaseCreate: {
+            tag: string;
+            name?: string;
+            body?: string;
+            draft?: boolean;
+            prerelease?: boolean;
+            target?: string;
+        };
+        ReleaseUpdate: {
+            tag?: string;
+            name?: string;
+            body?: string;
+            draft?: boolean;
+            prerelease?: boolean;
+            target?: string;
+        };
+        ResolvedRef: {
+            /** @description The ref as requested (the default branch when empty) */
+            ref: string;
+            /** @enum {string} */
+            kind: "branch" | "tag" | "commit";
+            /** @description Full ref name; empty for a commit id */
+            name: string;
+            /** @description Full commit id */
+            commit: string;
+        };
+        GitPerson: {
+            name: string;
+            email: string;
+            /** Format: date-time */
+            date: string;
+        };
+        GitCommit: {
+            sha: string;
+            parents: string[];
+            author: components["schemas"]["GitPerson"];
+            committer: components["schemas"]["GitPerson"];
+            summary: string;
+            message: string;
+        };
+        GitCommitSummary: {
+            sha: string;
+            summary: string;
+            /** @description Author name */
+            author: string;
+            /** Format: date-time */
+            date: string;
+        };
+        TreeEntry: {
+            name: string;
+            path: string;
+            /** @enum {string} */
+            type: "blob" | "tree" | "symlink" | "submodule";
+            mode: string;
+            oid: string;
+            /**
+             * Format: int64
+             * @description Bytes; -1 for trees and submodules
+             */
+            size: number;
+            lastCommit?: components["schemas"]["GitCommitSummary"];
+        };
+        Tree: {
+            ref: components["schemas"]["ResolvedRef"];
+            path: string;
+            entries: components["schemas"]["TreeEntry"][];
+            /** @description The directory has more entries than listed */
+            truncated: boolean;
+            /** @description Path of the README of the directory */
+            readme?: string;
+        };
+        LfsPointer: {
+            /** @description SHA-256 of the content */
+            oid: string;
+            /** Format: int64 */
+            size: number;
+        };
+        BlobFile: {
+            ref: components["schemas"]["ResolvedRef"];
+            path: string;
+            oid: string;
+            mode: string;
+            /** Format: int64 */
+            size: number;
+            binary: boolean;
+            lfs?: components["schemas"]["LfsPointer"];
+            /** @description UTF-8 text; absent for binary or too large files */
+            content?: string;
+            /** @description The file is too large to be shown inline */
+            truncated: boolean;
+            /** @description Type served by the raw endpoint */
+            contentType: string;
+        };
+        BlameRange: {
+            commit: components["schemas"]["GitCommitSummary"];
+            /** @description 1-based */
+            startLine: number;
+            lines: number;
+        };
+        Blame: {
+            ref: components["schemas"]["ResolvedRef"];
+            path: string;
+            lines: string[];
+            ranges: components["schemas"]["BlameRange"][];
+        };
+        CommitPage: {
+            ref: components["schemas"]["ResolvedRef"];
+            commits: components["schemas"]["GitCommit"][];
+            hasMore: boolean;
+        };
+        DiffLine: {
+            /** @enum {string} */
+            type: "context" | "add" | "delete" | "no-newline";
+            /** @description 0 when the line is not on the old side */
+            oldLine: number;
+            /** @description 0 when the line is not on the new side */
+            newLine: number;
+            text: string;
+        };
+        DiffHunk: {
+            header: string;
+            oldStart: number;
+            oldLines: number;
+            newStart: number;
+            newLines: number;
+            lines: components["schemas"]["DiffLine"][];
+        };
+        FileDiff: {
+            /** @enum {string} */
+            status: "added" | "modified" | "deleted" | "renamed" | "copied";
+            oldPath: string;
+            newPath: string;
+            oldMode: string;
+            newMode: string;
+            oldOid: string;
+            newOid: string;
+            similarity: number;
+            binary: boolean;
+            additions: number;
+            deletions: number;
+            hunks: components["schemas"]["DiffHunk"][];
+            truncated: boolean;
+        };
+        Diff: {
+            files: components["schemas"]["FileDiff"][];
+            additions: number;
+            deletions: number;
+            /** @description Lines or files were dropped */
+            truncated: boolean;
+        };
+        CommitDetail: {
+            commit: components["schemas"]["GitCommit"];
+            diff: components["schemas"]["Diff"];
+        };
+        Branch: {
+            name: string;
+            commit: components["schemas"]["GitCommitSummary"];
+            default: boolean;
+            /** @description Commits not in the default branch */
+            ahead?: number;
+            /** @description Commits of the default branch missing here */
+            behind?: number;
+        };
+        BranchPage: {
+            items: components["schemas"]["Branch"][];
+            hasMore: boolean;
+        };
+        GitTag: {
+            name: string;
+            commit: components["schemas"]["GitCommitSummary"];
+            annotated: boolean;
+            /** @description Subject of an annotated tag */
+            message: string;
+            tagger?: components["schemas"]["GitPerson"];
+        };
+        TagPage: {
+            items: components["schemas"]["GitTag"][];
+            hasMore: boolean;
+        };
+        Comparison: {
+            base: components["schemas"]["ResolvedRef"];
+            head: components["schemas"]["ResolvedRef"];
+            mergeBase: string;
+            ahead: number;
+            behind: number;
+            commits: components["schemas"]["GitCommit"][];
+            commitsTruncated: boolean;
+            diff: components["schemas"]["Diff"];
+        };
+        CodeMatch: {
+            path: string;
+            line: number;
+            text: string;
+        };
+        CodeSearchResult: {
+            ref: components["schemas"]["ResolvedRef"];
+            matches: components["schemas"]["CodeMatch"][];
+            truncated: boolean;
+        };
+        FileEdit: {
+            /** @enum {string} */
+            op: "create" | "update" | "delete";
+            path: string;
+            /** @description New content (create */
+            content?: string;
+            /**
+             * @default utf-8
+             * @enum {string}
+             */
+            encoding: "utf-8" | "base64";
+            /** @description Branch to start from; default branch when empty */
+            branch?: string;
+            /** @description Commit on this new branch instead */
+            newBranch?: string;
+            /** @description Blob id the edit started from (update */
+            sha?: string;
+            message?: string;
+        };
+        FileEditResult: {
+            branch: string;
+            commit: components["schemas"]["GitCommit"];
+        };
         Problem: {
             /** @example about:blank */
             type: string;
@@ -2086,6 +2753,19 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
+        /**
+         * @description The repository is being restored from the remote store or is busy;
+         *     retry after the given number of seconds (absent when degraded).
+         */
+        Unavailable: {
+            headers: {
+                "Retry-After"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
     };
     parameters: {
         /** @description User or organization name */
@@ -2102,6 +2782,12 @@ export interface components {
         AuditLimit: number;
         /** @description Exact action, or a prefix ending with "." (e.g. org.) */
         AuditAction: string;
+        /** @description Branch, tag or commit id; empty means the default branch */
+        CodeRef: string;
+        /** @description Directory path; empty means the root */
+        CodePath: string;
+        /** @description File path */
+        CodeFilePath: string;
     };
     requestBodies: never;
     headers: never;
@@ -4469,6 +5155,682 @@ export interface operations {
             307: components["responses"]["Moved"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listReleases: {
+        parameters: {
+            query?: {
+                /** @description Only the release of this exact tag */
+                tag?: string;
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Releases */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseCreate"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getLatestRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The release */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                releaseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The release */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                releaseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                releaseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseUpdate"];
+            };
+        };
+        responses: {
+            /** @description The updated release */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Release"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteReleaseAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                releaseId: string;
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateReleaseAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                releaseId: string;
+                assetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseAssetUpdate"];
+            };
+        };
+        responses: {
+            /** @description The updated asset */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReleaseAsset"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    resolveRef: {
+        parameters: {
+            query?: {
+                /** @description Branch, tag or commit id; empty means the default branch */
+                ref?: components["parameters"]["CodeRef"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resolved ref */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolvedRef"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getTree: {
+        parameters: {
+            query?: {
+                /** @description Branch, tag or commit id; empty means the default branch */
+                ref?: components["parameters"]["CodeRef"];
+                /** @description Directory path; empty means the root */
+                path?: components["parameters"]["CodePath"];
+                lastCommits?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Directory */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tree"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getBlob: {
+        parameters: {
+            query: {
+                /** @description Branch, tag or commit id; empty means the default branch */
+                ref?: components["parameters"]["CodeRef"];
+                /** @description File path */
+                path: components["parameters"]["CodeFilePath"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description File */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlobFile"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getReadme: {
+        parameters: {
+            query?: {
+                /** @description Branch, tag or commit id; empty means the default branch */
+                ref?: components["parameters"]["CodeRef"];
+                /** @description Directory path; empty means the root */
+                path?: components["parameters"]["CodePath"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description README file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlobFile"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getBlame: {
+        parameters: {
+            query: {
+                /** @description Branch, tag or commit id; empty means the default branch */
+                ref?: components["parameters"]["CodeRef"];
+                /** @description File path */
+                path: components["parameters"]["CodeFilePath"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Blame */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Blame"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listCommits: {
+        parameters: {
+            query?: {
+                /** @description Branch, tag or commit id; empty means the default branch */
+                ref?: components["parameters"]["CodeRef"];
+                /** @description Only the commits that touch this path */
+                path?: string;
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Commits */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitPage"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getCommit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Commit id (full or abbreviated), branch or tag */
+                sha: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Commit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitDetail"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listBranches: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Branches */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchPage"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listTags: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tags */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagPage"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    compareRefs: {
+        parameters: {
+            query: {
+                base: string;
+                head: string;
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Comparison */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Comparison"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    searchCode: {
+        parameters: {
+            query: {
+                q: string;
+                /** @description Branch, tag or commit id; empty means the default branch */
+                ref?: components["parameters"]["CodeRef"];
+                /** @description Directory path; empty means the root */
+                path?: components["parameters"]["CodePath"];
+                /** @description Extended regular expression instead of a fixed string */
+                regexp?: boolean;
+                ignoreCase?: boolean;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matches */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSearchResult"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    editContents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileEdit"];
+            };
+        };
+        responses: {
+            /** @description Committed */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileEditResult"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    searchRepos: {
+        parameters: {
+            query: {
+                q: string;
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repositories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"][];
+                };
+            };
+            400: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

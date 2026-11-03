@@ -15,6 +15,8 @@ tags:
   - name: admin
   - name: orgs
   - name: repos
+  - name: releases
+  - name: code
 # Every operation needs a session unless it declares `security: []`. The
 # "admin" scope means an instance admin. Unsafe methods also need the
 # X-CSRF-Token header (see components.securitySchemes.session).
@@ -2181,6 +2183,723 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/releases:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listReleases
+      tags: [releases]
+      summary: Releases of the repository, newest first
+      description: Drafts are only listed for callers who can manage releases.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: tag
+          in: query
+          schema:
+            type: string
+          description: Only the release of this exact tag
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Releases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Release"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createRelease
+      tags: [releases]
+      summary: Create a release
+      description: |
+        Unless the release is a draft, a missing tag is created at the target
+        (default branch by default). Assets are uploaded with
+        `POST /api/v1/repos/{owner}/{name}/releases/{releaseId}/assets?name=`
+        (raw body, `Content-Length` required) and downloaded from
+        `GET /api/v1/repos/{owner}/{name}/releases/{releaseId}/assets/{assetId}/download`.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReleaseCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Release"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/releases/latest:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getLatestRelease
+      tags: [releases]
+      summary: The newest published release that is not a prerelease
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: The release
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Release"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/releases/{releaseId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: releaseId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getRelease
+      tags: [releases]
+      summary: A release
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: The release
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Release"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateRelease
+      tags: [releases]
+      summary: Change a release
+      description: |
+        Publishing a draft (draft false) creates the tag when missing. The tag
+        can only be changed while the release is a draft.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReleaseUpdate"
+      responses:
+        "200":
+          description: The updated release
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Release"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteRelease
+      tags: [releases]
+      summary: Delete a release and its assets
+      description: The git tag is kept.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Deleted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/releases/{releaseId}/assets/{assetId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: releaseId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: assetId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      operationId: updateReleaseAsset
+      tags: [releases]
+      summary: Rename an asset or change its label
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReleaseAssetUpdate"
+      responses:
+        "200":
+          description: The updated asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReleaseAsset"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteReleaseAsset
+      tags: [releases]
+      summary: Delete an asset and its stored bytes
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Deleted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  # --- code browsing (tag: code) ---
+  /repos/{owner}/{name}/refs/resolve:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: resolveRef
+      tags: [code]
+      summary: Resolve a branch, tag or commit id to a commit
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/CodeRef"
+      responses:
+        "200":
+          description: Resolved ref
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolvedRef"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/tree:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getTree
+      tags: [code]
+      summary: A directory of a ref
+      description: |
+        Directories first. With lastCommits the newest commit of each entry
+        is filled within a time budget; entries left without lastCommit ran
+        out of it. The raw content of a file is served by
+        `GET /api/v1/repos/{owner}/{name}/raw?ref=&path=` and an archive by
+        `GET /api/v1/repos/{owner}/{name}/archive?ref=&format=zip|tar.gz`.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/CodeRef"
+        - $ref: "#/components/parameters/CodePath"
+        - name: lastCommits
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Directory
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tree"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/blob:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getBlob
+      tags: [code]
+      summary: A file of a ref
+      description: Text files within the size limit carry their content; others only the metadata.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/CodeRef"
+        - $ref: "#/components/parameters/CodeFilePath"
+      responses:
+        "200":
+          description: File
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlobFile"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/readme:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getReadme
+      tags: [code]
+      summary: The README of a directory
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/CodeRef"
+        - $ref: "#/components/parameters/CodePath"
+      responses:
+        "200":
+          description: README file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlobFile"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/blame:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getBlame
+      tags: [code]
+      summary: Line authorship of a text file
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/CodeRef"
+        - $ref: "#/components/parameters/CodeFilePath"
+      responses:
+        "200":
+          description: Blame
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blame"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "413":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/commits:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listCommits
+      tags: [code]
+      summary: History of a ref, newest first
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/CodeRef"
+        - name: path
+          in: query
+          description: Only the commits that touch this path
+          schema:
+            type: string
+            maxLength: 4096
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Commits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommitPage"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/commits/{sha}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: sha
+        in: path
+        required: true
+        description: Commit id (full or abbreviated), branch or tag
+        schema:
+          type: string
+          maxLength: 255
+    get:
+      operationId: getCommit
+      tags: [code]
+      summary: A commit with its diff against the first parent
+      description: Huge diffs are truncated (truncated flags on the diff and on the files).
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Commit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommitDetail"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/branches:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listBranches
+      tags: [code]
+      summary: Branches, most recently committed first
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Branches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BranchPage"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/tags:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listTags
+      tags: [code]
+      summary: Tags of commits, newest first
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Tags
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagPage"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/compare:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: compareRefs
+      tags: [code]
+      summary: Compare two refs from their merge base
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: base
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 255
+        - name: head
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 255
+      responses:
+        "200":
+          description: Comparison
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comparison"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/search/code:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: searchCode
+      tags: [code]
+      summary: Search the text files of a ref (git grep)
+      description: Stops at the result limit or after a timeout; truncated tells whether it did.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 256
+        - $ref: "#/components/parameters/CodeRef"
+        - $ref: "#/components/parameters/CodePath"
+        - name: regexp
+          in: query
+          description: Extended regular expression instead of a fixed string
+          schema:
+            type: boolean
+            default: false
+        - name: ignoreCase
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 200
+      responses:
+        "200":
+          description: Matches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeSearchResult"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/contents:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    post:
+      operationId: editContents
+      tags: [code]
+      summary: Create, update or delete a file with a commit
+      description: |
+        Needs push permission. The commit goes on branch (default branch by
+        default) or on a new branch started from it; the author is the
+        caller. A stale sha or a concurrent change answers 409.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileEdit"
+      responses:
+        "201":
+          description: Committed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileEditResult"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "413":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /search/repos:
+    get:
+      operationId: searchRepos
+      tags: [code]
+      summary: Search the visible repositories by name
+      description: Exact matches first, then prefixes, then substrings.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Repositories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repo"
+        "400":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  # --- end code browsing ---
 components:
   securitySchemes:
     session:
@@ -2280,6 +2999,29 @@ components:
       schema:
         type: string
         maxLength: 100
+    CodeRef:
+      name: ref
+      in: query
+      description: Branch, tag or commit id; empty means the default branch
+      schema:
+        type: string
+        maxLength: 255
+    CodePath:
+      name: path
+      in: query
+      description: Directory path; empty means the root
+      schema:
+        type: string
+        maxLength: 4096
+    CodeFilePath:
+      name: path
+      in: query
+      required: true
+      description: File path
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 4096
   responses:
     Moved:
       description: |
@@ -2305,6 +3047,18 @@ components:
       headers:
         Retry-After:
           required: true
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unavailable:
+      description: |
+        The repository is being restored from the remote store or is busy;
+        retry after the given number of seconds (absent when degraded).
+      headers:
+        Retry-After:
           schema:
             type: integer
       content:
@@ -3371,6 +4125,306 @@ components:
           type: string
           format: uuid
           description: Cursor of the next page (pass as before); absent on the last page
+    ReleaseAsset:
+      type: object
+      required: [id, name, label, contentType, size, sha256, downloadCount, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        label: {type: string}
+        contentType: {type: string}
+        size: {type: integer, format: int64}
+        sha256: {type: string, description: Hex digest}
+        downloadCount: {type: integer, format: int64}
+        createdAt: {type: string, format: date-time}
+    ReleaseAssetUpdate:
+      type: object
+      properties:
+        name: {type: string, maxLength: 255}
+        label: {type: string, maxLength: 255}
+    Release:
+      type: object
+      required: [id, tag, name, body, draft, prerelease, latest, target, commit, author, createdAt, assets]
+      properties:
+        id: {type: string, format: uuid}
+        tag: {type: string}
+        name: {type: string}
+        body: {type: string, description: Markdown release notes}
+        draft: {type: boolean}
+        prerelease: {type: boolean}
+        latest: {type: boolean, description: True for the release returned by getLatestRelease}
+        target: {type: string, description: Branch or commit the tag was or will be created from; empty means the default branch}
+        commit: {type: string, description: Commit of the tag once published; empty for drafts}
+        author: {type: string, description: Username of the author; empty when unknown}
+        createdAt: {type: string, format: date-time}
+        publishedAt: {type: string, format: date-time, nullable: true}
+        assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReleaseAsset"
+    ReleaseCreate:
+      type: object
+      required: [tag]
+      properties:
+        tag: {type: string}
+        name: {type: string, maxLength: 255}
+        body: {type: string, maxLength: 125000}
+        draft: {type: boolean}
+        prerelease: {type: boolean}
+        target: {type: string}
+    ReleaseUpdate:
+      type: object
+      properties:
+        tag: {type: string}
+        name: {type: string, maxLength: 255}
+        body: {type: string, maxLength: 125000}
+        draft: {type: boolean}
+        prerelease: {type: boolean}
+        target: {type: string}
+    # --- code browsing schemas ---
+    ResolvedRef:
+      type: object
+      required: [ref, kind, name, commit]
+      properties:
+        ref: {type: string, description: The ref as requested (the default branch when empty)}
+        kind: {type: string, enum: [branch, tag, commit]}
+        name: {type: string, description: Full ref name; empty for a commit id}
+        commit: {type: string, description: Full commit id}
+    GitPerson:
+      type: object
+      required: [name, email, date]
+      properties:
+        name: {type: string}
+        email: {type: string}
+        date: {type: string, format: date-time}
+    GitCommit:
+      type: object
+      required: [sha, parents, author, committer, summary, message]
+      properties:
+        sha: {type: string}
+        parents:
+          type: array
+          items: {type: string}
+        author: {$ref: "#/components/schemas/GitPerson"}
+        committer: {$ref: "#/components/schemas/GitPerson"}
+        summary: {type: string}
+        message: {type: string}
+    GitCommitSummary:
+      type: object
+      required: [sha, summary, author, date]
+      properties:
+        sha: {type: string}
+        summary: {type: string}
+        author: {type: string, description: Author name}
+        date: {type: string, format: date-time}
+    TreeEntry:
+      type: object
+      required: [name, path, type, mode, oid, size]
+      properties:
+        name: {type: string}
+        path: {type: string}
+        type: {type: string, enum: [blob, tree, symlink, submodule]}
+        mode: {type: string}
+        oid: {type: string}
+        size: {type: integer, format: int64, description: Bytes; -1 for trees and submodules}
+        lastCommit: {$ref: "#/components/schemas/GitCommitSummary"}
+    Tree:
+      type: object
+      required: [ref, path, entries, truncated]
+      properties:
+        ref: {$ref: "#/components/schemas/ResolvedRef"}
+        path: {type: string}
+        entries:
+          type: array
+          items: {$ref: "#/components/schemas/TreeEntry"}
+        truncated: {type: boolean, description: The directory has more entries than listed}
+        readme: {type: string, description: Path of the README of the directory}
+    LfsPointer:
+      type: object
+      required: [oid, size]
+      properties:
+        oid: {type: string, description: SHA-256 of the content}
+        size: {type: integer, format: int64}
+    BlobFile:
+      type: object
+      required: [ref, path, oid, mode, size, binary, truncated, contentType]
+      properties:
+        ref: {$ref: "#/components/schemas/ResolvedRef"}
+        path: {type: string}
+        oid: {type: string}
+        mode: {type: string}
+        size: {type: integer, format: int64}
+        binary: {type: boolean}
+        lfs: {$ref: "#/components/schemas/LfsPointer"}
+        content: {type: string, description: UTF-8 text; absent for binary or too large files}
+        truncated: {type: boolean, description: The file is too large to be shown inline}
+        contentType: {type: string, description: Type served by the raw endpoint}
+    BlameRange:
+      type: object
+      required: [commit, startLine, lines]
+      properties:
+        commit: {$ref: "#/components/schemas/GitCommitSummary"}
+        startLine: {type: integer, description: 1-based}
+        lines: {type: integer}
+    Blame:
+      type: object
+      required: [ref, path, lines, ranges]
+      properties:
+        ref: {$ref: "#/components/schemas/ResolvedRef"}
+        path: {type: string}
+        lines:
+          type: array
+          items: {type: string}
+        ranges:
+          type: array
+          items: {$ref: "#/components/schemas/BlameRange"}
+    CommitPage:
+      type: object
+      required: [ref, commits, hasMore]
+      properties:
+        ref: {$ref: "#/components/schemas/ResolvedRef"}
+        commits:
+          type: array
+          items: {$ref: "#/components/schemas/GitCommit"}
+        hasMore: {type: boolean}
+    DiffLine:
+      type: object
+      required: [type, oldLine, newLine, text]
+      properties:
+        type: {type: string, enum: [context, add, delete, no-newline]}
+        oldLine: {type: integer, description: 0 when the line is not on the old side}
+        newLine: {type: integer, description: 0 when the line is not on the new side}
+        text: {type: string}
+    DiffHunk:
+      type: object
+      required: [header, oldStart, oldLines, newStart, newLines, lines]
+      properties:
+        header: {type: string}
+        oldStart: {type: integer}
+        oldLines: {type: integer}
+        newStart: {type: integer}
+        newLines: {type: integer}
+        lines:
+          type: array
+          items: {$ref: "#/components/schemas/DiffLine"}
+    FileDiff:
+      type: object
+      required: [status, oldPath, newPath, oldMode, newMode, oldOid, newOid, similarity, binary, additions, deletions, hunks, truncated]
+      properties:
+        status: {type: string, enum: [added, modified, deleted, renamed, copied]}
+        oldPath: {type: string}
+        newPath: {type: string}
+        oldMode: {type: string}
+        newMode: {type: string}
+        oldOid: {type: string}
+        newOid: {type: string}
+        similarity: {type: integer}
+        binary: {type: boolean}
+        additions: {type: integer}
+        deletions: {type: integer}
+        hunks:
+          type: array
+          items: {$ref: "#/components/schemas/DiffHunk"}
+        truncated: {type: boolean}
+    Diff:
+      type: object
+      required: [files, additions, deletions, truncated]
+      properties:
+        files:
+          type: array
+          items: {$ref: "#/components/schemas/FileDiff"}
+        additions: {type: integer}
+        deletions: {type: integer}
+        truncated: {type: boolean, description: Lines or files were dropped}
+    CommitDetail:
+      type: object
+      required: [commit, diff]
+      properties:
+        commit: {$ref: "#/components/schemas/GitCommit"}
+        diff: {$ref: "#/components/schemas/Diff"}
+    Branch:
+      type: object
+      required: [name, commit, default]
+      properties:
+        name: {type: string}
+        commit: {$ref: "#/components/schemas/GitCommitSummary"}
+        default: {type: boolean}
+        ahead: {type: integer, description: Commits not in the default branch}
+        behind: {type: integer, description: Commits of the default branch missing here}
+    BranchPage:
+      type: object
+      required: [items, hasMore]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/Branch"}
+        hasMore: {type: boolean}
+    GitTag:
+      type: object
+      required: [name, commit, annotated, message]
+      properties:
+        name: {type: string}
+        commit: {$ref: "#/components/schemas/GitCommitSummary"}
+        annotated: {type: boolean}
+        message: {type: string, description: Subject of an annotated tag}
+        tagger: {$ref: "#/components/schemas/GitPerson"}
+    TagPage:
+      type: object
+      required: [items, hasMore]
+      properties:
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/GitTag"}
+        hasMore: {type: boolean}
+    Comparison:
+      type: object
+      required: [base, head, mergeBase, ahead, behind, commits, commitsTruncated, diff]
+      properties:
+        base: {$ref: "#/components/schemas/ResolvedRef"}
+        head: {$ref: "#/components/schemas/ResolvedRef"}
+        mergeBase: {type: string}
+        ahead: {type: integer}
+        behind: {type: integer}
+        commits:
+          type: array
+          items: {$ref: "#/components/schemas/GitCommit"}
+        commitsTruncated: {type: boolean}
+        diff: {$ref: "#/components/schemas/Diff"}
+    CodeMatch:
+      type: object
+      required: [path, line, text]
+      properties:
+        path: {type: string}
+        line: {type: integer}
+        text: {type: string}
+    CodeSearchResult:
+      type: object
+      required: [ref, matches, truncated]
+      properties:
+        ref: {$ref: "#/components/schemas/ResolvedRef"}
+        matches:
+          type: array
+          items: {$ref: "#/components/schemas/CodeMatch"}
+        truncated: {type: boolean}
+    FileEdit:
+      type: object
+      required: [op, path]
+      properties:
+        op: {type: string, enum: [create, update, delete]}
+        path: {type: string, minLength: 1, maxLength: 4096}
+        content: {type: string, description: New content (create, update)}
+        encoding: {type: string, enum: [utf-8, base64], default: utf-8}
+        branch: {type: string, maxLength: 255, description: Branch to start from; default branch when empty}
+        newBranch: {type: string, maxLength: 255, description: Commit on this new branch instead}
+        sha: {type: string, description: Blob id the edit started from (update, delete)}
+        message: {type: string, maxLength: 65536}
+    FileEditResult:
+      type: object
+      required: [branch, commit]
+      properties:
+        branch: {type: string}
+        commit: {$ref: "#/components/schemas/GitCommit"}
+    # --- end code browsing schemas ---
     Problem:
       type: object
       required: [type, title, status]

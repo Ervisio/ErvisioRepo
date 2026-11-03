@@ -25,6 +25,7 @@ type Querier interface {
 	// Accepts a code for step only once: a replay in the same window matches
 	// no row.
 	AdvanceTOTPStep(ctx context.Context, arg AdvanceTOTPStepParams) (int64, error)
+	BumpReleaseAssetDownloads(ctx context.Context, id uuid.UUID) error
 	ClearPrimaryEmail(ctx context.Context, userID uuid.UUID) error
 	// Clears the marker after a flush. Markers are set and cleared only under
 	// the repository write lease, so no change can slip in between.
@@ -35,6 +36,8 @@ type Querier interface {
 	ConsumeMFAChallenge(ctx context.Context, id uuid.UUID) (int64, error)
 	// Deletes and returns a token; the caller checks expires_at.
 	ConsumeOneTimeToken(ctx context.Context, arg ConsumeOneTimeTokenParams) (ConsumeOneTimeTokenRow, error)
+	// Repositories (existing or not yet collected) that reference an object.
+	CountLFSObjectRefs(ctx context.Context, oid string) (int64, error)
 	CountOrgOwners(ctx context.Context, orgID uuid.UUID) (int64, error)
 	CountOwnerRepos(ctx context.Context, ownerID uuid.UUID) (int64, error)
 	CountRecoveryCodes(ctx context.Context, userID uuid.UUID) (CountRecoveryCodesRow, error)
@@ -46,6 +49,8 @@ type Querier interface {
 	CountUserTokens(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CountWebAuthnCredentials(ctx context.Context, userID uuid.UUID) (int64, error)
+	CreateLFSLock(ctx context.Context, arg CreateLFSLockParams) (LfsLock, error)
+	DeleteExpiredLFSTokens(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	DeleteExpiredMFAChallenges(ctx context.Context) (int64, error)
 	DeleteExpiredOIDCFlows(ctx context.Context) (int64, error)
 	DeleteExpiredOneTimeTokens(ctx context.Context) (int64, error)
@@ -53,6 +58,8 @@ type Querier interface {
 	DeleteExpiredOrgInvites(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	DeleteExpiredSessions(ctx context.Context, idleBefore pgtype.Timestamptz) (int64, error)
 	DeleteExpiredTokens(ctx context.Context, before pgtype.Timestamptz) (int64, error)
+	DeleteLFSLock(ctx context.Context, arg DeleteLFSLockParams) (int64, error)
+	DeleteLFSObject(ctx context.Context, arg DeleteLFSObjectParams) (DeleteLFSObjectRow, error)
 	DeleteMFAChallenge(ctx context.Context, id uuid.UUID) error
 	// Invalidates the outstanding tokens of one purpose for a user.
 	DeleteOneTimeTokens(ctx context.Context, arg DeleteOneTimeTokensParams) error
@@ -62,6 +69,8 @@ type Querier interface {
 	DeleteOrgNamespace(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteQuotaOverride(ctx context.Context, namespaceID uuid.UUID) (int64, error)
 	DeleteRecoveryCodes(ctx context.Context, userID uuid.UUID) error
+	DeleteRelease(ctx context.Context, arg DeleteReleaseParams) (int64, error)
+	DeleteReleaseAsset(ctx context.Context, arg DeleteReleaseAssetParams) (int64, error)
 	DeleteRepo(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteRepoCollaborator(ctx context.Context, arg DeleteRepoCollaboratorParams) (int64, error)
 	DeleteRepoRedirect(ctx context.Context, arg DeleteRepoRedirectParams) error
@@ -98,6 +107,12 @@ type Querier interface {
 	GetEffectiveQuota(ctx context.Context, id uuid.UUID) (GetEffectiveQuotaRow, error)
 	GetEmailByAddress(ctx context.Context, address string) (GetEmailByAddressRow, error)
 	GetEmailByID(ctx context.Context, id uuid.UUID) (GetEmailByIDRow, error)
+	GetLFSLock(ctx context.Context, arg GetLFSLockParams) (GetLFSLockRow, error)
+	GetLFSLockByPath(ctx context.Context, arg GetLFSLockByPathParams) (GetLFSLockByPathRow, error)
+	GetLFSObject(ctx context.Context, arg GetLFSObjectParams) (LfsObject, error)
+	GetLFSToken(ctx context.Context, tokenHash []byte) (GetLFSTokenRow, error)
+	// The newest published release that is not a draft or a prerelease.
+	GetLatestRelease(ctx context.Context, repoID uuid.UUID) (Release, error)
 	// Credentials for a login by email address; any verified address of the user works.
 	GetLoginByEmail(ctx context.Context, address string) (GetLoginByEmailRow, error)
 	// Credentials for a login by username; the email is the primary address.
@@ -114,6 +129,9 @@ type Querier interface {
 	GetOrgMemberRole(ctx context.Context, arg GetOrgMemberRoleParams) (string, error)
 	GetQuotaDefaults(ctx context.Context) ([]QuotaDefault, error)
 	GetQuotaOverride(ctx context.Context, namespaceID uuid.UUID) (Quota, error)
+	GetRelease(ctx context.Context, arg GetReleaseParams) (Release, error)
+	GetReleaseAsset(ctx context.Context, arg GetReleaseAssetParams) (ReleaseAsset, error)
+	GetReleaseForUpdate(ctx context.Context, arg GetReleaseForUpdateParams) (Release, error)
 	GetRepo(ctx context.Context, id uuid.UUID) (GetRepoRow, error)
 	// What the permission of a user on a repository depends on, besides the
 	// teams (ListUserTeamRepoPermissions) and the account itself.
@@ -151,6 +169,9 @@ type Querier interface {
 	InsertEmail(ctx context.Context, arg InsertEmailParams) error
 	InsertGPGKey(ctx context.Context, arg InsertGPGKeyParams) error
 	InsertInvite(ctx context.Context, arg InsertInviteParams) error
+	// Grants the repository access to an object; 0 rows when it already has it.
+	InsertLFSObject(ctx context.Context, arg InsertLFSObjectParams) (int64, error)
+	InsertLFSToken(ctx context.Context, arg InsertLFSTokenParams) error
 	InsertMFAChallenge(ctx context.Context, arg InsertMFAChallengeParams) error
 	InsertNamespace(ctx context.Context, arg InsertNamespaceParams) error
 	InsertOIDCFlow(ctx context.Context, arg InsertOIDCFlowParams) error
@@ -161,6 +182,10 @@ type Querier interface {
 	InsertOrgInvite(ctx context.Context, arg InsertOrgInviteParams) error
 	InsertOrgMember(ctx context.Context, arg InsertOrgMemberParams) (int64, error)
 	InsertRecoveryCode(ctx context.Context, arg InsertRecoveryCodeParams) error
+	// Releases and their assets (PLAN §4.2). The asset bytes live in the storage
+	// tier; the rows here own them.
+	InsertRelease(ctx context.Context, arg InsertReleaseParams) (Release, error)
+	InsertReleaseAsset(ctx context.Context, arg InsertReleaseAssetParams) (ReleaseAsset, error)
 	// Repositories, redirects, collaborators and tiering state (PLAN §4.3, §5.2).
 	InsertRepo(ctx context.Context, arg InsertRepoParams) error
 	InsertRetiredGeneration(ctx context.Context, arg InsertRetiredGenerationParams) error
@@ -181,17 +206,35 @@ type Querier interface {
 	ListEvictionCandidates(ctx context.Context, arg ListEvictionCandidatesParams) ([]ListEvictionCandidatesRow, error)
 	// Watermark eviction candidates; the caller weights age by size.
 	ListHotUnpinnedRepos(ctx context.Context, lim int32) ([]ListHotUnpinnedReposRow, error)
+	// Hot repositories with LFS objects not seen since before (GC candidates).
+	ListLFSGCRepos(ctx context.Context, arg ListLFSGCReposParams) ([]uuid.UUID, error)
+	// Keyset pagination on (created_at, id); filters are optional.
+	ListLFSLocks(ctx context.Context, arg ListLFSLocksParams) ([]ListLFSLocksRow, error)
+	ListLFSObjectsByOIDs(ctx context.Context, arg ListLFSObjectsByOIDsParams) ([]LfsObject, error)
+	// Rows charged to a namespace that no longer owns the repository (transfer).
+	ListMischargedLFSObjects(ctx context.Context, maxRows int32) ([]ListMischargedLFSObjectsRow, error)
 	// Pending invitations, expired ones included (the UI shows them as such).
 	ListOrgInvites(ctx context.Context, orgID uuid.UUID) ([]ListOrgInvitesRow, error)
 	ListOrgMembers(ctx context.Context, orgID uuid.UUID) ([]ListOrgMembersRow, error)
+	// Rows of repositories that no longer exist.
+	ListOrphanLFSObjects(ctx context.Context, maxRows int32) ([]ListOrphanLFSObjectsRow, error)
+	// Objects under "<policy>/releases/" that no asset row references and
+	// that are older than "before" (an upload in progress has no row yet).
+	ListOrphanReleaseObjects(ctx context.Context, arg ListOrphanReleaseObjectsParams) ([]ListOrphanReleaseObjectsRow, error)
 	// Repositories of a namespace visible to a viewer. all = the viewer sees
 	// every repository (instance admin, the user himself, organization
 	// owner/admin); internal = the viewer is signed in and not restricted.
 	ListOwnerRepos(ctx context.Context, arg ListOwnerReposParams) ([]ListOwnerReposRow, error)
+	ListReleaseAssets(ctx context.Context, releaseIds []uuid.UUID) ([]ReleaseAsset, error)
+	// Newest first; drafts only when include_drafts. An empty tag matches all.
+	ListReleases(ctx context.Context, arg ListReleasesParams) ([]Release, error)
 	ListRepoCollaborators(ctx context.Context, repoID uuid.UUID) ([]ListRepoCollaboratorsRow, error)
 	// Keyset pagination over every repository, for the garbage collector.
 	ListRepoIDsAfter(ctx context.Context, arg ListRepoIDsAfterParams) ([]uuid.UUID, error)
+	ListRepoLFSObjects(ctx context.Context, repoID uuid.UUID) ([]ListRepoLFSObjectsRow, error)
 	ListRepoRedirects(ctx context.Context, repoID uuid.UUID) ([]ListRepoRedirectsRow, error)
+	// Every asset of a repository, to clean up its objects.
+	ListRepoReleaseAssets(ctx context.Context, repoID uuid.UUID) ([]ReleaseAsset, error)
 	// Every repository with its journal sequence, for restore.
 	ListRepoTiering(ctx context.Context) ([]ListRepoTieringRow, error)
 	// Repositories in a storage state with their path, for prewarm.
@@ -203,6 +246,11 @@ type Querier interface {
 	ListTeamMembers(ctx context.Context, teamID uuid.UUID) ([]ListTeamMembersRow, error)
 	ListTeamRepos(ctx context.Context, teamID uuid.UUID) ([]ListTeamReposRow, error)
 	ListTeams(ctx context.Context, orgID uuid.UUID) ([]ListTeamsRow, error)
+	// Stored LFS objects that no repository references any more (the oid is
+	// the last path segment of the key). Only the content-addressed area
+	// lfs/sha256/ is considered: the class also holds release assets
+	// (lfs/releases/), which are collected by internal/releases.
+	ListUnreferencedLFSStorage(ctx context.Context, arg ListUnreferencedLFSStorageParams) ([]ListUnreferencedLFSStorageRow, error)
 	// Repositories a user can reach without public or internal visibility: his
 	// own, those of organizations he owns or administers or whose base
 	// permission he receives, and those granted through teams or directly.
@@ -242,10 +290,13 @@ type Querier interface {
 	MarkRepoJournalDirty(ctx context.Context, id uuid.UUID) error
 	MarkStorageObjectReplicated(ctx context.Context, arg MarkStorageObjectReplicatedParams) error
 	MarkStorageObjectVerified(ctx context.Context, arg MarkStorageObjectVerifiedParams) error
+	NamespaceExists(ctx context.Context, id uuid.UUID) (bool, error)
 	NamespaceTaken(ctx context.Context, name string) (bool, error)
+	ReleaseAuthorNames(ctx context.Context, ids []uuid.UUID) ([]ReleaseAuthorNamesRow, error)
 	RenameRepo(ctx context.Context, arg RenameRepoParams) error
 	// True while the hot copy holds pushes not yet in the remote journal.
 	RepoJournalDirty(ctx context.Context, id uuid.UUID) (bool, error)
+	RepoLFSUsage(ctx context.Context, repoID uuid.UUID) (RepoLFSUsageRow, error)
 	// Adds the deltas to the usage of a namespace only if the result stays
 	// within its effective limits. Negative deltas (releases) always apply and
 	// never go below zero. Zero rows means the quota would be exceeded; call
@@ -258,6 +309,12 @@ type Querier interface {
 	// Oldest-verified first, random within the same age, so repeated runs cover
 	// every object over time.
 	SampleStorageObjectsForVerify(ctx context.Context, arg SampleStorageObjectsForVerifyParams) ([]StorageObject, error)
+	// Repositories whose name contains pattern (already lower-cased and with
+	// LIKE metacharacters escaped), visible to a viewer: all_repos = instance
+	// admin; internal = the viewer is signed in and not restricted. Exact and
+	// prefix matches come first.
+	SearchRepos(ctx context.Context, arg SearchReposParams) ([]SearchReposRow, error)
+	SetLFSObjectCharge(ctx context.Context, arg SetLFSObjectChargeParams) (int64, error)
 	SetMFAChallengeWebAuthn(ctx context.Context, arg SetMFAChallengeWebAuthnParams) (int64, error)
 	// Replaces the token of a pending invitation (sending again invalidates the
 	// previous link) and extends its expiry.
@@ -281,9 +338,13 @@ type Querier interface {
 	SetUserRole(ctx context.Context, arg SetUserRoleParams) error
 	SetUserSuspended(ctx context.Context, arg SetUserSuspendedParams) error
 	StorageObjectStats(ctx context.Context) ([]StorageObjectStatsRow, error)
+	// Bytes held by every release asset of a repository (released from the owner
+	// quota when the repository is deleted).
+	SumRepoReleaseAssetBytes(ctx context.Context, repoID uuid.UUID) (int64, error)
 	// Consumes the flow: a state is good for a single callback.
 	TakeOIDCFlow(ctx context.Context, stateHash []byte) (OidcFlow, error)
 	TokenNameTaken(ctx context.Context, arg TokenNameTakenParams) (bool, error)
+	TouchLFSObjects(ctx context.Context, arg TouchLFSObjectsParams) error
 	TouchOIDCLink(ctx context.Context, arg TouchOIDCLinkParams) error
 	// Records an access at time "at"; skipped when the last recorded access is
 	// newer than not_before, to keep writes off the read path.
@@ -296,6 +357,8 @@ type Querier interface {
 	TryLockRepoSession(ctx context.Context, repoID uuid.UUID) (bool, error)
 	UnlockRepoSession(ctx context.Context, repoID uuid.UUID) (bool, error)
 	UpdateOrg(ctx context.Context, arg UpdateOrgParams) error
+	UpdateRelease(ctx context.Context, arg UpdateReleaseParams) (Release, error)
+	UpdateReleaseAsset(ctx context.Context, arg UpdateReleaseAssetParams) (ReleaseAsset, error)
 	UpdateRepo(ctx context.Context, arg UpdateRepoParams) error
 	UpdateTeam(ctx context.Context, arg UpdateTeamParams) error
 	// Profile, password, sessions and email addresses of the signed-in user.

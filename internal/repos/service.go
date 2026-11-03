@@ -689,6 +689,12 @@ func (s *Service) Delete(ctx context.Context, who auth.Principal, owner, name st
 		if _, err := q.DeleteRepo(ctx, r.ID); err != nil {
 			return fmt.Errorf("delete repo: %w", err)
 		}
+		// Release assets are charged to the owner too; their rows go with the repository.
+		assetBytes, err := q.SumRepoReleaseAssetBytes(ctx, r.ID)
+		if err != nil {
+			return fmt.Errorf("sum release asset size: %w", err)
+		}
+		st.SizeBytes += assetBytes
 		if err := quota.Release(ctx, q, r.OwnerID, quota.Delta{Repos: 1, Bytes: st.SizeBytes}); err != nil {
 			return err
 		}

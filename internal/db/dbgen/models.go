@@ -61,6 +61,34 @@ type Invite struct {
 	CreatedAt pgtype.Timestamptz
 }
 
+type LfsLock struct {
+	ID        uuid.UUID
+	RepoID    uuid.UUID
+	Path      string
+	Refname   string
+	OwnerID   uuid.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
+type LfsObject struct {
+	RepoID    uuid.UUID
+	Oid       string
+	Size      int64
+	ChargedTo uuid.UUID
+	CreatedAt pgtype.Timestamptz
+	SeenAt    pgtype.Timestamptz
+}
+
+type LfsToken struct {
+	ID        uuid.UUID
+	TokenHash []byte
+	RepoID    uuid.UUID
+	UserID    uuid.UUID
+	Operation string
+	ExpiresAt pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
+}
+
 type MfaChallenge struct {
 	ID        uuid.UUID
 	TokenHash []byte
@@ -182,6 +210,39 @@ type QuotaDefault struct {
 	MaxRepos        pgtype.Int4
 	MaxStorageBytes pgtype.Int8
 	UpdatedAt       pgtype.Timestamptz
+}
+
+type Release struct {
+	ID          uuid.UUID
+	RepoID      uuid.UUID
+	Tag         string
+	Name        string
+	Body        string
+	Draft       bool
+	Prerelease  bool
+	Target      string
+	CommitSha   string
+	AuthorID    uuid.NullUUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	PublishedAt pgtype.Timestamptz
+}
+
+type ReleaseAsset struct {
+	ID            uuid.UUID
+	ReleaseID     uuid.UUID
+	RepoID        uuid.UUID
+	Name          string
+	Label         string
+	ContentType   string
+	Size          int64
+	Sha256        []byte
+	StoragePolicy string
+	StorageKey    string
+	DownloadCount int64
+	UploaderID    uuid.NullUUID
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
 }
 
 type Repo struct {

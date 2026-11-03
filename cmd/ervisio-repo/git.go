@@ -21,6 +21,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/gittier"
 	"github.com/Ervisio/ErvisioRepo/internal/gittransport"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
+	"github.com/Ervisio/ErvisioRepo/internal/lfs"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
 )
@@ -59,8 +60,14 @@ type gitTransports struct {
 // setupGitTransports builds the Smart HTTP and SSH transports on t (PLAN
 // §5.1). hooks (internal/githooks, may be nil) journals every push.
 func setupGitTransports(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, rs *repos.Service, hooks gittransport.Hooks,
-	ids *identity.Stack, creds *credentials.Service, proxies []netip.Prefix, log *slog.Logger,
+	ids *identity.Stack, creds *credentials.Service, proxies []netip.Prefix, lfsSrv *lfs.Server, log *slog.Logger,
 ) (*gitTransports, error) {
+	// Interfaces stay nil (not typed nil) when LFS is off.
+	var lfsHTTP githttp.LFS
+	var lfsSSH gitssh.LFS
+	if lfsSrv != nil {
+		lfsHTTP, lfsSSH = lfsSrv, lfsSrv
+	}
 	g := cfg.Git
 	ts, err := gittransport.New(gittransport.Options{
 		Tier: t, MaxPushSize: int64(g.MaxPushSize), Hooks: hooks,
@@ -77,7 +84,7 @@ func setupGitTransports(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier
 	h, err := githttp.New(githttp.Options{
 		Transport: ts, Repos: rs, Tokens: &auth.Tokens{Store: dbgen.New(pool)}, Sessions: ids.Sessions,
 		Cookies: auth.CookiesFor(cfg.Server.PublicURL), TrustedProxies: proxies,
-		Failures: ids.Limiter, Requests: requests, Log: log.With("component", "git-http"),
+		Failures: ids.Limiter, Requests: requests, LFS: lfsHTTP, Log: log.With("component", "git-http"),
 	})
 	if err != nil {
 		return nil, err
@@ -92,7 +99,7 @@ func setupGitTransports(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier
 	}
 	out.SSH, err = gitssh.New(gitssh.Options{
 		Transport: ts, Repos: rs, Keys: creds, HostKeys: keys,
-		Failures: ids.Limiter, Requests: requests,
+		Failures: ids.Limiter, Requests: requests, LFS: lfsSSH,
 		MaxConnections: cfg.SSH.MaxConnections, LoginGraceTime: time.Duration(cfg.SSH.LoginGraceTime),
 		IdleTimeout: time.Duration(g.IdleTimeout), Log: log.With("component", "git-ssh"),
 	})
@@ -100,4 +107,17 @@ func setupGitTransports(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier
 		return nil, err
 	}
 	return out, nil
+}
+
+// setupLFS builds the Git LFS server (PLAN §4.4) when the storage policy
+// "lfs" is configured; nil otherwise.
+func setupLFS(cfg *config.Config, pool *pgxpool.Pool, storage *tier.Tier, t *gitstore.Tier, log *slog.Logger) (*lfs.Server, error) {
+	if _, ok := cfg.Storage.Policy[lfs.Policy]; !ok || storage == nil || t == nil {
+		return nil, nil
+	}
+	cl, err := storage.Class(lfs.Policy)
+	if err != nil {
+		return nil, fmt.Errorf("lfs storage: %w", err)
+	}
+	return lfs.New(lfs.Options{Pool: pool, Storage: cl, Git: t, PublicURL: cfg.Server.PublicURL, Log: log.With("component", "lfs")})
 }

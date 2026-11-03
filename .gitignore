@@ -14,3 +14,4 @@ __pycache__/
 /design/.variant-studio/
 /ervisio-repo
 *.tsbuildinfo
+.variant-studio/

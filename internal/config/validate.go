@@ -15,7 +15,7 @@ import (
 )
 
 // PolicyTypes are the data types a storage policy can be declared for.
-var PolicyTypes = []string{"git", "lfs", "registry", "actions", "backup"}
+var PolicyTypes = []string{"git", "lfs", "releases", "registry", "actions", "backup"}
 
 var targetName = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,62}$`)
 

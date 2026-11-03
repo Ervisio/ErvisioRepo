@@ -7,6 +7,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
+	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
 )
@@ -24,6 +25,8 @@ type v1Server struct {
 	creds    *credentials.Service
 	sso      *sso.Manager
 	tiering  Tiering
+	releases Releases
+	browse   *gitbrowse.Service
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

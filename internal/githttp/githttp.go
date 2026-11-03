@@ -53,7 +53,9 @@ type Options struct {
 	// Requests is the hourly request budget per client IP (anonymous),
 	// per token or per account; nil disables it.
 	Requests *auth.Limiter
-	Log      *slog.Logger
+	// LFS serves .../info/lfs/...; nil answers 404 there.
+	LFS LFS
+	Log *slog.Logger
 }
 
 // Handler serves the Smart HTTP endpoints.
@@ -111,6 +113,14 @@ func parsePath(p string) (request, bool) {
 
 // ServeHTTP implements http.Handler.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if owner, name, rest, ok := parseLFSPath(r.URL.Path); ok {
+		if h.o.LFS == nil {
+			LFSError(w, http.StatusNotFound, "Git LFS is not enabled on this server")
+			return
+		}
+		h.serveLFS(w, r, owner, name, rest)
+		return
+	}
 	req, ok := parsePath(r.URL.Path)
 	if !ok {
 		textError(w, http.StatusNotFound, "not found")

@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -22,12 +23,15 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/db"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
+	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
+	"github.com/Ervisio/ErvisioRepo/internal/githooks"
 	"github.com/Ervisio/ErvisioRepo/internal/gitstore"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
 	"github.com/Ervisio/ErvisioRepo/internal/jobs"
 	"github.com/Ervisio/ErvisioRepo/internal/mail"
 	"github.com/Ervisio/ErvisioRepo/internal/orgs"
+	"github.com/Ervisio/ErvisioRepo/internal/releases"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
@@ -89,9 +93,17 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	}
 	jobOpts := []jobs.Option{jobs.WithStorage(storage, log), identity.JobsOption(mailer),
 		orgs.JobsOption(orgs.MailerFor(cfg, dbgen.New(pool), sender, log))}
+	jobOpts = append(jobOpts, releases.JobsOption(dbgen.New(pool), storage, log))
 	if gitTier != nil {
 		jobOpts = append(jobOpts, repos.JobsOption(gitTier, log))
 		jobOpts = append(jobOpts, tiering.jobOptions(log)...)
+	}
+	lfsSrv, err := setupLFS(cfg, pool, storage, gitTier, log)
+	if err != nil {
+		return err
+	}
+	if lfsSrv != nil {
+		jobOpts = append(jobOpts, lfsSrv.JobsOption())
 	}
 	if opt, ok := backupJobOption(cfg, storage, log); ok {
 		jobOpts = append(jobOpts, opt)
@@ -147,7 +159,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	var repoSvc *repos.Service
 	if gitTier != nil {
 		repoSvc = repos.New(repos.Options{Pool: pool, Tier: gitTier, Jobs: runner, Log: log})
-		if git, err = setupGitTransports(cfg, pool, gitTier, repoSvc, journal.TransportHooks(gitTier), ids, creds, proxies, log); err != nil {
+		if git, err = setupGitTransports(cfg, pool, gitTier, repoSvc, journal.TransportHooks(gitTier), ids, creds, proxies, lfsSrv, log); err != nil {
 			return err
 		}
 	}
@@ -183,9 +195,20 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	}
 	if repoSvc != nil {
 		deps.Repos = repoSvc
+		var rj releases.Journal
+		if journal != nil {
+			rj = journal.Journal
+		}
+		deps.Releases = releases.New(releases.Options{Pool: pool, Repos: repoSvc, Git: gitTier, Journal: rj, Storage: storage, Log: log})
 		deps.Git = git.HTTP
 		deps.Tiering = tiering.Admin
 		deps.Hydration = tiering.Hydrator
+		browse, err := setupBrowse(cfg, pool, gitTier, journal, log)
+		if err != nil {
+			return err
+		}
+		defer browse.Close()
+		deps.Browse = browse
 	}
 	handler := httpapi.NewRouter(deps)
 
@@ -274,4 +297,23 @@ func readSecretFile(path string) (string, error) {
 		return "", fmt.Errorf("read %s: %w", path, err)
 	}
 	return strings.TrimRight(string(raw), "\r\n"), nil
+}
+
+// setupBrowse builds the code browsing service. Web edits go through the
+// hook server, so that the journal records them like pushes.
+func setupBrowse(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, j *gitJournal, log *slog.Logger) (*gitbrowse.Service, error) {
+	var hooks *githooks.Server
+	if j != nil {
+		hooks = j.Hooks
+	}
+	host := "localhost"
+	if u, err := url.Parse(cfg.Server.PublicURL); err == nil && u.Hostname() != "" {
+		host = u.Hostname()
+	}
+	s, err := gitbrowse.New(gitbrowse.Options{Tier: t, Hooks: hooks, DB: pool, NoReplyDomain: "users.noreply." + host,
+		Log: log.With("component", "git-browse")})
+	if err != nil {
+		return nil, fmt.Errorf("code browsing: %w", err)
+	}
+	return s, nil
 }

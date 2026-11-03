@@ -22,6 +22,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
+	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
 )
@@ -74,6 +75,11 @@ type Deps struct {
 	SSO *sso.Manager
 	// Tiering serves the admin pin/unpin/evict endpoints; nil answers 503.
 	Tiering Tiering
+	// Releases serves the release endpoints and asset transfers; nil answers 503.
+	Releases Releases
+	// Browse serves the code browsing endpoints, raw files and archives;
+	// nil answers 503.
+	Browse *gitbrowse.Service
 	// Hydration streams the hydration progress; nil answers 503.
 	Hydration Hydration
 	// Git serves the Smart HTTP transport (internal/githttp) on
@@ -117,6 +123,8 @@ func NewRouter(d Deps) http.Handler {
 	// Streaming routes (SSE under /api/events, git transports) will be
 	// mounted outside this group so that they are not cut by the timeout.
 	mountHydration(r, d)
+	mountReleases(r, d)
+	mountBrowse(r, d)
 	mountGit(r, d)
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Timeout(RequestTimeout))
@@ -183,7 +191,7 @@ func directLoopback(r *http.Request) bool {
 func mountV1(r chi.Router, d Deps) {
 	r.Use(d.Auth.LoadSession, d.Auth.CSRF, adminOnly(d.Auth), mfaCookie(d.Auth.Cookies))
 	srv := &v1Server{meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies, mfa: d.MFA, orgs: d.Orgs, repos: d.Repos, audit: d.Audit,
-		creds: d.Credentials, sso: d.SSO, tiering: d.Tiering}
+		creds: d.Credentials, sso: d.SSO, tiering: d.Tiering, releases: d.Releases, browse: d.Browse}
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())
@@ -241,4 +249,8 @@ func mountGit(r chi.Router, d Deps) {
 	r.Head("/{owner}/{repo}/info/refs", d.Git.ServeHTTP)
 	r.Post("/{owner}/{repo}/git-upload-pack", d.Git.ServeHTTP)
 	r.Post("/{owner}/{repo}/git-receive-pack", d.Git.ServeHTTP)
+	// Git LFS batch, basic transfer and locks API (PLAN §4.4).
+	r.Get("/{owner}/{repo}/info/lfs/*", d.Git.ServeHTTP)
+	r.Put("/{owner}/{repo}/info/lfs/*", d.Git.ServeHTTP)
+	r.Post("/{owner}/{repo}/info/lfs/*", d.Git.ServeHTTP)
 }

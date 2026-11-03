@@ -88,6 +88,27 @@ Phase 3, Git hosting:
 - Account API and screens for profile, password, sessions and emails; OIDC start rate limit; per-provider `require_local_2fa`.
 - Self-hosted Figtree and JetBrains Mono fonts; repository list, creation, empty page with clone instructions and settings.
 
+Phase 4, Git LFS:
+
+- Batch API at `/<owner>/<repo>.git/info/lfs/objects/batch` (upload, download, verify) with the basic transfer: presigned S3 URLs when the primary supports them and is not encrypted, otherwise a streaming proxy that checks sha256 and size.
+- Content-addressed, instance-wide deduplicated objects under `lfs/sha256/ab/cd/<oid>`; per-repository references in `lfs_objects` (migration 00100), charged to the owner's storage quota. A repository gains an object only by proving possession of its content.
+- Locks API (create, list, verify, unlock; force unlock for repository admins), also over SSH.
+- `git-lfs-authenticate` with short-lived `RemoteAuth` tokens (1 hour, stored hashed) and `git-lfs-transfer` (pure SSH protocol).
+- Conservative GC job every 6 hours: expired tokens, rows of deleted repositories, quota moves after transfers, objects no longer referenced by any reachable pointer after a 14 day grace, unreferenced stored content.
+
+Phase 4, code browsing:
+
+- `internal/gitbrowse` on `internal/git`, always under the tier Read lease: ref resolution, trees with the last commit of each entry (time budget and cache), blobs (binary detection, size limit, safe content type, LFS pointers), README, blame, paginated history (optionally per path), commits with a parsed and truncated diff, branches with ahead/behind, tags, compare from the merge base, `git grep` with a timeout and a result limit.
+- REST endpoints (tag `code`) under `/api/v1/repos/{owner}/{name}/`: `refs/resolve`, `tree`, `blob`, `readme`, `blame`, `commits`, `commits/{sha}`, `branches`, `tags`, `compare`, `search/code`, `POST contents`; plus `GET /api/v1/search/repos`, a name search that respects visibility.
+- Streaming downloads outside the request timeout: `raw?ref=&path=` (nosniff, sandbox CSP, text always as `text/plain`) and `archive?ref=&format=zip|tar.gz` (`git archive`).
+- Web edit (create, update, delete a file) without a working tree: `hash-object`, `mktree`, `commit-tree` and a compare-and-swap `update-ref` under the Write lease and inside a hook session, so the journal records it like a push; push permission, quota and stale `sha` (409) checked.
+
+Phase 4, releases:
+
+- Releases and assets (migration 00110) under `/api/v1/repos/{owner}/{name}/releases`: list, create, latest, update, delete; drafts visible only to writers; a missing tag is created at publish and kept when the release is deleted.
+- Asset upload (raw body) and download (single Range, download counter) as streaming routes outside the request timeout; bytes stored with the `releases` storage policy (fallback `lfs`) and charged to the owner's quota.
+- `releases_cleanup` job removes orphaned asset objects older than 2 hours.
+
 ### Removed
 
 - Organization role `billing` (existing members become `member`).
