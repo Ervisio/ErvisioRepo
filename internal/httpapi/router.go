@@ -22,6 +22,8 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
+	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
+	"github.com/Ervisio/ErvisioRepo/internal/ghapi"
 	"github.com/Ervisio/ErvisioRepo/internal/ghsync"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
@@ -146,6 +148,7 @@ func NewRouter(d Deps) http.Handler {
 	mountGitHubWebhook(r, d)
 	mountBrowse(r, d)
 	mountGit(r, d)
+	mountGitHubAPI(r, d)
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Timeout(RequestTimeout))
 		r.Get("/readyz", readyz(d))
@@ -158,6 +161,34 @@ func NewRouter(d Deps) http.Handler {
 		r.Handle("/*", spaHandler(d.Web, d.HasIndex))
 	})
 	return r
+}
+
+// mountGitHubAPI mounts the GitHub REST compatible subset at /api/v3. It
+// applies the request timeout itself, outside the asset transfers.
+func mountGitHubAPI(r chi.Router, d Deps) {
+	db, _ := d.DB.(dbgen.DBTX)
+	g := ghapi.Deps{Log: d.Log, DB: db, PublicURL: d.Meta.PublicURL, Version: d.Meta.Version, Auth: d.Auth,
+		Browse: d.Browse, Timeout: RequestTimeout}
+	// Assigned one by one: a nil service must stay a nil interface.
+	if d.Repos != nil {
+		g.Repos = d.Repos
+	}
+	if d.Orgs != nil {
+		g.Orgs = d.Orgs
+	}
+	if d.Identity != nil {
+		g.Identity = d.Identity
+	}
+	if d.Issues != nil {
+		g.Issues = d.Issues
+	}
+	if d.Pulls != nil {
+		g.Pulls = d.Pulls
+	}
+	if d.Releases != nil {
+		g.Releases = d.Releases
+	}
+	ghapi.Mount(r, g)
 }
 
 func readyz(d Deps) http.HandlerFunc {

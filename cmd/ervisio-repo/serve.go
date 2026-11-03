@@ -221,7 +221,8 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		if journal != nil && journal.Journal != nil {
 			rj = journal.Journal
 		}
-		deps.Releases = releases.New(releases.Options{Pool: pool, Repos: repoSvc, Git: gitTier, Journal: rj, Storage: storage, Bus: bus, Log: log})
+		relSvc := releases.New(releases.Options{Pool: pool, Repos: repoSvc, Git: gitTier, Journal: rj, Storage: storage, Bus: bus, Log: log})
+		deps.Releases = relSvc
 		deps.Git = git.HTTP
 		deps.Tiering = tiering.Admin
 		deps.Hydration = tiering.Hydrator
@@ -260,6 +261,10 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 			deps.Protection = journal.Protection
 			journal.GitHub.SetRepos(repoSvc)
 			bus.Register("ghsync.push", journal.GitHub.EventHandler(), events.KindPush)
+			// GitHub import of the non-git data (labels, milestones, issues,
+			// pull requests, releases).
+			journal.GitHub.SetImporters(append(issueSvc.GitHubImporters(),
+				pullSvc.GitHubImporter(issueSvc.ImportGitHubComments), relSvc.GitHubImporter())...)
 			deps.GitHub = journal.GitHub
 		}
 	}

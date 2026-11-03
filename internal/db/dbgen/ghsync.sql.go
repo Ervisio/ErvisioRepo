@@ -126,7 +126,7 @@ func (q *Queries) GetGitHubConnection(ctx context.Context, id uuid.UUID) (GetGit
 }
 
 const getGitHubImport = `-- name: GetGitHubImport :one
-SELECT id, repo_id, connection_id, remote_owner, remote_name, status, last_error, created_by, created_at, started_at, finished_at FROM github_imports WHERE id = $1
+SELECT id, repo_id, connection_id, remote_owner, remote_name, status, last_error, created_by, created_at, started_at, finished_at, include FROM github_imports WHERE id = $1
 `
 
 func (q *Queries) GetGitHubImport(ctx context.Context, id uuid.UUID) (GithubImport, error) {
@@ -144,12 +144,13 @@ func (q *Queries) GetGitHubImport(ctx context.Context, id uuid.UUID) (GithubImpo
 		&i.CreatedAt,
 		&i.StartedAt,
 		&i.FinishedAt,
+		&i.Include,
 	)
 	return i, err
 }
 
 const getGitHubImportByRepo = `-- name: GetGitHubImportByRepo :one
-SELECT id, repo_id, connection_id, remote_owner, remote_name, status, last_error, created_by, created_at, started_at, finished_at FROM github_imports WHERE repo_id = $1
+SELECT id, repo_id, connection_id, remote_owner, remote_name, status, last_error, created_by, created_at, started_at, finished_at, include FROM github_imports WHERE repo_id = $1
 `
 
 func (q *Queries) GetGitHubImportByRepo(ctx context.Context, repoID uuid.UUID) (GithubImport, error) {
@@ -167,6 +168,7 @@ func (q *Queries) GetGitHubImportByRepo(ctx context.Context, repoID uuid.UUID) (
 		&i.CreatedAt,
 		&i.StartedAt,
 		&i.FinishedAt,
+		&i.Include,
 	)
 	return i, err
 }
@@ -331,7 +333,7 @@ func (q *Queries) InsertGitHubConnection(ctx context.Context, arg InsertGitHubCo
 const insertGitHubImport = `-- name: InsertGitHubImport :one
 INSERT INTO github_imports (id, repo_id, connection_id, remote_owner, remote_name, created_by)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, repo_id, connection_id, remote_owner, remote_name, status, last_error, created_by, created_at, started_at, finished_at
+RETURNING id, repo_id, connection_id, remote_owner, remote_name, status, last_error, created_by, created_at, started_at, finished_at, include
 `
 
 type InsertGitHubImportParams struct {
@@ -365,6 +367,7 @@ func (q *Queries) InsertGitHubImport(ctx context.Context, arg InsertGitHubImport
 		&i.CreatedAt,
 		&i.StartedAt,
 		&i.FinishedAt,
+		&i.Include,
 	)
 	return i, err
 }

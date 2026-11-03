@@ -27,11 +27,15 @@ import (
 const DefaultBaseURL = "https://github.com"
 
 const (
-	apiVersion   = "2022-11-28"
-	maxAPIBody   = 4 << 20
-	apiTimeout   = 30 * time.Second
-	jwtLifetime  = 9 * time.Minute
-	tokenRefresh = 5 * time.Minute
+	apiVersion = "2022-11-28"
+	maxAPIBody = 32 << 20
+	// Rate limits: how long a request may wait for a reset, and how many
+	// times it is sent again.
+	maxRateWait    = time.Hour
+	maxRateRetries = 5
+	apiTimeout     = 30 * time.Second
+	jwtLifetime    = 9 * time.Minute
+	tokenRefresh   = 5 * time.Minute
 )
 
 // APIURL is the REST endpoint of a GitHub web URL: api.github.com for
@@ -75,48 +79,89 @@ func (e *APIError) Error() string {
 
 // API is an authenticated client of the GitHub REST API of one connection.
 // Importers (see Importer) use it to read the non-git data of a
-// repository.
+// repository. Requests that hit a rate limit wait for it to reset (at most
+// maxRateWait) and are sent again.
 type API struct {
 	base  string
 	token string
-	http  *http.Client
+	// source, when set, returns the current token before every request
+	// (App installation tokens expire after an hour; long imports outlive
+	// them).
+	source func(ctx context.Context) (string, error)
+	http   *http.Client
 }
 
 // Do sends a request to path (relative to the API root, for example
 // "/repos/o/n/issues?state=all") with body encoded as JSON when not nil,
 // and decodes a JSON answer into out when not nil.
 func (a *API) Do(ctx context.Context, method, path string, body, out any) error {
-	var rd io.Reader
+	_, err := a.do(ctx, method, path, body, out)
+	return err
+}
+
+func (a *API) do(ctx context.Context, method, path string, body, out any) (http.Header, error) {
+	var payload []byte
 	if body != nil {
 		b, err := json.Marshal(body)
 		if err != nil {
-			return fmt.Errorf("encode request: %w", err)
+			return nil, fmt.Errorf("encode request: %w", err)
 		}
-		rd = bytes.NewReader(b)
+		payload = b
 	}
-	req, err := http.NewRequestWithContext(ctx, method, a.base+path, rd)
+	resp, err := a.send(ctx, a.http, method, path, payload, "application/vnd.github+json")
 	if err != nil {
-		return fmt.Errorf("github request: %w", err)
-	}
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("X-GitHub-Api-Version", apiVersion)
-	req.Header.Set("User-Agent", "ErvisioRepo")
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	if a.token != "" {
-		req.Header.Set("Authorization", "Bearer "+a.token)
-	}
-	resp, err := a.http.Do(req)
-	if err != nil {
-		return fmt.Errorf("github request: %w", err)
+		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 	data, err := io.ReadAll(io.LimitReader(resp.Body, maxAPIBody))
 	if err != nil {
-		return fmt.Errorf("github response: %w", err)
+		return nil, fmt.Errorf("github response: %w", err)
 	}
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+	if out != nil && len(data) > 0 {
+		if err := json.Unmarshal(data, out); err != nil {
+			return nil, fmt.Errorf("github response: %w", err)
+		}
+	}
+	return resp.Header, nil
+}
+
+// send sends a request and returns the 2xx response, whose body the
+// caller closes. A rate-limited request waits and is sent again; any other
+// non-2xx answer is an *APIError.
+func (a *API) send(ctx context.Context, c *http.Client, method, path string, payload []byte, accept string) (*http.Response, error) {
+	for attempt := 0; ; attempt++ {
+		var rd io.Reader
+		if payload != nil {
+			rd = bytes.NewReader(payload)
+		}
+		req, err := http.NewRequestWithContext(ctx, method, a.base+path, rd)
+		if err != nil {
+			return nil, fmt.Errorf("github request: %w", err)
+		}
+		req.Header.Set("Accept", accept)
+		req.Header.Set("X-GitHub-Api-Version", apiVersion)
+		req.Header.Set("User-Agent", "ErvisioRepo")
+		if payload != nil {
+			req.Header.Set("Content-Type", "application/json")
+		}
+		tok := a.token
+		if a.source != nil {
+			if tok, err = a.source(ctx); err != nil {
+				return nil, fmt.Errorf("GitHub authentication: %w", err)
+			}
+		}
+		if tok != "" {
+			req.Header.Set("Authorization", "Bearer "+tok)
+		}
+		resp, err := c.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("github request: %w", err)
+		}
+		if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+			return resp, nil
+		}
+		data, _ := io.ReadAll(io.LimitReader(resp.Body, 64<<10))
+		_ = resp.Body.Close()
 		var m struct {
 			Message string `json:"message"`
 		}
@@ -125,15 +170,118 @@ func (a *API) Do(ctx context.Context, method, path string, body, out any) error 
 		if len(msg) > 300 {
 			msg = msg[:300]
 		}
-		return &APIError{Status: resp.StatusCode, Message: msg}
+		wait, limited := rateLimitWait(resp, msg)
+		if !limited || attempt >= maxRateRetries {
+			return nil, &APIError{Status: resp.StatusCode, Message: msg}
+		}
+		if wait > maxRateWait {
+			return nil, &APIError{Status: resp.StatusCode, Message: "rate limit exceeded until " +
+				time.Now().Add(wait).UTC().Format(time.RFC3339)}
+		}
+		t := time.NewTimer(wait)
+		select {
+		case <-ctx.Done():
+			t.Stop()
+			return nil, fmt.Errorf("github request: %w", ctx.Err())
+		case <-t.C:
+		}
 	}
-	if out != nil && len(data) > 0 {
-		if err := json.Unmarshal(data, out); err != nil {
-			return fmt.Errorf("github response: %w", err)
+}
+
+// rateLimitWait reports whether resp is a rate limit refusal and how long
+// to wait before sending the request again: Retry-After when given
+// (secondary limits), otherwise until X-RateLimit-Reset when the primary
+// limit is exhausted.
+func rateLimitWait(resp *http.Response, msg string) (time.Duration, bool) {
+	if resp.StatusCode != http.StatusForbidden && resp.StatusCode != http.StatusTooManyRequests {
+		return 0, false
+	}
+	if v := resp.Header.Get("Retry-After"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			return time.Duration(n)*time.Second + time.Second, true
+		}
+	}
+	if resp.Header.Get("X-RateLimit-Remaining") == "0" {
+		if n, err := strconv.ParseInt(resp.Header.Get("X-RateLimit-Reset"), 10, 64); err == nil {
+			return max(time.Until(time.Unix(n, 0))+time.Second, time.Second), true
+		}
+		return time.Minute, true
+	}
+	if resp.StatusCode == http.StatusTooManyRequests || strings.Contains(strings.ToLower(msg), "rate limit") {
+		return time.Minute, true
+	}
+	return 0, false
+}
+
+// Each GETs path, a list endpoint, and every following page (Link
+// rel="next"), and calls fn on each element in order. per_page=100 is
+// added when path sets no page size.
+func Each[T any](ctx context.Context, a *API, path string, fn func(T) error) error {
+	next := path
+	if !strings.Contains(path, "per_page=") {
+		sep := "?"
+		if strings.Contains(path, "?") {
+			sep = "&"
+		}
+		next = path + sep + "per_page=100"
+	}
+	for next != "" {
+		var page []T
+		hdr, err := a.do(ctx, http.MethodGet, next, nil, &page)
+		if err != nil {
+			return err
+		}
+		for _, v := range page {
+			if err := fn(v); err != nil {
+				return err
+			}
+		}
+		if next, err = a.nextPage(hdr.Get("Link")); err != nil {
+			return err
 		}
 	}
 	return nil
 }
+
+// nextPage returns the API path of the rel="next" link of a Link header,
+// "" on the last page. A link outside the API root is refused: the token
+// must not be sent anywhere else.
+func (a *API) nextPage(link string) (string, error) {
+	for part := range strings.SplitSeq(link, ",") {
+		target, params, ok := strings.Cut(strings.TrimSpace(part), ";")
+		if !ok || !strings.Contains(params, `rel="next"`) {
+			continue
+		}
+		u := strings.TrimSuffix(strings.TrimPrefix(strings.TrimSpace(target), "<"), ">")
+		path, ok := strings.CutPrefix(u, a.base)
+		if !ok || !strings.HasPrefix(path, "/") {
+			return "", errors.New("github pagination: link outside the API")
+		}
+		return path, nil
+	}
+	return "", nil
+}
+
+// Download streams the binary content at path (a release asset:
+// "/repos/o/n/releases/assets/<id>") to fn. GitHub answers with a redirect
+// to its storage; the Authorization header is not forwarded to another
+// host. The transfer has no overall timeout besides ctx.
+func (a *API) Download(ctx context.Context, path string, fn func(io.Reader) error) error {
+	resp, err := a.send(ctx, downloadClient, http.MethodGet, path, nil, "application/octet-stream")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	return fn(resp.Body)
+}
+
+// downloadClient has no overall timeout (assets can be large) but bounds
+// the wait for the response headers.
+var downloadClient = func() *http.Client {
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.ResponseHeaderTimeout = time.Minute
+	return &http.Client{Transport: t}
+}()
 
 // notFound reports whether err is a 404 of the API.
 func notFound(err error) bool {

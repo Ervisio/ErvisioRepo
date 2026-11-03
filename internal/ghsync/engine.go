@@ -23,6 +23,8 @@ const (
 	scratchPrefix  = "refs/sync/github/"
 	scratchHeads   = scratchPrefix + "heads/"
 	scratchTags    = scratchPrefix + "tags/"
+	scratchPulls   = scratchPrefix + "pull/"
+	pullsPrefix    = "refs/pull/"
 	headsPrefix    = "refs/heads/"
 	tagsPrefix     = "refs/tags/"
 	conflictPrefix = headsPrefix + "sync-conflict/"
@@ -155,6 +157,11 @@ func sortedKeys(m map[string]string) []string {
 // that the journal records it and branch protection checks it. It returns
 // the refusal of the hooks, or the git error.
 func (s *Service) updateRefs(ctx context.Context, l *gitstore.Lease, edits []edit) error {
+	return s.updateRefsAs(ctx, l, edits, Protocol)
+}
+
+// updateRefsAs is updateRefs with the githooks protocol of the session.
+func (s *Service) updateRefsAs(ctx context.Context, l *gitstore.Lease, edits []edit, protocol string) error {
 	if len(edits) == 0 {
 		return nil
 	}
@@ -166,7 +173,7 @@ func (s *Service) updateRefs(ctx context.Context, l *gitstore.Lease, edits []edi
 	var sess *githooks.Session
 	if h := s.hooks.Load(); h != nil {
 		var err error
-		if sess, err = h.Begin(ctx, l, uuid.Nil, Protocol); err != nil {
+		if sess, err = h.Begin(ctx, l, uuid.Nil, protocol); err != nil {
 			return fmt.Errorf("hook session: %w", err)
 		}
 		defer sess.Close()

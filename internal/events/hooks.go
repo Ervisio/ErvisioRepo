@@ -17,6 +17,9 @@ type PushHooks struct {
 	Bus  *Bus
 	Next githooks.Handler
 	Log  *slog.Logger
+	// Skip, when set, keeps the updates of the sessions it reports from
+	// being published (bulk imports).
+	Skip func(s *githooks.Session) bool
 }
 
 var (
@@ -46,7 +49,7 @@ func (h *PushHooks) Committed(ctx context.Context, s *githooks.Session, updates 
 	if h.Next != nil {
 		err = h.Next.Committed(ctx, s, updates, out)
 	}
-	if h.Bus != nil && len(updates) > 0 {
+	if h.Bus != nil && len(updates) > 0 && (h.Skip == nil || !h.Skip(s)) {
 		p := PushPayload{Updates: make([]RefUpdate, 0, len(updates))}
 		for _, u := range updates {
 			p.Updates = append(p.Updates, RefUpdate{Ref: u.Ref, Old: u.Old, New: u.New})

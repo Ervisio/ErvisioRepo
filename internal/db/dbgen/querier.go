@@ -32,6 +32,9 @@ type Querier interface {
 	// Accepts a code for step only once: a replay in the same window matches
 	// no row.
 	AdvanceTOTPStep(ctx context.Context, arg AdvanceTOTPStepParams) (int64, error)
+	// Numeric ids of the GitHub compatible API (internal/ghapi).
+	// Gives an id to each UUID that has none yet.
+	AssignGitHubAPIIDs(ctx context.Context, uuids []uuid.UUID) error
 	// Open pull requests of a repository waiting for auto-merge.
 	AutoMergePulls(ctx context.Context, repoID uuid.UUID) ([]PullRequest, error)
 	BumpReleaseAssetDownloads(ctx context.Context, id uuid.UUID) error
@@ -134,6 +137,9 @@ type Querier interface {
 	EmailTaken(ctx context.Context, address string) (bool, error)
 	EnsureUsageCounter(ctx context.Context, namespaceID uuid.UUID) error
 	FailMFAChallenge(ctx context.Context, id uuid.UUID) (int32, error)
+	// The local user whose external identity is the GitHub account with the
+	// numeric id subject. Matched on the id only, never on the e-mail.
+	FindLinkedGitHubUser(ctx context.Context, arg FindLinkedGitHubUserParams) (uuid.UUID, error)
 	FinishGitHubSyncRun(ctx context.Context, arg FinishGitHubSyncRunParams) error
 	// Sets the state unconditionally (restore only, nothing else runs).
 	ForceRepoStorageState(ctx context.Context, arg ForceRepoStorageStateParams) error
@@ -146,9 +152,14 @@ type Querier interface {
 	GetEmailByAddress(ctx context.Context, address string) (GetEmailByAddressRow, error)
 	GetEmailByID(ctx context.Context, id uuid.UUID) (GetEmailByIDRow, error)
 	GetEmailNotifications(ctx context.Context, id uuid.UUID) (bool, error)
+	// The release of an asset: the asset URLs of /api/v3 carry no release id.
+	// The release service still checks access with the repository.
+	GetGitHubAPIAssetRelease(ctx context.Context, id uuid.UUID) (uuid.UUID, error)
+	GetGitHubAPIUUID(ctx context.Context, id int64) (uuid.UUID, error)
 	GetGitHubConnection(ctx context.Context, id uuid.UUID) (GetGitHubConnectionRow, error)
 	GetGitHubImport(ctx context.Context, id uuid.UUID) (GithubImport, error)
 	GetGitHubImportByRepo(ctx context.Context, repoID uuid.UUID) (GithubImport, error)
+	GetGitHubImportMap(ctx context.Context, arg GetGitHubImportMapParams) (uuid.UUID, error)
 	GetGitHubSyncLink(ctx context.Context, id uuid.UUID) (GithubSyncLink, error)
 	GetGitHubSyncLinkByRepo(ctx context.Context, repoID uuid.UUID) (GithubSyncLink, error)
 	// The mode of the enabled link of a repository (hook path).
@@ -173,6 +184,7 @@ type Querier interface {
 	// Credentials for a login by username; the email is the primary address.
 	GetLoginByUsername(ctx context.Context, username string) (GetLoginByUsernameRow, error)
 	GetMFAChallenge(ctx context.Context, arg GetMFAChallengeParams) (GetMFAChallengeRow, error)
+	GetMilestoneByTitle(ctx context.Context, arg GetMilestoneByTitleParams) (Milestone, error)
 	GetMilestonesByIDs(ctx context.Context, arg GetMilestonesByIDsParams) ([]GetMilestonesByIDsRow, error)
 	GetNamespaceByName(ctx context.Context, name string) (GetNamespaceByNameRow, error)
 	GetNotificationForMail(ctx context.Context, id uuid.UUID) (GetNotificationForMailRow, error)
@@ -200,6 +212,7 @@ type Querier interface {
 	GetQuotaOverride(ctx context.Context, namespaceID uuid.UUID) (Quota, error)
 	GetRelease(ctx context.Context, arg GetReleaseParams) (Release, error)
 	GetReleaseAsset(ctx context.Context, arg GetReleaseAssetParams) (ReleaseAsset, error)
+	GetReleaseByTag(ctx context.Context, arg GetReleaseByTagParams) (Release, error)
 	GetReleaseForUpdate(ctx context.Context, arg GetReleaseForUpdateParams) (Release, error)
 	GetRepo(ctx context.Context, id uuid.UUID) (GetRepoRow, error)
 	// What the permission of a user on a repository depends on, besides the
@@ -239,6 +252,19 @@ type Querier interface {
 	// Hydration, eviction, prewarm and restore of the hot tier (PLAN §4.3, §4.5).
 	// Bytes held by the hot repositories, as recorded in repos.size_bytes.
 	HotRepoUsage(ctx context.Context) (int64, error)
+	// No row when the number is already taken.
+	ImportIssue(ctx context.Context, arg ImportIssueParams) (Issue, error)
+	ImportIssueComment(ctx context.Context, arg ImportIssueCommentParams) error
+	ImportIssueReaction(ctx context.Context, arg ImportIssueReactionParams) error
+	ImportLabel(ctx context.Context, arg ImportLabelParams) (Label, error)
+	ImportMilestone(ctx context.Context, arg ImportMilestoneParams) (Milestone, error)
+	// ---- pull requests ----
+	ImportPullRequest(ctx context.Context, arg ImportPullRequestParams) error
+	ImportPullReview(ctx context.Context, arg ImportPullReviewParams) error
+	ImportPullReviewComment(ctx context.Context, arg ImportPullReviewCommentParams) error
+	// ---- releases ----
+	// No row when a release of the tag exists already.
+	ImportRelease(ctx context.Context, arg ImportReleaseParams) (Release, error)
 	IncRepoPushes(ctx context.Context, id uuid.UUID) (int32, error)
 	InsertAuditEvent(ctx context.Context, arg InsertAuditEventParams) error
 	InsertBranchProtection(ctx context.Context, arg InsertBranchProtectionParams) (BranchProtection, error)
@@ -247,6 +273,7 @@ type Querier interface {
 	// GitHub code sync (internal/ghsync).
 	InsertGitHubConnection(ctx context.Context, arg InsertGitHubConnectionParams) (GithubConnection, error)
 	InsertGitHubImport(ctx context.Context, arg InsertGitHubImportParams) (GithubImport, error)
+	InsertGitHubImportMap(ctx context.Context, arg InsertGitHubImportMapParams) error
 	InsertInvite(ctx context.Context, arg InsertInviteParams) error
 	// ---- issues ----
 	InsertIssue(ctx context.Context, arg InsertIssueParams) (Issue, error)
@@ -329,9 +356,13 @@ type Querier interface {
 	// Enabled links whose scheduled run is due and not held by a backoff.
 	ListDueGitHubSyncLinks(ctx context.Context, limit int32) ([]GithubSyncLink, error)
 	ListEvictionCandidates(ctx context.Context, arg ListEvictionCandidatesParams) ([]ListEvictionCandidatesRow, error)
+	ListGitHubAPIIDs(ctx context.Context, uuids []uuid.UUID) ([]GhapiID, error)
 	// Every enabled backup or sync link of a hot repository (nightly check).
 	ListGitHubBackupLinks(ctx context.Context, arg ListGitHubBackupLinksParams) ([]GithubSyncLink, error)
 	ListGitHubConnections(ctx context.Context, ownerID uuid.UUID) ([]ListGitHubConnectionsRow, error)
+	// Import of the non-git data of a GitHub repository (ghsync.Importer).
+	// ---- id map ----
+	ListGitHubImportMap(ctx context.Context, arg ListGitHubImportMapParams) ([]ListGitHubImportMapRow, error)
 	// Links of a connection that follow one GitHub repository (webhooks).
 	ListGitHubSyncLinksByRemote(ctx context.Context, arg ListGitHubSyncLinksByRemoteParams) ([]GithubSyncLink, error)
 	ListGitHubSyncRefs(ctx context.Context, linkID uuid.UUID) ([]GithubSyncRef, error)
@@ -356,6 +387,8 @@ type Querier interface {
 	ListMilestones(ctx context.Context, arg ListMilestonesParams) ([]ListMilestonesRow, error)
 	// Rows charged to a namespace that no longer owns the repository (transfer).
 	ListMischargedLFSObjects(ctx context.Context, maxRows int32) ([]ListMischargedLFSObjectsRow, error)
+	// Users and organizations by name, for the user objects of /api/v3.
+	ListNamespacesByName(ctx context.Context, names []string) ([]ListNamespacesByNameRow, error)
 	ListNotificationThreads(ctx context.Context, arg ListNotificationThreadsParams) ([]ListNotificationThreadsRow, error)
 	// Pending invitations, expired ones included (the UI shows them as such).
 	ListOrgInvites(ctx context.Context, orgID uuid.UUID) ([]ListOrgInvitesRow, error)
@@ -489,10 +522,14 @@ type Querier interface {
 	PruneOutboxEvents(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	PruneWebhookDeliveries(ctx context.Context, createdAt pgtype.Timestamptz) (int64, error)
 	PullReviewRequestsOf(ctx context.Context, pullIds []uuid.UUID) ([]PullReviewRequestsOfRow, error)
+	// ---- issues ----
+	// Makes the next allocated number greater than number.
+	RaiseIssueCounter(ctx context.Context, arg RaiseIssueCounterParams) error
 	// Moves a thread (root and replies) to a new position on commit_sha, or
 	// marks it outdated (line NULL).
 	ReanchorPullReviewComment(ctx context.Context, arg ReanchorPullReviewCommentParams) error
 	RecordWebhookAttempt(ctx context.Context, arg RecordWebhookAttemptParams) error
+	RecountIssueComments(ctx context.Context, repoID uuid.UUID) error
 	ReleaseAuthorNames(ctx context.Context, ids []uuid.UUID) ([]ReleaseAuthorNamesRow, error)
 	RemoveIssueAssignee(ctx context.Context, arg RemoveIssueAssigneeParams) (int64, error)
 	RemoveIssueLabel(ctx context.Context, arg RemoveIssueLabelParams) (int64, error)
@@ -534,6 +571,7 @@ type Querier interface {
 	// prefix matches come first.
 	SearchRepos(ctx context.Context, arg SearchReposParams) ([]SearchReposRow, error)
 	SetEmailNotifications(ctx context.Context, arg SetEmailNotificationsParams) error
+	SetGitHubImportInclude(ctx context.Context, arg SetGitHubImportIncludeParams) error
 	SetGitHubImportStatus(ctx context.Context, arg SetGitHubImportStatusParams) error
 	SetIssueLock(ctx context.Context, arg SetIssueLockParams) (Issue, error)
 	SetIssueMilestone(ctx context.Context, arg SetIssueMilestoneParams) (Issue, error)

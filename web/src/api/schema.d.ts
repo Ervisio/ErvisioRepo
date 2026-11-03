@@ -3084,11 +3084,18 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Import the git data of a GitHub repository into a new repository
+         * Import a GitHub repository into a new repository
          * @description Creates the repository (the same rules as POST /user/repos or
-         *     /orgs/{org}/repos apply) and fetches every branch and tag in the
-         *     background through the normal write path. Issues, pull requests,
-         *     labels, milestones and releases are not imported yet.
+         *     /orgs/{org}/repos apply) and, in the background, fetches every
+         *     branch and tag through the normal write path, then imports the
+         *     kinds of data listed in include (all when empty): labels,
+         *     milestones, pull requests (with refs/pull/N/head, reviews and
+         *     review comments), issues (with comments and reactions) and
+         *     releases (with their assets). Numbers and timestamps are kept;
+         *     content by GitHub users without a linked local account is
+         *     attributed to the caller with an "originally by" line. The import
+         *     sends no webhooks or notifications, and a retry skips what was
+         *     imported already.
          */
         post: operations["importGitHubRepo"];
         delete?: never;
@@ -3696,7 +3703,11 @@ export interface components {
             name?: string;
             description?: string;
             visibility?: components["schemas"]["Visibility"];
+            /** @description Kinds of non-git data to import; all when empty or absent */
+            include?: components["schemas"]["GitHubImportKind"][];
         };
+        /** @enum {string} */
+        GitHubImportKind: "labels" | "milestones" | "pulls" | "issues" | "releases";
         GitHubImport: {
             /** Format: uuid */
             id: string;
@@ -3708,6 +3719,8 @@ export interface components {
             /** @enum {string} */
             status: "pending" | "running" | "done" | "error";
             lastError: string;
+            /** @description Kinds of non-git data imported; empty means all */
+            include?: components["schemas"]["GitHubImportKind"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */

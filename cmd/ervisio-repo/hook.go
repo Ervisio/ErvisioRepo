@@ -84,7 +84,7 @@ func setupGitJournal(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool
 		return nil, fmt.Errorf("git hooks: locate executable: %w", err)
 	}
 	srv, err := githooks.Start(ctx, githooks.Options{
-		Dir: t.HotRoot(), Executable: exe, Handler: &events.PushHooks{Bus: bus, Next: &ghsync.Hooks{Service: gh, Next: chain}, Log: log.With("component", "events")}, Log: log.With("component", "git-hooks"),
+		Dir: t.HotRoot(), Executable: exe, Handler: &events.PushHooks{Bus: bus, Skip: ghsync.Quiet, Next: &ghsync.Hooks{Service: gh, Next: chain}, Log: log.With("component", "events")}, Log: log.With("component", "git-hooks"),
 	})
 	if err != nil {
 		return nil, err

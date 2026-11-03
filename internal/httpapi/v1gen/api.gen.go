@@ -227,6 +227,33 @@ func (e GitHubImportStatus) Valid() bool {
 	}
 }
 
+// Defines values for GitHubImportKind.
+const (
+	Issues     GitHubImportKind = "issues"
+	Labels     GitHubImportKind = "labels"
+	Milestones GitHubImportKind = "milestones"
+	Pulls      GitHubImportKind = "pulls"
+	Releases   GitHubImportKind = "releases"
+)
+
+// Valid indicates whether the value is a known member of the GitHubImportKind enum.
+func (e GitHubImportKind) Valid() bool {
+	switch e {
+	case Issues:
+		return true
+	case Labels:
+		return true
+	case Milestones:
+		return true
+	case Pulls:
+		return true
+	case Releases:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GitHubSyncLinkStatus.
 const (
 	GitHubSyncLinkStatusDiverged GitHubSyncLinkStatus = "diverged"
@@ -1948,16 +1975,19 @@ type GitHubConnectionUpdate struct {
 
 // GitHubImport defines model for GitHubImport.
 type GitHubImport struct {
-	CreatedAt    time.Time          `json:"createdAt"`
-	FinishedAt   *time.Time         `json:"finishedAt,omitempty"`
-	Id           openapi_types.UUID `json:"id"`
-	LastError    string             `json:"lastError"`
-	RemoteName   string             `json:"remoteName"`
-	RemoteOwner  string             `json:"remoteOwner"`
-	RepoFullName string             `json:"repoFullName"`
-	RepoId       openapi_types.UUID `json:"repoId"`
-	StartedAt    *time.Time         `json:"startedAt,omitempty"`
-	Status       GitHubImportStatus `json:"status"`
+	CreatedAt  time.Time          `json:"createdAt"`
+	FinishedAt *time.Time         `json:"finishedAt,omitempty"`
+	Id         openapi_types.UUID `json:"id"`
+
+	// Include Kinds of non-git data imported; empty means all
+	Include      *[]GitHubImportKind `json:"include,omitempty"`
+	LastError    string              `json:"lastError"`
+	RemoteName   string              `json:"remoteName"`
+	RemoteOwner  string              `json:"remoteOwner"`
+	RepoFullName string              `json:"repoFullName"`
+	RepoId       openapi_types.UUID  `json:"repoId"`
+	StartedAt    *time.Time          `json:"startedAt,omitempty"`
+	Status       GitHubImportStatus  `json:"status"`
 }
 
 // GitHubImportStatus defines model for GitHubImport.Status.
@@ -1968,6 +1998,9 @@ type GitHubImportCreate struct {
 	ConnectionId openapi_types.UUID `json:"connectionId"`
 	Description  *string            `json:"description,omitempty"`
 
+	// Include Kinds of non-git data to import; all when empty or absent
+	Include *[]GitHubImportKind `json:"include,omitempty"`
+
 	// Name Name of the new repository; remoteName when empty
 	Name *string `json:"name,omitempty"`
 
@@ -1977,6 +2010,9 @@ type GitHubImportCreate struct {
 	RemoteOwner string      `json:"remoteOwner"`
 	Visibility  *Visibility `json:"visibility,omitempty"`
 }
+
+// GitHubImportKind defines model for GitHubImportKind.
+type GitHubImportKind string
 
 // GitHubSyncLink defines model for GitHubSyncLink.
 type GitHubSyncLink struct {
@@ -4370,7 +4406,7 @@ type ServerInterface interface {
 	// CheckGitHubConnection Verify the credentials of a connection against GitHub
 	// (POST /github/connections/{connectionId}/check)
 	CheckGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID)
-	// ImportGitHubRepo Import the git data of a GitHub repository into a new repository
+	// ImportGitHubRepo Import a GitHub repository into a new repository
 	// (POST /github/imports)
 	ImportGitHubRepo(w http.ResponseWriter, r *http.Request)
 	// GetMeta Public information about this instance
@@ -5147,7 +5183,7 @@ func (_ Unimplemented) CheckGitHubConnection(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// ImportGitHubRepo Import the git data of a GitHub repository into a new repository
+// ImportGitHubRepo Import a GitHub repository into a new repository
 // (POST /github/imports)
 func (_ Unimplemented) ImportGitHubRepo(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -37137,7 +37173,7 @@ type StrictServerInterface interface {
 	// CheckGitHubConnection Verify the credentials of a connection against GitHub
 	// (POST /github/connections/{connectionId}/check)
 	CheckGitHubConnection(ctx context.Context, request CheckGitHubConnectionRequestObject) (CheckGitHubConnectionResponseObject, error)
-	// ImportGitHubRepo Import the git data of a GitHub repository into a new repository
+	// ImportGitHubRepo Import a GitHub repository into a new repository
 	// (POST /github/imports)
 	ImportGitHubRepo(ctx context.Context, request ImportGitHubRepoRequestObject) (ImportGitHubRepoResponseObject, error)
 	// GetMeta Public information about this instance

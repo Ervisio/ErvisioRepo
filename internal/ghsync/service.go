@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -48,6 +49,16 @@ const (
 // the hooks let them through a mirror and do not schedule a backup for
 // them (loop prevention).
 const Protocol = "ghsync"
+
+// ImportProtocol is the githooks protocol of the writes of an import (the
+// git data and the pull request heads). It behaves like Protocol, and the
+// event hooks publish no push for it (see Quiet).
+const ImportProtocol = "ghsync-import"
+
+// Quiet reports whether the ref updates of a hook session are part of an
+// import, whose writes must not fan out to webhooks, notifications and
+// the other push consumers (events.PushHooks.Skip).
+func Quiet(s *githooks.Session) bool { return s.Protocol == ImportProtocol }
 
 // Tuning.
 const (
@@ -99,6 +110,7 @@ type Options struct {
 	PublicURL string
 	// Importers import the non-git data of a repository after its git
 	// data (see Importer). They run in order; a failure fails the import.
+	// SetImporters replaces them.
 	Importers []Importer
 	Log       *slog.Logger
 }
@@ -110,6 +122,7 @@ type Service struct {
 	seal   *sealer
 	tokens *tokens
 	hooks  atomic.Pointer[githooks.Server]
+	imps   atomic.Pointer[[]Importer]
 	repos  atomic.Value // Repos
 	jobs   atomic.Value // Enqueuer
 }
@@ -127,7 +140,31 @@ func New(o Options) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Service{o: o, q: dbgen.New(o.Pool), seal: s, tokens: newTokens()}, nil
+	svc := &Service{o: o, q: dbgen.New(o.Pool), seal: s, tokens: newTokens()}
+	svc.SetImporters(o.Importers...)
+	return svc, nil
+}
+
+// SetImporters sets the importers of the non-git data (built after the
+// service: they belong to the packages that own the data). They run in
+// ImportKinds order, whatever the order given.
+func (s *Service) SetImporters(imps ...Importer) {
+	cp := append([]Importer(nil), imps...)
+	rank := func(im Importer) int {
+		if i := slices.Index(ImportKinds, im.Name()); i >= 0 {
+			return i
+		}
+		return len(ImportKinds)
+	}
+	slices.SortStableFunc(cp, func(a, b Importer) int { return rank(a) - rank(b) })
+	s.imps.Store(&cp)
+}
+
+func (s *Service) importers() []Importer {
+	if p := s.imps.Load(); p != nil {
+		return *p
+	}
+	return nil
 }
 
 // SetHooks sets the hook server the local writes open their sessions on.

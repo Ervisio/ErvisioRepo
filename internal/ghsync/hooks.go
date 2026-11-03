@@ -24,7 +24,7 @@ type Hooks struct {
 const mirrorRefusal = "this repository is a read-only mirror of a GitHub repository: push to GitHub instead"
 
 func (h *Hooks) mode(ctx context.Context, s *githooks.Session) string {
-	if h.Service == nil || s.Protocol == Protocol {
+	if h.Service == nil || s.Protocol == Protocol || s.Protocol == ImportProtocol {
 		return ""
 	}
 	mode, err := h.Service.q.GetGitHubSyncModeByRepo(ctx, s.RepoID)

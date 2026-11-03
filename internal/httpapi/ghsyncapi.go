@@ -184,9 +184,28 @@ func connectionDTO(c ghsync.Connection) v1gen.GitHubConnection {
 }
 
 func importDTO(i ghsync.Import) v1gen.GitHubImport {
-	return v1gen.GitHubImport{Id: i.ID, RepoId: i.RepoID, RepoFullName: i.RepoFullName,
+	d := v1gen.GitHubImport{Id: i.ID, RepoId: i.RepoID, RepoFullName: i.RepoFullName,
 		RemoteOwner: i.RemoteOwner, RemoteName: i.RemoteName, Status: v1gen.GitHubImportStatus(i.Status),
 		LastError: i.LastError, CreatedAt: i.CreatedAt, StartedAt: i.StartedAt, FinishedAt: i.FinishedAt}
+	if len(i.Include) > 0 {
+		inc := make([]v1gen.GitHubImportKind, len(i.Include))
+		for n, k := range i.Include {
+			inc[n] = v1gen.GitHubImportKind(k)
+		}
+		d.Include = &inc
+	}
+	return d
+}
+
+func importKinds(in *[]v1gen.GitHubImportKind) []string {
+	if in == nil {
+		return nil
+	}
+	out := make([]string, len(*in))
+	for n, k := range *in {
+		out[n] = string(k)
+	}
+	return out
 }
 
 func linkDTO(l ghsync.Link) v1gen.GitHubSyncLink {
@@ -295,7 +314,8 @@ func (s *v1Server) ImportGitHubRepo(ctx context.Context, req v1gen.ImportGitHubR
 	b := req.Body
 	i, err := s.github.Import(ctx, principal(ctx), ghsync.ImportInput{ConnectionID: b.ConnectionId,
 		RemoteOwner: b.RemoteOwner, RemoteName: b.RemoteName, Owner: deref(b.Owner), Name: deref(b.Name),
-		Description: deref(b.Description), Visibility: string(deref(b.Visibility))}, clientOf(ctx))
+		Description: deref(b.Description), Visibility: string(deref(b.Visibility)), Include: importKinds(b.Include)},
+		clientOf(ctx))
 	if err != nil {
 		return ghsyncFail(err, http.MethodPost, "")
 	}

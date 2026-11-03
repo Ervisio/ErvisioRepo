@@ -27,6 +27,7 @@ type remote struct {
 	url  string
 	env  []string
 	kind string
+	base string // web URL of the GitHub server
 }
 
 // open authenticates the connection of a link (or an import) and returns
@@ -48,10 +49,12 @@ func (s *Service) open(ctx context.Context, connID uuid.UUID, owner, name string
 		return remote{}, err
 	}
 	return remote{
-		api:  &API{base: APIURL(cred.baseURL), token: tok, http: s.tokens.http},
+		api: &API{base: APIURL(cred.baseURL), token: tok, http: s.tokens.http,
+			source: func(ctx context.Context) (string, error) { return s.tokens.token(ctx, cred) }},
 		url:  cloneURL(cred.baseURL, owner, name),
 		env:  gitAuthEnv(tok),
 		kind: cred.kind,
+		base: cred.baseURL,
 	}, nil
 }
 

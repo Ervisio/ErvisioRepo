@@ -166,6 +166,20 @@ Phase 5, webhooks and notifications:
 - Notifications (`internal/notify`) under `/api/v1/notifications`: one thread per user and subject (issue, pull request, release) with a reason (review requested, assigned, mentioned, author, comment, state change, subscribed), read/done state, unread count, mark-all-read, per-thread subscriptions and per-repository watch levels (`/repos/{owner}/{name}/subscription`: watching, participating, ignoring). Recipients that cannot read the repository are skipped.
 - Email notifications through `internal/mail` (templates `notification` in English and Italian), sent unless the thread was read or superseded meanwhile, with an opt-out in the notification settings.
 
+Phase 5, GitHub import of issues, pull requests and releases:
+
+- The GitHub import (`POST /api/v1/github/imports`, optional `include` subset of `labels`, `milestones`, `pulls`, `issues`, `releases`; all by default) now also imports labels, milestones, issues with comments, assignees and reactions, pull requests with their reviews and review comments, and releases with their assets (streamed into the release storage class and charged to the owner quota).
+- Original numbers and timestamps are kept; the shared issue and pull request counter is raised past the highest GitHub number. Content from GitHub users without a linked identity is attributed to the importing user with an "Originally by @login on GitHub" line; approvals and change requests from unlinked reviewers become comments, so they never satisfy branch protection.
+- `refs/pull/<n>/head` is fetched from GitHub, so closed and fork pull requests keep their head commit.
+- Imports are idempotent across retries through the `github_import_map` table (migration 00170, GitHub id to local id per kind); GitHub rate limits (`Retry-After`, `X-RateLimit-Reset`) and pagination (`Link`) are honored.
+- Event bus, webhooks and notifications are suppressed while an import runs (`events.Quiet`), including the pushes of the git import.
+
+Phase 5, GitHub compatible REST API:
+
+- `/api/v3` (`internal/ghapi`) serves a subset of the GitHub REST API over the existing services and permissions: repositories, contents, commits, branches, tags and refs, pull requests with reviews, review comments and requested reviewers, issues with comments, labels, assignees and milestones, releases with asset upload (`/api/uploads/...`, the `upload_url`) and download (`Accept: application/octet-stream`, ranges), plus `/user`, `/meta` and `/rate_limit`. Commit statuses and checks answer empty results; writing them answers 501. GraphQL is not implemented (`POST /api/graphql` answers 501).
+- GitHub-shaped JSON (snake_case, `node_id`, URLs from the public URL), `Link` pagination with `page`/`per_page`, and errors as `{"message", "documentation_url"}`, the documented exception to `application/problem+json`. Stable numeric ids for UUID objects in `ghapi_ids` (migration 00175).
+- Compatibility table and the list of working `gh` commands in `docs/api-v3.md` and `docs/api-v3.it.md`.
+
 ### Removed
 
 - Organization role `billing` (existing members become `member`).

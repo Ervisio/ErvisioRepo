@@ -101,8 +101,12 @@ func nullID(id uuid.UUID) uuid.NullUUID { return uuid.NullUUID{UUID: id, Valid: 
 // transaction of the change. A nil payload keeps ev.Payload (an empty
 // object when unset); otherwise payload is marshalled to JSON. ev.ID is
 // generated when unset. Call Bus.Kick after the commit for a prompt
-// delivery; the periodic drain delivers it anyway.
+// delivery; the periodic drain delivers it anyway. Under a Quiet context
+// it records nothing.
 func Emit(ctx context.Context, q *dbgen.Queries, ev Event, payload any) error {
+	if IsQuiet(ctx) {
+		return nil
+	}
 	if ev.Kind == "" || ev.Action == "" {
 		return fmt.Errorf("emit event: kind and action are required")
 	}

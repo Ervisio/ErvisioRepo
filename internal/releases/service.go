@@ -714,63 +714,88 @@ func (s *Service) UploadAsset(ctx context.Context, who auth.Principal, owner, na
 	if err != nil {
 		return Asset{}, err
 	}
-	ctype := in.ContentType
-	if ctype == "" {
-		ctype = mime.TypeByExtension(path.Ext(in.Name))
-	}
-	if mt, _, err := mime.ParseMediaType(ctype); err != nil || len(ctype) > 255 {
-		ctype = "application/octet-stream"
-	} else {
-		ctype = mt
-	}
-	id, err := uuid.NewV7()
+	row, err := s.storeAsset(ctx, r.OwnerID, r.ID, rel.ID, in, assetType(in.Name, in.ContentType), cl, nullUser(who.UserID),
+		func(q *dbgen.Queries, row dbgen.ReleaseAsset) error {
+			return audit.Record(ctx, q, s.auditEvent(who, ActionAssetAdded, r, rel.ID, c,
+				map[string]any{"asset": in.Name, "size": row.Size}))
+		})
 	if err != nil {
-		return Asset{}, fmt.Errorf("asset id: %w", err)
-	}
-	if err := quota.Reserve(ctx, s.q, r.OwnerID, quota.Delta{Bytes: in.Size}); err != nil {
 		return Asset{}, err
 	}
+	return assetFrom(row), nil
+}
+
+// assetType is the media type recorded for the asset name uploaded as
+// ctype (guessed from the extension when empty).
+func assetType(name, ctype string) string {
+	if ctype == "" {
+		ctype = mime.TypeByExtension(path.Ext(name))
+	}
+	mt, _, err := mime.ParseMediaType(ctype)
+	if err != nil || len(ctype) > 255 {
+		return "application/octet-stream"
+	}
+	return mt
+}
+
+func nullUser(id uuid.UUID) uuid.NullUUID { return uuid.NullUUID{UUID: id, Valid: id != uuid.Nil} }
+
+// storeAsset streams in.Body into the storage class cl, charging in.Size
+// bytes to the quota of ownerID, and records the asset of release relID
+// of repoID; then, in the same transaction, runs also when not nil. On
+// failure the quota is refunded and the object deleted.
+func (s *Service) storeAsset(ctx context.Context, ownerID, repoID, relID uuid.UUID, in UploadInput, ctype string,
+	cl *tier.Class, uploader uuid.NullUUID, also func(*dbgen.Queries, dbgen.ReleaseAsset) error) (dbgen.ReleaseAsset, error) {
+	id, err := uuid.NewV7()
+	if err != nil {
+		return dbgen.ReleaseAsset{}, fmt.Errorf("asset id: %w", err)
+	}
+	if err := quota.Reserve(ctx, s.q, ownerID, quota.Delta{Bytes: in.Size}); err != nil {
+		return dbgen.ReleaseAsset{}, err
+	}
 	refund := func() {
-		if err := quota.Release(context.WithoutCancel(ctx), s.q, r.OwnerID, quota.Delta{Bytes: in.Size}); err != nil {
-			s.log.ErrorContext(ctx, "release asset quota", "repo", r.ID, "error", err)
+		if err := quota.Release(context.WithoutCancel(ctx), s.q, ownerID, quota.Delta{Bytes: in.Size}); err != nil {
+			s.log.ErrorContext(ctx, "release asset quota", "repo", repoID, "error", err)
 		}
 	}
-	key := fmt.Sprintf("releases/%s/%s/%s", r.ID, rel.ID, id)
+	key := fmt.Sprintf("releases/%s/%s/%s", repoID, relID, id)
 	obj, err := cl.Put(ctx, key, in.Body, in.Size, nil)
 	if err != nil {
 		refund()
-		return Asset{}, fmt.Errorf("store asset: %w", err)
+		return dbgen.ReleaseAsset{}, fmt.Errorf("store asset: %w", err)
 	}
 	var row dbgen.ReleaseAsset
 	err = s.tx(ctx, func(q *dbgen.Queries) error {
 		// The release may have been deleted while the bytes were uploading.
-		if _, err := q.GetReleaseForUpdate(ctx, dbgen.GetReleaseForUpdateParams{ID: rel.ID, RepoID: r.ID}); err != nil {
+		if _, err := q.GetReleaseForUpdate(ctx, dbgen.GetReleaseForUpdateParams{ID: relID, RepoID: repoID}); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ErrNotFound
 			}
 			return fmt.Errorf("lock release: %w", err)
 		}
 		var err error
-		row, err = q.InsertReleaseAsset(ctx, dbgen.InsertReleaseAssetParams{ID: id, ReleaseID: rel.ID, RepoID: r.ID, Name: in.Name,
+		row, err = q.InsertReleaseAsset(ctx, dbgen.InsertReleaseAssetParams{ID: id, ReleaseID: relID, RepoID: repoID, Name: in.Name,
 			Label: in.Label, ContentType: ctype, Size: obj.Size, Sha256: obj.SHA256, StoragePolicy: cl.Name(), StorageKey: key,
-			UploaderID: uuid.NullUUID{UUID: who.UserID, Valid: who.UserID != uuid.Nil}})
+			UploaderID: uploader})
 		if isUnique(err) {
 			return ErrNameTaken
 		}
 		if err != nil {
 			return fmt.Errorf("insert asset: %w", err)
 		}
-		return audit.Record(ctx, q, s.auditEvent(who, ActionAssetAdded, r, rel.ID, c,
-			map[string]any{"asset": in.Name, "size": obj.Size}))
+		if also != nil {
+			return also(q, row)
+		}
+		return nil
 	})
 	if err != nil {
 		refund()
 		if delErr := cl.Delete(context.WithoutCancel(ctx), key); delErr != nil {
 			s.log.WarnContext(ctx, "delete unreferenced asset object", "key", key, "error", delErr)
 		}
-		return Asset{}, err
+		return dbgen.ReleaseAsset{}, err
 	}
-	return assetFrom(row), nil
+	return row, nil
 }
 
 // UpdateAsset renames an asset or changes its label; nil fields are kept.

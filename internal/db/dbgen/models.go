@@ -65,6 +65,11 @@ type EventsOutbox struct {
 	DispatchedAt pgtype.Timestamptz
 }
 
+type GhapiID struct {
+	Uuid uuid.UUID
+	ID   int64
+}
+
 type GitGenerationsRetired struct {
 	RepoID     uuid.UUID
 	Generation int64
@@ -99,6 +104,14 @@ type GithubImport struct {
 	CreatedAt    pgtype.Timestamptz
 	StartedAt    pgtype.Timestamptz
 	FinishedAt   pgtype.Timestamptz
+	Include      []string
+}
+
+type GithubImportMap struct {
+	RepoID   uuid.UUID
+	Kind     string
+	GithubID int64
+	LocalID  uuid.UUID
 }
 
 type GithubSyncLink struct {

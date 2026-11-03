@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
+	"github.com/Ervisio/ErvisioRepo/internal/events"
 	"github.com/Ervisio/ErvisioRepo/internal/gitstore"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
@@ -29,13 +31,17 @@ import (
 // repository and its lease was released.
 //
 // An Importer must be idempotent: a failed import job is retried, and the
-// importers before the failing one run again. It reads GitHub only through
-// ImportContext.API (already authenticated, rate limits and pagination are
-// the importer's business) and writes through its own service, never to
-// the git repository. A returned error fails the import; its message is
+// importers before the failing one run again (the github_import_map table
+// maps GitHub ids to local ids for this). It reads GitHub only through
+// ImportContext.API (authenticated; Each pages, rate limits are waited
+// for) and writes through its own service, never to the git repository
+// (ImportContext.FetchPullHeads is the one git write it may ask for). It
+// runs under an events.Quiet context and must not emit events or send
+// notifications itself. A returned error fails the import; its message is
 // shown to the user, so it must carry no secret.
 type Importer interface {
-	// Name identifies the importer in logs and errors ("issues").
+	// Name identifies the importer in logs and errors; it is one of
+	// ImportKinds, which ImportInput.Include selects.
 	Name() string
 	Import(ctx context.Context, ic ImportContext) error
 }
@@ -52,8 +58,24 @@ type ImportContext struct {
 	// CreatedBy is the user who started the import (the author of
 	// imported data whose GitHub author has no local account).
 	CreatedBy uuid.UUID
-	Log       *slog.Logger
+	// BaseURL is the web URL of the GitHub server (https://github.com).
+	BaseURL string
+	Log     *slog.Logger
+
+	st *importState
 }
+
+// Kinds of non-git data (Importer.Name), in import order.
+const (
+	ImportLabels     = "labels"
+	ImportMilestones = "milestones"
+	ImportPulls      = "pulls"
+	ImportIssues     = "issues"
+	ImportReleases   = "releases"
+)
+
+// ImportKinds lists the kinds an import can include.
+var ImportKinds = []string{ImportLabels, ImportMilestones, ImportPulls, ImportIssues, ImportReleases}
 
 // ImportInput starts an import.
 type ImportInput struct {
@@ -63,6 +85,9 @@ type ImportInput struct {
 	// Owner, Name, Description and Visibility describe the new repository;
 	// Name defaults to RemoteName, Visibility to private.
 	Owner, Name, Description, Visibility string
+	// Include lists the kinds of non-git data to import (ImportKinds);
+	// empty imports them all.
+	Include []string
 }
 
 // Import is the state of an import.
@@ -72,13 +97,15 @@ type Import struct {
 	RepoFullName            string
 	RemoteOwner, RemoteName string
 	Status, LastError       string
-	CreatedAt               time.Time
-	StartedAt, FinishedAt   *time.Time
+	// Include is the kinds of non-git data imported; empty means all.
+	Include               []string
+	CreatedAt             time.Time
+	StartedAt, FinishedAt *time.Time
 }
 
 func toImport(r dbgen.GithubImport, fullName string) Import {
 	return Import{ID: r.ID, RepoID: r.RepoID, RepoFullName: fullName, RemoteOwner: r.RemoteOwner,
-		RemoteName: r.RemoteName, Status: r.Status, LastError: r.LastError, CreatedAt: r.CreatedAt.Time,
+		RemoteName: r.RemoteName, Status: r.Status, LastError: r.LastError, Include: r.Include, CreatedAt: r.CreatedAt.Time,
 		StartedAt: ts(r.StartedAt), FinishedAt: ts(r.FinishedAt)}
 }
 
@@ -93,13 +120,38 @@ func checkRemote(owner, name string) error {
 	return nil
 }
 
+// checkInclude validates and deduplicates the kinds of an import; all of
+// them is the same as none (everything).
+func checkInclude(kinds []string) ([]string, error) {
+	var out []string
+	for _, k := range ImportKinds {
+		if slices.Contains(kinds, k) {
+			out = append(out, k)
+		}
+	}
+	for _, k := range kinds {
+		if !slices.Contains(ImportKinds, k) {
+			return nil, invalidf("include: unknown kind %q", k)
+		}
+	}
+	if len(out) == len(ImportKinds) {
+		return nil, nil
+	}
+	return out, nil
+}
+
 // Import creates a repository and schedules the import of the git data
-// of a GitHub repository into it.
+// of a GitHub repository into it, then of the kinds of non-git data it
+// includes.
 func (s *Service) Import(ctx context.Context, who auth.Principal, in ImportInput, c identity.Client) (Import, error) {
 	if who.UserID == uuid.Nil {
 		return Import{}, ErrForbidden
 	}
 	if err := checkRemote(in.RemoteOwner, in.RemoteName); err != nil {
+		return Import{}, err
+	}
+	include, err := checkInclude(in.Include)
+	if err != nil {
 		return Import{}, err
 	}
 	rs, err := s.repoSvc()
@@ -151,6 +203,12 @@ func (s *Service) Import(ctx context.Context, who auth.Principal, in ImportInput
 	if err != nil {
 		return Import{}, fmt.Errorf("insert import: %w", err)
 	}
+	if len(include) > 0 {
+		if err := s.q.SetGitHubImportInclude(ctx, dbgen.SetGitHubImportIncludeParams{ID: row.ID, Include: include}); err != nil {
+			return Import{}, fmt.Errorf("set import kinds: %w", err)
+		}
+		row.Include = include
+	}
 	if err := s.enqueue(ctx, ImportArgs{ImportID: row.ID}); err != nil {
 		return Import{}, fmt.Errorf("enqueue import: %w", err)
 	}
@@ -199,15 +257,31 @@ func (s *Service) runImport(ctx context.Context, id uuid.UUID) error {
 		}
 		return s.failImport(ctx, imp, err)
 	}
-	if len(s.o.Importers) > 0 {
+	var run []Importer
+	for _, im := range s.importers() {
+		if len(imp.Include) == 0 || slices.Contains(imp.Include, im.Name()) {
+			run = append(run, im)
+		}
+	}
+	if len(run) > 0 {
+		if !imp.ConnectionID.Valid {
+			return s.failImport(ctx, imp, errors.New("the GitHub connection was deleted"))
+		}
 		r, err := s.open(ctx, imp.ConnectionID.UUID, imp.RemoteOwner, imp.RemoteName)
 		if err != nil {
 			return s.failImport(ctx, imp, err)
 		}
-		for _, im := range s.o.Importers {
-			if err := im.Import(ctx, ImportContext{ImportID: imp.ID, RepoID: imp.RepoID,
+		base := r.base
+		st := &importState{s: s, imp: imp, issuers: issuersOf(base), users: map[int64]uuid.NullUUID{}}
+		qctx := events.Quiet(ctx)
+		for _, im := range run {
+			if err := im.Import(qctx, ImportContext{ImportID: imp.ID, RepoID: imp.RepoID,
 				RemoteOwner: imp.RemoteOwner, RemoteName: imp.RemoteName, API: r.api,
-				CreatedBy: imp.CreatedBy.UUID, Log: s.o.Log.With("importer", im.Name())}); err != nil {
+				CreatedBy: imp.CreatedBy.UUID, BaseURL: base, Log: s.o.Log.With("importer", im.Name()),
+				st: st}); err != nil {
+				if errors.Is(err, gitstore.ErrBusy) {
+					return err
+				}
 				return s.failImport(ctx, imp, fmt.Errorf("import %s: %w", im.Name(), err))
 			}
 		}
@@ -265,5 +339,5 @@ func (s *Service) importGit(ctx context.Context, imp dbgen.GithubImport) error {
 	if len(edits) == len(scratch) {
 		return updateRefsRaw(ctx, l.Path, edits)
 	}
-	return s.updateRefs(ctx, l, edits)
+	return s.updateRefsAs(ctx, l, edits, ImportProtocol)
 }

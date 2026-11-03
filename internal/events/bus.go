@@ -146,7 +146,11 @@ func (b *Bus) Kick(ctx context.Context) {
 
 // Publish emits ev in a transaction of its own and kicks the drain. Use
 // Emit instead when the event describes a change made in a transaction.
+// Under a Quiet context it records nothing.
 func (b *Bus) Publish(ctx context.Context, ev Event, payload any) error {
+	if IsQuiet(ctx) {
+		return nil
+	}
 	tx, err := b.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("publish event: begin: %w", err)
