@@ -1,0 +1,217 @@
+
+<style>
+.a { --hue: var(--sec-code); --hue-s: var(--sec-code-s); display: grid; grid-template-columns: 72px 248px 1fr; min-height: 100vh; gap: 0 12px; padding: 12px 12px 12px 0; }
+.a-rail { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 4px; }
+.a-logo { width: 44px; height: 44px; border-radius: 14px; background: var(--ink); color: #000; display: grid; place-items: center; font: 800 20px var(--font); margin-bottom: 10px; }
+.a-ri { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--ink2); background: var(--surface); transition: border-radius .18s, background .18s; position: relative; }
+.a-ri:hover, .a-ri.on { border-radius: 14px; background: var(--sunk); color: var(--ink); }
+.a-ri.on::before { content: ""; position: absolute; left: -14px; width: 4px; height: 24px; border-radius: 0 4px 4px 0; background: var(--ink); }
+.a-ri .i { width: 19px; height: 19px; }
+.a-ri.tile { font: 800 13px var(--font); color: #000; }
+.a-sp { flex: 1; }
+.a-nav { display: flex; flex-direction: column; gap: 4px; padding-top: 6px; }
+.a-repo { padding: 4px 10px 14px; }
+.a-repo small { color: var(--ink2); font-weight: 600; font-size: 13px; }
+.a-repo b { display: block; font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
+.a-chip { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 999px; background: var(--sunk); font-size: 12px; font-weight: 700; color: var(--ink2); margin-top: 6px; }
+.a-chip .i { width: 12px; height: 12px; }
+.a-ni { display: flex; align-items: center; gap: 11px; height: 44px; padding: 0 10px 0 6px; border-radius: 12px; font-weight: 700; color: var(--ink2); }
+.a-ni:hover { background: var(--surface); color: var(--ink); }
+.a-ni[aria-current] { background: var(--sunk); color: var(--ink); }
+.a-ni em { margin-left: auto; font-style: normal; font-size: 12px; color: var(--ink3); }
+.a-kt { width: 32px; height: 32px; border-radius: 11px; display: grid; place-items: center; background: var(--hue-s); color: var(--hue); flex: none; }
+.a-ni[aria-current] .a-kt { background: var(--hue); color: #000; }
+.a-store { margin-top: 14px; background: var(--surface); border-radius: 18px; padding: 14px; font-size: 12.5px; color: var(--ink2); display: flex; flex-direction: column; gap: 6px; }
+.a-store b { color: var(--ink); font-size: 13px; }
+.a-meter { height: 6px; border-radius: 6px; background: var(--sunk); overflow: hidden; }
+.a-meter i { display: block; height: 100%; width: 34%; background: var(--ok); border-radius: 6px; }
+.a-main { background: var(--surface); border-radius: 20px; padding: 20px 22px 28px; min-width: 0; }
+.a-grid > div, .b-cols > div, .c-body > div { min-width: 0; }
+.a-main > section { display: none; }
+.a-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.a-head h1 { margin: 0 6px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+.a-head .sub { color: var(--ink2); font-size: 13px; }
+.a-grow { flex: 1; }
+.a-btn { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 14px; border-radius: 12px; background: var(--sunk); font-weight: 700; font-size: 13px; }
+.a-btn:hover { background: var(--raise); }
+.a-btn.pri { background: var(--hue); color: #000; }
+.a-btn em { font-style: normal; color: var(--ink2); font-weight: 600; }
+.a-grid { display: grid; grid-template-columns: 1fr 280px; gap: 12px; align-items: start; }
+.a-card { background: var(--sunk); border-radius: 18px; padding: 6px; min-width: 0; }
+.a-card + .a-card { margin-top: 12px; }
+.a-ch { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px; font-size: 13px; flex-wrap: wrap; }
+.a-ch h3 { margin: 0; font-size: 14px; font-weight: 800; display: flex; gap: 8px; align-items: center; }
+.a-ch h3 .i { color: var(--hue); }
+.a-row { display: grid; grid-template-columns: 18px minmax(120px, 220px) 1fr auto; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 12px; font-size: 13.5px; }
+.a-row:hover { background: var(--raise); }
+.a-row.k-folder .i { color: var(--hue); }
+.a-row.k-file .i { color: var(--ink3); }
+.a-row .nm { font-weight: 700; }
+.a-row .msg { color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.a-row .tm { color: var(--ink3); font-size: 12.5px; white-space: nowrap; }
+.a-last { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--raise); margin: 0 0 4px; font-size: 13px; }
+.a-last .msg { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.a-md { padding: 4px 18px 14px; font-size: 14px; line-height: 1.6; max-width: 72ch; }
+.a-md h1 { font-size: 22px; font-weight: 800; margin: 8px 0; } .a-md h2 { font-size: 16px; font-weight: 800; margin: 18px 0 6px; }
+.a-md code { font: 12.5px var(--mono); background: var(--raise); padding: 1px 5px; border-radius: 6px; }
+.a-md pre { background: var(--bg); border-radius: 12px; padding: 12px 14px; overflow-x: auto; }
+.a-md pre code { background: none; padding: 0; }
+.a-side { display: flex; flex-direction: column; gap: 12px; }
+.a-kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; padding: 4px 10px 10px; margin: 0; font-size: 13px; }
+.a-kv dt { color: var(--ink2); } .a-kv dd { margin: 0; font-weight: 600; text-align: right; }
+.a-lang { display: flex; height: 8px; border-radius: 8px; overflow: hidden; gap: 2px; margin: 4px 10px 8px; }
+.a-lang i:nth-child(1) { flex: 71; background: var(--h-file); } .a-lang i:nth-child(2) { flex: 24; background: var(--h-svc); } .a-lang i:nth-child(3) { flex: 5; background: var(--ink3); }
+.a-crumb { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-weight: 700; font-size: 15px; }
+.a-crumb a { color: var(--hue); } .a-crumb .i { color: var(--ink3); width: 14px; }
+.a-code { background: var(--bg); border-radius: 12px; padding: 10px 0; margin: 0 0 0; }
+.jobrow { display: flex; gap: 10px; align-items: center; padding: 7px 10px; font-size: 13px; border-radius: 12px; }
+.jobrow span:nth-child(2) { flex: 1; font-weight: 600; }
+.a-tabs { display: flex; gap: 4px; background: var(--sunk); padding: 4px; border-radius: 14px; width: fit-content; margin-bottom: 12px; flex-wrap: wrap; }
+.a-tab { height: 32px; padding: 0 12px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--ink2); }
+.a-tab.on { background: var(--raise); color: var(--ink); }
+.a-tab em { font-style: normal; color: var(--ink3); }
+.a-state { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border-radius: 999px; background: var(--hue-s); color: var(--hue); font-size: 12.5px; font-weight: 800; }
+.a-split { display: grid; grid-template-columns: 240px 1fr; gap: 12px; align-items: start; }
+.a-ft { display: flex; flex-direction: column; gap: 2px; }
+.a-ft a { display: flex; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 10px; font: 12px var(--mono); color: var(--ink2); }
+.a-ft a.on { background: var(--raise); color: var(--ink); }
+.a-ft a span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-ft .p { color: var(--ok); } .a-ft .m { color: var(--err); }
+.a-fh { display: flex; align-items: center; gap: 10px; padding: 8px 10px; font: 600 12.5px var(--mono); }
+.a-fh .p { color: var(--ok); } .a-fh .m { color: var(--err); }
+.diff tr.cmt td { padding: 8px 12px; background: var(--sunk); white-space: normal; font-family: var(--font); }
+.thread { background: var(--surface); border-radius: 14px; padding: 12px 14px; max-width: 720px; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; }
+.tc { display: flex; gap: 10px; } .tc p { margin: 3px 0 0; color: var(--ink); line-height: 1.5; }
+.tc code { font: 12px var(--mono); background: var(--raise); padding: 1px 5px; border-radius: 6px; }
+.treply { background: var(--sunk); border-radius: 12px; padding: 9px 12px; color: var(--ink3); }
+.a-jobs { display: flex; flex-direction: column; gap: 2px; padding: 4px; }
+.a-jobs .jobrow.on { background: var(--raise); }
+.a-log { background: var(--bg); border-radius: 12px; padding: 10px 0; }
+.a-pull { display: flex; align-items: center; gap: 10px; background: var(--bg); border-radius: 12px; padding: 10px 12px; margin: 0 4px 6px; font: 13px var(--mono); }
+.a-pull span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-tag { display: grid; grid-template-columns: 90px 1fr auto auto; gap: 12px; align-items: center; padding: 9px 10px; border-radius: 12px; font-size: 13px; }
+.a-tag:hover { background: var(--raise); }
+.a-tag b { font: 600 13px var(--mono); }
+.a-tag .lt { font-size: 11.5px; font-weight: 800; color: var(--hue); background: var(--hue-s); padding: 2px 8px; border-radius: 999px; justify-self: start; }
+.a-layer { display: grid; grid-template-columns: 1fr 70px; gap: 4px 12px; padding: 6px 10px; font-size: 12.5px; }
+.a-layer code { font: 12px var(--mono); color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.a-layer span { text-align: right; color: var(--ink2); }
+.a-layer i { grid-column: 1 / -1; height: 5px; border-radius: 5px; background: var(--hue-s); }
+.a-layer i::before { content: ""; display: block; height: 100%; width: var(--w); background: var(--hue); border-radius: 5px; }
+.a-top { display: none; }
+@media (max-width: 900px) {
+  .a { grid-template-columns: minmax(0,1fr); padding: 0; gap: 0; }
+  .a-rail, .a-nav { display: none; }
+  .a-top { display: block; padding: 12px 12px 8px; }
+  .a-top .tb { display: flex; align-items: center; gap: 10px; }
+  .a-top .tb b { font-size: 17px; font-weight: 800; flex: 1; }
+  .a-top .tb small { color: var(--ink2); font-weight: 600; }
+  .a-chips { display: flex; gap: 6px; overflow-x: auto; padding: 10px 0 2px; scrollbar-width: none; }
+  .a-chips .a-ni { height: 38px; flex: none; padding: 0 12px 0 4px; background: var(--surface); }
+  .a-chips .a-kt { width: 28px; height: 28px; border-radius: 9px; }
+  .a-main { border-radius: 20px 20px 0 0; padding: 16px 12px 24px; }
+  .a-grid, .a-split { grid-template-columns: minmax(0,1fr); }
+  .a-grid > *, .a-split > * { min-width: 0; }
+  .a-row { grid-template-columns: 18px 1fr auto; } .a-row .msg { display: none; }
+  .a-head h1 { font-size: 22px; }
+  .a-ft { flex-direction: row; overflow-x: auto; } .a-ft a { flex: none; max-width: 240px; }
+  .a-tag { grid-template-columns: 70px 1fr auto; } .a-tag .sz { display: none; }
+  .a-hide-m { display: none !important; }
+}
+</style><div class="a"><nav class="a-rail" aria-label="Ervisio">
+  <div class="a-logo">E</div>
+  <a href="#" class="a-ri" title="Dashboard"><svg class="i" aria-hidden="true"><use href="#i-grid"/></svg></a>
+  <a href="#" class="a-ri on" title="Repository"><svg class="i" aria-hidden="true"><use href="#i-book"/></svg></a>
+  <a href="#" class="a-ri" title="Revisioni"><svg class="i" aria-hidden="true"><use href="#i-pr"/></svg></a>
+  <a href="#" class="a-ri" title="Notifiche"><svg class="i" aria-hidden="true"><use href="#i-bell"/></svg></a>
+  <a href="#" class="a-ri tile" style="background:var(--h-usr)" title="fonlogen/ervisio-core">EC</a>
+  <a href="#" class="a-ri tile" style="background:var(--h-plg)" title="fonlogen/ervisio-drive">ED</a>
+  <a href="#" class="a-ri tile" style="background:var(--h-log)" title="fonlogen/ervisio-logs">EL</a>
+  <a href="#" class="a-ri" title="Nuovo repository"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></a>
+  <div class="a-sp"></div>
+  <span class="av lg av-rc">RC</span>
+</nav><aside class="a-nav">
+  <div class="a-repo"><small>fonlogen /</small><b>ervisio-core</b><span class="a-chip"><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg> Privato</span></div>
+  <a href="#" data-go="home" class="a-ni sec-code"><span class="a-kt"><svg class="i" aria-hidden="true"><use href="#i-code"/></svg></span><span>Codice</span></a><a href="#" data-go="diff" class="a-ni sec-pr"><span class="a-kt"><svg class="i" aria-hidden="true"><use href="#i-pr"/></svg></span><span>Pull request</span><em>7</em></a><a href="#" class="a-ni sec-issue"><span class="a-kt"><svg class="i" aria-hidden="true"><use href="#i-issue"/></svg></span><span>Issue</span><em>23</em></a><a href="#" data-go="actions" class="a-ni sec-act"><span class="a-kt"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg></span><span>Actions</span></a><a href="#" data-go="pacchetto" class="a-ni sec-pkg"><span class="a-kt"><svg class="i" aria-hidden="true"><use href="#i-pkg"/></svg></span><span>Pacchetti</span><em>4</em></a>
+  <a href="#" class="a-ni"><span class="a-kt" style="background:var(--sunk);color:var(--ink2)"><svg class="i" aria-hidden="true"><use href="#i-gear"/></svg></span><span>Impostazioni</span></a>
+  <div class="a-store"><b>Storage</b><div class="a-meter"><i></i></div><span>412 MB in cache calda su 1,2 GB</span><span>Copia canonica su Hetzner Object Storage, allineata 2 minuti fa</span></div>
+</aside><main class="a-main"><div class="a-top"><div class="tb"><svg class="i" aria-hidden="true"><use href="#i-menu"/></svg><b><small>fonlogen / </small>ervisio-core</b><span class="av lg av-rc">RC</span></div>
+<div class="a-chips"><a href="#" data-go="home" class="a-ni sec-code"><span class="a-kt"><svg class="i" aria-hidden="true"><use href="#i-code"/></svg></span><span>Codice</span></a><a href="#" data-go="diff" class="a-ni sec-pr"><span class="a-kt"><svg class="i" aria-hidden="true"><use href="#i-pr"/></svg></span><span>Pull request</span></a><a href="#" class="a-ni sec-issue"><span class="a-kt"><svg class="i" aria-hidden="true"><use href="#i-issue"/></svg></span><span>Issue</span></a><a href="#" data-go="actions" class="a-ni sec-act"><span class="a-kt"><svg class="i" aria-hidden="true"><use href="#i-play"/></svg></span><span>Actions</span></a><a href="#" data-go="pacchetto" class="a-ni sec-pkg"><span class="a-kt"><svg class="i" aria-hidden="true"><use href="#i-pkg"/></svg></span><span>Pacchetti</span></a></div></div><section data-s="home" class="sec-code">
+  <div class="a-head"><h1>Codice</h1>
+    <a href="#" class="a-btn"><svg class="i" aria-hidden="true"><use href="#i-branch"/></svg> main <svg class="i" aria-hidden="true"><use href="#i-down"/></svg></a>
+    <span class="sub a-hide-m">312 commit, 14 branch, 38 tag</span><span class="a-grow"></span>
+    <a href="#" class="a-btn a-hide-m"><svg class="i" aria-hidden="true"><use href="#i-star"/></svg> Stella <em>48</em></a>
+    <a href="#" class="a-btn pri"><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg> Clona</a></div>
+  <div class="a-grid"><div>
+    <div class="a-card">
+      <div class="a-last"><span class="av av-rc">RC</span><b>riccardo</b><span class="msg dim">storage: sfratta i pack freddi oltre il budget</span><svg class="i st-ok" aria-hidden="true"><use href="#i-check"/></svg><span class="mono faint">a3f9c21</span><span class="faint a-hide-m">2 ore fa</span></div>
+      <a href="#" class="a-row k-folder"><svg class="i" aria-hidden="true"><use href="#i-folder"/></svg><span class="nm">.github/workflows</span><span class="msg">ci: matrice arm64 per i test di storage</span><span class="tm">3 giorni fa</span></a>
+<a href="#" class="a-row k-folder"><svg class="i" aria-hidden="true"><use href="#i-folder"/></svg><span class="nm">cmd/ervisiod</span><span class="msg">cmd: flag --cache-budget con default 50 GB</span><span class="tm">1 settimana fa</span></a>
+<a href="#" data-go="file" class="a-row k-folder"><svg class="i" aria-hidden="true"><use href="#i-folder"/></svg><span class="nm">internal</span><span class="msg">storage: sfratta i pack freddi oltre il budget</span><span class="tm">2 ore fa</span></a>
+<a href="#" class="a-row k-folder"><svg class="i" aria-hidden="true"><use href="#i-folder"/></svg><span class="nm">web</span><span class="msg">web: allinea React a 18.3.1</span><span class="tm">5 giorni fa</span></a>
+<a href="#" class="a-row k-folder"><svg class="i" aria-hidden="true"><use href="#i-folder"/></svg><span class="nm">docs</span><span class="msg">docs: procedura di ripristino da StorageBox</span><span class="tm">2 settimane fa</span></a>
+<a href="#" class="a-row k-file"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span class="nm">.gitignore</span><span class="msg">build: ignora dist/ e coverage.out</span><span class="tm">4 mesi fa</span></a>
+<a href="#" class="a-row k-file"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span class="nm">go.mod</span><span class="msg">deps: go-git 5.13, toml 1.4</span><span class="tm">6 giorni fa</span></a>
+<a href="#" class="a-row k-file"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span class="nm">Makefile</span><span class="msg">build: target nfpm per deb e rpm</span><span class="tm">1 mese fa</span></a>
+<a href="#" class="a-row k-file"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span class="nm">README.md</span><span class="msg">docs: requisiti git 2.45 nel README</span><span class="tm">3 settimane fa</span></a>
+<a href="#" class="a-row k-file"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span class="nm">LICENSE</span><span class="msg">Licenza AGPL-3.0</span><span class="tm">8 mesi fa</span></a>
+    </div>
+    <div class="a-card"><div class="a-ch"><h3><svg class="i" aria-hidden="true"><use href="#i-book"/></svg> README.md</h3></div><div class="a-md">
+<h1>ervisio-core</h1>
+<p>Il demone <code>ervisiod</code> e la sua console web: gestisci server Linux e Windows da un solo pannello, con plugin firmati e agenti remoti.</p>
+<h2>Installazione</h2>
+<pre><code>curl -fsSL https://get.ervisio.app | sh
+sudo systemctl enable --now ervisiod</code></pre>
+<p>Serve git 2.45 o successivo. La console risponde su <code>https://&lt;host&gt;:7443</code>.</p>
+</div></div>
+  </div>
+  <div class="a-side">
+    <div class="a-card"><div class="a-ch"><h3>Informazioni</h3></div>
+      <p style="margin:0 10px 10px;font-size:13px;color:var(--ink2)">Il demone ervisiod: console web, plugin e agenti per server Linux e Windows.</p>
+      <div class="a-lang"><i></i><i></i><i></i></div>
+      <dl class="a-kv"><dt>Go</dt><dd>71%</dd><dt>TypeScript</dt><dd>24%</dd><dt>Ultima release</dt><dd>v0.5.2</dd><dt>Licenza</dt><dd>AGPL-3.0</dd></dl></div>
+    <div class="a-card sec-act"><div class="a-ch"><h3><svg class="i" aria-hidden="true"><use href="#i-play"/></svg> ci.yml #1287</h3><span class="st-run" style="margin-left:auto;font-weight:700;font-size:12.5px">In corso</span></div><div class="jobrow"><svg class="i st-ok" aria-hidden="true"><use href="#i-check"/></svg><span>lint</span><span class="faint">38 s</span></div><div class="jobrow"><svg class="i st-ok" aria-hidden="true"><use href="#i-check"/></svg><span>test (linux/amd64)</span><span class="faint">2 min 51 s</span></div><div class="jobrow"><svg class="i st-run spin" aria-hidden="true"><use href="#i-redo"/></svg><span>test (linux/arm64)</span><span class="faint">3 min 05 s</span></div><div class="jobrow"><svg class="i faint" aria-hidden="true"><use href="#i-clock"/></svg><span>build</span><span class="faint"></span></div><div class="jobrow"><svg class="i faint" aria-hidden="true"><use href="#i-clock"/></svg><span>docker push</span><span class="faint"></span></div></div>
+  </div></div>
+</section><section data-s="file" class="sec-code">
+  <div class="a-head"><div class="a-crumb"><a href="#" data-go="home">ervisio-core</a><svg class="i" aria-hidden="true"><use href="#i-right"/></svg><a href="#">internal</a><svg class="i" aria-hidden="true"><use href="#i-right"/></svg><a href="#">storage</a><svg class="i" aria-hidden="true"><use href="#i-right"/></svg><a href="#">tier</a><svg class="i" aria-hidden="true"><use href="#i-right"/></svg><span>cache.go</span></div><span class="a-grow"></span>
+    <a href="#" class="a-btn"><svg class="i" aria-hidden="true"><use href="#i-branch"/></svg> main</a></div>
+  <div class="a-card">
+    <div class="a-last"><span class="av av-rc">RC</span><b>riccardo</b><span class="msg dim">storage: sfratta i pack freddi oltre il budget</span><span class="mono faint">a3f9c21</span></div>
+    <div class="a-ch"><span class="dim">142 righe, 4,1 KB</span><span class="a-grow"></span>
+      <a href="#" class="a-btn">Blame</a><a href="#" class="a-btn a-hide-m">Cronologia</a><a href="#" class="a-btn a-hide-m">Raw</a><a href="#" class="a-btn">Modifica</a></div>
+    <div class="a-code"><div class="code"><table><tr><td class="ln">41</td><td><span class="kw">package</span> tier</td></tr><tr><td class="ln">42</td><td></td></tr><tr><td class="ln">43</td><td><span class="co">// Evict libera spazio finché la cache calda torna sotto il budget.</span></td></tr><tr><td class="ln">44</td><td><span class="co">// Sfratta solo i pack con una copia canonica confermata sullo storage esterno.</span></td></tr><tr><td class="ln">45</td><td><span class="kw">func</span> (c *<span class="ty">Cache</span>) <span class="fn">Evict</span>(ctx <span class="ty">context.Context</span>) (<span class="ty">int64</span>, <span class="ty">error</span>) {</td></tr><tr><td class="ln">46</td><td>	c.mu.<span class="fn">Lock</span>()</td></tr><tr><td class="ln">47</td><td>	<span class="kw">defer</span> c.mu.<span class="fn">Unlock</span>()</td></tr><tr><td class="ln">48</td><td></td></tr><tr><td class="ln">49</td><td>	<span class="kw">var</span> freed <span class="ty">int64</span></td></tr><tr><td class="ln">50</td><td>	<span class="kw">for</span> c.used &gt; c.budget {</td></tr><tr><td class="ln">51</td><td>		p := c.lru.<span class="fn">Back</span>()</td></tr><tr><td class="ln">52</td><td>		<span class="kw">if</span> p == <span class="kw">nil</span> {</td></tr><tr><td class="ln">53</td><td>			<span class="kw">return</span> freed, <span class="ty">ErrBudgetTooSmall</span></td></tr><tr><td class="ln">54</td><td>		}</td></tr><tr><td class="ln">55</td><td>		<span class="kw">if</span> !p.<span class="fn">Durable</span>() {</td></tr><tr><td class="ln">56</td><td>			c.lru.<span class="fn">MoveToFront</span>(p) <span class="co">// upload ancora in corso</span></td></tr><tr><td class="ln">57</td><td>			<span class="kw">continue</span></td></tr><tr><td class="ln">58</td><td>		}</td></tr><tr><td class="ln">59</td><td>		<span class="kw">if</span> err := os.<span class="fn">Remove</span>(p.path); err != <span class="kw">nil</span> {</td></tr><tr><td class="ln">60</td><td>			<span class="kw">return</span> freed, fmt.<span class="fn">Errorf</span>(<span class="st">"evict %s: %w"</span>, p.name, err)</td></tr><tr><td class="ln">61</td><td>		}</td></tr><tr><td class="ln">62</td><td>		c.used -= p.size</td></tr><tr><td class="ln">63</td><td>		freed += p.size</td></tr><tr><td class="ln">64</td><td>	}</td></tr><tr><td class="ln">65</td><td>	<span class="kw">return</span> freed, <span class="kw">nil</span></td></tr><tr><td class="ln">66</td><td>}</td></tr></table></div></div>
+  </div>
+</section><section data-s="diff" class="sec-pr">
+  <div class="a-head"><h1>Cache calda: sfratto LRU dei pack freddi <span class="faint" style="font-weight:600">#412</span></h1></div>
+  <div class="a-head" style="margin-top:-6px"><span class="a-state"><svg class="i" aria-hidden="true"><use href="#i-pr"/></svg> Aperta</span><span class="sub"><b style="color:var(--ink)">riccardo</b> vuole unire 3 commit da <span class="mono">feat/lru-evict</span> in <span class="mono">main</span></span><span class="a-grow"></span><a href="#" class="a-btn pri">Invia revisione</a></div>
+  <div class="a-tabs"><a class="a-tab" href="#"><svg class="i" aria-hidden="true"><use href="#i-chat"/></svg> Conversazione <em>6</em></a><a class="a-tab" href="#"><svg class="i" aria-hidden="true"><use href="#i-commit"/></svg> Commit <em>3</em></a><a class="a-tab" href="#"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg> Controlli <em>3/5</em></a><a class="a-tab on" href="#"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg> File <em>5</em></a></div>
+  <div class="a-split">
+    <div class="a-card a-hide-m"><div class="a-ch"><h3>File modificati</h3><span class="mono"><span class="st-ok">+184</span> <span class="st-err">−37</span></span></div><div class="a-ft"><a href="#" class="on"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span>cache.go</span><b class="p">+41</b><b class="m">−12</b></a><a href="#" class=""><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span>cache_test.go</span><b class="p">+96</b><b class="m">−3</b></a><a href="#" class=""><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span>lru.go</span><b class="p">+38</b><b class="m"></b></a><a href="#" class=""><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span>flags.go</span><b class="p">+6</b><b class="m">−2</b></a><a href="#" class=""><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span>storage.md</span><b class="p">+3</b><b class="m">−20</b></a></div></div>
+    <div class="a-card"><div class="a-fh"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span style="flex:1">internal/storage/tier/cache.go</span><span class="p">+41</span><span class="m">−12</span></div>
+      <div class="a-code" style="padding:0;overflow:hidden"><div class="code diff"><table><tr class="hunk"><td class="ln"></td><td class="ln"></td><td class="mk"></td><td>@@ -48,12 +48,19 @@ func (c *Cache) Evict(ctx context.Context) (int64, error) {</td></tr><tr class="ctx"><td class="ln">48</td><td class="ln">48</td><td class="mk"> </td><td>	c.mu.<span class="fn">Lock</span>()</td></tr><tr class="ctx"><td class="ln">49</td><td class="ln">49</td><td class="mk"> </td><td>	<span class="kw">defer</span> c.mu.<span class="fn">Unlock</span>()</td></tr><tr class="ctx"><td class="ln">50</td><td class="ln">50</td><td class="mk"> </td><td></td></tr><tr class="del"><td class="ln">51</td><td class="ln"></td><td class="mk">−</td><td>	<span class="kw">for</span> _, p := <span class="kw">range</span> c.packs {</td></tr><tr class="del"><td class="ln">52</td><td class="ln"></td><td class="mk">−</td><td>		<span class="kw">if</span> c.used &lt;= c.budget { <span class="kw">break</span> }</td></tr><tr class="add"><td class="ln"></td><td class="ln">51</td><td class="mk">+</td><td>	<span class="kw">var</span> freed <span class="ty">int64</span></td></tr><tr class="add"><td class="ln"></td><td class="ln">52</td><td class="mk">+</td><td>	<span class="kw">for</span> c.used &gt; c.budget {</td></tr><tr class="add"><td class="ln"></td><td class="ln">53</td><td class="mk">+</td><td>		p := c.lru.<span class="fn">Back</span>()</td></tr><tr class="add"><td class="ln"></td><td class="ln">54</td><td class="mk">+</td><td>		<span class="kw">if</span> p == <span class="kw">nil</span> {</td></tr><tr class="add"><td class="ln"></td><td class="ln">55</td><td class="mk">+</td><td>			<span class="kw">return</span> freed, <span class="ty">ErrBudgetTooSmall</span></td></tr><tr class="add"><td class="ln"></td><td class="ln">56</td><td class="mk">+</td><td>		}</td></tr><tr class="add"><td class="ln"></td><td class="ln">57</td><td class="mk">+</td><td>		<span class="kw">if</span> !p.<span class="fn">Durable</span>() {</td></tr><tr class="add"><td class="ln"></td><td class="ln">58</td><td class="mk">+</td><td>			c.lru.<span class="fn">MoveToFront</span>(p)</td></tr><tr class="cmt"><td colspan="4"><div class="thread">
+  <div class="tc"><span class="av av-mb">MB</span><div><b>marta.b</b> <span class="faint">1 ora fa</span>
+  <p>Se tutti i pack in coda sono in upload questo ciclo non termina: <code>MoveToFront</code> li rimette davanti e <code>Back()</code> restituisce sempre lo stesso. Serve un limite di giri o un controllo su <code>c.pending</code>.</p></div></div>
+  <div class="tc"><span class="av av-rc">RC</span><div><b>riccardo</b> <span class="faint">40 minuti fa</span>
+  <p>Giusto. Aggiungo un contatore e restituisco <code>ErrAllPending</code> dopo un giro completo.</p></div></div>
+  <div class="treply">Rispondi…</div>
+</div></td></tr><tr class="add"><td class="ln"></td><td class="ln">59</td><td class="mk">+</td><td>			<span class="kw">continue</span></td></tr><tr class="add"><td class="ln"></td><td class="ln">60</td><td class="mk">+</td><td>		}</td></tr><tr class="ctx"><td class="ln">53</td><td class="ln">61</td><td class="mk"> </td><td>		<span class="kw">if</span> err := os.<span class="fn">Remove</span>(p.path); err != <span class="kw">nil</span> {</td></tr><tr class="ctx"><td class="ln">54</td><td class="ln">62</td><td class="mk"> </td><td>			<span class="kw">return</span> freed, fmt.<span class="fn">Errorf</span>(<span class="st">"evict %s: %w"</span>, p.name, err)</td></tr></table></div></div></div>
+  </div>
+</section><section data-s="actions" class="sec-act">
+  <div class="a-head"><h1>storage: sfratta i pack freddi oltre il budget</h1></div>
+  <div class="a-head" style="margin-top:-6px"><span class="a-state"><svg class="i spin" aria-hidden="true"><use href="#i-redo"/></svg> In corso</span><span class="sub"><span class="mono">ci.yml</span> run #1287, push su <span class="mono">main</span> di riccardo, avviato 3 minuti fa</span><span class="a-grow"></span><a href="#" class="a-btn">Annulla</a></div>
+  <div class="a-split">
+    <div class="a-card"><div class="a-ch"><h3>Job</h3><span class="faint">2 di 5 completati</span></div><div class="a-jobs"><div class="jobrow "><svg class="i st-ok" aria-hidden="true"><use href="#i-check"/></svg><span>lint</span><span class="faint">38 s</span></div><div class="jobrow "><svg class="i st-ok" aria-hidden="true"><use href="#i-check"/></svg><span>test (linux/amd64)</span><span class="faint">2 min 51 s</span></div><div class="jobrow on"><svg class="i st-run spin" aria-hidden="true"><use href="#i-redo"/></svg><span>test (linux/arm64)</span><span class="faint">3 min 05 s</span></div><div class="jobrow "><svg class="i faint" aria-hidden="true"><use href="#i-clock"/></svg><span>build</span><span class="faint"></span></div><div class="jobrow "><svg class="i faint" aria-hidden="true"><use href="#i-clock"/></svg><span>docker push</span><span class="faint"></span></div></div></div>
+    <div class="a-card"><div class="a-ch"><h3><svg class="i" aria-hidden="true"><use href="#i-term"/></svg> test (linux/arm64)</h3><span class="faint">runner hz-arm-02, Firecracker</span><span class="a-grow"></span><a href="#" class="a-btn">Log completo</a></div>
+      <div class="a-log"><div class="log"><div class="l"><span class="n">1</span><span class="m">##[group]Run go test -race ./internal/storage/...</span></div><div class="l"><span class="n">2</span><span><span class="c">go</span> test -race -count=1 ./internal/storage/...</span></div><div class="l"><span class="n">3</span><span class="m">go: downloading github.com/go-git/go-git/v5 v5.13.1</span></div><div class="l"><span class="n">4</span><span>=== RUN   TestEvictRespectsBudget</span></div><div class="l"><span class="n">5</span><span>--- <span class="g">PASS</span>: TestEvictRespectsBudget (0.21s)</span></div><div class="l"><span class="n">6</span><span>=== RUN   TestEvictSkipsPendingUploads</span></div><div class="l"><span class="n">7</span><span>--- <span class="g">PASS</span>: TestEvictSkipsPendingUploads (0.34s)</span></div><div class="l"><span class="n">8</span><span>=== RUN   TestEvictBudgetTooSmall</span></div><div class="l"><span class="n">9</span><span>--- <span class="g">PASS</span>: TestEvictBudgetTooSmall (0.02s)</span></div><div class="l"><span class="n">10</span><span>=== RUN   TestColdCloneFromObjectStorage</span></div><div class="l"><span class="n">11</span><span>    tier_test.go:188: minio pronto su 127.0.0.1:39211</span></div><div class="l"><span class="n">12</span><span>    tier_test.go:201: <span class="y">primo byte dopo 41.8s (limite 90s)</span></span></div><div class="l"><span class="n">13</span><span>--- <span class="g">PASS</span>: TestColdCloneFromObjectStorage (44.07s)</span></div><div class="l"><span class="n">14</span><span>=== RUN   TestStorageBoxReconnect</span></div><div class="l"><span class="n">15</span><span>    sftp_test.go:77: sshd in ascolto, prima connessione rifiutata come previsto</span></div><div class="l"><span class="n">16</span><span><span class="m">▍</span></span></div></div></div></div>
+  </div>
+</section><section data-s="pacchetto" class="sec-pkg">
+  <div class="a-head"><h1>ervisiod</h1><span class="a-state"><svg class="i" aria-hidden="true"><use href="#i-pkg"/></svg> Immagine OCI</span><span class="a-grow"></span><a href="#" class="a-btn a-hide-m">Impostazioni pacchetto</a></div>
+  <div class="a-grid"><div>
+    <div class="a-card"><div class="a-ch"><h3>Scarica</h3></div><div class="a-pull"><span>docker pull git.ervisio.app/fonlogen/ervisiod:0.5.2</span><svg class="i" aria-hidden="true"><use href="#i-copy"/></svg></div></div>
+    <div class="a-card"><div class="a-ch"><h3><svg class="i" aria-hidden="true"><use href="#i-tag"/></svg> Tag</h3><span class="faint">4 tag, 19 versioni</span></div><div class="a-tag"><b>0.5.2</b><span class=lt>latest</span><span class="mono faint sz">sha256:9f2c1e7a</span><span class="faint">2 ore fa</span></div><div class="a-tag"><b>0.5.1</b><span></span><span class="mono faint sz">sha256:41bd08c3</span><span class="faint">12 giorni fa</span></div><div class="a-tag"><b>0.5.0</b><span></span><span class="mono faint sz">sha256:e07a5f19</span><span class="faint">1 mese fa</span></div><div class="a-tag"><b>edge</b><span></span><span class="mono faint sz">sha256:c3a99d02</span><span class="faint">40 minuti fa</span></div></div>
+    <div class="a-card"><div class="a-ch"><h3><svg class="i" aria-hidden="true"><use href="#i-layers"/></svg> Layer di linux/amd64</h3><span class="faint">75,3 MB compressi</span></div><div class="a-layer"><code>debian:bookworm-slim</code><span>28,2 MB</span><i style="--w:37%"></i></div><div class="a-layer"><code>apt-get install git ca-certificates</code><span>21,6 MB</span><i style="--w:29%"></i></div><div class="a-layer"><code>COPY ervisiod /usr/bin/ervisiod</code><span>24,9 MB</span><i style="--w:33%"></i></div><div class="a-layer"><code>COPY web/dist /usr/share/ervisio/web</code><span>0,6 MB</span><i style="--w:1%"></i></div></div>
+  </div><div class="a-side">
+    <div class="a-card"><div class="a-ch"><h3>Dettagli</h3></div><dl class="a-kv"><dt>Digest</dt><dd class="mono">9f2c1e7a</dd><dt>Piattaforme</dt><dd>amd64, arm64</dd><dt>Download</dt><dd>2.318</dd><dt>Firmata</dt><dd class="st-ok">cosign</dd><dt>Sorgente</dt><dd>ervisio-core</dd></dl></div>
+    <div class="a-card"><div class="a-ch"><h3>Storage</h3></div><p style="margin:0 10px 12px;font-size:13px;color:var(--ink2);line-height:1.5">Blob su Hetzner Object Storage. I 3 tag più recenti restano in cache calda.</p></div>
+  </div></div>
+</section></main></div>

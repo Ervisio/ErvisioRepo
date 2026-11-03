@@ -1,0 +1,70 @@
+@import url("https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import url("../tokens.css");
+
+/* Base comune ai mock. Le direzioni cambiano shell, layout e uso della hue; codice, diff e log
+   condividono le primitive qui sotto. Regola del core: niente linee divisorie grigie,
+   la separazione viene da --surface / --sunk e dallo spazio. */
+html, body { background: var(--bg); color: var(--ink); }
+body { font: 500 14px/1.45 var(--font); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; margin: 0; }
+* { box-sizing: border-box; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+:focus-visible { outline: 2px solid var(--hue, var(--ink)); outline-offset: 2px; border-radius: 6px; }
+.i { width: 16px; height: 16px; flex: none; display: inline-block; vertical-align: -3px; }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+.dim { color: var(--ink2); }
+.faint { color: var(--ink3); }
+
+/* schermate: una per stato del gallery */
+[data-s] { display: none; }
+html:not([data-vs-state]) [data-s="home"],
+html[data-vs-state="file"] [data-s="file"],
+html[data-vs-state="diff"] [data-s="diff"],
+html[data-vs-state="actions"] [data-s="actions"],
+html[data-vs-state="pacchetto"] [data-s="pacchetto"] { display: block; }
+
+/* hue di sezione: ogni schermata imposta --hue / --hue-s */
+.sec-code { --hue: var(--sec-code); --hue-s: var(--sec-code-s); }
+.sec-pr { --hue: var(--sec-pr); --hue-s: var(--sec-pr-s); }
+.sec-issue { --hue: var(--sec-issue); --hue-s: var(--sec-issue-s); }
+.sec-act { --hue: var(--sec-act); --hue-s: var(--sec-act-s); }
+.sec-pkg { --hue: var(--sec-pkg); --hue-s: var(--sec-pkg-s); }
+
+/* codice */
+.code { font: 400 12.75px/1.65 var(--mono); overflow-x: auto; font-variant-ligatures: none; }
+.code table { border-collapse: collapse; width: 100%; }
+.code td { padding: 0 14px 0 0; white-space: pre; vertical-align: top; }
+.code td.ln { color: var(--ink3); text-align: right; padding: 0 14px 0 14px; user-select: none; width: 1%; }
+.kw { color: var(--syn-kw); } .fn { color: var(--syn-fn); } .st { color: var(--syn-str); }
+.nu { color: var(--syn-num); } .ty { color: var(--syn-type); } .co { color: var(--syn-com); font-style: italic; }
+
+/* diff */
+.diff td.ln { width: 1%; }
+.diff tr.add td { background: var(--ok-s); }
+.diff tr.del td { background: var(--err-s); }
+.diff tr.add td.mk { color: var(--ok); }
+.diff tr.del td.mk { color: var(--err); }
+.diff td.mk { width: 1%; padding: 0 8px 0 4px; color: var(--ink3); user-select: none; }
+.diff tr.hunk td { color: var(--ink3); background: var(--sunk); padding-top: 3px; padding-bottom: 3px; }
+
+/* log ANSI */
+.log { font: 400 12.5px/1.7 var(--mono); white-space: pre; overflow-x: auto; font-variant-ligatures: none; }
+.log .l { display: flex; gap: 14px; padding: 0 14px; }
+.log .l:hover { background: var(--raise); }
+.log .n { color: var(--ink3); width: 3ch; text-align: right; flex: none; user-select: none; }
+.log .g { color: var(--ok); } .log .r { color: var(--err); } .log .y { color: var(--warn); }
+.log .c { color: var(--info); } .log .m { color: var(--ink3); } .log .b { font-weight: 600; color: var(--ink); }
+
+/* avatar con iniziali */
+.av { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center; font: 700 10px var(--font); color: #000; flex: none; }
+.av.lg { width: 28px; height: 28px; font-size: 11px; }
+.av-rc { background: var(--h-usr); } .av-mb { background: var(--h-plg); } .av-gs { background: var(--h-ov); } .av-bot { background: var(--h-term); }
+
+/* stato */
+.st-ok { color: var(--ok); } .st-err { color: var(--err); } .st-warn { color: var(--warn); } .st-run { color: var(--info); }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 1.4s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+/* il thread inline resta visibile quando il diff scorre in orizzontale */
+.diff tr.cmt .thread { position: sticky; left: 12px; max-width: min(720px, calc(100vw - 64px)); }

@@ -1,0 +1,82 @@
+/* ErvisioRepo: token del core Ervisio.
+   Nomi: contratto del plugin SDK 0.3 (docs/sdk.md, sezione Styling).
+   Valori VERIFICATI (da ErvisioLogs/web/src/index.css, che segue le DESIGN-RULES del core):
+     --bg --surface --sunk --ink --ink2 --ink3 --ok --err --h-log, tema chiaro idem.
+   Valori RICOSTRUITI (il tokens.css del core non e' nel workspace): --warn --info, le altre --h-*
+   e tutte le tinte -s. Da sostituire con tokens.css del core appena disponibile; i nomi restano. */
+
+:root {
+  color-scheme: dark;
+  /* superfici OLED */
+  --bg: #000000;
+  --surface: #0e0e10;
+  --sunk: #18181b;
+  --raise: #222226;          /* ErvisioRepo: hover/elemento attivo dentro --sunk */
+  --ink: #f4f4f6;
+  --ink2: #b0b0ba;
+  --ink3: #8f8f9a;
+
+  /* hue di sezione del core */
+  --h-ov: #9db4ff;   --h-ov-s: rgba(157, 180, 255, .14);
+  --h-term: #4fd6be; --h-term-s: rgba(79, 214, 190, .14);
+  --h-file: #64b5ff; --h-file-s: rgba(100, 181, 255, .14);
+  --h-log: #ffb547;  --h-log-s: rgba(255, 181, 71, .14);
+  --h-svc: #b49cff;  --h-svc-s: rgba(180, 156, 255, .14);
+  --h-sw: #ff9a6b;   --h-sw-s: rgba(255, 154, 107, .14);
+  --h-usr: #ff8ac4;  --h-usr-s: rgba(255, 138, 196, .14);
+  --h-plg: #c6e36a;  --h-plg-s: rgba(198, 227, 106, .14);
+
+  /* stato */
+  --ok: #3ddc97;   --ok-s: rgba(61, 220, 151, .13);
+  --warn: #ffd166; --warn-s: rgba(255, 209, 102, .13);
+  --err: #ff6b81;  --err-s: rgba(255, 107, 129, .13);
+  --info: #6cb6ff; --info-s: rgba(108, 182, 255, .13);
+
+  /* raggi del core */
+  --r-ctl: 12px;   /* campi, pulsanti, righe, chip */
+  --r-card: 18px;  /* card, blocchi codice */
+  --r-sheet: 20px; /* pannello contenuti, dialog */
+
+  --font: "Figtree", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* sezioni di ErvisioRepo mappate sulle hue del core */
+  --sec-code: var(--h-file);   --sec-code-s: var(--h-file-s);
+  --sec-pr: var(--h-svc);      --sec-pr-s: var(--h-svc-s);
+  --sec-issue: var(--h-usr);   --sec-issue-s: var(--h-usr-s);
+  --sec-act: var(--h-term);    --sec-act-s: var(--h-term-s);
+  --sec-pkg: var(--h-sw);      --sec-pkg-s: var(--h-sw-s);
+
+  /* sintassi (Shiki genera il tema da questi) */
+  --syn-kw: #ff8ac4;
+  --syn-fn: #64b5ff;
+  --syn-str: #c6e36a;
+  --syn-num: #ffb547;
+  --syn-type: #4fd6be;
+  --syn-com: #8f8f9a;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ececef;
+  --surface: #f7f7f9;
+  --sunk: #ffffff;
+  --raise: #ededf1;
+  --ink: #16161a;
+  --ink2: #50505b;
+  --ink3: #6b6b76;
+  --h-ov: #3d5bd6;   --h-ov-s: rgba(61, 91, 214, .10);
+  --h-term: #0b7d6b; --h-term-s: rgba(11, 125, 107, .10);
+  --h-file: #1468c2; --h-file-s: rgba(20, 104, 194, .10);
+  --h-log: #a85f00;  --h-log-s: rgba(168, 95, 0, .10);
+  --h-svc: #6a45d8;  --h-svc-s: rgba(106, 69, 216, .10);
+  --h-sw: #b4501c;   --h-sw-s: rgba(180, 80, 28, .10);
+  --h-usr: #b8327a;  --h-usr-s: rgba(184, 50, 122, .10);
+  --h-plg: #5c7a00;  --h-plg-s: rgba(92, 122, 0, .10);
+  --ok: #0f7a50;   --ok-s: rgba(15, 122, 80, .10);
+  --warn: #8a6100; --warn-s: rgba(138, 97, 0, .10);
+  --err: #c42d4a;  --err-s: rgba(196, 45, 74, .10);
+  --info: #1468c2; --info-s: rgba(20, 104, 194, .10);
+  --syn-kw: #b8327a; --syn-fn: #1468c2; --syn-str: #5c7a00;
+  --syn-num: #a85f00; --syn-type: #0b7d6b; --syn-com: #6b6b76;
+}

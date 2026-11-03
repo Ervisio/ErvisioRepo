@@ -9,3 +9,6 @@ coverage.out
 .env
 *.local.toml
 /plugin/dist/
+/deploy/dev/master.key
+__pycache__/
+/design/.variant-studio/
