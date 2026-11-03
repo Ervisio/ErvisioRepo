@@ -188,3 +188,17 @@ func TestSMTPStartTLSRequired(t *testing.T) {
 		t.Fatalf("plaintext fallback: %v", err)
 	}
 }
+
+func TestRenderOrgInvite(t *testing.T) {
+	data := map[string]string{"Instance": "git.example.com", "Org": "acme", "Inviter": "alice", "Role": "member",
+		"Link": "https://x/invite?token=t", "Expires": "7 days"}
+	for _, l := range Locales {
+		subj, body, err := Render(l, TemplateOrgInvite, data)
+		if err != nil {
+			t.Fatalf("%s: %v", l, err)
+		}
+		if !strings.Contains(subj, "acme") || strings.ContainsAny(subj, "\r\n") || !strings.Contains(body, data["Link"]) {
+			t.Fatalf("%s: subject %q body %q", l, subj, body)
+		}
+	}
+}

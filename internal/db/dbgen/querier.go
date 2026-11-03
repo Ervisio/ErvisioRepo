@@ -16,68 +16,202 @@ type Querier interface {
 	// Serializes registrations inside a transaction, so that exactly one first
 	// user becomes the instance admin.
 	AcquireRegistrationLock(ctx context.Context) error
+	// Adds a user to the given teams of an organization, keeping existing roles.
+	AddTeamMembers(ctx context.Context, arg AddTeamMembersParams) error
+	// Accepts a code for step only once: a replay in the same window matches
+	// no row.
+	AdvanceTOTPStep(ctx context.Context, arg AdvanceTOTPStepParams) (int64, error)
+	ConfirmTOTP(ctx context.Context, arg ConfirmTOTPParams) (int64, error)
 	ConsumeInvite(ctx context.Context, arg ConsumeInviteParams) (ConsumeInviteRow, error)
+	// Deletes the challenge; a second use (or a concurrent one) matches no row.
+	ConsumeMFAChallenge(ctx context.Context, id uuid.UUID) (int64, error)
 	// Deletes and returns a token; the caller checks expires_at.
 	ConsumeOneTimeToken(ctx context.Context, arg ConsumeOneTimeTokenParams) (ConsumeOneTimeTokenRow, error)
+	CountOrgOwners(ctx context.Context, orgID uuid.UUID) (int64, error)
+	CountRecoveryCodes(ctx context.Context, userID uuid.UUID) (CountRecoveryCodesRow, error)
+	CountTeamsInOrg(ctx context.Context, arg CountTeamsInOrgParams) (int64, error)
+	CountUserGPGKeys(ctx context.Context, userID uuid.UUID) (int64, error)
+	CountUserOIDCLinks(ctx context.Context, userID uuid.UUID) (int64, error)
+	CountUserSSHKeys(ctx context.Context, userID uuid.UUID) (int64, error)
+	CountUserTokens(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	CountWebAuthnCredentials(ctx context.Context, userID uuid.UUID) (int64, error)
+	DeleteExpiredMFAChallenges(ctx context.Context) (int64, error)
+	DeleteExpiredOIDCFlows(ctx context.Context) (int64, error)
 	DeleteExpiredOneTimeTokens(ctx context.Context) (int64, error)
+	// Forgets invitations expired for more than the given age.
+	DeleteExpiredOrgInvites(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	DeleteExpiredSessions(ctx context.Context, idleBefore pgtype.Timestamptz) (int64, error)
+	DeleteExpiredTokens(ctx context.Context, before pgtype.Timestamptz) (int64, error)
+	DeleteMFAChallenge(ctx context.Context, id uuid.UUID) error
 	// Invalidates the outstanding tokens of one purpose for a user.
 	DeleteOneTimeTokens(ctx context.Context, arg DeleteOneTimeTokensParams) error
+	DeleteOrgInvite(ctx context.Context, arg DeleteOrgInviteParams) (int64, error)
+	DeleteOrgMember(ctx context.Context, arg DeleteOrgMemberParams) (int64, error)
+	// Deletes the organization with its namespace, members, teams and invites.
+	DeleteOrgNamespace(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteQuotaOverride(ctx context.Context, namespaceID uuid.UUID) (int64, error)
+	DeleteRecoveryCodes(ctx context.Context, userID uuid.UUID) error
 	DeleteSession(ctx context.Context, id uuid.UUID) error
+	// Removes an expired pending invitation for the address, so a new one can
+	// take its place.
+	DeleteStaleOrgInvite(ctx context.Context, arg DeleteStaleOrgInviteParams) (int64, error)
 	DeleteStorageObject(ctx context.Context, arg DeleteStorageObjectParams) error
+	DeleteTOTP(ctx context.Context, userID uuid.UUID) (int64, error)
+	DeleteTeam(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteTeamMember(ctx context.Context, arg DeleteTeamMemberParams) (int64, error)
+	DeleteTeamRepo(ctx context.Context, arg DeleteTeamRepoParams) (int64, error)
+	DeleteUserGPGKey(ctx context.Context, arg DeleteUserGPGKeyParams) (int64, error)
+	DeleteUserOIDCLink(ctx context.Context, arg DeleteUserOIDCLinkParams) (int64, error)
+	DeleteUserSSHKey(ctx context.Context, arg DeleteUserSSHKeyParams) (int64, error)
 	DeleteUserSessions(ctx context.Context, userID uuid.UUID) (int64, error)
 	DeleteUserSessionsExcept(ctx context.Context, arg DeleteUserSessionsExceptParams) (int64, error)
+	DeleteUserToken(ctx context.Context, arg DeleteUserTokenParams) (int64, error)
+	DeleteWebAuthnCredential(ctx context.Context, arg DeleteWebAuthnCredentialParams) (int64, error)
 	EmailTaken(ctx context.Context, address string) (bool, error)
+	EnsureUsageCounter(ctx context.Context, namespaceID uuid.UUID) error
+	FailMFAChallenge(ctx context.Context, id uuid.UUID) (int32, error)
+	GPGKeyFingerprintTaken(ctx context.Context, fingerprint string) (bool, error)
+	// Quotas per user and organization, and their usage counters (PLAN §8.2).
+	// Limits of a namespace (override, else instance default; -1 = unlimited)
+	// and its current usage.
+	GetEffectiveQuota(ctx context.Context, id uuid.UUID) (GetEffectiveQuotaRow, error)
 	GetEmailByAddress(ctx context.Context, address string) (GetEmailByAddressRow, error)
 	GetEmailByID(ctx context.Context, id uuid.UUID) (GetEmailByIDRow, error)
 	// Credentials for a login by email address; any verified address of the user works.
 	GetLoginByEmail(ctx context.Context, address string) (GetLoginByEmailRow, error)
 	// Credentials for a login by username; the email is the primary address.
 	GetLoginByUsername(ctx context.Context, username string) (GetLoginByUsernameRow, error)
+	GetMFAChallenge(ctx context.Context, arg GetMFAChallengeParams) (GetMFAChallengeRow, error)
 	GetNamespaceByName(ctx context.Context, name string) (GetNamespaceByNameRow, error)
+	GetOIDCLinkBySubject(ctx context.Context, arg GetOIDCLinkBySubjectParams) (GetOIDCLinkBySubjectRow, error)
 	GetOrgByName(ctx context.Context, name string) (GetOrgByNameRow, error)
+	// Organizations and their members (InsertOrg, GetOrgByName, UpsertOrgMember
+	// and GetOrgMemberRole are in identity.sql).
+	GetOrgDetails(ctx context.Context, name string) (GetOrgDetailsRow, error)
+	GetOrgInvite(ctx context.Context, id uuid.UUID) (GetOrgInviteRow, error)
+	GetOrgInviteByToken(ctx context.Context, tokenHash []byte) (GetOrgInviteByTokenRow, error)
 	GetOrgMemberRole(ctx context.Context, arg GetOrgMemberRoleParams) (string, error)
+	GetQuotaDefaults(ctx context.Context) ([]QuotaDefault, error)
+	GetQuotaOverride(ctx context.Context, namespaceID uuid.UUID) (Quota, error)
+	// Used by the SSH server (Phase 3) to authenticate a public key.
+	GetSSHKeyByFingerprint(ctx context.Context, fingerprint string) (GetSSHKeyByFingerprintRow, error)
 	GetSessionByTokenHash(ctx context.Context, tokenHash []byte) (GetSessionByTokenHashRow, error)
 	GetSetting(ctx context.Context, key string) (Setting, error)
 	GetStorageObject(ctx context.Context, arg GetStorageObjectParams) (StorageObject, error)
+	// Second factors and two-step login (PLAN §8.1).
+	GetTOTP(ctx context.Context, userID uuid.UUID) (MfaTotp, error)
+	GetTeamByName(ctx context.Context, arg GetTeamByNameParams) (GetTeamByNameRow, error)
+	GetTeamMemberRole(ctx context.Context, arg GetTeamMemberRoleParams) (string, error)
+	GetTokenByHash(ctx context.Context, tokenHash []byte) (GetTokenByHashRow, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error)
 	GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error)
+	GetUserByWebAuthnHandle(ctx context.Context, handle []byte) (uuid.UUID, error)
+	GetUserIDByEmail(ctx context.Context, address string) (uuid.UUID, error)
+	GetUserOIDCLink(ctx context.Context, arg GetUserOIDCLinkParams) (GetUserOIDCLinkRow, error)
 	GetValidInvite(ctx context.Context, tokenHash []byte) (GetValidInviteRow, error)
+	GetWebAuthnHandle(ctx context.Context, userID uuid.UUID) ([]byte, error)
 	InsertAuditEvent(ctx context.Context, arg InsertAuditEventParams) error
 	InsertEmail(ctx context.Context, arg InsertEmailParams) error
+	InsertGPGKey(ctx context.Context, arg InsertGPGKeyParams) error
 	InsertInvite(ctx context.Context, arg InsertInviteParams) error
+	InsertMFAChallenge(ctx context.Context, arg InsertMFAChallengeParams) error
 	InsertNamespace(ctx context.Context, arg InsertNamespaceParams) error
+	InsertOIDCFlow(ctx context.Context, arg InsertOIDCFlowParams) error
+	InsertOIDCLink(ctx context.Context, arg InsertOIDCLinkParams) error
 	InsertOneTimeToken(ctx context.Context, arg InsertOneTimeTokenParams) error
 	InsertOrg(ctx context.Context, arg InsertOrgParams) error
+	// Organization invitations (instance invitations are in identity.sql).
+	InsertOrgInvite(ctx context.Context, arg InsertOrgInviteParams) error
+	InsertOrgMember(ctx context.Context, arg InsertOrgMemberParams) (int64, error)
+	InsertRecoveryCode(ctx context.Context, arg InsertRecoveryCodeParams) error
+	InsertSSHKey(ctx context.Context, arg InsertSSHKeyParams) error
 	InsertSession(ctx context.Context, arg InsertSessionParams) error
 	InsertSettingIfAbsent(ctx context.Context, arg InsertSettingIfAbsentParams) error
+	// Teams, their members and their repository permissions.
+	InsertTeam(ctx context.Context, arg InsertTeamParams) error
+	InsertToken(ctx context.Context, arg InsertTokenParams) error
 	InsertUser(ctx context.Context, arg InsertUserParams) error
+	InsertWebAuthnCredential(ctx context.Context, arg InsertWebAuthnCredentialParams) error
+	InsertWebAuthnHandle(ctx context.Context, arg InsertWebAuthnHandleParams) error
 	// Newest first; pass the last id of a page as before to get the next one.
-	ListAuditEvents(ctx context.Context, arg ListAuditEventsParams) ([]AuditLog, error)
+	// action matches exactly, or a whole prefix when it ends with ".".
+	ListAuditEvents(ctx context.Context, arg ListAuditEventsParams) ([]ListAuditEventsRow, error)
+	// Pending invitations, expired ones included (the UI shows them as such).
+	ListOrgInvites(ctx context.Context, orgID uuid.UUID) ([]ListOrgInvitesRow, error)
+	ListOrgMembers(ctx context.Context, orgID uuid.UUID) ([]ListOrgMembersRow, error)
 	ListStorageObjectsByKeys(ctx context.Context, arg ListStorageObjectsByKeysParams) ([]StorageObject, error)
 	ListStorageObjectsPendingReplicas(ctx context.Context, arg ListStorageObjectsPendingReplicasParams) ([]StorageObject, error)
+	ListTeamMembers(ctx context.Context, teamID uuid.UUID) ([]ListTeamMembersRow, error)
+	ListTeamRepos(ctx context.Context, teamID uuid.UUID) ([]ListTeamReposRow, error)
+	ListTeams(ctx context.Context, orgID uuid.UUID) ([]ListTeamsRow, error)
+	ListUserGPGKeys(ctx context.Context, userID uuid.UUID) ([]ListUserGPGKeysRow, error)
+	ListUserOIDCLinks(ctx context.Context, userID uuid.UUID) ([]ListUserOIDCLinksRow, error)
+	ListUserOrgs(ctx context.Context, userID uuid.UUID) ([]ListUserOrgsRow, error)
+	ListUserSSHKeys(ctx context.Context, userID uuid.UUID) ([]ListUserSSHKeysRow, error)
 	ListUserSessions(ctx context.Context, userID uuid.UUID) ([]ListUserSessionsRow, error)
+	// The permissions a user receives on a repository through teams.
+	ListUserTeamRepoPermissions(ctx context.Context, arg ListUserTeamRepoPermissionsParams) ([]string, error)
+	ListUserTokens(ctx context.Context, userID uuid.UUID) ([]ListUserTokensRow, error)
+	ListUserVerifiedEmails(ctx context.Context, userID uuid.UUID) ([]string, error)
+	ListWebAuthnCredentials(ctx context.Context, userID uuid.UUID) ([]WebauthnCredential, error)
+	// Serializes membership changes of one organization inside a transaction,
+	// so that the last-owner check cannot race.
+	LockOrgMembers(ctx context.Context, orgID uuid.UUID) error
+	// Serializes credential changes of one account.
+	LockUserForUpdate(ctx context.Context, id uuid.UUID) (uuid.UUID, error)
 	MarkEmailVerified(ctx context.Context, arg MarkEmailVerifiedParams) (int64, error)
+	MarkOrgInviteAccepted(ctx context.Context, arg MarkOrgInviteAcceptedParams) (int64, error)
 	MarkStorageObjectReplicated(ctx context.Context, arg MarkStorageObjectReplicatedParams) error
 	MarkStorageObjectVerified(ctx context.Context, arg MarkStorageObjectVerifiedParams) error
 	NamespaceTaken(ctx context.Context, name string) (bool, error)
+	// Adds the deltas to the usage of a namespace only if the result stays
+	// within its effective limits. Negative deltas (releases) always apply and
+	// never go below zero. Zero rows means the quota would be exceeded; call
+	// EnsureUsageCounter first.
+	ReserveUsage(ctx context.Context, arg ReserveUsageParams) (int64, error)
+	SSHKeyFingerprintTaken(ctx context.Context, fingerprint string) (bool, error)
 	// Oldest-verified first, random within the same age, so repeated runs cover
 	// every object over time.
 	SampleStorageObjectsForVerify(ctx context.Context, arg SampleStorageObjectsForVerifyParams) ([]StorageObject, error)
+	SetMFAChallengeWebAuthn(ctx context.Context, arg SetMFAChallengeWebAuthnParams) (int64, error)
+	// Replaces the token of a pending invitation (sending again invalidates the
+	// previous link) and extends its expiry.
+	SetOrgInviteToken(ctx context.Context, arg SetOrgInviteTokenParams) (int64, error)
+	SetOrgMemberRole(ctx context.Context, arg SetOrgMemberRoleParams) (int64, error)
+	SetQuotaDefault(ctx context.Context, arg SetQuotaDefaultParams) (int64, error)
+	SetQuotaOverride(ctx context.Context, arg SetQuotaOverrideParams) error
 	SetStorageObjectError(ctx context.Context, arg SetStorageObjectErrorParams) error
 	SetStorageObjectReplicasPending(ctx context.Context, arg SetStorageObjectReplicasPendingParams) error
+	SetTeamRepoPermission(ctx context.Context, arg SetTeamRepoPermissionParams) error
 	SetUserRole(ctx context.Context, arg SetUserRoleParams) error
 	SetUserSuspended(ctx context.Context, arg SetUserSuspendedParams) error
 	StorageObjectStats(ctx context.Context) ([]StorageObjectStatsRow, error)
+	// Consumes the flow: a state is good for a single callback.
+	TakeOIDCFlow(ctx context.Context, stateHash []byte) (OidcFlow, error)
+	TokenNameTaken(ctx context.Context, arg TokenNameTakenParams) (bool, error)
+	TouchOIDCLink(ctx context.Context, arg TouchOIDCLinkParams) error
 	// Records activity at most once a minute to keep writes low.
 	TouchSession(ctx context.Context, id uuid.UUID) error
+	// Records use at most once a minute to keep writes low.
+	TouchToken(ctx context.Context, id uuid.UUID) error
+	UpdateOrg(ctx context.Context, arg UpdateOrgParams) error
+	UpdateTeam(ctx context.Context, arg UpdateTeamParams) error
+	UpdateWebAuthnCredentialUse(ctx context.Context, arg UpdateWebAuthnCredentialUseParams) error
 	UpsertOrgMember(ctx context.Context, arg UpsertOrgMemberParams) error
 	UpsertPassword(ctx context.Context, arg UpsertPasswordParams) error
+	// Starts (or restarts) a TOTP enrollment; a confirmed secret is kept.
+	UpsertPendingTOTP(ctx context.Context, arg UpsertPendingTOTPParams) (int64, error)
 	UpsertSetting(ctx context.Context, arg UpsertSettingParams) error
 	// Called only after the object is confirmed on the primary. Re-uploading an
 	// existing key with the same content keeps its replica and verification state.
 	UpsertStorageObject(ctx context.Context, arg UpsertStorageObjectParams) (StorageObject, error)
+	UpsertTeamMember(ctx context.Context, arg UpsertTeamMemberParams) error
+	UseRecoveryCode(ctx context.Context, arg UseRecoveryCodeParams) (int64, error)
+	// Whether the address belongs to the user, and whether it is verified.
+	UserHasEmail(ctx context.Context, arg UserHasEmailParams) (UserHasEmailRow, error)
+	UserHasPassword(ctx context.Context, userID uuid.UUID) (bool, error)
+	UserInRequire2FAOrg(ctx context.Context, userID uuid.UUID) (bool, error)
 }
 
 var _ Querier = (*Queries)(nil)

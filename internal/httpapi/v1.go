@@ -3,8 +3,12 @@ package httpapi
 import (
 	"context"
 
+	"github.com/Ervisio/ErvisioRepo/internal/audit"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
+	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
+	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+	"github.com/Ervisio/ErvisioRepo/internal/sso"
 )
 
 // v1Server implements the strict server generated from api/openapi.yaml.
@@ -13,6 +17,11 @@ type v1Server struct {
 	storage  Storage
 	identity Identity
 	cookies  auth.Cookies
+	mfa      *mfa.Service
+	orgs     Orgs
+	audit    audit.Lister
+	creds    *credentials.Service
+	sso      *sso.Manager
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

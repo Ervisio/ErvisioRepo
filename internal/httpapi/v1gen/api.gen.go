@@ -7,7 +7,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -18,7 +20,44 @@ import (
 
 const (
 	SessionScopes sessionContextKey = "session.Scopes"
+	TokenScopes   tokenContextKey   = "token.Scopes"
 )
+
+// Defines values for AccessTokenCreateScopes.
+const (
+	AccessTokenCreateScopesActionsWrite  AccessTokenCreateScopes = "actions:write"
+	AccessTokenCreateScopesAdmin         AccessTokenCreateScopes = "admin"
+	AccessTokenCreateScopesPackagesRead  AccessTokenCreateScopes = "packages:read"
+	AccessTokenCreateScopesPackagesWrite AccessTokenCreateScopes = "packages:write"
+	AccessTokenCreateScopesRepoRead      AccessTokenCreateScopes = "repo:read"
+	AccessTokenCreateScopesRepoWrite     AccessTokenCreateScopes = "repo:write"
+	AccessTokenCreateScopesUserRead      AccessTokenCreateScopes = "user:read"
+	AccessTokenCreateScopesUserWrite     AccessTokenCreateScopes = "user:write"
+)
+
+// Valid indicates whether the value is a known member of the AccessTokenCreateScopes enum.
+func (e AccessTokenCreateScopes) Valid() bool {
+	switch e {
+	case AccessTokenCreateScopesActionsWrite:
+		return true
+	case AccessTokenCreateScopesAdmin:
+		return true
+	case AccessTokenCreateScopesPackagesRead:
+		return true
+	case AccessTokenCreateScopesPackagesWrite:
+		return true
+	case AccessTokenCreateScopesRepoRead:
+		return true
+	case AccessTokenCreateScopesRepoWrite:
+		return true
+	case AccessTokenCreateScopesUserRead:
+		return true
+	case AccessTokenCreateScopesUserWrite:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for MetaRegistration.
 const (
@@ -35,6 +74,81 @@ func (e MetaRegistration) Valid() bool {
 	case MetaRegistrationInvite:
 		return true
 	case MetaRegistrationOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MfaChallengeMethods.
+const (
+	Recovery MfaChallengeMethods = "recovery"
+	Totp     MfaChallengeMethods = "totp"
+	Webauthn MfaChallengeMethods = "webauthn"
+)
+
+// Valid indicates whether the value is a known member of the MfaChallengeMethods enum.
+func (e MfaChallengeMethods) Valid() bool {
+	switch e {
+	case Recovery:
+		return true
+	case Totp:
+		return true
+	case Webauthn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OrgRole.
+const (
+	OrgRoleAdmin   OrgRole = "admin"
+	OrgRoleBilling OrgRole = "billing"
+	OrgRoleMember  OrgRole = "member"
+	OrgRoleOwner   OrgRole = "owner"
+)
+
+// Valid indicates whether the value is a known member of the OrgRole enum.
+func (e OrgRole) Valid() bool {
+	switch e {
+	case OrgRoleAdmin:
+		return true
+	case OrgRoleBilling:
+		return true
+	case OrgRoleMember:
+		return true
+	case OrgRoleOwner:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Permission.
+const (
+	PermissionAdmin    Permission = "admin"
+	PermissionMaintain Permission = "maintain"
+	PermissionNone     Permission = "none"
+	PermissionRead     Permission = "read"
+	PermissionTriage   Permission = "triage"
+	PermissionWrite    Permission = "write"
+)
+
+// Valid indicates whether the value is a known member of the Permission enum.
+func (e Permission) Valid() bool {
+	switch e {
+	case PermissionAdmin:
+		return true
+	case PermissionMaintain:
+		return true
+	case PermissionNone:
+		return true
+	case PermissionRead:
+		return true
+	case PermissionTriage:
+		return true
+	case PermissionWrite:
 		return true
 	default:
 		return false
@@ -134,6 +248,42 @@ func (e StorageWarningCode) Valid() bool {
 	}
 }
 
+// Defines values for TeamMemberRole.
+const (
+	TeamMemberRoleMaintainer TeamMemberRole = "maintainer"
+	TeamMemberRoleMember     TeamMemberRole = "member"
+)
+
+// Valid indicates whether the value is a known member of the TeamMemberRole enum.
+func (e TeamMemberRole) Valid() bool {
+	switch e {
+	case TeamMemberRoleMaintainer:
+		return true
+	case TeamMemberRoleMember:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TeamRoleRequestRole.
+const (
+	TeamRoleRequestRoleMaintainer TeamRoleRequestRole = "maintainer"
+	TeamRoleRequestRoleMember     TeamRoleRequestRole = "member"
+)
+
+// Valid indicates whether the value is a known member of the TeamRoleRequestRole enum.
+func (e TeamRoleRequestRole) Valid() bool {
+	switch e {
+	case TeamRoleRequestRoleMaintainer:
+		return true
+	case TeamRoleRequestRoleMember:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for UserLocale.
 const (
 	UserLocaleEn UserLocale = "en"
@@ -173,9 +323,88 @@ func (e UserRole) Valid() bool {
 	}
 }
 
+// AccessToken defines model for AccessToken.
+type AccessToken struct {
+	CreatedAt time.Time `json:"createdAt"`
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// Hint First characters of the token (erp_ and four more)
+	Hint       string             `json:"hint"`
+	Id         openapi_types.UUID `json:"id"`
+	LastUsedAt *time.Time         `json:"lastUsedAt,omitempty"`
+	Name       string             `json:"name"`
+	Scopes     []string           `json:"scopes"`
+}
+
+// AccessTokenCreate defines model for AccessTokenCreate.
+type AccessTokenCreate struct {
+	// ExpiresAt Required; at most the configured maximum lifetime from now
+	ExpiresAt time.Time                 `json:"expiresAt"`
+	Name      string                    `json:"name"`
+	Scopes    []AccessTokenCreateScopes `json:"scopes"`
+}
+
+// AccessTokenCreateScopes defines model for AccessTokenCreate.Scopes.
+type AccessTokenCreateScopes string
+
+// AuditEntry defines model for AuditEntry.
+type AuditEntry struct {
+	Action string `json:"action"`
+
+	// Actor Username of the actor; absent when anonymous or deleted
+	Actor      *string                `json:"actor,omitempty"`
+	ActorId    *openapi_types.UUID    `json:"actorId,omitempty"`
+	At         time.Time              `json:"at"`
+	Data       map[string]interface{} `json:"data"`
+	Id         openapi_types.UUID     `json:"id"`
+	Ip         string                 `json:"ip"`
+	OrgId      *openapi_types.UUID    `json:"orgId,omitempty"`
+	TargetId   string                 `json:"targetId"`
+	TargetType string                 `json:"targetType"`
+}
+
+// AuditPage defines model for AuditPage.
+type AuditPage struct {
+	Entries []AuditEntry `json:"entries"`
+
+	// Next Cursor of the next page (pass as before); absent on the last page
+	Next *openapi_types.UUID `json:"next,omitempty"`
+}
+
+// CodeRequest defines model for CodeRequest.
+type CodeRequest struct {
+	Code string `json:"code"`
+}
+
+// CreatedAccessToken defines model for CreatedAccessToken.
+type CreatedAccessToken struct {
+	// Secret The token (erp_...), shown only once; send it as "Authorization Bearer"
+	Secret string      `json:"secret"`
+	Token  AccessToken `json:"token"`
+}
+
 // EmailRequest defines model for EmailRequest.
 type EmailRequest struct {
 	Email string `json:"email"`
+}
+
+// GpgKey defines model for GpgKey.
+type GpgKey struct {
+	CreatedAt   time.Time          `json:"createdAt"`
+	Emails      []string           `json:"emails"`
+	ExpiresAt   *time.Time         `json:"expiresAt,omitempty"`
+	Fingerprint string             `json:"fingerprint"`
+	Id          openapi_types.UUID `json:"id"`
+	KeyId       string             `json:"keyId"`
+	SubkeyIds   []string           `json:"subkeyIds"`
+
+	// VerifiedEmails The emails that are verified addresses of the account
+	VerifiedEmails []string `json:"verifiedEmails"`
+}
+
+// GpgKeyCreate defines model for GpgKeyCreate.
+type GpgKeyCreate struct {
+	ArmoredKey string `json:"armoredKey"`
 }
 
 // Invite defines model for Invite.
@@ -217,6 +446,161 @@ type Meta struct {
 // MetaRegistration defines model for Meta.Registration.
 type MetaRegistration string
 
+// MfaChallenge A login waiting for its second factor. The pending state lives in
+// the HttpOnly erepo_mfa cookie (__Host-erepo_mfa on https), never in
+// a session cookie.
+type MfaChallenge struct {
+	// EnrollmentRequired Policy requires a second factor and the account has none; set up an authenticator app to continue
+	EnrollmentRequired bool                  `json:"enrollmentRequired"`
+	ExpiresAt          time.Time             `json:"expiresAt"`
+	Methods            []MfaChallengeMethods `json:"methods"`
+}
+
+// MfaChallengeMethods defines model for MfaChallenge.Methods.
+type MfaChallengeMethods string
+
+// MfaEnrollResult defines model for MfaEnrollResult.
+type MfaEnrollResult struct {
+	RecoveryCodes []string `json:"recoveryCodes"`
+	User          User     `json:"user"`
+}
+
+// OidcLink defines model for OidcLink.
+type OidcLink struct {
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Email Email address reported by the provider, if any
+	Email       *string            `json:"email,omitempty"`
+	Id          openapi_types.UUID `json:"id"`
+	Label       string             `json:"label"`
+	LastLoginAt *time.Time         `json:"lastLoginAt,omitempty"`
+	Provider    string             `json:"provider"`
+}
+
+// OidcLinkRequest defines model for OidcLinkRequest.
+type OidcLinkRequest struct {
+	// ReturnTo Local path to return to after the provider (default /settings)
+	ReturnTo *string `json:"returnTo,omitempty"`
+}
+
+// OidcProvider defines model for OidcProvider.
+type OidcProvider struct {
+	Label string `json:"label"`
+	Name  string `json:"name"`
+}
+
+// OidcRedirect defines model for OidcRedirect.
+type OidcRedirect struct {
+	Url string `json:"url"`
+}
+
+// Org defines model for Org.
+type Org struct {
+	BasePermission Permission         `json:"basePermission"`
+	CreatedAt      time.Time          `json:"createdAt"`
+	Description    string             `json:"description"`
+	DisplayName    string             `json:"displayName"`
+	Id             openapi_types.UUID `json:"id"`
+	Name           string             `json:"name"`
+
+	// Require2fa Members must have a second factor; enforced from their next sign-in.
+	Require2fa bool      `json:"require2fa"`
+	Role       *OrgRole  `json:"role,omitempty"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+	Verified   bool      `json:"verified"`
+}
+
+// OrgCreate defines model for OrgCreate.
+type OrgCreate struct {
+	Description *string `json:"description,omitempty"`
+	DisplayName *string `json:"displayName,omitempty"`
+	Name        string  `json:"name"`
+}
+
+// OrgInvite defines model for OrgInvite.
+type OrgInvite struct {
+	CreatedAt time.Time          `json:"createdAt"`
+	Email     string             `json:"email"`
+	ExpiresAt time.Time          `json:"expiresAt"`
+	Id        openapi_types.UUID `json:"id"`
+	InvitedBy *string            `json:"invitedBy,omitempty"`
+	Role      OrgRole            `json:"role"`
+	Teams     []string           `json:"teams"`
+
+	// Token Only at creation and only when mail is disabled; shown once
+	Token *string `json:"token,omitempty"`
+}
+
+// OrgInviteAccepted defines model for OrgInviteAccepted.
+type OrgInviteAccepted struct {
+	Org  string  `json:"org"`
+	Role OrgRole `json:"role"`
+}
+
+// OrgInviteRequest defines model for OrgInviteRequest.
+type OrgInviteRequest struct {
+	Email string    `json:"email"`
+	Role  OrgRole   `json:"role"`
+	Teams *[]string `json:"teams,omitempty"`
+}
+
+// OrgMember defines model for OrgMember.
+type OrgMember struct {
+	DisplayName string    `json:"displayName"`
+	Role        OrgRole   `json:"role"`
+	Since       time.Time `json:"since"`
+	Username    string    `json:"username"`
+}
+
+// OrgRole defines model for OrgRole.
+type OrgRole string
+
+// OrgRoleRequest defines model for OrgRoleRequest.
+type OrgRoleRequest struct {
+	Role OrgRole `json:"role"`
+}
+
+// OrgUpdate defines model for OrgUpdate.
+type OrgUpdate struct {
+	BasePermission *Permission `json:"basePermission,omitempty"`
+	Description    *string     `json:"description,omitempty"`
+	DisplayName    *string     `json:"displayName,omitempty"`
+
+	// Require2fa Owners only. Requires a second factor from every member.
+	Require2fa *bool `json:"require2fa,omitempty"`
+}
+
+// Passkey defines model for Passkey.
+type Passkey struct {
+	CreatedAt  time.Time          `json:"createdAt"`
+	Id         openapi_types.UUID `json:"id"`
+	LastUsedAt *time.Time         `json:"lastUsedAt,omitempty"`
+	Name       string             `json:"name"`
+}
+
+// PasskeyChallenge defines model for PasskeyChallenge.
+type PasskeyChallenge struct {
+	// Challenge Ceremony token to send back with the response
+	Challenge string                 `json:"challenge"`
+	Options   map[string]interface{} `json:"options"`
+}
+
+// PasskeyLoginRequest defines model for PasskeyLoginRequest.
+type PasskeyLoginRequest struct {
+	Challenge  string                 `json:"challenge"`
+	Credential map[string]interface{} `json:"credential"`
+}
+
+// PasskeyRegisterRequest defines model for PasskeyRegisterRequest.
+type PasskeyRegisterRequest struct {
+	Challenge  string                 `json:"challenge"`
+	Credential map[string]interface{} `json:"credential"`
+	Name       string                 `json:"name"`
+}
+
+// Permission defines model for Permission.
+type Permission string
+
 // Problem defines model for Problem.
 type Problem struct {
 	Detail   *string `json:"detail,omitempty"`
@@ -224,6 +608,29 @@ type Problem struct {
 	Status   int     `json:"status"`
 	Title    string  `json:"title"`
 	Type     string  `json:"type"`
+}
+
+// Quota defines model for Quota.
+type Quota struct {
+	// MaxRepos -1 means unlimited
+	MaxRepos int32 `json:"maxRepos"`
+
+	// MaxStorageBytes -1 means unlimited
+	MaxStorageBytes int64 `json:"maxStorageBytes"`
+	Repos           int32 `json:"repos"`
+	StorageBytes    int64 `json:"storageBytes"`
+}
+
+// ReauthRequest Either the password or a current authenticator app or recovery code
+type ReauthRequest struct {
+	Code     *string `json:"code,omitempty"`
+	Password *string `json:"password,omitempty"`
+}
+
+// RecoveryCodes defines model for RecoveryCodes.
+type RecoveryCodes struct {
+	// Codes Shown only once; empty when existing codes were kept
+	Codes []string `json:"codes"`
 }
 
 // RegisterAccepted defines model for RegisterAccepted.
@@ -252,6 +659,43 @@ type RegisterRequestLocale string
 type ResetPasswordRequest struct {
 	Password string `json:"password"`
 	Token    string `json:"token"`
+}
+
+// SecurityStatus defines model for SecurityStatus.
+type SecurityStatus struct {
+	Passkeys           []Passkey `json:"passkeys"`
+	RecoveryCodesLeft  int       `json:"recoveryCodesLeft"`
+	RecoveryCodesTotal int       `json:"recoveryCodesTotal"`
+
+	// Required Policy (instance or organization) requires a second factor
+	Required bool `json:"required"`
+
+	// Totp An authenticator app is enabled
+	Totp bool `json:"totp"`
+
+	// TotpPending An authenticator app setup waits for its first code
+	TotpPending       bool `json:"totpPending"`
+	WebauthnAvailable bool `json:"webauthnAvailable"`
+}
+
+// SshKey defines model for SshKey.
+type SshKey struct {
+	Bits        *int               `json:"bits,omitempty"`
+	CreatedAt   time.Time          `json:"createdAt"`
+	Fingerprint string             `json:"fingerprint"`
+	Id          openapi_types.UUID `json:"id"`
+	LastUsedAt  *time.Time         `json:"lastUsedAt,omitempty"`
+	PublicKey   string             `json:"publicKey"`
+	Title       string             `json:"title"`
+	Type        string             `json:"type"`
+}
+
+// SshKeyCreate defines model for SshKeyCreate.
+type SshKeyCreate struct {
+	Key string `json:"key"`
+
+	// Title Empty uses the key comment, or the key type
+	Title string `json:"title"`
 }
 
 // StorageCache defines model for StorageCache.
@@ -352,9 +796,59 @@ type StorageWarning struct {
 // StorageWarningCode defines model for StorageWarning.Code.
 type StorageWarningCode string
 
+// Team defines model for Team.
+type Team struct {
+	CreatedAt   time.Time          `json:"createdAt"`
+	Description string             `json:"description"`
+	Id          openapi_types.UUID `json:"id"`
+	Members     int64              `json:"members"`
+	Name        string             `json:"name"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
+}
+
+// TeamCreate defines model for TeamCreate.
+type TeamCreate struct {
+	Description *string `json:"description,omitempty"`
+	Name        string  `json:"name"`
+}
+
+// TeamMember defines model for TeamMember.
+type TeamMember struct {
+	DisplayName string         `json:"displayName"`
+	Role        TeamMemberRole `json:"role"`
+	Since       time.Time      `json:"since"`
+	Username    string         `json:"username"`
+}
+
+// TeamMemberRole defines model for TeamMember.Role.
+type TeamMemberRole string
+
+// TeamRoleRequest defines model for TeamRoleRequest.
+type TeamRoleRequest struct {
+	Role TeamRoleRequestRole `json:"role"`
+}
+
+// TeamRoleRequestRole defines model for TeamRoleRequest.Role.
+type TeamRoleRequestRole string
+
+// TeamUpdate defines model for TeamUpdate.
+type TeamUpdate struct {
+	Description *string `json:"description,omitempty"`
+	Name        *string `json:"name,omitempty"`
+}
+
 // TokenRequest defines model for TokenRequest.
 type TokenRequest struct {
 	Token string `json:"token"`
+}
+
+// TotpSetup defines model for TotpSetup.
+type TotpSetup struct {
+	// Secret Base32 secret for manual entry
+	Secret string `json:"secret"`
+
+	// Uri otpauth:// URI for a QR code
+	Uri string `json:"uri"`
 }
 
 // User defines model for User.
@@ -377,11 +871,73 @@ type UserLocale string
 // UserRole defines model for User.Role.
 type UserRole string
 
+// WebAuthnCredentialRequest defines model for WebAuthnCredentialRequest.
+type WebAuthnCredentialRequest struct {
+	// Credential PublicKeyCredential JSON (toJSON), binary fields in base64url
+	Credential map[string]interface{} `json:"credential"`
+}
+
+// WebAuthnOptions defines model for WebAuthnOptions.
+type WebAuthnOptions struct {
+	// Options PublicKeyCredentialRequestOptions wrapper ({publicKey}), binary fields in base64url
+	Options map[string]interface{} `json:"options"`
+}
+
+// AuditAction defines model for AuditAction.
+type AuditAction = string
+
+// AuditBefore defines model for AuditBefore.
+type AuditBefore = openapi_types.UUID
+
+// AuditLimit defines model for AuditLimit.
+type AuditLimit = int
+
+// CredentialID defines model for CredentialID.
+type CredentialID = openapi_types.UUID
+
+// OrgName defines model for OrgName.
+type OrgName = string
+
+// TeamName defines model for TeamName.
+type TeamName = string
+
+// Username defines model for Username.
+type Username = string
+
 // TooManyRequests defines model for TooManyRequests.
 type TooManyRequests = Problem
 
 // sessionContextKey is the context key for session security scheme
 type sessionContextKey string
+
+// tokenContextKey is the context key for token security scheme
+type tokenContextKey string
+
+// ListAdminAuditParams defines parameters for ListAdminAudit.
+type ListAdminAuditParams struct {
+	// Before Cursor; the next value of the previous page
+	Before *AuditBefore `form:"before,omitempty" json:"before,omitempty"`
+	Limit  *AuditLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Action Exact action, or a prefix ending with "." (e.g. org.)
+	Action *AuditAction `form:"action,omitempty" json:"action,omitempty"`
+
+	// Actor Only entries of this user
+	Actor *openapi_types.UUID `form:"actor,omitempty" json:"actor,omitempty"`
+
+	// Org Only entries of this organization
+	Org *openapi_types.UUID `form:"org,omitempty" json:"org,omitempty"`
+}
+
+// ListOrgAuditParams defines parameters for ListOrgAudit.
+type ListOrgAuditParams struct {
+	// Before Cursor; the next value of the previous page
+	Before *AuditBefore `form:"before,omitempty" json:"before,omitempty"`
+	Limit  *AuditLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Action Exact action, or a prefix ending with "." (e.g. org.)
+	Action *AuditAction `form:"action,omitempty" json:"action,omitempty"`
+}
 
 // CreateInviteJSONRequestBody defines body for CreateInvite for application/json ContentType.
 type CreateInviteJSONRequestBody = InviteRequest
@@ -395,6 +951,21 @@ type VerifyEmailJSONRequestBody = TokenRequest
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
+// ConfirmMfaEnrollTotpJSONRequestBody defines body for ConfirmMfaEnrollTotp for application/json ContentType.
+type ConfirmMfaEnrollTotpJSONRequestBody = CodeRequest
+
+// PasskeyLoginJSONRequestBody defines body for PasskeyLogin for application/json ContentType.
+type PasskeyLoginJSONRequestBody = PasskeyLoginRequest
+
+// VerifyMfaRecoveryJSONRequestBody defines body for VerifyMfaRecovery for application/json ContentType.
+type VerifyMfaRecoveryJSONRequestBody = CodeRequest
+
+// VerifyMfaTotpJSONRequestBody defines body for VerifyMfaTotp for application/json ContentType.
+type VerifyMfaTotpJSONRequestBody = CodeRequest
+
+// VerifyMfaWebAuthnJSONRequestBody defines body for VerifyMfaWebAuthn for application/json ContentType.
+type VerifyMfaWebAuthnJSONRequestBody = WebAuthnCredentialRequest
+
 // RequestPasswordResetJSONRequestBody defines body for RequestPasswordReset for application/json ContentType.
 type RequestPasswordResetJSONRequestBody = EmailRequest
 
@@ -404,8 +975,68 @@ type ResetPasswordJSONRequestBody = ResetPasswordRequest
 // RegisterJSONRequestBody defines body for Register for application/json ContentType.
 type RegisterJSONRequestBody = RegisterRequest
 
+// CreateOrgJSONRequestBody defines body for CreateOrg for application/json ContentType.
+type CreateOrgJSONRequestBody = OrgCreate
+
+// AcceptOrgInviteJSONRequestBody defines body for AcceptOrgInvite for application/json ContentType.
+type AcceptOrgInviteJSONRequestBody = TokenRequest
+
+// UpdateOrgJSONRequestBody defines body for UpdateOrg for application/json ContentType.
+type UpdateOrgJSONRequestBody = OrgUpdate
+
+// CreateOrgInviteJSONRequestBody defines body for CreateOrgInvite for application/json ContentType.
+type CreateOrgInviteJSONRequestBody = OrgInviteRequest
+
+// SetOrgMemberRoleJSONRequestBody defines body for SetOrgMemberRole for application/json ContentType.
+type SetOrgMemberRoleJSONRequestBody = OrgRoleRequest
+
+// CreateTeamJSONRequestBody defines body for CreateTeam for application/json ContentType.
+type CreateTeamJSONRequestBody = TeamCreate
+
+// UpdateTeamJSONRequestBody defines body for UpdateTeam for application/json ContentType.
+type UpdateTeamJSONRequestBody = TeamUpdate
+
+// SetTeamMemberJSONRequestBody defines body for SetTeamMember for application/json ContentType.
+type SetTeamMemberJSONRequestBody = TeamRoleRequest
+
+// AddGpgKeyJSONRequestBody defines body for AddGpgKey for application/json ContentType.
+type AddGpgKeyJSONRequestBody = GpgKeyCreate
+
+// AddSshKeyJSONRequestBody defines body for AddSshKey for application/json ContentType.
+type AddSshKeyJSONRequestBody = SshKeyCreate
+
+// BeginOidcLinkJSONRequestBody defines body for BeginOidcLink for application/json ContentType.
+type BeginOidcLinkJSONRequestBody = OidcLinkRequest
+
+// RegisterPasskeyJSONRequestBody defines body for RegisterPasskey for application/json ContentType.
+type RegisterPasskeyJSONRequestBody = PasskeyRegisterRequest
+
+// BeginPasskeyRegistrationJSONRequestBody defines body for BeginPasskeyRegistration for application/json ContentType.
+type BeginPasskeyRegistrationJSONRequestBody = ReauthRequest
+
+// DeletePasskeyJSONRequestBody defines body for DeletePasskey for application/json ContentType.
+type DeletePasskeyJSONRequestBody = ReauthRequest
+
+// RegenerateRecoveryCodesJSONRequestBody defines body for RegenerateRecoveryCodes for application/json ContentType.
+type RegenerateRecoveryCodesJSONRequestBody = ReauthRequest
+
+// DisableTotpJSONRequestBody defines body for DisableTotp for application/json ContentType.
+type DisableTotpJSONRequestBody = ReauthRequest
+
+// SetupTotpJSONRequestBody defines body for SetupTotp for application/json ContentType.
+type SetupTotpJSONRequestBody = ReauthRequest
+
+// ConfirmTotpJSONRequestBody defines body for ConfirmTotp for application/json ContentType.
+type ConfirmTotpJSONRequestBody = CodeRequest
+
+// CreateAccessTokenJSONRequestBody defines body for CreateAccessToken for application/json ContentType.
+type CreateAccessTokenJSONRequestBody = AccessTokenCreate
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// ListAdminAudit Instance audit log, newest first
+	// (GET /admin/audit)
+	ListAdminAudit(w http.ResponseWriter, r *http.Request, params ListAdminAuditParams)
 	// CreateInvite Create an instance invitation
 	// (POST /admin/invites)
 	CreateInvite(w http.ResponseWriter, r *http.Request)
@@ -427,6 +1058,36 @@ type ServerInterface interface {
 	// Logout Sign out and revoke the current session
 	// (POST /auth/logout)
 	Logout(w http.ResponseWriter, r *http.Request)
+	// GetMfaChallenge The pending second-factor step of this browser
+	// (GET /auth/mfa)
+	GetMfaChallenge(w http.ResponseWriter, r *http.Request)
+	// BeginMfaEnrollTotp Set up an authenticator app during a login that requires one
+	// (POST /auth/mfa/enroll/totp)
+	BeginMfaEnrollTotp(w http.ResponseWriter, r *http.Request)
+	// ConfirmMfaEnrollTotp Confirm the authenticator app and complete the login
+	// (POST /auth/mfa/enroll/totp/confirm)
+	ConfirmMfaEnrollTotp(w http.ResponseWriter, r *http.Request)
+	// PasskeyLogin Sign in with a passkey
+	// (POST /auth/mfa/passkey)
+	PasskeyLogin(w http.ResponseWriter, r *http.Request)
+	// BeginPasskeyLogin Options for a passwordless sign-in with a passkey
+	// (POST /auth/mfa/passkey/options)
+	BeginPasskeyLogin(w http.ResponseWriter, r *http.Request)
+	// VerifyMfaRecovery Complete a pending login with a recovery code
+	// (POST /auth/mfa/recovery)
+	VerifyMfaRecovery(w http.ResponseWriter, r *http.Request)
+	// VerifyMfaTotp Complete a pending login with an authenticator app code
+	// (POST /auth/mfa/totp)
+	VerifyMfaTotp(w http.ResponseWriter, r *http.Request)
+	// VerifyMfaWebAuthn Complete a pending login with a security key
+	// (POST /auth/mfa/webauthn)
+	VerifyMfaWebAuthn(w http.ResponseWriter, r *http.Request)
+	// BeginMfaWebAuthn Options to complete a pending login with a security key
+	// (POST /auth/mfa/webauthn/options)
+	BeginMfaWebAuthn(w http.ResponseWriter, r *http.Request)
+	// ListOidcProviders External identity providers configured on this instance
+	// (GET /auth/oidc/providers)
+	ListOidcProviders(w http.ResponseWriter, r *http.Request)
 	// RequestPasswordReset Send a password reset link
 	// (POST /auth/password/reset)
 	RequestPasswordReset(w http.ResponseWriter, r *http.Request)
@@ -439,14 +1100,146 @@ type ServerInterface interface {
 	// GetMeta Public information about this instance
 	// (GET /meta)
 	GetMeta(w http.ResponseWriter, r *http.Request)
+	// ListMyOrgs Organizations the caller is a member of
+	// (GET /orgs)
+	ListMyOrgs(w http.ResponseWriter, r *http.Request)
+	// CreateOrg Create an organization owned by the caller
+	// (POST /orgs)
+	CreateOrg(w http.ResponseWriter, r *http.Request)
+	// AcceptOrgInvite Join an organization with an invitation token
+	// (POST /orgs/invites/accept)
+	AcceptOrgInvite(w http.ResponseWriter, r *http.Request)
+	// DeleteOrg Delete an organization with its members, teams and invitations
+	// (DELETE /orgs/{org})
+	DeleteOrg(w http.ResponseWriter, r *http.Request, org OrgName)
+	// GetOrg An organization
+	// (GET /orgs/{org})
+	GetOrg(w http.ResponseWriter, r *http.Request, org OrgName)
+	// UpdateOrg Change the settings of an organization
+	// (PATCH /orgs/{org})
+	UpdateOrg(w http.ResponseWriter, r *http.Request, org OrgName)
+	// ListOrgAudit Audit log of an organization, newest first
+	// (GET /orgs/{org}/audit)
+	ListOrgAudit(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgAuditParams)
+	// ListOrgInvites Pending invitations, expired ones included
+	// (GET /orgs/{org}/invites)
+	ListOrgInvites(w http.ResponseWriter, r *http.Request, org OrgName)
+	// CreateOrgInvite Invite an email address to join the organization
+	// (POST /orgs/{org}/invites)
+	CreateOrgInvite(w http.ResponseWriter, r *http.Request, org OrgName)
+	// RevokeOrgInvite Revoke a pending invitation
+	// (DELETE /orgs/{org}/invites/{id})
+	RevokeOrgInvite(w http.ResponseWriter, r *http.Request, org OrgName, id openapi_types.UUID)
+	// ListOrgMembers Members of an organization
+	// (GET /orgs/{org}/members)
+	ListOrgMembers(w http.ResponseWriter, r *http.Request, org OrgName)
+	// RemoveOrgMember Remove a member, or leave the organization
+	// (DELETE /orgs/{org}/members/{username})
+	RemoveOrgMember(w http.ResponseWriter, r *http.Request, org OrgName, username Username)
+	// SetOrgMemberRole Change the role of a member
+	// (PUT /orgs/{org}/members/{username})
+	SetOrgMemberRole(w http.ResponseWriter, r *http.Request, org OrgName, username Username)
+	// GetOrgQuota Limits and current usage of an organization
+	// (GET /orgs/{org}/quota)
+	GetOrgQuota(w http.ResponseWriter, r *http.Request, org OrgName)
+	// ListTeams Teams of an organization
+	// (GET /orgs/{org}/teams)
+	ListTeams(w http.ResponseWriter, r *http.Request, org OrgName)
+	// CreateTeam Create a team
+	// (POST /orgs/{org}/teams)
+	CreateTeam(w http.ResponseWriter, r *http.Request, org OrgName)
+	// DeleteTeam Delete a team
+	// (DELETE /orgs/{org}/teams/{team})
+	DeleteTeam(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName)
+	// GetTeam A team
+	// (GET /orgs/{org}/teams/{team})
+	GetTeam(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName)
+	// UpdateTeam Rename a team or change its description
+	// (PATCH /orgs/{org}/teams/{team})
+	UpdateTeam(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName)
+	// ListTeamMembers Members of a team
+	// (GET /orgs/{org}/teams/{team}/members)
+	ListTeamMembers(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName)
+	// RemoveTeamMember Remove a member from a team
+	// (DELETE /orgs/{org}/teams/{team}/members/{username})
+	RemoveTeamMember(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName, username Username)
+	// SetTeamMember Add a member of the organization to a team, or change its team role
+	// (PUT /orgs/{org}/teams/{team}/members/{username})
+	SetTeamMember(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName, username Username)
 	// GetCurrentUser The signed-in user
 	// (GET /user)
 	GetCurrentUser(w http.ResponseWriter, r *http.Request)
+	// ListGpgKeys GPG public keys of the account
+	// (GET /user/keys/gpg)
+	ListGpgKeys(w http.ResponseWriter, r *http.Request)
+	// AddGpgKey Add a GPG public key
+	// (POST /user/keys/gpg)
+	AddGpgKey(w http.ResponseWriter, r *http.Request)
+	// DeleteGpgKey Remove a GPG public key
+	// (DELETE /user/keys/gpg/{id})
+	DeleteGpgKey(w http.ResponseWriter, r *http.Request, id CredentialID)
+	// ListSshKeys SSH public keys of the account
+	// (GET /user/keys/ssh)
+	ListSshKeys(w http.ResponseWriter, r *http.Request)
+	// AddSshKey Add an SSH public key
+	// (POST /user/keys/ssh)
+	AddSshKey(w http.ResponseWriter, r *http.Request)
+	// DeleteSshKey Remove an SSH public key
+	// (DELETE /user/keys/ssh/{id})
+	DeleteSshKey(w http.ResponseWriter, r *http.Request, id CredentialID)
+	// ListOidcLinks External identities linked to the account
+	// (GET /user/oidc)
+	ListOidcLinks(w http.ResponseWriter, r *http.Request)
+	// UnlinkOidc Unlink an external identity
+	// (DELETE /user/oidc/{id})
+	UnlinkOidc(w http.ResponseWriter, r *http.Request, id CredentialID)
+	// BeginOidcLink Start linking an external identity
+	// (POST /user/oidc/{provider}/link)
+	BeginOidcLink(w http.ResponseWriter, r *http.Request, provider string)
+	// GetSecurity Second factors of the signed-in user
+	// (GET /user/security)
+	GetSecurity(w http.ResponseWriter, r *http.Request)
+	// RegisterPasskey Register a passkey
+	// (POST /user/security/passkeys)
+	RegisterPasskey(w http.ResponseWriter, r *http.Request)
+	// BeginPasskeyRegistration Options to register a passkey
+	// (POST /user/security/passkeys/options)
+	BeginPasskeyRegistration(w http.ResponseWriter, r *http.Request)
+	// DeletePasskey Remove a passkey
+	// (DELETE /user/security/passkeys/{id})
+	DeletePasskey(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// RegenerateRecoveryCodes Replace the recovery codes
+	// (POST /user/security/recovery-codes)
+	RegenerateRecoveryCodes(w http.ResponseWriter, r *http.Request)
+	// DisableTotp Remove the authenticator app
+	// (DELETE /user/security/totp)
+	DisableTotp(w http.ResponseWriter, r *http.Request)
+	// SetupTotp Start setting up an authenticator app
+	// (POST /user/security/totp)
+	SetupTotp(w http.ResponseWriter, r *http.Request)
+	// ConfirmTotp Enable the authenticator app with a first code
+	// (POST /user/security/totp/confirm)
+	ConfirmTotp(w http.ResponseWriter, r *http.Request)
+	// ListAccessTokens Personal access tokens of the account
+	// (GET /user/tokens)
+	ListAccessTokens(w http.ResponseWriter, r *http.Request)
+	// CreateAccessToken Create a personal access token
+	// (POST /user/tokens)
+	CreateAccessToken(w http.ResponseWriter, r *http.Request)
+	// RevokeAccessToken Revoke a personal access token
+	// (DELETE /user/tokens/{id})
+	RevokeAccessToken(w http.ResponseWriter, r *http.Request, id CredentialID)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
+
+// ListAdminAudit Instance audit log, newest first
+// (GET /admin/audit)
+func (_ Unimplemented) ListAdminAudit(w http.ResponseWriter, r *http.Request, params ListAdminAuditParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // CreateInvite Create an instance invitation
 // (POST /admin/invites)
@@ -490,6 +1283,66 @@ func (_ Unimplemented) Logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetMfaChallenge The pending second-factor step of this browser
+// (GET /auth/mfa)
+func (_ Unimplemented) GetMfaChallenge(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// BeginMfaEnrollTotp Set up an authenticator app during a login that requires one
+// (POST /auth/mfa/enroll/totp)
+func (_ Unimplemented) BeginMfaEnrollTotp(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ConfirmMfaEnrollTotp Confirm the authenticator app and complete the login
+// (POST /auth/mfa/enroll/totp/confirm)
+func (_ Unimplemented) ConfirmMfaEnrollTotp(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PasskeyLogin Sign in with a passkey
+// (POST /auth/mfa/passkey)
+func (_ Unimplemented) PasskeyLogin(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// BeginPasskeyLogin Options for a passwordless sign-in with a passkey
+// (POST /auth/mfa/passkey/options)
+func (_ Unimplemented) BeginPasskeyLogin(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// VerifyMfaRecovery Complete a pending login with a recovery code
+// (POST /auth/mfa/recovery)
+func (_ Unimplemented) VerifyMfaRecovery(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// VerifyMfaTotp Complete a pending login with an authenticator app code
+// (POST /auth/mfa/totp)
+func (_ Unimplemented) VerifyMfaTotp(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// VerifyMfaWebAuthn Complete a pending login with a security key
+// (POST /auth/mfa/webauthn)
+func (_ Unimplemented) VerifyMfaWebAuthn(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// BeginMfaWebAuthn Options to complete a pending login with a security key
+// (POST /auth/mfa/webauthn/options)
+func (_ Unimplemented) BeginMfaWebAuthn(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOidcProviders External identity providers configured on this instance
+// (GET /auth/oidc/providers)
+func (_ Unimplemented) ListOidcProviders(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // RequestPasswordReset Send a password reset link
 // (POST /auth/password/reset)
 func (_ Unimplemented) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
@@ -514,9 +1367,261 @@ func (_ Unimplemented) GetMeta(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListMyOrgs Organizations the caller is a member of
+// (GET /orgs)
+func (_ Unimplemented) ListMyOrgs(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateOrg Create an organization owned by the caller
+// (POST /orgs)
+func (_ Unimplemented) CreateOrg(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AcceptOrgInvite Join an organization with an invitation token
+// (POST /orgs/invites/accept)
+func (_ Unimplemented) AcceptOrgInvite(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteOrg Delete an organization with its members, teams and invitations
+// (DELETE /orgs/{org})
+func (_ Unimplemented) DeleteOrg(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetOrg An organization
+// (GET /orgs/{org})
+func (_ Unimplemented) GetOrg(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateOrg Change the settings of an organization
+// (PATCH /orgs/{org})
+func (_ Unimplemented) UpdateOrg(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOrgAudit Audit log of an organization, newest first
+// (GET /orgs/{org}/audit)
+func (_ Unimplemented) ListOrgAudit(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgAuditParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOrgInvites Pending invitations, expired ones included
+// (GET /orgs/{org}/invites)
+func (_ Unimplemented) ListOrgInvites(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateOrgInvite Invite an email address to join the organization
+// (POST /orgs/{org}/invites)
+func (_ Unimplemented) CreateOrgInvite(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RevokeOrgInvite Revoke a pending invitation
+// (DELETE /orgs/{org}/invites/{id})
+func (_ Unimplemented) RevokeOrgInvite(w http.ResponseWriter, r *http.Request, org OrgName, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOrgMembers Members of an organization
+// (GET /orgs/{org}/members)
+func (_ Unimplemented) ListOrgMembers(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RemoveOrgMember Remove a member, or leave the organization
+// (DELETE /orgs/{org}/members/{username})
+func (_ Unimplemented) RemoveOrgMember(w http.ResponseWriter, r *http.Request, org OrgName, username Username) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetOrgMemberRole Change the role of a member
+// (PUT /orgs/{org}/members/{username})
+func (_ Unimplemented) SetOrgMemberRole(w http.ResponseWriter, r *http.Request, org OrgName, username Username) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetOrgQuota Limits and current usage of an organization
+// (GET /orgs/{org}/quota)
+func (_ Unimplemented) GetOrgQuota(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTeams Teams of an organization
+// (GET /orgs/{org}/teams)
+func (_ Unimplemented) ListTeams(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTeam Create a team
+// (POST /orgs/{org}/teams)
+func (_ Unimplemented) CreateTeam(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteTeam Delete a team
+// (DELETE /orgs/{org}/teams/{team})
+func (_ Unimplemented) DeleteTeam(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTeam A team
+// (GET /orgs/{org}/teams/{team})
+func (_ Unimplemented) GetTeam(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateTeam Rename a team or change its description
+// (PATCH /orgs/{org}/teams/{team})
+func (_ Unimplemented) UpdateTeam(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTeamMembers Members of a team
+// (GET /orgs/{org}/teams/{team}/members)
+func (_ Unimplemented) ListTeamMembers(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RemoveTeamMember Remove a member from a team
+// (DELETE /orgs/{org}/teams/{team}/members/{username})
+func (_ Unimplemented) RemoveTeamMember(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName, username Username) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetTeamMember Add a member of the organization to a team, or change its team role
+// (PUT /orgs/{org}/teams/{team}/members/{username})
+func (_ Unimplemented) SetTeamMember(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName, username Username) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetCurrentUser The signed-in user
 // (GET /user)
 func (_ Unimplemented) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListGpgKeys GPG public keys of the account
+// (GET /user/keys/gpg)
+func (_ Unimplemented) ListGpgKeys(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AddGpgKey Add a GPG public key
+// (POST /user/keys/gpg)
+func (_ Unimplemented) AddGpgKey(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteGpgKey Remove a GPG public key
+// (DELETE /user/keys/gpg/{id})
+func (_ Unimplemented) DeleteGpgKey(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListSshKeys SSH public keys of the account
+// (GET /user/keys/ssh)
+func (_ Unimplemented) ListSshKeys(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AddSshKey Add an SSH public key
+// (POST /user/keys/ssh)
+func (_ Unimplemented) AddSshKey(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteSshKey Remove an SSH public key
+// (DELETE /user/keys/ssh/{id})
+func (_ Unimplemented) DeleteSshKey(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOidcLinks External identities linked to the account
+// (GET /user/oidc)
+func (_ Unimplemented) ListOidcLinks(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UnlinkOidc Unlink an external identity
+// (DELETE /user/oidc/{id})
+func (_ Unimplemented) UnlinkOidc(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// BeginOidcLink Start linking an external identity
+// (POST /user/oidc/{provider}/link)
+func (_ Unimplemented) BeginOidcLink(w http.ResponseWriter, r *http.Request, provider string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetSecurity Second factors of the signed-in user
+// (GET /user/security)
+func (_ Unimplemented) GetSecurity(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RegisterPasskey Register a passkey
+// (POST /user/security/passkeys)
+func (_ Unimplemented) RegisterPasskey(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// BeginPasskeyRegistration Options to register a passkey
+// (POST /user/security/passkeys/options)
+func (_ Unimplemented) BeginPasskeyRegistration(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeletePasskey Remove a passkey
+// (DELETE /user/security/passkeys/{id})
+func (_ Unimplemented) DeletePasskey(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RegenerateRecoveryCodes Replace the recovery codes
+// (POST /user/security/recovery-codes)
+func (_ Unimplemented) RegenerateRecoveryCodes(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DisableTotp Remove the authenticator app
+// (DELETE /user/security/totp)
+func (_ Unimplemented) DisableTotp(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetupTotp Start setting up an authenticator app
+// (POST /user/security/totp)
+func (_ Unimplemented) SetupTotp(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ConfirmTotp Enable the authenticator app with a first code
+// (POST /user/security/totp/confirm)
+func (_ Unimplemented) ConfirmTotp(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListAccessTokens Personal access tokens of the account
+// (GET /user/tokens)
+func (_ Unimplemented) ListAccessTokens(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAccessToken Create a personal access token
+// (POST /user/tokens)
+func (_ Unimplemented) CreateAccessToken(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RevokeAccessToken Revoke a personal access token
+// (DELETE /user/tokens/{id})
+func (_ Unimplemented) RevokeAccessToken(w http.ResponseWriter, r *http.Request, id CredentialID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -528,6 +1633,97 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// ListAdminAudit operation middleware
+func (siw *ServerInterfaceWrapper) ListAdminAudit(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAdminAuditParams
+
+	// ------------- Optional query parameter "before" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "before", r.URL.Query(), &params.Before, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "before"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "before", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "action" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "action", r.URL.Query(), &params.Action, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "action"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "action", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "actor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "actor", r.URL.Query(), &params.Actor, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "actor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "actor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "org" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "org", r.URL.Query(), &params.Org, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "org"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAdminAudit(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // CreateInvite operation middleware
 func (siw *ServerInterfaceWrapper) CreateInvite(w http.ResponseWriter, r *http.Request) {
@@ -657,6 +1853,146 @@ func (siw *ServerInterfaceWrapper) Logout(w http.ResponseWriter, r *http.Request
 	handler.ServeHTTP(w, r)
 }
 
+// GetMfaChallenge operation middleware
+func (siw *ServerInterfaceWrapper) GetMfaChallenge(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMfaChallenge(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// BeginMfaEnrollTotp operation middleware
+func (siw *ServerInterfaceWrapper) BeginMfaEnrollTotp(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.BeginMfaEnrollTotp(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ConfirmMfaEnrollTotp operation middleware
+func (siw *ServerInterfaceWrapper) ConfirmMfaEnrollTotp(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ConfirmMfaEnrollTotp(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PasskeyLogin operation middleware
+func (siw *ServerInterfaceWrapper) PasskeyLogin(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PasskeyLogin(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// BeginPasskeyLogin operation middleware
+func (siw *ServerInterfaceWrapper) BeginPasskeyLogin(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.BeginPasskeyLogin(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// VerifyMfaRecovery operation middleware
+func (siw *ServerInterfaceWrapper) VerifyMfaRecovery(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.VerifyMfaRecovery(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// VerifyMfaTotp operation middleware
+func (siw *ServerInterfaceWrapper) VerifyMfaTotp(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.VerifyMfaTotp(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// VerifyMfaWebAuthn operation middleware
+func (siw *ServerInterfaceWrapper) VerifyMfaWebAuthn(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.VerifyMfaWebAuthn(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// BeginMfaWebAuthn operation middleware
+func (siw *ServerInterfaceWrapper) BeginMfaWebAuthn(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.BeginMfaWebAuthn(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOidcProviders operation middleware
+func (siw *ServerInterfaceWrapper) ListOidcProviders(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOidcProviders(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // RequestPasswordReset operation middleware
 func (siw *ServerInterfaceWrapper) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 
@@ -713,8 +2049,8 @@ func (siw *ServerInterfaceWrapper) GetMeta(w http.ResponseWriter, r *http.Reques
 	handler.ServeHTTP(w, r)
 }
 
-// GetCurrentUser operation middleware
-func (siw *ServerInterfaceWrapper) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+// ListMyOrgs operation middleware
+func (siw *ServerInterfaceWrapper) ListMyOrgs(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
@@ -723,7 +2059,1302 @@ func (siw *ServerInterfaceWrapper) GetCurrentUser(w http.ResponseWriter, r *http
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMyOrgs(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateOrg operation middleware
+func (siw *ServerInterfaceWrapper) CreateOrg(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateOrg(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AcceptOrgInvite operation middleware
+func (siw *ServerInterfaceWrapper) AcceptOrgInvite(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AcceptOrgInvite(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteOrg operation middleware
+func (siw *ServerInterfaceWrapper) DeleteOrg(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteOrg(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOrg operation middleware
+func (siw *ServerInterfaceWrapper) GetOrg(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOrg(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateOrg operation middleware
+func (siw *ServerInterfaceWrapper) UpdateOrg(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateOrg(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrgAudit operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgAudit(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListOrgAuditParams
+
+	// ------------- Optional query parameter "before" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "before", r.URL.Query(), &params.Before, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "before"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "before", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "action" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "action", r.URL.Query(), &params.Action, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "action"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "action", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgAudit(w, r, org, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrgInvites operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgInvites(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgInvites(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateOrgInvite operation middleware
+func (siw *ServerInterfaceWrapper) CreateOrgInvite(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateOrgInvite(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeOrgInvite operation middleware
+func (siw *ServerInterfaceWrapper) RevokeOrgInvite(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeOrgInvite(w, r, org, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrgMembers operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgMembers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgMembers(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveOrgMember operation middleware
+func (siw *ServerInterfaceWrapper) RemoveOrgMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveOrgMember(w, r, org, username)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetOrgMemberRole operation middleware
+func (siw *ServerInterfaceWrapper) SetOrgMemberRole(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetOrgMemberRole(w, r, org, username)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOrgQuota operation middleware
+func (siw *ServerInterfaceWrapper) GetOrgQuota(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOrgQuota(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTeams operation middleware
+func (siw *ServerInterfaceWrapper) ListTeams(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTeams(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTeam operation middleware
+func (siw *ServerInterfaceWrapper) CreateTeam(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTeam(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTeam operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTeam(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "team" -------------
+	var team TeamName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "team", chi.URLParam(r, "team"), &team, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTeam(w, r, org, team)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTeam operation middleware
+func (siw *ServerInterfaceWrapper) GetTeam(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "team" -------------
+	var team TeamName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "team", chi.URLParam(r, "team"), &team, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTeam(w, r, org, team)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTeam operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTeam(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "team" -------------
+	var team TeamName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "team", chi.URLParam(r, "team"), &team, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTeam(w, r, org, team)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTeamMembers operation middleware
+func (siw *ServerInterfaceWrapper) ListTeamMembers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "team" -------------
+	var team TeamName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "team", chi.URLParam(r, "team"), &team, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTeamMembers(w, r, org, team)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveTeamMember operation middleware
+func (siw *ServerInterfaceWrapper) RemoveTeamMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "team" -------------
+	var team TeamName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "team", chi.URLParam(r, "team"), &team, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveTeamMember(w, r, org, team, username)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetTeamMember operation middleware
+func (siw *ServerInterfaceWrapper) SetTeamMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "team" -------------
+	var team TeamName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "team", chi.URLParam(r, "team"), &team, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "team", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetTeamMember(w, r, org, team, username)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCurrentUser operation middleware
+func (siw *ServerInterfaceWrapper) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetCurrentUser(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListGpgKeys operation middleware
+func (siw *ServerInterfaceWrapper) ListGpgKeys(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGpgKeys(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddGpgKey operation middleware
+func (siw *ServerInterfaceWrapper) AddGpgKey(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddGpgKey(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGpgKey operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGpgKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id CredentialID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGpgKey(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSshKeys operation middleware
+func (siw *ServerInterfaceWrapper) ListSshKeys(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSshKeys(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddSshKey operation middleware
+func (siw *ServerInterfaceWrapper) AddSshKey(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddSshKey(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteSshKey operation middleware
+func (siw *ServerInterfaceWrapper) DeleteSshKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id CredentialID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteSshKey(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOidcLinks operation middleware
+func (siw *ServerInterfaceWrapper) ListOidcLinks(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOidcLinks(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnlinkOidc operation middleware
+func (siw *ServerInterfaceWrapper) UnlinkOidc(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id CredentialID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnlinkOidc(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// BeginOidcLink operation middleware
+func (siw *ServerInterfaceWrapper) BeginOidcLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "provider" -------------
+	var provider string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "provider", chi.URLParam(r, "provider"), &provider, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.BeginOidcLink(w, r, provider)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSecurity operation middleware
+func (siw *ServerInterfaceWrapper) GetSecurity(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSecurity(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RegisterPasskey operation middleware
+func (siw *ServerInterfaceWrapper) RegisterPasskey(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RegisterPasskey(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// BeginPasskeyRegistration operation middleware
+func (siw *ServerInterfaceWrapper) BeginPasskeyRegistration(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.BeginPasskeyRegistration(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePasskey operation middleware
+func (siw *ServerInterfaceWrapper) DeletePasskey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePasskey(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RegenerateRecoveryCodes operation middleware
+func (siw *ServerInterfaceWrapper) RegenerateRecoveryCodes(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RegenerateRecoveryCodes(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DisableTotp operation middleware
+func (siw *ServerInterfaceWrapper) DisableTotp(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DisableTotp(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetupTotp operation middleware
+func (siw *ServerInterfaceWrapper) SetupTotp(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetupTotp(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ConfirmTotp operation middleware
+func (siw *ServerInterfaceWrapper) ConfirmTotp(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ConfirmTotp(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAccessTokens operation middleware
+func (siw *ServerInterfaceWrapper) ListAccessTokens(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAccessTokens(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAccessToken operation middleware
+func (siw *ServerInterfaceWrapper) CreateAccessToken(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAccessToken(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeAccessToken operation middleware
+func (siw *ServerInterfaceWrapper) RevokeAccessToken(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id CredentialID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeAccessToken(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -882,6 +3513,165 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/user", wrapper.GetCurrentUser)
 	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/auth/mfa", wrapper.GetMfaChallenge)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/mfa/totp", wrapper.VerifyMfaTotp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/mfa/recovery", wrapper.VerifyMfaRecovery)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/mfa/webauthn/options", wrapper.BeginMfaWebAuthn)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/mfa/webauthn", wrapper.VerifyMfaWebAuthn)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/mfa/enroll/totp", wrapper.BeginMfaEnrollTotp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/mfa/enroll/totp/confirm", wrapper.ConfirmMfaEnrollTotp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/mfa/passkey/options", wrapper.BeginPasskeyLogin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/auth/mfa/passkey", wrapper.PasskeyLogin)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/security", wrapper.GetSecurity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/security/totp", wrapper.DisableTotp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/security/totp", wrapper.SetupTotp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/security/totp/confirm", wrapper.ConfirmTotp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/security/recovery-codes", wrapper.RegenerateRecoveryCodes)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/security/passkeys/options", wrapper.BeginPasskeyRegistration)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/security/passkeys", wrapper.RegisterPasskey)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/security/passkeys/{id}", wrapper.DeletePasskey)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/auth/oidc/providers", wrapper.ListOidcProviders)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/oidc", wrapper.ListOidcLinks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/oidc/{provider}/link", wrapper.BeginOidcLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/oidc/{id}", wrapper.UnlinkOidc)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/tokens", wrapper.ListAccessTokens)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/tokens", wrapper.CreateAccessToken)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/tokens/{id}", wrapper.RevokeAccessToken)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/keys/ssh", wrapper.ListSshKeys)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/keys/ssh", wrapper.AddSshKey)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/keys/ssh/{id}", wrapper.DeleteSshKey)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/keys/gpg", wrapper.ListGpgKeys)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/keys/gpg", wrapper.AddGpgKey)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/keys/gpg/{id}", wrapper.DeleteGpgKey)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs", wrapper.ListMyOrgs)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/orgs", wrapper.CreateOrg)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/orgs/invites/accept", wrapper.AcceptOrgInvite)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/orgs/{org}", wrapper.DeleteOrg)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}", wrapper.GetOrg)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/orgs/{org}", wrapper.UpdateOrg)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/members", wrapper.ListOrgMembers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/orgs/{org}/members/{username}", wrapper.RemoveOrgMember)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/orgs/{org}/members/{username}", wrapper.SetOrgMemberRole)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/teams", wrapper.ListTeams)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/orgs/{org}/teams", wrapper.CreateTeam)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/orgs/{org}/teams/{team}", wrapper.DeleteTeam)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/teams/{team}", wrapper.GetTeam)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/orgs/{org}/teams/{team}", wrapper.UpdateTeam)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/teams/{team}/members", wrapper.ListTeamMembers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/orgs/{org}/teams/{team}/members/{username}", wrapper.RemoveTeamMember)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/orgs/{org}/teams/{team}/members/{username}", wrapper.SetTeamMember)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/invites", wrapper.ListOrgInvites)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/orgs/{org}/invites", wrapper.CreateOrgInvite)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/orgs/{org}/invites/{id}", wrapper.RevokeOrgInvite)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/quota", wrapper.GetOrgQuota)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/audit", wrapper.ListOrgAudit)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/audit", wrapper.ListAdminAudit)
+	})
 
 	return r
 }
@@ -895,6 +3685,45 @@ type TooManyRequestsApplicationProblemPlusJSONResponse struct {
 	Body Problem
 
 	Headers TooManyRequestsResponseHeaders
+}
+
+type ListAdminAuditRequestObject struct {
+	Params ListAdminAuditParams
+}
+
+type ListAdminAuditResponseObject interface {
+	VisitListAdminAuditResponse(w http.ResponseWriter) error
+}
+
+type ListAdminAudit200JSONResponse AuditPage
+
+func (response ListAdminAudit200JSONResponse) VisitListAdminAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAdminAuditdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListAdminAuditdefaultApplicationProblemPlusJSONResponse) VisitListAdminAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type CreateInviteRequestObject struct {
@@ -1182,6 +4011,20 @@ func (response Login200JSONResponse) VisitLoginResponse(w http.ResponseWriter) e
 	return err
 }
 
+type Login202JSONResponse MfaChallenge
+
+func (response Login202JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type Login400ApplicationProblemPlusJSONResponse struct {
 	ProblemApplicationProblemPlusJSONResponse
 }
@@ -1281,6 +4124,822 @@ type LogoutdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response LogoutdefaultApplicationProblemPlusJSONResponse) VisitLogoutResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMfaChallengeRequestObject struct {
+}
+
+type GetMfaChallengeResponseObject interface {
+	VisitGetMfaChallengeResponse(w http.ResponseWriter) error
+}
+
+type GetMfaChallenge200JSONResponse MfaChallenge
+
+func (response GetMfaChallenge200JSONResponse) VisitGetMfaChallengeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMfaChallenge401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetMfaChallenge401ApplicationProblemPlusJSONResponse) VisitGetMfaChallengeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMfaChallengedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetMfaChallengedefaultApplicationProblemPlusJSONResponse) VisitGetMfaChallengeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginMfaEnrollTotpRequestObject struct {
+}
+
+type BeginMfaEnrollTotpResponseObject interface {
+	VisitBeginMfaEnrollTotpResponse(w http.ResponseWriter) error
+}
+
+type BeginMfaEnrollTotp200JSONResponse TotpSetup
+
+func (response BeginMfaEnrollTotp200JSONResponse) VisitBeginMfaEnrollTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginMfaEnrollTotp401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response BeginMfaEnrollTotp401ApplicationProblemPlusJSONResponse) VisitBeginMfaEnrollTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginMfaEnrollTotp409ApplicationProblemPlusJSONResponse Problem
+
+func (response BeginMfaEnrollTotp409ApplicationProblemPlusJSONResponse) VisitBeginMfaEnrollTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginMfaEnrollTotpdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response BeginMfaEnrollTotpdefaultApplicationProblemPlusJSONResponse) VisitBeginMfaEnrollTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmMfaEnrollTotpRequestObject struct {
+	Body *ConfirmMfaEnrollTotpJSONRequestBody
+}
+
+type ConfirmMfaEnrollTotpResponseObject interface {
+	VisitConfirmMfaEnrollTotpResponse(w http.ResponseWriter) error
+}
+
+type ConfirmMfaEnrollTotp200JSONResponse MfaEnrollResult
+
+func (response ConfirmMfaEnrollTotp200JSONResponse) VisitConfirmMfaEnrollTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmMfaEnrollTotp400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ConfirmMfaEnrollTotp400ApplicationProblemPlusJSONResponse) VisitConfirmMfaEnrollTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmMfaEnrollTotp401ApplicationProblemPlusJSONResponse Problem
+
+func (response ConfirmMfaEnrollTotp401ApplicationProblemPlusJSONResponse) VisitConfirmMfaEnrollTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmMfaEnrollTotp409ApplicationProblemPlusJSONResponse Problem
+
+func (response ConfirmMfaEnrollTotp409ApplicationProblemPlusJSONResponse) VisitConfirmMfaEnrollTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmMfaEnrollTotp429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response ConfirmMfaEnrollTotp429ApplicationProblemPlusJSONResponse) VisitConfirmMfaEnrollTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmMfaEnrollTotpdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ConfirmMfaEnrollTotpdefaultApplicationProblemPlusJSONResponse) VisitConfirmMfaEnrollTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PasskeyLoginRequestObject struct {
+	Body *PasskeyLoginJSONRequestBody
+}
+
+type PasskeyLoginResponseObject interface {
+	VisitPasskeyLoginResponse(w http.ResponseWriter) error
+}
+
+type PasskeyLogin200JSONResponse User
+
+func (response PasskeyLogin200JSONResponse) VisitPasskeyLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PasskeyLogin400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PasskeyLogin400ApplicationProblemPlusJSONResponse) VisitPasskeyLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PasskeyLogin401ApplicationProblemPlusJSONResponse Problem
+
+func (response PasskeyLogin401ApplicationProblemPlusJSONResponse) VisitPasskeyLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PasskeyLogin403ApplicationProblemPlusJSONResponse Problem
+
+func (response PasskeyLogin403ApplicationProblemPlusJSONResponse) VisitPasskeyLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PasskeyLogin429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response PasskeyLogin429ApplicationProblemPlusJSONResponse) VisitPasskeyLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PasskeyLogin503ApplicationProblemPlusJSONResponse Problem
+
+func (response PasskeyLogin503ApplicationProblemPlusJSONResponse) VisitPasskeyLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PasskeyLogindefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PasskeyLogindefaultApplicationProblemPlusJSONResponse) VisitPasskeyLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginPasskeyLoginRequestObject struct {
+}
+
+type BeginPasskeyLoginResponseObject interface {
+	VisitBeginPasskeyLoginResponse(w http.ResponseWriter) error
+}
+
+type BeginPasskeyLogin200JSONResponse PasskeyChallenge
+
+func (response BeginPasskeyLogin200JSONResponse) VisitBeginPasskeyLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginPasskeyLogin429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response BeginPasskeyLogin429ApplicationProblemPlusJSONResponse) VisitBeginPasskeyLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginPasskeyLogin503ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response BeginPasskeyLogin503ApplicationProblemPlusJSONResponse) VisitBeginPasskeyLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginPasskeyLogindefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response BeginPasskeyLogindefaultApplicationProblemPlusJSONResponse) VisitBeginPasskeyLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaRecoveryRequestObject struct {
+	Body *VerifyMfaRecoveryJSONRequestBody
+}
+
+type VerifyMfaRecoveryResponseObject interface {
+	VisitVerifyMfaRecoveryResponse(w http.ResponseWriter) error
+}
+
+type VerifyMfaRecovery200JSONResponse User
+
+func (response VerifyMfaRecovery200JSONResponse) VisitVerifyMfaRecoveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaRecovery400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response VerifyMfaRecovery400ApplicationProblemPlusJSONResponse) VisitVerifyMfaRecoveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaRecovery401ApplicationProblemPlusJSONResponse Problem
+
+func (response VerifyMfaRecovery401ApplicationProblemPlusJSONResponse) VisitVerifyMfaRecoveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaRecovery429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response VerifyMfaRecovery429ApplicationProblemPlusJSONResponse) VisitVerifyMfaRecoveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaRecoverydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response VerifyMfaRecoverydefaultApplicationProblemPlusJSONResponse) VisitVerifyMfaRecoveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaTotpRequestObject struct {
+	Body *VerifyMfaTotpJSONRequestBody
+}
+
+type VerifyMfaTotpResponseObject interface {
+	VisitVerifyMfaTotpResponse(w http.ResponseWriter) error
+}
+
+type VerifyMfaTotp200JSONResponse User
+
+func (response VerifyMfaTotp200JSONResponse) VisitVerifyMfaTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaTotp400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response VerifyMfaTotp400ApplicationProblemPlusJSONResponse) VisitVerifyMfaTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaTotp401ApplicationProblemPlusJSONResponse Problem
+
+func (response VerifyMfaTotp401ApplicationProblemPlusJSONResponse) VisitVerifyMfaTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaTotp429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response VerifyMfaTotp429ApplicationProblemPlusJSONResponse) VisitVerifyMfaTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaTotpdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response VerifyMfaTotpdefaultApplicationProblemPlusJSONResponse) VisitVerifyMfaTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaWebAuthnRequestObject struct {
+	Body *VerifyMfaWebAuthnJSONRequestBody
+}
+
+type VerifyMfaWebAuthnResponseObject interface {
+	VisitVerifyMfaWebAuthnResponse(w http.ResponseWriter) error
+}
+
+type VerifyMfaWebAuthn200JSONResponse User
+
+func (response VerifyMfaWebAuthn200JSONResponse) VisitVerifyMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaWebAuthn400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response VerifyMfaWebAuthn400ApplicationProblemPlusJSONResponse) VisitVerifyMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaWebAuthn401ApplicationProblemPlusJSONResponse Problem
+
+func (response VerifyMfaWebAuthn401ApplicationProblemPlusJSONResponse) VisitVerifyMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaWebAuthn429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response VerifyMfaWebAuthn429ApplicationProblemPlusJSONResponse) VisitVerifyMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaWebAuthn503ApplicationProblemPlusJSONResponse Problem
+
+func (response VerifyMfaWebAuthn503ApplicationProblemPlusJSONResponse) VisitVerifyMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyMfaWebAuthndefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response VerifyMfaWebAuthndefaultApplicationProblemPlusJSONResponse) VisitVerifyMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginMfaWebAuthnRequestObject struct {
+}
+
+type BeginMfaWebAuthnResponseObject interface {
+	VisitBeginMfaWebAuthnResponse(w http.ResponseWriter) error
+}
+
+type BeginMfaWebAuthn200JSONResponse WebAuthnOptions
+
+func (response BeginMfaWebAuthn200JSONResponse) VisitBeginMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginMfaWebAuthn401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response BeginMfaWebAuthn401ApplicationProblemPlusJSONResponse) VisitBeginMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginMfaWebAuthn409ApplicationProblemPlusJSONResponse Problem
+
+func (response BeginMfaWebAuthn409ApplicationProblemPlusJSONResponse) VisitBeginMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginMfaWebAuthn429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response BeginMfaWebAuthn429ApplicationProblemPlusJSONResponse) VisitBeginMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginMfaWebAuthn503ApplicationProblemPlusJSONResponse Problem
+
+func (response BeginMfaWebAuthn503ApplicationProblemPlusJSONResponse) VisitBeginMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginMfaWebAuthndefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response BeginMfaWebAuthndefaultApplicationProblemPlusJSONResponse) VisitBeginMfaWebAuthnResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOidcProvidersRequestObject struct {
+}
+
+type ListOidcProvidersResponseObject interface {
+	VisitListOidcProvidersResponse(w http.ResponseWriter) error
+}
+
+type ListOidcProviders200JSONResponse []OidcProvider
+
+func (response ListOidcProviders200JSONResponse) VisitListOidcProvidersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOidcProvidersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOidcProvidersdefaultApplicationProblemPlusJSONResponse) VisitListOidcProvidersResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -1545,6 +5204,1587 @@ func (response GetMetadefaultApplicationProblemPlusJSONResponse) VisitGetMetaRes
 	return err
 }
 
+type ListMyOrgsRequestObject struct {
+}
+
+type ListMyOrgsResponseObject interface {
+	VisitListMyOrgsResponse(w http.ResponseWriter) error
+}
+
+type ListMyOrgs200JSONResponse []Org
+
+func (response ListMyOrgs200JSONResponse) VisitListMyOrgsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMyOrgsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListMyOrgsdefaultApplicationProblemPlusJSONResponse) VisitListMyOrgsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgRequestObject struct {
+	Body *CreateOrgJSONRequestBody
+}
+
+type CreateOrgResponseObject interface {
+	VisitCreateOrgResponse(w http.ResponseWriter) error
+}
+
+type CreateOrg201JSONResponse Org
+
+func (response CreateOrg201JSONResponse) VisitCreateOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrg400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateOrg400ApplicationProblemPlusJSONResponse) VisitCreateOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrg403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrg403ApplicationProblemPlusJSONResponse) VisitCreateOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrg409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrg409ApplicationProblemPlusJSONResponse) VisitCreateOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateOrgdefaultApplicationProblemPlusJSONResponse) VisitCreateOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptOrgInviteRequestObject struct {
+	Body *AcceptOrgInviteJSONRequestBody
+}
+
+type AcceptOrgInviteResponseObject interface {
+	VisitAcceptOrgInviteResponse(w http.ResponseWriter) error
+}
+
+type AcceptOrgInvite200JSONResponse OrgInviteAccepted
+
+func (response AcceptOrgInvite200JSONResponse) VisitAcceptOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptOrgInvite400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AcceptOrgInvite400ApplicationProblemPlusJSONResponse) VisitAcceptOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptOrgInvite403ApplicationProblemPlusJSONResponse Problem
+
+func (response AcceptOrgInvite403ApplicationProblemPlusJSONResponse) VisitAcceptOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptOrgInvitedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response AcceptOrgInvitedefaultApplicationProblemPlusJSONResponse) VisitAcceptOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type DeleteOrgResponseObject interface {
+	VisitDeleteOrgResponse(w http.ResponseWriter) error
+}
+
+type DeleteOrg204Response struct {
+}
+
+func (response DeleteOrg204Response) VisitDeleteOrgResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteOrg403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteOrg403ApplicationProblemPlusJSONResponse) VisitDeleteOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrg404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteOrg404ApplicationProblemPlusJSONResponse) VisitDeleteOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteOrgdefaultApplicationProblemPlusJSONResponse) VisitDeleteOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type GetOrgResponseObject interface {
+	VisitGetOrgResponse(w http.ResponseWriter) error
+}
+
+type GetOrg200JSONResponse Org
+
+func (response GetOrg200JSONResponse) VisitGetOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrg404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetOrg404ApplicationProblemPlusJSONResponse) VisitGetOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetOrgdefaultApplicationProblemPlusJSONResponse) VisitGetOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrgRequestObject struct {
+	Org  OrgName `json:"org"`
+	Body *UpdateOrgJSONRequestBody
+}
+
+type UpdateOrgResponseObject interface {
+	VisitUpdateOrgResponse(w http.ResponseWriter) error
+}
+
+type UpdateOrg200JSONResponse Org
+
+func (response UpdateOrg200JSONResponse) VisitUpdateOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrg400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateOrg400ApplicationProblemPlusJSONResponse) VisitUpdateOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrg403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateOrg403ApplicationProblemPlusJSONResponse) VisitUpdateOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrg404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateOrg404ApplicationProblemPlusJSONResponse) VisitUpdateOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrgdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateOrgdefaultApplicationProblemPlusJSONResponse) VisitUpdateOrgResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgAuditRequestObject struct {
+	Org    OrgName `json:"org"`
+	Params ListOrgAuditParams
+}
+
+type ListOrgAuditResponseObject interface {
+	VisitListOrgAuditResponse(w http.ResponseWriter) error
+}
+
+type ListOrgAudit200JSONResponse AuditPage
+
+func (response ListOrgAudit200JSONResponse) VisitListOrgAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgAudit403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgAudit403ApplicationProblemPlusJSONResponse) VisitListOrgAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgAudit404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgAudit404ApplicationProblemPlusJSONResponse) VisitListOrgAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgAuditdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgAuditdefaultApplicationProblemPlusJSONResponse) VisitListOrgAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgInvitesRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type ListOrgInvitesResponseObject interface {
+	VisitListOrgInvitesResponse(w http.ResponseWriter) error
+}
+
+type ListOrgInvites200JSONResponse []OrgInvite
+
+func (response ListOrgInvites200JSONResponse) VisitListOrgInvitesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgInvites403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgInvites403ApplicationProblemPlusJSONResponse) VisitListOrgInvitesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgInvites404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgInvites404ApplicationProblemPlusJSONResponse) VisitListOrgInvitesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgInvitesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgInvitesdefaultApplicationProblemPlusJSONResponse) VisitListOrgInvitesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgInviteRequestObject struct {
+	Org  OrgName `json:"org"`
+	Body *CreateOrgInviteJSONRequestBody
+}
+
+type CreateOrgInviteResponseObject interface {
+	VisitCreateOrgInviteResponse(w http.ResponseWriter) error
+}
+
+type CreateOrgInvite201JSONResponse OrgInvite
+
+func (response CreateOrgInvite201JSONResponse) VisitCreateOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgInvite400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateOrgInvite400ApplicationProblemPlusJSONResponse) VisitCreateOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgInvite403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgInvite403ApplicationProblemPlusJSONResponse) VisitCreateOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgInvite404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgInvite404ApplicationProblemPlusJSONResponse) VisitCreateOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgInvite409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgInvite409ApplicationProblemPlusJSONResponse) VisitCreateOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgInvitedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateOrgInvitedefaultApplicationProblemPlusJSONResponse) VisitCreateOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeOrgInviteRequestObject struct {
+	Org OrgName            `json:"org"`
+	Id  openapi_types.UUID `json:"id"`
+}
+
+type RevokeOrgInviteResponseObject interface {
+	VisitRevokeOrgInviteResponse(w http.ResponseWriter) error
+}
+
+type RevokeOrgInvite204Response struct {
+}
+
+func (response RevokeOrgInvite204Response) VisitRevokeOrgInviteResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeOrgInvite403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeOrgInvite403ApplicationProblemPlusJSONResponse) VisitRevokeOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeOrgInvite404ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeOrgInvite404ApplicationProblemPlusJSONResponse) VisitRevokeOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeOrgInvitedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RevokeOrgInvitedefaultApplicationProblemPlusJSONResponse) VisitRevokeOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgMembersRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type ListOrgMembersResponseObject interface {
+	VisitListOrgMembersResponse(w http.ResponseWriter) error
+}
+
+type ListOrgMembers200JSONResponse []OrgMember
+
+func (response ListOrgMembers200JSONResponse) VisitListOrgMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgMembers404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgMembers404ApplicationProblemPlusJSONResponse) VisitListOrgMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgMembersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgMembersdefaultApplicationProblemPlusJSONResponse) VisitListOrgMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveOrgMemberRequestObject struct {
+	Org      OrgName  `json:"org"`
+	Username Username `json:"username"`
+}
+
+type RemoveOrgMemberResponseObject interface {
+	VisitRemoveOrgMemberResponse(w http.ResponseWriter) error
+}
+
+type RemoveOrgMember204Response struct {
+}
+
+func (response RemoveOrgMember204Response) VisitRemoveOrgMemberResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RemoveOrgMember403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveOrgMember403ApplicationProblemPlusJSONResponse) VisitRemoveOrgMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveOrgMember404ApplicationProblemPlusJSONResponse Problem
+
+func (response RemoveOrgMember404ApplicationProblemPlusJSONResponse) VisitRemoveOrgMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveOrgMember409ApplicationProblemPlusJSONResponse Problem
+
+func (response RemoveOrgMember409ApplicationProblemPlusJSONResponse) VisitRemoveOrgMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveOrgMemberdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RemoveOrgMemberdefaultApplicationProblemPlusJSONResponse) VisitRemoveOrgMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetOrgMemberRoleRequestObject struct {
+	Org      OrgName  `json:"org"`
+	Username Username `json:"username"`
+	Body     *SetOrgMemberRoleJSONRequestBody
+}
+
+type SetOrgMemberRoleResponseObject interface {
+	VisitSetOrgMemberRoleResponse(w http.ResponseWriter) error
+}
+
+type SetOrgMemberRole200JSONResponse OrgMember
+
+func (response SetOrgMemberRole200JSONResponse) VisitSetOrgMemberRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetOrgMemberRole400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetOrgMemberRole400ApplicationProblemPlusJSONResponse) VisitSetOrgMemberRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetOrgMemberRole403ApplicationProblemPlusJSONResponse Problem
+
+func (response SetOrgMemberRole403ApplicationProblemPlusJSONResponse) VisitSetOrgMemberRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetOrgMemberRole404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetOrgMemberRole404ApplicationProblemPlusJSONResponse) VisitSetOrgMemberRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetOrgMemberRole409ApplicationProblemPlusJSONResponse Problem
+
+func (response SetOrgMemberRole409ApplicationProblemPlusJSONResponse) VisitSetOrgMemberRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetOrgMemberRoledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetOrgMemberRoledefaultApplicationProblemPlusJSONResponse) VisitSetOrgMemberRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgQuotaRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type GetOrgQuotaResponseObject interface {
+	VisitGetOrgQuotaResponse(w http.ResponseWriter) error
+}
+
+type GetOrgQuota200JSONResponse Quota
+
+func (response GetOrgQuota200JSONResponse) VisitGetOrgQuotaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgQuota403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetOrgQuota403ApplicationProblemPlusJSONResponse) VisitGetOrgQuotaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgQuota404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetOrgQuota404ApplicationProblemPlusJSONResponse) VisitGetOrgQuotaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgQuotadefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetOrgQuotadefaultApplicationProblemPlusJSONResponse) VisitGetOrgQuotaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTeamsRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type ListTeamsResponseObject interface {
+	VisitListTeamsResponse(w http.ResponseWriter) error
+}
+
+type ListTeams200JSONResponse []Team
+
+func (response ListTeams200JSONResponse) VisitListTeamsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTeams404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListTeams404ApplicationProblemPlusJSONResponse) VisitListTeamsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTeamsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListTeamsdefaultApplicationProblemPlusJSONResponse) VisitListTeamsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTeamRequestObject struct {
+	Org  OrgName `json:"org"`
+	Body *CreateTeamJSONRequestBody
+}
+
+type CreateTeamResponseObject interface {
+	VisitCreateTeamResponse(w http.ResponseWriter) error
+}
+
+type CreateTeam201JSONResponse Team
+
+func (response CreateTeam201JSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTeam400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateTeam400ApplicationProblemPlusJSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTeam403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateTeam403ApplicationProblemPlusJSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTeam404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateTeam404ApplicationProblemPlusJSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTeam409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateTeam409ApplicationProblemPlusJSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTeamdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateTeamdefaultApplicationProblemPlusJSONResponse) VisitCreateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTeamRequestObject struct {
+	Org  OrgName  `json:"org"`
+	Team TeamName `json:"team"`
+}
+
+type DeleteTeamResponseObject interface {
+	VisitDeleteTeamResponse(w http.ResponseWriter) error
+}
+
+type DeleteTeam204Response struct {
+}
+
+func (response DeleteTeam204Response) VisitDeleteTeamResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteTeam403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteTeam403ApplicationProblemPlusJSONResponse) VisitDeleteTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTeam404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteTeam404ApplicationProblemPlusJSONResponse) VisitDeleteTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTeamdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteTeamdefaultApplicationProblemPlusJSONResponse) VisitDeleteTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTeamRequestObject struct {
+	Org  OrgName  `json:"org"`
+	Team TeamName `json:"team"`
+}
+
+type GetTeamResponseObject interface {
+	VisitGetTeamResponse(w http.ResponseWriter) error
+}
+
+type GetTeam200JSONResponse Team
+
+func (response GetTeam200JSONResponse) VisitGetTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTeam404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetTeam404ApplicationProblemPlusJSONResponse) VisitGetTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTeamdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetTeamdefaultApplicationProblemPlusJSONResponse) VisitGetTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTeamRequestObject struct {
+	Org  OrgName  `json:"org"`
+	Team TeamName `json:"team"`
+	Body *UpdateTeamJSONRequestBody
+}
+
+type UpdateTeamResponseObject interface {
+	VisitUpdateTeamResponse(w http.ResponseWriter) error
+}
+
+type UpdateTeam200JSONResponse Team
+
+func (response UpdateTeam200JSONResponse) VisitUpdateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTeam400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateTeam400ApplicationProblemPlusJSONResponse) VisitUpdateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTeam403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateTeam403ApplicationProblemPlusJSONResponse) VisitUpdateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTeam404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateTeam404ApplicationProblemPlusJSONResponse) VisitUpdateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTeam409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateTeam409ApplicationProblemPlusJSONResponse) VisitUpdateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTeamdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateTeamdefaultApplicationProblemPlusJSONResponse) VisitUpdateTeamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTeamMembersRequestObject struct {
+	Org  OrgName  `json:"org"`
+	Team TeamName `json:"team"`
+}
+
+type ListTeamMembersResponseObject interface {
+	VisitListTeamMembersResponse(w http.ResponseWriter) error
+}
+
+type ListTeamMembers200JSONResponse []TeamMember
+
+func (response ListTeamMembers200JSONResponse) VisitListTeamMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTeamMembers404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListTeamMembers404ApplicationProblemPlusJSONResponse) VisitListTeamMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTeamMembersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListTeamMembersdefaultApplicationProblemPlusJSONResponse) VisitListTeamMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveTeamMemberRequestObject struct {
+	Org      OrgName  `json:"org"`
+	Team     TeamName `json:"team"`
+	Username Username `json:"username"`
+}
+
+type RemoveTeamMemberResponseObject interface {
+	VisitRemoveTeamMemberResponse(w http.ResponseWriter) error
+}
+
+type RemoveTeamMember204Response struct {
+}
+
+func (response RemoveTeamMember204Response) VisitRemoveTeamMemberResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RemoveTeamMember403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveTeamMember403ApplicationProblemPlusJSONResponse) VisitRemoveTeamMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveTeamMember404ApplicationProblemPlusJSONResponse Problem
+
+func (response RemoveTeamMember404ApplicationProblemPlusJSONResponse) VisitRemoveTeamMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveTeamMemberdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RemoveTeamMemberdefaultApplicationProblemPlusJSONResponse) VisitRemoveTeamMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetTeamMemberRequestObject struct {
+	Org      OrgName  `json:"org"`
+	Team     TeamName `json:"team"`
+	Username Username `json:"username"`
+	Body     *SetTeamMemberJSONRequestBody
+}
+
+type SetTeamMemberResponseObject interface {
+	VisitSetTeamMemberResponse(w http.ResponseWriter) error
+}
+
+type SetTeamMember204Response struct {
+}
+
+func (response SetTeamMember204Response) VisitSetTeamMemberResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SetTeamMember400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetTeamMember400ApplicationProblemPlusJSONResponse) VisitSetTeamMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetTeamMember403ApplicationProblemPlusJSONResponse Problem
+
+func (response SetTeamMember403ApplicationProblemPlusJSONResponse) VisitSetTeamMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetTeamMember404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetTeamMember404ApplicationProblemPlusJSONResponse) VisitSetTeamMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetTeamMember409ApplicationProblemPlusJSONResponse Problem
+
+func (response SetTeamMember409ApplicationProblemPlusJSONResponse) VisitSetTeamMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetTeamMemberdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetTeamMemberdefaultApplicationProblemPlusJSONResponse) VisitSetTeamMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetCurrentUserRequestObject struct {
 }
 
@@ -1599,8 +6839,1650 @@ func (response GetCurrentUserdefaultApplicationProblemPlusJSONResponse) VisitGet
 	return err
 }
 
+type ListGpgKeysRequestObject struct {
+}
+
+type ListGpgKeysResponseObject interface {
+	VisitListGpgKeysResponse(w http.ResponseWriter) error
+}
+
+type ListGpgKeys200JSONResponse []GpgKey
+
+func (response ListGpgKeys200JSONResponse) VisitListGpgKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGpgKeys401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListGpgKeys401ApplicationProblemPlusJSONResponse) VisitListGpgKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGpgKeysdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListGpgKeysdefaultApplicationProblemPlusJSONResponse) VisitListGpgKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddGpgKeyRequestObject struct {
+	Body *AddGpgKeyJSONRequestBody
+}
+
+type AddGpgKeyResponseObject interface {
+	VisitAddGpgKeyResponse(w http.ResponseWriter) error
+}
+
+type AddGpgKey201JSONResponse GpgKey
+
+func (response AddGpgKey201JSONResponse) VisitAddGpgKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddGpgKey400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AddGpgKey400ApplicationProblemPlusJSONResponse) VisitAddGpgKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddGpgKey401ApplicationProblemPlusJSONResponse Problem
+
+func (response AddGpgKey401ApplicationProblemPlusJSONResponse) VisitAddGpgKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddGpgKey409ApplicationProblemPlusJSONResponse Problem
+
+func (response AddGpgKey409ApplicationProblemPlusJSONResponse) VisitAddGpgKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddGpgKeydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response AddGpgKeydefaultApplicationProblemPlusJSONResponse) VisitAddGpgKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGpgKeyRequestObject struct {
+	Id CredentialID `json:"id"`
+}
+
+type DeleteGpgKeyResponseObject interface {
+	VisitDeleteGpgKeyResponse(w http.ResponseWriter) error
+}
+
+type DeleteGpgKey204Response struct {
+}
+
+func (response DeleteGpgKey204Response) VisitDeleteGpgKeyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteGpgKey401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteGpgKey401ApplicationProblemPlusJSONResponse) VisitDeleteGpgKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGpgKey404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteGpgKey404ApplicationProblemPlusJSONResponse) VisitDeleteGpgKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGpgKeydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteGpgKeydefaultApplicationProblemPlusJSONResponse) VisitDeleteGpgKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSshKeysRequestObject struct {
+}
+
+type ListSshKeysResponseObject interface {
+	VisitListSshKeysResponse(w http.ResponseWriter) error
+}
+
+type ListSshKeys200JSONResponse []SshKey
+
+func (response ListSshKeys200JSONResponse) VisitListSshKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSshKeys401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSshKeys401ApplicationProblemPlusJSONResponse) VisitListSshKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSshKeysdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListSshKeysdefaultApplicationProblemPlusJSONResponse) VisitListSshKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddSshKeyRequestObject struct {
+	Body *AddSshKeyJSONRequestBody
+}
+
+type AddSshKeyResponseObject interface {
+	VisitAddSshKeyResponse(w http.ResponseWriter) error
+}
+
+type AddSshKey201JSONResponse SshKey
+
+func (response AddSshKey201JSONResponse) VisitAddSshKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddSshKey400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AddSshKey400ApplicationProblemPlusJSONResponse) VisitAddSshKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddSshKey401ApplicationProblemPlusJSONResponse Problem
+
+func (response AddSshKey401ApplicationProblemPlusJSONResponse) VisitAddSshKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddSshKey409ApplicationProblemPlusJSONResponse Problem
+
+func (response AddSshKey409ApplicationProblemPlusJSONResponse) VisitAddSshKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddSshKeydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response AddSshKeydefaultApplicationProblemPlusJSONResponse) VisitAddSshKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteSshKeyRequestObject struct {
+	Id CredentialID `json:"id"`
+}
+
+type DeleteSshKeyResponseObject interface {
+	VisitDeleteSshKeyResponse(w http.ResponseWriter) error
+}
+
+type DeleteSshKey204Response struct {
+}
+
+func (response DeleteSshKey204Response) VisitDeleteSshKeyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteSshKey401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteSshKey401ApplicationProblemPlusJSONResponse) VisitDeleteSshKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteSshKey404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteSshKey404ApplicationProblemPlusJSONResponse) VisitDeleteSshKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteSshKeydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteSshKeydefaultApplicationProblemPlusJSONResponse) VisitDeleteSshKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOidcLinksRequestObject struct {
+}
+
+type ListOidcLinksResponseObject interface {
+	VisitListOidcLinksResponse(w http.ResponseWriter) error
+}
+
+type ListOidcLinks200JSONResponse []OidcLink
+
+func (response ListOidcLinks200JSONResponse) VisitListOidcLinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOidcLinks401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOidcLinks401ApplicationProblemPlusJSONResponse) VisitListOidcLinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOidcLinksdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOidcLinksdefaultApplicationProblemPlusJSONResponse) VisitListOidcLinksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlinkOidcRequestObject struct {
+	Id CredentialID `json:"id"`
+}
+
+type UnlinkOidcResponseObject interface {
+	VisitUnlinkOidcResponse(w http.ResponseWriter) error
+}
+
+type UnlinkOidc204Response struct {
+}
+
+func (response UnlinkOidc204Response) VisitUnlinkOidcResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnlinkOidc401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UnlinkOidc401ApplicationProblemPlusJSONResponse) VisitUnlinkOidcResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlinkOidc404ApplicationProblemPlusJSONResponse Problem
+
+func (response UnlinkOidc404ApplicationProblemPlusJSONResponse) VisitUnlinkOidcResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlinkOidc409ApplicationProblemPlusJSONResponse Problem
+
+func (response UnlinkOidc409ApplicationProblemPlusJSONResponse) VisitUnlinkOidcResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlinkOidcdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UnlinkOidcdefaultApplicationProblemPlusJSONResponse) VisitUnlinkOidcResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginOidcLinkRequestObject struct {
+	Provider string `json:"provider"`
+	Body     *BeginOidcLinkJSONRequestBody
+}
+
+type BeginOidcLinkResponseObject interface {
+	VisitBeginOidcLinkResponse(w http.ResponseWriter) error
+}
+
+type BeginOidcLink200JSONResponse OidcRedirect
+
+func (response BeginOidcLink200JSONResponse) VisitBeginOidcLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginOidcLink401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response BeginOidcLink401ApplicationProblemPlusJSONResponse) VisitBeginOidcLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginOidcLink404ApplicationProblemPlusJSONResponse Problem
+
+func (response BeginOidcLink404ApplicationProblemPlusJSONResponse) VisitBeginOidcLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginOidcLink502ApplicationProblemPlusJSONResponse Problem
+
+func (response BeginOidcLink502ApplicationProblemPlusJSONResponse) VisitBeginOidcLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginOidcLinkdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response BeginOidcLinkdefaultApplicationProblemPlusJSONResponse) VisitBeginOidcLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSecurityRequestObject struct {
+}
+
+type GetSecurityResponseObject interface {
+	VisitGetSecurityResponse(w http.ResponseWriter) error
+}
+
+type GetSecurity200JSONResponse SecurityStatus
+
+func (response GetSecurity200JSONResponse) VisitGetSecurityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSecurity401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetSecurity401ApplicationProblemPlusJSONResponse) VisitGetSecurityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSecuritydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetSecuritydefaultApplicationProblemPlusJSONResponse) VisitGetSecurityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegisterPasskeyRequestObject struct {
+	Body *RegisterPasskeyJSONRequestBody
+}
+
+type RegisterPasskeyResponseObject interface {
+	VisitRegisterPasskeyResponse(w http.ResponseWriter) error
+}
+
+type RegisterPasskey201JSONResponse Passkey
+
+func (response RegisterPasskey201JSONResponse) VisitRegisterPasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegisterPasskey400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RegisterPasskey400ApplicationProblemPlusJSONResponse) VisitRegisterPasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegisterPasskey401ApplicationProblemPlusJSONResponse Problem
+
+func (response RegisterPasskey401ApplicationProblemPlusJSONResponse) VisitRegisterPasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegisterPasskey503ApplicationProblemPlusJSONResponse Problem
+
+func (response RegisterPasskey503ApplicationProblemPlusJSONResponse) VisitRegisterPasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegisterPasskeydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RegisterPasskeydefaultApplicationProblemPlusJSONResponse) VisitRegisterPasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginPasskeyRegistrationRequestObject struct {
+	Body *BeginPasskeyRegistrationJSONRequestBody
+}
+
+type BeginPasskeyRegistrationResponseObject interface {
+	VisitBeginPasskeyRegistrationResponse(w http.ResponseWriter) error
+}
+
+type BeginPasskeyRegistration200JSONResponse PasskeyChallenge
+
+func (response BeginPasskeyRegistration200JSONResponse) VisitBeginPasskeyRegistrationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginPasskeyRegistration400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response BeginPasskeyRegistration400ApplicationProblemPlusJSONResponse) VisitBeginPasskeyRegistrationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginPasskeyRegistration401ApplicationProblemPlusJSONResponse Problem
+
+func (response BeginPasskeyRegistration401ApplicationProblemPlusJSONResponse) VisitBeginPasskeyRegistrationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginPasskeyRegistration403ApplicationProblemPlusJSONResponse Problem
+
+func (response BeginPasskeyRegistration403ApplicationProblemPlusJSONResponse) VisitBeginPasskeyRegistrationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginPasskeyRegistration429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response BeginPasskeyRegistration429ApplicationProblemPlusJSONResponse) VisitBeginPasskeyRegistrationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginPasskeyRegistration503ApplicationProblemPlusJSONResponse Problem
+
+func (response BeginPasskeyRegistration503ApplicationProblemPlusJSONResponse) VisitBeginPasskeyRegistrationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BeginPasskeyRegistrationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response BeginPasskeyRegistrationdefaultApplicationProblemPlusJSONResponse) VisitBeginPasskeyRegistrationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePasskeyRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *DeletePasskeyJSONRequestBody
+}
+
+type DeletePasskeyResponseObject interface {
+	VisitDeletePasskeyResponse(w http.ResponseWriter) error
+}
+
+type DeletePasskey204Response struct {
+}
+
+func (response DeletePasskey204Response) VisitDeletePasskeyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeletePasskey400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePasskey400ApplicationProblemPlusJSONResponse) VisitDeletePasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePasskey401ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePasskey401ApplicationProblemPlusJSONResponse) VisitDeletePasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePasskey403ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePasskey403ApplicationProblemPlusJSONResponse) VisitDeletePasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePasskey404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePasskey404ApplicationProblemPlusJSONResponse) VisitDeletePasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePasskey409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePasskey409ApplicationProblemPlusJSONResponse) VisitDeletePasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePasskey429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePasskey429ApplicationProblemPlusJSONResponse) VisitDeletePasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePasskeydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeletePasskeydefaultApplicationProblemPlusJSONResponse) VisitDeletePasskeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegenerateRecoveryCodesRequestObject struct {
+	Body *RegenerateRecoveryCodesJSONRequestBody
+}
+
+type RegenerateRecoveryCodesResponseObject interface {
+	VisitRegenerateRecoveryCodesResponse(w http.ResponseWriter) error
+}
+
+type RegenerateRecoveryCodes200JSONResponse RecoveryCodes
+
+func (response RegenerateRecoveryCodes200JSONResponse) VisitRegenerateRecoveryCodesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegenerateRecoveryCodes400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RegenerateRecoveryCodes400ApplicationProblemPlusJSONResponse) VisitRegenerateRecoveryCodesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegenerateRecoveryCodes401ApplicationProblemPlusJSONResponse Problem
+
+func (response RegenerateRecoveryCodes401ApplicationProblemPlusJSONResponse) VisitRegenerateRecoveryCodesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegenerateRecoveryCodes403ApplicationProblemPlusJSONResponse Problem
+
+func (response RegenerateRecoveryCodes403ApplicationProblemPlusJSONResponse) VisitRegenerateRecoveryCodesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegenerateRecoveryCodes409ApplicationProblemPlusJSONResponse Problem
+
+func (response RegenerateRecoveryCodes409ApplicationProblemPlusJSONResponse) VisitRegenerateRecoveryCodesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegenerateRecoveryCodes429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response RegenerateRecoveryCodes429ApplicationProblemPlusJSONResponse) VisitRegenerateRecoveryCodesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RegenerateRecoveryCodesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RegenerateRecoveryCodesdefaultApplicationProblemPlusJSONResponse) VisitRegenerateRecoveryCodesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableTotpRequestObject struct {
+	Body *DisableTotpJSONRequestBody
+}
+
+type DisableTotpResponseObject interface {
+	VisitDisableTotpResponse(w http.ResponseWriter) error
+}
+
+type DisableTotp204Response struct {
+}
+
+func (response DisableTotp204Response) VisitDisableTotpResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DisableTotp400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DisableTotp400ApplicationProblemPlusJSONResponse) VisitDisableTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableTotp401ApplicationProblemPlusJSONResponse Problem
+
+func (response DisableTotp401ApplicationProblemPlusJSONResponse) VisitDisableTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableTotp403ApplicationProblemPlusJSONResponse Problem
+
+func (response DisableTotp403ApplicationProblemPlusJSONResponse) VisitDisableTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableTotp409ApplicationProblemPlusJSONResponse Problem
+
+func (response DisableTotp409ApplicationProblemPlusJSONResponse) VisitDisableTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableTotp429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response DisableTotp429ApplicationProblemPlusJSONResponse) VisitDisableTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableTotpdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DisableTotpdefaultApplicationProblemPlusJSONResponse) VisitDisableTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetupTotpRequestObject struct {
+	Body *SetupTotpJSONRequestBody
+}
+
+type SetupTotpResponseObject interface {
+	VisitSetupTotpResponse(w http.ResponseWriter) error
+}
+
+type SetupTotp200JSONResponse TotpSetup
+
+func (response SetupTotp200JSONResponse) VisitSetupTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetupTotp400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetupTotp400ApplicationProblemPlusJSONResponse) VisitSetupTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetupTotp401ApplicationProblemPlusJSONResponse Problem
+
+func (response SetupTotp401ApplicationProblemPlusJSONResponse) VisitSetupTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetupTotp403ApplicationProblemPlusJSONResponse Problem
+
+func (response SetupTotp403ApplicationProblemPlusJSONResponse) VisitSetupTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetupTotp409ApplicationProblemPlusJSONResponse Problem
+
+func (response SetupTotp409ApplicationProblemPlusJSONResponse) VisitSetupTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetupTotp429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response SetupTotp429ApplicationProblemPlusJSONResponse) VisitSetupTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetupTotpdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetupTotpdefaultApplicationProblemPlusJSONResponse) VisitSetupTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmTotpRequestObject struct {
+	Body *ConfirmTotpJSONRequestBody
+}
+
+type ConfirmTotpResponseObject interface {
+	VisitConfirmTotpResponse(w http.ResponseWriter) error
+}
+
+type ConfirmTotp200JSONResponse RecoveryCodes
+
+func (response ConfirmTotp200JSONResponse) VisitConfirmTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmTotp400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ConfirmTotp400ApplicationProblemPlusJSONResponse) VisitConfirmTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmTotp401ApplicationProblemPlusJSONResponse Problem
+
+func (response ConfirmTotp401ApplicationProblemPlusJSONResponse) VisitConfirmTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmTotp409ApplicationProblemPlusJSONResponse Problem
+
+func (response ConfirmTotp409ApplicationProblemPlusJSONResponse) VisitConfirmTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmTotp429ApplicationProblemPlusJSONResponse struct {
+	TooManyRequestsApplicationProblemPlusJSONResponse
+}
+
+func (response ConfirmTotp429ApplicationProblemPlusJSONResponse) VisitConfirmTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Retry-After", fmt.Sprint(response.Headers.RetryAfter))
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfirmTotpdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ConfirmTotpdefaultApplicationProblemPlusJSONResponse) VisitConfirmTotpResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAccessTokensRequestObject struct {
+}
+
+type ListAccessTokensResponseObject interface {
+	VisitListAccessTokensResponse(w http.ResponseWriter) error
+}
+
+type ListAccessTokens200JSONResponse []AccessToken
+
+func (response ListAccessTokens200JSONResponse) VisitListAccessTokensResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAccessTokens401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListAccessTokens401ApplicationProblemPlusJSONResponse) VisitListAccessTokensResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAccessTokensdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListAccessTokensdefaultApplicationProblemPlusJSONResponse) VisitListAccessTokensResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAccessTokenRequestObject struct {
+	Body *CreateAccessTokenJSONRequestBody
+}
+
+type CreateAccessTokenResponseObject interface {
+	VisitCreateAccessTokenResponse(w http.ResponseWriter) error
+}
+
+type CreateAccessToken201JSONResponse CreatedAccessToken
+
+func (response CreateAccessToken201JSONResponse) VisitCreateAccessTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAccessToken400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateAccessToken400ApplicationProblemPlusJSONResponse) VisitCreateAccessTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAccessToken401ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateAccessToken401ApplicationProblemPlusJSONResponse) VisitCreateAccessTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAccessToken403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateAccessToken403ApplicationProblemPlusJSONResponse) VisitCreateAccessTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAccessToken409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateAccessToken409ApplicationProblemPlusJSONResponse) VisitCreateAccessTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAccessTokendefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateAccessTokendefaultApplicationProblemPlusJSONResponse) VisitCreateAccessTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeAccessTokenRequestObject struct {
+	Id CredentialID `json:"id"`
+}
+
+type RevokeAccessTokenResponseObject interface {
+	VisitRevokeAccessTokenResponse(w http.ResponseWriter) error
+}
+
+type RevokeAccessToken204Response struct {
+}
+
+func (response RevokeAccessToken204Response) VisitRevokeAccessTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeAccessToken401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeAccessToken401ApplicationProblemPlusJSONResponse) VisitRevokeAccessTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeAccessToken404ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeAccessToken404ApplicationProblemPlusJSONResponse) VisitRevokeAccessTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeAccessTokendefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RevokeAccessTokendefaultApplicationProblemPlusJSONResponse) VisitRevokeAccessTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// ListAdminAudit Instance audit log, newest first
+	// (GET /admin/audit)
+	ListAdminAudit(ctx context.Context, request ListAdminAuditRequestObject) (ListAdminAuditResponseObject, error)
 	// CreateInvite Create an instance invitation
 	// (POST /admin/invites)
 	CreateInvite(ctx context.Context, request CreateInviteRequestObject) (CreateInviteResponseObject, error)
@@ -1622,6 +8504,36 @@ type StrictServerInterface interface {
 	// Logout Sign out and revoke the current session
 	// (POST /auth/logout)
 	Logout(ctx context.Context, request LogoutRequestObject) (LogoutResponseObject, error)
+	// GetMfaChallenge The pending second-factor step of this browser
+	// (GET /auth/mfa)
+	GetMfaChallenge(ctx context.Context, request GetMfaChallengeRequestObject) (GetMfaChallengeResponseObject, error)
+	// BeginMfaEnrollTotp Set up an authenticator app during a login that requires one
+	// (POST /auth/mfa/enroll/totp)
+	BeginMfaEnrollTotp(ctx context.Context, request BeginMfaEnrollTotpRequestObject) (BeginMfaEnrollTotpResponseObject, error)
+	// ConfirmMfaEnrollTotp Confirm the authenticator app and complete the login
+	// (POST /auth/mfa/enroll/totp/confirm)
+	ConfirmMfaEnrollTotp(ctx context.Context, request ConfirmMfaEnrollTotpRequestObject) (ConfirmMfaEnrollTotpResponseObject, error)
+	// PasskeyLogin Sign in with a passkey
+	// (POST /auth/mfa/passkey)
+	PasskeyLogin(ctx context.Context, request PasskeyLoginRequestObject) (PasskeyLoginResponseObject, error)
+	// BeginPasskeyLogin Options for a passwordless sign-in with a passkey
+	// (POST /auth/mfa/passkey/options)
+	BeginPasskeyLogin(ctx context.Context, request BeginPasskeyLoginRequestObject) (BeginPasskeyLoginResponseObject, error)
+	// VerifyMfaRecovery Complete a pending login with a recovery code
+	// (POST /auth/mfa/recovery)
+	VerifyMfaRecovery(ctx context.Context, request VerifyMfaRecoveryRequestObject) (VerifyMfaRecoveryResponseObject, error)
+	// VerifyMfaTotp Complete a pending login with an authenticator app code
+	// (POST /auth/mfa/totp)
+	VerifyMfaTotp(ctx context.Context, request VerifyMfaTotpRequestObject) (VerifyMfaTotpResponseObject, error)
+	// VerifyMfaWebAuthn Complete a pending login with a security key
+	// (POST /auth/mfa/webauthn)
+	VerifyMfaWebAuthn(ctx context.Context, request VerifyMfaWebAuthnRequestObject) (VerifyMfaWebAuthnResponseObject, error)
+	// BeginMfaWebAuthn Options to complete a pending login with a security key
+	// (POST /auth/mfa/webauthn/options)
+	BeginMfaWebAuthn(ctx context.Context, request BeginMfaWebAuthnRequestObject) (BeginMfaWebAuthnResponseObject, error)
+	// ListOidcProviders External identity providers configured on this instance
+	// (GET /auth/oidc/providers)
+	ListOidcProviders(ctx context.Context, request ListOidcProvidersRequestObject) (ListOidcProvidersResponseObject, error)
 	// RequestPasswordReset Send a password reset link
 	// (POST /auth/password/reset)
 	RequestPasswordReset(ctx context.Context, request RequestPasswordResetRequestObject) (RequestPasswordResetResponseObject, error)
@@ -1634,9 +8546,135 @@ type StrictServerInterface interface {
 	// GetMeta Public information about this instance
 	// (GET /meta)
 	GetMeta(ctx context.Context, request GetMetaRequestObject) (GetMetaResponseObject, error)
+	// ListMyOrgs Organizations the caller is a member of
+	// (GET /orgs)
+	ListMyOrgs(ctx context.Context, request ListMyOrgsRequestObject) (ListMyOrgsResponseObject, error)
+	// CreateOrg Create an organization owned by the caller
+	// (POST /orgs)
+	CreateOrg(ctx context.Context, request CreateOrgRequestObject) (CreateOrgResponseObject, error)
+	// AcceptOrgInvite Join an organization with an invitation token
+	// (POST /orgs/invites/accept)
+	AcceptOrgInvite(ctx context.Context, request AcceptOrgInviteRequestObject) (AcceptOrgInviteResponseObject, error)
+	// DeleteOrg Delete an organization with its members, teams and invitations
+	// (DELETE /orgs/{org})
+	DeleteOrg(ctx context.Context, request DeleteOrgRequestObject) (DeleteOrgResponseObject, error)
+	// GetOrg An organization
+	// (GET /orgs/{org})
+	GetOrg(ctx context.Context, request GetOrgRequestObject) (GetOrgResponseObject, error)
+	// UpdateOrg Change the settings of an organization
+	// (PATCH /orgs/{org})
+	UpdateOrg(ctx context.Context, request UpdateOrgRequestObject) (UpdateOrgResponseObject, error)
+	// ListOrgAudit Audit log of an organization, newest first
+	// (GET /orgs/{org}/audit)
+	ListOrgAudit(ctx context.Context, request ListOrgAuditRequestObject) (ListOrgAuditResponseObject, error)
+	// ListOrgInvites Pending invitations, expired ones included
+	// (GET /orgs/{org}/invites)
+	ListOrgInvites(ctx context.Context, request ListOrgInvitesRequestObject) (ListOrgInvitesResponseObject, error)
+	// CreateOrgInvite Invite an email address to join the organization
+	// (POST /orgs/{org}/invites)
+	CreateOrgInvite(ctx context.Context, request CreateOrgInviteRequestObject) (CreateOrgInviteResponseObject, error)
+	// RevokeOrgInvite Revoke a pending invitation
+	// (DELETE /orgs/{org}/invites/{id})
+	RevokeOrgInvite(ctx context.Context, request RevokeOrgInviteRequestObject) (RevokeOrgInviteResponseObject, error)
+	// ListOrgMembers Members of an organization
+	// (GET /orgs/{org}/members)
+	ListOrgMembers(ctx context.Context, request ListOrgMembersRequestObject) (ListOrgMembersResponseObject, error)
+	// RemoveOrgMember Remove a member, or leave the organization
+	// (DELETE /orgs/{org}/members/{username})
+	RemoveOrgMember(ctx context.Context, request RemoveOrgMemberRequestObject) (RemoveOrgMemberResponseObject, error)
+	// SetOrgMemberRole Change the role of a member
+	// (PUT /orgs/{org}/members/{username})
+	SetOrgMemberRole(ctx context.Context, request SetOrgMemberRoleRequestObject) (SetOrgMemberRoleResponseObject, error)
+	// GetOrgQuota Limits and current usage of an organization
+	// (GET /orgs/{org}/quota)
+	GetOrgQuota(ctx context.Context, request GetOrgQuotaRequestObject) (GetOrgQuotaResponseObject, error)
+	// ListTeams Teams of an organization
+	// (GET /orgs/{org}/teams)
+	ListTeams(ctx context.Context, request ListTeamsRequestObject) (ListTeamsResponseObject, error)
+	// CreateTeam Create a team
+	// (POST /orgs/{org}/teams)
+	CreateTeam(ctx context.Context, request CreateTeamRequestObject) (CreateTeamResponseObject, error)
+	// DeleteTeam Delete a team
+	// (DELETE /orgs/{org}/teams/{team})
+	DeleteTeam(ctx context.Context, request DeleteTeamRequestObject) (DeleteTeamResponseObject, error)
+	// GetTeam A team
+	// (GET /orgs/{org}/teams/{team})
+	GetTeam(ctx context.Context, request GetTeamRequestObject) (GetTeamResponseObject, error)
+	// UpdateTeam Rename a team or change its description
+	// (PATCH /orgs/{org}/teams/{team})
+	UpdateTeam(ctx context.Context, request UpdateTeamRequestObject) (UpdateTeamResponseObject, error)
+	// ListTeamMembers Members of a team
+	// (GET /orgs/{org}/teams/{team}/members)
+	ListTeamMembers(ctx context.Context, request ListTeamMembersRequestObject) (ListTeamMembersResponseObject, error)
+	// RemoveTeamMember Remove a member from a team
+	// (DELETE /orgs/{org}/teams/{team}/members/{username})
+	RemoveTeamMember(ctx context.Context, request RemoveTeamMemberRequestObject) (RemoveTeamMemberResponseObject, error)
+	// SetTeamMember Add a member of the organization to a team, or change its team role
+	// (PUT /orgs/{org}/teams/{team}/members/{username})
+	SetTeamMember(ctx context.Context, request SetTeamMemberRequestObject) (SetTeamMemberResponseObject, error)
 	// GetCurrentUser The signed-in user
 	// (GET /user)
 	GetCurrentUser(ctx context.Context, request GetCurrentUserRequestObject) (GetCurrentUserResponseObject, error)
+	// ListGpgKeys GPG public keys of the account
+	// (GET /user/keys/gpg)
+	ListGpgKeys(ctx context.Context, request ListGpgKeysRequestObject) (ListGpgKeysResponseObject, error)
+	// AddGpgKey Add a GPG public key
+	// (POST /user/keys/gpg)
+	AddGpgKey(ctx context.Context, request AddGpgKeyRequestObject) (AddGpgKeyResponseObject, error)
+	// DeleteGpgKey Remove a GPG public key
+	// (DELETE /user/keys/gpg/{id})
+	DeleteGpgKey(ctx context.Context, request DeleteGpgKeyRequestObject) (DeleteGpgKeyResponseObject, error)
+	// ListSshKeys SSH public keys of the account
+	// (GET /user/keys/ssh)
+	ListSshKeys(ctx context.Context, request ListSshKeysRequestObject) (ListSshKeysResponseObject, error)
+	// AddSshKey Add an SSH public key
+	// (POST /user/keys/ssh)
+	AddSshKey(ctx context.Context, request AddSshKeyRequestObject) (AddSshKeyResponseObject, error)
+	// DeleteSshKey Remove an SSH public key
+	// (DELETE /user/keys/ssh/{id})
+	DeleteSshKey(ctx context.Context, request DeleteSshKeyRequestObject) (DeleteSshKeyResponseObject, error)
+	// ListOidcLinks External identities linked to the account
+	// (GET /user/oidc)
+	ListOidcLinks(ctx context.Context, request ListOidcLinksRequestObject) (ListOidcLinksResponseObject, error)
+	// UnlinkOidc Unlink an external identity
+	// (DELETE /user/oidc/{id})
+	UnlinkOidc(ctx context.Context, request UnlinkOidcRequestObject) (UnlinkOidcResponseObject, error)
+	// BeginOidcLink Start linking an external identity
+	// (POST /user/oidc/{provider}/link)
+	BeginOidcLink(ctx context.Context, request BeginOidcLinkRequestObject) (BeginOidcLinkResponseObject, error)
+	// GetSecurity Second factors of the signed-in user
+	// (GET /user/security)
+	GetSecurity(ctx context.Context, request GetSecurityRequestObject) (GetSecurityResponseObject, error)
+	// RegisterPasskey Register a passkey
+	// (POST /user/security/passkeys)
+	RegisterPasskey(ctx context.Context, request RegisterPasskeyRequestObject) (RegisterPasskeyResponseObject, error)
+	// BeginPasskeyRegistration Options to register a passkey
+	// (POST /user/security/passkeys/options)
+	BeginPasskeyRegistration(ctx context.Context, request BeginPasskeyRegistrationRequestObject) (BeginPasskeyRegistrationResponseObject, error)
+	// DeletePasskey Remove a passkey
+	// (DELETE /user/security/passkeys/{id})
+	DeletePasskey(ctx context.Context, request DeletePasskeyRequestObject) (DeletePasskeyResponseObject, error)
+	// RegenerateRecoveryCodes Replace the recovery codes
+	// (POST /user/security/recovery-codes)
+	RegenerateRecoveryCodes(ctx context.Context, request RegenerateRecoveryCodesRequestObject) (RegenerateRecoveryCodesResponseObject, error)
+	// DisableTotp Remove the authenticator app
+	// (DELETE /user/security/totp)
+	DisableTotp(ctx context.Context, request DisableTotpRequestObject) (DisableTotpResponseObject, error)
+	// SetupTotp Start setting up an authenticator app
+	// (POST /user/security/totp)
+	SetupTotp(ctx context.Context, request SetupTotpRequestObject) (SetupTotpResponseObject, error)
+	// ConfirmTotp Enable the authenticator app with a first code
+	// (POST /user/security/totp/confirm)
+	ConfirmTotp(ctx context.Context, request ConfirmTotpRequestObject) (ConfirmTotpResponseObject, error)
+	// ListAccessTokens Personal access tokens of the account
+	// (GET /user/tokens)
+	ListAccessTokens(ctx context.Context, request ListAccessTokensRequestObject) (ListAccessTokensResponseObject, error)
+	// CreateAccessToken Create a personal access token
+	// (POST /user/tokens)
+	CreateAccessToken(ctx context.Context, request CreateAccessTokenRequestObject) (CreateAccessTokenResponseObject, error)
+	// RevokeAccessToken Revoke a personal access token
+	// (DELETE /user/tokens/{id})
+	RevokeAccessToken(ctx context.Context, request RevokeAccessTokenRequestObject) (RevokeAccessTokenResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -1676,6 +8714,32 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// ListAdminAudit operation middleware
+func (sh *strictHandler) ListAdminAudit(w http.ResponseWriter, r *http.Request, params ListAdminAuditParams) {
+	var request ListAdminAuditRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAdminAudit(ctx, request.(ListAdminAuditRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAdminAudit")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAdminAuditResponseObject); ok {
+		if err := validResponse.VisitListAdminAuditResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // CreateInvite operation middleware
@@ -1876,6 +8940,281 @@ func (sh *strictHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetMfaChallenge operation middleware
+func (sh *strictHandler) GetMfaChallenge(w http.ResponseWriter, r *http.Request) {
+	var request GetMfaChallengeRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMfaChallenge(ctx, request.(GetMfaChallengeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMfaChallenge")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMfaChallengeResponseObject); ok {
+		if err := validResponse.VisitGetMfaChallengeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// BeginMfaEnrollTotp operation middleware
+func (sh *strictHandler) BeginMfaEnrollTotp(w http.ResponseWriter, r *http.Request) {
+	var request BeginMfaEnrollTotpRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.BeginMfaEnrollTotp(ctx, request.(BeginMfaEnrollTotpRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BeginMfaEnrollTotp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(BeginMfaEnrollTotpResponseObject); ok {
+		if err := validResponse.VisitBeginMfaEnrollTotpResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ConfirmMfaEnrollTotp operation middleware
+func (sh *strictHandler) ConfirmMfaEnrollTotp(w http.ResponseWriter, r *http.Request) {
+	var request ConfirmMfaEnrollTotpRequestObject
+
+	var body ConfirmMfaEnrollTotpJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ConfirmMfaEnrollTotp(ctx, request.(ConfirmMfaEnrollTotpRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ConfirmMfaEnrollTotp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ConfirmMfaEnrollTotpResponseObject); ok {
+		if err := validResponse.VisitConfirmMfaEnrollTotpResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PasskeyLogin operation middleware
+func (sh *strictHandler) PasskeyLogin(w http.ResponseWriter, r *http.Request) {
+	var request PasskeyLoginRequestObject
+
+	var body PasskeyLoginJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PasskeyLogin(ctx, request.(PasskeyLoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PasskeyLogin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PasskeyLoginResponseObject); ok {
+		if err := validResponse.VisitPasskeyLoginResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// BeginPasskeyLogin operation middleware
+func (sh *strictHandler) BeginPasskeyLogin(w http.ResponseWriter, r *http.Request) {
+	var request BeginPasskeyLoginRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.BeginPasskeyLogin(ctx, request.(BeginPasskeyLoginRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BeginPasskeyLogin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(BeginPasskeyLoginResponseObject); ok {
+		if err := validResponse.VisitBeginPasskeyLoginResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// VerifyMfaRecovery operation middleware
+func (sh *strictHandler) VerifyMfaRecovery(w http.ResponseWriter, r *http.Request) {
+	var request VerifyMfaRecoveryRequestObject
+
+	var body VerifyMfaRecoveryJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.VerifyMfaRecovery(ctx, request.(VerifyMfaRecoveryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "VerifyMfaRecovery")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(VerifyMfaRecoveryResponseObject); ok {
+		if err := validResponse.VisitVerifyMfaRecoveryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// VerifyMfaTotp operation middleware
+func (sh *strictHandler) VerifyMfaTotp(w http.ResponseWriter, r *http.Request) {
+	var request VerifyMfaTotpRequestObject
+
+	var body VerifyMfaTotpJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.VerifyMfaTotp(ctx, request.(VerifyMfaTotpRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "VerifyMfaTotp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(VerifyMfaTotpResponseObject); ok {
+		if err := validResponse.VisitVerifyMfaTotpResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// VerifyMfaWebAuthn operation middleware
+func (sh *strictHandler) VerifyMfaWebAuthn(w http.ResponseWriter, r *http.Request) {
+	var request VerifyMfaWebAuthnRequestObject
+
+	var body VerifyMfaWebAuthnJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.VerifyMfaWebAuthn(ctx, request.(VerifyMfaWebAuthnRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "VerifyMfaWebAuthn")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(VerifyMfaWebAuthnResponseObject); ok {
+		if err := validResponse.VisitVerifyMfaWebAuthnResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// BeginMfaWebAuthn operation middleware
+func (sh *strictHandler) BeginMfaWebAuthn(w http.ResponseWriter, r *http.Request) {
+	var request BeginMfaWebAuthnRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.BeginMfaWebAuthn(ctx, request.(BeginMfaWebAuthnRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BeginMfaWebAuthn")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(BeginMfaWebAuthnResponseObject); ok {
+		if err := validResponse.VisitBeginMfaWebAuthnResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOidcProviders operation middleware
+func (sh *strictHandler) ListOidcProviders(w http.ResponseWriter, r *http.Request) {
+	var request ListOidcProvidersRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOidcProviders(ctx, request.(ListOidcProvidersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOidcProviders")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOidcProvidersResponseObject); ok {
+		if err := validResponse.VisitListOidcProvidersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // RequestPasswordReset operation middleware
 func (sh *strictHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	var request RequestPasswordResetRequestObject
@@ -1993,6 +9332,640 @@ func (sh *strictHandler) GetMeta(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ListMyOrgs operation middleware
+func (sh *strictHandler) ListMyOrgs(w http.ResponseWriter, r *http.Request) {
+	var request ListMyOrgsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListMyOrgs(ctx, request.(ListMyOrgsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListMyOrgs")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListMyOrgsResponseObject); ok {
+		if err := validResponse.VisitListMyOrgsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateOrg operation middleware
+func (sh *strictHandler) CreateOrg(w http.ResponseWriter, r *http.Request) {
+	var request CreateOrgRequestObject
+
+	var body CreateOrgJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateOrg(ctx, request.(CreateOrgRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateOrg")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateOrgResponseObject); ok {
+		if err := validResponse.VisitCreateOrgResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AcceptOrgInvite operation middleware
+func (sh *strictHandler) AcceptOrgInvite(w http.ResponseWriter, r *http.Request) {
+	var request AcceptOrgInviteRequestObject
+
+	var body AcceptOrgInviteJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AcceptOrgInvite(ctx, request.(AcceptOrgInviteRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AcceptOrgInvite")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AcceptOrgInviteResponseObject); ok {
+		if err := validResponse.VisitAcceptOrgInviteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteOrg operation middleware
+func (sh *strictHandler) DeleteOrg(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request DeleteOrgRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteOrg(ctx, request.(DeleteOrgRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteOrg")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteOrgResponseObject); ok {
+		if err := validResponse.VisitDeleteOrgResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOrg operation middleware
+func (sh *strictHandler) GetOrg(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request GetOrgRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOrg(ctx, request.(GetOrgRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOrg")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOrgResponseObject); ok {
+		if err := validResponse.VisitGetOrgResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateOrg operation middleware
+func (sh *strictHandler) UpdateOrg(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request UpdateOrgRequestObject
+
+	request.Org = org
+
+	var body UpdateOrgJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateOrg(ctx, request.(UpdateOrgRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateOrg")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateOrgResponseObject); ok {
+		if err := validResponse.VisitUpdateOrgResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrgAudit operation middleware
+func (sh *strictHandler) ListOrgAudit(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgAuditParams) {
+	var request ListOrgAuditRequestObject
+
+	request.Org = org
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgAudit(ctx, request.(ListOrgAuditRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgAudit")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgAuditResponseObject); ok {
+		if err := validResponse.VisitListOrgAuditResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrgInvites operation middleware
+func (sh *strictHandler) ListOrgInvites(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request ListOrgInvitesRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgInvites(ctx, request.(ListOrgInvitesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgInvites")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgInvitesResponseObject); ok {
+		if err := validResponse.VisitListOrgInvitesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateOrgInvite operation middleware
+func (sh *strictHandler) CreateOrgInvite(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request CreateOrgInviteRequestObject
+
+	request.Org = org
+
+	var body CreateOrgInviteJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateOrgInvite(ctx, request.(CreateOrgInviteRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateOrgInvite")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateOrgInviteResponseObject); ok {
+		if err := validResponse.VisitCreateOrgInviteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeOrgInvite operation middleware
+func (sh *strictHandler) RevokeOrgInvite(w http.ResponseWriter, r *http.Request, org OrgName, id openapi_types.UUID) {
+	var request RevokeOrgInviteRequestObject
+
+	request.Org = org
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeOrgInvite(ctx, request.(RevokeOrgInviteRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeOrgInvite")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeOrgInviteResponseObject); ok {
+		if err := validResponse.VisitRevokeOrgInviteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrgMembers operation middleware
+func (sh *strictHandler) ListOrgMembers(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request ListOrgMembersRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgMembers(ctx, request.(ListOrgMembersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgMembers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgMembersResponseObject); ok {
+		if err := validResponse.VisitListOrgMembersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveOrgMember operation middleware
+func (sh *strictHandler) RemoveOrgMember(w http.ResponseWriter, r *http.Request, org OrgName, username Username) {
+	var request RemoveOrgMemberRequestObject
+
+	request.Org = org
+	request.Username = username
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveOrgMember(ctx, request.(RemoveOrgMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveOrgMember")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveOrgMemberResponseObject); ok {
+		if err := validResponse.VisitRemoveOrgMemberResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetOrgMemberRole operation middleware
+func (sh *strictHandler) SetOrgMemberRole(w http.ResponseWriter, r *http.Request, org OrgName, username Username) {
+	var request SetOrgMemberRoleRequestObject
+
+	request.Org = org
+	request.Username = username
+
+	var body SetOrgMemberRoleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetOrgMemberRole(ctx, request.(SetOrgMemberRoleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetOrgMemberRole")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetOrgMemberRoleResponseObject); ok {
+		if err := validResponse.VisitSetOrgMemberRoleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOrgQuota operation middleware
+func (sh *strictHandler) GetOrgQuota(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request GetOrgQuotaRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOrgQuota(ctx, request.(GetOrgQuotaRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOrgQuota")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOrgQuotaResponseObject); ok {
+		if err := validResponse.VisitGetOrgQuotaResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListTeams operation middleware
+func (sh *strictHandler) ListTeams(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request ListTeamsRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListTeams(ctx, request.(ListTeamsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTeams")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListTeamsResponseObject); ok {
+		if err := validResponse.VisitListTeamsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateTeam operation middleware
+func (sh *strictHandler) CreateTeam(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request CreateTeamRequestObject
+
+	request.Org = org
+
+	var body CreateTeamJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateTeam(ctx, request.(CreateTeamRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateTeam")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateTeamResponseObject); ok {
+		if err := validResponse.VisitCreateTeamResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteTeam operation middleware
+func (sh *strictHandler) DeleteTeam(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName) {
+	var request DeleteTeamRequestObject
+
+	request.Org = org
+	request.Team = team
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteTeam(ctx, request.(DeleteTeamRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteTeam")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteTeamResponseObject); ok {
+		if err := validResponse.VisitDeleteTeamResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetTeam operation middleware
+func (sh *strictHandler) GetTeam(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName) {
+	var request GetTeamRequestObject
+
+	request.Org = org
+	request.Team = team
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetTeam(ctx, request.(GetTeamRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetTeam")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetTeamResponseObject); ok {
+		if err := validResponse.VisitGetTeamResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateTeam operation middleware
+func (sh *strictHandler) UpdateTeam(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName) {
+	var request UpdateTeamRequestObject
+
+	request.Org = org
+	request.Team = team
+
+	var body UpdateTeamJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateTeam(ctx, request.(UpdateTeamRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateTeam")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateTeamResponseObject); ok {
+		if err := validResponse.VisitUpdateTeamResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListTeamMembers operation middleware
+func (sh *strictHandler) ListTeamMembers(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName) {
+	var request ListTeamMembersRequestObject
+
+	request.Org = org
+	request.Team = team
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListTeamMembers(ctx, request.(ListTeamMembersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTeamMembers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListTeamMembersResponseObject); ok {
+		if err := validResponse.VisitListTeamMembersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveTeamMember operation middleware
+func (sh *strictHandler) RemoveTeamMember(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName, username Username) {
+	var request RemoveTeamMemberRequestObject
+
+	request.Org = org
+	request.Team = team
+	request.Username = username
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveTeamMember(ctx, request.(RemoveTeamMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveTeamMember")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveTeamMemberResponseObject); ok {
+		if err := validResponse.VisitRemoveTeamMemberResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetTeamMember operation middleware
+func (sh *strictHandler) SetTeamMember(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName, username Username) {
+	var request SetTeamMemberRequestObject
+
+	request.Org = org
+	request.Team = team
+	request.Username = username
+
+	var body SetTeamMemberJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetTeamMember(ctx, request.(SetTeamMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetTeamMember")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetTeamMemberResponseObject); ok {
+		if err := validResponse.VisitSetTeamMemberResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetCurrentUser operation middleware
 func (sh *strictHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	var request GetCurrentUserRequestObject
@@ -2010,6 +9983,578 @@ func (sh *strictHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetCurrentUserResponseObject); ok {
 		if err := validResponse.VisitGetCurrentUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListGpgKeys operation middleware
+func (sh *strictHandler) ListGpgKeys(w http.ResponseWriter, r *http.Request) {
+	var request ListGpgKeysRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListGpgKeys(ctx, request.(ListGpgKeysRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListGpgKeys")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListGpgKeysResponseObject); ok {
+		if err := validResponse.VisitListGpgKeysResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddGpgKey operation middleware
+func (sh *strictHandler) AddGpgKey(w http.ResponseWriter, r *http.Request) {
+	var request AddGpgKeyRequestObject
+
+	var body AddGpgKeyJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddGpgKey(ctx, request.(AddGpgKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddGpgKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddGpgKeyResponseObject); ok {
+		if err := validResponse.VisitAddGpgKeyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteGpgKey operation middleware
+func (sh *strictHandler) DeleteGpgKey(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	var request DeleteGpgKeyRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteGpgKey(ctx, request.(DeleteGpgKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteGpgKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteGpgKeyResponseObject); ok {
+		if err := validResponse.VisitDeleteGpgKeyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSshKeys operation middleware
+func (sh *strictHandler) ListSshKeys(w http.ResponseWriter, r *http.Request) {
+	var request ListSshKeysRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSshKeys(ctx, request.(ListSshKeysRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSshKeys")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSshKeysResponseObject); ok {
+		if err := validResponse.VisitListSshKeysResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddSshKey operation middleware
+func (sh *strictHandler) AddSshKey(w http.ResponseWriter, r *http.Request) {
+	var request AddSshKeyRequestObject
+
+	var body AddSshKeyJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddSshKey(ctx, request.(AddSshKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddSshKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddSshKeyResponseObject); ok {
+		if err := validResponse.VisitAddSshKeyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteSshKey operation middleware
+func (sh *strictHandler) DeleteSshKey(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	var request DeleteSshKeyRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteSshKey(ctx, request.(DeleteSshKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteSshKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteSshKeyResponseObject); ok {
+		if err := validResponse.VisitDeleteSshKeyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOidcLinks operation middleware
+func (sh *strictHandler) ListOidcLinks(w http.ResponseWriter, r *http.Request) {
+	var request ListOidcLinksRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOidcLinks(ctx, request.(ListOidcLinksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOidcLinks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOidcLinksResponseObject); ok {
+		if err := validResponse.VisitListOidcLinksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnlinkOidc operation middleware
+func (sh *strictHandler) UnlinkOidc(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	var request UnlinkOidcRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnlinkOidc(ctx, request.(UnlinkOidcRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnlinkOidc")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnlinkOidcResponseObject); ok {
+		if err := validResponse.VisitUnlinkOidcResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// BeginOidcLink operation middleware
+func (sh *strictHandler) BeginOidcLink(w http.ResponseWriter, r *http.Request, provider string) {
+	var request BeginOidcLinkRequestObject
+
+	request.Provider = provider
+
+	var body BeginOidcLinkJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.BeginOidcLink(ctx, request.(BeginOidcLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BeginOidcLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(BeginOidcLinkResponseObject); ok {
+		if err := validResponse.VisitBeginOidcLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSecurity operation middleware
+func (sh *strictHandler) GetSecurity(w http.ResponseWriter, r *http.Request) {
+	var request GetSecurityRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSecurity(ctx, request.(GetSecurityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSecurity")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSecurityResponseObject); ok {
+		if err := validResponse.VisitGetSecurityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RegisterPasskey operation middleware
+func (sh *strictHandler) RegisterPasskey(w http.ResponseWriter, r *http.Request) {
+	var request RegisterPasskeyRequestObject
+
+	var body RegisterPasskeyJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RegisterPasskey(ctx, request.(RegisterPasskeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RegisterPasskey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RegisterPasskeyResponseObject); ok {
+		if err := validResponse.VisitRegisterPasskeyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// BeginPasskeyRegistration operation middleware
+func (sh *strictHandler) BeginPasskeyRegistration(w http.ResponseWriter, r *http.Request) {
+	var request BeginPasskeyRegistrationRequestObject
+
+	var body BeginPasskeyRegistrationJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.BeginPasskeyRegistration(ctx, request.(BeginPasskeyRegistrationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BeginPasskeyRegistration")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(BeginPasskeyRegistrationResponseObject); ok {
+		if err := validResponse.VisitBeginPasskeyRegistrationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeletePasskey operation middleware
+func (sh *strictHandler) DeletePasskey(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request DeletePasskeyRequestObject
+
+	request.Id = id
+
+	var body DeletePasskeyJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeletePasskey(ctx, request.(DeletePasskeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeletePasskey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeletePasskeyResponseObject); ok {
+		if err := validResponse.VisitDeletePasskeyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RegenerateRecoveryCodes operation middleware
+func (sh *strictHandler) RegenerateRecoveryCodes(w http.ResponseWriter, r *http.Request) {
+	var request RegenerateRecoveryCodesRequestObject
+
+	var body RegenerateRecoveryCodesJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RegenerateRecoveryCodes(ctx, request.(RegenerateRecoveryCodesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RegenerateRecoveryCodes")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RegenerateRecoveryCodesResponseObject); ok {
+		if err := validResponse.VisitRegenerateRecoveryCodesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DisableTotp operation middleware
+func (sh *strictHandler) DisableTotp(w http.ResponseWriter, r *http.Request) {
+	var request DisableTotpRequestObject
+
+	var body DisableTotpJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DisableTotp(ctx, request.(DisableTotpRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DisableTotp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DisableTotpResponseObject); ok {
+		if err := validResponse.VisitDisableTotpResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetupTotp operation middleware
+func (sh *strictHandler) SetupTotp(w http.ResponseWriter, r *http.Request) {
+	var request SetupTotpRequestObject
+
+	var body SetupTotpJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetupTotp(ctx, request.(SetupTotpRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetupTotp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetupTotpResponseObject); ok {
+		if err := validResponse.VisitSetupTotpResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ConfirmTotp operation middleware
+func (sh *strictHandler) ConfirmTotp(w http.ResponseWriter, r *http.Request) {
+	var request ConfirmTotpRequestObject
+
+	var body ConfirmTotpJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ConfirmTotp(ctx, request.(ConfirmTotpRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ConfirmTotp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ConfirmTotpResponseObject); ok {
+		if err := validResponse.VisitConfirmTotpResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAccessTokens operation middleware
+func (sh *strictHandler) ListAccessTokens(w http.ResponseWriter, r *http.Request) {
+	var request ListAccessTokensRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAccessTokens(ctx, request.(ListAccessTokensRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAccessTokens")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAccessTokensResponseObject); ok {
+		if err := validResponse.VisitListAccessTokensResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateAccessToken operation middleware
+func (sh *strictHandler) CreateAccessToken(w http.ResponseWriter, r *http.Request) {
+	var request CreateAccessTokenRequestObject
+
+	var body CreateAccessTokenJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateAccessToken(ctx, request.(CreateAccessTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateAccessToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateAccessTokenResponseObject); ok {
+		if err := validResponse.VisitCreateAccessTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeAccessToken operation middleware
+func (sh *strictHandler) RevokeAccessToken(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	var request RevokeAccessTokenRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeAccessToken(ctx, request.(RevokeAccessTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeAccessToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeAccessTokenResponseObject); ok {
+		if err := validResponse.VisitRevokeAccessTokenResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

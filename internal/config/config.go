@@ -46,6 +46,13 @@ const (
 	RegistrationClosed = "closed"
 )
 
+// Values of auth.require_2fa.
+const (
+	Require2FAOff    = "off"
+	Require2FAAdmins = "admins"
+	Require2FAAll    = "all"
+)
+
 type Security struct {
 	MasterKeyFile string `toml:"master_key_file"`
 	Registration  string `toml:"registration"`
@@ -91,6 +98,15 @@ type Auth struct {
 	VerifyTokenTTL Duration `toml:"verify_token_ttl"`
 	ResetTokenTTL  Duration `toml:"reset_token_ttl"`
 	InviteTTL      Duration `toml:"invite_ttl"`
+	// Require2FA makes a second factor mandatory: "off", "admins" or "all".
+	// Organizations can also require it of their members.
+	Require2FA string `toml:"require_2fa"`
+
+	// TokenMaxTTL bounds the lifetime of personal access tokens. Every
+	// token expires (PLAN §8.1), so it must be positive.
+	TokenMaxTTL Duration `toml:"token_max_ttl"`
+	// OIDC lists the external identity providers ([[auth.oidc]]).
+	OIDC []OIDCProvider `toml:"oidc"`
 }
 
 // Mail configures outgoing SMTP mail (verification and password reset).
@@ -194,6 +210,8 @@ func Default() Config {
 			VerifyTokenTTL:           Duration(48 * time.Hour),
 			ResetTokenTTL:            Duration(time.Hour),
 			InviteTTL:                Duration(7 * 24 * time.Hour),
+			Require2FA:               Require2FAOff,
+			TokenMaxTTL:              Duration(366 * 24 * time.Hour),
 		},
 		Mail: Mail{Port: 587, TLS: "starttls", Timeout: Duration(30 * time.Second)},
 	}
@@ -228,6 +246,7 @@ func Parse(data []byte, lookupEnv func(string) (string, bool)) (*Config, error) 
 		errs = append(errs, applyEnv(&cfg, lookupEnv)...)
 	}
 	applyStorageDefaults(&cfg.Storage)
+	applyOIDCDefaults(cfg.Auth.OIDC)
 	errs = append(errs, cfg.validate()...)
 	if len(errs) > 0 {
 		return nil, errors.Join(errs...)

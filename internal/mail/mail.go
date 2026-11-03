@@ -31,6 +31,7 @@ const (
 	TemplateVerifyEmail        = "verify_email"
 	TemplateResetPassword      = "reset_password"
 	TemplateRegistrationNotice = "registration_notice"
+	TemplateOrgInvite          = "org_invite"
 )
 
 // Locales with templates; anything else falls back to DefaultLocale.

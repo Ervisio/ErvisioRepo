@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/netip"
 	"slices"
+	"strings"
 )
 
 // ProblemWriter writes an RFC 9457 error response.
@@ -16,6 +17,7 @@ type ProblemWriter func(w http.ResponseWriter, status int, detail string)
 // authorization.
 type Middleware struct {
 	Sessions       *Sessions
+	Tokens         *Tokens // nil refuses every access token
 	Cookies        Cookies
 	TrustedProxies []netip.Prefix
 	Problem        ProblemWriter
@@ -56,7 +58,24 @@ func safeMethod(m string) bool {
 func (m *Middleware) LoadSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		ri := RequestInfo{IP: ClientIP(r, m.TrustedProxies), UserAgent: r.UserAgent(), SessionToken: m.Cookies.Session(r)}
+		ri := RequestInfo{IP: ClientIP(r, m.TrustedProxies), UserAgent: r.UserAgent()}
+		if bearer, ok := bearerToken(r); ok {
+			// An access token replaces the cookies: the session cookie of
+			// the same client is ignored, and no CSRF cookie is issued.
+			p, err := m.lookupToken(ctx, bearer)
+			switch {
+			case err == nil:
+				next.ServeHTTP(w, r.WithContext(WithRequestInfo(WithPrincipal(ctx, p), ri)))
+			case errors.Is(err, ErrNoToken):
+				w.Header().Set("WWW-Authenticate", `Bearer error="invalid_token"`)
+				m.Problem(w, http.StatusUnauthorized, "invalid or expired access token")
+			default:
+				m.Log.ErrorContext(ctx, "load access token", "error", err)
+				m.Problem(w, http.StatusServiceUnavailable, "")
+			}
+			return
+		}
+		ri.SessionToken = m.Cookies.Session(r)
 		if ri.SessionToken != "" && m.Sessions != nil {
 			s, err := m.Sessions.Lookup(ctx, ri.SessionToken)
 			switch {
@@ -82,13 +101,31 @@ func (m *Middleware) LoadSession(next http.Handler) http.Handler {
 	})
 }
 
+// bearerToken returns the credentials of an "Authorization: Bearer" header.
+func bearerToken(r *http.Request) (string, bool) {
+	h := r.Header.Get("Authorization")
+	scheme, cred, ok := strings.Cut(h, " ")
+	if !ok || !strings.EqualFold(scheme, "Bearer") {
+		return "", false
+	}
+	return strings.TrimSpace(cred), true
+}
+
+func (m *Middleware) lookupToken(ctx context.Context, token string) (Principal, error) {
+	if m.Tokens == nil {
+		return Principal{}, ErrNoToken
+	}
+	return m.Tokens.Lookup(ctx, token)
+}
+
 // CSRF rejects unsafe requests that a browser marks as cross-site, and those
 // whose X-CSRF-Token header does not match the CSRF cookie and, with a
 // session, the token bound to the session (double submit plus synchronizer
-// token). It must run after LoadSession.
+// token). Access token callers are exempt: a browser never attaches the
+// token on its own. It must run after LoadSession.
 func (m *Middleware) CSRF(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if safeMethod(r.Method) {
+		if p, _ := PrincipalFrom(r.Context()); safeMethod(r.Method) || p.Method == MethodToken {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -135,23 +172,65 @@ func (m *Middleware) RequireAdmin(next http.Handler) http.Handler {
 	}))
 }
 
-// Scopes enforces the security requirement of an OpenAPI operation, given
-// the scopes the generated router put in the context: no value means a
-// public operation, an empty list a signed-in user, "admin" an instance
-// admin.
+// Scopes enforces the security requirement of an OpenAPI operation for
+// session callers only; access tokens are refused on every secured
+// operation. See Authorize.
 func (m *Middleware) Scopes(scopes func(context.Context) ([]string, bool)) func(http.Handler) http.Handler {
+	return m.Authorize(scopes, nil)
+}
+
+// Authorize enforces the security requirement of an OpenAPI operation,
+// given the scopes the generated router put in the context for the session
+// scheme and for the access token scheme. An operation with neither is
+// public. Session (or anonymous) callers need the session scheme: an empty
+// list means a signed-in user, "admin" an instance admin. Access token
+// callers need the token scheme and every scope it lists; "admin" also
+// requires an instance admin. token may be nil (no operation accepts
+// tokens).
+func (m *Middleware) Authorize(session, token func(context.Context) ([]string, bool)) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		user, admin := m.RequireUser(next), m.RequireAdmin(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			s, secured := scopes(r.Context())
+			ctx := r.Context()
+			ss, sessionOK := session(ctx)
+			var ts []string
+			tokenOK := false
+			if token != nil {
+				ts, tokenOK = token(ctx)
+			}
+			p, _ := PrincipalFrom(ctx)
 			switch {
-			case !secured:
+			case !sessionOK && !tokenOK:
 				next.ServeHTTP(w, r)
-			case slices.Contains(s, RoleAdmin):
+			case p.Method == MethodToken:
+				m.authorizeToken(w, r, next, p, ts, tokenOK)
+			case !sessionOK:
+				// Only tokens are accepted here.
+				m.Problem(w, http.StatusUnauthorized, "access token required")
+			case slices.Contains(ss, RoleAdmin):
 				admin.ServeHTTP(w, r)
 			default:
 				user.ServeHTTP(w, r)
 			}
 		})
 	}
+}
+
+func (m *Middleware) authorizeToken(w http.ResponseWriter, r *http.Request, next http.Handler, p Principal, scopes []string, accepted bool) {
+	if !accepted {
+		m.Problem(w, http.StatusForbidden, "this operation does not accept access tokens")
+		return
+	}
+	for _, s := range scopes {
+		if !p.HasScope(s) {
+			w.Header().Set("WWW-Authenticate", `Bearer error="insufficient_scope", scope="`+strings.Join(scopes, " ")+`"`)
+			m.Problem(w, http.StatusForbidden, "the access token lacks the scope "+s)
+			return
+		}
+	}
+	if slices.Contains(scopes, ScopeAdmin) && !p.IsAdmin() {
+		m.Problem(w, http.StatusForbidden, "instance admin required")
+		return
+	}
+	next.ServeHTTP(w, r)
 }

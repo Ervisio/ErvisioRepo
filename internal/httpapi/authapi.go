@@ -167,6 +167,19 @@ func (s *v1Server) Login(ctx context.Context, req v1gen.LoginRequestObject) (v1g
 		return badRequest("missing body"), nil
 	}
 	ri := auth.RequestInfoFrom(ctx)
+	if s.mfa != nil {
+		out, err := s.mfa.Login(ctx, req.Body.Login, req.Body.Password, ri.SessionToken, clientOf(ctx))
+		if p, ok := mfaProblem(err); ok {
+			return p, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		if out.Pending != nil {
+			return pendingResponse{pending: *out.Pending, cookies: s.cookies}, nil
+		}
+		return loginResponse{user: userDTO(out.Session.User), session: out.Session.Session, cookies: s.cookies}, nil
+	}
 	res, err := s.identity.Login(ctx, req.Body.Login, req.Body.Password, ri.SessionToken, clientOf(ctx))
 	if p, ok := identityProblem(err); ok {
 		return p, nil

@@ -1,0 +1,10 @@
+Subject: {{.Inviter}} ti ha invitato in {{.Org}} su {{.Instance}}
+Ciao,
+
+{{.Inviter}} ti ha invitato a far parte dell'organizzazione {{.Org}} su {{.Instance}} con il ruolo {{.Role}}.
+
+Per accettare, accedi con un account che usa questo indirizzo email e apri questo link:
+
+{{.Link}}
+
+L'invito scade tra {{.Expires}}. Se non te lo aspettavi puoi ignorare questo messaggio.

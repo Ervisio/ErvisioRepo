@@ -27,6 +27,25 @@ const (
 	ActionInviteCreated        = "auth.invite_created"
 )
 
+// Actions recorded by organization management; their events carry OrgID.
+const (
+	ActionOrgCreated        = "org.created"
+	ActionOrgUpdated        = "org.updated"
+	ActionOrgDeleted        = "org.deleted"
+	ActionOrgMemberAdded    = "org.member_added"
+	ActionOrgMemberRole     = "org.member_role_changed"
+	ActionOrgMemberRemoved  = "org.member_removed"
+	ActionOrgTeamCreated    = "org.team_created"
+	ActionOrgTeamUpdated    = "org.team_updated"
+	ActionOrgTeamDeleted    = "org.team_deleted"
+	ActionOrgTeamMemberSet  = "org.team_member_set"
+	ActionOrgTeamMemberDrop = "org.team_member_removed"
+	ActionOrgInviteCreated  = "org.invite_created"
+	ActionOrgInviteRevoked  = "org.invite_revoked"
+	ActionOrgInviteAccepted = "org.invite_accepted"
+	ActionQuotaUpdated      = "quota.updated"
+)
+
 // Inserter is the subset of dbgen.Querier used to record events.
 type Inserter interface {
 	InsertAuditEvent(ctx context.Context, arg dbgen.InsertAuditEventParams) error
@@ -40,6 +59,9 @@ type Event struct {
 	TargetID   string
 	IP         string
 	Data       map[string]any
+	// OrgID scopes the event to an organization (its audit log); zero for
+	// instance-wide events.
+	OrgID uuid.UUID
 }
 
 // Record appends e to the audit log.
@@ -57,6 +79,7 @@ func Record(ctx context.Context, q Inserter, e Event) error {
 	if err := q.InsertAuditEvent(ctx, dbgen.InsertAuditEventParams{
 		ID: id, ActorID: uuid.NullUUID{UUID: e.Actor, Valid: e.Actor != uuid.Nil},
 		Action: e.Action, TargetType: e.TargetType, TargetID: e.TargetID, Ip: e.IP, Data: data,
+		OrgID: uuid.NullUUID{UUID: e.OrgID, Valid: e.OrgID != uuid.Nil},
 	}); err != nil {
 		return fmt.Errorf("insert audit event %s: %w", e.Action, err)
 	}

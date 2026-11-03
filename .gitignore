@@ -12,3 +12,5 @@ coverage.out
 /deploy/dev/master.key
 __pycache__/
 /design/.variant-studio/
+/ervisio-repo
+*.tsbuildinfo

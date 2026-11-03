@@ -9,11 +9,12 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const insertAuditEvent = `-- name: InsertAuditEvent :exec
-INSERT INTO audit_log (id, actor_id, action, target_type, target_id, ip, data)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO audit_log (id, actor_id, action, target_type, target_id, ip, data, org_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 `
 
 type InsertAuditEventParams struct {
@@ -24,6 +25,7 @@ type InsertAuditEventParams struct {
 	TargetID   string
 	Ip         string
 	Data       []byte
+	OrgID      uuid.NullUUID
 }
 
 func (q *Queries) InsertAuditEvent(ctx context.Context, arg InsertAuditEventParams) error {
@@ -35,44 +37,73 @@ func (q *Queries) InsertAuditEvent(ctx context.Context, arg InsertAuditEventPara
 		arg.TargetID,
 		arg.Ip,
 		arg.Data,
+		arg.OrgID,
 	)
 	return err
 }
 
 const listAuditEvents = `-- name: ListAuditEvents :many
-SELECT id, at, actor_id, action, target_type, target_id, ip, data
-FROM audit_log
-WHERE ($1::uuid IS NULL OR id < $1::uuid)
-  AND ($2::uuid IS NULL OR actor_id = $2::uuid)
-ORDER BY id DESC
-LIMIT $3
+SELECT a.id, a.at, a.actor_id, actor.name AS actor_name, a.action, a.target_type, a.target_id, a.ip, a.data, a.org_id
+FROM audit_log a
+LEFT JOIN namespaces actor ON actor.id = a.actor_id
+WHERE ($1::uuid IS NULL OR a.id < $1::uuid)
+  AND ($2::uuid IS NULL OR a.actor_id = $2::uuid)
+  AND ($3::uuid IS NULL OR a.org_id = $3::uuid)
+  AND ($4::text IS NULL OR a.action = $4::text
+       OR (right($4::text, 1) = '.' AND starts_with(a.action, $4::text)))
+ORDER BY a.id DESC
+LIMIT $5
 `
 
 type ListAuditEventsParams struct {
 	Before  uuid.NullUUID
 	Actor   uuid.NullUUID
+	Org     uuid.NullUUID
+	Action  pgtype.Text
 	MaxRows int32
 }
 
+type ListAuditEventsRow struct {
+	ID         uuid.UUID
+	At         pgtype.Timestamptz
+	ActorID    uuid.NullUUID
+	ActorName  pgtype.Text
+	Action     string
+	TargetType string
+	TargetID   string
+	Ip         string
+	Data       []byte
+	OrgID      uuid.NullUUID
+}
+
 // Newest first; pass the last id of a page as before to get the next one.
-func (q *Queries) ListAuditEvents(ctx context.Context, arg ListAuditEventsParams) ([]AuditLog, error) {
-	rows, err := q.db.Query(ctx, listAuditEvents, arg.Before, arg.Actor, arg.MaxRows)
+// action matches exactly, or a whole prefix when it ends with ".".
+func (q *Queries) ListAuditEvents(ctx context.Context, arg ListAuditEventsParams) ([]ListAuditEventsRow, error) {
+	rows, err := q.db.Query(ctx, listAuditEvents,
+		arg.Before,
+		arg.Actor,
+		arg.Org,
+		arg.Action,
+		arg.MaxRows,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []AuditLog{}
+	items := []ListAuditEventsRow{}
 	for rows.Next() {
-		var i AuditLog
+		var i ListAuditEventsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.At,
 			&i.ActorID,
+			&i.ActorName,
 			&i.Action,
 			&i.TargetType,
 			&i.TargetID,
 			&i.Ip,
 			&i.Data,
+			&i.OrgID,
 		); err != nil {
 			return nil, err
 		}

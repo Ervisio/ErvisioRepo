@@ -300,27 +300,39 @@ type LoginResult struct {
 // Login checks a username or email address and its password, then starts a
 // new session. oldToken, when set, is the session cookie the browser sent:
 // that session is revoked (rotation at login). Unknown accounts cost the
-// same as wrong passwords and give the same error.
+// same as wrong passwords and give the same error. It does not ask for a
+// second factor: the HTTP login goes through the mfa service instead.
 func (s *Service) Login(ctx context.Context, login, password, oldToken string, c Client) (LoginResult, error) {
+	p, err := s.Authenticate(ctx, login, password, c)
+	if err != nil {
+		return LoginResult{}, err
+	}
+	return s.StartSession(ctx, p.UserID, oldToken, c, "password")
+}
+
+// Authenticate checks a username or email address and its password (the
+// first factor) without starting a session. Unknown accounts cost the same
+// as wrong passwords and give the same error.
+func (s *Service) Authenticate(ctx context.Context, login, password string, c Client) (auth.Principal, error) {
 	login = strings.TrimSpace(login)
 	if login == "" || len(login) > MaxEmailLength || password == "" || len(password) > auth.MaxPasswordBytes {
-		return LoginResult{}, ErrInvalidCredentials
+		return auth.Principal{}, ErrInvalidCredentials
 	}
 	ipKey, loginKey := auth.IPKey(c.IP), auth.AccountKey(strings.ToLower(login))
 	if wait := s.limiter.LoginWait(ipKey, loginKey); wait > 0 {
-		return LoginResult{}, &RateLimitError{RetryAfter: wait}
+		return auth.Principal{}, &RateLimitError{RetryAfter: wait}
 	}
 
 	acct, found, err := s.lookupLogin(ctx, login)
 	if err != nil {
-		return LoginResult{}, err
+		return auth.Principal{}, err
 	}
 	keys := []string{ipKey, loginKey}
 	if found {
 		userKey := auth.AccountKey(acct.ID.String())
 		keys = append(keys, userKey)
 		if wait := s.limiter.LoginWait(userKey); wait > 0 {
-			return LoginResult{}, &RateLimitError{RetryAfter: wait}
+			return auth.Principal{}, &RateLimitError{RetryAfter: wait}
 		}
 	}
 
@@ -328,7 +340,7 @@ func (s *Service) Login(ctx context.Context, login, password, oldToken string, c
 	if found && acct.PasswordHash.Valid {
 		ok, rehash, err = s.hasher.Verify(ctx, acct.PasswordHash.String, password)
 		if err != nil && !errors.Is(err, auth.ErrMalformedHash) {
-			return LoginResult{}, err
+			return auth.Principal{}, err
 		}
 	} else {
 		s.hasher.VerifyDummy(ctx, password)
@@ -340,17 +352,17 @@ func (s *Service) Login(ctx context.Context, login, password, oldToken string, c
 			ev.TargetID = acct.ID.String()
 		}
 		s.record(ctx, ev)
-		return LoginResult{}, ErrInvalidCredentials
+		return auth.Principal{}, ErrInvalidCredentials
 	}
 
 	if acct.SuspendedAt.Valid {
-		return LoginResult{}, ErrSuspended
+		return auth.Principal{}, ErrSuspended
 	}
 	if s.VerificationRequired() && !acct.EmailVerifiedAt.Valid {
 		if acct.EmailID.Valid && s.allowAction(c) == nil {
 			s.enqueue(ctx, VerifyEmailArgs{EmailID: acct.EmailID.UUID})
 		}
-		return LoginResult{}, ErrEmailNotVerified
+		return auth.Principal{}, ErrEmailNotVerified
 	}
 	s.limiter.Reset(loginKey)
 	s.limiter.Reset(auth.AccountKey(acct.ID.String()))
@@ -364,6 +376,27 @@ func (s *Service) Login(ctx context.Context, login, password, oldToken string, c
 			}
 		}
 	}
+	return auth.Principal{UserID: acct.ID, Username: acct.Username, Role: acct.Role}, nil
+}
+
+// StartSession starts a session for an account whose factors were checked
+// by the caller. It checks again that the account may sign in, revokes
+// oldToken (the session cookie the browser sent, rotation at login) and
+// records the login with method ("password", "totp", "passkey"...).
+func (s *Service) StartSession(ctx context.Context, userID uuid.UUID, oldToken string, c Client, method string) (LoginResult, error) {
+	row, err := s.q.GetUserByID(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return LoginResult{}, ErrInvalidCredentials
+	}
+	if err != nil {
+		return LoginResult{}, fmt.Errorf("get user: %w", err)
+	}
+	if row.SuspendedAt.Valid {
+		return LoginResult{}, ErrSuspended
+	}
+	if s.VerificationRequired() && !row.EmailVerifiedAt.Valid {
+		return LoginResult{}, ErrEmailNotVerified
+	}
 	if oldToken != "" {
 		if old, err := s.sessions.Lookup(ctx, oldToken); err == nil {
 			if err := s.sessions.Revoke(ctx, old.ID); err != nil {
@@ -371,17 +404,49 @@ func (s *Service) Login(ctx context.Context, login, password, oldToken string, c
 			}
 		}
 	}
-	p := auth.Principal{UserID: acct.ID, Username: acct.Username, Role: acct.Role, Method: auth.MethodSession}
+	p := auth.Principal{UserID: row.ID, Username: row.Username, Role: row.Role, Method: auth.MethodSession}
 	sess, err := s.sessions.Create(ctx, p, c.IP, c.UserAgent)
 	if err != nil {
 		return LoginResult{}, err
 	}
-	s.record(ctx, audit.Event{Actor: acct.ID, Action: audit.ActionLogin, TargetType: "session", TargetID: sess.ID.String(), IP: c.IP})
-	u, err := s.User(ctx, acct.ID)
+	s.record(ctx, audit.Event{Actor: row.ID, Action: audit.ActionLogin, TargetType: "session", TargetID: sess.ID.String(), IP: c.IP,
+		Data: map[string]any{"method": method}})
+	u, err := s.User(ctx, row.ID)
 	if err != nil {
 		return LoginResult{}, err
 	}
 	return LoginResult{User: u, Session: sess}, nil
+}
+
+// VerifyPassword checks the password of a signed-in account (re-auth
+// before a sensitive change). Failures count against the account.
+func (s *Service) VerifyPassword(ctx context.Context, userID uuid.UUID, password string) error {
+	key := auth.AccountKey(userID.String())
+	if wait := s.limiter.LoginWait(key); wait > 0 {
+		return &RateLimitError{RetryAfter: wait}
+	}
+	u, err := s.q.GetUserByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("get user: %w", err)
+	}
+	acct, found, err := s.lookupLogin(ctx, u.Username)
+	if err != nil {
+		return err
+	}
+	ok := false
+	if found && acct.ID == userID && acct.PasswordHash.Valid && password != "" && len(password) <= auth.MaxPasswordBytes {
+		ok, _, err = s.hasher.Verify(ctx, acct.PasswordHash.String, password)
+		if err != nil && !errors.Is(err, auth.ErrMalformedHash) {
+			return err
+		}
+	} else {
+		s.hasher.VerifyDummy(ctx, password)
+	}
+	if !ok {
+		s.limiter.Fail(key)
+		return ErrInvalidCredentials
+	}
+	return nil
 }
 
 type loginRow struct {

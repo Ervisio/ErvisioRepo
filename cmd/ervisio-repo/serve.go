@@ -11,18 +11,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/buildinfo"
 	"github.com/Ervisio/ErvisioRepo/internal/config"
+	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/db"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
 	"github.com/Ervisio/ErvisioRepo/internal/jobs"
 	"github.com/Ervisio/ErvisioRepo/internal/mail"
+	"github.com/Ervisio/ErvisioRepo/internal/orgs"
+	"github.com/Ervisio/ErvisioRepo/internal/sso"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
 	"github.com/Ervisio/ErvisioRepo/web"
 )
@@ -72,11 +76,20 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	}
 	mailer := identity.MailerFor(cfg, dbgen.New(pool), sender, log)
 
-	runner, err = jobs.New(pool, log, jobs.WithStorage(storage, log), identity.JobsOption(mailer))
+	runner, err = jobs.New(pool, log, jobs.WithStorage(storage, log), identity.JobsOption(mailer),
+		orgs.JobsOption(orgs.MailerFor(cfg, dbgen.New(pool), sender, log)))
 	if err != nil {
 		return err
 	}
 	ids, err := identity.Setup(cfg, pool, runner, log, nil)
+	if err != nil {
+		return err
+	}
+	mfaSvc, err := setupMFA(cfg, pool, ids, log)
+	if err != nil {
+		return err
+	}
+	ssoMgr, err := setupSSO(cfg, pool, ids.Service, log)
 	if err != nil {
 		return err
 	}
@@ -117,9 +130,15 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		Registry: registry,
 		Storage:  storage,
 		Identity: ids.Service,
+		MFA:      mfaSvc,
+		Orgs:     orgs.New(orgs.Options{Pool: pool, Jobs: runner, Log: log, Config: cfg}),
+		Audit:    dbgen.New(pool),
+		Credentials: credentials.New(credentials.Options{Pool: pool, Log: log,
+			TokenMaxTTL: time.Duration(cfg.Auth.TokenMaxTTL)}),
+		SSO: ssoMgr,
 		Auth: &auth.Middleware{
-			Sessions: ids.Sessions, Cookies: auth.CookiesFor(cfg.Server.PublicURL),
-			TrustedProxies: proxies, Log: log,
+			Sessions: ids.Sessions, Tokens: &auth.Tokens{Store: dbgen.New(pool)},
+			Cookies: auth.CookiesFor(cfg.Server.PublicURL), TrustedProxies: proxies, Log: log,
 		},
 	})
 
@@ -153,6 +172,24 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		return fmt.Errorf("http shutdown: %w", err)
 	}
 	return nil
+}
+
+// setupSSO reads the client secrets of the [[auth.oidc]] providers and
+// builds the OIDC manager; it returns nil when no provider is configured.
+func setupSSO(cfg *config.Config, pool *pgxpool.Pool, ids *identity.Service, log *slog.Logger) (*sso.Manager, error) {
+	if len(cfg.Auth.OIDC) == 0 {
+		return nil, nil
+	}
+	secrets := make(map[string]string, len(cfg.Auth.OIDC))
+	for _, p := range cfg.Auth.OIDC {
+		secret, err := readSecretFile(p.ClientSecretFile)
+		if err != nil {
+			return nil, fmt.Errorf("oidc provider %s client secret: %w", p.Name, err)
+		}
+		secrets[p.Name] = secret
+	}
+	return sso.New(sso.Options{Pool: pool, Identity: ids, Providers: cfg.Auth.OIDC, Secrets: secrets,
+		PublicURL: cfg.Server.PublicURL, Cookies: auth.CookiesFor(cfg.Server.PublicURL), Log: log}), nil
 }
 
 // readSecretFile returns the trimmed content of an operator-configured

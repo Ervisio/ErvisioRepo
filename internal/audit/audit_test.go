@@ -50,3 +50,17 @@ func TestRecord(t *testing.T) {
 		t.Fatalf("error not wrapped: %v", err)
 	}
 }
+
+func TestRecordOrgScope(t *testing.T) {
+	f := &fakeInserter{}
+	org := uuid.New()
+	if err := Record(context.Background(), f, Event{Action: ActionOrgCreated, OrgID: org}); err != nil {
+		t.Fatal(err)
+	}
+	if err := Record(context.Background(), f, Event{Action: ActionLogin}); err != nil {
+		t.Fatal(err)
+	}
+	if !f.got[0].OrgID.Valid || f.got[0].OrgID.UUID != org || f.got[1].OrgID.Valid {
+		t.Fatalf("bad org scope %+v %+v", f.got[0].OrgID, f.got[1].OrgID)
+	}
+}

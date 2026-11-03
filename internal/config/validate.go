@@ -229,6 +229,11 @@ func (v *validator) auth(a *Auth) {
 	v.positive("auth.verify_token_ttl", a.VerifyTokenTTL)
 	v.positive("auth.reset_token_ttl", a.ResetTokenTTL)
 	v.positive("auth.invite_ttl", a.InviteTTL)
+	v.oneOf("auth.require_2fa", a.Require2FA, Require2FAOff, Require2FAAdmins, Require2FAAll)
+	if a.TokenMaxTTL <= 0 {
+		v.add("auth.token_max_ttl", "must be positive (personal access tokens always expire)")
+	}
+	v.oidc(a.OIDC)
 }
 
 func (v *validator) mail(m *Mail) {

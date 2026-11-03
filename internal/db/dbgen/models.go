@@ -18,6 +18,7 @@ type AuditLog struct {
 	TargetID   string
 	Ip         string
 	Data       []byte
+	OrgID      uuid.NullUUID
 }
 
 type Email struct {
@@ -28,6 +29,18 @@ type Email struct {
 	IsPrimary    bool
 	VerifiedAt   pgtype.Timestamptz
 	CreatedAt    pgtype.Timestamptz
+}
+
+type GpgKey struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	KeyID       string
+	Fingerprint string
+	SubkeyIds   []string
+	Emails      []string
+	Armored     string
+	ExpiresAt   pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
 }
 
 type Invite struct {
@@ -41,12 +54,65 @@ type Invite struct {
 	CreatedAt pgtype.Timestamptz
 }
 
+type MfaChallenge struct {
+	ID        uuid.UUID
+	TokenHash []byte
+	Kind      string
+	UserID    uuid.NullUUID
+	Enroll    bool
+	Webauthn  []byte
+	Attempts  int32
+	Ip        string
+	UserAgent string
+	ExpiresAt pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
+}
+
+type MfaRecoveryCode struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	CodeHash  []byte
+	UsedAt    pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
+}
+
+type MfaTotp struct {
+	UserID      uuid.UUID
+	Secret      []byte
+	ConfirmedAt pgtype.Timestamptz
+	LastStep    int64
+	CreatedAt   pgtype.Timestamptz
+}
+
 type Namespace struct {
 	ID        uuid.UUID
 	Kind      string
 	Name      string
 	NameLower pgtype.Text
 	CreatedAt pgtype.Timestamptz
+}
+
+type OidcFlow struct {
+	StateHash    []byte
+	Provider     string
+	Mode         string
+	Nonce        string
+	PkceVerifier string
+	UserID       uuid.NullUUID
+	SessionID    uuid.NullUUID
+	ReturnTo     string
+	ExpiresAt    pgtype.Timestamptz
+}
+
+type OidcLink struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	Provider    string
+	Issuer      string
+	Subject     string
+	Email       string
+	CreatedAt   pgtype.Timestamptz
+	LastLoginAt pgtype.Timestamptz
 }
 
 type OneTimeToken struct {
@@ -59,12 +125,29 @@ type OneTimeToken struct {
 }
 
 type Org struct {
-	ID          uuid.UUID
-	DisplayName string
-	Description string
-	VerifiedAt  pgtype.Timestamptz
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
+	ID             uuid.UUID
+	DisplayName    string
+	Description    string
+	VerifiedAt     pgtype.Timestamptz
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+	Require2fa     bool
+	BasePermission string
+}
+
+type OrgInvite struct {
+	ID         uuid.UUID
+	OrgID      uuid.UUID
+	Email      string
+	EmailLower pgtype.Text
+	Role       string
+	TeamIds    []uuid.UUID
+	TokenHash  []byte
+	InvitedBy  uuid.NullUUID
+	ExpiresAt  pgtype.Timestamptz
+	AcceptedAt pgtype.Timestamptz
+	AcceptedBy uuid.NullUUID
+	CreatedAt  pgtype.Timestamptz
 }
 
 type OrgMember struct {
@@ -78,6 +161,20 @@ type Password struct {
 	UserID    uuid.UUID
 	Hash      string
 	UpdatedAt pgtype.Timestamptz
+}
+
+type Quota struct {
+	NamespaceID     uuid.UUID
+	MaxRepos        pgtype.Int4
+	MaxStorageBytes pgtype.Int8
+	UpdatedAt       pgtype.Timestamptz
+}
+
+type QuotaDefault struct {
+	Kind            string
+	MaxRepos        pgtype.Int4
+	MaxStorageBytes pgtype.Int8
+	UpdatedAt       pgtype.Timestamptz
 }
 
 type Session struct {
@@ -98,6 +195,18 @@ type Setting struct {
 	UpdatedAt pgtype.Timestamptz
 }
 
+type SshKey struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	Title       string
+	KeyType     string
+	Fingerprint string
+	PublicKey   string
+	Bits        int32
+	LastUsedAt  pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+}
+
 type StorageObject struct {
 	Target     string
 	Key        string
@@ -111,6 +220,50 @@ type StorageObject struct {
 	UpdatedAt  pgtype.Timestamptz
 }
 
+type Team struct {
+	ID          uuid.UUID
+	OrgID       uuid.UUID
+	Name        string
+	NameLower   pgtype.Text
+	Description string
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type TeamMember struct {
+	TeamID    uuid.UUID
+	OrgID     uuid.UUID
+	UserID    uuid.UUID
+	Role      string
+	CreatedAt pgtype.Timestamptz
+}
+
+type TeamRepo struct {
+	TeamID     uuid.UUID
+	RepoID     uuid.UUID
+	Permission string
+	CreatedAt  pgtype.Timestamptz
+}
+
+type Token struct {
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	Name       string
+	TokenHash  []byte
+	Hint       string
+	Scopes     []string
+	ExpiresAt  pgtype.Timestamptz
+	LastUsedAt pgtype.Timestamptz
+	CreatedAt  pgtype.Timestamptz
+}
+
+type UsageCounter struct {
+	NamespaceID  uuid.UUID
+	Repos        int32
+	StorageBytes int64
+	UpdatedAt    pgtype.Timestamptz
+}
+
 type User struct {
 	ID          uuid.UUID
 	DisplayName string
@@ -119,4 +272,19 @@ type User struct {
 	SuspendedAt pgtype.Timestamptz
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
+}
+
+type WebauthnCredential struct {
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	CredentialID []byte
+	Name         string
+	Data         []byte
+	CreatedAt    pgtype.Timestamptz
+	LastUsedAt   pgtype.Timestamptz
+}
+
+type WebauthnHandle struct {
+	UserID uuid.UUID
+	Handle []byte
 }

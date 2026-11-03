@@ -13,6 +13,7 @@ tags:
   - name: auth
   - name: users
   - name: admin
+  - name: orgs
 # Every operation needs a session unless it declares `security: []`. The
 # "admin" scope means an instance admin. Unsafe methods also need the
 # X-CSRF-Token header (see components.securitySchemes.session).
@@ -146,6 +147,9 @@ paths:
         Sets a new session cookie (the previous session of this browser is
         revoked) and a new CSRF cookie. Every credential failure answers the
         same 401. Repeated failures are slowed down per account and per IP.
+        When the account has a second factor, or policy requires one, the
+        answer is 202 with the pending step: no session yet, only the
+        short-lived HttpOnly erepo_mfa cookie, to complete under /auth/mfa.
       security: []
       requestBody:
         required: true
@@ -160,6 +164,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+        "202":
+          description: Password accepted, second factor needed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MfaChallenge"
         "400":
           $ref: "#/components/responses/Problem"
         "401":
@@ -269,6 +279,9 @@ paths:
       operationId: getCurrentUser
       tags: [users]
       summary: The signed-in user
+      security:
+        - session: []
+        - token: [user:read]
       responses:
         "200":
           description: Current user
@@ -278,6 +291,1293 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/mfa:
+    get:
+      operationId: getMfaChallenge
+      tags: [auth]
+      summary: The pending second-factor step of this browser
+      description: |
+        Reads the pending login held in the erepo_mfa cookie (set by a 202
+        from POST /auth/login). 401 when there is none or it expired.
+      security: []
+      responses:
+        "200":
+          description: Pending login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MfaChallenge"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/mfa/totp:
+    post:
+      operationId: verifyMfaTotp
+      tags: [auth]
+      summary: Complete a pending login with an authenticator app code
+      description: |
+        A code is accepted once: a replay in the same time window fails.
+        After five wrong codes the pending login is dropped.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CodeRequest"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/mfa/recovery:
+    post:
+      operationId: verifyMfaRecovery
+      tags: [auth]
+      summary: Complete a pending login with a recovery code
+      description: Each recovery code works once.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CodeRequest"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/mfa/webauthn/options:
+    post:
+      operationId: beginMfaWebAuthn
+      tags: [auth]
+      summary: Options to complete a pending login with a security key
+      security: []
+      responses:
+        "200":
+          description: Options for navigator.credentials.get
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebAuthnOptions"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/mfa/webauthn:
+    post:
+      operationId: verifyMfaWebAuthn
+      tags: [auth]
+      summary: Complete a pending login with a security key
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebAuthnCredentialRequest"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/mfa/enroll/totp:
+    post:
+      operationId: beginMfaEnrollTotp
+      tags: [auth]
+      summary: Set up an authenticator app during a login that requires one
+      description: |
+        Only for a pending login with enrollmentRequired: the account must
+        have a second factor and has none yet.
+      security: []
+      responses:
+        "200":
+          description: New secret, to confirm with a code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotpSetup"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/mfa/enroll/totp/confirm:
+    post:
+      operationId: confirmMfaEnrollTotp
+      tags: [auth]
+      summary: Confirm the authenticator app and complete the login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CodeRequest"
+      responses:
+        "200":
+          description: Signed in; the recovery codes are shown only once
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MfaEnrollResult"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/mfa/passkey/options:
+    post:
+      operationId: beginPasskeyLogin
+      tags: [auth]
+      summary: Options for a passwordless sign-in with a passkey
+      security: []
+      responses:
+        "200":
+          description: Ceremony token and options for navigator.credentials.get
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PasskeyChallenge"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/mfa/passkey:
+    post:
+      operationId: passkeyLogin
+      tags: [auth]
+      summary: Sign in with a passkey
+      description: |
+        The passkey must verify the user (PIN or biometrics), so it stands
+        for both factors. Sets the session and CSRF cookies like a login.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasskeyLoginRequest"
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/security:
+    get:
+      operationId: getSecurity
+      tags: [users]
+      summary: Second factors of the signed-in user
+      responses:
+        "200":
+          description: Second-factor setup
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecurityStatus"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/security/totp:
+    post:
+      operationId: setupTotp
+      tags: [users]
+      summary: Start setting up an authenticator app
+      description: Needs the password or a current code. Confirm with POST /user/security/totp/confirm.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReauthRequest"
+      responses:
+        "200":
+          description: New secret, to confirm with a code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotpSetup"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: disableTotp
+      tags: [users]
+      summary: Remove the authenticator app
+      description: |
+        Needs the password or a current code. Refused (409) when it is the
+        last factor and policy requires two-factor authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReauthRequest"
+      responses:
+        "204":
+          description: Removed
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/security/totp/confirm:
+    post:
+      operationId: confirmTotp
+      tags: [users]
+      summary: Enable the authenticator app with a first code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CodeRequest"
+      responses:
+        "200":
+          description: Enabled; new recovery codes when the account had none (shown only once)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryCodes"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/security/recovery-codes:
+    post:
+      operationId: regenerateRecoveryCodes
+      tags: [users]
+      summary: Replace the recovery codes
+      description: The old codes stop working. Needs the password or a current code.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReauthRequest"
+      responses:
+        "200":
+          description: New recovery codes, shown only once
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryCodes"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/security/passkeys/options:
+    post:
+      operationId: beginPasskeyRegistration
+      tags: [users]
+      summary: Options to register a passkey
+      description: Needs the password or a current code.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReauthRequest"
+      responses:
+        "200":
+          description: Ceremony token and options for navigator.credentials.create
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PasskeyChallenge"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/security/passkeys:
+    post:
+      operationId: registerPasskey
+      tags: [users]
+      summary: Register a passkey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasskeyRegisterRequest"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Passkey"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/security/passkeys/{id}:
+    delete:
+      operationId: deletePasskey
+      tags: [users]
+      summary: Remove a passkey
+      description: |
+        Needs the password or a current code. Refused (409) when it is the
+        last factor and policy requires two-factor authentication.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReauthRequest"
+      responses:
+        "204":
+          description: Removed
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        default:
+          $ref: "#/components/responses/Problem"
+  /auth/oidc/providers:
+    get:
+      operationId: listOidcProviders
+      tags: [auth]
+      summary: External identity providers configured on this instance
+      description: |
+        Sign in with a provider by navigating the browser to
+        /auth/oidc/{name}/login?return_to=/path (outside /api/v1); the
+        provider redirects back to /auth/oidc/{name}/callback.
+      security: []
+      responses:
+        "200":
+          description: Providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OidcProvider"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/oidc:
+    get:
+      operationId: listOidcLinks
+      tags: [users]
+      summary: External identities linked to the account
+      responses:
+        "200":
+          description: Linked identities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OidcLink"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/oidc/{provider}/link:
+    post:
+      operationId: beginOidcLink
+      tags: [users]
+      summary: Start linking an external identity
+      description: |
+        Returns the provider URL to navigate to and sets the state cookie.
+        The callback links the identity only for the same signed-in session.
+        An identity is never linked because its email matches the account.
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OidcLinkRequest"
+      responses:
+        "200":
+          description: Redirect target
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OidcRedirect"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "502":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/oidc/{id}:
+    delete:
+      operationId: unlinkOidc
+      tags: [users]
+      summary: Unlink an external identity
+      description: Refused (409) when it is the last way to sign in.
+      parameters:
+        - $ref: "#/components/parameters/CredentialID"
+      responses:
+        "204":
+          description: Unlinked
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/tokens:
+    get:
+      operationId: listAccessTokens
+      tags: [users]
+      summary: Personal access tokens of the account
+      responses:
+        "200":
+          description: Tokens (without secrets)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AccessToken"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createAccessToken
+      tags: [users]
+      summary: Create a personal access token
+      description: |
+        The secret is returned only once. Only a session can manage tokens;
+        the admin scope needs an instance admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccessTokenCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatedAccessToken"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/tokens/{id}:
+    delete:
+      operationId: revokeAccessToken
+      tags: [users]
+      summary: Revoke a personal access token
+      parameters:
+        - $ref: "#/components/parameters/CredentialID"
+      responses:
+        "204":
+          description: Revoked
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/keys/ssh:
+    get:
+      operationId: listSshKeys
+      tags: [users]
+      summary: SSH public keys of the account
+      security:
+        - session: []
+        - token: [user:read]
+      responses:
+        "200":
+          description: Keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SshKey"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: addSshKey
+      tags: [users]
+      summary: Add an SSH public key
+      description: |
+        Accepts one key in authorized_keys format. RSA keys need at least
+        3072 bits; DSA keys are refused. A key belongs to one account only.
+      security:
+        - session: []
+        - token: [user:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SshKeyCreate"
+      responses:
+        "201":
+          description: Added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SshKey"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/keys/ssh/{id}:
+    delete:
+      operationId: deleteSshKey
+      tags: [users]
+      summary: Remove an SSH public key
+      security:
+        - session: []
+        - token: [user:write]
+      parameters:
+        - $ref: "#/components/parameters/CredentialID"
+      responses:
+        "204":
+          description: Removed
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/keys/gpg:
+    get:
+      operationId: listGpgKeys
+      tags: [users]
+      summary: GPG public keys of the account
+      security:
+        - session: []
+        - token: [user:read]
+      responses:
+        "200":
+          description: Keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GpgKey"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: addGpgKey
+      tags: [users]
+      summary: Add a GPG public key
+      security:
+        - session: []
+        - token: [user:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GpgKeyCreate"
+      responses:
+        "201":
+          description: Added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GpgKey"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/keys/gpg/{id}:
+    delete:
+      operationId: deleteGpgKey
+      tags: [users]
+      summary: Remove a GPG public key
+      security:
+        - session: []
+        - token: [user:write]
+      parameters:
+        - $ref: "#/components/parameters/CredentialID"
+      responses:
+        "204":
+          description: Removed
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs:
+    get:
+      operationId: listMyOrgs
+      tags: [orgs]
+      summary: Organizations the caller is a member of
+      responses:
+        "200":
+          description: Organizations with the caller's role
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Org"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createOrg
+      tags: [orgs]
+      summary: Create an organization owned by the caller
+      description: Restricted users cannot create organizations (403).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgCreate"
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Org"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/invites/accept:
+    post:
+      operationId: acceptOrgInvite
+      tags: [orgs]
+      summary: Join an organization with an invitation token
+      description: |
+        The invited address must belong to the caller and, when the instance
+        requires verified addresses, be verified. A caller who is already a
+        member keeps their role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRequest"
+      responses:
+        "200":
+          description: Joined
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgInviteAccepted"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: getOrg
+      tags: [orgs]
+      summary: An organization
+      description: Organizations the caller cannot see answer 404, as if they did not exist.
+      responses:
+        "200":
+          description: Organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Org"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateOrg
+      tags: [orgs]
+      summary: Change the settings of an organization
+      description: Owners and admins.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgUpdate"
+      responses:
+        "200":
+          description: Updated organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Org"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteOrg
+      tags: [orgs]
+      summary: Delete an organization with its members, teams and invitations
+      description: Owners only.
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/members:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgMembers
+      tags: [orgs]
+      summary: Members of an organization
+      responses:
+        "200":
+          description: Members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrgMember"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/members/{username}:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - $ref: "#/components/parameters/Username"
+    put:
+      operationId: setOrgMemberRole
+      tags: [orgs]
+      summary: Change the role of a member
+      description: |
+        Owners and admins; only owners grant or revoke ownership. The last
+        owner cannot step down (409). New members join through invitations.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgRoleRequest"
+      responses:
+        "200":
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgMember"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: removeOrgMember
+      tags: [orgs]
+      summary: Remove a member, or leave the organization
+      description: Owners remove anyone, admins non-owners, members themselves. The last owner cannot be removed (409).
+      responses:
+        "204":
+          description: Removed
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/teams:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listTeams
+      tags: [orgs]
+      summary: Teams of an organization
+      responses:
+        "200":
+          description: Teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Team"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createTeam
+      tags: [orgs]
+      summary: Create a team
+      description: Owners and admins.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamCreate"
+      responses:
+        "201":
+          description: Team created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/teams/{team}:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - $ref: "#/components/parameters/TeamName"
+    get:
+      operationId: getTeam
+      tags: [orgs]
+      summary: A team
+      responses:
+        "200":
+          description: Team
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateTeam
+      tags: [orgs]
+      summary: Rename a team or change its description
+      description: Owners and admins.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamUpdate"
+      responses:
+        "200":
+          description: Updated team
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteTeam
+      tags: [orgs]
+      summary: Delete a team
+      description: Owners and admins.
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/teams/{team}/members:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - $ref: "#/components/parameters/TeamName"
+    get:
+      operationId: listTeamMembers
+      tags: [orgs]
+      summary: Members of a team
+      responses:
+        "200":
+          description: Team members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TeamMember"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/teams/{team}/members/{username}:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - $ref: "#/components/parameters/TeamName"
+      - $ref: "#/components/parameters/Username"
+    put:
+      operationId: setTeamMember
+      tags: [orgs]
+      summary: Add a member of the organization to a team, or change its team role
+      description: Owners, admins and maintainers of the team.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamRoleRequest"
+      responses:
+        "204":
+          description: Saved
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: removeTeamMember
+      tags: [orgs]
+      summary: Remove a member from a team
+      description: Owners, admins, maintainers of the team, or the member itself.
+      responses:
+        "204":
+          description: Removed
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/invites:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgInvites
+      tags: [orgs]
+      summary: Pending invitations, expired ones included
+      description: Owners and admins.
+      responses:
+        "200":
+          description: Invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrgInvite"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createOrgInvite
+      tags: [orgs]
+      summary: Invite an email address to join the organization
+      description: |
+        Owners and admins; only owners invite owners. With mail enabled the
+        link is mailed; otherwise the token is returned once in the answer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgInviteRequest"
+      responses:
+        "201":
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgInvite"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/invites/{id}:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      operationId: revokeOrgInvite
+      tags: [orgs]
+      summary: Revoke a pending invitation
+      description: Owners and admins.
+      responses:
+        "204":
+          description: Revoked
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/quota:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: getOrgQuota
+      tags: [orgs]
+      summary: Limits and current usage of an organization
+      description: Owners and admins. A limit of -1 means unlimited.
+      responses:
+        "200":
+          description: Quota
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quota"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/audit:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgAudit
+      tags: [orgs]
+      summary: Audit log of an organization, newest first
+      description: Owners and admins.
+      parameters:
+        - $ref: "#/components/parameters/AuditBefore"
+        - $ref: "#/components/parameters/AuditLimit"
+        - $ref: "#/components/parameters/AuditAction"
+      responses:
+        "200":
+          description: A page of entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditPage"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/audit:
+    get:
+      operationId: listAdminAudit
+      tags: [admin]
+      summary: Instance audit log, newest first
+      description: Instance admins only.
+      security:
+        - session: [admin]
+      parameters:
+        - $ref: "#/components/parameters/AuditBefore"
+        - $ref: "#/components/parameters/AuditLimit"
+        - $ref: "#/components/parameters/AuditAction"
+        - name: actor
+          in: query
+          description: Only entries of this user
+          schema:
+            type: string
+            format: uuid
+        - name: org
+          in: query
+          description: Only entries of this organization
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: A page of entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditPage"
         default:
           $ref: "#/components/responses/Problem"
 components:
@@ -291,6 +1591,64 @@ components:
         plain http on a non-loopback host the cookie is named erepo_session.
         Requests with an unsafe method must send the X-CSRF-Token header with
         the value of the erepo_csrf cookie (__Host-erepo_csrf on https).
+    token:
+      type: http
+      scheme: bearer
+      description: |
+        Personal access token (erp_...) in "Authorization: Bearer". Only the
+        operations that list the token scheme accept it, and the token must
+        hold every scope listed there. Tokens skip the CSRF check.
+  parameters:
+    CredentialID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    OrgName:
+      name: org
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 39
+    TeamName:
+      name: team
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 39
+    Username:
+      name: username
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 39
+    AuditBefore:
+      name: before
+      in: query
+      description: Cursor; the next value of the previous page
+      schema:
+        type: string
+        format: uuid
+    AuditLimit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    AuditAction:
+      name: action
+      in: query
+      description: Exact action, or a prefix ending with "." (e.g. org.)
+      schema:
+        type: string
+        maxLength: 100
   responses:
     Problem:
       description: Error in RFC 9457 format
@@ -310,6 +1668,175 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    OidcProvider:
+      type: object
+      required: [name, label]
+      properties:
+        name:
+          type: string
+        label:
+          type: string
+    OidcLink:
+      type: object
+      required: [id, provider, label, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        provider:
+          type: string
+        label:
+          type: string
+        email:
+          type: string
+          description: Email address reported by the provider, if any
+        createdAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+    OidcLinkRequest:
+      type: object
+      properties:
+        returnTo:
+          type: string
+          maxLength: 2000
+          description: Local path to return to after the provider (default /settings)
+    OidcRedirect:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+    AccessToken:
+      type: object
+      required: [id, name, hint, scopes, expiresAt, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        hint:
+          type: string
+          description: First characters of the token (erp_ and four more)
+        scopes:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    AccessTokenCreate:
+      type: object
+      required: [name, scopes, expiresAt]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        scopes:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items:
+            type: string
+            enum: [user:read, user:write, repo:read, repo:write, packages:read, packages:write, actions:write, admin]
+        expiresAt:
+          type: string
+          format: date-time
+          description: Required; at most the configured maximum lifetime from now
+    CreatedAccessToken:
+      type: object
+      required: [token, secret]
+      properties:
+        token:
+          $ref: "#/components/schemas/AccessToken"
+        secret:
+          type: string
+          description: The token (erp_...), shown only once; send it as "Authorization Bearer"
+    SshKey:
+      type: object
+      required: [id, title, type, fingerprint, publicKey, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        type:
+          type: string
+          example: ssh-ed25519
+        fingerprint:
+          type: string
+          example: SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8
+        publicKey:
+          type: string
+        bits:
+          type: integer
+        lastUsedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    SshKeyCreate:
+      type: object
+      required: [title, key]
+      properties:
+        title:
+          type: string
+          maxLength: 100
+          description: Empty uses the key comment, or the key type
+        key:
+          type: string
+          maxLength: 16384
+    GpgKey:
+      type: object
+      required: [id, keyId, fingerprint, subkeyIds, emails, verifiedEmails, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        keyId:
+          type: string
+          example: 3AA5C34371567BD2
+        fingerprint:
+          type: string
+        subkeyIds:
+          type: array
+          items:
+            type: string
+        emails:
+          type: array
+          items:
+            type: string
+        verifiedEmails:
+          type: array
+          description: The emails that are verified addresses of the account
+          items:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    GpgKeyCreate:
+      type: object
+      required: [armoredKey]
+      properties:
+        armoredKey:
+          type: string
+          maxLength: 65536
     RegisterRequest:
       type: object
       required: [username, email, password]
@@ -611,6 +2138,411 @@ components:
         registration:
           type: string
           enum: [open, invite, closed]
+    MfaChallenge:
+      type: object
+      required: [methods, enrollmentRequired, expiresAt]
+      description: |
+        A login waiting for its second factor. The pending state lives in
+        the HttpOnly erepo_mfa cookie (__Host-erepo_mfa on https), never in
+        a session cookie.
+      properties:
+        methods:
+          type: array
+          items:
+            type: string
+            enum: [totp, webauthn, recovery]
+        enrollmentRequired:
+          type: boolean
+          description: Policy requires a second factor and the account has none; set up an authenticator app to continue
+        expiresAt:
+          type: string
+          format: date-time
+    CodeRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+    ReauthRequest:
+      type: object
+      description: Either the password or a current authenticator app or recovery code
+      properties:
+        password:
+          type: string
+          maxLength: 1024
+        code:
+          type: string
+          maxLength: 64
+    TotpSetup:
+      type: object
+      required: [secret, uri]
+      properties:
+        secret:
+          type: string
+          description: Base32 secret for manual entry
+        uri:
+          type: string
+          description: otpauth:// URI for a QR code
+    RecoveryCodes:
+      type: object
+      required: [codes]
+      properties:
+        codes:
+          type: array
+          description: Shown only once; empty when existing codes were kept
+          items:
+            type: string
+    MfaEnrollResult:
+      type: object
+      required: [user, recoveryCodes]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        recoveryCodes:
+          type: array
+          items:
+            type: string
+    WebAuthnOptions:
+      type: object
+      required: [options]
+      properties:
+        options:
+          type: object
+          additionalProperties: true
+          description: PublicKeyCredentialRequestOptions wrapper ({publicKey}), binary fields in base64url
+    WebAuthnCredentialRequest:
+      type: object
+      required: [credential]
+      properties:
+        credential:
+          type: object
+          additionalProperties: true
+          description: PublicKeyCredential JSON (toJSON), binary fields in base64url
+    PasskeyChallenge:
+      type: object
+      required: [challenge, options]
+      properties:
+        challenge:
+          type: string
+          description: Ceremony token to send back with the response
+        options:
+          type: object
+          additionalProperties: true
+    PasskeyLoginRequest:
+      type: object
+      required: [challenge, credential]
+      properties:
+        challenge:
+          type: string
+          minLength: 1
+          maxLength: 128
+        credential:
+          type: object
+          additionalProperties: true
+    PasskeyRegisterRequest:
+      type: object
+      required: [challenge, name, credential]
+      properties:
+        challenge:
+          type: string
+          minLength: 1
+          maxLength: 128
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        credential:
+          type: object
+          additionalProperties: true
+    Passkey:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+    SecurityStatus:
+      type: object
+      required: [totp, totpPending, passkeys, recoveryCodesLeft, recoveryCodesTotal, required, webauthnAvailable]
+      properties:
+        totp:
+          type: boolean
+          description: An authenticator app is enabled
+        totpPending:
+          type: boolean
+          description: An authenticator app setup waits for its first code
+        passkeys:
+          type: array
+          items:
+            $ref: "#/components/schemas/Passkey"
+        recoveryCodesLeft:
+          type: integer
+        recoveryCodesTotal:
+          type: integer
+        required:
+          type: boolean
+          description: Policy (instance or organization) requires a second factor
+        webauthnAvailable:
+          type: boolean
+    OrgRole:
+      type: string
+      enum: [owner, admin, member, billing]
+    Permission:
+      type: string
+      enum: [none, read, triage, write, maintain, admin]
+    Org:
+      type: object
+      required: [id, name, displayName, description, basePermission, require2fa, verified, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        displayName:
+          type: string
+        description:
+          type: string
+        basePermission:
+          $ref: "#/components/schemas/Permission"
+        require2fa:
+          type: boolean
+          description: Members must have a second factor; enforced from their next sign-in.
+        verified:
+          type: boolean
+        role:
+          $ref: "#/components/schemas/OrgRole"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    OrgCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 39
+        displayName:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+    OrgUpdate:
+      type: object
+      properties:
+        displayName:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        basePermission:
+          $ref: "#/components/schemas/Permission"
+        require2fa:
+          type: boolean
+          description: Owners only. Requires a second factor from every member.
+    OrgMember:
+      type: object
+      required: [username, displayName, role, since]
+      properties:
+        username:
+          type: string
+        displayName:
+          type: string
+        role:
+          $ref: "#/components/schemas/OrgRole"
+        since:
+          type: string
+          format: date-time
+    OrgRoleRequest:
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: "#/components/schemas/OrgRole"
+    Team:
+      type: object
+      required: [id, name, description, members, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        members:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TeamCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 39
+        description:
+          type: string
+          maxLength: 1000
+    TeamUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 39
+        description:
+          type: string
+          maxLength: 1000
+    TeamMember:
+      type: object
+      required: [username, displayName, role, since]
+      properties:
+        username:
+          type: string
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [maintainer, member]
+        since:
+          type: string
+          format: date-time
+    TeamRoleRequest:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          enum: [maintainer, member]
+    OrgInviteRequest:
+      type: object
+      required: [email, role]
+      properties:
+        email:
+          type: string
+          maxLength: 254
+        role:
+          $ref: "#/components/schemas/OrgRole"
+        teams:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 39
+    OrgInvite:
+      type: object
+      required: [id, email, role, teams, expiresAt, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        role:
+          $ref: "#/components/schemas/OrgRole"
+        teams:
+          type: array
+          items:
+            type: string
+        invitedBy:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        token:
+          type: string
+          description: Only at creation and only when mail is disabled; shown once
+    OrgInviteAccepted:
+      type: object
+      required: [org, role]
+      properties:
+        org:
+          type: string
+        role:
+          $ref: "#/components/schemas/OrgRole"
+    Quota:
+      type: object
+      required: [maxRepos, maxStorageBytes, repos, storageBytes]
+      properties:
+        maxRepos:
+          type: integer
+          format: int32
+          description: -1 means unlimited
+        maxStorageBytes:
+          type: integer
+          format: int64
+          description: -1 means unlimited
+        repos:
+          type: integer
+          format: int32
+        storageBytes:
+          type: integer
+          format: int64
+    AuditEntry:
+      type: object
+      required: [id, at, action, targetType, targetId, ip, data]
+      properties:
+        id:
+          type: string
+          format: uuid
+        at:
+          type: string
+          format: date-time
+        actorId:
+          type: string
+          format: uuid
+        actor:
+          type: string
+          description: Username of the actor; absent when anonymous or deleted
+        action:
+          type: string
+        targetType:
+          type: string
+        targetId:
+          type: string
+        ip:
+          type: string
+        orgId:
+          type: string
+          format: uuid
+        data:
+          type: object
+          additionalProperties: true
+    AuditPage:
+      type: object
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditEntry"
+        next:
+          type: string
+          format: uuid
+          description: Cursor of the next page (pass as before); absent on the last page
     Problem:
       type: object
       required: [type, title, status]

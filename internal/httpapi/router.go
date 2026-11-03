@@ -18,8 +18,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/Ervisio/ErvisioRepo/internal/audit"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
+	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
+	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+	"github.com/Ervisio/ErvisioRepo/internal/sso"
 )
 
 // RequestTimeout bounds every non-streaming request.
@@ -56,6 +60,16 @@ type Deps struct {
 	Storage  Storage              // nil makes the storage admin endpoints answer 503
 	// Identity serves the account endpoints; nil makes them answer 503.
 	Identity Identity
+	// MFA runs the two-step login and /user/security; nil disables it.
+	MFA *mfa.Service
+	// Orgs serves /orgs; nil makes those endpoints answer 503.
+	Orgs Orgs
+	// Audit reads the instance audit log for /admin/audit; nil answers 503.
+	Audit audit.Lister
+	// Credentials serves /user/tokens and /user/keys; nil answers 503.
+	Credentials *credentials.Service
+	// SSO runs the OIDC sign-in and linking; nil means no providers.
+	SSO *sso.Manager
 	// Auth loads sessions and enforces CSRF and authorization on /api/v1.
 	// Nil uses cookies derived from Meta.PublicURL and no sessions, so
 	// every caller is anonymous.
@@ -101,6 +115,7 @@ func NewRouter(d Deps) http.Handler {
 			api.MethodNotAllowed(problemHandler(http.StatusMethodNotAllowed))
 			api.Route("/v1", func(v1 chi.Router) { mountV1(v1, d) })
 		})
+		mountOIDC(r, d)
 		r.Handle("/*", spaHandler(d.Web, d.HasIndex))
 	})
 	return r
@@ -155,8 +170,9 @@ func directLoopback(r *http.Request) bool {
 // requirement (public, signed-in user or instance admin). The admin prefix
 // is also guarded as a whole, so that a misdeclared operation cannot leak.
 func mountV1(r chi.Router, d Deps) {
-	r.Use(d.Auth.LoadSession, d.Auth.CSRF, adminOnly(d.Auth))
-	srv := &v1Server{meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies}
+	r.Use(d.Auth.LoadSession, d.Auth.CSRF, adminOnly(d.Auth), mfaCookie(d.Auth.Cookies))
+	srv := &v1Server{meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies, mfa: d.MFA, orgs: d.Orgs, audit: d.Audit,
+		creds: d.Credentials, sso: d.SSO}
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())
@@ -169,7 +185,7 @@ func mountV1(r chi.Router, d Deps) {
 	})
 	v1gen.HandlerWithOptions(strict, v1gen.ChiServerOptions{
 		BaseRouter:  r,
-		Middlewares: []v1gen.MiddlewareFunc{d.Auth.Scopes(operationScopes)},
+		Middlewares: []v1gen.MiddlewareFunc{d.Auth.Authorize(operationScopes, operationTokenScopes)},
 		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())
 		},
@@ -180,6 +196,13 @@ func mountV1(r chi.Router, d Deps) {
 // operation; ok is false for public operations (security: []).
 func operationScopes(ctx context.Context) ([]string, bool) {
 	s, ok := ctx.Value(v1gen.SessionScopes).([]string)
+	return s, ok
+}
+
+// operationTokenScopes returns the scopes an access token needs for the
+// operation; ok is false when the operation does not accept tokens.
+func operationTokenScopes(ctx context.Context) ([]string, bool) {
+	s, ok := ctx.Value(v1gen.TokenScopes).([]string)
 	return s, ok
 }
 

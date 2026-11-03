@@ -1,0 +1,10 @@
+Subject: {{.Inviter}} invited you to join {{.Org}} on {{.Instance}}
+Hello,
+
+{{.Inviter}} invited you to join the organization {{.Org}} on {{.Instance}} as {{.Role}}.
+
+To accept, sign in with an account that uses this email address and open this link:
+
+{{.Link}}
+
+The invitation expires in {{.Expires}}. If you were not expecting it you can ignore this message.
