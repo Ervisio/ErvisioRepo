@@ -23,11 +23,13 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/db"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
+	"github.com/Ervisio/ErvisioRepo/internal/events"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/githooks"
 	"github.com/Ervisio/ErvisioRepo/internal/gitstore"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
+	"github.com/Ervisio/ErvisioRepo/internal/issues"
 	"github.com/Ervisio/ErvisioRepo/internal/jobs"
 	"github.com/Ervisio/ErvisioRepo/internal/mail"
 	"github.com/Ervisio/ErvisioRepo/internal/orgs"
@@ -108,20 +110,30 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	if opt, ok := backupJobOption(cfg, storage, log); ok {
 		jobOpts = append(jobOpts, opt)
 	}
-	journal, err := setupGitJournal(ctx, cfg, pool, gitTier, log)
+	bus := events.NewBus(pool, log.With("component", "events"))
+	jobOpts = append(jobOpts, bus.JobsOption(), issues.JobsOption(dbgen.New(pool), storage, log))
+	journal, err := setupGitJournal(ctx, cfg, pool, gitTier, bus, log)
 	if err != nil {
 		return err
 	}
 	defer journal.Close()
-	if journal != nil {
+	if journal != nil && journal.Jobs != nil {
 		jobOpts = append(jobOpts, journal.Jobs)
+	}
+	if journal != nil {
+		jobOpts = append(jobOpts, journal.GitHub.JobsOption())
 	}
 	runner, err = jobs.New(pool, log, jobOpts...)
 	if err != nil {
 		return err
 	}
-	if journal != nil {
+	bus.SetClient(runner.Client())
+	if journal != nil && journal.Journal != nil {
 		journal.Journal.SetEnqueuer(runner)
+	}
+	if journal != nil {
+		journal.GitHub.SetEnqueuer(runner)
+		journal.GitHub.SetHooks(journal.Hooks)
 	}
 	ids, err := identity.Setup(cfg, pool, runner, log, nil)
 	if err != nil {
@@ -196,7 +208,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	if repoSvc != nil {
 		deps.Repos = repoSvc
 		var rj releases.Journal
-		if journal != nil {
+		if journal != nil && journal.Journal != nil {
 			rj = journal.Journal
 		}
 		deps.Releases = releases.New(releases.Options{Pool: pool, Repos: repoSvc, Git: gitTier, Journal: rj, Storage: storage, Log: log})
@@ -209,6 +221,17 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		}
 		defer browse.Close()
 		deps.Browse = browse
+		issueSvc := issues.New(issues.Options{Pool: pool, Repos: repoSvc, Browse: browse, Storage: storage, Bus: bus,
+			MaxAttachmentSize: issues.DefaultMaxAttachmentSize, Log: log.With("component", "issues")})
+		bus.Register("issues.autoclose", issueSvc.PushHandler(), events.KindPush)
+		deps.Issues = issueSvc
+		if journal != nil {
+			journal.Protection.SetRepos(repoSvc)
+			deps.Protection = journal.Protection
+			journal.GitHub.SetRepos(repoSvc)
+			bus.Register("ghsync.push", journal.GitHub.EventHandler(), events.KindPush)
+			deps.GitHub = journal.GitHub
+		}
 	}
 	handler := httpapi.NewRouter(deps)
 

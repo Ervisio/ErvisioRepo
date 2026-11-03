@@ -35,6 +35,15 @@ type Handler interface {
 	Finish(s *Session)
 }
 
+// Preparer is implemented by a Handler that also checks ref updates made
+// without a pre-receive hook (git update-ref from web edits and merges):
+// it runs in the "prepared" state of the reference transaction, and a
+// *Reject aborts the transaction. It is not called for a session whose
+// pre-receive hook already accepted the push.
+type Preparer interface {
+	Prepared(ctx context.Context, s *Session, updates []RefUpdate, out io.Writer) error
+}
+
 // Quarantine is the incoming object directory of a push.
 type Quarantine struct {
 	Dir     string // <repo>/objects/tmp_objdir-incoming-*
@@ -96,6 +105,18 @@ type Session struct {
 	// State is free for the Handler; it is only touched from hook calls
 	// and Finish, which never overlap.
 	State any
+
+	received bool   // pre-receive accepted the push
+	rejected string // last message a hook refused an update with
+}
+
+// Rejected returns the message of the last hook that refused an update of
+// this session, or "" when none did. The caller of git uses it to tell a
+// policy refusal from a failure.
+func (sess *Session) Rejected() string {
+	sess.mu.Lock()
+	defer sess.mu.Unlock()
+	return sess.rejected
 }
 
 // sunPathMax is the portable bound of a unix socket path (macOS: 104).
@@ -409,11 +430,29 @@ func (s *Server) handle(ctx context.Context, conn net.Conn) {
 			return
 		}
 		err = s.o.Handler.PreReceive(ctx, sess, updates, q, out)
-		if _, ok := rejectMessage(err); err != nil && !ok {
+		if msg, ok := rejectMessage(err); err != nil && !ok {
 			log.Error("git pre-receive failed", "error", err)
+		} else if ok {
+			sess.rejected = msg
 		}
+		sess.received = err == nil
 		finish(err)
 	case HookReferenceTransaction:
+		if len(req.Args) == 1 && req.Args[0] == TxPrepared {
+			p, ok := s.o.Handler.(Preparer)
+			if !ok || sess.received {
+				finish(nil)
+				return
+			}
+			err := p.Prepared(ctx, sess, updates, out)
+			if msg, ok := rejectMessage(err); err != nil && !ok {
+				log.Error("git reference-transaction prepared failed", "error", err)
+			} else if ok {
+				sess.rejected = msg
+			}
+			finish(err)
+			return
+		}
 		if len(req.Args) != 1 || req.Args[0] != TxCommitted {
 			finish(nil)
 			return

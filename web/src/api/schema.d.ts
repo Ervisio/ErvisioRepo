@@ -1862,10 +1862,1003 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repos/{owner}/{name}/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Search the issues of the repository
+         * @description Full-text search (title, body and comments) with filters. Without q
+         *     the issues are sorted by creation date, newest first.
+         */
+        get: operations["listIssues"];
+        put?: never;
+        /**
+         * Open an issue
+         * @description Any signed-in user who can read the repository can open an issue.
+         *     Labels, assignees and the milestone need the triage permission and are
+         *     silently ignored otherwise.
+         */
+        post: operations["createIssue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        /** An issue */
+        get: operations["getIssue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit, close or reopen an issue
+         * @description The author can edit the title and body and close or reopen the issue;
+         *     anything else needs the triage permission. labels and assignees
+         *     replace the whole set. milestoneId: absent keeps it, empty clears it.
+         */
+        patch: operations["updateIssue"];
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/{number}/edits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        /** Previous bodies of an issue, newest first */
+        get: operations["listIssueEdits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/{number}/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Lock the conversation
+         * @description Only users with the triage permission can comment on a locked issue.
+         */
+        put: operations["lockIssue"];
+        post?: never;
+        /** Unlock the conversation */
+        delete: operations["unlockIssue"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/{number}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        /** Comments of an issue, oldest first */
+        get: operations["listIssueComments"];
+        put?: never;
+        /** Comment on an issue */
+        post: operations["createIssueComment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/comments/{commentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        /** A comment */
+        get: operations["getIssueComment"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a comment
+         * @description The author or a user with the triage permission.
+         */
+        delete: operations["deleteIssueComment"];
+        options?: never;
+        head?: never;
+        /**
+         * Edit a comment
+         * @description The author or a user with the triage permission. The previous body is
+         *     kept in the edit history.
+         */
+        patch: operations["updateIssueComment"];
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/comments/{commentId}/edits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        /** Previous bodies of a comment, newest first */
+        get: operations["listIssueCommentEdits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/{number}/reactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        /** Reactions to an issue */
+        get: operations["listIssueReactions"];
+        put?: never;
+        /**
+         * React to an issue
+         * @description Adding the same reaction twice is a no-op.
+         */
+        post: operations["addIssueReaction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/{number}/reactions/{content}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+                /** @description Reaction: +1, -1, laugh, hooray, confused, heart, rocket or eyes */
+                content: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove the caller's reaction */
+        delete: operations["removeIssueReaction"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/comments/{commentId}/reactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        /** Reactions to a comment */
+        get: operations["listIssueCommentReactions"];
+        put?: never;
+        /**
+         * React to a comment
+         * @description Adding the same reaction twice is a no-op.
+         */
+        post: operations["addIssueCommentReaction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/comments/{commentId}/reactions/{content}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: string;
+                /** @description Reaction: +1, -1, laugh, hooray, confused, heart, rocket or eyes */
+                content: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove the caller's reaction */
+        delete: operations["removeIssueCommentReaction"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/{number}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * Events and comments of an issue, oldest first
+         * @description Cross-references from repositories the caller cannot read are
+         *     redacted (no repository, number or title).
+         */
+        get: operations["listIssueTimeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Labels of the repository, by name */
+        get: operations["listLabels"];
+        put?: never;
+        /**
+         * Create a label
+         * @description Needs the triage permission.
+         */
+        post: operations["createLabel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/labels/{label}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Label name */
+                label: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a label
+         * @description Needs the triage permission. The label is removed from every issue.
+         */
+        delete: operations["deleteLabel"];
+        options?: never;
+        head?: never;
+        /**
+         * Edit a label
+         * @description Needs the triage permission.
+         */
+        patch: operations["updateLabel"];
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/milestones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Milestones of the repository
+         * @description Open milestones by due date, closed ones by closing date.
+         */
+        get: operations["listMilestones"];
+        put?: never;
+        /**
+         * Create a milestone
+         * @description Needs the triage permission.
+         */
+        post: operations["createMilestone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/milestones/{milestoneId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                milestoneId: string;
+            };
+            cookie?: never;
+        };
+        /** A milestone */
+        get: operations["getMilestone"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a milestone
+         * @description Needs the triage permission. Its issues keep no milestone.
+         */
+        delete: operations["deleteMilestone"];
+        options?: never;
+        head?: never;
+        /**
+         * Edit, close or reopen a milestone
+         * @description Needs the triage permission.
+         */
+        patch: operations["updateMilestone"];
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issue-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Issue templates of the default branch
+         * @description Markdown templates and issue forms from .github/ISSUE_TEMPLATE, plus
+         *     its config.yml. Templates that cannot be parsed are skipped.
+         */
+        get: operations["listIssueTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/attachments/{attachmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                attachmentId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete an attachment
+         * @description The uploader or a user with the triage permission. Attachments are
+         *     uploaded with POST /api/v1/repos/{owner}/{name}/issues/attachments?name=
+         *     (raw body, outside this document: needs a signed-in user who can read
+         *     the repository; 201 with an IssueAttachment, charged to the quota of
+         *     the owner) and downloaded with GET on the url of the attachment.
+         */
+        delete: operations["deleteIssueAttachment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/branch-protections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Branch protection rules of the repository
+         * @description Needs the admin permission on the repository.
+         */
+        get: operations["listBranchProtections"];
+        put?: never;
+        /**
+         * Create a branch protection rule
+         * @description The pattern is a glob on the branch name (`*` does not cross `/`,
+         *     `**` does). When several rules match a branch the most specific one
+         *     applies: an exact name first, then the pattern with fewer wildcards
+         *     and the longer literal part.
+         */
+        post: operations["createBranchProtection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/branch-protections/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dry-run a ref update against the branch protection and tag rules
+         * @description Evaluates the update exactly as the pre-receive hook would, without
+         *     touching the repository. Needs the admin permission on the repository.
+         */
+        post: operations["evaluateRefUpdate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/branch-protections/{ruleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                ruleId: components["parameters"]["ProtectionRuleId"];
+            };
+            cookie?: never;
+        };
+        /** A branch protection rule */
+        get: operations["getBranchProtection"];
+        /** Replace a branch protection rule */
+        put: operations["updateBranchProtection"];
+        post?: never;
+        /** Delete a branch protection rule */
+        delete: operations["deleteBranchProtection"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/tag-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Tag rules of the repository
+         * @description Needs the admin permission on the repository.
+         */
+        get: operations["listTagRules"];
+        put?: never;
+        /**
+         * Create a tag rule
+         * @description The pattern is a glob on the tag name, matched like branch protection patterns.
+         */
+        post: operations["createTagRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/tag-rules/{ruleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                ruleId: components["parameters"]["ProtectionRuleId"];
+            };
+            cookie?: never;
+        };
+        /** A tag rule */
+        get: operations["getTagRule"];
+        /** Replace a tag rule */
+        put: operations["updateTagRule"];
+        post?: never;
+        /** Delete a tag rule */
+        delete: operations["deleteTagRule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/github/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * GitHub connections of a user or organization
+         * @description owner defaults to the caller. Connections of an organization are
+         *     visible to its owners and admins.
+         */
+        get: operations["listGitHubConnections"];
+        put?: never;
+        /**
+         * Connect a GitHub App installation or a fine-grained token
+         * @description The credentials are encrypted with the instance master key (503
+         *     without one) and never returned. The response carries the webhook
+         *     secret once, to configure on GitHub with the webhookUrl. A baseUrl
+         *     other than https://github.com (GitHub Enterprise Server) needs an
+         *     instance admin.
+         */
+        post: operations["createGitHubConnection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/github/connections/{connectionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectionId: string;
+            };
+            cookie?: never;
+        };
+        /** A GitHub connection */
+        get: operations["getGitHubConnection"];
+        put?: never;
+        post?: never;
+        /** Delete a connection that no repository uses (409 otherwise) */
+        delete: operations["deleteGitHubConnection"];
+        options?: never;
+        head?: never;
+        /** Rename a connection, replace its credentials or rotate the webhook secret */
+        patch: operations["updateGitHubConnection"];
+        trace?: never;
+    };
+    "/github/connections/{connectionId}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectionId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify the credentials of a connection against GitHub */
+        post: operations["checkGitHubConnection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/github/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import the git data of a GitHub repository into a new repository
+         * @description Creates the repository (the same rules as POST /user/repos or
+         *     /orgs/{org}/repos apply) and fetches every branch and tag in the
+         *     background through the normal write path. Issues, pull requests,
+         *     labels, milestones and releases are not imported yet.
+         */
+        post: operations["importGitHubRepo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/github/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Status of the import that created the repository */
+        get: operations["getGitHubImport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/github/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** The GitHub sync link of a repository (404 when none) */
+        get: operations["getGitHubSyncLink"];
+        /**
+         * Create or replace the GitHub sync link of a repository
+         * @description Needs admin on the repository and a connection of the repository
+         *     owner or of the caller. mirror makes the repository read-only
+         *     (pushes are refused); backup pushes branches and tags to GitHub
+         *     after every push; sync does both, fast-forward only.
+         */
+        put: operations["putGitHubSyncLink"];
+        post?: never;
+        /** Remove the GitHub sync link (the GitHub repository is untouched) */
+        delete: operations["deleteGitHubSyncLink"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/github/sync/refs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Per-ref state of the GitHub sync link */
+        get: operations["listGitHubSyncRefs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/github/sync/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run the GitHub sync link now (clears the backoff) */
+        post: operations["runGitHubSync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/github/sync/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolve a diverged branch of a sync link
+         * @description keep_ervisio pushes the local branch to GitHub (force);
+         *     keep_github moves the local branch to the GitHub commit (force,
+         *     under the write lease, through the normal write path); the commit
+         *     replaced on either side stays reachable from
+         *     refs/heads/sync-conflict/<side>/<branch>. merge_request records
+         *     that the branch is to be merged by hand from
+         *     refs/heads/sync-conflict/github/<branch>.
+         */
+        post: operations["resolveGitHubSyncConflict"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        GitHubConnection: {
+            /** Format: uuid */
+            id: string;
+            owner: string;
+            /** @enum {string} */
+            ownerKind: "user" | "org";
+            name: string;
+            /** @enum {string} */
+            kind: "app" | "token";
+            /** @description Web URL of github.com or of a GitHub Enterprise Server */
+            baseUrl: string;
+            /** Format: int64 */
+            appId?: number;
+            /** Format: int64 */
+            installationId?: number;
+            /** @description Payload URL to configure on GitHub (content type application/json) */
+            webhookUrl: string;
+            /** @description Only in the response that created or rotated it */
+            webhookSecret?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        GitHubConnectionCreate: {
+            /** @description User or organization; the caller when empty */
+            owner?: string;
+            name: string;
+            /** @enum {string} */
+            kind: "app" | "token";
+            baseUrl?: string;
+            /** Format: int64 */
+            appId?: number;
+            /** Format: int64 */
+            installationId?: number;
+            /** @description PEM private key of the GitHub App (app) */
+            privateKey?: string;
+            /** @description Fine-grained personal access token (token) */
+            token?: string;
+            /** @description Generated when empty */
+            webhookSecret?: string;
+        };
+        GitHubConnectionUpdate: {
+            name?: string;
+            /** Format: int64 */
+            appId?: number;
+            /** Format: int64 */
+            installationId?: number;
+            privateKey?: string;
+            token?: string;
+            rotateWebhookSecret?: boolean;
+        };
+        GitHubConnectionCheck: {
+            ok: boolean;
+            /** @description Why the check failed */
+            detail?: string;
+        };
+        GitHubImportCreate: {
+            /** Format: uuid */
+            connectionId: string;
+            remoteOwner: string;
+            remoteName: string;
+            /** @description Owner of the new repository; the caller when empty */
+            owner?: string;
+            /** @description Name of the new repository; remoteName when empty */
+            name?: string;
+            description?: string;
+            visibility?: components["schemas"]["Visibility"];
+        };
+        GitHubImport: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            repoId: string;
+            repoFullName: string;
+            remoteOwner: string;
+            remoteName: string;
+            /** @enum {string} */
+            status: "pending" | "running" | "done" | "error";
+            lastError: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            startedAt?: string;
+            /** Format: date-time */
+            finishedAt?: string;
+        };
+        /** @enum {string} */
+        GitHubSyncMode: "mirror" | "backup" | "sync";
+        GitHubSyncLink: {
+            /** Format: uuid */
+            connectionId: string;
+            mode: components["schemas"]["GitHubSyncMode"];
+            remoteOwner: string;
+            remoteName: string;
+            prune: boolean;
+            trustGithub: string[];
+            createMissing: boolean;
+            intervalMinutes: number;
+            enabled: boolean;
+            /** @description Pushes are refused (mirror) */
+            readOnly: boolean;
+            /** @enum {string} */
+            status: "pending" | "ok" | "diverged" | "error";
+            lastError: string;
+            failures: number;
+            /** Format: date-time */
+            nextAttemptAt?: string;
+            /** Format: date-time */
+            lastRunAt?: string;
+            /** Format: date-time */
+            lastSuccessAt?: string;
+            /** @description The repository has Git LFS objects, which are not sent to GitHub */
+            lfsSkipped: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        GitHubSyncLinkPut: {
+            /** Format: uuid */
+            connectionId: string;
+            mode: components["schemas"]["GitHubSyncMode"];
+            remoteOwner: string;
+            remoteName: string;
+            /**
+             * @description Propagate branch and tag deletions
+             * @default false
+             */
+            prune: boolean;
+            /** @description Branch patterns (sync) on which GitHub wins a divergence */
+            trustGithub?: string[];
+            /**
+             * @description Create the GitHub repository (private) when it does not exist (backup, sync)
+             * @default false
+             */
+            createMissing: boolean;
+            /** @default 10 */
+            intervalMinutes: number;
+            /** @default true */
+            enabled: boolean;
+        };
+        GitHubSyncRef: {
+            ref: string;
+            localSha: string;
+            remoteSha: string;
+            /** @enum {string} */
+            status: "ok" | "diverged" | "error";
+            lastError: string;
+            retries: number;
+            /** @description Branch holding the GitHub commit of a divergence */
+            conflictRef?: string;
+            conflictSha?: string;
+            /** @enum {string} */
+            resolution: "" | "merge_request";
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        GitHubSyncResolve: {
+            /** @description Full ref name (refs/heads/...) */
+            ref: string;
+            /** @enum {string} */
+            resolution: "keep_ervisio" | "keep_github" | "merge_request";
+        };
         OidcProvider: {
             name: string;
             label: string;
@@ -2711,6 +3704,357 @@ export interface components {
             branch: string;
             commit: components["schemas"]["GitCommit"];
         };
+        Issue: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: int64
+             * @description Shared with the pull requests of the repository
+             */
+            number: number;
+            title: string;
+            /** @description Markdown */
+            body: string;
+            /** @enum {string} */
+            state: "open" | "closed";
+            /** @description completed, not_planned or duplicate when closed; reopened after a reopen; empty otherwise */
+            stateReason: string;
+            locked: boolean;
+            /** @description off-topic, too heated, resolved, spam or empty */
+            lockReason: string;
+            /** @description Username; empty when the account is gone */
+            author: string;
+            labels: components["schemas"]["Label"][];
+            assignees: string[];
+            milestone?: components["schemas"]["Milestone"];
+            commentCount: number;
+            reactions: components["schemas"]["ReactionGroup"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            closedAt?: string | null;
+            /** @description Username of who closed it */
+            closedBy?: string;
+            /** Format: date-time */
+            editedAt?: string | null;
+        };
+        IssueCreate: {
+            title: string;
+            body?: string;
+            labels?: string[];
+            assignees?: string[];
+            /** Format: uuid */
+            milestoneId?: string;
+        };
+        IssueUpdate: {
+            title?: string;
+            body?: string;
+            /** @enum {string} */
+            state?: "open" | "closed";
+            /** @description On close: completed (default), not_planned or duplicate */
+            stateReason?: string;
+            labels?: string[];
+            assignees?: string[];
+            /** @description Milestone id; empty clears it */
+            milestoneId?: string;
+        };
+        IssueLock: {
+            /** @description off-topic, too heated, resolved, spam or empty */
+            lockReason?: string;
+        };
+        Label: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description Six lowercase hex digits */
+            color: string;
+            description: string;
+        };
+        LabelCreate: {
+            name: string;
+            color: string;
+            description?: string;
+        };
+        LabelUpdate: {
+            name?: string;
+            color?: string;
+            description?: string;
+        };
+        Milestone: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            description: string;
+            /** @enum {string} */
+            state: "open" | "closed";
+            /** Format: date-time */
+            dueOn?: string | null;
+            /** Format: int64 */
+            openIssues: number;
+            /** Format: int64 */
+            closedIssues: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            closedAt?: string | null;
+        };
+        MilestoneCreate: {
+            title: string;
+            description?: string;
+            /** Format: date-time */
+            dueOn?: string;
+        };
+        MilestoneUpdate: {
+            title?: string;
+            description?: string;
+            /** @description RFC 3339 date-time; empty clears it */
+            dueOn?: string;
+            /** @enum {string} */
+            state?: "open" | "closed";
+        };
+        IssueComment: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            issueNumber: number;
+            author: string;
+            /** @description Markdown */
+            body: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            editedAt?: string | null;
+            editedBy?: string;
+            reactions: components["schemas"]["ReactionGroup"][];
+        };
+        CommentBody: {
+            body: string;
+        };
+        BodyEdit: {
+            /** Format: uuid */
+            id: string;
+            /** @description Username of who made the edit */
+            editor: string;
+            /** @description The body before the edit */
+            body: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        Reaction: {
+            /** Format: uuid */
+            id: string;
+            content: string;
+            user: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ReactionRequest: {
+            /** @description +1, -1, laugh, hooray, confused, heart, rocket or eyes */
+            content: string;
+        };
+        ReactionGroup: {
+            content: string;
+            /** Format: int64 */
+            count: number;
+            viewerReacted: boolean;
+        };
+        /** @description Where an issue was referenced from */
+        TimelineSource: {
+            /** @enum {string} */
+            kind: "issue" | "pull" | "commit";
+            /** @description The source is in a repository the caller cannot read; nothing else is set */
+            redacted: boolean;
+            /** @description owner/name */
+            repo?: string;
+            /** Format: int64 */
+            number?: number;
+            title?: string;
+            commit?: string;
+        };
+        TimelineEvent: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description commented, closed, reopened, renamed, labeled, unlabeled, assigned,
+             *     unassigned, milestoned, demilestoned, locked, unlocked, referenced
+             *     or cross-referenced
+             */
+            event: string;
+            actor: string;
+            /** Format: date-time */
+            createdAt: string;
+            label?: components["schemas"]["Label"];
+            assignee?: string;
+            /** @description Milestone title at the time of the event */
+            milestone?: string;
+            renameFrom?: string;
+            renameTo?: string;
+            stateReason?: string;
+            lockReason?: string;
+            comment?: components["schemas"]["IssueComment"];
+            source?: components["schemas"]["TimelineSource"];
+        };
+        IssueTemplate: {
+            /** @enum {string} */
+            kind: "markdown" | "form";
+            fileName: string;
+            name: string;
+            /** @description The about of a markdown template or the description of a form */
+            about: string;
+            /** @description Default issue title */
+            title: string;
+            labels: string[];
+            assignees: string[];
+            /** @description Body of a markdown template; empty for forms */
+            body: string;
+            /** @description The body elements of an issue form, as written in the YAML file */
+            form?: {
+                [key: string]: unknown;
+            }[];
+        };
+        IssueContactLink: {
+            name: string;
+            url: string;
+            about: string;
+        };
+        IssueTemplateConfig: {
+            blankIssuesEnabled: boolean;
+            contactLinks: components["schemas"]["IssueContactLink"][];
+        };
+        IssueTemplates: {
+            templates: components["schemas"]["IssueTemplate"][];
+            config: components["schemas"]["IssueTemplateConfig"];
+        };
+        /** @description Returned by the attachment upload (outside this document) */
+        IssueAttachment: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: int64 */
+            size: number;
+            contentType: string;
+            /** @description Download path */
+            url: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        BranchProtectionInput: {
+            /** @description Glob on the branch name */
+            pattern: string;
+            /** @description Approving reviews a pull request needs before merging */
+            requiredApprovals?: number;
+            /** @description A code owner of every changed path must approve */
+            requireCodeOwnerReviews?: boolean;
+            /** @description A new push dismisses the approvals given before it */
+            dismissStaleReviews?: boolean;
+            /** @description Status check contexts that must succeed on the head commit */
+            requiredStatusChecks?: string[];
+            /** @description The branch must be up to date with the base before merging */
+            strictStatusChecks?: boolean;
+            /** @description Reject merge commits */
+            requireLinearHistory?: boolean;
+            /** @description Allow non fast-forward updates (default false) */
+            allowForcePushes?: boolean;
+            /** @description Allow deleting the branch (default false) */
+            allowDeletions?: boolean;
+            /** @description Every new commit needs a verified GPG or SSH signature */
+            requireSignedCommits?: boolean;
+            /** @description Only pushUsers and pushTeams may push */
+            restrictPushes?: boolean;
+            /** @description Usernames allowed to push when restrictPushes is set */
+            pushUsers?: string[];
+            /** @description Teams of the owning organization allowed to push when restrictPushes is set */
+            pushTeams?: string[];
+            /** @description Repository admins are exempt from the rule (default false) */
+            adminsBypass?: boolean;
+        };
+        BranchProtection: {
+            /** Format: uuid */
+            id: string;
+            pattern: string;
+            requiredApprovals: number;
+            requireCodeOwnerReviews: boolean;
+            dismissStaleReviews: boolean;
+            requiredStatusChecks: string[];
+            strictStatusChecks: boolean;
+            requireLinearHistory: boolean;
+            allowForcePushes: boolean;
+            allowDeletions: boolean;
+            requireSignedCommits: boolean;
+            restrictPushes: boolean;
+            pushUsers: string[];
+            pushTeams: string[];
+            adminsBypass: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /**
+         * @description Minimum repository permission for an action; none allows only the listed users and teams
+         * @enum {string}
+         */
+        TagRuleLevel: "write" | "maintain" | "admin" | "none";
+        TagRuleInput: {
+            /** @description Glob on the tag name */
+            pattern: string;
+            create?: components["schemas"]["TagRuleLevel"];
+            update?: components["schemas"]["TagRuleLevel"];
+            delete?: components["schemas"]["TagRuleLevel"];
+            /** @description Usernames allowed every action regardless of the levels */
+            allowedUsers?: string[];
+            /** @description Teams of the owning organization allowed every action */
+            allowedTeams?: string[];
+            /** @description Repository admins are exempt from the rule (default false) */
+            adminsBypass?: boolean;
+        };
+        TagRule: {
+            /** Format: uuid */
+            id: string;
+            pattern: string;
+            create: components["schemas"]["TagRuleLevel"];
+            update: components["schemas"]["TagRuleLevel"];
+            delete: components["schemas"]["TagRuleLevel"];
+            allowedUsers: string[];
+            allowedTeams: string[];
+            adminsBypass: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        RefUpdateCheck: {
+            /** @description Full ref name (refs/heads/main, refs/tags/v1) or a branch name */
+            ref: string;
+            /** @description Current object id; empty reads it from the repository */
+            old?: string;
+            /** @description New object id; empty or all zeros means deletion */
+            new?: string;
+            /** @description Username to evaluate as; defaults to the caller */
+            user?: string;
+        };
+        RefUpdateEvaluation: {
+            ref: string;
+            /** @enum {string} */
+            kind: "branch" | "tag" | "other";
+            allowed: boolean;
+            /** @description Pattern of the rule that applies; empty when none */
+            rule: string;
+            violations: components["schemas"]["ProtectionViolation"][];
+        };
+        ProtectionViolation: {
+            /** @description Machine-readable reason: push_restricted, force_push, deletion, linear_history, unsigned_commit, too_many_commits, pull_request_required, status_checks, tag_create, tag_update, tag_delete */
+            code: string;
+            message: string;
+            /** @description Offending commit */
+            commit?: string;
+        };
         Problem: {
             /** @example about:blank */
             type: string;
@@ -2768,6 +4112,7 @@ export interface components {
         };
     };
     parameters: {
+        ProtectionRuleId: string;
         /** @description User or organization name */
         RepoOwner: string;
         RepoName: string;
@@ -5831,6 +7176,1738 @@ export interface operations {
                 };
             };
             400: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listIssues: {
+        parameters: {
+            query?: {
+                /** @description Default open */
+                state?: "open" | "closed" | "all";
+                /** @description Comma-separated label names; every one must be set */
+                labels?: string;
+                /** @description Milestone id, "none" or "*" (any) */
+                milestone?: string;
+                /** @description Username, "none" or "*" (any) */
+                assignee?: string;
+                /** @description Username of the author */
+                author?: string;
+                /** @description Username mentioned in the issue or its comments */
+                mentioned?: string;
+                /** @description Full-text query (websearch syntax) */
+                q?: string;
+                /** @description Default created, or relevance with q */
+                sort?: "created" | "updated" | "comments" | "relevance";
+                /** @description Default desc */
+                direction?: "asc" | "desc";
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueCreate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listIssueEdits: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BodyEdit"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    lockIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueLock"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    unlockIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Issue"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listIssueComments: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueComment"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createIssueComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommentBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueComment"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getIssueComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueComment"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteIssueComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Done */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateIssueComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommentBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueComment"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listIssueCommentEdits: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BodyEdit"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listIssueReactions: {
+        parameters: {
+            query?: {
+                /** @description Only this reaction */
+                content?: string;
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Reaction"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    addIssueReaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReactionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReactionGroup"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    removeIssueReaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+                /** @description Reaction: +1, -1, laugh, hooray, confused, heart, rocket or eyes */
+                content: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReactionGroup"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listIssueCommentReactions: {
+        parameters: {
+            query?: {
+                /** @description Only this reaction */
+                content?: string;
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Reaction"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    addIssueCommentReaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReactionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReactionGroup"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    removeIssueCommentReaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                commentId: string;
+                /** @description Reaction: +1, -1, laugh, hooray, confused, heart, rocket or eyes */
+                content: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReactionGroup"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listIssueTimeline: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimelineEvent"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listLabels: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Label"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createLabel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LabelCreate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Label"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteLabel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Label name */
+                label: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Done */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateLabel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Label name */
+                label: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LabelUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Label"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listMilestones: {
+        parameters: {
+            query?: {
+                /** @description Default open */
+                state?: "open" | "closed" | "all";
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Milestone"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createMilestone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MilestoneCreate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Milestone"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getMilestone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                milestoneId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Milestone"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteMilestone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                milestoneId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Done */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateMilestone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                milestoneId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MilestoneUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Milestone"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listIssueTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssueTemplates"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteIssueAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                attachmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Done */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listBranchProtections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rules ordered by pattern */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchProtection"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createBranchProtection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BranchProtectionInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchProtection"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    evaluateRefUpdate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefUpdateCheck"];
+            };
+        };
+        responses: {
+            /** @description Evaluation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefUpdateEvaluation"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getBranchProtection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                ruleId: components["parameters"]["ProtectionRuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rule */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchProtection"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateBranchProtection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                ruleId: components["parameters"]["ProtectionRuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BranchProtectionInput"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchProtection"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteBranchProtection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                ruleId: components["parameters"]["ProtectionRuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listTagRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rules ordered by pattern */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagRule"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createTagRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TagRuleInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagRule"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getTagRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                ruleId: components["parameters"]["ProtectionRuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rule */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagRule"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateTagRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                ruleId: components["parameters"]["ProtectionRuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TagRuleInput"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagRule"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteTagRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                ruleId: components["parameters"]["ProtectionRuleId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listGitHubConnections: {
+        parameters: {
+            query?: {
+                owner?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Connections */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubConnection"][];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createGitHubConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GitHubConnectionCreate"];
+            };
+        };
+        responses: {
+            /** @description Connection created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubConnection"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getGitHubConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Connection */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubConnection"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteGitHubConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateGitHubConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GitHubConnectionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated connection (with the new webhook secret when rotated) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubConnection"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    checkGitHubConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Result of the check */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubConnectionCheck"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    importGitHubRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GitHubImportCreate"];
+            };
+        };
+        responses: {
+            /** @description Import scheduled */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubImport"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getGitHubImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Import */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubImport"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getGitHubSyncLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Link */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubSyncLink"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    putGitHubSyncLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GitHubSyncLinkPut"];
+            };
+        };
+        responses: {
+            /** @description Link */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubSyncLink"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteGitHubSyncLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listGitHubSyncRefs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Refs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubSyncRef"][];
+                };
+            };
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    runGitHubSync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Run scheduled */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    resolveGitHubSyncConflict: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GitHubSyncResolve"];
+            };
+        };
+        responses: {
+            /** @description Updated ref state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubSyncRef"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

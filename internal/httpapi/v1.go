@@ -7,6 +7,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
+	"github.com/Ervisio/ErvisioRepo/internal/ghsync"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
@@ -27,6 +28,12 @@ type v1Server struct {
 	tiering  Tiering
 	releases Releases
 	browse   *gitbrowse.Service
+	// protection serves the branch protection and tag rule endpoints.
+	protection Protection
+	// github serves the GitHub connection and sync endpoints; nil answers 503.
+	github *ghsync.Service
+	// issues serves the issue, label and milestone endpoints; nil answers 503.
+	issues Issues
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

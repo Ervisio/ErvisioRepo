@@ -43,6 +43,8 @@ func browseFail(err error, method, suffix string) (browseResponse, error) {
 		return badRequest(err.Error()), nil
 	case errors.Is(err, gitbrowse.ErrConflict), errors.Is(err, gitbrowse.ErrQuota):
 		return problemResponse{status: http.StatusConflict, detail: err.Error()}, nil
+	case errors.Is(err, gitbrowse.ErrRejected):
+		return problemResponse{status: http.StatusForbidden, detail: err.Error()}, nil
 	case errors.Is(err, gitbrowse.ErrTooLarge):
 		return problemResponse{status: http.StatusRequestEntityTooLarge, detail: err.Error()}, nil
 	case errors.Is(err, gitstore.ErrBusy), errors.Is(err, gitstore.ErrCold):

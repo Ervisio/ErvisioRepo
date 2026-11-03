@@ -16,6 +16,9 @@ type Querier interface {
 	// Serializes registrations inside a transaction, so that exactly one first
 	// user becomes the instance admin.
 	AcquireRegistrationLock(ctx context.Context) error
+	AddIssueAssignee(ctx context.Context, arg AddIssueAssigneeParams) (int64, error)
+	AddIssueCommentCount(ctx context.Context, arg AddIssueCommentCountParams) error
+	AddIssueLabel(ctx context.Context, arg AddIssueLabelParams) (int64, error)
 	// Adds a user to the given teams of an organization, keeping existing roles.
 	AddTeamMembers(ctx context.Context, arg AddTeamMembersParams) error
 	// Applies the deltas regardless of the limits (never below zero): for usage
@@ -26,16 +29,21 @@ type Querier interface {
 	// no row.
 	AdvanceTOTPStep(ctx context.Context, arg AdvanceTOTPStepParams) (int64, error)
 	BumpReleaseAssetDownloads(ctx context.Context, id uuid.UUID) error
+	// Undispatched events, oldest first, locked for the dispatching transaction
+	// (concurrent dispatchers skip each other's rows).
+	ClaimOutboxEvents(ctx context.Context, lim int32) ([]ClaimOutboxEventsRow, error)
 	ClearPrimaryEmail(ctx context.Context, userID uuid.UUID) error
 	// Clears the marker after a flush. Markers are set and cleared only under
 	// the repository write lease, so no change can slip in between.
 	ClearRepoJournalDirty(ctx context.Context, id uuid.UUID) error
+	CommentReactionGroups(ctx context.Context, arg CommentReactionGroupsParams) ([]CommentReactionGroupsRow, error)
 	ConfirmTOTP(ctx context.Context, arg ConfirmTOTPParams) (int64, error)
 	ConsumeInvite(ctx context.Context, arg ConsumeInviteParams) (ConsumeInviteRow, error)
 	// Deletes the challenge; a second use (or a concurrent one) matches no row.
 	ConsumeMFAChallenge(ctx context.Context, id uuid.UUID) (int64, error)
 	// Deletes and returns a token; the caller checks expires_at.
 	ConsumeOneTimeToken(ctx context.Context, arg ConsumeOneTimeTokenParams) (ConsumeOneTimeTokenRow, error)
+	CountGitHubConnectionLinks(ctx context.Context, connectionID uuid.UUID) (int64, error)
 	// Repositories (existing or not yet collected) that reference an object.
 	CountLFSObjectRefs(ctx context.Context, oid string) (int64, error)
 	CountOrgOwners(ctx context.Context, orgID uuid.UUID) (int64, error)
@@ -50,6 +58,7 @@ type Querier interface {
 	CountUsers(ctx context.Context) (int64, error)
 	CountWebAuthnCredentials(ctx context.Context, userID uuid.UUID) (int64, error)
 	CreateLFSLock(ctx context.Context, arg CreateLFSLockParams) (LfsLock, error)
+	DeleteBranchProtection(ctx context.Context, arg DeleteBranchProtectionParams) (int64, error)
 	DeleteExpiredLFSTokens(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	DeleteExpiredMFAChallenges(ctx context.Context) (int64, error)
 	DeleteExpiredOIDCFlows(ctx context.Context) (int64, error)
@@ -58,9 +67,17 @@ type Querier interface {
 	DeleteExpiredOrgInvites(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	DeleteExpiredSessions(ctx context.Context, idleBefore pgtype.Timestamptz) (int64, error)
 	DeleteExpiredTokens(ctx context.Context, before pgtype.Timestamptz) (int64, error)
+	DeleteGitHubConnection(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteGitHubSyncLinkByRepo(ctx context.Context, repoID uuid.UUID) (int64, error)
+	DeleteGitHubSyncRef(ctx context.Context, arg DeleteGitHubSyncRefParams) error
+	DeleteIssueAttachment(ctx context.Context, arg DeleteIssueAttachmentParams) (IssueAttachment, error)
+	DeleteIssueComment(ctx context.Context, arg DeleteIssueCommentParams) (int64, error)
+	DeleteIssueReaction(ctx context.Context, arg DeleteIssueReactionParams) (int64, error)
 	DeleteLFSLock(ctx context.Context, arg DeleteLFSLockParams) (int64, error)
 	DeleteLFSObject(ctx context.Context, arg DeleteLFSObjectParams) (DeleteLFSObjectRow, error)
+	DeleteLabel(ctx context.Context, arg DeleteLabelParams) (int64, error)
 	DeleteMFAChallenge(ctx context.Context, id uuid.UUID) error
+	DeleteMilestone(ctx context.Context, arg DeleteMilestoneParams) (int64, error)
 	// Invalidates the outstanding tokens of one purpose for a user.
 	DeleteOneTimeTokens(ctx context.Context, arg DeleteOneTimeTokensParams) error
 	DeleteOrgInvite(ctx context.Context, arg DeleteOrgInviteParams) (int64, error)
@@ -83,6 +100,7 @@ type Querier interface {
 	DeleteStaleOrgInvite(ctx context.Context, arg DeleteStaleOrgInviteParams) (int64, error)
 	DeleteStorageObject(ctx context.Context, arg DeleteStorageObjectParams) error
 	DeleteTOTP(ctx context.Context, userID uuid.UUID) (int64, error)
+	DeleteTagRule(ctx context.Context, arg DeleteTagRuleParams) (int64, error)
 	DeleteTeam(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteTeamMember(ctx context.Context, arg DeleteTeamMemberParams) (int64, error)
 	DeleteTeamRepo(ctx context.Context, arg DeleteTeamRepoParams) (int64, error)
@@ -98,19 +116,37 @@ type Querier interface {
 	EmailTaken(ctx context.Context, address string) (bool, error)
 	EnsureUsageCounter(ctx context.Context, namespaceID uuid.UUID) error
 	FailMFAChallenge(ctx context.Context, id uuid.UUID) (int32, error)
+	FinishGitHubSyncRun(ctx context.Context, arg FinishGitHubSyncRunParams) error
 	// Sets the state unconditionally (restore only, nothing else runs).
 	ForceRepoStorageState(ctx context.Context, arg ForceRepoStorageStateParams) error
 	GPGKeyFingerprintTaken(ctx context.Context, fingerprint string) (bool, error)
+	GetBranchProtection(ctx context.Context, arg GetBranchProtectionParams) (BranchProtection, error)
 	// Quotas per user and organization, and their usage counters (PLAN §8.2).
 	// Limits of a namespace (override, else instance default; -1 = unlimited)
 	// and its current usage.
 	GetEffectiveQuota(ctx context.Context, id uuid.UUID) (GetEffectiveQuotaRow, error)
 	GetEmailByAddress(ctx context.Context, address string) (GetEmailByAddressRow, error)
 	GetEmailByID(ctx context.Context, id uuid.UUID) (GetEmailByIDRow, error)
+	GetGitHubConnection(ctx context.Context, id uuid.UUID) (GetGitHubConnectionRow, error)
+	GetGitHubImport(ctx context.Context, id uuid.UUID) (GithubImport, error)
+	GetGitHubImportByRepo(ctx context.Context, repoID uuid.UUID) (GithubImport, error)
+	GetGitHubSyncLink(ctx context.Context, id uuid.UUID) (GithubSyncLink, error)
+	GetGitHubSyncLinkByRepo(ctx context.Context, repoID uuid.UUID) (GithubSyncLink, error)
+	// The mode of the enabled link of a repository (hook path).
+	GetGitHubSyncModeByRepo(ctx context.Context, repoID uuid.UUID) (string, error)
+	GetGitHubSyncRef(ctx context.Context, arg GetGitHubSyncRefParams) (GithubSyncRef, error)
+	GetIssueAttachment(ctx context.Context, arg GetIssueAttachmentParams) (IssueAttachment, error)
+	GetIssueByID(ctx context.Context, id uuid.UUID) (Issue, error)
+	GetIssueByNumber(ctx context.Context, arg GetIssueByNumberParams) (Issue, error)
+	GetIssueComment(ctx context.Context, arg GetIssueCommentParams) (IssueComment, error)
+	GetIssueCommentsByIDs(ctx context.Context, ids []uuid.UUID) ([]IssueComment, error)
+	GetIssueForUpdate(ctx context.Context, arg GetIssueForUpdateParams) (Issue, error)
+	GetIssuesByNumbers(ctx context.Context, arg GetIssuesByNumbersParams) ([]Issue, error)
 	GetLFSLock(ctx context.Context, arg GetLFSLockParams) (GetLFSLockRow, error)
 	GetLFSLockByPath(ctx context.Context, arg GetLFSLockByPathParams) (GetLFSLockByPathRow, error)
 	GetLFSObject(ctx context.Context, arg GetLFSObjectParams) (LfsObject, error)
 	GetLFSToken(ctx context.Context, tokenHash []byte) (GetLFSTokenRow, error)
+	GetLabelByName(ctx context.Context, arg GetLabelByNameParams) (Label, error)
 	// The newest published release that is not a draft or a prerelease.
 	GetLatestRelease(ctx context.Context, repoID uuid.UUID) (Release, error)
 	// Credentials for a login by email address; any verified address of the user works.
@@ -118,6 +154,7 @@ type Querier interface {
 	// Credentials for a login by username; the email is the primary address.
 	GetLoginByUsername(ctx context.Context, username string) (GetLoginByUsernameRow, error)
 	GetMFAChallenge(ctx context.Context, arg GetMFAChallengeParams) (GetMFAChallengeRow, error)
+	GetMilestonesByIDs(ctx context.Context, arg GetMilestonesByIDsParams) ([]GetMilestonesByIDsRow, error)
 	GetNamespaceByName(ctx context.Context, name string) (GetNamespaceByNameRow, error)
 	GetOIDCLinkBySubject(ctx context.Context, arg GetOIDCLinkBySubjectParams) (GetOIDCLinkBySubjectRow, error)
 	GetOrgByName(ctx context.Context, name string) (GetOrgByNameRow, error)
@@ -127,6 +164,9 @@ type Querier interface {
 	GetOrgInvite(ctx context.Context, id uuid.UUID) (GetOrgInviteRow, error)
 	GetOrgInviteByToken(ctx context.Context, tokenHash []byte) (GetOrgInviteByTokenRow, error)
 	GetOrgMemberRole(ctx context.Context, arg GetOrgMemberRoleParams) (string, error)
+	GetOutboxEvent(ctx context.Context, id uuid.UUID) (GetOutboxEventRow, error)
+	// The account owning a verified address (commit signer, CODEOWNERS email).
+	GetProtectionUserByVerifiedEmail(ctx context.Context, address string) (uuid.UUID, error)
 	GetQuotaDefaults(ctx context.Context) ([]QuotaDefault, error)
 	GetQuotaOverride(ctx context.Context, namespaceID uuid.UUID) (Quota, error)
 	GetRelease(ctx context.Context, arg GetReleaseParams) (Release, error)
@@ -150,6 +190,7 @@ type Querier interface {
 	GetStorageObject(ctx context.Context, arg GetStorageObjectParams) (StorageObject, error)
 	// Second factors and two-step login (PLAN §8.1).
 	GetTOTP(ctx context.Context, userID uuid.UUID) (MfaTotp, error)
+	GetTagRule(ctx context.Context, arg GetTagRuleParams) (TagRule, error)
 	GetTeamByName(ctx context.Context, arg GetTeamByNameParams) (GetTeamByNameRow, error)
 	GetTeamMemberRole(ctx context.Context, arg GetTeamMemberRoleParams) (string, error)
 	GetTokenByHash(ctx context.Context, tokenHash []byte) (GetTokenByHashRow, error)
@@ -166,13 +207,32 @@ type Querier interface {
 	HotRepoUsage(ctx context.Context) (int64, error)
 	IncRepoPushes(ctx context.Context, id uuid.UUID) (int32, error)
 	InsertAuditEvent(ctx context.Context, arg InsertAuditEventParams) error
+	InsertBranchProtection(ctx context.Context, arg InsertBranchProtectionParams) (BranchProtection, error)
 	InsertEmail(ctx context.Context, arg InsertEmailParams) error
 	InsertGPGKey(ctx context.Context, arg InsertGPGKeyParams) error
+	// GitHub code sync (internal/ghsync).
+	InsertGitHubConnection(ctx context.Context, arg InsertGitHubConnectionParams) (GithubConnection, error)
+	InsertGitHubImport(ctx context.Context, arg InsertGitHubImportParams) (GithubImport, error)
 	InsertInvite(ctx context.Context, arg InsertInviteParams) error
+	// ---- issues ----
+	InsertIssue(ctx context.Context, arg InsertIssueParams) (Issue, error)
+	// ---- attachments ----
+	InsertIssueAttachment(ctx context.Context, arg InsertIssueAttachmentParams) (IssueAttachment, error)
+	// ---- comments and edit history ----
+	InsertIssueComment(ctx context.Context, arg InsertIssueCommentParams) (IssueComment, error)
+	InsertIssueEdit(ctx context.Context, arg InsertIssueEditParams) error
+	// ---- timeline ----
+	InsertIssueEvent(ctx context.Context, arg InsertIssueEventParams) error
+	// ---- reactions ----
+	InsertIssueReaction(ctx context.Context, arg InsertIssueReactionParams) (int64, error)
+	// ---- cross-references ----
+	InsertIssueReference(ctx context.Context, arg InsertIssueReferenceParams) (int64, error)
 	// Grants the repository access to an object; 0 rows when it already has it.
 	InsertLFSObject(ctx context.Context, arg InsertLFSObjectParams) (int64, error)
 	InsertLFSToken(ctx context.Context, arg InsertLFSTokenParams) error
+	InsertLabel(ctx context.Context, arg InsertLabelParams) (Label, error)
 	InsertMFAChallenge(ctx context.Context, arg InsertMFAChallengeParams) error
+	InsertMilestone(ctx context.Context, arg InsertMilestoneParams) (Milestone, error)
 	InsertNamespace(ctx context.Context, arg InsertNamespaceParams) error
 	InsertOIDCFlow(ctx context.Context, arg InsertOIDCFlowParams) error
 	InsertOIDCLink(ctx context.Context, arg InsertOIDCLinkParams) error
@@ -181,6 +241,7 @@ type Querier interface {
 	// Organization invitations (instance invitations are in identity.sql).
 	InsertOrgInvite(ctx context.Context, arg InsertOrgInviteParams) error
 	InsertOrgMember(ctx context.Context, arg InsertOrgMemberParams) (int64, error)
+	InsertOutboxEvent(ctx context.Context, arg InsertOutboxEventParams) error
 	InsertRecoveryCode(ctx context.Context, arg InsertRecoveryCodeParams) error
 	// Releases and their assets (PLAN §4.2). The asset bytes live in the storage
 	// tier; the rows here own them.
@@ -192,30 +253,64 @@ type Querier interface {
 	InsertSSHKey(ctx context.Context, arg InsertSSHKeyParams) error
 	InsertSession(ctx context.Context, arg InsertSessionParams) error
 	InsertSettingIfAbsent(ctx context.Context, arg InsertSettingIfAbsentParams) error
+	InsertTagRule(ctx context.Context, arg InsertTagRuleParams) (TagRule, error)
 	// Teams, their members and their repository permissions.
 	InsertTeam(ctx context.Context, arg InsertTeamParams) error
 	InsertToken(ctx context.Context, arg InsertTokenParams) error
 	InsertUser(ctx context.Context, arg InsertUserParams) error
 	InsertWebAuthnCredential(ctx context.Context, arg InsertWebAuthnCredentialParams) error
 	InsertWebAuthnHandle(ctx context.Context, arg InsertWebAuthnHandleParams) error
+	// ---- assignees and users ----
+	IssueAssigneesOf(ctx context.Context, issueIds []uuid.UUID) ([]IssueAssigneesOfRow, error)
+	IssueLabelsOf(ctx context.Context, issueIds []uuid.UUID) ([]IssueLabelsOfRow, error)
+	// Reaction counts on issues (not on their comments).
+	IssueReactionGroups(ctx context.Context, arg IssueReactionGroupsParams) ([]IssueReactionGroupsRow, error)
+	IssueUserNames(ctx context.Context, ids []uuid.UUID) ([]IssueUserNamesRow, error)
+	// Active users among the given lowercase names.
+	IssueUsersByNames(ctx context.Context, names []string) ([]IssueUsersByNamesRow, error)
 	// Newest first; pass the last id of a page as before to get the next one.
 	// action matches exactly, or a whole prefix when it ends with ".".
 	ListAuditEvents(ctx context.Context, arg ListAuditEventsParams) ([]ListAuditEventsRow, error)
+	// Branch protection and tag rules (internal/protection).
+	ListBranchProtections(ctx context.Context, repoID uuid.UUID) ([]BranchProtection, error)
 	// Repositories still waiting for replication since before "before".
 	ListDirtyRepos(ctx context.Context, arg ListDirtyReposParams) ([]uuid.UUID, error)
+	// Enabled links whose scheduled run is due and not held by a backoff.
+	ListDueGitHubSyncLinks(ctx context.Context, limit int32) ([]GithubSyncLink, error)
 	ListEvictionCandidates(ctx context.Context, arg ListEvictionCandidatesParams) ([]ListEvictionCandidatesRow, error)
+	// Every enabled backup or sync link of a hot repository (nightly check).
+	ListGitHubBackupLinks(ctx context.Context, arg ListGitHubBackupLinksParams) ([]GithubSyncLink, error)
+	ListGitHubConnections(ctx context.Context, ownerID uuid.UUID) ([]ListGitHubConnectionsRow, error)
+	// Links of a connection that follow one GitHub repository (webhooks).
+	ListGitHubSyncLinksByRemote(ctx context.Context, arg ListGitHubSyncLinksByRemoteParams) ([]GithubSyncLink, error)
+	ListGitHubSyncRefs(ctx context.Context, linkID uuid.UUID) ([]GithubSyncRef, error)
 	// Watermark eviction candidates; the caller weights age by size.
 	ListHotUnpinnedRepos(ctx context.Context, lim int32) ([]ListHotUnpinnedReposRow, error)
+	ListIssueComments(ctx context.Context, arg ListIssueCommentsParams) ([]IssueComment, error)
+	// Previous bodies of an issue (comment_id NULL) or of a comment, newest first.
+	ListIssueEdits(ctx context.Context, arg ListIssueEditsParams) ([]IssueEdit, error)
+	ListIssueEvents(ctx context.Context, arg ListIssueEventsParams) ([]IssueEvent, error)
+	ListIssueReactions(ctx context.Context, arg ListIssueReactionsParams) ([]ListIssueReactionsRow, error)
+	// References written in an issue and its comments.
+	ListIssueReferencesFrom(ctx context.Context, issueID uuid.NullUUID) ([]IssueReference, error)
 	// Hot repositories with LFS objects not seen since before (GC candidates).
 	ListLFSGCRepos(ctx context.Context, arg ListLFSGCReposParams) ([]uuid.UUID, error)
 	// Keyset pagination on (created_at, id); filters are optional.
 	ListLFSLocks(ctx context.Context, arg ListLFSLocksParams) ([]ListLFSLocksRow, error)
 	ListLFSObjectsByOIDs(ctx context.Context, arg ListLFSObjectsByOIDsParams) ([]LfsObject, error)
+	// ---- labels ----
+	ListLabels(ctx context.Context, repoID uuid.UUID) ([]Label, error)
+	ListLabelsByNames(ctx context.Context, arg ListLabelsByNamesParams) ([]Label, error)
+	// ---- milestones ----
+	ListMilestones(ctx context.Context, arg ListMilestonesParams) ([]ListMilestonesRow, error)
 	// Rows charged to a namespace that no longer owns the repository (transfer).
 	ListMischargedLFSObjects(ctx context.Context, maxRows int32) ([]ListMischargedLFSObjectsRow, error)
 	// Pending invitations, expired ones included (the UI shows them as such).
 	ListOrgInvites(ctx context.Context, orgID uuid.UUID) ([]ListOrgInvitesRow, error)
 	ListOrgMembers(ctx context.Context, orgID uuid.UUID) ([]ListOrgMembersRow, error)
+	// Objects under "<policy>/attachments/" that no attachment row references
+	// and that are older than "before" (an upload in progress has no row yet).
+	ListOrphanIssueAttachmentObjects(ctx context.Context, arg ListOrphanIssueAttachmentObjectsParams) ([]ListOrphanIssueAttachmentObjectsRow, error)
 	// Rows of repositories that no longer exist.
 	ListOrphanLFSObjects(ctx context.Context, maxRows int32) ([]ListOrphanLFSObjectsRow, error)
 	// Objects under "<policy>/releases/" that no asset row references and
@@ -225,6 +320,13 @@ type Querier interface {
 	// every repository (instance admin, the user himself, organization
 	// owner/admin); internal = the viewer is signed in and not restricted.
 	ListOwnerRepos(ctx context.Context, arg ListOwnerReposParams) ([]ListOwnerReposRow, error)
+	// Armored public keys of a user, for commit signature verification.
+	ListProtectionGPGKeys(ctx context.Context, userID uuid.UUID) ([]ListProtectionGPGKeysRow, error)
+	// Public keys of a user, for SSH commit signature verification.
+	ListProtectionSSHKeys(ctx context.Context, userID uuid.UUID) ([]ListProtectionSSHKeysRow, error)
+	ListProtectionTeamMembers(ctx context.Context, teamID uuid.UUID) ([]uuid.UUID, error)
+	// Teams the user belongs to, for push restrictions and CODEOWNERS teams.
+	ListProtectionUserTeams(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 	ListReleaseAssets(ctx context.Context, releaseIds []uuid.UUID) ([]ReleaseAsset, error)
 	// Newest first; drafts only when include_drafts. An empty tag matches all.
 	ListReleases(ctx context.Context, arg ListReleasesParams) ([]Release, error)
@@ -243,6 +345,7 @@ type Querier interface {
 	ListRetiredGenerations(ctx context.Context, repoID uuid.UUID) ([]GitGenerationsRetired, error)
 	ListStorageObjectsByKeys(ctx context.Context, arg ListStorageObjectsByKeysParams) ([]StorageObject, error)
 	ListStorageObjectsPendingReplicas(ctx context.Context, arg ListStorageObjectsPendingReplicasParams) ([]StorageObject, error)
+	ListTagRules(ctx context.Context, repoID uuid.UUID) ([]TagRule, error)
 	ListTeamMembers(ctx context.Context, teamID uuid.UUID) ([]ListTeamMembersRow, error)
 	ListTeamRepos(ctx context.Context, teamID uuid.UUID) ([]ListTeamReposRow, error)
 	ListTeams(ctx context.Context, orgID uuid.UUID) ([]ListTeamsRow, error)
@@ -283,6 +386,7 @@ type Querier interface {
 	MarkAllReposCold(ctx context.Context) (int64, error)
 	MarkEmailVerified(ctx context.Context, arg MarkEmailVerifiedParams) (int64, error)
 	MarkOrgInviteAccepted(ctx context.Context, arg MarkOrgInviteAcceptedParams) (int64, error)
+	MarkOutboxDispatched(ctx context.Context, ids []uuid.UUID) error
 	// Write path of the git journal: durability, compaction, maintenance and
 	// garbage collection (PLAN §4.3).
 	// Records that the hot copy is ahead of the remote manifest; the first
@@ -292,8 +396,18 @@ type Querier interface {
 	MarkStorageObjectVerified(ctx context.Context, arg MarkStorageObjectVerifiedParams) error
 	NamespaceExists(ctx context.Context, id uuid.UUID) (bool, error)
 	NamespaceTaken(ctx context.Context, name string) (bool, error)
+	// ---- numbering (shared by issues and pull requests) ----
+	// Allocates the next number of a repository. The counter row stays locked
+	// until the calling transaction ends, which serializes number allocation.
+	NextIssueNumber(ctx context.Context, repoID uuid.UUID) (int64, error)
+	// Dispatched events older than "before" (their delivery jobs are done or
+	// have given up).
+	PruneOutboxEvents(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	ReleaseAuthorNames(ctx context.Context, ids []uuid.UUID) ([]ReleaseAuthorNamesRow, error)
+	RemoveIssueAssignee(ctx context.Context, arg RemoveIssueAssigneeParams) (int64, error)
+	RemoveIssueLabel(ctx context.Context, arg RemoveIssueLabelParams) (int64, error)
 	RenameRepo(ctx context.Context, arg RenameRepoParams) error
+	RepoHasLFSObjects(ctx context.Context, repoID uuid.UUID) (bool, error)
 	// True while the hot copy holds pushes not yet in the remote journal.
 	RepoJournalDirty(ctx context.Context, id uuid.UUID) (bool, error)
 	RepoLFSUsage(ctx context.Context, repoID uuid.UUID) (RepoLFSUsageRow, error)
@@ -302,18 +416,33 @@ type Querier interface {
 	// never go below zero. Zero rows means the quota would be exceeded; call
 	// EnsureUsageCounter first.
 	ReserveUsage(ctx context.Context, arg ReserveUsageParams) (int64, error)
+	// A new remote or mode makes the stored per-ref state meaningless.
+	ResetGitHubSyncRefsOnModeChange(ctx context.Context, linkID uuid.UUID) error
 	// Sets the journal sequence to the one of the remote manifest (restore).
 	ResetRepoManifestSeq(ctx context.Context, arg ResetRepoManifestSeqParams) error
 	ResetRepoPushes(ctx context.Context, id uuid.UUID) error
+	// Names of the given teams of one organization (unknown ids are omitted).
+	ResolveProtectionTeams(ctx context.Context, arg ResolveProtectionTeamsParams) ([]ResolveProtectionTeamsRow, error)
+	// Usernames of the given user ids (unknown ids are omitted).
+	ResolveProtectionUsers(ctx context.Context, ids []uuid.UUID) ([]ResolveProtectionUsersRow, error)
 	SSHKeyFingerprintTaken(ctx context.Context, fingerprint string) (bool, error)
 	// Oldest-verified first, random within the same age, so repeated runs cover
 	// every object over time.
 	SampleStorageObjectsForVerify(ctx context.Context, arg SampleStorageObjectsForVerifyParams) ([]StorageObject, error)
+	// Issues of a repository matching every given filter. Modes: milestone_mode
+	// and assignee_mode are '' (no filter), 'none', 'any' or 'id'. query is a
+	// websearch_to_tsquery text matched against title, body and comments.
+	// sort is created, updated, comments or relevance.
+	SearchIssues(ctx context.Context, arg SearchIssuesParams) ([]Issue, error)
 	// Repositories whose name contains pattern (already lower-cased and with
 	// LIKE metacharacters escaped), visible to a viewer: all_repos = instance
 	// admin; internal = the viewer is signed in and not restricted. Exact and
 	// prefix matches come first.
 	SearchRepos(ctx context.Context, arg SearchReposParams) ([]SearchReposRow, error)
+	SetGitHubImportStatus(ctx context.Context, arg SetGitHubImportStatusParams) error
+	SetIssueLock(ctx context.Context, arg SetIssueLockParams) (Issue, error)
+	SetIssueMilestone(ctx context.Context, arg SetIssueMilestoneParams) (Issue, error)
+	SetIssueState(ctx context.Context, arg SetIssueStateParams) (Issue, error)
 	SetLFSObjectCharge(ctx context.Context, arg SetLFSObjectChargeParams) (int64, error)
 	SetMFAChallengeWebAuthn(ctx context.Context, arg SetMFAChallengeWebAuthnParams) (int64, error)
 	// Replaces the token of a pending invitation (sending again invalidates the
@@ -338,12 +467,16 @@ type Querier interface {
 	SetUserRole(ctx context.Context, arg SetUserRoleParams) error
 	SetUserSuspended(ctx context.Context, arg SetUserSuspendedParams) error
 	StorageObjectStats(ctx context.Context) ([]StorageObjectStatsRow, error)
+	// Bytes held by the issue attachments of a repository (released from the
+	// owner quota when the repository is deleted).
+	SumRepoIssueAttachmentBytes(ctx context.Context, repoID uuid.UUID) (int64, error)
 	// Bytes held by every release asset of a repository (released from the owner
 	// quota when the repository is deleted).
 	SumRepoReleaseAssetBytes(ctx context.Context, repoID uuid.UUID) (int64, error)
 	// Consumes the flow: a state is good for a single callback.
 	TakeOIDCFlow(ctx context.Context, stateHash []byte) (OidcFlow, error)
 	TokenNameTaken(ctx context.Context, arg TokenNameTakenParams) (bool, error)
+	TouchIssue(ctx context.Context, id uuid.UUID) error
 	TouchLFSObjects(ctx context.Context, arg TouchLFSObjectsParams) error
 	TouchOIDCLink(ctx context.Context, arg TouchOIDCLinkParams) error
 	// Records an access at time "at"; skipped when the last recorded access is
@@ -356,14 +489,23 @@ type Querier interface {
 	TransferRepo(ctx context.Context, arg TransferRepoParams) error
 	TryLockRepoSession(ctx context.Context, repoID uuid.UUID) (bool, error)
 	UnlockRepoSession(ctx context.Context, repoID uuid.UUID) (bool, error)
+	UpdateBranchProtection(ctx context.Context, arg UpdateBranchProtectionParams) (BranchProtection, error)
+	UpdateGitHubConnection(ctx context.Context, arg UpdateGitHubConnectionParams) (GithubConnection, error)
+	UpdateIssueCommentBody(ctx context.Context, arg UpdateIssueCommentBodyParams) (IssueComment, error)
+	UpdateIssueContent(ctx context.Context, arg UpdateIssueContentParams) (Issue, error)
+	UpdateLabel(ctx context.Context, arg UpdateLabelParams) (Label, error)
+	UpdateMilestone(ctx context.Context, arg UpdateMilestoneParams) (Milestone, error)
 	UpdateOrg(ctx context.Context, arg UpdateOrgParams) error
 	UpdateRelease(ctx context.Context, arg UpdateReleaseParams) (Release, error)
 	UpdateReleaseAsset(ctx context.Context, arg UpdateReleaseAssetParams) (ReleaseAsset, error)
 	UpdateRepo(ctx context.Context, arg UpdateRepoParams) error
+	UpdateTagRule(ctx context.Context, arg UpdateTagRuleParams) (TagRule, error)
 	UpdateTeam(ctx context.Context, arg UpdateTeamParams) error
 	// Profile, password, sessions and email addresses of the signed-in user.
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error
 	UpdateWebAuthnCredentialUse(ctx context.Context, arg UpdateWebAuthnCredentialUseParams) error
+	UpsertGitHubSyncLink(ctx context.Context, arg UpsertGitHubSyncLinkParams) (GithubSyncLink, error)
+	UpsertGitHubSyncRef(ctx context.Context, arg UpsertGitHubSyncRefParams) error
 	UpsertOrgMember(ctx context.Context, arg UpsertOrgMemberParams) error
 	UpsertPassword(ctx context.Context, arg UpsertPasswordParams) error
 	// Starts (or restarts) a TOTP enrollment; a confirmed secret is kept.

@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/Ervisio/ErvisioRepo/internal/git"
+	"github.com/Ervisio/ErvisioRepo/internal/githooks"
 	"github.com/Ervisio/ErvisioRepo/internal/gitstore"
 	"github.com/Ervisio/ErvisioRepo/internal/quota"
 )
@@ -161,8 +162,9 @@ func (s *Service) Edit(ctx context.Context, repo Repo, e Edit) (EditResult, erro
 		cmd = "update " + ref + " " + commit + " " + parent + "\n"
 	}
 	var env []string
+	var sess *githooks.Session
 	if s.o.Hooks != nil {
-		sess, err := s.o.Hooks.Begin(ctx, l, e.AuthorID, "web")
+		sess, err = s.o.Hooks.Begin(ctx, l, e.AuthorID, "web")
 		if err != nil {
 			return res, fmt.Errorf("begin hook session: %w", err)
 		}
@@ -170,6 +172,9 @@ func (s *Service) Edit(ctx context.Context, repo Repo, e Edit) (EditResult, erro
 		env = sess.Env()
 	}
 	if _, err := gitIn(ctx, rp, []byte(cmd), env, "update-ref", "--stdin"); err != nil {
+		if sess != nil && sess.Rejected() != "" {
+			return res, fmt.Errorf("%w: %s", ErrRejected, sess.Rejected())
+		}
 		if exitCode(err) == 128 {
 			return res, fmt.Errorf("%w: branch %q changed, reload and retry", ErrConflict, target)
 		}

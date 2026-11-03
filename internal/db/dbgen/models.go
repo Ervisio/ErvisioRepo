@@ -21,6 +21,28 @@ type AuditLog struct {
 	OrgID      uuid.NullUUID
 }
 
+type BranchProtection struct {
+	ID                      uuid.UUID
+	RepoID                  uuid.UUID
+	Pattern                 string
+	RequiredApprovals       int32
+	RequireCodeOwnerReviews bool
+	DismissStaleReviews     bool
+	RequiredStatusChecks    []string
+	StrictStatusChecks      bool
+	RequireLinearHistory    bool
+	AllowForcePushes        bool
+	AllowDeletions          bool
+	RequireSignedCommits    bool
+	RestrictPushes          bool
+	PushUserIds             []uuid.UUID
+	PushTeamIds             []uuid.UUID
+	AdminsBypass            bool
+	CreatedBy               uuid.NullUUID
+	CreatedAt               pgtype.Timestamptz
+	UpdatedAt               pgtype.Timestamptz
+}
+
 type Email struct {
 	ID           uuid.UUID
 	UserID       uuid.UUID
@@ -31,11 +53,89 @@ type Email struct {
 	CreatedAt    pgtype.Timestamptz
 }
 
+type EventsOutbox struct {
+	ID           uuid.UUID
+	Kind         string
+	Action       string
+	RepoID       uuid.NullUUID
+	ActorID      uuid.NullUUID
+	SubjectID    uuid.NullUUID
+	Payload      []byte
+	CreatedAt    pgtype.Timestamptz
+	DispatchedAt pgtype.Timestamptz
+}
+
 type GitGenerationsRetired struct {
 	RepoID     uuid.UUID
 	Generation int64
 	Keys       []string
 	RetiredAt  pgtype.Timestamptz
+}
+
+type GithubConnection struct {
+	ID             uuid.UUID
+	OwnerID        uuid.UUID
+	Name           string
+	Kind           string
+	BaseUrl        string
+	AppID          int64
+	InstallationID int64
+	Secret         []byte
+	WebhookSecret  []byte
+	CreatedBy      uuid.NullUUID
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
+type GithubImport struct {
+	ID           uuid.UUID
+	RepoID       uuid.UUID
+	ConnectionID uuid.NullUUID
+	RemoteOwner  string
+	RemoteName   string
+	Status       string
+	LastError    string
+	CreatedBy    uuid.NullUUID
+	CreatedAt    pgtype.Timestamptz
+	StartedAt    pgtype.Timestamptz
+	FinishedAt   pgtype.Timestamptz
+}
+
+type GithubSyncLink struct {
+	ID              uuid.UUID
+	RepoID          uuid.UUID
+	ConnectionID    uuid.UUID
+	Mode            string
+	RemoteOwner     string
+	RemoteName      string
+	Prune           bool
+	TrustGithub     []string
+	CreateMissing   bool
+	IntervalSeconds int32
+	Enabled         bool
+	Status          string
+	LastError       string
+	Failures        int32
+	NextAttemptAt   pgtype.Timestamptz
+	LastRunAt       pgtype.Timestamptz
+	LastSuccessAt   pgtype.Timestamptz
+	LfsSkipped      bool
+	CreatedBy       uuid.NullUUID
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+}
+
+type GithubSyncRef struct {
+	LinkID      uuid.UUID
+	Ref         string
+	LocalSha    string
+	RemoteSha   string
+	Status      string
+	LastError   string
+	Retries     int32
+	ConflictSha string
+	Resolution  string
+	UpdatedAt   pgtype.Timestamptz
 }
 
 type GpgKey struct {
@@ -59,6 +159,125 @@ type Invite struct {
 	UsedAt    pgtype.Timestamptz
 	UsedBy    uuid.NullUUID
 	CreatedAt pgtype.Timestamptz
+}
+
+type Issue struct {
+	ID           uuid.UUID
+	RepoID       uuid.UUID
+	Number       int64
+	Kind         string
+	Title        string
+	Body         string
+	State        string
+	StateReason  string
+	Locked       bool
+	LockReason   string
+	AuthorID     uuid.NullUUID
+	MilestoneID  uuid.NullUUID
+	CommentCount int32
+	ClosedAt     pgtype.Timestamptz
+	ClosedBy     uuid.NullUUID
+	EditedAt     pgtype.Timestamptz
+	EditedBy     uuid.NullUUID
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+}
+
+type IssueAssignee struct {
+	IssueID   uuid.UUID
+	UserID    uuid.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
+type IssueAttachment struct {
+	ID            uuid.UUID
+	RepoID        uuid.UUID
+	UploaderID    uuid.NullUUID
+	Name          string
+	ContentType   string
+	Size          int64
+	Sha256        []byte
+	StoragePolicy string
+	StorageKey    string
+	CreatedAt     pgtype.Timestamptz
+}
+
+type IssueComment struct {
+	ID        uuid.UUID
+	IssueID   uuid.UUID
+	RepoID    uuid.UUID
+	AuthorID  uuid.NullUUID
+	Body      string
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+	EditedAt  pgtype.Timestamptz
+	EditedBy  uuid.NullUUID
+}
+
+type IssueCounter struct {
+	RepoID     uuid.UUID
+	LastNumber int64
+}
+
+type IssueEdit struct {
+	ID        uuid.UUID
+	IssueID   uuid.UUID
+	CommentID uuid.NullUUID
+	EditorID  uuid.NullUUID
+	Body      string
+	CreatedAt pgtype.Timestamptz
+}
+
+type IssueEvent struct {
+	ID        uuid.UUID
+	RepoID    uuid.UUID
+	IssueID   uuid.UUID
+	ActorID   uuid.NullUUID
+	Event     string
+	CommentID uuid.NullUUID
+	Data      []byte
+	CreatedAt pgtype.Timestamptz
+}
+
+type IssueLabel struct {
+	IssueID   uuid.UUID
+	LabelID   uuid.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
+type IssueReaction struct {
+	ID        uuid.UUID
+	IssueID   uuid.UUID
+	CommentID uuid.NullUUID
+	UserID    uuid.UUID
+	Content   string
+	CreatedAt pgtype.Timestamptz
+}
+
+type IssueReference struct {
+	ID              uuid.UUID
+	SourceKey       string
+	SourceRepoID    uuid.UUID
+	SourceIssueID   uuid.NullUUID
+	SourceCommentID uuid.NullUUID
+	SourceCommit    string
+	TargetKind      string
+	TargetKey       string
+	TargetIssueID   uuid.NullUUID
+	TargetUserID    uuid.NullUUID
+	TargetCommit    string
+	ActorID         uuid.NullUUID
+	CreatedAt       pgtype.Timestamptz
+}
+
+type Label struct {
+	ID          uuid.UUID
+	RepoID      uuid.UUID
+	Name        string
+	Color       string
+	Description string
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
 }
 
 type LfsLock struct {
@@ -117,6 +336,18 @@ type MfaTotp struct {
 	ConfirmedAt pgtype.Timestamptz
 	LastStep    int64
 	CreatedAt   pgtype.Timestamptz
+}
+
+type Milestone struct {
+	ID          uuid.UUID
+	RepoID      uuid.UUID
+	Title       string
+	Description string
+	State       string
+	DueOn       pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	ClosedAt    pgtype.Timestamptz
 }
 
 type Namespace struct {
@@ -322,6 +553,21 @@ type StorageObject struct {
 	LastError  pgtype.Text
 	CreatedAt  pgtype.Timestamptz
 	UpdatedAt  pgtype.Timestamptz
+}
+
+type TagRule struct {
+	ID             uuid.UUID
+	RepoID         uuid.UUID
+	Pattern        string
+	CreateMin      string
+	UpdateMin      string
+	DeleteMin      string
+	AllowedUserIds []uuid.UUID
+	AllowedTeamIds []uuid.UUID
+	AdminsBypass   bool
+	CreatedBy      uuid.NullUUID
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
 }
 
 type Team struct {

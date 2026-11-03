@@ -17,6 +17,7 @@ tags:
   - name: repos
   - name: releases
   - name: code
+  - name: protection
 # Every operation needs a session unless it declares `security: []`. The
 # "admin" scope means an instance admin. Unsafe methods also need the
 # X-CSRF-Token header (see components.securitySchemes.session).
@@ -2900,6 +2901,1793 @@ paths:
         default:
           $ref: "#/components/responses/Problem"
   # --- end code browsing ---
+  # --- issues (tag: issues) ---
+  /repos/{owner}/{name}/issues:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listIssues
+      tags: [issues]
+      summary: Search the issues of the repository
+      description: |
+        Full-text search (title, body and comments) with filters. Without q
+        the issues are sorted by creation date, newest first.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: state
+          in: query
+          description: "Default open"
+          schema:
+            type: string
+            enum: [open, closed, all]
+        - name: labels
+          in: query
+          description: "Comma-separated label names; every one must be set"
+          schema:
+            type: string
+        - name: milestone
+          in: query
+          description: "Milestone id, \"none\" or \"*\" (any)"
+          schema:
+            type: string
+        - name: assignee
+          in: query
+          description: "Username, \"none\" or \"*\" (any)"
+          schema:
+            type: string
+        - name: author
+          in: query
+          description: "Username of the author"
+          schema:
+            type: string
+        - name: mentioned
+          in: query
+          description: "Username mentioned in the issue or its comments"
+          schema:
+            type: string
+        - name: q
+          in: query
+          description: "Full-text query (websearch syntax)"
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: "Default created, or relevance with q"
+          schema:
+            type: string
+            enum: [created, updated, comments, relevance]
+        - name: direction
+          in: query
+          description: "Default desc"
+          schema:
+            type: string
+            enum: [asc, desc]
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Issue"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createIssue
+      tags: [issues]
+      summary: Open an issue
+      description: |
+        Any signed-in user who can read the repository can open an issue.
+        Labels, assignees and the milestone need the triage permission and are
+        silently ignored otherwise.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueCreate"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/{number}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: number
+        in: path
+        required: true
+        description: "Issue number"
+        schema:
+          type: integer
+          format: int64
+    get:
+      operationId: getIssue
+      tags: [issues]
+      summary: An issue
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateIssue
+      tags: [issues]
+      summary: Edit, close or reopen an issue
+      description: |
+        The author can edit the title and body and close or reopen the issue;
+        anything else needs the triage permission. labels and assignees
+        replace the whole set. milestoneId: absent keeps it, empty clears it.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/{number}/edits:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: number
+        in: path
+        required: true
+        description: "Issue number"
+        schema:
+          type: integer
+          format: int64
+    get:
+      operationId: listIssueEdits
+      tags: [issues]
+      summary: Previous bodies of an issue, newest first
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BodyEdit"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/{number}/lock:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: number
+        in: path
+        required: true
+        description: "Issue number"
+        schema:
+          type: integer
+          format: int64
+    put:
+      operationId: lockIssue
+      tags: [issues]
+      summary: Lock the conversation
+      description: Only users with the triage permission can comment on a locked issue.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueLock"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: unlockIssue
+      tags: [issues]
+      summary: Unlock the conversation
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/{number}/comments:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: number
+        in: path
+        required: true
+        description: "Issue number"
+        schema:
+          type: integer
+          format: int64
+    get:
+      operationId: listIssueComments
+      tags: [issues]
+      summary: Comments of an issue, oldest first
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IssueComment"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createIssueComment
+      tags: [issues]
+      summary: Comment on an issue
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentBody"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueComment"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/comments/{commentId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getIssueComment
+      tags: [issues]
+      summary: A comment
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueComment"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateIssueComment
+      tags: [issues]
+      summary: Edit a comment
+      description: |
+        The author or a user with the triage permission. The previous body is
+        kept in the edit history.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueComment"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteIssueComment
+      tags: [issues]
+      summary: Delete a comment
+      description: The author or a user with the triage permission.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Done
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/comments/{commentId}/edits:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: listIssueCommentEdits
+      tags: [issues]
+      summary: Previous bodies of a comment, newest first
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BodyEdit"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/{number}/reactions:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: number
+        in: path
+        required: true
+        description: "Issue number"
+        schema:
+          type: integer
+          format: int64
+    get:
+      operationId: listIssueReactions
+      tags: [issues]
+      summary: Reactions to an issue
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: content
+          in: query
+          description: "Only this reaction"
+          schema:
+            type: string
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reaction"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: addIssueReaction
+      tags: [issues]
+      summary: React to an issue
+      description: Adding the same reaction twice is a no-op.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReactionRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReactionGroup"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/{number}/reactions/{content}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: number
+        in: path
+        required: true
+        description: "Issue number"
+        schema:
+          type: integer
+          format: int64
+      - name: content
+        in: path
+        required: true
+        description: "Reaction: +1, -1, laugh, hooray, confused, heart, rocket or eyes"
+        schema:
+          type: string
+    delete:
+      operationId: removeIssueReaction
+      tags: [issues]
+      summary: Remove the caller's reaction
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReactionGroup"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/comments/{commentId}/reactions:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: listIssueCommentReactions
+      tags: [issues]
+      summary: Reactions to a comment
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: content
+          in: query
+          description: "Only this reaction"
+          schema:
+            type: string
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reaction"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: addIssueCommentReaction
+      tags: [issues]
+      summary: React to a comment
+      description: Adding the same reaction twice is a no-op.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReactionRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReactionGroup"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/comments/{commentId}/reactions/{content}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: commentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: content
+        in: path
+        required: true
+        description: "Reaction: +1, -1, laugh, hooray, confused, heart, rocket or eyes"
+        schema:
+          type: string
+    delete:
+      operationId: removeIssueCommentReaction
+      tags: [issues]
+      summary: Remove the caller's reaction
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReactionGroup"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/{number}/timeline:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: number
+        in: path
+        required: true
+        description: "Issue number"
+        schema:
+          type: integer
+          format: int64
+    get:
+      operationId: listIssueTimeline
+      tags: [issues]
+      summary: Events and comments of an issue, oldest first
+      description: |
+        Cross-references from repositories the caller cannot read are
+        redacted (no repository, number or title).
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelineEvent"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/labels:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listLabels
+      tags: [issues]
+      summary: Labels of the repository, by name
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Label"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createLabel
+      tags: [issues]
+      summary: Create a label
+      description: Needs the triage permission.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelCreate"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Label"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/labels/{label}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: label
+        in: path
+        required: true
+        description: "Label name"
+        schema:
+          type: string
+    patch:
+      operationId: updateLabel
+      tags: [issues]
+      summary: Edit a label
+      description: Needs the triage permission.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Label"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteLabel
+      tags: [issues]
+      summary: Delete a label
+      description: Needs the triage permission. The label is removed from every issue.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Done
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/milestones:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listMilestones
+      tags: [issues]
+      summary: Milestones of the repository
+      description: Open milestones by due date, closed ones by closing date.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: state
+          in: query
+          description: "Default open"
+          schema:
+            type: string
+            enum: [open, closed, all]
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Milestone"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createMilestone
+      tags: [issues]
+      summary: Create a milestone
+      description: Needs the triage permission.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneCreate"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Milestone"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/milestones/{milestoneId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: milestoneId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getMilestone
+      tags: [issues]
+      summary: A milestone
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Milestone"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateMilestone
+      tags: [issues]
+      summary: Edit, close or reopen a milestone
+      description: Needs the triage permission.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Milestone"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteMilestone
+      tags: [issues]
+      summary: Delete a milestone
+      description: Needs the triage permission. Its issues keep no milestone.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Done
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issue-templates:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listIssueTemplates
+      tags: [issues]
+      summary: Issue templates of the default branch
+      description: |
+        Markdown templates and issue forms from .github/ISSUE_TEMPLATE, plus
+        its config.yml. Templates that cannot be parsed are skipped.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueTemplates"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/issues/attachments/{attachmentId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      operationId: deleteIssueAttachment
+      tags: [issues]
+      summary: Delete an attachment
+      description: |
+        The uploader or a user with the triage permission. Attachments are
+        uploaded with POST /api/v1/repos/{owner}/{name}/issues/attachments?name=
+        (raw body, outside this document: needs a signed-in user who can read
+        the repository; 201 with an IssueAttachment, charged to the quota of
+        the owner) and downloaded with GET on the url of the attachment.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Done
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  # --- end issues ---
+  # --- branch protection (tag: protection) ---
+  /repos/{owner}/{name}/branch-protections:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listBranchProtections
+      tags: [protection]
+      summary: Branch protection rules of the repository
+      description: Needs the admin permission on the repository.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: Rules ordered by pattern
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BranchProtection"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createBranchProtection
+      tags: [protection]
+      summary: Create a branch protection rule
+      description: |
+        The pattern is a glob on the branch name (`*` does not cross `/`,
+        `**` does). When several rules match a branch the most specific one
+        applies: an exact name first, then the pattern with fewer wildcards
+        and the longer literal part.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BranchProtectionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BranchProtection"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/branch-protections/evaluate:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    post:
+      operationId: evaluateRefUpdate
+      tags: [protection]
+      summary: Dry-run a ref update against the branch protection and tag rules
+      description: |
+        Evaluates the update exactly as the pre-receive hook would, without
+        touching the repository. Needs the admin permission on the repository.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefUpdateCheck"
+      responses:
+        "200":
+          description: Evaluation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefUpdateEvaluation"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/branch-protections/{ruleId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ProtectionRuleId"
+    get:
+      operationId: getBranchProtection
+      tags: [protection]
+      summary: A branch protection rule
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: Rule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BranchProtection"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: updateBranchProtection
+      tags: [protection]
+      summary: Replace a branch protection rule
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BranchProtectionInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BranchProtection"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteBranchProtection
+      tags: [protection]
+      summary: Delete a branch protection rule
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Deleted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/tag-rules:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listTagRules
+      tags: [protection]
+      summary: Tag rules of the repository
+      description: Needs the admin permission on the repository.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: Rules ordered by pattern
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TagRule"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createTagRule
+      tags: [protection]
+      summary: Create a tag rule
+      description: The pattern is a glob on the tag name, matched like branch protection patterns.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagRuleInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagRule"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/tag-rules/{ruleId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ProtectionRuleId"
+    get:
+      operationId: getTagRule
+      tags: [protection]
+      summary: A tag rule
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: Rule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagRule"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: updateTagRule
+      tags: [protection]
+      summary: Replace a tag rule
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagRuleInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagRule"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteTagRule
+      tags: [protection]
+      summary: Delete a tag rule
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Deleted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  # --- end branch protection ---
+  # --- github sync (tag: github) ---
+  # GitHub connections, one-off imports, pull mirrors, backups and
+  # bidirectional sync (PLAN §5.6). The webhook receiver
+  # POST /api/v1/github/webhook/{connectionId} is mounted outside the
+  # generated router: it needs the raw body to verify X-Hub-Signature-256.
+  /github/connections:
+    get:
+      operationId: listGitHubConnections
+      tags: [github]
+      summary: GitHub connections of a user or organization
+      description: |
+        owner defaults to the caller. Connections of an organization are
+        visible to its owners and admins.
+      security:
+        - session: []
+        - token: [user:read]
+      parameters:
+        - name: owner
+          in: query
+          schema: {type: string, maxLength: 39}
+      responses:
+        "200":
+          description: Connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/GitHubConnection"}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createGitHubConnection
+      tags: [github]
+      summary: Connect a GitHub App installation or a fine-grained token
+      description: |
+        The credentials are encrypted with the instance master key (503
+        without one) and never returned. The response carries the webhook
+        secret once, to configure on GitHub with the webhookUrl. A baseUrl
+        other than https://github.com (GitHub Enterprise Server) needs an
+        instance admin.
+      security:
+        - session: []
+        - token: [user:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/GitHubConnectionCreate"}
+      responses:
+        "201":
+          description: Connection created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GitHubConnection"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /github/connections/{connectionId}:
+    parameters:
+      - name: connectionId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getGitHubConnection
+      tags: [github]
+      summary: A GitHub connection
+      security:
+        - session: []
+        - token: [user:read]
+      responses:
+        "200":
+          description: Connection
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GitHubConnection"}
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateGitHubConnection
+      tags: [github]
+      summary: Rename a connection, replace its credentials or rotate the webhook secret
+      security:
+        - session: []
+        - token: [user:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/GitHubConnectionUpdate"}
+      responses:
+        "200":
+          description: Updated connection (with the new webhook secret when rotated)
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GitHubConnection"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteGitHubConnection
+      tags: [github]
+      summary: Delete a connection that no repository uses (409 otherwise)
+      security:
+        - session: []
+        - token: [user:write]
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /github/connections/{connectionId}/check:
+    parameters:
+      - name: connectionId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: checkGitHubConnection
+      tags: [github]
+      summary: Verify the credentials of a connection against GitHub
+      security:
+        - session: []
+        - token: [user:write]
+      responses:
+        "200":
+          description: Result of the check
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GitHubConnectionCheck"}
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /github/imports:
+    post:
+      operationId: importGitHubRepo
+      tags: [github]
+      summary: Import the git data of a GitHub repository into a new repository
+      description: |
+        Creates the repository (the same rules as POST /user/repos or
+        /orgs/{org}/repos apply) and fetches every branch and tag in the
+        background through the normal write path. Issues, pull requests,
+        labels, milestones and releases are not imported yet.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/GitHubImportCreate"}
+      responses:
+        "202":
+          description: Import scheduled
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GitHubImport"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/github/import:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getGitHubImport
+      tags: [github]
+      summary: Status of the import that created the repository
+      security:
+        - session: []
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Import
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GitHubImport"}
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/github/sync:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getGitHubSyncLink
+      tags: [github]
+      summary: The GitHub sync link of a repository (404 when none)
+      security:
+        - session: []
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Link
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GitHubSyncLink"}
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: putGitHubSyncLink
+      tags: [github]
+      summary: Create or replace the GitHub sync link of a repository
+      description: |
+        Needs admin on the repository and a connection of the repository
+        owner or of the caller. mirror makes the repository read-only
+        (pushes are refused); backup pushes branches and tags to GitHub
+        after every push; sync does both, fast-forward only.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/GitHubSyncLinkPut"}
+      responses:
+        "200":
+          description: Link
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GitHubSyncLink"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteGitHubSyncLink
+      tags: [github]
+      summary: Remove the GitHub sync link (the GitHub repository is untouched)
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Removed
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/github/sync/refs:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listGitHubSyncRefs
+      tags: [github]
+      summary: Per-ref state of the GitHub sync link
+      security:
+        - session: []
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Refs
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/GitHubSyncRef"}
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/github/sync/run:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    post:
+      operationId: runGitHubSync
+      tags: [github]
+      summary: Run the GitHub sync link now (clears the backoff)
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "202":
+          description: Run scheduled
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/github/sync/resolve:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    post:
+      operationId: resolveGitHubSyncConflict
+      tags: [github]
+      summary: Resolve a diverged branch of a sync link
+      description: |
+        keep_ervisio pushes the local branch to GitHub (force);
+        keep_github moves the local branch to the GitHub commit (force,
+        under the write lease, through the normal write path); the commit
+        replaced on either side stays reachable from
+        refs/heads/sync-conflict/<side>/<branch>. merge_request records
+        that the branch is to be merged by hand from
+        refs/heads/sync-conflict/github/<branch>.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/GitHubSyncResolve"}
+      responses:
+        "200":
+          description: Updated ref state
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/GitHubSyncRef"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  # --- end github sync ---
 components:
   securitySchemes:
     session:
@@ -2919,6 +4707,15 @@ components:
         operations that list the token scheme accept it, and the token must
         hold every scope listed there. Tokens skip the CSRF check.
   parameters:
+    # --- branch protection parameters ---
+    ProtectionRuleId:
+      name: ruleId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    # --- end branch protection parameters ---
     RepoOwner:
       name: owner
       in: path
@@ -3066,6 +4863,150 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    # --- github sync schemas ---
+    GitHubConnection:
+      type: object
+      required: [id, owner, ownerKind, name, kind, baseUrl, webhookUrl, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        owner: {type: string}
+        ownerKind: {type: string, enum: [user, org]}
+        name: {type: string}
+        kind: {type: string, enum: [app, token]}
+        baseUrl: {type: string, description: Web URL of github.com or of a GitHub Enterprise Server}
+        appId: {type: integer, format: int64}
+        installationId: {type: integer, format: int64}
+        webhookUrl: {type: string, description: Payload URL to configure on GitHub (content type application/json)}
+        webhookSecret:
+          type: string
+          description: Only in the response that created or rotated it
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    GitHubConnectionCreate:
+      type: object
+      required: [name, kind]
+      properties:
+        owner: {type: string, maxLength: 39, description: User or organization; the caller when empty}
+        name: {type: string, minLength: 1, maxLength: 100}
+        kind: {type: string, enum: [app, token]}
+        baseUrl: {type: string, maxLength: 255}
+        appId: {type: integer, format: int64, minimum: 1}
+        installationId: {type: integer, format: int64, minimum: 1}
+        privateKey: {type: string, maxLength: 16384, description: PEM private key of the GitHub App (app)}
+        token: {type: string, maxLength: 1024, description: Fine-grained personal access token (token)}
+        webhookSecret: {type: string, minLength: 16, maxLength: 256, description: Generated when empty}
+    GitHubConnectionUpdate:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 100}
+        appId: {type: integer, format: int64, minimum: 1}
+        installationId: {type: integer, format: int64, minimum: 1}
+        privateKey: {type: string, maxLength: 16384}
+        token: {type: string, maxLength: 1024}
+        rotateWebhookSecret: {type: boolean}
+    GitHubConnectionCheck:
+      type: object
+      required: [ok]
+      properties:
+        ok: {type: boolean}
+        detail: {type: string, description: Why the check failed}
+    GitHubImportCreate:
+      type: object
+      required: [connectionId, remoteOwner, remoteName]
+      properties:
+        connectionId: {type: string, format: uuid}
+        remoteOwner: {type: string, maxLength: 39}
+        remoteName: {type: string, maxLength: 100}
+        owner: {type: string, maxLength: 39, description: Owner of the new repository; the caller when empty}
+        name: {type: string, maxLength: 100, description: Name of the new repository; remoteName when empty}
+        description: {type: string, maxLength: 1000}
+        visibility: {$ref: "#/components/schemas/Visibility"}
+    GitHubImport:
+      type: object
+      required: [id, repoId, repoFullName, remoteOwner, remoteName, status, lastError, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        repoId: {type: string, format: uuid}
+        repoFullName: {type: string}
+        remoteOwner: {type: string}
+        remoteName: {type: string}
+        status: {type: string, enum: [pending, running, done, error]}
+        lastError: {type: string}
+        createdAt: {type: string, format: date-time}
+        startedAt: {type: string, format: date-time}
+        finishedAt: {type: string, format: date-time}
+    GitHubSyncMode:
+      type: string
+      enum: [mirror, backup, sync]
+    GitHubSyncLink:
+      type: object
+      required: [connectionId, mode, remoteOwner, remoteName, prune, trustGithub, createMissing, intervalMinutes,
+        enabled, readOnly, status, lastError, failures, lfsSkipped, createdAt, updatedAt]
+      properties:
+        connectionId: {type: string, format: uuid}
+        mode: {$ref: "#/components/schemas/GitHubSyncMode"}
+        remoteOwner: {type: string}
+        remoteName: {type: string}
+        prune: {type: boolean}
+        trustGithub:
+          type: array
+          items: {type: string}
+        createMissing: {type: boolean}
+        intervalMinutes: {type: integer}
+        enabled: {type: boolean}
+        readOnly: {type: boolean, description: Pushes are refused (mirror)}
+        status: {type: string, enum: [pending, ok, diverged, error]}
+        lastError: {type: string}
+        failures: {type: integer}
+        nextAttemptAt: {type: string, format: date-time}
+        lastRunAt: {type: string, format: date-time}
+        lastSuccessAt: {type: string, format: date-time}
+        lfsSkipped:
+          type: boolean
+          description: The repository has Git LFS objects, which are not sent to GitHub
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    GitHubSyncLinkPut:
+      type: object
+      required: [connectionId, mode, remoteOwner, remoteName]
+      properties:
+        connectionId: {type: string, format: uuid}
+        mode: {$ref: "#/components/schemas/GitHubSyncMode"}
+        remoteOwner: {type: string, maxLength: 39}
+        remoteName: {type: string, maxLength: 100}
+        prune: {type: boolean, default: false, description: Propagate branch and tag deletions}
+        trustGithub:
+          type: array
+          maxItems: 50
+          description: Branch patterns (sync) on which GitHub wins a divergence
+          items: {type: string, maxLength: 255}
+        createMissing:
+          type: boolean
+          default: false
+          description: Create the GitHub repository (private) when it does not exist (backup, sync)
+        intervalMinutes: {type: integer, minimum: 10, maximum: 10080, default: 10}
+        enabled: {type: boolean, default: true}
+    GitHubSyncRef:
+      type: object
+      required: [ref, localSha, remoteSha, status, lastError, retries, resolution, updatedAt]
+      properties:
+        ref: {type: string}
+        localSha: {type: string}
+        remoteSha: {type: string}
+        status: {type: string, enum: [ok, diverged, error]}
+        lastError: {type: string}
+        retries: {type: integer}
+        conflictRef: {type: string, description: Branch holding the GitHub commit of a divergence}
+        conflictSha: {type: string}
+        resolution: {type: string, enum: ["", merge_request]}
+        updatedAt: {type: string, format: date-time}
+    GitHubSyncResolve:
+      type: object
+      required: [ref, resolution]
+      properties:
+        ref: {type: string, maxLength: 255, description: Full ref name (refs/heads/...)}
+        resolution: {type: string, enum: [keep_ervisio, keep_github, merge_request]}
+    # --- end github sync schemas ---
     OidcProvider:
       type: object
       required: [name, label]
@@ -4425,6 +6366,395 @@ components:
         branch: {type: string}
         commit: {$ref: "#/components/schemas/GitCommit"}
     # --- end code browsing schemas ---
+    # --- issues schemas ---
+    Issue:
+      type: object
+      required: [id, number, title, body, state, stateReason, locked, lockReason, author, labels, assignees, commentCount, reactions, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        number: {type: integer, format: int64, description: Shared with the pull requests of the repository}
+        title: {type: string}
+        body: {type: string, description: Markdown}
+        state: {type: string, enum: [open, closed]}
+        stateReason: {type: string, description: "completed, not_planned or duplicate when closed; reopened after a reopen; empty otherwise"}
+        locked: {type: boolean}
+        lockReason: {type: string, description: "off-topic, too heated, resolved, spam or empty"}
+        author: {type: string, description: Username; empty when the account is gone}
+        labels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Label"
+        assignees:
+          type: array
+          items: {type: string}
+        milestone:
+          $ref: "#/components/schemas/Milestone"
+        commentCount: {type: integer}
+        reactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReactionGroup"
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        closedAt: {type: string, format: date-time, nullable: true}
+        closedBy: {type: string, description: Username of who closed it}
+        editedAt: {type: string, format: date-time, nullable: true}
+    IssueCreate:
+      type: object
+      required: [title]
+      properties:
+        title: {type: string, maxLength: 255}
+        body: {type: string, maxLength: 65536}
+        labels:
+          type: array
+          items: {type: string}
+        assignees:
+          type: array
+          items: {type: string}
+        milestoneId: {type: string, format: uuid}
+    IssueUpdate:
+      type: object
+      properties:
+        title: {type: string, maxLength: 255}
+        body: {type: string, maxLength: 65536}
+        state: {type: string, enum: [open, closed]}
+        stateReason: {type: string, description: "On close: completed (default), not_planned or duplicate"}
+        labels:
+          type: array
+          items: {type: string}
+        assignees:
+          type: array
+          items: {type: string}
+        milestoneId: {type: string, description: Milestone id; empty clears it}
+    IssueLock:
+      type: object
+      properties:
+        lockReason: {type: string, description: "off-topic, too heated, resolved, spam or empty"}
+    Label:
+      type: object
+      required: [id, name, color, description]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        color: {type: string, description: Six lowercase hex digits, without "#"}
+        description: {type: string}
+    LabelCreate:
+      type: object
+      required: [name, color]
+      properties:
+        name: {type: string, maxLength: 50}
+        color: {type: string, pattern: "^#?[0-9a-fA-F]{6}$"}
+        description: {type: string, maxLength: 100}
+    LabelUpdate:
+      type: object
+      properties:
+        name: {type: string, maxLength: 50}
+        color: {type: string, pattern: "^#?[0-9a-fA-F]{6}$"}
+        description: {type: string, maxLength: 100}
+    Milestone:
+      type: object
+      required: [id, title, description, state, openIssues, closedIssues, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        title: {type: string}
+        description: {type: string}
+        state: {type: string, enum: [open, closed]}
+        dueOn: {type: string, format: date-time, nullable: true}
+        openIssues: {type: integer, format: int64}
+        closedIssues: {type: integer, format: int64}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        closedAt: {type: string, format: date-time, nullable: true}
+    MilestoneCreate:
+      type: object
+      required: [title]
+      properties:
+        title: {type: string, maxLength: 255}
+        description: {type: string, maxLength: 65536}
+        dueOn: {type: string, format: date-time}
+    MilestoneUpdate:
+      type: object
+      properties:
+        title: {type: string, maxLength: 255}
+        description: {type: string, maxLength: 65536}
+        dueOn: {type: string, description: RFC 3339 date-time; empty clears it}
+        state: {type: string, enum: [open, closed]}
+    IssueComment:
+      type: object
+      required: [id, issueNumber, author, body, createdAt, updatedAt, reactions]
+      properties:
+        id: {type: string, format: uuid}
+        issueNumber: {type: integer, format: int64}
+        author: {type: string}
+        body: {type: string, description: Markdown}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        editedAt: {type: string, format: date-time, nullable: true}
+        editedBy: {type: string}
+        reactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReactionGroup"
+    CommentBody:
+      type: object
+      required: [body]
+      properties:
+        body: {type: string, minLength: 1, maxLength: 65536}
+    BodyEdit:
+      type: object
+      required: [id, editor, body, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        editor: {type: string, description: Username of who made the edit}
+        body: {type: string, description: The body before the edit}
+        createdAt: {type: string, format: date-time}
+    Reaction:
+      type: object
+      required: [id, content, user, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        content: {type: string}
+        user: {type: string}
+        createdAt: {type: string, format: date-time}
+    ReactionRequest:
+      type: object
+      required: [content]
+      properties:
+        content: {type: string, description: "+1, -1, laugh, hooray, confused, heart, rocket or eyes"}
+    ReactionGroup:
+      type: object
+      required: [content, count, viewerReacted]
+      properties:
+        content: {type: string}
+        count: {type: integer, format: int64}
+        viewerReacted: {type: boolean}
+    TimelineSource:
+      type: object
+      required: [kind, redacted]
+      description: Where an issue was referenced from
+      properties:
+        kind: {type: string, enum: [issue, pull, commit]}
+        redacted: {type: boolean, description: The source is in a repository the caller cannot read; nothing else is set}
+        repo: {type: string, description: owner/name}
+        number: {type: integer, format: int64}
+        title: {type: string}
+        commit: {type: string}
+    TimelineEvent:
+      type: object
+      required: [id, event, actor, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        event:
+          type: string
+          description: |
+            commented, closed, reopened, renamed, labeled, unlabeled, assigned,
+            unassigned, milestoned, demilestoned, locked, unlocked, referenced
+            or cross-referenced
+        actor: {type: string}
+        createdAt: {type: string, format: date-time}
+        label:
+          $ref: "#/components/schemas/Label"
+        assignee: {type: string}
+        milestone: {type: string, description: Milestone title at the time of the event}
+        renameFrom: {type: string}
+        renameTo: {type: string}
+        stateReason: {type: string}
+        lockReason: {type: string}
+        comment:
+          $ref: "#/components/schemas/IssueComment"
+        source:
+          $ref: "#/components/schemas/TimelineSource"
+    IssueTemplate:
+      type: object
+      required: [kind, fileName, name, about, title, labels, assignees, body]
+      properties:
+        kind: {type: string, enum: [markdown, form]}
+        fileName: {type: string}
+        name: {type: string}
+        about: {type: string, description: The about of a markdown template or the description of a form}
+        title: {type: string, description: Default issue title}
+        labels:
+          type: array
+          items: {type: string}
+        assignees:
+          type: array
+          items: {type: string}
+        body: {type: string, description: Body of a markdown template; empty for forms}
+        form:
+          type: array
+          description: The body elements of an issue form, as written in the YAML file
+          items:
+            type: object
+            additionalProperties: true
+    IssueContactLink:
+      type: object
+      required: [name, url, about]
+      properties:
+        name: {type: string}
+        url: {type: string}
+        about: {type: string}
+    IssueTemplateConfig:
+      type: object
+      required: [blankIssuesEnabled, contactLinks]
+      properties:
+        blankIssuesEnabled: {type: boolean}
+        contactLinks:
+          type: array
+          items:
+            $ref: "#/components/schemas/IssueContactLink"
+    IssueTemplates:
+      type: object
+      required: [templates, config]
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: "#/components/schemas/IssueTemplate"
+        config:
+          $ref: "#/components/schemas/IssueTemplateConfig"
+    IssueAttachment:
+      type: object
+      required: [id, name, size, contentType, url, createdAt]
+      description: Returned by the attachment upload (outside this document)
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        size: {type: integer, format: int64}
+        contentType: {type: string}
+        url: {type: string, description: Download path, to use in Markdown}
+        createdAt: {type: string, format: date-time}
+    # --- end issues schemas ---
+    # --- branch protection schemas ---
+    BranchProtectionInput:
+      type: object
+      required: [pattern]
+      properties:
+        pattern: {type: string, minLength: 1, maxLength: 255, description: Glob on the branch name}
+        requiredApprovals: {type: integer, minimum: 0, maximum: 10, description: Approving reviews a pull request needs before merging}
+        requireCodeOwnerReviews: {type: boolean, description: A code owner of every changed path must approve}
+        dismissStaleReviews: {type: boolean, description: A new push dismisses the approvals given before it}
+        requiredStatusChecks:
+          type: array
+          maxItems: 50
+          items: {type: string, minLength: 1, maxLength: 255}
+          description: Status check contexts that must succeed on the head commit
+        strictStatusChecks: {type: boolean, description: The branch must be up to date with the base before merging}
+        requireLinearHistory: {type: boolean, description: Reject merge commits}
+        allowForcePushes: {type: boolean, description: Allow non fast-forward updates (default false)}
+        allowDeletions: {type: boolean, description: Allow deleting the branch (default false)}
+        requireSignedCommits: {type: boolean, description: Every new commit needs a verified GPG or SSH signature}
+        restrictPushes: {type: boolean, description: Only pushUsers and pushTeams may push}
+        pushUsers:
+          type: array
+          maxItems: 100
+          items: {type: string}
+          description: Usernames allowed to push when restrictPushes is set
+        pushTeams:
+          type: array
+          maxItems: 100
+          items: {type: string}
+          description: Teams of the owning organization allowed to push when restrictPushes is set
+        adminsBypass: {type: boolean, description: Repository admins are exempt from the rule (default false)}
+    BranchProtection:
+      type: object
+      required: [id, pattern, requiredApprovals, requireCodeOwnerReviews, dismissStaleReviews, requiredStatusChecks,
+        strictStatusChecks, requireLinearHistory, allowForcePushes, allowDeletions, requireSignedCommits,
+        restrictPushes, pushUsers, pushTeams, adminsBypass, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        pattern: {type: string}
+        requiredApprovals: {type: integer}
+        requireCodeOwnerReviews: {type: boolean}
+        dismissStaleReviews: {type: boolean}
+        requiredStatusChecks:
+          type: array
+          items: {type: string}
+        strictStatusChecks: {type: boolean}
+        requireLinearHistory: {type: boolean}
+        allowForcePushes: {type: boolean}
+        allowDeletions: {type: boolean}
+        requireSignedCommits: {type: boolean}
+        restrictPushes: {type: boolean}
+        pushUsers:
+          type: array
+          items: {type: string}
+        pushTeams:
+          type: array
+          items: {type: string}
+        adminsBypass: {type: boolean}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    TagRuleLevel:
+      type: string
+      enum: [write, maintain, admin, none]
+      description: Minimum repository permission for an action; none allows only the listed users and teams
+    TagRuleInput:
+      type: object
+      required: [pattern]
+      properties:
+        pattern: {type: string, minLength: 1, maxLength: 255, description: Glob on the tag name}
+        create: {$ref: "#/components/schemas/TagRuleLevel"}
+        update: {$ref: "#/components/schemas/TagRuleLevel"}
+        delete: {$ref: "#/components/schemas/TagRuleLevel"}
+        allowedUsers:
+          type: array
+          maxItems: 100
+          items: {type: string}
+          description: Usernames allowed every action regardless of the levels
+        allowedTeams:
+          type: array
+          maxItems: 100
+          items: {type: string}
+          description: Teams of the owning organization allowed every action
+        adminsBypass: {type: boolean, description: Repository admins are exempt from the rule (default false)}
+    TagRule:
+      type: object
+      required: [id, pattern, create, update, delete, allowedUsers, allowedTeams, adminsBypass, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        pattern: {type: string}
+        create: {$ref: "#/components/schemas/TagRuleLevel"}
+        update: {$ref: "#/components/schemas/TagRuleLevel"}
+        delete: {$ref: "#/components/schemas/TagRuleLevel"}
+        allowedUsers:
+          type: array
+          items: {type: string}
+        allowedTeams:
+          type: array
+          items: {type: string}
+        adminsBypass: {type: boolean}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    RefUpdateCheck:
+      type: object
+      required: [ref]
+      properties:
+        ref: {type: string, maxLength: 255, description: "Full ref name (refs/heads/main, refs/tags/v1) or a branch name"}
+        old: {type: string, description: Current object id; empty reads it from the repository}
+        new: {type: string, description: New object id; empty or all zeros means deletion}
+        user: {type: string, description: Username to evaluate as; defaults to the caller}
+    RefUpdateEvaluation:
+      type: object
+      required: [ref, kind, allowed, rule, violations]
+      properties:
+        ref: {type: string}
+        kind: {type: string, enum: [branch, tag, other]}
+        allowed: {type: boolean}
+        rule: {type: string, description: Pattern of the rule that applies; empty when none}
+        violations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProtectionViolation"
+    ProtectionViolation:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: "Machine-readable reason: push_restricted, force_push, deletion, linear_history, unsigned_commit, too_many_commits, pull_request_required, status_checks, tag_create, tag_update, tag_delete"
+        message: {type: string}
+        commit: {type: string, description: Offending commit, when the violation concerns one}
+    # --- end branch protection schemas ---
     Problem:
       type: object
       required: [type, title, status]

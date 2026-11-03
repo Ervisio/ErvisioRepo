@@ -22,6 +22,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
+	"github.com/Ervisio/ErvisioRepo/internal/ghsync"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
@@ -80,6 +81,12 @@ type Deps struct {
 	// Browse serves the code browsing endpoints, raw files and archives;
 	// nil answers 503.
 	Browse *gitbrowse.Service
+	// Protection serves the branch protection and tag rule endpoints; nil
+	// answers 503.
+	Protection Protection
+	// Issues serves the issue, label and milestone endpoints and issue
+	// attachments; nil answers 503.
+	Issues Issues
 	// Hydration streams the hydration progress; nil answers 503.
 	Hydration Hydration
 	// Git serves the Smart HTTP transport (internal/githttp) on
@@ -89,6 +96,8 @@ type Deps struct {
 	// Nil uses cookies derived from Meta.PublicURL and no sessions, so
 	// every caller is anonymous.
 	Auth *auth.Middleware
+	// GitHub serves the GitHub sync endpoints and webhook; nil answers 503.
+	GitHub *ghsync.Service
 }
 
 // NewRouter builds the root handler.
@@ -124,6 +133,8 @@ func NewRouter(d Deps) http.Handler {
 	// mounted outside this group so that they are not cut by the timeout.
 	mountHydration(r, d)
 	mountReleases(r, d)
+	mountIssues(r, d)
+	mountGitHubWebhook(r, d)
 	mountBrowse(r, d)
 	mountGit(r, d)
 	r.Group(func(r chi.Router) {
@@ -191,7 +202,8 @@ func directLoopback(r *http.Request) bool {
 func mountV1(r chi.Router, d Deps) {
 	r.Use(d.Auth.LoadSession, d.Auth.CSRF, adminOnly(d.Auth), mfaCookie(d.Auth.Cookies))
 	srv := &v1Server{meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies, mfa: d.MFA, orgs: d.Orgs, repos: d.Repos, audit: d.Audit,
-		creds: d.Credentials, sso: d.SSO, tiering: d.Tiering, releases: d.Releases, browse: d.Browse}
+		creds: d.Credentials, sso: d.SSO, tiering: d.Tiering, releases: d.Releases, browse: d.Browse,
+		protection: d.Protection, github: d.GitHub, issues: d.Issues}
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())

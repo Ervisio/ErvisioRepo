@@ -149,6 +149,243 @@ func (e FileEditOp) Valid() bool {
 	}
 }
 
+// Defines values for GitHubConnectionKind.
+const (
+	GitHubConnectionKindApp   GitHubConnectionKind = "app"
+	GitHubConnectionKindToken GitHubConnectionKind = "token"
+)
+
+// Valid indicates whether the value is a known member of the GitHubConnectionKind enum.
+func (e GitHubConnectionKind) Valid() bool {
+	switch e {
+	case GitHubConnectionKindApp:
+		return true
+	case GitHubConnectionKindToken:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GitHubConnectionOwnerKind.
+const (
+	GitHubConnectionOwnerKindOrg  GitHubConnectionOwnerKind = "org"
+	GitHubConnectionOwnerKindUser GitHubConnectionOwnerKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the GitHubConnectionOwnerKind enum.
+func (e GitHubConnectionOwnerKind) Valid() bool {
+	switch e {
+	case GitHubConnectionOwnerKindOrg:
+		return true
+	case GitHubConnectionOwnerKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GitHubConnectionCreateKind.
+const (
+	GitHubConnectionCreateKindApp   GitHubConnectionCreateKind = "app"
+	GitHubConnectionCreateKindToken GitHubConnectionCreateKind = "token"
+)
+
+// Valid indicates whether the value is a known member of the GitHubConnectionCreateKind enum.
+func (e GitHubConnectionCreateKind) Valid() bool {
+	switch e {
+	case GitHubConnectionCreateKindApp:
+		return true
+	case GitHubConnectionCreateKindToken:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GitHubImportStatus.
+const (
+	GitHubImportStatusDone    GitHubImportStatus = "done"
+	GitHubImportStatusError   GitHubImportStatus = "error"
+	GitHubImportStatusPending GitHubImportStatus = "pending"
+	GitHubImportStatusRunning GitHubImportStatus = "running"
+)
+
+// Valid indicates whether the value is a known member of the GitHubImportStatus enum.
+func (e GitHubImportStatus) Valid() bool {
+	switch e {
+	case GitHubImportStatusDone:
+		return true
+	case GitHubImportStatusError:
+		return true
+	case GitHubImportStatusPending:
+		return true
+	case GitHubImportStatusRunning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GitHubSyncLinkStatus.
+const (
+	GitHubSyncLinkStatusDiverged GitHubSyncLinkStatus = "diverged"
+	GitHubSyncLinkStatusError    GitHubSyncLinkStatus = "error"
+	GitHubSyncLinkStatusOk       GitHubSyncLinkStatus = "ok"
+	GitHubSyncLinkStatusPending  GitHubSyncLinkStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the GitHubSyncLinkStatus enum.
+func (e GitHubSyncLinkStatus) Valid() bool {
+	switch e {
+	case GitHubSyncLinkStatusDiverged:
+		return true
+	case GitHubSyncLinkStatusError:
+		return true
+	case GitHubSyncLinkStatusOk:
+		return true
+	case GitHubSyncLinkStatusPending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GitHubSyncMode.
+const (
+	Backup GitHubSyncMode = "backup"
+	Mirror GitHubSyncMode = "mirror"
+	Sync   GitHubSyncMode = "sync"
+)
+
+// Valid indicates whether the value is a known member of the GitHubSyncMode enum.
+func (e GitHubSyncMode) Valid() bool {
+	switch e {
+	case Backup:
+		return true
+	case Mirror:
+		return true
+	case Sync:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GitHubSyncRefResolution.
+const (
+	GitHubSyncRefResolutionEmpty        GitHubSyncRefResolution = ""
+	GitHubSyncRefResolutionMergeRequest GitHubSyncRefResolution = "merge_request"
+)
+
+// Valid indicates whether the value is a known member of the GitHubSyncRefResolution enum.
+func (e GitHubSyncRefResolution) Valid() bool {
+	switch e {
+	case GitHubSyncRefResolutionEmpty:
+		return true
+	case GitHubSyncRefResolutionMergeRequest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GitHubSyncRefStatus.
+const (
+	GitHubSyncRefStatusDiverged GitHubSyncRefStatus = "diverged"
+	GitHubSyncRefStatusError    GitHubSyncRefStatus = "error"
+	GitHubSyncRefStatusOk       GitHubSyncRefStatus = "ok"
+)
+
+// Valid indicates whether the value is a known member of the GitHubSyncRefStatus enum.
+func (e GitHubSyncRefStatus) Valid() bool {
+	switch e {
+	case GitHubSyncRefStatusDiverged:
+		return true
+	case GitHubSyncRefStatusError:
+		return true
+	case GitHubSyncRefStatusOk:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GitHubSyncResolveResolution.
+const (
+	GitHubSyncResolveResolutionKeepErvisio  GitHubSyncResolveResolution = "keep_ervisio"
+	GitHubSyncResolveResolutionKeepGithub   GitHubSyncResolveResolution = "keep_github"
+	GitHubSyncResolveResolutionMergeRequest GitHubSyncResolveResolution = "merge_request"
+)
+
+// Valid indicates whether the value is a known member of the GitHubSyncResolveResolution enum.
+func (e GitHubSyncResolveResolution) Valid() bool {
+	switch e {
+	case GitHubSyncResolveResolutionKeepErvisio:
+		return true
+	case GitHubSyncResolveResolutionKeepGithub:
+		return true
+	case GitHubSyncResolveResolutionMergeRequest:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IssueState.
+const (
+	IssueStateClosed IssueState = "closed"
+	IssueStateOpen   IssueState = "open"
+)
+
+// Valid indicates whether the value is a known member of the IssueState enum.
+func (e IssueState) Valid() bool {
+	switch e {
+	case IssueStateClosed:
+		return true
+	case IssueStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IssueTemplateKind.
+const (
+	Form     IssueTemplateKind = "form"
+	Markdown IssueTemplateKind = "markdown"
+)
+
+// Valid indicates whether the value is a known member of the IssueTemplateKind enum.
+func (e IssueTemplateKind) Valid() bool {
+	switch e {
+	case Form:
+		return true
+	case Markdown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IssueUpdateState.
+const (
+	IssueUpdateStateClosed IssueUpdateState = "closed"
+	IssueUpdateStateOpen   IssueUpdateState = "open"
+)
+
+// Valid indicates whether the value is a known member of the IssueUpdateState enum.
+func (e IssueUpdateState) Valid() bool {
+	switch e {
+	case IssueUpdateStateClosed:
+		return true
+	case IssueUpdateStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MetaRegistration.
 const (
 	MetaRegistrationClosed MetaRegistration = "closed"
@@ -185,6 +422,42 @@ func (e MfaChallengeMethods) Valid() bool {
 	case Totp:
 		return true
 	case Webauthn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MilestoneState.
+const (
+	MilestoneStateClosed MilestoneState = "closed"
+	MilestoneStateOpen   MilestoneState = "open"
+)
+
+// Valid indicates whether the value is a known member of the MilestoneState enum.
+func (e MilestoneState) Valid() bool {
+	switch e {
+	case MilestoneStateClosed:
+		return true
+	case MilestoneStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MilestoneUpdateState.
+const (
+	MilestoneUpdateStateClosed MilestoneUpdateState = "closed"
+	MilestoneUpdateStateOpen   MilestoneUpdateState = "open"
+)
+
+// Valid indicates whether the value is a known member of the MilestoneUpdateState enum.
+func (e MilestoneUpdateState) Valid() bool {
+	switch e {
+	case MilestoneUpdateStateClosed:
+		return true
+	case MilestoneUpdateStateOpen:
 		return true
 	default:
 		return false
@@ -254,6 +527,27 @@ func (e ProfileUpdateLocale) Valid() bool {
 	case ProfileUpdateLocaleEn:
 		return true
 	case ProfileUpdateLocaleIt:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RefUpdateEvaluationKind.
+const (
+	RefUpdateEvaluationKindBranch RefUpdateEvaluationKind = "branch"
+	RefUpdateEvaluationKindOther  RefUpdateEvaluationKind = "other"
+	RefUpdateEvaluationKindTag    RefUpdateEvaluationKind = "tag"
+)
+
+// Valid indicates whether the value is a known member of the RefUpdateEvaluationKind enum.
+func (e RefUpdateEvaluationKind) Valid() bool {
+	switch e {
+	case RefUpdateEvaluationKindBranch:
+		return true
+	case RefUpdateEvaluationKindOther:
+		return true
+	case RefUpdateEvaluationKindTag:
 		return true
 	default:
 		return false
@@ -473,6 +767,30 @@ func (e StorageWarningCode) Valid() bool {
 	}
 }
 
+// Defines values for TagRuleLevel.
+const (
+	TagRuleLevelAdmin    TagRuleLevel = "admin"
+	TagRuleLevelMaintain TagRuleLevel = "maintain"
+	TagRuleLevelNone     TagRuleLevel = "none"
+	TagRuleLevelWrite    TagRuleLevel = "write"
+)
+
+// Valid indicates whether the value is a known member of the TagRuleLevel enum.
+func (e TagRuleLevel) Valid() bool {
+	switch e {
+	case TagRuleLevelAdmin:
+		return true
+	case TagRuleLevelMaintain:
+		return true
+	case TagRuleLevelNone:
+		return true
+	case TagRuleLevelWrite:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TeamMemberRole.
 const (
 	TeamMemberRoleMaintainer TeamMemberRole = "maintainer"
@@ -503,6 +821,27 @@ func (e TeamRoleRequestRole) Valid() bool {
 	case TeamRoleRequestRoleMaintainer:
 		return true
 	case TeamRoleRequestRoleMember:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TimelineSourceKind.
+const (
+	TimelineSourceKindCommit TimelineSourceKind = "commit"
+	TimelineSourceKindIssue  TimelineSourceKind = "issue"
+	TimelineSourceKindPull   TimelineSourceKind = "pull"
+)
+
+// Valid indicates whether the value is a known member of the TimelineSourceKind enum.
+func (e TimelineSourceKind) Valid() bool {
+	switch e {
+	case TimelineSourceKindCommit:
+		return true
+	case TimelineSourceKindIssue:
+		return true
+	case TimelineSourceKindPull:
 		return true
 	default:
 		return false
@@ -587,6 +926,90 @@ func (e Visibility) Valid() bool {
 	case Private:
 		return true
 	case Public:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListIssuesParamsState.
+const (
+	ListIssuesParamsStateAll    ListIssuesParamsState = "all"
+	ListIssuesParamsStateClosed ListIssuesParamsState = "closed"
+	ListIssuesParamsStateOpen   ListIssuesParamsState = "open"
+)
+
+// Valid indicates whether the value is a known member of the ListIssuesParamsState enum.
+func (e ListIssuesParamsState) Valid() bool {
+	switch e {
+	case ListIssuesParamsStateAll:
+		return true
+	case ListIssuesParamsStateClosed:
+		return true
+	case ListIssuesParamsStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListIssuesParamsSort.
+const (
+	Comments  ListIssuesParamsSort = "comments"
+	Created   ListIssuesParamsSort = "created"
+	Relevance ListIssuesParamsSort = "relevance"
+	Updated   ListIssuesParamsSort = "updated"
+)
+
+// Valid indicates whether the value is a known member of the ListIssuesParamsSort enum.
+func (e ListIssuesParamsSort) Valid() bool {
+	switch e {
+	case Comments:
+		return true
+	case Created:
+		return true
+	case Relevance:
+		return true
+	case Updated:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListIssuesParamsDirection.
+const (
+	Asc  ListIssuesParamsDirection = "asc"
+	Desc ListIssuesParamsDirection = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListIssuesParamsDirection enum.
+func (e ListIssuesParamsDirection) Valid() bool {
+	switch e {
+	case Asc:
+		return true
+	case Desc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListMilestonesParamsState.
+const (
+	ListMilestonesParamsStateAll    ListMilestonesParamsState = "all"
+	ListMilestonesParamsStateClosed ListMilestonesParamsState = "closed"
+	ListMilestonesParamsStateOpen   ListMilestonesParamsState = "open"
+)
+
+// Valid indicates whether the value is a known member of the ListMilestonesParamsState enum.
+func (e ListMilestonesParamsState) Valid() bool {
+	switch e {
+	case ListMilestonesParamsStateAll:
+		return true
+	case ListMilestonesParamsStateClosed:
+		return true
+	case ListMilestonesParamsStateOpen:
 		return true
 	default:
 		return false
@@ -678,6 +1101,17 @@ type BlobFile struct {
 	Truncated bool `json:"truncated"`
 }
 
+// BodyEdit defines model for BodyEdit.
+type BodyEdit struct {
+	// Body The body before the edit
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Editor Username of who made the edit
+	Editor string             `json:"editor"`
+	Id     openapi_types.UUID `json:"id"`
+}
+
 // Branch defines model for Branch.
 type Branch struct {
 	// Ahead Commits not in the default branch
@@ -694,6 +1128,72 @@ type Branch struct {
 type BranchPage struct {
 	HasMore bool     `json:"hasMore"`
 	Items   []Branch `json:"items"`
+}
+
+// BranchProtection defines model for BranchProtection.
+type BranchProtection struct {
+	AdminsBypass            bool               `json:"adminsBypass"`
+	AllowDeletions          bool               `json:"allowDeletions"`
+	AllowForcePushes        bool               `json:"allowForcePushes"`
+	CreatedAt               time.Time          `json:"createdAt"`
+	DismissStaleReviews     bool               `json:"dismissStaleReviews"`
+	Id                      openapi_types.UUID `json:"id"`
+	Pattern                 string             `json:"pattern"`
+	PushTeams               []string           `json:"pushTeams"`
+	PushUsers               []string           `json:"pushUsers"`
+	RequireCodeOwnerReviews bool               `json:"requireCodeOwnerReviews"`
+	RequireLinearHistory    bool               `json:"requireLinearHistory"`
+	RequireSignedCommits    bool               `json:"requireSignedCommits"`
+	RequiredApprovals       int                `json:"requiredApprovals"`
+	RequiredStatusChecks    []string           `json:"requiredStatusChecks"`
+	RestrictPushes          bool               `json:"restrictPushes"`
+	StrictStatusChecks      bool               `json:"strictStatusChecks"`
+	UpdatedAt               time.Time          `json:"updatedAt"`
+}
+
+// BranchProtectionInput defines model for BranchProtectionInput.
+type BranchProtectionInput struct {
+	// AdminsBypass Repository admins are exempt from the rule (default false)
+	AdminsBypass *bool `json:"adminsBypass,omitempty"`
+
+	// AllowDeletions Allow deleting the branch (default false)
+	AllowDeletions *bool `json:"allowDeletions,omitempty"`
+
+	// AllowForcePushes Allow non fast-forward updates (default false)
+	AllowForcePushes *bool `json:"allowForcePushes,omitempty"`
+
+	// DismissStaleReviews A new push dismisses the approvals given before it
+	DismissStaleReviews *bool `json:"dismissStaleReviews,omitempty"`
+
+	// Pattern Glob on the branch name
+	Pattern string `json:"pattern"`
+
+	// PushTeams Teams of the owning organization allowed to push when restrictPushes is set
+	PushTeams *[]string `json:"pushTeams,omitempty"`
+
+	// PushUsers Usernames allowed to push when restrictPushes is set
+	PushUsers *[]string `json:"pushUsers,omitempty"`
+
+	// RequireCodeOwnerReviews A code owner of every changed path must approve
+	RequireCodeOwnerReviews *bool `json:"requireCodeOwnerReviews,omitempty"`
+
+	// RequireLinearHistory Reject merge commits
+	RequireLinearHistory *bool `json:"requireLinearHistory,omitempty"`
+
+	// RequireSignedCommits Every new commit needs a verified GPG or SSH signature
+	RequireSignedCommits *bool `json:"requireSignedCommits,omitempty"`
+
+	// RequiredApprovals Approving reviews a pull request needs before merging
+	RequiredApprovals *int `json:"requiredApprovals,omitempty"`
+
+	// RequiredStatusChecks Status check contexts that must succeed on the head commit
+	RequiredStatusChecks *[]string `json:"requiredStatusChecks,omitempty"`
+
+	// RestrictPushes Only pushUsers and pushTeams may push
+	RestrictPushes *bool `json:"restrictPushes,omitempty"`
+
+	// StrictStatusChecks The branch must be up to date with the base before merging
+	StrictStatusChecks *bool `json:"strictStatusChecks,omitempty"`
 }
 
 // CodeMatch defines model for CodeMatch.
@@ -713,6 +1213,11 @@ type CodeSearchResult struct {
 	Matches   []CodeMatch `json:"matches"`
 	Ref       ResolvedRef `json:"ref"`
 	Truncated bool        `json:"truncated"`
+}
+
+// CommentBody defines model for CommentBody.
+type CommentBody struct {
+	Body string `json:"body"`
 }
 
 // CommitDetail defines model for CommitDetail.
@@ -865,6 +1370,190 @@ type GitCommitSummary struct {
 	Summary string    `json:"summary"`
 }
 
+// GitHubConnection defines model for GitHubConnection.
+type GitHubConnection struct {
+	AppId *int64 `json:"appId,omitempty"`
+
+	// BaseUrl Web URL of github.com or of a GitHub Enterprise Server
+	BaseUrl        string                    `json:"baseUrl"`
+	CreatedAt      time.Time                 `json:"createdAt"`
+	Id             openapi_types.UUID        `json:"id"`
+	InstallationId *int64                    `json:"installationId,omitempty"`
+	Kind           GitHubConnectionKind      `json:"kind"`
+	Name           string                    `json:"name"`
+	Owner          string                    `json:"owner"`
+	OwnerKind      GitHubConnectionOwnerKind `json:"ownerKind"`
+	UpdatedAt      time.Time                 `json:"updatedAt"`
+
+	// WebhookSecret Only in the response that created or rotated it
+	WebhookSecret *string `json:"webhookSecret,omitempty"`
+
+	// WebhookUrl Payload URL to configure on GitHub (content type application/json)
+	WebhookUrl string `json:"webhookUrl"`
+}
+
+// GitHubConnectionKind defines model for GitHubConnection.Kind.
+type GitHubConnectionKind string
+
+// GitHubConnectionOwnerKind defines model for GitHubConnection.OwnerKind.
+type GitHubConnectionOwnerKind string
+
+// GitHubConnectionCheck defines model for GitHubConnectionCheck.
+type GitHubConnectionCheck struct {
+	// Detail Why the check failed
+	Detail *string `json:"detail,omitempty"`
+	Ok     bool    `json:"ok"`
+}
+
+// GitHubConnectionCreate defines model for GitHubConnectionCreate.
+type GitHubConnectionCreate struct {
+	AppId          *int64                     `json:"appId,omitempty"`
+	BaseUrl        *string                    `json:"baseUrl,omitempty"`
+	InstallationId *int64                     `json:"installationId,omitempty"`
+	Kind           GitHubConnectionCreateKind `json:"kind"`
+	Name           string                     `json:"name"`
+
+	// Owner User or organization; the caller when empty
+	Owner *string `json:"owner,omitempty"`
+
+	// PrivateKey PEM private key of the GitHub App (app)
+	PrivateKey *string `json:"privateKey,omitempty"`
+
+	// Token Fine-grained personal access token (token)
+	Token *string `json:"token,omitempty"`
+
+	// WebhookSecret Generated when empty
+	WebhookSecret *string `json:"webhookSecret,omitempty"`
+}
+
+// GitHubConnectionCreateKind defines model for GitHubConnectionCreate.Kind.
+type GitHubConnectionCreateKind string
+
+// GitHubConnectionUpdate defines model for GitHubConnectionUpdate.
+type GitHubConnectionUpdate struct {
+	AppId               *int64  `json:"appId,omitempty"`
+	InstallationId      *int64  `json:"installationId,omitempty"`
+	Name                *string `json:"name,omitempty"`
+	PrivateKey          *string `json:"privateKey,omitempty"`
+	RotateWebhookSecret *bool   `json:"rotateWebhookSecret,omitempty"`
+	Token               *string `json:"token,omitempty"`
+}
+
+// GitHubImport defines model for GitHubImport.
+type GitHubImport struct {
+	CreatedAt    time.Time          `json:"createdAt"`
+	FinishedAt   *time.Time         `json:"finishedAt,omitempty"`
+	Id           openapi_types.UUID `json:"id"`
+	LastError    string             `json:"lastError"`
+	RemoteName   string             `json:"remoteName"`
+	RemoteOwner  string             `json:"remoteOwner"`
+	RepoFullName string             `json:"repoFullName"`
+	RepoId       openapi_types.UUID `json:"repoId"`
+	StartedAt    *time.Time         `json:"startedAt,omitempty"`
+	Status       GitHubImportStatus `json:"status"`
+}
+
+// GitHubImportStatus defines model for GitHubImport.Status.
+type GitHubImportStatus string
+
+// GitHubImportCreate defines model for GitHubImportCreate.
+type GitHubImportCreate struct {
+	ConnectionId openapi_types.UUID `json:"connectionId"`
+	Description  *string            `json:"description,omitempty"`
+
+	// Name Name of the new repository; remoteName when empty
+	Name *string `json:"name,omitempty"`
+
+	// Owner Owner of the new repository; the caller when empty
+	Owner       *string     `json:"owner,omitempty"`
+	RemoteName  string      `json:"remoteName"`
+	RemoteOwner string      `json:"remoteOwner"`
+	Visibility  *Visibility `json:"visibility,omitempty"`
+}
+
+// GitHubSyncLink defines model for GitHubSyncLink.
+type GitHubSyncLink struct {
+	ConnectionId    openapi_types.UUID `json:"connectionId"`
+	CreateMissing   bool               `json:"createMissing"`
+	CreatedAt       time.Time          `json:"createdAt"`
+	Enabled         bool               `json:"enabled"`
+	Failures        int                `json:"failures"`
+	IntervalMinutes int                `json:"intervalMinutes"`
+	LastError       string             `json:"lastError"`
+	LastRunAt       *time.Time         `json:"lastRunAt,omitempty"`
+	LastSuccessAt   *time.Time         `json:"lastSuccessAt,omitempty"`
+
+	// LfsSkipped The repository has Git LFS objects, which are not sent to GitHub
+	LfsSkipped    bool           `json:"lfsSkipped"`
+	Mode          GitHubSyncMode `json:"mode"`
+	NextAttemptAt *time.Time     `json:"nextAttemptAt,omitempty"`
+	Prune         bool           `json:"prune"`
+
+	// ReadOnly Pushes are refused (mirror)
+	ReadOnly    bool                 `json:"readOnly"`
+	RemoteName  string               `json:"remoteName"`
+	RemoteOwner string               `json:"remoteOwner"`
+	Status      GitHubSyncLinkStatus `json:"status"`
+	TrustGithub []string             `json:"trustGithub"`
+	UpdatedAt   time.Time            `json:"updatedAt"`
+}
+
+// GitHubSyncLinkStatus defines model for GitHubSyncLink.Status.
+type GitHubSyncLinkStatus string
+
+// GitHubSyncLinkPut defines model for GitHubSyncLinkPut.
+type GitHubSyncLinkPut struct {
+	ConnectionId openapi_types.UUID `json:"connectionId"`
+
+	// CreateMissing Create the GitHub repository (private) when it does not exist (backup, sync)
+	CreateMissing   *bool          `json:"createMissing,omitempty"`
+	Enabled         *bool          `json:"enabled,omitempty"`
+	IntervalMinutes *int           `json:"intervalMinutes,omitempty"`
+	Mode            GitHubSyncMode `json:"mode"`
+
+	// Prune Propagate branch and tag deletions
+	Prune       *bool  `json:"prune,omitempty"`
+	RemoteName  string `json:"remoteName"`
+	RemoteOwner string `json:"remoteOwner"`
+
+	// TrustGithub Branch patterns (sync) on which GitHub wins a divergence
+	TrustGithub *[]string `json:"trustGithub,omitempty"`
+}
+
+// GitHubSyncMode defines model for GitHubSyncMode.
+type GitHubSyncMode string
+
+// GitHubSyncRef defines model for GitHubSyncRef.
+type GitHubSyncRef struct {
+	// ConflictRef Branch holding the GitHub commit of a divergence
+	ConflictRef *string                 `json:"conflictRef,omitempty"`
+	ConflictSha *string                 `json:"conflictSha,omitempty"`
+	LastError   string                  `json:"lastError"`
+	LocalSha    string                  `json:"localSha"`
+	Ref         string                  `json:"ref"`
+	RemoteSha   string                  `json:"remoteSha"`
+	Resolution  GitHubSyncRefResolution `json:"resolution"`
+	Retries     int                     `json:"retries"`
+	Status      GitHubSyncRefStatus     `json:"status"`
+	UpdatedAt   time.Time               `json:"updatedAt"`
+}
+
+// GitHubSyncRefResolution defines model for GitHubSyncRef.Resolution.
+type GitHubSyncRefResolution string
+
+// GitHubSyncRefStatus defines model for GitHubSyncRef.Status.
+type GitHubSyncRefStatus string
+
+// GitHubSyncResolve defines model for GitHubSyncResolve.
+type GitHubSyncResolve struct {
+	// Ref Full ref name (refs/heads/...)
+	Ref        string                      `json:"ref"`
+	Resolution GitHubSyncResolveResolution `json:"resolution"`
+}
+
+// GitHubSyncResolveResolution defines model for GitHubSyncResolve.Resolution.
+type GitHubSyncResolveResolution string
+
 // GitPerson defines model for GitPerson.
 type GitPerson struct {
 	Date  time.Time `json:"date"`
@@ -918,6 +1607,157 @@ type InviteRequest struct {
 	Email *string `json:"email,omitempty"`
 }
 
+// Issue defines model for Issue.
+type Issue struct {
+	Assignees []string `json:"assignees"`
+
+	// Author Username; empty when the account is gone
+	Author string `json:"author"`
+
+	// Body Markdown
+	Body     string     `json:"body"`
+	ClosedAt *time.Time `json:"closedAt,omitempty"`
+
+	// ClosedBy Username of who closed it
+	ClosedBy     *string            `json:"closedBy,omitempty"`
+	CommentCount int                `json:"commentCount"`
+	CreatedAt    time.Time          `json:"createdAt"`
+	EditedAt     *time.Time         `json:"editedAt,omitempty"`
+	Id           openapi_types.UUID `json:"id"`
+	Labels       []Label            `json:"labels"`
+
+	// LockReason off-topic, too heated, resolved, spam or empty
+	LockReason string     `json:"lockReason"`
+	Locked     bool       `json:"locked"`
+	Milestone  *Milestone `json:"milestone,omitempty"`
+
+	// Number Shared with the pull requests of the repository
+	Number    int64           `json:"number"`
+	Reactions []ReactionGroup `json:"reactions"`
+	State     IssueState      `json:"state"`
+
+	// StateReason completed, not_planned or duplicate when closed; reopened after a reopen; empty otherwise
+	StateReason string    `json:"stateReason"`
+	Title       string    `json:"title"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+// IssueState defines model for Issue.State.
+type IssueState string
+
+// IssueComment defines model for IssueComment.
+type IssueComment struct {
+	Author string `json:"author"`
+
+	// Body Markdown
+	Body        string             `json:"body"`
+	CreatedAt   time.Time          `json:"createdAt"`
+	EditedAt    *time.Time         `json:"editedAt,omitempty"`
+	EditedBy    *string            `json:"editedBy,omitempty"`
+	Id          openapi_types.UUID `json:"id"`
+	IssueNumber int64              `json:"issueNumber"`
+	Reactions   []ReactionGroup    `json:"reactions"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
+}
+
+// IssueContactLink defines model for IssueContactLink.
+type IssueContactLink struct {
+	About string `json:"about"`
+	Name  string `json:"name"`
+	Url   string `json:"url"`
+}
+
+// IssueCreate defines model for IssueCreate.
+type IssueCreate struct {
+	Assignees   *[]string           `json:"assignees,omitempty"`
+	Body        *string             `json:"body,omitempty"`
+	Labels      *[]string           `json:"labels,omitempty"`
+	MilestoneId *openapi_types.UUID `json:"milestoneId,omitempty"`
+	Title       string              `json:"title"`
+}
+
+// IssueLock defines model for IssueLock.
+type IssueLock struct {
+	// LockReason off-topic, too heated, resolved, spam or empty
+	LockReason *string `json:"lockReason,omitempty"`
+}
+
+// IssueTemplate defines model for IssueTemplate.
+type IssueTemplate struct {
+	// About The about of a markdown template or the description of a form
+	About     string   `json:"about"`
+	Assignees []string `json:"assignees"`
+
+	// Body Body of a markdown template; empty for forms
+	Body     string `json:"body"`
+	FileName string `json:"fileName"`
+
+	// Form The body elements of an issue form, as written in the YAML file
+	Form   *[]map[string]interface{} `json:"form,omitempty"`
+	Kind   IssueTemplateKind         `json:"kind"`
+	Labels []string                  `json:"labels"`
+	Name   string                    `json:"name"`
+
+	// Title Default issue title
+	Title string `json:"title"`
+}
+
+// IssueTemplateKind defines model for IssueTemplate.Kind.
+type IssueTemplateKind string
+
+// IssueTemplateConfig defines model for IssueTemplateConfig.
+type IssueTemplateConfig struct {
+	BlankIssuesEnabled bool               `json:"blankIssuesEnabled"`
+	ContactLinks       []IssueContactLink `json:"contactLinks"`
+}
+
+// IssueTemplates defines model for IssueTemplates.
+type IssueTemplates struct {
+	Config    IssueTemplateConfig `json:"config"`
+	Templates []IssueTemplate     `json:"templates"`
+}
+
+// IssueUpdate defines model for IssueUpdate.
+type IssueUpdate struct {
+	Assignees *[]string `json:"assignees,omitempty"`
+	Body      *string   `json:"body,omitempty"`
+	Labels    *[]string `json:"labels,omitempty"`
+
+	// MilestoneId Milestone id; empty clears it
+	MilestoneId *string           `json:"milestoneId,omitempty"`
+	State       *IssueUpdateState `json:"state,omitempty"`
+
+	// StateReason On close: completed (default), not_planned or duplicate
+	StateReason *string `json:"stateReason,omitempty"`
+	Title       *string `json:"title,omitempty"`
+}
+
+// IssueUpdateState defines model for IssueUpdate.State.
+type IssueUpdateState string
+
+// Label defines model for Label.
+type Label struct {
+	// Color Six lowercase hex digits
+	Color       string             `json:"color"`
+	Description string             `json:"description"`
+	Id          openapi_types.UUID `json:"id"`
+	Name        string             `json:"name"`
+}
+
+// LabelCreate defines model for LabelCreate.
+type LabelCreate struct {
+	Color       string  `json:"color"`
+	Description *string `json:"description,omitempty"`
+	Name        string  `json:"name"`
+}
+
+// LabelUpdate defines model for LabelUpdate.
+type LabelUpdate struct {
+	Color       *string `json:"color,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Name        *string `json:"name,omitempty"`
+}
+
 // LfsPointer defines model for LfsPointer.
 type LfsPointer struct {
 	// Oid SHA-256 of the content
@@ -966,6 +1806,43 @@ type MfaEnrollResult struct {
 	RecoveryCodes []string `json:"recoveryCodes"`
 	User          User     `json:"user"`
 }
+
+// Milestone defines model for Milestone.
+type Milestone struct {
+	ClosedAt     *time.Time         `json:"closedAt,omitempty"`
+	ClosedIssues int64              `json:"closedIssues"`
+	CreatedAt    time.Time          `json:"createdAt"`
+	Description  string             `json:"description"`
+	DueOn        *time.Time         `json:"dueOn,omitempty"`
+	Id           openapi_types.UUID `json:"id"`
+	OpenIssues   int64              `json:"openIssues"`
+	State        MilestoneState     `json:"state"`
+	Title        string             `json:"title"`
+	UpdatedAt    time.Time          `json:"updatedAt"`
+}
+
+// MilestoneState defines model for Milestone.State.
+type MilestoneState string
+
+// MilestoneCreate defines model for MilestoneCreate.
+type MilestoneCreate struct {
+	Description *string    `json:"description,omitempty"`
+	DueOn       *time.Time `json:"dueOn,omitempty"`
+	Title       string     `json:"title"`
+}
+
+// MilestoneUpdate defines model for MilestoneUpdate.
+type MilestoneUpdate struct {
+	Description *string `json:"description,omitempty"`
+
+	// DueOn RFC 3339 date-time; empty clears it
+	DueOn *string               `json:"dueOn,omitempty"`
+	State *MilestoneUpdateState `json:"state,omitempty"`
+	Title *string               `json:"title,omitempty"`
+}
+
+// MilestoneUpdateState defines model for MilestoneUpdate.State.
+type MilestoneUpdateState string
 
 // OidcLink defines model for OidcLink.
 type OidcLink struct {
@@ -1129,6 +2006,16 @@ type ProfileUpdate struct {
 // ProfileUpdateLocale defines model for ProfileUpdate.Locale.
 type ProfileUpdateLocale string
 
+// ProtectionViolation defines model for ProtectionViolation.
+type ProtectionViolation struct {
+	// Code Machine-readable reason: push_restricted, force_push, deletion, linear_history, unsigned_commit, too_many_commits, pull_request_required, status_checks, tag_create, tag_update, tag_delete
+	Code string `json:"code"`
+
+	// Commit Offending commit
+	Commit  *string `json:"commit,omitempty"`
+	Message string  `json:"message"`
+}
+
 // Quota defines model for Quota.
 type Quota struct {
 	// MaxRepos -1 means unlimited
@@ -1138,6 +2025,27 @@ type Quota struct {
 	MaxStorageBytes int64 `json:"maxStorageBytes"`
 	Repos           int32 `json:"repos"`
 	StorageBytes    int64 `json:"storageBytes"`
+}
+
+// Reaction defines model for Reaction.
+type Reaction struct {
+	Content   string             `json:"content"`
+	CreatedAt time.Time          `json:"createdAt"`
+	Id        openapi_types.UUID `json:"id"`
+	User      string             `json:"user"`
+}
+
+// ReactionGroup defines model for ReactionGroup.
+type ReactionGroup struct {
+	Content       string `json:"content"`
+	Count         int64  `json:"count"`
+	ViewerReacted bool   `json:"viewerReacted"`
+}
+
+// ReactionRequest defines model for ReactionRequest.
+type ReactionRequest struct {
+	// Content +1, -1, laugh, hooray, confused, heart, rocket or eyes
+	Content string `json:"content"`
 }
 
 // ReauthRequest Either the password or a current authenticator app or recovery code
@@ -1151,6 +2059,35 @@ type RecoveryCodes struct {
 	// Codes Shown only once; empty when existing codes were kept
 	Codes []string `json:"codes"`
 }
+
+// RefUpdateCheck defines model for RefUpdateCheck.
+type RefUpdateCheck struct {
+	// New New object id; empty or all zeros means deletion
+	New *string `json:"new,omitempty"`
+
+	// Old Current object id; empty reads it from the repository
+	Old *string `json:"old,omitempty"`
+
+	// Ref Full ref name (refs/heads/main, refs/tags/v1) or a branch name
+	Ref string `json:"ref"`
+
+	// User Username to evaluate as; defaults to the caller
+	User *string `json:"user,omitempty"`
+}
+
+// RefUpdateEvaluation defines model for RefUpdateEvaluation.
+type RefUpdateEvaluation struct {
+	Allowed bool                    `json:"allowed"`
+	Kind    RefUpdateEvaluationKind `json:"kind"`
+	Ref     string                  `json:"ref"`
+
+	// Rule Pattern of the rule that applies; empty when none
+	Rule       string                `json:"rule"`
+	Violations []ProtectionViolation `json:"violations"`
+}
+
+// RefUpdateEvaluationKind defines model for RefUpdateEvaluation.Kind.
+type RefUpdateEvaluationKind string
 
 // RegisterAccepted defines model for RegisterAccepted.
 type RegisterAccepted struct {
@@ -1493,6 +2430,53 @@ type TagPage struct {
 	Items   []GitTag `json:"items"`
 }
 
+// TagRule defines model for TagRule.
+type TagRule struct {
+	AdminsBypass bool     `json:"adminsBypass"`
+	AllowedTeams []string `json:"allowedTeams"`
+	AllowedUsers []string `json:"allowedUsers"`
+
+	// Create Minimum repository permission for an action; none allows only the listed users and teams
+	Create    TagRuleLevel `json:"create"`
+	CreatedAt time.Time    `json:"createdAt"`
+
+	// Delete Minimum repository permission for an action; none allows only the listed users and teams
+	Delete  TagRuleLevel       `json:"delete"`
+	Id      openapi_types.UUID `json:"id"`
+	Pattern string             `json:"pattern"`
+
+	// Update Minimum repository permission for an action; none allows only the listed users and teams
+	Update    TagRuleLevel `json:"update"`
+	UpdatedAt time.Time    `json:"updatedAt"`
+}
+
+// TagRuleInput defines model for TagRuleInput.
+type TagRuleInput struct {
+	// AdminsBypass Repository admins are exempt from the rule (default false)
+	AdminsBypass *bool `json:"adminsBypass,omitempty"`
+
+	// AllowedTeams Teams of the owning organization allowed every action
+	AllowedTeams *[]string `json:"allowedTeams,omitempty"`
+
+	// AllowedUsers Usernames allowed every action regardless of the levels
+	AllowedUsers *[]string `json:"allowedUsers,omitempty"`
+
+	// Create Minimum repository permission for an action; none allows only the listed users and teams
+	Create *TagRuleLevel `json:"create,omitempty"`
+
+	// Delete Minimum repository permission for an action; none allows only the listed users and teams
+	Delete *TagRuleLevel `json:"delete,omitempty"`
+
+	// Pattern Glob on the tag name
+	Pattern string `json:"pattern"`
+
+	// Update Minimum repository permission for an action; none allows only the listed users and teams
+	Update *TagRuleLevel `json:"update,omitempty"`
+}
+
+// TagRuleLevel Minimum repository permission for an action; none allows only the listed users and teams
+type TagRuleLevel string
+
 // Team defines model for Team.
 type Team struct {
 	CreatedAt   time.Time          `json:"createdAt"`
@@ -1533,6 +2517,48 @@ type TeamUpdate struct {
 	Description *string `json:"description,omitempty"`
 	Name        *string `json:"name,omitempty"`
 }
+
+// TimelineEvent defines model for TimelineEvent.
+type TimelineEvent struct {
+	Actor     string        `json:"actor"`
+	Assignee  *string       `json:"assignee,omitempty"`
+	Comment   *IssueComment `json:"comment,omitempty"`
+	CreatedAt time.Time     `json:"createdAt"`
+
+	// Event commented, closed, reopened, renamed, labeled, unlabeled, assigned,
+	// unassigned, milestoned, demilestoned, locked, unlocked, referenced
+	// or cross-referenced
+	Event      string             `json:"event"`
+	Id         openapi_types.UUID `json:"id"`
+	Label      *Label             `json:"label,omitempty"`
+	LockReason *string            `json:"lockReason,omitempty"`
+
+	// Milestone Milestone title at the time of the event
+	Milestone  *string `json:"milestone,omitempty"`
+	RenameFrom *string `json:"renameFrom,omitempty"`
+	RenameTo   *string `json:"renameTo,omitempty"`
+
+	// Source Where an issue was referenced from
+	Source      *TimelineSource `json:"source,omitempty"`
+	StateReason *string         `json:"stateReason,omitempty"`
+}
+
+// TimelineSource Where an issue was referenced from
+type TimelineSource struct {
+	Commit *string            `json:"commit,omitempty"`
+	Kind   TimelineSourceKind `json:"kind"`
+	Number *int64             `json:"number,omitempty"`
+
+	// Redacted The source is in a repository the caller cannot read; nothing else is set
+	Redacted bool `json:"redacted"`
+
+	// Repo owner/name
+	Repo  *string `json:"repo,omitempty"`
+	Title *string `json:"title,omitempty"`
+}
+
+// TimelineSourceKind defines model for TimelineSource.Kind.
+type TimelineSourceKind string
 
 // TokenRequest defines model for TokenRequest.
 type TokenRequest struct {
@@ -1644,6 +2670,9 @@ type PageLimit = int
 // PageOffset defines model for PageOffset.
 type PageOffset = int
 
+// ProtectionRuleId defines model for ProtectionRuleId.
+type ProtectionRuleId = openapi_types.UUID
+
 // RepoName defines model for RepoName.
 type RepoName = string
 
@@ -1685,6 +2714,11 @@ type ListAdminAuditParams struct {
 
 	// Org Only entries of this organization
 	Org *openapi_types.UUID `form:"org,omitempty" json:"org,omitempty"`
+}
+
+// ListGitHubConnectionsParams defines parameters for ListGitHubConnections.
+type ListGitHubConnectionsParams struct {
+	Owner *string `form:"owner,omitempty" json:"owner,omitempty"`
 }
 
 // ListOrgAuditParams defines parameters for ListOrgAudit.
@@ -1743,6 +2777,104 @@ type CompareRefsParams struct {
 	Base string `form:"base" json:"base"`
 	Head string `form:"head" json:"head"`
 }
+
+// ListIssuesParams defines parameters for ListIssues.
+type ListIssuesParams struct {
+	// State Default open
+	State *ListIssuesParamsState `form:"state,omitempty" json:"state,omitempty"`
+
+	// Labels Comma-separated label names; every one must be set
+	Labels *string `form:"labels,omitempty" json:"labels,omitempty"`
+
+	// Milestone Milestone id, "none" or "*" (any)
+	Milestone *string `form:"milestone,omitempty" json:"milestone,omitempty"`
+
+	// Assignee Username, "none" or "*" (any)
+	Assignee *string `form:"assignee,omitempty" json:"assignee,omitempty"`
+
+	// Author Username of the author
+	Author *string `form:"author,omitempty" json:"author,omitempty"`
+
+	// Mentioned Username mentioned in the issue or its comments
+	Mentioned *string `form:"mentioned,omitempty" json:"mentioned,omitempty"`
+
+	// Q Full-text query (websearch syntax)
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+
+	// Sort Default created, or relevance with q
+	Sort *ListIssuesParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// Direction Default desc
+	Direction *ListIssuesParamsDirection `form:"direction,omitempty" json:"direction,omitempty"`
+	Offset    *PageOffset                `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit     *PageLimit                 `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListIssuesParamsState defines parameters for ListIssues.
+type ListIssuesParamsState string
+
+// ListIssuesParamsSort defines parameters for ListIssues.
+type ListIssuesParamsSort string
+
+// ListIssuesParamsDirection defines parameters for ListIssues.
+type ListIssuesParamsDirection string
+
+// ListIssueCommentEditsParams defines parameters for ListIssueCommentEdits.
+type ListIssueCommentEditsParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListIssueCommentReactionsParams defines parameters for ListIssueCommentReactions.
+type ListIssueCommentReactionsParams struct {
+	// Content Only this reaction
+	Content *string     `form:"content,omitempty" json:"content,omitempty"`
+	Offset  *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit   *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListIssueCommentsParams defines parameters for ListIssueComments.
+type ListIssueCommentsParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListIssueEditsParams defines parameters for ListIssueEdits.
+type ListIssueEditsParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListIssueReactionsParams defines parameters for ListIssueReactions.
+type ListIssueReactionsParams struct {
+	// Content Only this reaction
+	Content *string     `form:"content,omitempty" json:"content,omitempty"`
+	Offset  *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit   *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListIssueTimelineParams defines parameters for ListIssueTimeline.
+type ListIssueTimelineParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListLabelsParams defines parameters for ListLabels.
+type ListLabelsParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListMilestonesParams defines parameters for ListMilestones.
+type ListMilestonesParams struct {
+	// State Default open
+	State  *ListMilestonesParamsState `form:"state,omitempty" json:"state,omitempty"`
+	Offset *PageOffset                `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit                 `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListMilestonesParamsState defines parameters for ListMilestones.
+type ListMilestonesParamsState string
 
 // GetReadmeParams defines parameters for GetReadme.
 type GetReadmeParams struct {
@@ -1854,6 +2986,15 @@ type ResetPasswordJSONRequestBody = ResetPasswordRequest
 // RegisterJSONRequestBody defines body for Register for application/json ContentType.
 type RegisterJSONRequestBody = RegisterRequest
 
+// CreateGitHubConnectionJSONRequestBody defines body for CreateGitHubConnection for application/json ContentType.
+type CreateGitHubConnectionJSONRequestBody = GitHubConnectionCreate
+
+// UpdateGitHubConnectionJSONRequestBody defines body for UpdateGitHubConnection for application/json ContentType.
+type UpdateGitHubConnectionJSONRequestBody = GitHubConnectionUpdate
+
+// ImportGitHubRepoJSONRequestBody defines body for ImportGitHubRepo for application/json ContentType.
+type ImportGitHubRepoJSONRequestBody = GitHubImportCreate
+
 // CreateOrgJSONRequestBody defines body for CreateOrg for application/json ContentType.
 type CreateOrgJSONRequestBody = OrgCreate
 
@@ -1884,11 +3025,59 @@ type SetTeamMemberJSONRequestBody = TeamRoleRequest
 // UpdateRepoJSONRequestBody defines body for UpdateRepo for application/json ContentType.
 type UpdateRepoJSONRequestBody = RepoUpdate
 
+// CreateBranchProtectionJSONRequestBody defines body for CreateBranchProtection for application/json ContentType.
+type CreateBranchProtectionJSONRequestBody = BranchProtectionInput
+
+// EvaluateRefUpdateJSONRequestBody defines body for EvaluateRefUpdate for application/json ContentType.
+type EvaluateRefUpdateJSONRequestBody = RefUpdateCheck
+
+// UpdateBranchProtectionJSONRequestBody defines body for UpdateBranchProtection for application/json ContentType.
+type UpdateBranchProtectionJSONRequestBody = BranchProtectionInput
+
 // SetRepoCollaboratorJSONRequestBody defines body for SetRepoCollaborator for application/json ContentType.
 type SetRepoCollaboratorJSONRequestBody = RepoPermissionRequest
 
 // EditContentsJSONRequestBody defines body for EditContents for application/json ContentType.
 type EditContentsJSONRequestBody = FileEdit
+
+// PutGitHubSyncLinkJSONRequestBody defines body for PutGitHubSyncLink for application/json ContentType.
+type PutGitHubSyncLinkJSONRequestBody = GitHubSyncLinkPut
+
+// ResolveGitHubSyncConflictJSONRequestBody defines body for ResolveGitHubSyncConflict for application/json ContentType.
+type ResolveGitHubSyncConflictJSONRequestBody = GitHubSyncResolve
+
+// CreateIssueJSONRequestBody defines body for CreateIssue for application/json ContentType.
+type CreateIssueJSONRequestBody = IssueCreate
+
+// UpdateIssueCommentJSONRequestBody defines body for UpdateIssueComment for application/json ContentType.
+type UpdateIssueCommentJSONRequestBody = CommentBody
+
+// AddIssueCommentReactionJSONRequestBody defines body for AddIssueCommentReaction for application/json ContentType.
+type AddIssueCommentReactionJSONRequestBody = ReactionRequest
+
+// UpdateIssueJSONRequestBody defines body for UpdateIssue for application/json ContentType.
+type UpdateIssueJSONRequestBody = IssueUpdate
+
+// CreateIssueCommentJSONRequestBody defines body for CreateIssueComment for application/json ContentType.
+type CreateIssueCommentJSONRequestBody = CommentBody
+
+// LockIssueJSONRequestBody defines body for LockIssue for application/json ContentType.
+type LockIssueJSONRequestBody = IssueLock
+
+// AddIssueReactionJSONRequestBody defines body for AddIssueReaction for application/json ContentType.
+type AddIssueReactionJSONRequestBody = ReactionRequest
+
+// CreateLabelJSONRequestBody defines body for CreateLabel for application/json ContentType.
+type CreateLabelJSONRequestBody = LabelCreate
+
+// UpdateLabelJSONRequestBody defines body for UpdateLabel for application/json ContentType.
+type UpdateLabelJSONRequestBody = LabelUpdate
+
+// CreateMilestoneJSONRequestBody defines body for CreateMilestone for application/json ContentType.
+type CreateMilestoneJSONRequestBody = MilestoneCreate
+
+// UpdateMilestoneJSONRequestBody defines body for UpdateMilestone for application/json ContentType.
+type UpdateMilestoneJSONRequestBody = MilestoneUpdate
 
 // CreateReleaseJSONRequestBody defines body for CreateRelease for application/json ContentType.
 type CreateReleaseJSONRequestBody = ReleaseCreate
@@ -1898,6 +3087,12 @@ type UpdateReleaseJSONRequestBody = ReleaseUpdate
 
 // UpdateReleaseAssetJSONRequestBody defines body for UpdateReleaseAsset for application/json ContentType.
 type UpdateReleaseAssetJSONRequestBody = ReleaseAssetUpdate
+
+// CreateTagRuleJSONRequestBody defines body for CreateTagRule for application/json ContentType.
+type CreateTagRuleJSONRequestBody = TagRuleInput
+
+// UpdateTagRuleJSONRequestBody defines body for UpdateTagRule for application/json ContentType.
+type UpdateTagRuleJSONRequestBody = TagRuleInput
 
 // TransferRepoJSONRequestBody defines body for TransferRepo for application/json ContentType.
 type TransferRepoJSONRequestBody = RepoTransfer
@@ -2021,6 +3216,27 @@ type ServerInterface interface {
 	// Register Create an account
 	// (POST /auth/register)
 	Register(w http.ResponseWriter, r *http.Request)
+	// ListGitHubConnections GitHub connections of a user or organization
+	// (GET /github/connections)
+	ListGitHubConnections(w http.ResponseWriter, r *http.Request, params ListGitHubConnectionsParams)
+	// CreateGitHubConnection Connect a GitHub App installation or a fine-grained token
+	// (POST /github/connections)
+	CreateGitHubConnection(w http.ResponseWriter, r *http.Request)
+	// DeleteGitHubConnection Delete a connection that no repository uses (409 otherwise)
+	// (DELETE /github/connections/{connectionId})
+	DeleteGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID)
+	// GetGitHubConnection A GitHub connection
+	// (GET /github/connections/{connectionId})
+	GetGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID)
+	// UpdateGitHubConnection Rename a connection, replace its credentials or rotate the webhook secret
+	// (PATCH /github/connections/{connectionId})
+	UpdateGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID)
+	// CheckGitHubConnection Verify the credentials of a connection against GitHub
+	// (POST /github/connections/{connectionId}/check)
+	CheckGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID)
+	// ImportGitHubRepo Import the git data of a GitHub repository into a new repository
+	// (POST /github/imports)
+	ImportGitHubRepo(w http.ResponseWriter, r *http.Request)
 	// GetMeta Public information about this instance
 	// (GET /meta)
 	GetMeta(w http.ResponseWriter, r *http.Request)
@@ -2111,6 +3327,24 @@ type ServerInterface interface {
 	// GetBlob A file of a ref
 	// (GET /repos/{owner}/{name}/blob)
 	GetBlob(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params GetBlobParams)
+	// ListBranchProtections Branch protection rules of the repository
+	// (GET /repos/{owner}/{name}/branch-protections)
+	ListBranchProtections(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// CreateBranchProtection Create a branch protection rule
+	// (POST /repos/{owner}/{name}/branch-protections)
+	CreateBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// EvaluateRefUpdate Dry-run a ref update against the branch protection and tag rules
+	// (POST /repos/{owner}/{name}/branch-protections/evaluate)
+	EvaluateRefUpdate(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeleteBranchProtection Delete a branch protection rule
+	// (DELETE /repos/{owner}/{name}/branch-protections/{ruleId})
+	DeleteBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId)
+	// GetBranchProtection A branch protection rule
+	// (GET /repos/{owner}/{name}/branch-protections/{ruleId})
+	GetBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId)
+	// UpdateBranchProtection Replace a branch protection rule
+	// (PUT /repos/{owner}/{name}/branch-protections/{ruleId})
+	UpdateBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId)
 	// ListBranches Branches, most recently committed first
 	// (GET /repos/{owner}/{name}/branches)
 	ListBranches(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListBranchesParams)
@@ -2135,6 +3369,120 @@ type ServerInterface interface {
 	// EditContents Create, update or delete a file with a commit
 	// (POST /repos/{owner}/{name}/contents)
 	EditContents(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// GetGitHubImport Status of the import that created the repository
+	// (GET /repos/{owner}/{name}/github/import)
+	GetGitHubImport(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeleteGitHubSyncLink Remove the GitHub sync link (the GitHub repository is untouched)
+	// (DELETE /repos/{owner}/{name}/github/sync)
+	DeleteGitHubSyncLink(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// GetGitHubSyncLink The GitHub sync link of a repository (404 when none)
+	// (GET /repos/{owner}/{name}/github/sync)
+	GetGitHubSyncLink(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// PutGitHubSyncLink Create or replace the GitHub sync link of a repository
+	// (PUT /repos/{owner}/{name}/github/sync)
+	PutGitHubSyncLink(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// ListGitHubSyncRefs Per-ref state of the GitHub sync link
+	// (GET /repos/{owner}/{name}/github/sync/refs)
+	ListGitHubSyncRefs(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// ResolveGitHubSyncConflict Resolve a diverged branch of a sync link
+	// (POST /repos/{owner}/{name}/github/sync/resolve)
+	ResolveGitHubSyncConflict(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// RunGitHubSync Run the GitHub sync link now (clears the backoff)
+	// (POST /repos/{owner}/{name}/github/sync/run)
+	RunGitHubSync(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// ListIssueTemplates Issue templates of the default branch
+	// (GET /repos/{owner}/{name}/issue-templates)
+	ListIssueTemplates(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// ListIssues Search the issues of the repository
+	// (GET /repos/{owner}/{name}/issues)
+	ListIssues(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListIssuesParams)
+	// CreateIssue Open an issue
+	// (POST /repos/{owner}/{name}/issues)
+	CreateIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeleteIssueAttachment Delete an attachment
+	// (DELETE /repos/{owner}/{name}/issues/attachments/{attachmentId})
+	DeleteIssueAttachment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, attachmentId openapi_types.UUID)
+	// DeleteIssueComment Delete a comment
+	// (DELETE /repos/{owner}/{name}/issues/comments/{commentId})
+	DeleteIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID)
+	// GetIssueComment A comment
+	// (GET /repos/{owner}/{name}/issues/comments/{commentId})
+	GetIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID)
+	// UpdateIssueComment Edit a comment
+	// (PATCH /repos/{owner}/{name}/issues/comments/{commentId})
+	UpdateIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID)
+	// ListIssueCommentEdits Previous bodies of a comment, newest first
+	// (GET /repos/{owner}/{name}/issues/comments/{commentId}/edits)
+	ListIssueCommentEdits(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID, params ListIssueCommentEditsParams)
+	// ListIssueCommentReactions Reactions to a comment
+	// (GET /repos/{owner}/{name}/issues/comments/{commentId}/reactions)
+	ListIssueCommentReactions(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID, params ListIssueCommentReactionsParams)
+	// AddIssueCommentReaction React to a comment
+	// (POST /repos/{owner}/{name}/issues/comments/{commentId}/reactions)
+	AddIssueCommentReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID)
+	// RemoveIssueCommentReaction Remove the caller's reaction
+	// (DELETE /repos/{owner}/{name}/issues/comments/{commentId}/reactions/{content})
+	RemoveIssueCommentReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID, content string)
+	// GetIssue An issue
+	// (GET /repos/{owner}/{name}/issues/{number})
+	GetIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64)
+	// UpdateIssue Edit, close or reopen an issue
+	// (PATCH /repos/{owner}/{name}/issues/{number})
+	UpdateIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64)
+	// ListIssueComments Comments of an issue, oldest first
+	// (GET /repos/{owner}/{name}/issues/{number}/comments)
+	ListIssueComments(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueCommentsParams)
+	// CreateIssueComment Comment on an issue
+	// (POST /repos/{owner}/{name}/issues/{number}/comments)
+	CreateIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64)
+	// ListIssueEdits Previous bodies of an issue, newest first
+	// (GET /repos/{owner}/{name}/issues/{number}/edits)
+	ListIssueEdits(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueEditsParams)
+	// UnlockIssue Unlock the conversation
+	// (DELETE /repos/{owner}/{name}/issues/{number}/lock)
+	UnlockIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64)
+	// LockIssue Lock the conversation
+	// (PUT /repos/{owner}/{name}/issues/{number}/lock)
+	LockIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64)
+	// ListIssueReactions Reactions to an issue
+	// (GET /repos/{owner}/{name}/issues/{number}/reactions)
+	ListIssueReactions(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueReactionsParams)
+	// AddIssueReaction React to an issue
+	// (POST /repos/{owner}/{name}/issues/{number}/reactions)
+	AddIssueReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64)
+	// RemoveIssueReaction Remove the caller's reaction
+	// (DELETE /repos/{owner}/{name}/issues/{number}/reactions/{content})
+	RemoveIssueReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, content string)
+	// ListIssueTimeline Events and comments of an issue, oldest first
+	// (GET /repos/{owner}/{name}/issues/{number}/timeline)
+	ListIssueTimeline(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueTimelineParams)
+	// ListLabels Labels of the repository, by name
+	// (GET /repos/{owner}/{name}/labels)
+	ListLabels(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListLabelsParams)
+	// CreateLabel Create a label
+	// (POST /repos/{owner}/{name}/labels)
+	CreateLabel(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeleteLabel Delete a label
+	// (DELETE /repos/{owner}/{name}/labels/{label})
+	DeleteLabel(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, label string)
+	// UpdateLabel Edit a label
+	// (PATCH /repos/{owner}/{name}/labels/{label})
+	UpdateLabel(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, label string)
+	// ListMilestones Milestones of the repository
+	// (GET /repos/{owner}/{name}/milestones)
+	ListMilestones(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListMilestonesParams)
+	// CreateMilestone Create a milestone
+	// (POST /repos/{owner}/{name}/milestones)
+	CreateMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeleteMilestone Delete a milestone
+	// (DELETE /repos/{owner}/{name}/milestones/{milestoneId})
+	DeleteMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID)
+	// GetMilestone A milestone
+	// (GET /repos/{owner}/{name}/milestones/{milestoneId})
+	GetMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID)
+	// UpdateMilestone Edit, close or reopen a milestone
+	// (PATCH /repos/{owner}/{name}/milestones/{milestoneId})
+	UpdateMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID)
 	// GetReadme The README of a directory
 	// (GET /repos/{owner}/{name}/readme)
 	GetReadme(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params GetReadmeParams)
@@ -2168,6 +3516,21 @@ type ServerInterface interface {
 	// SearchCode Search the text files of a ref (git grep)
 	// (GET /repos/{owner}/{name}/search/code)
 	SearchCode(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params SearchCodeParams)
+	// ListTagRules Tag rules of the repository
+	// (GET /repos/{owner}/{name}/tag-rules)
+	ListTagRules(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// CreateTagRule Create a tag rule
+	// (POST /repos/{owner}/{name}/tag-rules)
+	CreateTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeleteTagRule Delete a tag rule
+	// (DELETE /repos/{owner}/{name}/tag-rules/{ruleId})
+	DeleteTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId)
+	// GetTagRule A tag rule
+	// (GET /repos/{owner}/{name}/tag-rules/{ruleId})
+	GetTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId)
+	// UpdateTagRule Replace a tag rule
+	// (PUT /repos/{owner}/{name}/tag-rules/{ruleId})
+	UpdateTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId)
 	// ListTags Tags of commits, newest first
 	// (GET /repos/{owner}/{name}/tags)
 	ListTags(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListTagsParams)
@@ -2432,6 +3795,48 @@ func (_ Unimplemented) Register(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListGitHubConnections GitHub connections of a user or organization
+// (GET /github/connections)
+func (_ Unimplemented) ListGitHubConnections(w http.ResponseWriter, r *http.Request, params ListGitHubConnectionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateGitHubConnection Connect a GitHub App installation or a fine-grained token
+// (POST /github/connections)
+func (_ Unimplemented) CreateGitHubConnection(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteGitHubConnection Delete a connection that no repository uses (409 otherwise)
+// (DELETE /github/connections/{connectionId})
+func (_ Unimplemented) DeleteGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetGitHubConnection A GitHub connection
+// (GET /github/connections/{connectionId})
+func (_ Unimplemented) GetGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateGitHubConnection Rename a connection, replace its credentials or rotate the webhook secret
+// (PATCH /github/connections/{connectionId})
+func (_ Unimplemented) UpdateGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CheckGitHubConnection Verify the credentials of a connection against GitHub
+// (POST /github/connections/{connectionId}/check)
+func (_ Unimplemented) CheckGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ImportGitHubRepo Import the git data of a GitHub repository into a new repository
+// (POST /github/imports)
+func (_ Unimplemented) ImportGitHubRepo(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetMeta Public information about this instance
 // (GET /meta)
 func (_ Unimplemented) GetMeta(w http.ResponseWriter, r *http.Request) {
@@ -2612,6 +4017,42 @@ func (_ Unimplemented) GetBlob(w http.ResponseWriter, r *http.Request, owner Rep
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListBranchProtections Branch protection rules of the repository
+// (GET /repos/{owner}/{name}/branch-protections)
+func (_ Unimplemented) ListBranchProtections(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateBranchProtection Create a branch protection rule
+// (POST /repos/{owner}/{name}/branch-protections)
+func (_ Unimplemented) CreateBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// EvaluateRefUpdate Dry-run a ref update against the branch protection and tag rules
+// (POST /repos/{owner}/{name}/branch-protections/evaluate)
+func (_ Unimplemented) EvaluateRefUpdate(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteBranchProtection Delete a branch protection rule
+// (DELETE /repos/{owner}/{name}/branch-protections/{ruleId})
+func (_ Unimplemented) DeleteBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetBranchProtection A branch protection rule
+// (GET /repos/{owner}/{name}/branch-protections/{ruleId})
+func (_ Unimplemented) GetBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateBranchProtection Replace a branch protection rule
+// (PUT /repos/{owner}/{name}/branch-protections/{ruleId})
+func (_ Unimplemented) UpdateBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListBranches Branches, most recently committed first
 // (GET /repos/{owner}/{name}/branches)
 func (_ Unimplemented) ListBranches(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListBranchesParams) {
@@ -2657,6 +4098,234 @@ func (_ Unimplemented) CompareRefs(w http.ResponseWriter, r *http.Request, owner
 // EditContents Create, update or delete a file with a commit
 // (POST /repos/{owner}/{name}/contents)
 func (_ Unimplemented) EditContents(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetGitHubImport Status of the import that created the repository
+// (GET /repos/{owner}/{name}/github/import)
+func (_ Unimplemented) GetGitHubImport(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteGitHubSyncLink Remove the GitHub sync link (the GitHub repository is untouched)
+// (DELETE /repos/{owner}/{name}/github/sync)
+func (_ Unimplemented) DeleteGitHubSyncLink(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetGitHubSyncLink The GitHub sync link of a repository (404 when none)
+// (GET /repos/{owner}/{name}/github/sync)
+func (_ Unimplemented) GetGitHubSyncLink(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PutGitHubSyncLink Create or replace the GitHub sync link of a repository
+// (PUT /repos/{owner}/{name}/github/sync)
+func (_ Unimplemented) PutGitHubSyncLink(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListGitHubSyncRefs Per-ref state of the GitHub sync link
+// (GET /repos/{owner}/{name}/github/sync/refs)
+func (_ Unimplemented) ListGitHubSyncRefs(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ResolveGitHubSyncConflict Resolve a diverged branch of a sync link
+// (POST /repos/{owner}/{name}/github/sync/resolve)
+func (_ Unimplemented) ResolveGitHubSyncConflict(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RunGitHubSync Run the GitHub sync link now (clears the backoff)
+// (POST /repos/{owner}/{name}/github/sync/run)
+func (_ Unimplemented) RunGitHubSync(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListIssueTemplates Issue templates of the default branch
+// (GET /repos/{owner}/{name}/issue-templates)
+func (_ Unimplemented) ListIssueTemplates(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListIssues Search the issues of the repository
+// (GET /repos/{owner}/{name}/issues)
+func (_ Unimplemented) ListIssues(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListIssuesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateIssue Open an issue
+// (POST /repos/{owner}/{name}/issues)
+func (_ Unimplemented) CreateIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteIssueAttachment Delete an attachment
+// (DELETE /repos/{owner}/{name}/issues/attachments/{attachmentId})
+func (_ Unimplemented) DeleteIssueAttachment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, attachmentId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteIssueComment Delete a comment
+// (DELETE /repos/{owner}/{name}/issues/comments/{commentId})
+func (_ Unimplemented) DeleteIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetIssueComment A comment
+// (GET /repos/{owner}/{name}/issues/comments/{commentId})
+func (_ Unimplemented) GetIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateIssueComment Edit a comment
+// (PATCH /repos/{owner}/{name}/issues/comments/{commentId})
+func (_ Unimplemented) UpdateIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListIssueCommentEdits Previous bodies of a comment, newest first
+// (GET /repos/{owner}/{name}/issues/comments/{commentId}/edits)
+func (_ Unimplemented) ListIssueCommentEdits(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID, params ListIssueCommentEditsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListIssueCommentReactions Reactions to a comment
+// (GET /repos/{owner}/{name}/issues/comments/{commentId}/reactions)
+func (_ Unimplemented) ListIssueCommentReactions(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID, params ListIssueCommentReactionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AddIssueCommentReaction React to a comment
+// (POST /repos/{owner}/{name}/issues/comments/{commentId}/reactions)
+func (_ Unimplemented) AddIssueCommentReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RemoveIssueCommentReaction Remove the caller's reaction
+// (DELETE /repos/{owner}/{name}/issues/comments/{commentId}/reactions/{content})
+func (_ Unimplemented) RemoveIssueCommentReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID, content string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetIssue An issue
+// (GET /repos/{owner}/{name}/issues/{number})
+func (_ Unimplemented) GetIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateIssue Edit, close or reopen an issue
+// (PATCH /repos/{owner}/{name}/issues/{number})
+func (_ Unimplemented) UpdateIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListIssueComments Comments of an issue, oldest first
+// (GET /repos/{owner}/{name}/issues/{number}/comments)
+func (_ Unimplemented) ListIssueComments(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueCommentsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateIssueComment Comment on an issue
+// (POST /repos/{owner}/{name}/issues/{number}/comments)
+func (_ Unimplemented) CreateIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListIssueEdits Previous bodies of an issue, newest first
+// (GET /repos/{owner}/{name}/issues/{number}/edits)
+func (_ Unimplemented) ListIssueEdits(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueEditsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UnlockIssue Unlock the conversation
+// (DELETE /repos/{owner}/{name}/issues/{number}/lock)
+func (_ Unimplemented) UnlockIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// LockIssue Lock the conversation
+// (PUT /repos/{owner}/{name}/issues/{number}/lock)
+func (_ Unimplemented) LockIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListIssueReactions Reactions to an issue
+// (GET /repos/{owner}/{name}/issues/{number}/reactions)
+func (_ Unimplemented) ListIssueReactions(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueReactionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AddIssueReaction React to an issue
+// (POST /repos/{owner}/{name}/issues/{number}/reactions)
+func (_ Unimplemented) AddIssueReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RemoveIssueReaction Remove the caller's reaction
+// (DELETE /repos/{owner}/{name}/issues/{number}/reactions/{content})
+func (_ Unimplemented) RemoveIssueReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, content string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListIssueTimeline Events and comments of an issue, oldest first
+// (GET /repos/{owner}/{name}/issues/{number}/timeline)
+func (_ Unimplemented) ListIssueTimeline(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueTimelineParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListLabels Labels of the repository, by name
+// (GET /repos/{owner}/{name}/labels)
+func (_ Unimplemented) ListLabels(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListLabelsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateLabel Create a label
+// (POST /repos/{owner}/{name}/labels)
+func (_ Unimplemented) CreateLabel(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteLabel Delete a label
+// (DELETE /repos/{owner}/{name}/labels/{label})
+func (_ Unimplemented) DeleteLabel(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, label string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateLabel Edit a label
+// (PATCH /repos/{owner}/{name}/labels/{label})
+func (_ Unimplemented) UpdateLabel(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, label string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListMilestones Milestones of the repository
+// (GET /repos/{owner}/{name}/milestones)
+func (_ Unimplemented) ListMilestones(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListMilestonesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateMilestone Create a milestone
+// (POST /repos/{owner}/{name}/milestones)
+func (_ Unimplemented) CreateMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteMilestone Delete a milestone
+// (DELETE /repos/{owner}/{name}/milestones/{milestoneId})
+func (_ Unimplemented) DeleteMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetMilestone A milestone
+// (GET /repos/{owner}/{name}/milestones/{milestoneId})
+func (_ Unimplemented) GetMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateMilestone Edit, close or reopen a milestone
+// (PATCH /repos/{owner}/{name}/milestones/{milestoneId})
+func (_ Unimplemented) UpdateMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2723,6 +4392,36 @@ func (_ Unimplemented) UpdateReleaseAsset(w http.ResponseWriter, r *http.Request
 // SearchCode Search the text files of a ref (git grep)
 // (GET /repos/{owner}/{name}/search/code)
 func (_ Unimplemented) SearchCode(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params SearchCodeParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTagRules Tag rules of the repository
+// (GET /repos/{owner}/{name}/tag-rules)
+func (_ Unimplemented) ListTagRules(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTagRule Create a tag rule
+// (POST /repos/{owner}/{name}/tag-rules)
+func (_ Unimplemented) CreateTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteTagRule Delete a tag rule
+// (DELETE /repos/{owner}/{name}/tag-rules/{ruleId})
+func (_ Unimplemented) DeleteTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTagRule A tag rule
+// (GET /repos/{owner}/{name}/tag-rules/{ruleId})
+func (_ Unimplemented) GetTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateTagRule Replace a tag rule
+// (PUT /repos/{owner}/{name}/tag-rules/{ruleId})
+func (_ Unimplemented) UpdateTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -3478,6 +5177,227 @@ func (siw *ServerInterfaceWrapper) Register(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Register(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListGitHubConnections operation middleware
+func (siw *ServerInterfaceWrapper) ListGitHubConnections(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListGitHubConnectionsParams
+
+	// ------------- Optional query parameter "owner" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "owner", r.URL.Query(), &params.Owner, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "owner"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGitHubConnections(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGitHubConnection operation middleware
+func (siw *ServerInterfaceWrapper) CreateGitHubConnection(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGitHubConnection(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGitHubConnection operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGitHubConnection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectionId" -------------
+	var connectionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectionId", chi.URLParam(r, "connectionId"), &connectionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectionId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGitHubConnection(w, r, connectionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGitHubConnection operation middleware
+func (siw *ServerInterfaceWrapper) GetGitHubConnection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectionId" -------------
+	var connectionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectionId", chi.URLParam(r, "connectionId"), &connectionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectionId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGitHubConnection(w, r, connectionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateGitHubConnection operation middleware
+func (siw *ServerInterfaceWrapper) UpdateGitHubConnection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectionId" -------------
+	var connectionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectionId", chi.URLParam(r, "connectionId"), &connectionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectionId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateGitHubConnection(w, r, connectionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CheckGitHubConnection operation middleware
+func (siw *ServerInterfaceWrapper) CheckGitHubConnection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectionId" -------------
+	var connectionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectionId", chi.URLParam(r, "connectionId"), &connectionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectionId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CheckGitHubConnection(w, r, connectionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImportGitHubRepo operation middleware
+func (siw *ServerInterfaceWrapper) ImportGitHubRepo(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportGitHubRepo(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4680,6 +6600,291 @@ func (siw *ServerInterfaceWrapper) GetBlob(w http.ResponseWriter, r *http.Reques
 	handler.ServeHTTP(w, r)
 }
 
+// ListBranchProtections operation middleware
+func (siw *ServerInterfaceWrapper) ListBranchProtections(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListBranchProtections(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateBranchProtection operation middleware
+func (siw *ServerInterfaceWrapper) CreateBranchProtection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateBranchProtection(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EvaluateRefUpdate operation middleware
+func (siw *ServerInterfaceWrapper) EvaluateRefUpdate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EvaluateRefUpdate(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteBranchProtection operation middleware
+func (siw *ServerInterfaceWrapper) DeleteBranchProtection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId ProtectionRuleId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", chi.URLParam(r, "ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteBranchProtection(w, r, owner, name, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetBranchProtection operation middleware
+func (siw *ServerInterfaceWrapper) GetBranchProtection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId ProtectionRuleId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", chi.URLParam(r, "ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBranchProtection(w, r, owner, name, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateBranchProtection operation middleware
+func (siw *ServerInterfaceWrapper) UpdateBranchProtection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId ProtectionRuleId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", chi.URLParam(r, "ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateBranchProtection(w, r, owner, name, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListBranches operation middleware
 func (siw *ServerInterfaceWrapper) ListBranches(w http.ResponseWriter, r *http.Request) {
 
@@ -5155,6 +7360,2291 @@ func (siw *ServerInterfaceWrapper) EditContents(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.EditContents(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGitHubImport operation middleware
+func (siw *ServerInterfaceWrapper) GetGitHubImport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGitHubImport(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGitHubSyncLink operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGitHubSyncLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGitHubSyncLink(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGitHubSyncLink operation middleware
+func (siw *ServerInterfaceWrapper) GetGitHubSyncLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGitHubSyncLink(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutGitHubSyncLink operation middleware
+func (siw *ServerInterfaceWrapper) PutGitHubSyncLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutGitHubSyncLink(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListGitHubSyncRefs operation middleware
+func (siw *ServerInterfaceWrapper) ListGitHubSyncRefs(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGitHubSyncRefs(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResolveGitHubSyncConflict operation middleware
+func (siw *ServerInterfaceWrapper) ResolveGitHubSyncConflict(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResolveGitHubSyncConflict(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RunGitHubSync operation middleware
+func (siw *ServerInterfaceWrapper) RunGitHubSync(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RunGitHubSync(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIssueTemplates operation middleware
+func (siw *ServerInterfaceWrapper) ListIssueTemplates(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIssueTemplates(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIssues operation middleware
+func (siw *ServerInterfaceWrapper) ListIssues(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListIssuesParams
+
+	// ------------- Optional query parameter "state" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "state", r.URL.Query(), &params.State, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "state"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "state", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "labels" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "labels", r.URL.Query(), &params.Labels, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "labels"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "labels", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "milestone" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "milestone", r.URL.Query(), &params.Milestone, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "milestone"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "milestone", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "assignee" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "assignee", r.URL.Query(), &params.Assignee, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "assignee"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "assignee", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "author" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "author", r.URL.Query(), &params.Author, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "author"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "author", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "mentioned" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "mentioned", r.URL.Query(), &params.Mentioned, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "mentioned"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "mentioned", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "direction" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "direction", r.URL.Query(), &params.Direction, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "direction"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "direction", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIssues(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateIssue operation middleware
+func (siw *ServerInterfaceWrapper) CreateIssue(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateIssue(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteIssueAttachment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteIssueAttachment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "attachmentId" -------------
+	var attachmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachmentId", chi.URLParam(r, "attachmentId"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachmentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteIssueAttachment(w, r, owner, name, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteIssueComment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteIssueComment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteIssueComment(w, r, owner, name, commentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetIssueComment operation middleware
+func (siw *ServerInterfaceWrapper) GetIssueComment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetIssueComment(w, r, owner, name, commentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateIssueComment operation middleware
+func (siw *ServerInterfaceWrapper) UpdateIssueComment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateIssueComment(w, r, owner, name, commentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIssueCommentEdits operation middleware
+func (siw *ServerInterfaceWrapper) ListIssueCommentEdits(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListIssueCommentEditsParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIssueCommentEdits(w, r, owner, name, commentId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIssueCommentReactions operation middleware
+func (siw *ServerInterfaceWrapper) ListIssueCommentReactions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListIssueCommentReactionsParams
+
+	// ------------- Optional query parameter "content" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "content", r.URL.Query(), &params.Content, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "content"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "content", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIssueCommentReactions(w, r, owner, name, commentId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddIssueCommentReaction operation middleware
+func (siw *ServerInterfaceWrapper) AddIssueCommentReaction(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddIssueCommentReaction(w, r, owner, name, commentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveIssueCommentReaction operation middleware
+func (siw *ServerInterfaceWrapper) RemoveIssueCommentReaction(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "content" -------------
+	var content string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "content", chi.URLParam(r, "content"), &content, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "content", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveIssueCommentReaction(w, r, owner, name, commentId, content)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetIssue operation middleware
+func (siw *ServerInterfaceWrapper) GetIssue(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetIssue(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateIssue operation middleware
+func (siw *ServerInterfaceWrapper) UpdateIssue(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateIssue(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIssueComments operation middleware
+func (siw *ServerInterfaceWrapper) ListIssueComments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListIssueCommentsParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIssueComments(w, r, owner, name, number, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateIssueComment operation middleware
+func (siw *ServerInterfaceWrapper) CreateIssueComment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateIssueComment(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIssueEdits operation middleware
+func (siw *ServerInterfaceWrapper) ListIssueEdits(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListIssueEditsParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIssueEdits(w, r, owner, name, number, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnlockIssue operation middleware
+func (siw *ServerInterfaceWrapper) UnlockIssue(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnlockIssue(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// LockIssue operation middleware
+func (siw *ServerInterfaceWrapper) LockIssue(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.LockIssue(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIssueReactions operation middleware
+func (siw *ServerInterfaceWrapper) ListIssueReactions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListIssueReactionsParams
+
+	// ------------- Optional query parameter "content" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "content", r.URL.Query(), &params.Content, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "content"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "content", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIssueReactions(w, r, owner, name, number, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddIssueReaction operation middleware
+func (siw *ServerInterfaceWrapper) AddIssueReaction(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddIssueReaction(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveIssueReaction operation middleware
+func (siw *ServerInterfaceWrapper) RemoveIssueReaction(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "content" -------------
+	var content string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "content", chi.URLParam(r, "content"), &content, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "content", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveIssueReaction(w, r, owner, name, number, content)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIssueTimeline operation middleware
+func (siw *ServerInterfaceWrapper) ListIssueTimeline(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListIssueTimelineParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIssueTimeline(w, r, owner, name, number, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListLabels operation middleware
+func (siw *ServerInterfaceWrapper) ListLabels(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListLabelsParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLabels(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateLabel operation middleware
+func (siw *ServerInterfaceWrapper) CreateLabel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateLabel(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteLabel operation middleware
+func (siw *ServerInterfaceWrapper) DeleteLabel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "label" -------------
+	var label string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "label", chi.URLParam(r, "label"), &label, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "label", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteLabel(w, r, owner, name, label)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateLabel operation middleware
+func (siw *ServerInterfaceWrapper) UpdateLabel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "label" -------------
+	var label string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "label", chi.URLParam(r, "label"), &label, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "label", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateLabel(w, r, owner, name, label)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMilestones operation middleware
+func (siw *ServerInterfaceWrapper) ListMilestones(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListMilestonesParams
+
+	// ------------- Optional query parameter "state" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "state", r.URL.Query(), &params.State, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "state"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "state", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMilestones(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateMilestone operation middleware
+func (siw *ServerInterfaceWrapper) CreateMilestone(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateMilestone(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteMilestone operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMilestone(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "milestoneId" -------------
+	var milestoneId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "milestoneId", chi.URLParam(r, "milestoneId"), &milestoneId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "milestoneId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteMilestone(w, r, owner, name, milestoneId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMilestone operation middleware
+func (siw *ServerInterfaceWrapper) GetMilestone(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "milestoneId" -------------
+	var milestoneId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "milestoneId", chi.URLParam(r, "milestoneId"), &milestoneId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "milestoneId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMilestone(w, r, owner, name, milestoneId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMilestone operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMilestone(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "milestoneId" -------------
+	var milestoneId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "milestoneId", chi.URLParam(r, "milestoneId"), &milestoneId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "milestoneId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMilestone(w, r, owner, name, milestoneId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5859,6 +10349,248 @@ func (siw *ServerInterfaceWrapper) SearchCode(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SearchCode(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTagRules operation middleware
+func (siw *ServerInterfaceWrapper) ListTagRules(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTagRules(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTagRule operation middleware
+func (siw *ServerInterfaceWrapper) CreateTagRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTagRule(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTagRule operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTagRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId ProtectionRuleId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", chi.URLParam(r, "ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTagRule(w, r, owner, name, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTagRule operation middleware
+func (siw *ServerInterfaceWrapper) GetTagRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId ProtectionRuleId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", chi.URLParam(r, "ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTagRule(w, r, owner, name, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTagRule operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTagRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId ProtectionRuleId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", chi.URLParam(r, "ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTagRule(w, r, owner, name, ruleId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7473,6 +12205,174 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/search/repos", wrapper.SearchRepos)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues", wrapper.ListIssues)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/issues", wrapper.CreateIssue)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues/{number}", wrapper.GetIssue)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/repos/{owner}/{name}/issues/{number}", wrapper.UpdateIssue)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues/{number}/edits", wrapper.ListIssueEdits)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/issues/{number}/lock", wrapper.UnlockIssue)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/issues/{number}/lock", wrapper.LockIssue)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues/{number}/comments", wrapper.ListIssueComments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/issues/{number}/comments", wrapper.CreateIssueComment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/issues/comments/{commentId}", wrapper.DeleteIssueComment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues/comments/{commentId}", wrapper.GetIssueComment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/repos/{owner}/{name}/issues/comments/{commentId}", wrapper.UpdateIssueComment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues/comments/{commentId}/edits", wrapper.ListIssueCommentEdits)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues/{number}/reactions", wrapper.ListIssueReactions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/issues/{number}/reactions", wrapper.AddIssueReaction)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/issues/{number}/reactions/{content}", wrapper.RemoveIssueReaction)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues/comments/{commentId}/reactions", wrapper.ListIssueCommentReactions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/issues/comments/{commentId}/reactions", wrapper.AddIssueCommentReaction)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/issues/comments/{commentId}/reactions/{content}", wrapper.RemoveIssueCommentReaction)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues/{number}/timeline", wrapper.ListIssueTimeline)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/labels", wrapper.ListLabels)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/labels", wrapper.CreateLabel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/labels/{label}", wrapper.DeleteLabel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/repos/{owner}/{name}/labels/{label}", wrapper.UpdateLabel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/milestones", wrapper.ListMilestones)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/milestones", wrapper.CreateMilestone)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/milestones/{milestoneId}", wrapper.DeleteMilestone)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/milestones/{milestoneId}", wrapper.GetMilestone)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/repos/{owner}/{name}/milestones/{milestoneId}", wrapper.UpdateMilestone)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/issue-templates", wrapper.ListIssueTemplates)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/issues/attachments/{attachmentId}", wrapper.DeleteIssueAttachment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/branch-protections", wrapper.ListBranchProtections)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/branch-protections", wrapper.CreateBranchProtection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/branch-protections/evaluate", wrapper.EvaluateRefUpdate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/branch-protections/{ruleId}", wrapper.DeleteBranchProtection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/branch-protections/{ruleId}", wrapper.GetBranchProtection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/branch-protections/{ruleId}", wrapper.UpdateBranchProtection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/tag-rules", wrapper.ListTagRules)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/tag-rules", wrapper.CreateTagRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/tag-rules/{ruleId}", wrapper.DeleteTagRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/tag-rules/{ruleId}", wrapper.GetTagRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/tag-rules/{ruleId}", wrapper.UpdateTagRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/github/connections", wrapper.ListGitHubConnections)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/github/connections", wrapper.CreateGitHubConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/github/connections/{connectionId}", wrapper.DeleteGitHubConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/github/connections/{connectionId}", wrapper.GetGitHubConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/github/connections/{connectionId}", wrapper.UpdateGitHubConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/github/connections/{connectionId}/check", wrapper.CheckGitHubConnection)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/github/imports", wrapper.ImportGitHubRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/github/import", wrapper.GetGitHubImport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/github/sync", wrapper.DeleteGitHubSyncLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/github/sync", wrapper.GetGitHubSyncLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/github/sync", wrapper.PutGitHubSyncLink)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/github/sync/refs", wrapper.ListGitHubSyncRefs)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/github/sync/run", wrapper.RunGitHubSync)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/github/sync/resolve", wrapper.ResolveGitHubSyncConflict)
 	})
 
 	return r
@@ -9157,6 +14057,624 @@ type RegisterdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response RegisterdefaultApplicationProblemPlusJSONResponse) VisitRegisterResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubConnectionsRequestObject struct {
+	Params ListGitHubConnectionsParams
+}
+
+type ListGitHubConnectionsResponseObject interface {
+	VisitListGitHubConnectionsResponse(w http.ResponseWriter) error
+}
+
+type ListGitHubConnections200JSONResponse []GitHubConnection
+
+func (response ListGitHubConnections200JSONResponse) VisitListGitHubConnectionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubConnections403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListGitHubConnections403ApplicationProblemPlusJSONResponse) VisitListGitHubConnectionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubConnections404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListGitHubConnections404ApplicationProblemPlusJSONResponse) VisitListGitHubConnectionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubConnections503ApplicationProblemPlusJSONResponse Problem
+
+func (response ListGitHubConnections503ApplicationProblemPlusJSONResponse) VisitListGitHubConnectionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubConnectionsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListGitHubConnectionsdefaultApplicationProblemPlusJSONResponse) VisitListGitHubConnectionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGitHubConnectionRequestObject struct {
+	Body *CreateGitHubConnectionJSONRequestBody
+}
+
+type CreateGitHubConnectionResponseObject interface {
+	VisitCreateGitHubConnectionResponse(w http.ResponseWriter) error
+}
+
+type CreateGitHubConnection201JSONResponse GitHubConnection
+
+func (response CreateGitHubConnection201JSONResponse) VisitCreateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGitHubConnection400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateGitHubConnection400ApplicationProblemPlusJSONResponse) VisitCreateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGitHubConnection403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateGitHubConnection403ApplicationProblemPlusJSONResponse) VisitCreateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGitHubConnection404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateGitHubConnection404ApplicationProblemPlusJSONResponse) VisitCreateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGitHubConnection409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateGitHubConnection409ApplicationProblemPlusJSONResponse) VisitCreateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGitHubConnection503ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateGitHubConnection503ApplicationProblemPlusJSONResponse) VisitCreateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGitHubConnectiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateGitHubConnectiondefaultApplicationProblemPlusJSONResponse) VisitCreateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGitHubConnectionRequestObject struct {
+	ConnectionId openapi_types.UUID `json:"connectionId"`
+}
+
+type DeleteGitHubConnectionResponseObject interface {
+	VisitDeleteGitHubConnectionResponse(w http.ResponseWriter) error
+}
+
+type DeleteGitHubConnection204Response struct {
+}
+
+func (response DeleteGitHubConnection204Response) VisitDeleteGitHubConnectionResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteGitHubConnection404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteGitHubConnection404ApplicationProblemPlusJSONResponse) VisitDeleteGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGitHubConnection409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteGitHubConnection409ApplicationProblemPlusJSONResponse) VisitDeleteGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGitHubConnection503ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteGitHubConnection503ApplicationProblemPlusJSONResponse) VisitDeleteGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGitHubConnectiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteGitHubConnectiondefaultApplicationProblemPlusJSONResponse) VisitDeleteGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubConnectionRequestObject struct {
+	ConnectionId openapi_types.UUID `json:"connectionId"`
+}
+
+type GetGitHubConnectionResponseObject interface {
+	VisitGetGitHubConnectionResponse(w http.ResponseWriter) error
+}
+
+type GetGitHubConnection200JSONResponse GitHubConnection
+
+func (response GetGitHubConnection200JSONResponse) VisitGetGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubConnection404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetGitHubConnection404ApplicationProblemPlusJSONResponse) VisitGetGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubConnection503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetGitHubConnection503ApplicationProblemPlusJSONResponse) VisitGetGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubConnectiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetGitHubConnectiondefaultApplicationProblemPlusJSONResponse) VisitGetGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGitHubConnectionRequestObject struct {
+	ConnectionId openapi_types.UUID `json:"connectionId"`
+	Body         *UpdateGitHubConnectionJSONRequestBody
+}
+
+type UpdateGitHubConnectionResponseObject interface {
+	VisitUpdateGitHubConnectionResponse(w http.ResponseWriter) error
+}
+
+type UpdateGitHubConnection200JSONResponse GitHubConnection
+
+func (response UpdateGitHubConnection200JSONResponse) VisitUpdateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGitHubConnection400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateGitHubConnection400ApplicationProblemPlusJSONResponse) VisitUpdateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGitHubConnection404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateGitHubConnection404ApplicationProblemPlusJSONResponse) VisitUpdateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGitHubConnection409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateGitHubConnection409ApplicationProblemPlusJSONResponse) VisitUpdateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGitHubConnection503ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateGitHubConnection503ApplicationProblemPlusJSONResponse) VisitUpdateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGitHubConnectiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateGitHubConnectiondefaultApplicationProblemPlusJSONResponse) VisitUpdateGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CheckGitHubConnectionRequestObject struct {
+	ConnectionId openapi_types.UUID `json:"connectionId"`
+}
+
+type CheckGitHubConnectionResponseObject interface {
+	VisitCheckGitHubConnectionResponse(w http.ResponseWriter) error
+}
+
+type CheckGitHubConnection200JSONResponse GitHubConnectionCheck
+
+func (response CheckGitHubConnection200JSONResponse) VisitCheckGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CheckGitHubConnection404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CheckGitHubConnection404ApplicationProblemPlusJSONResponse) VisitCheckGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CheckGitHubConnection503ApplicationProblemPlusJSONResponse Problem
+
+func (response CheckGitHubConnection503ApplicationProblemPlusJSONResponse) VisitCheckGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CheckGitHubConnectiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CheckGitHubConnectiondefaultApplicationProblemPlusJSONResponse) VisitCheckGitHubConnectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportGitHubRepoRequestObject struct {
+	Body *ImportGitHubRepoJSONRequestBody
+}
+
+type ImportGitHubRepoResponseObject interface {
+	VisitImportGitHubRepoResponse(w http.ResponseWriter) error
+}
+
+type ImportGitHubRepo202JSONResponse GitHubImport
+
+func (response ImportGitHubRepo202JSONResponse) VisitImportGitHubRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportGitHubRepo400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ImportGitHubRepo400ApplicationProblemPlusJSONResponse) VisitImportGitHubRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportGitHubRepo403ApplicationProblemPlusJSONResponse Problem
+
+func (response ImportGitHubRepo403ApplicationProblemPlusJSONResponse) VisitImportGitHubRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportGitHubRepo404ApplicationProblemPlusJSONResponse Problem
+
+func (response ImportGitHubRepo404ApplicationProblemPlusJSONResponse) VisitImportGitHubRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportGitHubRepo409ApplicationProblemPlusJSONResponse Problem
+
+func (response ImportGitHubRepo409ApplicationProblemPlusJSONResponse) VisitImportGitHubRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportGitHubRepo503ApplicationProblemPlusJSONResponse Problem
+
+func (response ImportGitHubRepo503ApplicationProblemPlusJSONResponse) VisitImportGitHubRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportGitHubRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ImportGitHubRepodefaultApplicationProblemPlusJSONResponse) VisitImportGitHubRepoResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -11439,6 +16957,598 @@ func (response GetBlobdefaultApplicationProblemPlusJSONResponse) VisitGetBlobRes
 	return err
 }
 
+type ListBranchProtectionsRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type ListBranchProtectionsResponseObject interface {
+	VisitListBranchProtectionsResponse(w http.ResponseWriter) error
+}
+
+type ListBranchProtections200JSONResponse []BranchProtection
+
+func (response ListBranchProtections200JSONResponse) VisitListBranchProtectionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBranchProtections307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListBranchProtections307ApplicationProblemPlusJSONResponse) VisitListBranchProtectionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBranchProtections403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListBranchProtections403ApplicationProblemPlusJSONResponse) VisitListBranchProtectionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBranchProtections404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListBranchProtections404ApplicationProblemPlusJSONResponse) VisitListBranchProtectionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBranchProtectionsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListBranchProtectionsdefaultApplicationProblemPlusJSONResponse) VisitListBranchProtectionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBranchProtectionRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *CreateBranchProtectionJSONRequestBody
+}
+
+type CreateBranchProtectionResponseObject interface {
+	VisitCreateBranchProtectionResponse(w http.ResponseWriter) error
+}
+
+type CreateBranchProtection201JSONResponse BranchProtection
+
+func (response CreateBranchProtection201JSONResponse) VisitCreateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBranchProtection307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateBranchProtection307ApplicationProblemPlusJSONResponse) VisitCreateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBranchProtection400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateBranchProtection400ApplicationProblemPlusJSONResponse) VisitCreateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBranchProtection403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateBranchProtection403ApplicationProblemPlusJSONResponse) VisitCreateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBranchProtection404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateBranchProtection404ApplicationProblemPlusJSONResponse) VisitCreateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBranchProtection409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateBranchProtection409ApplicationProblemPlusJSONResponse) VisitCreateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBranchProtectiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateBranchProtectiondefaultApplicationProblemPlusJSONResponse) VisitCreateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluateRefUpdateRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *EvaluateRefUpdateJSONRequestBody
+}
+
+type EvaluateRefUpdateResponseObject interface {
+	VisitEvaluateRefUpdateResponse(w http.ResponseWriter) error
+}
+
+type EvaluateRefUpdate200JSONResponse RefUpdateEvaluation
+
+func (response EvaluateRefUpdate200JSONResponse) VisitEvaluateRefUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluateRefUpdate307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response EvaluateRefUpdate307ApplicationProblemPlusJSONResponse) VisitEvaluateRefUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluateRefUpdate400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response EvaluateRefUpdate400ApplicationProblemPlusJSONResponse) VisitEvaluateRefUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluateRefUpdate403ApplicationProblemPlusJSONResponse Problem
+
+func (response EvaluateRefUpdate403ApplicationProblemPlusJSONResponse) VisitEvaluateRefUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluateRefUpdate404ApplicationProblemPlusJSONResponse Problem
+
+func (response EvaluateRefUpdate404ApplicationProblemPlusJSONResponse) VisitEvaluateRefUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluateRefUpdatedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response EvaluateRefUpdatedefaultApplicationProblemPlusJSONResponse) VisitEvaluateRefUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteBranchProtectionRequestObject struct {
+	Owner  RepoOwner        `json:"owner"`
+	Name   RepoName         `json:"name"`
+	RuleId ProtectionRuleId `json:"ruleId"`
+}
+
+type DeleteBranchProtectionResponseObject interface {
+	VisitDeleteBranchProtectionResponse(w http.ResponseWriter) error
+}
+
+type DeleteBranchProtection204Response struct {
+}
+
+func (response DeleteBranchProtection204Response) VisitDeleteBranchProtectionResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteBranchProtection307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteBranchProtection307ApplicationProblemPlusJSONResponse) VisitDeleteBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteBranchProtection403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteBranchProtection403ApplicationProblemPlusJSONResponse) VisitDeleteBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteBranchProtection404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteBranchProtection404ApplicationProblemPlusJSONResponse) VisitDeleteBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteBranchProtectiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteBranchProtectiondefaultApplicationProblemPlusJSONResponse) VisitDeleteBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBranchProtectionRequestObject struct {
+	Owner  RepoOwner        `json:"owner"`
+	Name   RepoName         `json:"name"`
+	RuleId ProtectionRuleId `json:"ruleId"`
+}
+
+type GetBranchProtectionResponseObject interface {
+	VisitGetBranchProtectionResponse(w http.ResponseWriter) error
+}
+
+type GetBranchProtection200JSONResponse BranchProtection
+
+func (response GetBranchProtection200JSONResponse) VisitGetBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBranchProtection307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetBranchProtection307ApplicationProblemPlusJSONResponse) VisitGetBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBranchProtection403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetBranchProtection403ApplicationProblemPlusJSONResponse) VisitGetBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBranchProtection404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetBranchProtection404ApplicationProblemPlusJSONResponse) VisitGetBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBranchProtectiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetBranchProtectiondefaultApplicationProblemPlusJSONResponse) VisitGetBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateBranchProtectionRequestObject struct {
+	Owner  RepoOwner        `json:"owner"`
+	Name   RepoName         `json:"name"`
+	RuleId ProtectionRuleId `json:"ruleId"`
+	Body   *UpdateBranchProtectionJSONRequestBody
+}
+
+type UpdateBranchProtectionResponseObject interface {
+	VisitUpdateBranchProtectionResponse(w http.ResponseWriter) error
+}
+
+type UpdateBranchProtection200JSONResponse BranchProtection
+
+func (response UpdateBranchProtection200JSONResponse) VisitUpdateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateBranchProtection307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateBranchProtection307ApplicationProblemPlusJSONResponse) VisitUpdateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateBranchProtection400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateBranchProtection400ApplicationProblemPlusJSONResponse) VisitUpdateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateBranchProtection403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateBranchProtection403ApplicationProblemPlusJSONResponse) VisitUpdateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateBranchProtection404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateBranchProtection404ApplicationProblemPlusJSONResponse) VisitUpdateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateBranchProtection409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateBranchProtection409ApplicationProblemPlusJSONResponse) VisitUpdateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateBranchProtectiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateBranchProtectiondefaultApplicationProblemPlusJSONResponse) VisitUpdateBranchProtectionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListBranchesRequestObject struct {
 	Owner  RepoOwner `json:"owner"`
 	Name   RepoName  `json:"name"`
@@ -12229,6 +18339,3387 @@ type EditContentsdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response EditContentsdefaultApplicationProblemPlusJSONResponse) VisitEditContentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubImportRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type GetGitHubImportResponseObject interface {
+	VisitGetGitHubImportResponse(w http.ResponseWriter) error
+}
+
+type GetGitHubImport200JSONResponse GitHubImport
+
+func (response GetGitHubImport200JSONResponse) VisitGetGitHubImportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubImport404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetGitHubImport404ApplicationProblemPlusJSONResponse) VisitGetGitHubImportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubImport503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetGitHubImport503ApplicationProblemPlusJSONResponse) VisitGetGitHubImportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubImportdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetGitHubImportdefaultApplicationProblemPlusJSONResponse) VisitGetGitHubImportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGitHubSyncLinkRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type DeleteGitHubSyncLinkResponseObject interface {
+	VisitDeleteGitHubSyncLinkResponse(w http.ResponseWriter) error
+}
+
+type DeleteGitHubSyncLink204Response struct {
+}
+
+func (response DeleteGitHubSyncLink204Response) VisitDeleteGitHubSyncLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteGitHubSyncLink403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteGitHubSyncLink403ApplicationProblemPlusJSONResponse) VisitDeleteGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGitHubSyncLink404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteGitHubSyncLink404ApplicationProblemPlusJSONResponse) VisitDeleteGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGitHubSyncLink503ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteGitHubSyncLink503ApplicationProblemPlusJSONResponse) VisitDeleteGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGitHubSyncLinkdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteGitHubSyncLinkdefaultApplicationProblemPlusJSONResponse) VisitDeleteGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubSyncLinkRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type GetGitHubSyncLinkResponseObject interface {
+	VisitGetGitHubSyncLinkResponse(w http.ResponseWriter) error
+}
+
+type GetGitHubSyncLink200JSONResponse GitHubSyncLink
+
+func (response GetGitHubSyncLink200JSONResponse) VisitGetGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubSyncLink404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetGitHubSyncLink404ApplicationProblemPlusJSONResponse) VisitGetGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubSyncLink503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetGitHubSyncLink503ApplicationProblemPlusJSONResponse) VisitGetGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGitHubSyncLinkdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetGitHubSyncLinkdefaultApplicationProblemPlusJSONResponse) VisitGetGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutGitHubSyncLinkRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *PutGitHubSyncLinkJSONRequestBody
+}
+
+type PutGitHubSyncLinkResponseObject interface {
+	VisitPutGitHubSyncLinkResponse(w http.ResponseWriter) error
+}
+
+type PutGitHubSyncLink200JSONResponse GitHubSyncLink
+
+func (response PutGitHubSyncLink200JSONResponse) VisitPutGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutGitHubSyncLink400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutGitHubSyncLink400ApplicationProblemPlusJSONResponse) VisitPutGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutGitHubSyncLink403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutGitHubSyncLink403ApplicationProblemPlusJSONResponse) VisitPutGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutGitHubSyncLink404ApplicationProblemPlusJSONResponse Problem
+
+func (response PutGitHubSyncLink404ApplicationProblemPlusJSONResponse) VisitPutGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutGitHubSyncLink503ApplicationProblemPlusJSONResponse Problem
+
+func (response PutGitHubSyncLink503ApplicationProblemPlusJSONResponse) VisitPutGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutGitHubSyncLinkdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PutGitHubSyncLinkdefaultApplicationProblemPlusJSONResponse) VisitPutGitHubSyncLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubSyncRefsRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type ListGitHubSyncRefsResponseObject interface {
+	VisitListGitHubSyncRefsResponse(w http.ResponseWriter) error
+}
+
+type ListGitHubSyncRefs200JSONResponse []GitHubSyncRef
+
+func (response ListGitHubSyncRefs200JSONResponse) VisitListGitHubSyncRefsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubSyncRefs404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListGitHubSyncRefs404ApplicationProblemPlusJSONResponse) VisitListGitHubSyncRefsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubSyncRefs503ApplicationProblemPlusJSONResponse Problem
+
+func (response ListGitHubSyncRefs503ApplicationProblemPlusJSONResponse) VisitListGitHubSyncRefsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubSyncRefsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListGitHubSyncRefsdefaultApplicationProblemPlusJSONResponse) VisitListGitHubSyncRefsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGitHubSyncConflictRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *ResolveGitHubSyncConflictJSONRequestBody
+}
+
+type ResolveGitHubSyncConflictResponseObject interface {
+	VisitResolveGitHubSyncConflictResponse(w http.ResponseWriter) error
+}
+
+type ResolveGitHubSyncConflict200JSONResponse GitHubSyncRef
+
+func (response ResolveGitHubSyncConflict200JSONResponse) VisitResolveGitHubSyncConflictResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGitHubSyncConflict400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ResolveGitHubSyncConflict400ApplicationProblemPlusJSONResponse) VisitResolveGitHubSyncConflictResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGitHubSyncConflict403ApplicationProblemPlusJSONResponse Problem
+
+func (response ResolveGitHubSyncConflict403ApplicationProblemPlusJSONResponse) VisitResolveGitHubSyncConflictResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGitHubSyncConflict404ApplicationProblemPlusJSONResponse Problem
+
+func (response ResolveGitHubSyncConflict404ApplicationProblemPlusJSONResponse) VisitResolveGitHubSyncConflictResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGitHubSyncConflict409ApplicationProblemPlusJSONResponse Problem
+
+func (response ResolveGitHubSyncConflict409ApplicationProblemPlusJSONResponse) VisitResolveGitHubSyncConflictResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGitHubSyncConflict503ApplicationProblemPlusJSONResponse Problem
+
+func (response ResolveGitHubSyncConflict503ApplicationProblemPlusJSONResponse) VisitResolveGitHubSyncConflictResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGitHubSyncConflictdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ResolveGitHubSyncConflictdefaultApplicationProblemPlusJSONResponse) VisitResolveGitHubSyncConflictResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunGitHubSyncRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type RunGitHubSyncResponseObject interface {
+	VisitRunGitHubSyncResponse(w http.ResponseWriter) error
+}
+
+type RunGitHubSync202Response struct {
+}
+
+func (response RunGitHubSync202Response) VisitRunGitHubSyncResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type RunGitHubSync403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RunGitHubSync403ApplicationProblemPlusJSONResponse) VisitRunGitHubSyncResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunGitHubSync404ApplicationProblemPlusJSONResponse Problem
+
+func (response RunGitHubSync404ApplicationProblemPlusJSONResponse) VisitRunGitHubSyncResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunGitHubSync503ApplicationProblemPlusJSONResponse Problem
+
+func (response RunGitHubSync503ApplicationProblemPlusJSONResponse) VisitRunGitHubSyncResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunGitHubSyncdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RunGitHubSyncdefaultApplicationProblemPlusJSONResponse) VisitRunGitHubSyncResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueTemplatesRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type ListIssueTemplatesResponseObject interface {
+	VisitListIssueTemplatesResponse(w http.ResponseWriter) error
+}
+
+type ListIssueTemplates200JSONResponse IssueTemplates
+
+func (response ListIssueTemplates200JSONResponse) VisitListIssueTemplatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueTemplates307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueTemplates307ApplicationProblemPlusJSONResponse) VisitListIssueTemplatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueTemplates404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueTemplates404ApplicationProblemPlusJSONResponse) VisitListIssueTemplatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueTemplatesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListIssueTemplatesdefaultApplicationProblemPlusJSONResponse) VisitListIssueTemplatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssuesRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params ListIssuesParams
+}
+
+type ListIssuesResponseObject interface {
+	VisitListIssuesResponse(w http.ResponseWriter) error
+}
+
+type ListIssues200JSONResponse []Issue
+
+func (response ListIssues200JSONResponse) VisitListIssuesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssues307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssues307ApplicationProblemPlusJSONResponse) VisitListIssuesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssues400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssues400ApplicationProblemPlusJSONResponse) VisitListIssuesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssues404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListIssues404ApplicationProblemPlusJSONResponse) VisitListIssuesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssuesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListIssuesdefaultApplicationProblemPlusJSONResponse) VisitListIssuesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssueRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *CreateIssueJSONRequestBody
+}
+
+type CreateIssueResponseObject interface {
+	VisitCreateIssueResponse(w http.ResponseWriter) error
+}
+
+type CreateIssue201JSONResponse Issue
+
+func (response CreateIssue201JSONResponse) VisitCreateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssue307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateIssue307ApplicationProblemPlusJSONResponse) VisitCreateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssue400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateIssue400ApplicationProblemPlusJSONResponse) VisitCreateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssue403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateIssue403ApplicationProblemPlusJSONResponse) VisitCreateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssue404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateIssue404ApplicationProblemPlusJSONResponse) VisitCreateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssuedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateIssuedefaultApplicationProblemPlusJSONResponse) VisitCreateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssueAttachmentRequestObject struct {
+	Owner        RepoOwner          `json:"owner"`
+	Name         RepoName           `json:"name"`
+	AttachmentId openapi_types.UUID `json:"attachmentId"`
+}
+
+type DeleteIssueAttachmentResponseObject interface {
+	VisitDeleteIssueAttachmentResponse(w http.ResponseWriter) error
+}
+
+type DeleteIssueAttachment204Response struct {
+}
+
+func (response DeleteIssueAttachment204Response) VisitDeleteIssueAttachmentResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteIssueAttachment307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteIssueAttachment307ApplicationProblemPlusJSONResponse) VisitDeleteIssueAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssueAttachment403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteIssueAttachment403ApplicationProblemPlusJSONResponse) VisitDeleteIssueAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssueAttachment404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteIssueAttachment404ApplicationProblemPlusJSONResponse) VisitDeleteIssueAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssueAttachmentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteIssueAttachmentdefaultApplicationProblemPlusJSONResponse) VisitDeleteIssueAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssueCommentRequestObject struct {
+	Owner     RepoOwner          `json:"owner"`
+	Name      RepoName           `json:"name"`
+	CommentId openapi_types.UUID `json:"commentId"`
+}
+
+type DeleteIssueCommentResponseObject interface {
+	VisitDeleteIssueCommentResponse(w http.ResponseWriter) error
+}
+
+type DeleteIssueComment204Response struct {
+}
+
+func (response DeleteIssueComment204Response) VisitDeleteIssueCommentResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteIssueComment307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteIssueComment307ApplicationProblemPlusJSONResponse) VisitDeleteIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssueComment403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteIssueComment403ApplicationProblemPlusJSONResponse) VisitDeleteIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssueComment404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteIssueComment404ApplicationProblemPlusJSONResponse) VisitDeleteIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssueCommentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteIssueCommentdefaultApplicationProblemPlusJSONResponse) VisitDeleteIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetIssueCommentRequestObject struct {
+	Owner     RepoOwner          `json:"owner"`
+	Name      RepoName           `json:"name"`
+	CommentId openapi_types.UUID `json:"commentId"`
+}
+
+type GetIssueCommentResponseObject interface {
+	VisitGetIssueCommentResponse(w http.ResponseWriter) error
+}
+
+type GetIssueComment200JSONResponse IssueComment
+
+func (response GetIssueComment200JSONResponse) VisitGetIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetIssueComment307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetIssueComment307ApplicationProblemPlusJSONResponse) VisitGetIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetIssueComment404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetIssueComment404ApplicationProblemPlusJSONResponse) VisitGetIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetIssueCommentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetIssueCommentdefaultApplicationProblemPlusJSONResponse) VisitGetIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssueCommentRequestObject struct {
+	Owner     RepoOwner          `json:"owner"`
+	Name      RepoName           `json:"name"`
+	CommentId openapi_types.UUID `json:"commentId"`
+	Body      *UpdateIssueCommentJSONRequestBody
+}
+
+type UpdateIssueCommentResponseObject interface {
+	VisitUpdateIssueCommentResponse(w http.ResponseWriter) error
+}
+
+type UpdateIssueComment200JSONResponse IssueComment
+
+func (response UpdateIssueComment200JSONResponse) VisitUpdateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssueComment307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateIssueComment307ApplicationProblemPlusJSONResponse) VisitUpdateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssueComment400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateIssueComment400ApplicationProblemPlusJSONResponse) VisitUpdateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssueComment403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateIssueComment403ApplicationProblemPlusJSONResponse) VisitUpdateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssueComment404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateIssueComment404ApplicationProblemPlusJSONResponse) VisitUpdateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssueCommentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateIssueCommentdefaultApplicationProblemPlusJSONResponse) VisitUpdateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueCommentEditsRequestObject struct {
+	Owner     RepoOwner          `json:"owner"`
+	Name      RepoName           `json:"name"`
+	CommentId openapi_types.UUID `json:"commentId"`
+	Params    ListIssueCommentEditsParams
+}
+
+type ListIssueCommentEditsResponseObject interface {
+	VisitListIssueCommentEditsResponse(w http.ResponseWriter) error
+}
+
+type ListIssueCommentEdits200JSONResponse []BodyEdit
+
+func (response ListIssueCommentEdits200JSONResponse) VisitListIssueCommentEditsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueCommentEdits307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueCommentEdits307ApplicationProblemPlusJSONResponse) VisitListIssueCommentEditsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueCommentEdits404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueCommentEdits404ApplicationProblemPlusJSONResponse) VisitListIssueCommentEditsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueCommentEditsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListIssueCommentEditsdefaultApplicationProblemPlusJSONResponse) VisitListIssueCommentEditsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueCommentReactionsRequestObject struct {
+	Owner     RepoOwner          `json:"owner"`
+	Name      RepoName           `json:"name"`
+	CommentId openapi_types.UUID `json:"commentId"`
+	Params    ListIssueCommentReactionsParams
+}
+
+type ListIssueCommentReactionsResponseObject interface {
+	VisitListIssueCommentReactionsResponse(w http.ResponseWriter) error
+}
+
+type ListIssueCommentReactions200JSONResponse []Reaction
+
+func (response ListIssueCommentReactions200JSONResponse) VisitListIssueCommentReactionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueCommentReactions307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueCommentReactions307ApplicationProblemPlusJSONResponse) VisitListIssueCommentReactionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueCommentReactions400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueCommentReactions400ApplicationProblemPlusJSONResponse) VisitListIssueCommentReactionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueCommentReactions404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListIssueCommentReactions404ApplicationProblemPlusJSONResponse) VisitListIssueCommentReactionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueCommentReactionsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListIssueCommentReactionsdefaultApplicationProblemPlusJSONResponse) VisitListIssueCommentReactionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueCommentReactionRequestObject struct {
+	Owner     RepoOwner          `json:"owner"`
+	Name      RepoName           `json:"name"`
+	CommentId openapi_types.UUID `json:"commentId"`
+	Body      *AddIssueCommentReactionJSONRequestBody
+}
+
+type AddIssueCommentReactionResponseObject interface {
+	VisitAddIssueCommentReactionResponse(w http.ResponseWriter) error
+}
+
+type AddIssueCommentReaction200JSONResponse []ReactionGroup
+
+func (response AddIssueCommentReaction200JSONResponse) VisitAddIssueCommentReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueCommentReaction307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response AddIssueCommentReaction307ApplicationProblemPlusJSONResponse) VisitAddIssueCommentReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueCommentReaction400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AddIssueCommentReaction400ApplicationProblemPlusJSONResponse) VisitAddIssueCommentReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueCommentReaction403ApplicationProblemPlusJSONResponse Problem
+
+func (response AddIssueCommentReaction403ApplicationProblemPlusJSONResponse) VisitAddIssueCommentReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueCommentReaction404ApplicationProblemPlusJSONResponse Problem
+
+func (response AddIssueCommentReaction404ApplicationProblemPlusJSONResponse) VisitAddIssueCommentReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueCommentReactiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response AddIssueCommentReactiondefaultApplicationProblemPlusJSONResponse) VisitAddIssueCommentReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveIssueCommentReactionRequestObject struct {
+	Owner     RepoOwner          `json:"owner"`
+	Name      RepoName           `json:"name"`
+	CommentId openapi_types.UUID `json:"commentId"`
+	Content   string             `json:"content"`
+}
+
+type RemoveIssueCommentReactionResponseObject interface {
+	VisitRemoveIssueCommentReactionResponse(w http.ResponseWriter) error
+}
+
+type RemoveIssueCommentReaction200JSONResponse []ReactionGroup
+
+func (response RemoveIssueCommentReaction200JSONResponse) VisitRemoveIssueCommentReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveIssueCommentReaction307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveIssueCommentReaction307ApplicationProblemPlusJSONResponse) VisitRemoveIssueCommentReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveIssueCommentReaction400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveIssueCommentReaction400ApplicationProblemPlusJSONResponse) VisitRemoveIssueCommentReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveIssueCommentReaction404ApplicationProblemPlusJSONResponse Problem
+
+func (response RemoveIssueCommentReaction404ApplicationProblemPlusJSONResponse) VisitRemoveIssueCommentReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveIssueCommentReactiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RemoveIssueCommentReactiondefaultApplicationProblemPlusJSONResponse) VisitRemoveIssueCommentReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetIssueRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+}
+
+type GetIssueResponseObject interface {
+	VisitGetIssueResponse(w http.ResponseWriter) error
+}
+
+type GetIssue200JSONResponse Issue
+
+func (response GetIssue200JSONResponse) VisitGetIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetIssue307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetIssue307ApplicationProblemPlusJSONResponse) VisitGetIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetIssue404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetIssue404ApplicationProblemPlusJSONResponse) VisitGetIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetIssuedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetIssuedefaultApplicationProblemPlusJSONResponse) VisitGetIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssueRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+	Body   *UpdateIssueJSONRequestBody
+}
+
+type UpdateIssueResponseObject interface {
+	VisitUpdateIssueResponse(w http.ResponseWriter) error
+}
+
+type UpdateIssue200JSONResponse Issue
+
+func (response UpdateIssue200JSONResponse) VisitUpdateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssue307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateIssue307ApplicationProblemPlusJSONResponse) VisitUpdateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssue400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateIssue400ApplicationProblemPlusJSONResponse) VisitUpdateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssue403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateIssue403ApplicationProblemPlusJSONResponse) VisitUpdateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssue404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateIssue404ApplicationProblemPlusJSONResponse) VisitUpdateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateIssuedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateIssuedefaultApplicationProblemPlusJSONResponse) VisitUpdateIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueCommentsRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+	Params ListIssueCommentsParams
+}
+
+type ListIssueCommentsResponseObject interface {
+	VisitListIssueCommentsResponse(w http.ResponseWriter) error
+}
+
+type ListIssueComments200JSONResponse []IssueComment
+
+func (response ListIssueComments200JSONResponse) VisitListIssueCommentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueComments307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueComments307ApplicationProblemPlusJSONResponse) VisitListIssueCommentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueComments404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueComments404ApplicationProblemPlusJSONResponse) VisitListIssueCommentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueCommentsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListIssueCommentsdefaultApplicationProblemPlusJSONResponse) VisitListIssueCommentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssueCommentRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+	Body   *CreateIssueCommentJSONRequestBody
+}
+
+type CreateIssueCommentResponseObject interface {
+	VisitCreateIssueCommentResponse(w http.ResponseWriter) error
+}
+
+type CreateIssueComment201JSONResponse IssueComment
+
+func (response CreateIssueComment201JSONResponse) VisitCreateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssueComment307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateIssueComment307ApplicationProblemPlusJSONResponse) VisitCreateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssueComment400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateIssueComment400ApplicationProblemPlusJSONResponse) VisitCreateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssueComment403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateIssueComment403ApplicationProblemPlusJSONResponse) VisitCreateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssueComment404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateIssueComment404ApplicationProblemPlusJSONResponse) VisitCreateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateIssueCommentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateIssueCommentdefaultApplicationProblemPlusJSONResponse) VisitCreateIssueCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueEditsRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+	Params ListIssueEditsParams
+}
+
+type ListIssueEditsResponseObject interface {
+	VisitListIssueEditsResponse(w http.ResponseWriter) error
+}
+
+type ListIssueEdits200JSONResponse []BodyEdit
+
+func (response ListIssueEdits200JSONResponse) VisitListIssueEditsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueEdits307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueEdits307ApplicationProblemPlusJSONResponse) VisitListIssueEditsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueEdits404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueEdits404ApplicationProblemPlusJSONResponse) VisitListIssueEditsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueEditsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListIssueEditsdefaultApplicationProblemPlusJSONResponse) VisitListIssueEditsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlockIssueRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+}
+
+type UnlockIssueResponseObject interface {
+	VisitUnlockIssueResponse(w http.ResponseWriter) error
+}
+
+type UnlockIssue200JSONResponse Issue
+
+func (response UnlockIssue200JSONResponse) VisitUnlockIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlockIssue307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UnlockIssue307ApplicationProblemPlusJSONResponse) VisitUnlockIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlockIssue403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UnlockIssue403ApplicationProblemPlusJSONResponse) VisitUnlockIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlockIssue404ApplicationProblemPlusJSONResponse Problem
+
+func (response UnlockIssue404ApplicationProblemPlusJSONResponse) VisitUnlockIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlockIssuedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UnlockIssuedefaultApplicationProblemPlusJSONResponse) VisitUnlockIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LockIssueRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+	Body   *LockIssueJSONRequestBody
+}
+
+type LockIssueResponseObject interface {
+	VisitLockIssueResponse(w http.ResponseWriter) error
+}
+
+type LockIssue200JSONResponse Issue
+
+func (response LockIssue200JSONResponse) VisitLockIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LockIssue307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response LockIssue307ApplicationProblemPlusJSONResponse) VisitLockIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LockIssue400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response LockIssue400ApplicationProblemPlusJSONResponse) VisitLockIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LockIssue403ApplicationProblemPlusJSONResponse Problem
+
+func (response LockIssue403ApplicationProblemPlusJSONResponse) VisitLockIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LockIssue404ApplicationProblemPlusJSONResponse Problem
+
+func (response LockIssue404ApplicationProblemPlusJSONResponse) VisitLockIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LockIssuedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response LockIssuedefaultApplicationProblemPlusJSONResponse) VisitLockIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueReactionsRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+	Params ListIssueReactionsParams
+}
+
+type ListIssueReactionsResponseObject interface {
+	VisitListIssueReactionsResponse(w http.ResponseWriter) error
+}
+
+type ListIssueReactions200JSONResponse []Reaction
+
+func (response ListIssueReactions200JSONResponse) VisitListIssueReactionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueReactions307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueReactions307ApplicationProblemPlusJSONResponse) VisitListIssueReactionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueReactions400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueReactions400ApplicationProblemPlusJSONResponse) VisitListIssueReactionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueReactions404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListIssueReactions404ApplicationProblemPlusJSONResponse) VisitListIssueReactionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueReactionsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListIssueReactionsdefaultApplicationProblemPlusJSONResponse) VisitListIssueReactionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueReactionRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+	Body   *AddIssueReactionJSONRequestBody
+}
+
+type AddIssueReactionResponseObject interface {
+	VisitAddIssueReactionResponse(w http.ResponseWriter) error
+}
+
+type AddIssueReaction200JSONResponse []ReactionGroup
+
+func (response AddIssueReaction200JSONResponse) VisitAddIssueReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueReaction307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response AddIssueReaction307ApplicationProblemPlusJSONResponse) VisitAddIssueReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueReaction400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AddIssueReaction400ApplicationProblemPlusJSONResponse) VisitAddIssueReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueReaction403ApplicationProblemPlusJSONResponse Problem
+
+func (response AddIssueReaction403ApplicationProblemPlusJSONResponse) VisitAddIssueReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueReaction404ApplicationProblemPlusJSONResponse Problem
+
+func (response AddIssueReaction404ApplicationProblemPlusJSONResponse) VisitAddIssueReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddIssueReactiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response AddIssueReactiondefaultApplicationProblemPlusJSONResponse) VisitAddIssueReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveIssueReactionRequestObject struct {
+	Owner   RepoOwner `json:"owner"`
+	Name    RepoName  `json:"name"`
+	Number  int64     `json:"number"`
+	Content string    `json:"content"`
+}
+
+type RemoveIssueReactionResponseObject interface {
+	VisitRemoveIssueReactionResponse(w http.ResponseWriter) error
+}
+
+type RemoveIssueReaction200JSONResponse []ReactionGroup
+
+func (response RemoveIssueReaction200JSONResponse) VisitRemoveIssueReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveIssueReaction307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveIssueReaction307ApplicationProblemPlusJSONResponse) VisitRemoveIssueReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveIssueReaction400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveIssueReaction400ApplicationProblemPlusJSONResponse) VisitRemoveIssueReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveIssueReaction404ApplicationProblemPlusJSONResponse Problem
+
+func (response RemoveIssueReaction404ApplicationProblemPlusJSONResponse) VisitRemoveIssueReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveIssueReactiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RemoveIssueReactiondefaultApplicationProblemPlusJSONResponse) VisitRemoveIssueReactionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueTimelineRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+	Params ListIssueTimelineParams
+}
+
+type ListIssueTimelineResponseObject interface {
+	VisitListIssueTimelineResponse(w http.ResponseWriter) error
+}
+
+type ListIssueTimeline200JSONResponse []TimelineEvent
+
+func (response ListIssueTimeline200JSONResponse) VisitListIssueTimelineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueTimeline307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueTimeline307ApplicationProblemPlusJSONResponse) VisitListIssueTimelineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueTimeline404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueTimeline404ApplicationProblemPlusJSONResponse) VisitListIssueTimelineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueTimelinedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListIssueTimelinedefaultApplicationProblemPlusJSONResponse) VisitListIssueTimelineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLabelsRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params ListLabelsParams
+}
+
+type ListLabelsResponseObject interface {
+	VisitListLabelsResponse(w http.ResponseWriter) error
+}
+
+type ListLabels200JSONResponse []Label
+
+func (response ListLabels200JSONResponse) VisitListLabelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLabels307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListLabels307ApplicationProblemPlusJSONResponse) VisitListLabelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLabels404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListLabels404ApplicationProblemPlusJSONResponse) VisitListLabelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLabelsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListLabelsdefaultApplicationProblemPlusJSONResponse) VisitListLabelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateLabelRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *CreateLabelJSONRequestBody
+}
+
+type CreateLabelResponseObject interface {
+	VisitCreateLabelResponse(w http.ResponseWriter) error
+}
+
+type CreateLabel201JSONResponse Label
+
+func (response CreateLabel201JSONResponse) VisitCreateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateLabel307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateLabel307ApplicationProblemPlusJSONResponse) VisitCreateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateLabel400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateLabel400ApplicationProblemPlusJSONResponse) VisitCreateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateLabel403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateLabel403ApplicationProblemPlusJSONResponse) VisitCreateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateLabel404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateLabel404ApplicationProblemPlusJSONResponse) VisitCreateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateLabel409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateLabel409ApplicationProblemPlusJSONResponse) VisitCreateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateLabeldefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateLabeldefaultApplicationProblemPlusJSONResponse) VisitCreateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteLabelRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Label string    `json:"label"`
+}
+
+type DeleteLabelResponseObject interface {
+	VisitDeleteLabelResponse(w http.ResponseWriter) error
+}
+
+type DeleteLabel204Response struct {
+}
+
+func (response DeleteLabel204Response) VisitDeleteLabelResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteLabel307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteLabel307ApplicationProblemPlusJSONResponse) VisitDeleteLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteLabel403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteLabel403ApplicationProblemPlusJSONResponse) VisitDeleteLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteLabel404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteLabel404ApplicationProblemPlusJSONResponse) VisitDeleteLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteLabeldefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteLabeldefaultApplicationProblemPlusJSONResponse) VisitDeleteLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLabelRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Label string    `json:"label"`
+	Body  *UpdateLabelJSONRequestBody
+}
+
+type UpdateLabelResponseObject interface {
+	VisitUpdateLabelResponse(w http.ResponseWriter) error
+}
+
+type UpdateLabel200JSONResponse Label
+
+func (response UpdateLabel200JSONResponse) VisitUpdateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLabel307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateLabel307ApplicationProblemPlusJSONResponse) VisitUpdateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLabel400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateLabel400ApplicationProblemPlusJSONResponse) VisitUpdateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLabel403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateLabel403ApplicationProblemPlusJSONResponse) VisitUpdateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLabel404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateLabel404ApplicationProblemPlusJSONResponse) VisitUpdateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLabel409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateLabel409ApplicationProblemPlusJSONResponse) VisitUpdateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLabeldefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateLabeldefaultApplicationProblemPlusJSONResponse) VisitUpdateLabelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMilestonesRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params ListMilestonesParams
+}
+
+type ListMilestonesResponseObject interface {
+	VisitListMilestonesResponse(w http.ResponseWriter) error
+}
+
+type ListMilestones200JSONResponse []Milestone
+
+func (response ListMilestones200JSONResponse) VisitListMilestonesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMilestones307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListMilestones307ApplicationProblemPlusJSONResponse) VisitListMilestonesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMilestones400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListMilestones400ApplicationProblemPlusJSONResponse) VisitListMilestonesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMilestones404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListMilestones404ApplicationProblemPlusJSONResponse) VisitListMilestonesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMilestonesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListMilestonesdefaultApplicationProblemPlusJSONResponse) VisitListMilestonesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMilestoneRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *CreateMilestoneJSONRequestBody
+}
+
+type CreateMilestoneResponseObject interface {
+	VisitCreateMilestoneResponse(w http.ResponseWriter) error
+}
+
+type CreateMilestone201JSONResponse Milestone
+
+func (response CreateMilestone201JSONResponse) VisitCreateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMilestone307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateMilestone307ApplicationProblemPlusJSONResponse) VisitCreateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMilestone400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateMilestone400ApplicationProblemPlusJSONResponse) VisitCreateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMilestone403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateMilestone403ApplicationProblemPlusJSONResponse) VisitCreateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMilestone404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateMilestone404ApplicationProblemPlusJSONResponse) VisitCreateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMilestone409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateMilestone409ApplicationProblemPlusJSONResponse) VisitCreateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMilestonedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateMilestonedefaultApplicationProblemPlusJSONResponse) VisitCreateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteMilestoneRequestObject struct {
+	Owner       RepoOwner          `json:"owner"`
+	Name        RepoName           `json:"name"`
+	MilestoneId openapi_types.UUID `json:"milestoneId"`
+}
+
+type DeleteMilestoneResponseObject interface {
+	VisitDeleteMilestoneResponse(w http.ResponseWriter) error
+}
+
+type DeleteMilestone204Response struct {
+}
+
+func (response DeleteMilestone204Response) VisitDeleteMilestoneResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteMilestone307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteMilestone307ApplicationProblemPlusJSONResponse) VisitDeleteMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteMilestone403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteMilestone403ApplicationProblemPlusJSONResponse) VisitDeleteMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteMilestone404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteMilestone404ApplicationProblemPlusJSONResponse) VisitDeleteMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteMilestonedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteMilestonedefaultApplicationProblemPlusJSONResponse) VisitDeleteMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMilestoneRequestObject struct {
+	Owner       RepoOwner          `json:"owner"`
+	Name        RepoName           `json:"name"`
+	MilestoneId openapi_types.UUID `json:"milestoneId"`
+}
+
+type GetMilestoneResponseObject interface {
+	VisitGetMilestoneResponse(w http.ResponseWriter) error
+}
+
+type GetMilestone200JSONResponse Milestone
+
+func (response GetMilestone200JSONResponse) VisitGetMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMilestone307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetMilestone307ApplicationProblemPlusJSONResponse) VisitGetMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMilestone404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetMilestone404ApplicationProblemPlusJSONResponse) VisitGetMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMilestonedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetMilestonedefaultApplicationProblemPlusJSONResponse) VisitGetMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateMilestoneRequestObject struct {
+	Owner       RepoOwner          `json:"owner"`
+	Name        RepoName           `json:"name"`
+	MilestoneId openapi_types.UUID `json:"milestoneId"`
+	Body        *UpdateMilestoneJSONRequestBody
+}
+
+type UpdateMilestoneResponseObject interface {
+	VisitUpdateMilestoneResponse(w http.ResponseWriter) error
+}
+
+type UpdateMilestone200JSONResponse Milestone
+
+func (response UpdateMilestone200JSONResponse) VisitUpdateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateMilestone307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateMilestone307ApplicationProblemPlusJSONResponse) VisitUpdateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateMilestone400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateMilestone400ApplicationProblemPlusJSONResponse) VisitUpdateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateMilestone403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateMilestone403ApplicationProblemPlusJSONResponse) VisitUpdateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateMilestone404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateMilestone404ApplicationProblemPlusJSONResponse) VisitUpdateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateMilestone409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateMilestone409ApplicationProblemPlusJSONResponse) VisitUpdateMilestoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateMilestonedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateMilestonedefaultApplicationProblemPlusJSONResponse) VisitUpdateMilestoneResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -13259,6 +22750,496 @@ type SearchCodedefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response SearchCodedefaultApplicationProblemPlusJSONResponse) VisitSearchCodeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTagRulesRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type ListTagRulesResponseObject interface {
+	VisitListTagRulesResponse(w http.ResponseWriter) error
+}
+
+type ListTagRules200JSONResponse []TagRule
+
+func (response ListTagRules200JSONResponse) VisitListTagRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTagRules307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListTagRules307ApplicationProblemPlusJSONResponse) VisitListTagRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTagRules403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListTagRules403ApplicationProblemPlusJSONResponse) VisitListTagRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTagRules404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListTagRules404ApplicationProblemPlusJSONResponse) VisitListTagRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTagRulesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListTagRulesdefaultApplicationProblemPlusJSONResponse) VisitListTagRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTagRuleRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *CreateTagRuleJSONRequestBody
+}
+
+type CreateTagRuleResponseObject interface {
+	VisitCreateTagRuleResponse(w http.ResponseWriter) error
+}
+
+type CreateTagRule201JSONResponse TagRule
+
+func (response CreateTagRule201JSONResponse) VisitCreateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTagRule307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateTagRule307ApplicationProblemPlusJSONResponse) VisitCreateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTagRule400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateTagRule400ApplicationProblemPlusJSONResponse) VisitCreateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTagRule403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateTagRule403ApplicationProblemPlusJSONResponse) VisitCreateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTagRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateTagRule404ApplicationProblemPlusJSONResponse) VisitCreateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTagRule409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateTagRule409ApplicationProblemPlusJSONResponse) VisitCreateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTagRuledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateTagRuledefaultApplicationProblemPlusJSONResponse) VisitCreateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTagRuleRequestObject struct {
+	Owner  RepoOwner        `json:"owner"`
+	Name   RepoName         `json:"name"`
+	RuleId ProtectionRuleId `json:"ruleId"`
+}
+
+type DeleteTagRuleResponseObject interface {
+	VisitDeleteTagRuleResponse(w http.ResponseWriter) error
+}
+
+type DeleteTagRule204Response struct {
+}
+
+func (response DeleteTagRule204Response) VisitDeleteTagRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteTagRule307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteTagRule307ApplicationProblemPlusJSONResponse) VisitDeleteTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTagRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteTagRule403ApplicationProblemPlusJSONResponse) VisitDeleteTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTagRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteTagRule404ApplicationProblemPlusJSONResponse) VisitDeleteTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTagRuledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteTagRuledefaultApplicationProblemPlusJSONResponse) VisitDeleteTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTagRuleRequestObject struct {
+	Owner  RepoOwner        `json:"owner"`
+	Name   RepoName         `json:"name"`
+	RuleId ProtectionRuleId `json:"ruleId"`
+}
+
+type GetTagRuleResponseObject interface {
+	VisitGetTagRuleResponse(w http.ResponseWriter) error
+}
+
+type GetTagRule200JSONResponse TagRule
+
+func (response GetTagRule200JSONResponse) VisitGetTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTagRule307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetTagRule307ApplicationProblemPlusJSONResponse) VisitGetTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTagRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetTagRule403ApplicationProblemPlusJSONResponse) VisitGetTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTagRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetTagRule404ApplicationProblemPlusJSONResponse) VisitGetTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTagRuledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetTagRuledefaultApplicationProblemPlusJSONResponse) VisitGetTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTagRuleRequestObject struct {
+	Owner  RepoOwner        `json:"owner"`
+	Name   RepoName         `json:"name"`
+	RuleId ProtectionRuleId `json:"ruleId"`
+	Body   *UpdateTagRuleJSONRequestBody
+}
+
+type UpdateTagRuleResponseObject interface {
+	VisitUpdateTagRuleResponse(w http.ResponseWriter) error
+}
+
+type UpdateTagRule200JSONResponse TagRule
+
+func (response UpdateTagRule200JSONResponse) VisitUpdateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTagRule307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateTagRule307ApplicationProblemPlusJSONResponse) VisitUpdateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTagRule400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateTagRule400ApplicationProblemPlusJSONResponse) VisitUpdateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTagRule403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateTagRule403ApplicationProblemPlusJSONResponse) VisitUpdateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTagRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateTagRule404ApplicationProblemPlusJSONResponse) VisitUpdateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTagRule409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateTagRule409ApplicationProblemPlusJSONResponse) VisitUpdateTagRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTagRuledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateTagRuledefaultApplicationProblemPlusJSONResponse) VisitUpdateTagRuleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -16305,6 +26286,27 @@ type StrictServerInterface interface {
 	// Register Create an account
 	// (POST /auth/register)
 	Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error)
+	// ListGitHubConnections GitHub connections of a user or organization
+	// (GET /github/connections)
+	ListGitHubConnections(ctx context.Context, request ListGitHubConnectionsRequestObject) (ListGitHubConnectionsResponseObject, error)
+	// CreateGitHubConnection Connect a GitHub App installation or a fine-grained token
+	// (POST /github/connections)
+	CreateGitHubConnection(ctx context.Context, request CreateGitHubConnectionRequestObject) (CreateGitHubConnectionResponseObject, error)
+	// DeleteGitHubConnection Delete a connection that no repository uses (409 otherwise)
+	// (DELETE /github/connections/{connectionId})
+	DeleteGitHubConnection(ctx context.Context, request DeleteGitHubConnectionRequestObject) (DeleteGitHubConnectionResponseObject, error)
+	// GetGitHubConnection A GitHub connection
+	// (GET /github/connections/{connectionId})
+	GetGitHubConnection(ctx context.Context, request GetGitHubConnectionRequestObject) (GetGitHubConnectionResponseObject, error)
+	// UpdateGitHubConnection Rename a connection, replace its credentials or rotate the webhook secret
+	// (PATCH /github/connections/{connectionId})
+	UpdateGitHubConnection(ctx context.Context, request UpdateGitHubConnectionRequestObject) (UpdateGitHubConnectionResponseObject, error)
+	// CheckGitHubConnection Verify the credentials of a connection against GitHub
+	// (POST /github/connections/{connectionId}/check)
+	CheckGitHubConnection(ctx context.Context, request CheckGitHubConnectionRequestObject) (CheckGitHubConnectionResponseObject, error)
+	// ImportGitHubRepo Import the git data of a GitHub repository into a new repository
+	// (POST /github/imports)
+	ImportGitHubRepo(ctx context.Context, request ImportGitHubRepoRequestObject) (ImportGitHubRepoResponseObject, error)
 	// GetMeta Public information about this instance
 	// (GET /meta)
 	GetMeta(ctx context.Context, request GetMetaRequestObject) (GetMetaResponseObject, error)
@@ -16395,6 +26397,24 @@ type StrictServerInterface interface {
 	// GetBlob A file of a ref
 	// (GET /repos/{owner}/{name}/blob)
 	GetBlob(ctx context.Context, request GetBlobRequestObject) (GetBlobResponseObject, error)
+	// ListBranchProtections Branch protection rules of the repository
+	// (GET /repos/{owner}/{name}/branch-protections)
+	ListBranchProtections(ctx context.Context, request ListBranchProtectionsRequestObject) (ListBranchProtectionsResponseObject, error)
+	// CreateBranchProtection Create a branch protection rule
+	// (POST /repos/{owner}/{name}/branch-protections)
+	CreateBranchProtection(ctx context.Context, request CreateBranchProtectionRequestObject) (CreateBranchProtectionResponseObject, error)
+	// EvaluateRefUpdate Dry-run a ref update against the branch protection and tag rules
+	// (POST /repos/{owner}/{name}/branch-protections/evaluate)
+	EvaluateRefUpdate(ctx context.Context, request EvaluateRefUpdateRequestObject) (EvaluateRefUpdateResponseObject, error)
+	// DeleteBranchProtection Delete a branch protection rule
+	// (DELETE /repos/{owner}/{name}/branch-protections/{ruleId})
+	DeleteBranchProtection(ctx context.Context, request DeleteBranchProtectionRequestObject) (DeleteBranchProtectionResponseObject, error)
+	// GetBranchProtection A branch protection rule
+	// (GET /repos/{owner}/{name}/branch-protections/{ruleId})
+	GetBranchProtection(ctx context.Context, request GetBranchProtectionRequestObject) (GetBranchProtectionResponseObject, error)
+	// UpdateBranchProtection Replace a branch protection rule
+	// (PUT /repos/{owner}/{name}/branch-protections/{ruleId})
+	UpdateBranchProtection(ctx context.Context, request UpdateBranchProtectionRequestObject) (UpdateBranchProtectionResponseObject, error)
 	// ListBranches Branches, most recently committed first
 	// (GET /repos/{owner}/{name}/branches)
 	ListBranches(ctx context.Context, request ListBranchesRequestObject) (ListBranchesResponseObject, error)
@@ -16419,6 +26439,120 @@ type StrictServerInterface interface {
 	// EditContents Create, update or delete a file with a commit
 	// (POST /repos/{owner}/{name}/contents)
 	EditContents(ctx context.Context, request EditContentsRequestObject) (EditContentsResponseObject, error)
+	// GetGitHubImport Status of the import that created the repository
+	// (GET /repos/{owner}/{name}/github/import)
+	GetGitHubImport(ctx context.Context, request GetGitHubImportRequestObject) (GetGitHubImportResponseObject, error)
+	// DeleteGitHubSyncLink Remove the GitHub sync link (the GitHub repository is untouched)
+	// (DELETE /repos/{owner}/{name}/github/sync)
+	DeleteGitHubSyncLink(ctx context.Context, request DeleteGitHubSyncLinkRequestObject) (DeleteGitHubSyncLinkResponseObject, error)
+	// GetGitHubSyncLink The GitHub sync link of a repository (404 when none)
+	// (GET /repos/{owner}/{name}/github/sync)
+	GetGitHubSyncLink(ctx context.Context, request GetGitHubSyncLinkRequestObject) (GetGitHubSyncLinkResponseObject, error)
+	// PutGitHubSyncLink Create or replace the GitHub sync link of a repository
+	// (PUT /repos/{owner}/{name}/github/sync)
+	PutGitHubSyncLink(ctx context.Context, request PutGitHubSyncLinkRequestObject) (PutGitHubSyncLinkResponseObject, error)
+	// ListGitHubSyncRefs Per-ref state of the GitHub sync link
+	// (GET /repos/{owner}/{name}/github/sync/refs)
+	ListGitHubSyncRefs(ctx context.Context, request ListGitHubSyncRefsRequestObject) (ListGitHubSyncRefsResponseObject, error)
+	// ResolveGitHubSyncConflict Resolve a diverged branch of a sync link
+	// (POST /repos/{owner}/{name}/github/sync/resolve)
+	ResolveGitHubSyncConflict(ctx context.Context, request ResolveGitHubSyncConflictRequestObject) (ResolveGitHubSyncConflictResponseObject, error)
+	// RunGitHubSync Run the GitHub sync link now (clears the backoff)
+	// (POST /repos/{owner}/{name}/github/sync/run)
+	RunGitHubSync(ctx context.Context, request RunGitHubSyncRequestObject) (RunGitHubSyncResponseObject, error)
+	// ListIssueTemplates Issue templates of the default branch
+	// (GET /repos/{owner}/{name}/issue-templates)
+	ListIssueTemplates(ctx context.Context, request ListIssueTemplatesRequestObject) (ListIssueTemplatesResponseObject, error)
+	// ListIssues Search the issues of the repository
+	// (GET /repos/{owner}/{name}/issues)
+	ListIssues(ctx context.Context, request ListIssuesRequestObject) (ListIssuesResponseObject, error)
+	// CreateIssue Open an issue
+	// (POST /repos/{owner}/{name}/issues)
+	CreateIssue(ctx context.Context, request CreateIssueRequestObject) (CreateIssueResponseObject, error)
+	// DeleteIssueAttachment Delete an attachment
+	// (DELETE /repos/{owner}/{name}/issues/attachments/{attachmentId})
+	DeleteIssueAttachment(ctx context.Context, request DeleteIssueAttachmentRequestObject) (DeleteIssueAttachmentResponseObject, error)
+	// DeleteIssueComment Delete a comment
+	// (DELETE /repos/{owner}/{name}/issues/comments/{commentId})
+	DeleteIssueComment(ctx context.Context, request DeleteIssueCommentRequestObject) (DeleteIssueCommentResponseObject, error)
+	// GetIssueComment A comment
+	// (GET /repos/{owner}/{name}/issues/comments/{commentId})
+	GetIssueComment(ctx context.Context, request GetIssueCommentRequestObject) (GetIssueCommentResponseObject, error)
+	// UpdateIssueComment Edit a comment
+	// (PATCH /repos/{owner}/{name}/issues/comments/{commentId})
+	UpdateIssueComment(ctx context.Context, request UpdateIssueCommentRequestObject) (UpdateIssueCommentResponseObject, error)
+	// ListIssueCommentEdits Previous bodies of a comment, newest first
+	// (GET /repos/{owner}/{name}/issues/comments/{commentId}/edits)
+	ListIssueCommentEdits(ctx context.Context, request ListIssueCommentEditsRequestObject) (ListIssueCommentEditsResponseObject, error)
+	// ListIssueCommentReactions Reactions to a comment
+	// (GET /repos/{owner}/{name}/issues/comments/{commentId}/reactions)
+	ListIssueCommentReactions(ctx context.Context, request ListIssueCommentReactionsRequestObject) (ListIssueCommentReactionsResponseObject, error)
+	// AddIssueCommentReaction React to a comment
+	// (POST /repos/{owner}/{name}/issues/comments/{commentId}/reactions)
+	AddIssueCommentReaction(ctx context.Context, request AddIssueCommentReactionRequestObject) (AddIssueCommentReactionResponseObject, error)
+	// RemoveIssueCommentReaction Remove the caller's reaction
+	// (DELETE /repos/{owner}/{name}/issues/comments/{commentId}/reactions/{content})
+	RemoveIssueCommentReaction(ctx context.Context, request RemoveIssueCommentReactionRequestObject) (RemoveIssueCommentReactionResponseObject, error)
+	// GetIssue An issue
+	// (GET /repos/{owner}/{name}/issues/{number})
+	GetIssue(ctx context.Context, request GetIssueRequestObject) (GetIssueResponseObject, error)
+	// UpdateIssue Edit, close or reopen an issue
+	// (PATCH /repos/{owner}/{name}/issues/{number})
+	UpdateIssue(ctx context.Context, request UpdateIssueRequestObject) (UpdateIssueResponseObject, error)
+	// ListIssueComments Comments of an issue, oldest first
+	// (GET /repos/{owner}/{name}/issues/{number}/comments)
+	ListIssueComments(ctx context.Context, request ListIssueCommentsRequestObject) (ListIssueCommentsResponseObject, error)
+	// CreateIssueComment Comment on an issue
+	// (POST /repos/{owner}/{name}/issues/{number}/comments)
+	CreateIssueComment(ctx context.Context, request CreateIssueCommentRequestObject) (CreateIssueCommentResponseObject, error)
+	// ListIssueEdits Previous bodies of an issue, newest first
+	// (GET /repos/{owner}/{name}/issues/{number}/edits)
+	ListIssueEdits(ctx context.Context, request ListIssueEditsRequestObject) (ListIssueEditsResponseObject, error)
+	// UnlockIssue Unlock the conversation
+	// (DELETE /repos/{owner}/{name}/issues/{number}/lock)
+	UnlockIssue(ctx context.Context, request UnlockIssueRequestObject) (UnlockIssueResponseObject, error)
+	// LockIssue Lock the conversation
+	// (PUT /repos/{owner}/{name}/issues/{number}/lock)
+	LockIssue(ctx context.Context, request LockIssueRequestObject) (LockIssueResponseObject, error)
+	// ListIssueReactions Reactions to an issue
+	// (GET /repos/{owner}/{name}/issues/{number}/reactions)
+	ListIssueReactions(ctx context.Context, request ListIssueReactionsRequestObject) (ListIssueReactionsResponseObject, error)
+	// AddIssueReaction React to an issue
+	// (POST /repos/{owner}/{name}/issues/{number}/reactions)
+	AddIssueReaction(ctx context.Context, request AddIssueReactionRequestObject) (AddIssueReactionResponseObject, error)
+	// RemoveIssueReaction Remove the caller's reaction
+	// (DELETE /repos/{owner}/{name}/issues/{number}/reactions/{content})
+	RemoveIssueReaction(ctx context.Context, request RemoveIssueReactionRequestObject) (RemoveIssueReactionResponseObject, error)
+	// ListIssueTimeline Events and comments of an issue, oldest first
+	// (GET /repos/{owner}/{name}/issues/{number}/timeline)
+	ListIssueTimeline(ctx context.Context, request ListIssueTimelineRequestObject) (ListIssueTimelineResponseObject, error)
+	// ListLabels Labels of the repository, by name
+	// (GET /repos/{owner}/{name}/labels)
+	ListLabels(ctx context.Context, request ListLabelsRequestObject) (ListLabelsResponseObject, error)
+	// CreateLabel Create a label
+	// (POST /repos/{owner}/{name}/labels)
+	CreateLabel(ctx context.Context, request CreateLabelRequestObject) (CreateLabelResponseObject, error)
+	// DeleteLabel Delete a label
+	// (DELETE /repos/{owner}/{name}/labels/{label})
+	DeleteLabel(ctx context.Context, request DeleteLabelRequestObject) (DeleteLabelResponseObject, error)
+	// UpdateLabel Edit a label
+	// (PATCH /repos/{owner}/{name}/labels/{label})
+	UpdateLabel(ctx context.Context, request UpdateLabelRequestObject) (UpdateLabelResponseObject, error)
+	// ListMilestones Milestones of the repository
+	// (GET /repos/{owner}/{name}/milestones)
+	ListMilestones(ctx context.Context, request ListMilestonesRequestObject) (ListMilestonesResponseObject, error)
+	// CreateMilestone Create a milestone
+	// (POST /repos/{owner}/{name}/milestones)
+	CreateMilestone(ctx context.Context, request CreateMilestoneRequestObject) (CreateMilestoneResponseObject, error)
+	// DeleteMilestone Delete a milestone
+	// (DELETE /repos/{owner}/{name}/milestones/{milestoneId})
+	DeleteMilestone(ctx context.Context, request DeleteMilestoneRequestObject) (DeleteMilestoneResponseObject, error)
+	// GetMilestone A milestone
+	// (GET /repos/{owner}/{name}/milestones/{milestoneId})
+	GetMilestone(ctx context.Context, request GetMilestoneRequestObject) (GetMilestoneResponseObject, error)
+	// UpdateMilestone Edit, close or reopen a milestone
+	// (PATCH /repos/{owner}/{name}/milestones/{milestoneId})
+	UpdateMilestone(ctx context.Context, request UpdateMilestoneRequestObject) (UpdateMilestoneResponseObject, error)
 	// GetReadme The README of a directory
 	// (GET /repos/{owner}/{name}/readme)
 	GetReadme(ctx context.Context, request GetReadmeRequestObject) (GetReadmeResponseObject, error)
@@ -16452,6 +26586,21 @@ type StrictServerInterface interface {
 	// SearchCode Search the text files of a ref (git grep)
 	// (GET /repos/{owner}/{name}/search/code)
 	SearchCode(ctx context.Context, request SearchCodeRequestObject) (SearchCodeResponseObject, error)
+	// ListTagRules Tag rules of the repository
+	// (GET /repos/{owner}/{name}/tag-rules)
+	ListTagRules(ctx context.Context, request ListTagRulesRequestObject) (ListTagRulesResponseObject, error)
+	// CreateTagRule Create a tag rule
+	// (POST /repos/{owner}/{name}/tag-rules)
+	CreateTagRule(ctx context.Context, request CreateTagRuleRequestObject) (CreateTagRuleResponseObject, error)
+	// DeleteTagRule Delete a tag rule
+	// (DELETE /repos/{owner}/{name}/tag-rules/{ruleId})
+	DeleteTagRule(ctx context.Context, request DeleteTagRuleRequestObject) (DeleteTagRuleResponseObject, error)
+	// GetTagRule A tag rule
+	// (GET /repos/{owner}/{name}/tag-rules/{ruleId})
+	GetTagRule(ctx context.Context, request GetTagRuleRequestObject) (GetTagRuleResponseObject, error)
+	// UpdateTagRule Replace a tag rule
+	// (PUT /repos/{owner}/{name}/tag-rules/{ruleId})
+	UpdateTagRule(ctx context.Context, request UpdateTagRuleRequestObject) (UpdateTagRuleResponseObject, error)
 	// ListTags Tags of commits, newest first
 	// (GET /repos/{owner}/{name}/tags)
 	ListTags(ctx context.Context, request ListTagsRequestObject) (ListTagsResponseObject, error)
@@ -17273,6 +27422,205 @@ func (sh *strictHandler) Register(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RegisterResponseObject); ok {
 		if err := validResponse.VisitRegisterResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListGitHubConnections operation middleware
+func (sh *strictHandler) ListGitHubConnections(w http.ResponseWriter, r *http.Request, params ListGitHubConnectionsParams) {
+	var request ListGitHubConnectionsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListGitHubConnections(ctx, request.(ListGitHubConnectionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListGitHubConnections")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListGitHubConnectionsResponseObject); ok {
+		if err := validResponse.VisitListGitHubConnectionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateGitHubConnection operation middleware
+func (sh *strictHandler) CreateGitHubConnection(w http.ResponseWriter, r *http.Request) {
+	var request CreateGitHubConnectionRequestObject
+
+	var body CreateGitHubConnectionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateGitHubConnection(ctx, request.(CreateGitHubConnectionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateGitHubConnection")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateGitHubConnectionResponseObject); ok {
+		if err := validResponse.VisitCreateGitHubConnectionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteGitHubConnection operation middleware
+func (sh *strictHandler) DeleteGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID) {
+	var request DeleteGitHubConnectionRequestObject
+
+	request.ConnectionId = connectionId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteGitHubConnection(ctx, request.(DeleteGitHubConnectionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteGitHubConnection")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteGitHubConnectionResponseObject); ok {
+		if err := validResponse.VisitDeleteGitHubConnectionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetGitHubConnection operation middleware
+func (sh *strictHandler) GetGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID) {
+	var request GetGitHubConnectionRequestObject
+
+	request.ConnectionId = connectionId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetGitHubConnection(ctx, request.(GetGitHubConnectionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetGitHubConnection")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetGitHubConnectionResponseObject); ok {
+		if err := validResponse.VisitGetGitHubConnectionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateGitHubConnection operation middleware
+func (sh *strictHandler) UpdateGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID) {
+	var request UpdateGitHubConnectionRequestObject
+
+	request.ConnectionId = connectionId
+
+	var body UpdateGitHubConnectionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateGitHubConnection(ctx, request.(UpdateGitHubConnectionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateGitHubConnection")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateGitHubConnectionResponseObject); ok {
+		if err := validResponse.VisitUpdateGitHubConnectionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CheckGitHubConnection operation middleware
+func (sh *strictHandler) CheckGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID) {
+	var request CheckGitHubConnectionRequestObject
+
+	request.ConnectionId = connectionId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CheckGitHubConnection(ctx, request.(CheckGitHubConnectionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CheckGitHubConnection")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CheckGitHubConnectionResponseObject); ok {
+		if err := validResponse.VisitCheckGitHubConnectionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImportGitHubRepo operation middleware
+func (sh *strictHandler) ImportGitHubRepo(w http.ResponseWriter, r *http.Request) {
+	var request ImportGitHubRepoRequestObject
+
+	var body ImportGitHubRepoJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImportGitHubRepo(ctx, request.(ImportGitHubRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImportGitHubRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImportGitHubRepoResponseObject); ok {
+		if err := validResponse.VisitImportGitHubRepoResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -18142,6 +28490,192 @@ func (sh *strictHandler) GetBlob(w http.ResponseWriter, r *http.Request, owner R
 	}
 }
 
+// ListBranchProtections operation middleware
+func (sh *strictHandler) ListBranchProtections(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request ListBranchProtectionsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListBranchProtections(ctx, request.(ListBranchProtectionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListBranchProtections")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListBranchProtectionsResponseObject); ok {
+		if err := validResponse.VisitListBranchProtectionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateBranchProtection operation middleware
+func (sh *strictHandler) CreateBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request CreateBranchProtectionRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body CreateBranchProtectionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateBranchProtection(ctx, request.(CreateBranchProtectionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateBranchProtection")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateBranchProtectionResponseObject); ok {
+		if err := validResponse.VisitCreateBranchProtectionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EvaluateRefUpdate operation middleware
+func (sh *strictHandler) EvaluateRefUpdate(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request EvaluateRefUpdateRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body EvaluateRefUpdateJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EvaluateRefUpdate(ctx, request.(EvaluateRefUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EvaluateRefUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EvaluateRefUpdateResponseObject); ok {
+		if err := validResponse.VisitEvaluateRefUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteBranchProtection operation middleware
+func (sh *strictHandler) DeleteBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
+	var request DeleteBranchProtectionRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteBranchProtection(ctx, request.(DeleteBranchProtectionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteBranchProtection")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteBranchProtectionResponseObject); ok {
+		if err := validResponse.VisitDeleteBranchProtectionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetBranchProtection operation middleware
+func (sh *strictHandler) GetBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
+	var request GetBranchProtectionRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetBranchProtection(ctx, request.(GetBranchProtectionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetBranchProtection")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetBranchProtectionResponseObject); ok {
+		if err := validResponse.VisitGetBranchProtectionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateBranchProtection operation middleware
+func (sh *strictHandler) UpdateBranchProtection(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
+	var request UpdateBranchProtectionRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RuleId = ruleId
+
+	var body UpdateBranchProtectionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateBranchProtection(ctx, request.(UpdateBranchProtectionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateBranchProtection")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateBranchProtectionResponseObject); ok {
+		if err := validResponse.VisitUpdateBranchProtectionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListBranches operation middleware
 func (sh *strictHandler) ListBranches(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListBranchesParams) {
 	var request ListBranchesRequestObject
@@ -18371,6 +28905,1158 @@ func (sh *strictHandler) EditContents(w http.ResponseWriter, r *http.Request, ow
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(EditContentsResponseObject); ok {
 		if err := validResponse.VisitEditContentsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetGitHubImport operation middleware
+func (sh *strictHandler) GetGitHubImport(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request GetGitHubImportRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetGitHubImport(ctx, request.(GetGitHubImportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetGitHubImport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetGitHubImportResponseObject); ok {
+		if err := validResponse.VisitGetGitHubImportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteGitHubSyncLink operation middleware
+func (sh *strictHandler) DeleteGitHubSyncLink(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request DeleteGitHubSyncLinkRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteGitHubSyncLink(ctx, request.(DeleteGitHubSyncLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteGitHubSyncLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteGitHubSyncLinkResponseObject); ok {
+		if err := validResponse.VisitDeleteGitHubSyncLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetGitHubSyncLink operation middleware
+func (sh *strictHandler) GetGitHubSyncLink(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request GetGitHubSyncLinkRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetGitHubSyncLink(ctx, request.(GetGitHubSyncLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetGitHubSyncLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetGitHubSyncLinkResponseObject); ok {
+		if err := validResponse.VisitGetGitHubSyncLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutGitHubSyncLink operation middleware
+func (sh *strictHandler) PutGitHubSyncLink(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request PutGitHubSyncLinkRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body PutGitHubSyncLinkJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutGitHubSyncLink(ctx, request.(PutGitHubSyncLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutGitHubSyncLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutGitHubSyncLinkResponseObject); ok {
+		if err := validResponse.VisitPutGitHubSyncLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListGitHubSyncRefs operation middleware
+func (sh *strictHandler) ListGitHubSyncRefs(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request ListGitHubSyncRefsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListGitHubSyncRefs(ctx, request.(ListGitHubSyncRefsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListGitHubSyncRefs")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListGitHubSyncRefsResponseObject); ok {
+		if err := validResponse.VisitListGitHubSyncRefsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ResolveGitHubSyncConflict operation middleware
+func (sh *strictHandler) ResolveGitHubSyncConflict(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request ResolveGitHubSyncConflictRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body ResolveGitHubSyncConflictJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResolveGitHubSyncConflict(ctx, request.(ResolveGitHubSyncConflictRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResolveGitHubSyncConflict")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResolveGitHubSyncConflictResponseObject); ok {
+		if err := validResponse.VisitResolveGitHubSyncConflictResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RunGitHubSync operation middleware
+func (sh *strictHandler) RunGitHubSync(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request RunGitHubSyncRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RunGitHubSync(ctx, request.(RunGitHubSyncRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RunGitHubSync")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RunGitHubSyncResponseObject); ok {
+		if err := validResponse.VisitRunGitHubSyncResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListIssueTemplates operation middleware
+func (sh *strictHandler) ListIssueTemplates(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request ListIssueTemplatesRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListIssueTemplates(ctx, request.(ListIssueTemplatesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListIssueTemplates")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListIssueTemplatesResponseObject); ok {
+		if err := validResponse.VisitListIssueTemplatesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListIssues operation middleware
+func (sh *strictHandler) ListIssues(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListIssuesParams) {
+	var request ListIssuesRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListIssues(ctx, request.(ListIssuesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListIssues")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListIssuesResponseObject); ok {
+		if err := validResponse.VisitListIssuesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateIssue operation middleware
+func (sh *strictHandler) CreateIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request CreateIssueRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body CreateIssueJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateIssue(ctx, request.(CreateIssueRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateIssue")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateIssueResponseObject); ok {
+		if err := validResponse.VisitCreateIssueResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteIssueAttachment operation middleware
+func (sh *strictHandler) DeleteIssueAttachment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, attachmentId openapi_types.UUID) {
+	var request DeleteIssueAttachmentRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.AttachmentId = attachmentId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteIssueAttachment(ctx, request.(DeleteIssueAttachmentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteIssueAttachment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteIssueAttachmentResponseObject); ok {
+		if err := validResponse.VisitDeleteIssueAttachmentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteIssueComment operation middleware
+func (sh *strictHandler) DeleteIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID) {
+	var request DeleteIssueCommentRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteIssueComment(ctx, request.(DeleteIssueCommentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteIssueComment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteIssueCommentResponseObject); ok {
+		if err := validResponse.VisitDeleteIssueCommentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetIssueComment operation middleware
+func (sh *strictHandler) GetIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID) {
+	var request GetIssueCommentRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetIssueComment(ctx, request.(GetIssueCommentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetIssueComment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetIssueCommentResponseObject); ok {
+		if err := validResponse.VisitGetIssueCommentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateIssueComment operation middleware
+func (sh *strictHandler) UpdateIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID) {
+	var request UpdateIssueCommentRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+
+	var body UpdateIssueCommentJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateIssueComment(ctx, request.(UpdateIssueCommentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateIssueComment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateIssueCommentResponseObject); ok {
+		if err := validResponse.VisitUpdateIssueCommentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListIssueCommentEdits operation middleware
+func (sh *strictHandler) ListIssueCommentEdits(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID, params ListIssueCommentEditsParams) {
+	var request ListIssueCommentEditsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListIssueCommentEdits(ctx, request.(ListIssueCommentEditsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListIssueCommentEdits")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListIssueCommentEditsResponseObject); ok {
+		if err := validResponse.VisitListIssueCommentEditsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListIssueCommentReactions operation middleware
+func (sh *strictHandler) ListIssueCommentReactions(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID, params ListIssueCommentReactionsParams) {
+	var request ListIssueCommentReactionsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListIssueCommentReactions(ctx, request.(ListIssueCommentReactionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListIssueCommentReactions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListIssueCommentReactionsResponseObject); ok {
+		if err := validResponse.VisitListIssueCommentReactionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddIssueCommentReaction operation middleware
+func (sh *strictHandler) AddIssueCommentReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID) {
+	var request AddIssueCommentReactionRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+
+	var body AddIssueCommentReactionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddIssueCommentReaction(ctx, request.(AddIssueCommentReactionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddIssueCommentReaction")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddIssueCommentReactionResponseObject); ok {
+		if err := validResponse.VisitAddIssueCommentReactionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveIssueCommentReaction operation middleware
+func (sh *strictHandler) RemoveIssueCommentReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID, content string) {
+	var request RemoveIssueCommentReactionRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.CommentId = commentId
+	request.Content = content
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveIssueCommentReaction(ctx, request.(RemoveIssueCommentReactionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveIssueCommentReaction")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveIssueCommentReactionResponseObject); ok {
+		if err := validResponse.VisitRemoveIssueCommentReactionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetIssue operation middleware
+func (sh *strictHandler) GetIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	var request GetIssueRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetIssue(ctx, request.(GetIssueRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetIssue")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetIssueResponseObject); ok {
+		if err := validResponse.VisitGetIssueResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateIssue operation middleware
+func (sh *strictHandler) UpdateIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	var request UpdateIssueRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	var body UpdateIssueJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateIssue(ctx, request.(UpdateIssueRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateIssue")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateIssueResponseObject); ok {
+		if err := validResponse.VisitUpdateIssueResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListIssueComments operation middleware
+func (sh *strictHandler) ListIssueComments(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueCommentsParams) {
+	var request ListIssueCommentsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListIssueComments(ctx, request.(ListIssueCommentsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListIssueComments")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListIssueCommentsResponseObject); ok {
+		if err := validResponse.VisitListIssueCommentsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateIssueComment operation middleware
+func (sh *strictHandler) CreateIssueComment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	var request CreateIssueCommentRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	var body CreateIssueCommentJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateIssueComment(ctx, request.(CreateIssueCommentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateIssueComment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateIssueCommentResponseObject); ok {
+		if err := validResponse.VisitCreateIssueCommentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListIssueEdits operation middleware
+func (sh *strictHandler) ListIssueEdits(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueEditsParams) {
+	var request ListIssueEditsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListIssueEdits(ctx, request.(ListIssueEditsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListIssueEdits")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListIssueEditsResponseObject); ok {
+		if err := validResponse.VisitListIssueEditsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnlockIssue operation middleware
+func (sh *strictHandler) UnlockIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	var request UnlockIssueRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnlockIssue(ctx, request.(UnlockIssueRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnlockIssue")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnlockIssueResponseObject); ok {
+		if err := validResponse.VisitUnlockIssueResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// LockIssue operation middleware
+func (sh *strictHandler) LockIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	var request LockIssueRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	var body LockIssueJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.LockIssue(ctx, request.(LockIssueRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "LockIssue")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LockIssueResponseObject); ok {
+		if err := validResponse.VisitLockIssueResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListIssueReactions operation middleware
+func (sh *strictHandler) ListIssueReactions(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueReactionsParams) {
+	var request ListIssueReactionsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListIssueReactions(ctx, request.(ListIssueReactionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListIssueReactions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListIssueReactionsResponseObject); ok {
+		if err := validResponse.VisitListIssueReactionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddIssueReaction operation middleware
+func (sh *strictHandler) AddIssueReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	var request AddIssueReactionRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	var body AddIssueReactionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AddIssueReaction(ctx, request.(AddIssueReactionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddIssueReaction")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddIssueReactionResponseObject); ok {
+		if err := validResponse.VisitAddIssueReactionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveIssueReaction operation middleware
+func (sh *strictHandler) RemoveIssueReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, content string) {
+	var request RemoveIssueReactionRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.Content = content
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveIssueReaction(ctx, request.(RemoveIssueReactionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveIssueReaction")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveIssueReactionResponseObject); ok {
+		if err := validResponse.VisitRemoveIssueReactionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListIssueTimeline operation middleware
+func (sh *strictHandler) ListIssueTimeline(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueTimelineParams) {
+	var request ListIssueTimelineRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListIssueTimeline(ctx, request.(ListIssueTimelineRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListIssueTimeline")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListIssueTimelineResponseObject); ok {
+		if err := validResponse.VisitListIssueTimelineResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListLabels operation middleware
+func (sh *strictHandler) ListLabels(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListLabelsParams) {
+	var request ListLabelsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListLabels(ctx, request.(ListLabelsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListLabels")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListLabelsResponseObject); ok {
+		if err := validResponse.VisitListLabelsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateLabel operation middleware
+func (sh *strictHandler) CreateLabel(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request CreateLabelRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body CreateLabelJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateLabel(ctx, request.(CreateLabelRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateLabel")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateLabelResponseObject); ok {
+		if err := validResponse.VisitCreateLabelResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteLabel operation middleware
+func (sh *strictHandler) DeleteLabel(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, label string) {
+	var request DeleteLabelRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Label = label
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteLabel(ctx, request.(DeleteLabelRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteLabel")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteLabelResponseObject); ok {
+		if err := validResponse.VisitDeleteLabelResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateLabel operation middleware
+func (sh *strictHandler) UpdateLabel(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, label string) {
+	var request UpdateLabelRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Label = label
+
+	var body UpdateLabelJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateLabel(ctx, request.(UpdateLabelRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateLabel")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateLabelResponseObject); ok {
+		if err := validResponse.VisitUpdateLabelResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListMilestones operation middleware
+func (sh *strictHandler) ListMilestones(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListMilestonesParams) {
+	var request ListMilestonesRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListMilestones(ctx, request.(ListMilestonesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListMilestones")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListMilestonesResponseObject); ok {
+		if err := validResponse.VisitListMilestonesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateMilestone operation middleware
+func (sh *strictHandler) CreateMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request CreateMilestoneRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body CreateMilestoneJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateMilestone(ctx, request.(CreateMilestoneRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateMilestone")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateMilestoneResponseObject); ok {
+		if err := validResponse.VisitCreateMilestoneResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteMilestone operation middleware
+func (sh *strictHandler) DeleteMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID) {
+	var request DeleteMilestoneRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.MilestoneId = milestoneId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteMilestone(ctx, request.(DeleteMilestoneRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteMilestone")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteMilestoneResponseObject); ok {
+		if err := validResponse.VisitDeleteMilestoneResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMilestone operation middleware
+func (sh *strictHandler) GetMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID) {
+	var request GetMilestoneRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.MilestoneId = milestoneId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMilestone(ctx, request.(GetMilestoneRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMilestone")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMilestoneResponseObject); ok {
+		if err := validResponse.VisitGetMilestoneResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateMilestone operation middleware
+func (sh *strictHandler) UpdateMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID) {
+	var request UpdateMilestoneRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.MilestoneId = milestoneId
+
+	var body UpdateMilestoneJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateMilestone(ctx, request.(UpdateMilestoneRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateMilestone")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateMilestoneResponseObject); ok {
+		if err := validResponse.VisitUpdateMilestoneResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -18700,6 +30386,158 @@ func (sh *strictHandler) SearchCode(w http.ResponseWriter, r *http.Request, owne
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SearchCodeResponseObject); ok {
 		if err := validResponse.VisitSearchCodeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListTagRules operation middleware
+func (sh *strictHandler) ListTagRules(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request ListTagRulesRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListTagRules(ctx, request.(ListTagRulesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTagRules")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListTagRulesResponseObject); ok {
+		if err := validResponse.VisitListTagRulesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateTagRule operation middleware
+func (sh *strictHandler) CreateTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request CreateTagRuleRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body CreateTagRuleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateTagRule(ctx, request.(CreateTagRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateTagRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateTagRuleResponseObject); ok {
+		if err := validResponse.VisitCreateTagRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteTagRule operation middleware
+func (sh *strictHandler) DeleteTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
+	var request DeleteTagRuleRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteTagRule(ctx, request.(DeleteTagRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteTagRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteTagRuleResponseObject); ok {
+		if err := validResponse.VisitDeleteTagRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetTagRule operation middleware
+func (sh *strictHandler) GetTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
+	var request GetTagRuleRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetTagRule(ctx, request.(GetTagRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetTagRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetTagRuleResponseObject); ok {
+		if err := validResponse.VisitGetTagRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateTagRule operation middleware
+func (sh *strictHandler) UpdateTagRule(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, ruleId ProtectionRuleId) {
+	var request UpdateTagRuleRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RuleId = ruleId
+
+	var body UpdateTagRuleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateTagRule(ctx, request.(UpdateTagRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateTagRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateTagRuleResponseObject); ok {
+		if err := validResponse.VisitUpdateTagRuleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

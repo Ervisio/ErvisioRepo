@@ -120,9 +120,41 @@ Phase 4, web UI:
 - Releases: list, detail with notes and assets, create/edit form, asset upload with progress and cancel, download, delete.
 - New dependencies: `shiki`, the `@codemirror/*` packages needed for the editor and `@lezer/highlight` (previously transitive).
 
+Phase 5, branch protection:
+
+- Branch protection rules and tag rules (migration 00130) under `/api/v1/repos/{owner}/{name}/branch-protections` and `/tag-rules`: CRUD for repository admins, glob patterns (`*`, `**`, `?`, `[...]`) with the most specific rule winning, and `POST .../branch-protections/evaluate` to dry-run a ref update.
+- Branch rules: restrict pushes to users and teams, block force pushes and deletions, require linear history, require signed commits (GPG and SSH signatures checked against the pusher's verified keys), required approvals, CODEOWNERS reviews, stale review dismissal and required status checks (strict mode: up to date with the base); admins may bypass.
+- Tag rules: minimum permission (write, maintain, admin, none) to create, move and delete matching tags, plus allowed users and teams.
+- Enforcement in the git hooks for SSH and HTTP pushes (pre-receive) and for server-side ref updates such as web edits (reference-transaction `prepared`); a rule that cannot be checked refuses the update, and the refusal is shown to the git client and returned as 403 by the web edit API.
+- CODEOWNERS parser (`CODEOWNERS`, `.github/`, `docs/`) with `@user`, `@org/team` and verified email owners; `PullRequestStatus` reports approvals, missing checks and code owner groups for the pull request merge.
+- The hook server now also runs without a remote storage tier, so the rules apply on every installation.
+
+Phase 5, GitHub sync:
+
+- GitHub connections (migration 00140, `/api/v1/github/connections`) owned by a user or an organization: GitHub App installations (JWT RS256 signed with the standard library, cached installation tokens) or fine-grained tokens, for github.com or a GitHub Enterprise Server (instance admins only). Private keys, tokens and webhook secrets are sealed with AES-256-GCM under a key derived from the master key; without `security.master_key_file` connections cannot be created. `POST .../check` tests the credentials.
+- One-off import of the git data of a GitHub repository (`POST /api/v1/github/imports`, status at `/repos/{owner}/{name}/github/import`): a background job fetches all branches and tags into a new repository. The `ghsync.Importer` interface is the extension point for issues, pull requests and releases.
+- Per-repository link (`/repos/{owner}/{name}/github/sync`) in one of three modes: pull mirror (read-only, pushes are refused in the git hooks), backup to GitHub (push after every local push, nightly check, optional repository creation) and bidirectional sync (fast-forwards in both directions, divergent branches kept at `refs/heads/sync-conflict/github/<branch>` and resolved with keep Ervisio, keep GitHub or merge request; `trustGithub` patterns let GitHub win). Deletions propagate only with `prune`; Git LFS objects are not sent and the link reports it.
+- Scheduled runs (interval of 10 minutes to 7 days) with exponential backoff on failures, per-ref state and errors (`.../github/sync/refs`), manual run (`.../github/sync/run`) and debounced runs after local pushes.
+- Webhook receiver `POST /api/v1/github/webhook/{connectionId}` with `X-Hub-Signature-256` verification (constant-time compare); a push schedules the mirror and sync links of the pushed repository.
+
+Phase 5, issues:
+
+- Issues (migration 00120) under `/api/v1/repos/{owner}/{name}/issues`: list with filters (state, labels, milestone, assignee, author, mentioned, text search, sort), create, edit, open/close with reason (completed, not planned, duplicate), lock/unlock, body edit history. Issues and pull requests share one number sequence per repository (`issues.NextNumber`).
+- Comments with edit history and deletion, reactions (`+1`, `-1`, `laugh`, `hooray`, `confused`, `heart`, `rocket`, `eyes`) on issues and comments, timeline of events (labels, assignees, milestones, renames, state changes, locks, references).
+- Labels and milestones (with due date and open/closed counts) per repository, managed by triagers.
+- References in Markdown: `@user` mentions, `#N` and `owner/repo#N` cross-references and commit ids, outside code; references from repositories the viewer cannot read are redacted on the timeline.
+- Closing keywords (`close`, `fix`, `resolve` and their forms) in commits pushed to the default branch close the referenced issues (`issues.CloseFromText`, also usable for merged pull requests).
+- Issue templates and forms from `.github/ISSUE_TEMPLATE` of the default branch, with `config.yml` (blank issues, contact links).
+- Issue attachments: upload (`POST .../issues/attachments?name=`, raw body, 25 MiB by default, charged to the owner quota), download (`GET .../issues/attachments/{id}/download`, range requests, images inline and everything else as a download with a sandboxed CSP) and deletion; a periodic job removes orphaned objects.
+- Transactional event outbox (`internal/events`): producers emit events in the transaction of the change, a River job delivers them to the registered handlers with retries. Pushes (transports and web edits) publish `push` events through the hook server.
+
 ### Removed
 
 - Organization role `billing` (existing members become `member`).
+
+### Fixed
+
+- Deleting a repository now releases the bytes of its release assets from the owner quota (they were summed after the cascade delete, so always as 0), and those of its issue attachments.
 
 ### Security
 

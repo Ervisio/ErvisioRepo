@@ -17,9 +17,10 @@ func RunHook(ctx context.Context, name string, args []string, stdin io.Reader, s
 	sock, tok := getenv(EnvSocket), getenv(EnvToken)
 	switch name {
 	case HookReferenceTransaction:
-		// Only committed transactions are journaled; ref updates made
+		// Prepared transactions are checked (branch protection on
+		// update-ref) and committed ones journaled; ref updates made
 		// outside a session (hydration, maintenance) need no hook.
-		if len(args) != 1 || args[0] != TxCommitted || tok == "" || sock == "" {
+		if len(args) != 1 || (args[0] != TxCommitted && args[0] != TxPrepared) || tok == "" || sock == "" {
 			_, _ = io.Copy(io.Discard, stdin)
 			return 0
 		}

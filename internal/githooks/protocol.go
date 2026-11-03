@@ -61,6 +61,11 @@ func ParseUpdates(s string) ([]RefUpdate, error) {
 		if len(f) != 3 {
 			return nil, fmt.Errorf("malformed hook input line %q", line)
 		}
+		// Symbolic ref updates (git 2.48+ reports "ref:<target>" values)
+		// carry no objects and are not subject to the hooks' checks.
+		if strings.HasPrefix(f[0], "ref:") || strings.HasPrefix(f[1], "ref:") {
+			continue
+		}
 		for _, oid := range f[:2] {
 			if err := git.ValidateObjectID(oid); err != nil {
 				return nil, fmt.Errorf("hook input: %w", err)

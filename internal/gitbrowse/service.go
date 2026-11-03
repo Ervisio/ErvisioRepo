@@ -44,6 +44,8 @@ var (
 	// ErrUnavailable: the operation needs a collaborator that is not
 	// configured.
 	ErrUnavailable = errors.New("unavailable")
+	// ErrRejected is a ref update refused by a hook (branch protection).
+	ErrRejected = errors.New("refused")
 )
 
 func invalidf(format string, a ...any) error {
