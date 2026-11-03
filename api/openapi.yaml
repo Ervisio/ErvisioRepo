@@ -18,6 +18,8 @@ tags:
   - name: releases
   - name: code
   - name: protection
+  - name: webhooks
+  - name: notifications
 # Every operation needs a session unless it declares `security: []`. The
 # "admin" scope means an instance admin. Unsafe methods also need the
 # X-CSRF-Token header (see components.securitySchemes.session).
@@ -4688,6 +4690,846 @@ paths:
         default:
           $ref: "#/components/responses/Problem"
   # --- end github sync ---
+  # --- webhooks (tag: webhooks) ---
+  # Outgoing webhooks (PLAN §5.7) of repositories (admins) and of
+  # organizations (owners; fired for every repository they own).
+  /repos/{owner}/{name}/hooks:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listRepoWebhooks
+      tags: [webhooks]
+      summary: Webhooks of the repository
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: Webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Webhook"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createRepoWebhook
+      tags: [webhooks]
+      summary: Create a webhook on the repository
+      description: |
+        The secret is encrypted with the instance master key (503 without
+        one) and never returned. A url that resolves to a non-public address
+        is refused at delivery time unless [webhooks] allows it.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/WebhookCreate"}
+      responses:
+        "201":
+          description: Webhook created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Webhook"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/hooks/{hookId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: hookId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getRepoWebhook
+      tags: [webhooks]
+      summary: A webhook of the repository
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: Webhook
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Webhook"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateRepoWebhook
+      tags: [webhooks]
+      summary: Change a webhook of the repository
+      description: An empty secret removes it; an absent one keeps it.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/WebhookUpdate"}
+      responses:
+        "200":
+          description: Updated webhook
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Webhook"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteRepoWebhook
+      tags: [webhooks]
+      summary: Delete a webhook of the repository with its deliveries
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Deleted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/hooks/{hookId}/pings:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: hookId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: pingRepoWebhook
+      tags: [webhooks]
+      summary: Send a ping event to a webhook of the repository
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "202":
+          description: Ping queued
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WebhookDelivery"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/hooks/{hookId}/deliveries:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: hookId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: listRepoWebhookDeliveries
+      tags: [webhooks]
+      summary: Deliveries of a webhook of the repository, newest first
+      security:
+        - session: []
+        - token: [repo:write]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Deliveries
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/WebhookDelivery"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/hooks/{hookId}/deliveries/{deliveryId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: hookId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      - name: deliveryId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getRepoWebhookDelivery
+      tags: [webhooks]
+      summary: A delivery with its request and response
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: Delivery
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WebhookDeliveryDetail"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/hooks/{hookId}/deliveries/{deliveryId}/attempts:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: hookId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      - name: deliveryId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: redeliverRepoWebhookDelivery
+      tags: [webhooks]
+      summary: Deliver the payload of a delivery again
+      description: A new delivery is recorded with the same delivery id (guid).
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "202":
+          description: Redelivery queued
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WebhookDelivery"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/hooks:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgWebhooks
+      tags: [webhooks]
+      summary: Webhooks of the organization
+      security:
+        - session: []
+      responses:
+        "200":
+          description: Webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Webhook"}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createOrgWebhook
+      tags: [webhooks]
+      summary: Create a webhook on the organization
+      description: |
+        The secret is encrypted with the instance master key (503 without
+        one) and never returned. A url that resolves to a non-public address
+        is refused at delivery time unless [webhooks] allows it.
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/WebhookCreate"}
+      responses:
+        "201":
+          description: Webhook created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Webhook"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/hooks/{hookId}:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - name: hookId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getOrgWebhook
+      tags: [webhooks]
+      summary: A webhook of the organization
+      security:
+        - session: []
+      responses:
+        "200":
+          description: Webhook
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Webhook"}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateOrgWebhook
+      tags: [webhooks]
+      summary: Change a webhook of the organization
+      description: An empty secret removes it; an absent one keeps it.
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/WebhookUpdate"}
+      responses:
+        "200":
+          description: Updated webhook
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Webhook"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteOrgWebhook
+      tags: [webhooks]
+      summary: Delete a webhook of the organization with its deliveries
+      security:
+        - session: []
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/hooks/{hookId}/pings:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - name: hookId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: pingOrgWebhook
+      tags: [webhooks]
+      summary: Send a ping event to a webhook of the organization
+      security:
+        - session: []
+      responses:
+        "202":
+          description: Ping queued
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WebhookDelivery"}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/hooks/{hookId}/deliveries:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - name: hookId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: listOrgWebhookDeliveries
+      tags: [webhooks]
+      summary: Deliveries of a webhook of the organization, newest first
+      security:
+        - session: []
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Deliveries
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/WebhookDelivery"}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/hooks/{hookId}/deliveries/{deliveryId}:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - name: hookId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      - name: deliveryId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getOrgWebhookDelivery
+      tags: [webhooks]
+      summary: A delivery with its request and response
+      security:
+        - session: []
+      responses:
+        "200":
+          description: Delivery
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WebhookDeliveryDetail"}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/hooks/{hookId}/deliveries/{deliveryId}/attempts:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - name: hookId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      - name: deliveryId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: redeliverOrgWebhookDelivery
+      tags: [webhooks]
+      summary: Deliver the payload of a delivery again
+      description: A new delivery is recorded with the same delivery id (guid).
+      security:
+        - session: []
+      responses:
+        "202":
+          description: Redelivery queued
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WebhookDelivery"}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  # --- end webhooks ---
+  # --- notifications (tag: notifications) ---
+  # In-app notifications (PLAN §5.5), GitHub-like. Mail copies follow the
+  # user's notification settings.
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: Notification threads of the caller, most recently updated first
+      description: Unread threads only unless all is true; done threads are never listed.
+      security:
+        - session: []
+        - token: [user:read]
+      parameters:
+        - name: all
+          in: query
+          schema: {type: boolean, default: false}
+        - name: participating
+          in: query
+          description: Only threads where the caller is directly involved (reason other than subscribed)
+          schema: {type: boolean, default: false}
+        - name: since
+          in: query
+          description: Only threads updated at or after this time
+          schema: {type: string, format: date-time}
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Threads
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/NotificationThread"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: markNotificationsRead
+      tags: [notifications]
+      summary: Mark every notification thread as read
+      security:
+        - session: []
+        - token: [user:write]
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/NotificationsMarkRead"}
+      responses:
+        "204":
+          description: Marked as read
+        "400":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /notifications/count:
+    get:
+      operationId: countNotifications
+      tags: [notifications]
+      summary: Number of unread notification threads (for polling)
+      security:
+        - session: []
+        - token: [user:read]
+      responses:
+        "200":
+          description: Unread count
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/NotificationCount"}
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /notifications/settings:
+    get:
+      operationId: getNotificationSettings
+      tags: [notifications]
+      summary: Notification settings of the caller
+      security:
+        - session: []
+        - token: [user:read]
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/NotificationSettings"}
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: setNotificationSettings
+      tags: [notifications]
+      summary: Change the notification settings of the caller
+      security:
+        - session: []
+        - token: [user:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/NotificationSettings"}
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/NotificationSettings"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /notifications/threads/{threadId}:
+    parameters:
+      - name: threadId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getNotificationThread
+      tags: [notifications]
+      summary: A notification thread of the caller
+      security:
+        - session: []
+        - token: [user:read]
+      responses:
+        "200":
+          description: Thread
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/NotificationThread"}
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: markNotificationThreadRead
+      tags: [notifications]
+      summary: Mark a thread as read
+      security:
+        - session: []
+        - token: [user:write]
+      responses:
+        "204":
+          description: Marked as read
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: markNotificationThreadDone
+      tags: [notifications]
+      summary: Mark a thread as done (removed from the inbox until it is updated)
+      security:
+        - session: []
+        - token: [user:write]
+      responses:
+        "204":
+          description: Marked as done
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /notifications/threads/{threadId}/subscription:
+    parameters:
+      - name: threadId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getThreadSubscription
+      tags: [notifications]
+      summary: Subscription of the caller to the subject of a thread
+      security:
+        - session: []
+        - token: [user:read]
+      responses:
+        "200":
+          description: Subscription
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ThreadSubscription"}
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: setThreadSubscription
+      tags: [notifications]
+      summary: Subscribe to (or ignore) the subject of a thread
+      security:
+        - session: []
+        - token: [user:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ThreadSubscriptionUpdate"}
+      responses:
+        "200":
+          description: Subscription
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ThreadSubscription"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteThreadSubscription
+      tags: [notifications]
+      summary: Remove the explicit subscription (back to the default rules)
+      security:
+        - session: []
+        - token: [user:write]
+      responses:
+        "204":
+          description: Removed
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/subscription:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getRepoSubscription
+      tags: [notifications]
+      summary: Watch level of the caller on the repository
+      description: Without an explicit choice the level is participating.
+      security:
+        - session: []
+        - token: [user:read]
+      responses:
+        "200":
+          description: Subscription
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RepoSubscription"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: setRepoSubscription
+      tags: [notifications]
+      summary: Watch, participate in or ignore the repository
+      security:
+        - session: []
+        - token: [user:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/RepoSubscriptionUpdate"}
+      responses:
+        "200":
+          description: Subscription
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/RepoSubscription"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  # --- end notifications ---
 components:
   securitySchemes:
     session:
@@ -6755,6 +7597,162 @@ components:
         message: {type: string}
         commit: {type: string, description: Offending commit, when the violation concerns one}
     # --- end branch protection schemas ---
+    # --- webhooks schemas ---
+    WebhookContentType:
+      type: string
+      enum: [json, form]
+    WebhookFormat:
+      type: string
+      description: github sends GitHub-compatible headers and payloads; ervisio sends the native envelope
+      enum: [github, ervisio]
+    WebhookDeliveryStatus:
+      type: string
+      enum: [pending, ok, failed]
+    Webhook:
+      type: object
+      required: [id, url, contentType, format, events, active, hasSecret, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        url: {type: string}
+        contentType: {$ref: "#/components/schemas/WebhookContentType"}
+        format: {$ref: "#/components/schemas/WebhookFormat"}
+        events:
+          type: array
+          description: GitHub event names, or "*" for every event
+          items: {type: string}
+        active: {type: boolean}
+        hasSecret: {type: boolean}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        lastDelivery: {$ref: "#/components/schemas/WebhookLastDelivery"}
+    WebhookLastDelivery:
+      type: object
+      required: [status, statusCode, deliveredAt]
+      properties:
+        status: {$ref: "#/components/schemas/WebhookDeliveryStatus"}
+        statusCode: {type: integer}
+        deliveredAt: {type: string, format: date-time}
+    WebhookCreate:
+      type: object
+      required: [url]
+      properties:
+        url: {type: string, maxLength: 2048}
+        contentType: {$ref: "#/components/schemas/WebhookContentType"}
+        format: {$ref: "#/components/schemas/WebhookFormat"}
+        secret: {type: string, maxLength: 256}
+        events:
+          type: array
+          maxItems: 32
+          items: {type: string}
+        active: {type: boolean}
+    WebhookUpdate:
+      type: object
+      properties:
+        url: {type: string, maxLength: 2048}
+        contentType: {$ref: "#/components/schemas/WebhookContentType"}
+        format: {$ref: "#/components/schemas/WebhookFormat"}
+        secret: {type: string, maxLength: 256}
+        events:
+          type: array
+          maxItems: 32
+          items: {type: string}
+        active: {type: boolean}
+    WebhookDelivery:
+      type: object
+      required: [id, guid, event, action, redelivery, status, attempts, statusCode, durationMs, error, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        guid: {type: string, format: uuid, description: Value of the delivery header, shared by redeliveries}
+        event: {type: string}
+        action: {type: string}
+        redelivery: {type: boolean}
+        status: {$ref: "#/components/schemas/WebhookDeliveryStatus"}
+        attempts: {type: integer}
+        statusCode: {type: integer}
+        durationMs: {type: integer}
+        error: {type: string}
+        createdAt: {type: string, format: date-time}
+        deliveredAt: {type: string, format: date-time, nullable: true}
+    WebhookDeliveryDetail:
+      type: object
+      required: [delivery, url, requestHeaders, requestBody, responseHeaders, responseBody]
+      properties:
+        delivery: {$ref: "#/components/schemas/WebhookDelivery"}
+        url: {type: string}
+        requestHeaders:
+          type: object
+          additionalProperties: {type: string}
+        requestBody: {type: string}
+        responseHeaders:
+          type: object
+          additionalProperties: {type: string}
+        responseBody: {type: string, description: Truncated}
+    # --- end webhooks schemas ---
+    # --- notifications schemas ---
+    NotificationReason:
+      type: string
+      enum: [author, assigned, mentioned, review_requested, subscribed, comment, state_change]
+    NotificationThread:
+      type: object
+      required: [id, repoId, owner, repo, subjectType, number, title, reason, summary, unread, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        repoId: {type: string, format: uuid}
+        owner: {type: string}
+        repo: {type: string}
+        subjectType:
+          type: string
+          enum: [issue, pull_request, release, commit]
+        number: {type: integer, format: int64, description: Issue or pull request number; 0 otherwise}
+        title: {type: string}
+        reason: {$ref: "#/components/schemas/NotificationReason"}
+        summary: {type: string}
+        unread: {type: boolean}
+        updatedAt: {type: string, format: date-time}
+        lastReadAt: {type: string, format: date-time, nullable: true}
+    NotificationsMarkRead:
+      type: object
+      properties:
+        lastReadAt:
+          type: string
+          format: date-time
+          description: Threads updated after this time stay unread (default now)
+    NotificationCount:
+      type: object
+      required: [unread]
+      properties:
+        unread: {type: integer, format: int64}
+    NotificationSettings:
+      type: object
+      required: [email]
+      properties:
+        email: {type: boolean, description: Also send notifications by mail}
+    ThreadSubscription:
+      type: object
+      required: [subscribed, ignored, explicit]
+      properties:
+        subscribed: {type: boolean}
+        ignored: {type: boolean}
+        explicit: {type: boolean, description: False when the default rules apply}
+    ThreadSubscriptionUpdate:
+      type: object
+      properties:
+        ignored: {type: boolean, description: True unsubscribes from the subject}
+    RepoWatchLevel:
+      type: string
+      enum: [watching, participating, ignoring]
+    RepoSubscription:
+      type: object
+      required: [level, explicit]
+      properties:
+        level: {$ref: "#/components/schemas/RepoWatchLevel"}
+        explicit: {type: boolean}
+    RepoSubscriptionUpdate:
+      type: object
+      required: [level]
+      properties:
+        level: {$ref: "#/components/schemas/RepoWatchLevel"}
+    # --- end notifications schemas ---
     Problem:
       type: object
       required: [type, title, status]

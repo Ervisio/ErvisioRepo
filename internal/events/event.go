@@ -31,6 +31,18 @@ const (
 	KindMilestone = "milestone"
 	// KindPush: pushed (one event per receive-pack, with every ref update).
 	KindPush = "push"
+	// KindPull: opened, edited, closed, reopened, synchronize, merged,
+	// labeled, unlabeled, assigned, unassigned, review_requested,
+	// ready_for_review, converted_to_draft.
+	KindPull = "pull_request"
+	// KindPullReview: submitted, edited, dismissed.
+	KindPullReview = "pull_request_review"
+	// KindPullReviewComment: created, edited, deleted.
+	KindPullReviewComment = "pull_request_review_comment"
+	// KindRelease: published, edited, deleted.
+	KindRelease = "release"
+	// KindStatus: created (commit status or check run state change).
+	KindStatus = "status"
 )
 
 // Event is one fact recorded by a producer. RepoID, ActorID and SubjectID

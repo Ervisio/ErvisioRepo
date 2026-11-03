@@ -358,6 +358,26 @@ type Namespace struct {
 	CreatedAt pgtype.Timestamptz
 }
 
+type NotificationThread struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	RepoID      uuid.UUID
+	SubjectType string
+	SubjectKey  string
+	Number      int64
+	Title       string
+	Reason      string
+	Summary     string
+	Unread      bool
+	Done        bool
+	LastEventID uuid.NullUUID
+	LastActorID uuid.NullUUID
+	LastReadAt  pgtype.Timestamptz
+	EmailedAt   pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
 type OidcFlow struct {
 	StateHash    []byte
 	Provider     string
@@ -427,6 +447,79 @@ type Password struct {
 	UserID    uuid.UUID
 	Hash      string
 	UpdatedAt pgtype.Timestamptz
+}
+
+type PullRequest struct {
+	IssueID          uuid.UUID
+	RepoID           uuid.UUID
+	Number           int64
+	HeadRepoID       uuid.NullUUID
+	HeadRef          string
+	HeadSha          string
+	BaseRef          string
+	BaseSha          string
+	MergeBaseSha     string
+	Draft            bool
+	MergeableState   string
+	MergeSha         string
+	ConflictFiles    []string
+	MergedAt         pgtype.Timestamptz
+	MergedBy         uuid.NullUUID
+	MergeCommitSha   string
+	MergeMethod      string
+	AutoMergeMethod  string
+	AutoMergeBy      uuid.NullUUID
+	AutoMergeTitle   string
+	AutoMergeMessage string
+	AutoMergeDelete  bool
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type PullReview struct {
+	ID             uuid.UUID
+	PullID         uuid.UUID
+	RepoID         uuid.UUID
+	ReviewerID     uuid.NullUUID
+	State          string
+	Body           string
+	CommitSha      string
+	SubmittedAt    pgtype.Timestamptz
+	DismissedAt    pgtype.Timestamptz
+	DismissedBy    uuid.NullUUID
+	DismissMessage string
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
+type PullReviewComment struct {
+	ID                uuid.UUID
+	PullID            uuid.UUID
+	RepoID            uuid.UUID
+	ReviewID          uuid.NullUUID
+	AuthorID          uuid.NullUUID
+	InReplyTo         uuid.NullUUID
+	Path              string
+	Side              string
+	Line              pgtype.Int4
+	StartLine         pgtype.Int4
+	OriginalLine      int32
+	OriginalStartLine pgtype.Int4
+	OriginalCommitSha string
+	CommitSha         string
+	DiffHunk          string
+	Body              string
+	Outdated          bool
+	ResolvedAt        pgtype.Timestamptz
+	ResolvedBy        uuid.NullUUID
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type PullReviewRequest struct {
+	PullID     uuid.UUID
+	ReviewerID uuid.UUID
+	CreatedAt  pgtype.Timestamptz
 }
 
 type Quota struct {
@@ -505,11 +598,25 @@ type RepoCollaborator struct {
 	CreatedAt  pgtype.Timestamptz
 }
 
+type RepoFork struct {
+	RepoID    uuid.UUID
+	ParentID  uuid.NullUUID
+	CreatedAt pgtype.Timestamptz
+}
+
 type RepoRedirect struct {
 	OwnerID   uuid.UUID
 	NameLower string
 	RepoID    uuid.UUID
 	CreatedAt pgtype.Timestamptz
+}
+
+type RepoSubscription struct {
+	UserID    uuid.UUID
+	RepoID    uuid.UUID
+	Level     string
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 }
 
 type Session struct {
@@ -595,6 +702,14 @@ type TeamRepo struct {
 	CreatedAt  pgtype.Timestamptz
 }
 
+type ThreadSubscription struct {
+	UserID     uuid.UUID
+	RepoID     uuid.UUID
+	SubjectKey string
+	Subscribed bool
+	CreatedAt  pgtype.Timestamptz
+}
+
 type Token struct {
 	ID         uuid.UUID
 	UserID     uuid.UUID
@@ -615,14 +730,15 @@ type UsageCounter struct {
 }
 
 type User struct {
-	ID          uuid.UUID
-	DisplayName string
-	Role        string
-	Locale      string
-	SuspendedAt pgtype.Timestamptz
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-	AvatarUrl   string
+	ID                 uuid.UUID
+	DisplayName        string
+	Role               string
+	Locale             string
+	SuspendedAt        pgtype.Timestamptz
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+	AvatarUrl          string
+	EmailNotifications bool
 }
 
 type WebauthnCredential struct {
@@ -638,4 +754,41 @@ type WebauthnCredential struct {
 type WebauthnHandle struct {
 	UserID uuid.UUID
 	Handle []byte
+}
+
+type Webhook struct {
+	ID          uuid.UUID
+	RepoID      uuid.NullUUID
+	OrgID       uuid.NullUUID
+	Url         string
+	ContentType string
+	Format      string
+	Secret      []byte
+	Events      []string
+	Active      bool
+	CreatedBy   uuid.NullUUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type WebhookDelivery struct {
+	ID              uuid.UUID
+	WebhookID       uuid.UUID
+	EventID         uuid.NullUUID
+	Guid            uuid.UUID
+	Event           string
+	Action          string
+	Redelivery      bool
+	Payload         []byte
+	Status          string
+	Attempts        int32
+	Url             string
+	RequestHeaders  []byte
+	StatusCode      int32
+	ResponseHeaders []byte
+	ResponseBody    string
+	DurationMs      int32
+	Error           string
+	CreatedAt       pgtype.Timestamptz
+	DeliveredAt     pgtype.Timestamptz
 }

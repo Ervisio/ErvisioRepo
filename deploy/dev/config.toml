@@ -41,3 +41,11 @@ host = "localhost"
 port = 1025
 tls = "none"
 from = "Ervisio Repo <git@localhost>"
+
+# Outgoing webhooks (PLAN §5.7). Non-public addresses (loopback, private,
+# link-local, CGNAT, metadata) are refused unless allowed here.
+# [webhooks]
+# allow_private = false
+# allowed_cidrs = ["10.20.0.0/16"]
+# timeout = "10s"
+# max_attempts = 8

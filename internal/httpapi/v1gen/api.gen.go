@@ -352,16 +352,16 @@ func (e IssueState) Valid() bool {
 
 // Defines values for IssueTemplateKind.
 const (
-	Form     IssueTemplateKind = "form"
-	Markdown IssueTemplateKind = "markdown"
+	IssueTemplateKindForm     IssueTemplateKind = "form"
+	IssueTemplateKindMarkdown IssueTemplateKind = "markdown"
 )
 
 // Valid indicates whether the value is a known member of the IssueTemplateKind enum.
 func (e IssueTemplateKind) Valid() bool {
 	switch e {
-	case Form:
+	case IssueTemplateKindForm:
 		return true
-	case Markdown:
+	case IssueTemplateKindMarkdown:
 		return true
 	default:
 		return false
@@ -458,6 +458,63 @@ func (e MilestoneUpdateState) Valid() bool {
 	case MilestoneUpdateStateClosed:
 		return true
 	case MilestoneUpdateStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for NotificationReason.
+const (
+	Assigned        NotificationReason = "assigned"
+	Author          NotificationReason = "author"
+	Comment         NotificationReason = "comment"
+	Mentioned       NotificationReason = "mentioned"
+	ReviewRequested NotificationReason = "review_requested"
+	StateChange     NotificationReason = "state_change"
+	Subscribed      NotificationReason = "subscribed"
+)
+
+// Valid indicates whether the value is a known member of the NotificationReason enum.
+func (e NotificationReason) Valid() bool {
+	switch e {
+	case Assigned:
+		return true
+	case Author:
+		return true
+	case Comment:
+		return true
+	case Mentioned:
+		return true
+	case ReviewRequested:
+		return true
+	case StateChange:
+		return true
+	case Subscribed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for NotificationThreadSubjectType.
+const (
+	NotificationThreadSubjectTypeCommit      NotificationThreadSubjectType = "commit"
+	NotificationThreadSubjectTypeIssue       NotificationThreadSubjectType = "issue"
+	NotificationThreadSubjectTypePullRequest NotificationThreadSubjectType = "pull_request"
+	NotificationThreadSubjectTypeRelease     NotificationThreadSubjectType = "release"
+)
+
+// Valid indicates whether the value is a known member of the NotificationThreadSubjectType enum.
+func (e NotificationThreadSubjectType) Valid() bool {
+	switch e {
+	case NotificationThreadSubjectTypeCommit:
+		return true
+	case NotificationThreadSubjectTypeIssue:
+		return true
+	case NotificationThreadSubjectTypePullRequest:
+		return true
+	case NotificationThreadSubjectTypeRelease:
 		return true
 	default:
 		return false
@@ -665,6 +722,27 @@ func (e RepoTieringState) Valid() bool {
 	case RepoTieringStateHot:
 		return true
 	case RepoTieringStateHydrating:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RepoWatchLevel.
+const (
+	Ignoring      RepoWatchLevel = "ignoring"
+	Participating RepoWatchLevel = "participating"
+	Watching      RepoWatchLevel = "watching"
+)
+
+// Valid indicates whether the value is a known member of the RepoWatchLevel enum.
+func (e RepoWatchLevel) Valid() bool {
+	switch e {
+	case Ignoring:
+		return true
+	case Participating:
+		return true
+	case Watching:
 		return true
 	default:
 		return false
@@ -926,6 +1004,63 @@ func (e Visibility) Valid() bool {
 	case Private:
 		return true
 	case Public:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WebhookContentType.
+const (
+	WebhookContentTypeForm WebhookContentType = "form"
+	WebhookContentTypeJson WebhookContentType = "json"
+)
+
+// Valid indicates whether the value is a known member of the WebhookContentType enum.
+func (e WebhookContentType) Valid() bool {
+	switch e {
+	case WebhookContentTypeForm:
+		return true
+	case WebhookContentTypeJson:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WebhookDeliveryStatus.
+const (
+	WebhookDeliveryStatusFailed  WebhookDeliveryStatus = "failed"
+	WebhookDeliveryStatusOk      WebhookDeliveryStatus = "ok"
+	WebhookDeliveryStatusPending WebhookDeliveryStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the WebhookDeliveryStatus enum.
+func (e WebhookDeliveryStatus) Valid() bool {
+	switch e {
+	case WebhookDeliveryStatusFailed:
+		return true
+	case WebhookDeliveryStatusOk:
+		return true
+	case WebhookDeliveryStatusPending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WebhookFormat.
+const (
+	Ervisio WebhookFormat = "ervisio"
+	Github  WebhookFormat = "github"
+)
+
+// Valid indicates whether the value is a known member of the WebhookFormat enum.
+func (e WebhookFormat) Valid() bool {
+	switch e {
+	case Ervisio:
+		return true
+	case Github:
 		return true
 	default:
 		return false
@@ -1844,6 +1979,47 @@ type MilestoneUpdate struct {
 // MilestoneUpdateState defines model for MilestoneUpdate.State.
 type MilestoneUpdateState string
 
+// NotificationCount defines model for NotificationCount.
+type NotificationCount struct {
+	Unread int64 `json:"unread"`
+}
+
+// NotificationReason defines model for NotificationReason.
+type NotificationReason string
+
+// NotificationSettings defines model for NotificationSettings.
+type NotificationSettings struct {
+	// Email Also send notifications by mail
+	Email bool `json:"email"`
+}
+
+// NotificationThread defines model for NotificationThread.
+type NotificationThread struct {
+	Id         openapi_types.UUID `json:"id"`
+	LastReadAt *time.Time         `json:"lastReadAt,omitempty"`
+
+	// Number Issue or pull request number; 0 otherwise
+	Number      int64                         `json:"number"`
+	Owner       string                        `json:"owner"`
+	Reason      NotificationReason            `json:"reason"`
+	Repo        string                        `json:"repo"`
+	RepoId      openapi_types.UUID            `json:"repoId"`
+	SubjectType NotificationThreadSubjectType `json:"subjectType"`
+	Summary     string                        `json:"summary"`
+	Title       string                        `json:"title"`
+	Unread      bool                          `json:"unread"`
+	UpdatedAt   time.Time                     `json:"updatedAt"`
+}
+
+// NotificationThreadSubjectType defines model for NotificationThread.SubjectType.
+type NotificationThreadSubjectType string
+
+// NotificationsMarkRead defines model for NotificationsMarkRead.
+type NotificationsMarkRead struct {
+	// LastReadAt Threads updated after this time stay unread (default now)
+	LastReadAt *time.Time `json:"lastReadAt,omitempty"`
+}
+
 // OidcLink defines model for OidcLink.
 type OidcLink struct {
 	CreatedAt time.Time `json:"createdAt"`
@@ -2229,6 +2405,17 @@ type RepoPermissionRequest struct {
 // RepoPermissionRequestPermission defines model for RepoPermissionRequest.Permission.
 type RepoPermissionRequestPermission string
 
+// RepoSubscription defines model for RepoSubscription.
+type RepoSubscription struct {
+	Explicit bool           `json:"explicit"`
+	Level    RepoWatchLevel `json:"level"`
+}
+
+// RepoSubscriptionUpdate defines model for RepoSubscriptionUpdate.
+type RepoSubscriptionUpdate struct {
+	Level RepoWatchLevel `json:"level"`
+}
+
 // RepoTiering defines model for RepoTiering.
 type RepoTiering struct {
 	// ManifestSeq Last pack journal sequence recorded for the repository.
@@ -2255,6 +2442,9 @@ type RepoUpdate struct {
 	Name          *string     `json:"name,omitempty"`
 	Visibility    *Visibility `json:"visibility,omitempty"`
 }
+
+// RepoWatchLevel defines model for RepoWatchLevel.
+type RepoWatchLevel string
 
 // ResetPasswordRequest defines model for ResetPasswordRequest.
 type ResetPasswordRequest struct {
@@ -2518,6 +2708,20 @@ type TeamUpdate struct {
 	Name        *string `json:"name,omitempty"`
 }
 
+// ThreadSubscription defines model for ThreadSubscription.
+type ThreadSubscription struct {
+	// Explicit False when the default rules apply
+	Explicit   bool `json:"explicit"`
+	Ignored    bool `json:"ignored"`
+	Subscribed bool `json:"subscribed"`
+}
+
+// ThreadSubscriptionUpdate defines model for ThreadSubscriptionUpdate.
+type ThreadSubscriptionUpdate struct {
+	// Ignored True unsubscribes from the subject
+	Ignored *bool `json:"ignored,omitempty"`
+}
+
 // TimelineEvent defines model for TimelineEvent.
 type TimelineEvent struct {
 	Actor     string        `json:"actor"`
@@ -2640,6 +2844,94 @@ type WebAuthnOptions struct {
 	Options map[string]interface{} `json:"options"`
 }
 
+// Webhook defines model for Webhook.
+type Webhook struct {
+	Active      bool               `json:"active"`
+	ContentType WebhookContentType `json:"contentType"`
+	CreatedAt   time.Time          `json:"createdAt"`
+
+	// Events GitHub event names, or "*" for every event
+	Events []string `json:"events"`
+
+	// Format github sends GitHub-compatible headers and payloads; ervisio sends the native envelope
+	Format       WebhookFormat        `json:"format"`
+	HasSecret    bool                 `json:"hasSecret"`
+	Id           openapi_types.UUID   `json:"id"`
+	LastDelivery *WebhookLastDelivery `json:"lastDelivery,omitempty"`
+	UpdatedAt    time.Time            `json:"updatedAt"`
+	Url          string               `json:"url"`
+}
+
+// WebhookContentType defines model for WebhookContentType.
+type WebhookContentType string
+
+// WebhookCreate defines model for WebhookCreate.
+type WebhookCreate struct {
+	Active      *bool               `json:"active,omitempty"`
+	ContentType *WebhookContentType `json:"contentType,omitempty"`
+	Events      *[]string           `json:"events,omitempty"`
+
+	// Format github sends GitHub-compatible headers and payloads; ervisio sends the native envelope
+	Format *WebhookFormat `json:"format,omitempty"`
+	Secret *string        `json:"secret,omitempty"`
+	Url    string         `json:"url"`
+}
+
+// WebhookDelivery defines model for WebhookDelivery.
+type WebhookDelivery struct {
+	Action      string     `json:"action"`
+	Attempts    int        `json:"attempts"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	DeliveredAt *time.Time `json:"deliveredAt,omitempty"`
+	DurationMs  int        `json:"durationMs"`
+	Error       string     `json:"error"`
+	Event       string     `json:"event"`
+
+	// Guid Value of the delivery header
+	Guid       openapi_types.UUID    `json:"guid"`
+	Id         openapi_types.UUID    `json:"id"`
+	Redelivery bool                  `json:"redelivery"`
+	Status     WebhookDeliveryStatus `json:"status"`
+	StatusCode int                   `json:"statusCode"`
+}
+
+// WebhookDeliveryDetail defines model for WebhookDeliveryDetail.
+type WebhookDeliveryDetail struct {
+	Delivery       WebhookDelivery   `json:"delivery"`
+	RequestBody    string            `json:"requestBody"`
+	RequestHeaders map[string]string `json:"requestHeaders"`
+
+	// ResponseBody Truncated
+	ResponseBody    string            `json:"responseBody"`
+	ResponseHeaders map[string]string `json:"responseHeaders"`
+	Url             string            `json:"url"`
+}
+
+// WebhookDeliveryStatus defines model for WebhookDeliveryStatus.
+type WebhookDeliveryStatus string
+
+// WebhookFormat github sends GitHub-compatible headers and payloads; ervisio sends the native envelope
+type WebhookFormat string
+
+// WebhookLastDelivery defines model for WebhookLastDelivery.
+type WebhookLastDelivery struct {
+	DeliveredAt time.Time             `json:"deliveredAt"`
+	Status      WebhookDeliveryStatus `json:"status"`
+	StatusCode  int                   `json:"statusCode"`
+}
+
+// WebhookUpdate defines model for WebhookUpdate.
+type WebhookUpdate struct {
+	Active      *bool               `json:"active,omitempty"`
+	ContentType *WebhookContentType `json:"contentType,omitempty"`
+	Events      *[]string           `json:"events,omitempty"`
+
+	// Format github sends GitHub-compatible headers and payloads; ervisio sends the native envelope
+	Format *WebhookFormat `json:"format,omitempty"`
+	Secret *string        `json:"secret,omitempty"`
+	Url    *string        `json:"url,omitempty"`
+}
+
 // AuditAction defines model for AuditAction.
 type AuditAction = string
 
@@ -2721,6 +3013,19 @@ type ListGitHubConnectionsParams struct {
 	Owner *string `form:"owner,omitempty" json:"owner,omitempty"`
 }
 
+// ListNotificationsParams defines parameters for ListNotifications.
+type ListNotificationsParams struct {
+	All *bool `form:"all,omitempty" json:"all,omitempty"`
+
+	// Participating Only threads where the caller is directly involved (reason other than subscribed)
+	Participating *bool `form:"participating,omitempty" json:"participating,omitempty"`
+
+	// Since Only threads updated at or after this time
+	Since  *time.Time  `form:"since,omitempty" json:"since,omitempty"`
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListOrgAuditParams defines parameters for ListOrgAudit.
 type ListOrgAuditParams struct {
 	// Before Cursor; the next value of the previous page
@@ -2729,6 +3034,12 @@ type ListOrgAuditParams struct {
 
 	// Action Exact action, or a prefix ending with "." (e.g. org.)
 	Action *AuditAction `form:"action,omitempty" json:"action,omitempty"`
+}
+
+// ListOrgWebhookDeliveriesParams defines parameters for ListOrgWebhookDeliveries.
+type ListOrgWebhookDeliveriesParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ListOrgReposParams defines parameters for ListOrgRepos.
@@ -2776,6 +3087,12 @@ type ListCommitsParams struct {
 type CompareRefsParams struct {
 	Base string `form:"base" json:"base"`
 	Head string `form:"head" json:"head"`
+}
+
+// ListRepoWebhookDeliveriesParams defines parameters for ListRepoWebhookDeliveries.
+type ListRepoWebhookDeliveriesParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ListIssuesParams defines parameters for ListIssues.
@@ -2995,6 +3312,15 @@ type UpdateGitHubConnectionJSONRequestBody = GitHubConnectionUpdate
 // ImportGitHubRepoJSONRequestBody defines body for ImportGitHubRepo for application/json ContentType.
 type ImportGitHubRepoJSONRequestBody = GitHubImportCreate
 
+// MarkNotificationsReadJSONRequestBody defines body for MarkNotificationsRead for application/json ContentType.
+type MarkNotificationsReadJSONRequestBody = NotificationsMarkRead
+
+// SetNotificationSettingsJSONRequestBody defines body for SetNotificationSettings for application/json ContentType.
+type SetNotificationSettingsJSONRequestBody = NotificationSettings
+
+// SetThreadSubscriptionJSONRequestBody defines body for SetThreadSubscription for application/json ContentType.
+type SetThreadSubscriptionJSONRequestBody = ThreadSubscriptionUpdate
+
 // CreateOrgJSONRequestBody defines body for CreateOrg for application/json ContentType.
 type CreateOrgJSONRequestBody = OrgCreate
 
@@ -3003,6 +3329,12 @@ type AcceptOrgInviteJSONRequestBody = TokenRequest
 
 // UpdateOrgJSONRequestBody defines body for UpdateOrg for application/json ContentType.
 type UpdateOrgJSONRequestBody = OrgUpdate
+
+// CreateOrgWebhookJSONRequestBody defines body for CreateOrgWebhook for application/json ContentType.
+type CreateOrgWebhookJSONRequestBody = WebhookCreate
+
+// UpdateOrgWebhookJSONRequestBody defines body for UpdateOrgWebhook for application/json ContentType.
+type UpdateOrgWebhookJSONRequestBody = WebhookUpdate
 
 // CreateOrgInviteJSONRequestBody defines body for CreateOrgInvite for application/json ContentType.
 type CreateOrgInviteJSONRequestBody = OrgInviteRequest
@@ -3046,6 +3378,12 @@ type PutGitHubSyncLinkJSONRequestBody = GitHubSyncLinkPut
 // ResolveGitHubSyncConflictJSONRequestBody defines body for ResolveGitHubSyncConflict for application/json ContentType.
 type ResolveGitHubSyncConflictJSONRequestBody = GitHubSyncResolve
 
+// CreateRepoWebhookJSONRequestBody defines body for CreateRepoWebhook for application/json ContentType.
+type CreateRepoWebhookJSONRequestBody = WebhookCreate
+
+// UpdateRepoWebhookJSONRequestBody defines body for UpdateRepoWebhook for application/json ContentType.
+type UpdateRepoWebhookJSONRequestBody = WebhookUpdate
+
 // CreateIssueJSONRequestBody defines body for CreateIssue for application/json ContentType.
 type CreateIssueJSONRequestBody = IssueCreate
 
@@ -3087,6 +3425,9 @@ type UpdateReleaseJSONRequestBody = ReleaseUpdate
 
 // UpdateReleaseAssetJSONRequestBody defines body for UpdateReleaseAsset for application/json ContentType.
 type UpdateReleaseAssetJSONRequestBody = ReleaseAssetUpdate
+
+// SetRepoSubscriptionJSONRequestBody defines body for SetRepoSubscription for application/json ContentType.
+type SetRepoSubscriptionJSONRequestBody = RepoSubscriptionUpdate
 
 // CreateTagRuleJSONRequestBody defines body for CreateTagRule for application/json ContentType.
 type CreateTagRuleJSONRequestBody = TagRuleInput
@@ -3240,6 +3581,39 @@ type ServerInterface interface {
 	// GetMeta Public information about this instance
 	// (GET /meta)
 	GetMeta(w http.ResponseWriter, r *http.Request)
+	// ListNotifications Notification threads of the caller, most recently updated first
+	// (GET /notifications)
+	ListNotifications(w http.ResponseWriter, r *http.Request, params ListNotificationsParams)
+	// MarkNotificationsRead Mark every notification thread as read
+	// (PUT /notifications)
+	MarkNotificationsRead(w http.ResponseWriter, r *http.Request)
+	// CountNotifications Number of unread notification threads (for polling)
+	// (GET /notifications/count)
+	CountNotifications(w http.ResponseWriter, r *http.Request)
+	// GetNotificationSettings Notification settings of the caller
+	// (GET /notifications/settings)
+	GetNotificationSettings(w http.ResponseWriter, r *http.Request)
+	// SetNotificationSettings Change the notification settings of the caller
+	// (PUT /notifications/settings)
+	SetNotificationSettings(w http.ResponseWriter, r *http.Request)
+	// MarkNotificationThreadDone Mark a thread as done (removed from the inbox until it is updated)
+	// (DELETE /notifications/threads/{threadId})
+	MarkNotificationThreadDone(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID)
+	// GetNotificationThread A notification thread of the caller
+	// (GET /notifications/threads/{threadId})
+	GetNotificationThread(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID)
+	// MarkNotificationThreadRead Mark a thread as read
+	// (PATCH /notifications/threads/{threadId})
+	MarkNotificationThreadRead(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID)
+	// DeleteThreadSubscription Remove the explicit subscription (back to the default rules)
+	// (DELETE /notifications/threads/{threadId}/subscription)
+	DeleteThreadSubscription(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID)
+	// GetThreadSubscription Subscription of the caller to the subject of a thread
+	// (GET /notifications/threads/{threadId}/subscription)
+	GetThreadSubscription(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID)
+	// SetThreadSubscription Subscribe to (or ignore) the subject of a thread
+	// (PUT /notifications/threads/{threadId}/subscription)
+	SetThreadSubscription(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID)
 	// ListMyOrgs Organizations the caller is a member of
 	// (GET /orgs)
 	ListMyOrgs(w http.ResponseWriter, r *http.Request)
@@ -3261,6 +3635,33 @@ type ServerInterface interface {
 	// ListOrgAudit Audit log of an organization, newest first
 	// (GET /orgs/{org}/audit)
 	ListOrgAudit(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgAuditParams)
+	// ListOrgWebhooks Webhooks of the organization
+	// (GET /orgs/{org}/hooks)
+	ListOrgWebhooks(w http.ResponseWriter, r *http.Request, org OrgName)
+	// CreateOrgWebhook Create a webhook on the organization
+	// (POST /orgs/{org}/hooks)
+	CreateOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName)
+	// DeleteOrgWebhook Delete a webhook of the organization with its deliveries
+	// (DELETE /orgs/{org}/hooks/{hookId})
+	DeleteOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID)
+	// GetOrgWebhook A webhook of the organization
+	// (GET /orgs/{org}/hooks/{hookId})
+	GetOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID)
+	// UpdateOrgWebhook Change a webhook of the organization
+	// (PATCH /orgs/{org}/hooks/{hookId})
+	UpdateOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID)
+	// ListOrgWebhookDeliveries Deliveries of a webhook of the organization, newest first
+	// (GET /orgs/{org}/hooks/{hookId}/deliveries)
+	ListOrgWebhookDeliveries(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID, params ListOrgWebhookDeliveriesParams)
+	// GetOrgWebhookDelivery A delivery with its request and response
+	// (GET /orgs/{org}/hooks/{hookId}/deliveries/{deliveryId})
+	GetOrgWebhookDelivery(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID, deliveryId openapi_types.UUID)
+	// RedeliverOrgWebhookDelivery Deliver the payload of a delivery again
+	// (POST /orgs/{org}/hooks/{hookId}/deliveries/{deliveryId}/attempts)
+	RedeliverOrgWebhookDelivery(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID, deliveryId openapi_types.UUID)
+	// PingOrgWebhook Send a ping event to a webhook of the organization
+	// (POST /orgs/{org}/hooks/{hookId}/pings)
+	PingOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID)
 	// ListOrgInvites Pending invitations, expired ones included
 	// (GET /orgs/{org}/invites)
 	ListOrgInvites(w http.ResponseWriter, r *http.Request, org OrgName)
@@ -3390,6 +3791,33 @@ type ServerInterface interface {
 	// RunGitHubSync Run the GitHub sync link now (clears the backoff)
 	// (POST /repos/{owner}/{name}/github/sync/run)
 	RunGitHubSync(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// ListRepoWebhooks Webhooks of the repository
+	// (GET /repos/{owner}/{name}/hooks)
+	ListRepoWebhooks(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// CreateRepoWebhook Create a webhook on the repository
+	// (POST /repos/{owner}/{name}/hooks)
+	CreateRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeleteRepoWebhook Delete a webhook of the repository with its deliveries
+	// (DELETE /repos/{owner}/{name}/hooks/{hookId})
+	DeleteRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID)
+	// GetRepoWebhook A webhook of the repository
+	// (GET /repos/{owner}/{name}/hooks/{hookId})
+	GetRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID)
+	// UpdateRepoWebhook Change a webhook of the repository
+	// (PATCH /repos/{owner}/{name}/hooks/{hookId})
+	UpdateRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID)
+	// ListRepoWebhookDeliveries Deliveries of a webhook of the repository, newest first
+	// (GET /repos/{owner}/{name}/hooks/{hookId}/deliveries)
+	ListRepoWebhookDeliveries(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID, params ListRepoWebhookDeliveriesParams)
+	// GetRepoWebhookDelivery A delivery with its request and response
+	// (GET /repos/{owner}/{name}/hooks/{hookId}/deliveries/{deliveryId})
+	GetRepoWebhookDelivery(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID, deliveryId openapi_types.UUID)
+	// RedeliverRepoWebhookDelivery Deliver the payload of a delivery again
+	// (POST /repos/{owner}/{name}/hooks/{hookId}/deliveries/{deliveryId}/attempts)
+	RedeliverRepoWebhookDelivery(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID, deliveryId openapi_types.UUID)
+	// PingRepoWebhook Send a ping event to a webhook of the repository
+	// (POST /repos/{owner}/{name}/hooks/{hookId}/pings)
+	PingRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID)
 	// ListIssueTemplates Issue templates of the default branch
 	// (GET /repos/{owner}/{name}/issue-templates)
 	ListIssueTemplates(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
@@ -3516,6 +3944,12 @@ type ServerInterface interface {
 	// SearchCode Search the text files of a ref (git grep)
 	// (GET /repos/{owner}/{name}/search/code)
 	SearchCode(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params SearchCodeParams)
+	// GetRepoSubscription Watch level of the caller on the repository
+	// (GET /repos/{owner}/{name}/subscription)
+	GetRepoSubscription(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// SetRepoSubscription Watch, participate in or ignore the repository
+	// (PUT /repos/{owner}/{name}/subscription)
+	SetRepoSubscription(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
 	// ListTagRules Tag rules of the repository
 	// (GET /repos/{owner}/{name}/tag-rules)
 	ListTagRules(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
@@ -3843,6 +4277,72 @@ func (_ Unimplemented) GetMeta(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListNotifications Notification threads of the caller, most recently updated first
+// (GET /notifications)
+func (_ Unimplemented) ListNotifications(w http.ResponseWriter, r *http.Request, params ListNotificationsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// MarkNotificationsRead Mark every notification thread as read
+// (PUT /notifications)
+func (_ Unimplemented) MarkNotificationsRead(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CountNotifications Number of unread notification threads (for polling)
+// (GET /notifications/count)
+func (_ Unimplemented) CountNotifications(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetNotificationSettings Notification settings of the caller
+// (GET /notifications/settings)
+func (_ Unimplemented) GetNotificationSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetNotificationSettings Change the notification settings of the caller
+// (PUT /notifications/settings)
+func (_ Unimplemented) SetNotificationSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// MarkNotificationThreadDone Mark a thread as done (removed from the inbox until it is updated)
+// (DELETE /notifications/threads/{threadId})
+func (_ Unimplemented) MarkNotificationThreadDone(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetNotificationThread A notification thread of the caller
+// (GET /notifications/threads/{threadId})
+func (_ Unimplemented) GetNotificationThread(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// MarkNotificationThreadRead Mark a thread as read
+// (PATCH /notifications/threads/{threadId})
+func (_ Unimplemented) MarkNotificationThreadRead(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteThreadSubscription Remove the explicit subscription (back to the default rules)
+// (DELETE /notifications/threads/{threadId}/subscription)
+func (_ Unimplemented) DeleteThreadSubscription(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetThreadSubscription Subscription of the caller to the subject of a thread
+// (GET /notifications/threads/{threadId}/subscription)
+func (_ Unimplemented) GetThreadSubscription(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetThreadSubscription Subscribe to (or ignore) the subject of a thread
+// (PUT /notifications/threads/{threadId}/subscription)
+func (_ Unimplemented) SetThreadSubscription(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListMyOrgs Organizations the caller is a member of
 // (GET /orgs)
 func (_ Unimplemented) ListMyOrgs(w http.ResponseWriter, r *http.Request) {
@@ -3882,6 +4382,60 @@ func (_ Unimplemented) UpdateOrg(w http.ResponseWriter, r *http.Request, org Org
 // ListOrgAudit Audit log of an organization, newest first
 // (GET /orgs/{org}/audit)
 func (_ Unimplemented) ListOrgAudit(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgAuditParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOrgWebhooks Webhooks of the organization
+// (GET /orgs/{org}/hooks)
+func (_ Unimplemented) ListOrgWebhooks(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateOrgWebhook Create a webhook on the organization
+// (POST /orgs/{org}/hooks)
+func (_ Unimplemented) CreateOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteOrgWebhook Delete a webhook of the organization with its deliveries
+// (DELETE /orgs/{org}/hooks/{hookId})
+func (_ Unimplemented) DeleteOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetOrgWebhook A webhook of the organization
+// (GET /orgs/{org}/hooks/{hookId})
+func (_ Unimplemented) GetOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateOrgWebhook Change a webhook of the organization
+// (PATCH /orgs/{org}/hooks/{hookId})
+func (_ Unimplemented) UpdateOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOrgWebhookDeliveries Deliveries of a webhook of the organization, newest first
+// (GET /orgs/{org}/hooks/{hookId}/deliveries)
+func (_ Unimplemented) ListOrgWebhookDeliveries(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID, params ListOrgWebhookDeliveriesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetOrgWebhookDelivery A delivery with its request and response
+// (GET /orgs/{org}/hooks/{hookId}/deliveries/{deliveryId})
+func (_ Unimplemented) GetOrgWebhookDelivery(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID, deliveryId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RedeliverOrgWebhookDelivery Deliver the payload of a delivery again
+// (POST /orgs/{org}/hooks/{hookId}/deliveries/{deliveryId}/attempts)
+func (_ Unimplemented) RedeliverOrgWebhookDelivery(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID, deliveryId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PingOrgWebhook Send a ping event to a webhook of the organization
+// (POST /orgs/{org}/hooks/{hookId}/pings)
+func (_ Unimplemented) PingOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4143,6 +4697,60 @@ func (_ Unimplemented) RunGitHubSync(w http.ResponseWriter, r *http.Request, own
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListRepoWebhooks Webhooks of the repository
+// (GET /repos/{owner}/{name}/hooks)
+func (_ Unimplemented) ListRepoWebhooks(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateRepoWebhook Create a webhook on the repository
+// (POST /repos/{owner}/{name}/hooks)
+func (_ Unimplemented) CreateRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteRepoWebhook Delete a webhook of the repository with its deliveries
+// (DELETE /repos/{owner}/{name}/hooks/{hookId})
+func (_ Unimplemented) DeleteRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetRepoWebhook A webhook of the repository
+// (GET /repos/{owner}/{name}/hooks/{hookId})
+func (_ Unimplemented) GetRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateRepoWebhook Change a webhook of the repository
+// (PATCH /repos/{owner}/{name}/hooks/{hookId})
+func (_ Unimplemented) UpdateRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListRepoWebhookDeliveries Deliveries of a webhook of the repository, newest first
+// (GET /repos/{owner}/{name}/hooks/{hookId}/deliveries)
+func (_ Unimplemented) ListRepoWebhookDeliveries(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID, params ListRepoWebhookDeliveriesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetRepoWebhookDelivery A delivery with its request and response
+// (GET /repos/{owner}/{name}/hooks/{hookId}/deliveries/{deliveryId})
+func (_ Unimplemented) GetRepoWebhookDelivery(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID, deliveryId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RedeliverRepoWebhookDelivery Deliver the payload of a delivery again
+// (POST /repos/{owner}/{name}/hooks/{hookId}/deliveries/{deliveryId}/attempts)
+func (_ Unimplemented) RedeliverRepoWebhookDelivery(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID, deliveryId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PingRepoWebhook Send a ping event to a webhook of the repository
+// (POST /repos/{owner}/{name}/hooks/{hookId}/pings)
+func (_ Unimplemented) PingRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListIssueTemplates Issue templates of the default branch
 // (GET /repos/{owner}/{name}/issue-templates)
 func (_ Unimplemented) ListIssueTemplates(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
@@ -4392,6 +5000,18 @@ func (_ Unimplemented) UpdateReleaseAsset(w http.ResponseWriter, r *http.Request
 // SearchCode Search the text files of a ref (git grep)
 // (GET /repos/{owner}/{name}/search/code)
 func (_ Unimplemented) SearchCode(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params SearchCodeParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetRepoSubscription Watch level of the caller on the repository
+// (GET /repos/{owner}/{name}/subscription)
+func (_ Unimplemented) GetRepoSubscription(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetRepoSubscription Watch, participate in or ignore the repository
+// (PUT /repos/{owner}/{name}/subscription)
+func (_ Unimplemented) SetRepoSubscription(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5421,6 +6041,391 @@ func (siw *ServerInterfaceWrapper) GetMeta(w http.ResponseWriter, r *http.Reques
 	handler.ServeHTTP(w, r)
 }
 
+// ListNotifications operation middleware
+func (siw *ServerInterfaceWrapper) ListNotifications(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListNotificationsParams
+
+	// ------------- Optional query parameter "all" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "all", r.URL.Query(), &params.All, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "all"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "all", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "participating" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "participating", r.URL.Query(), &params.Participating, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "participating"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "participating", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "since" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "since", r.URL.Query(), &params.Since, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "since"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "since", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListNotifications(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// MarkNotificationsRead operation middleware
+func (siw *ServerInterfaceWrapper) MarkNotificationsRead(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MarkNotificationsRead(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CountNotifications operation middleware
+func (siw *ServerInterfaceWrapper) CountNotifications(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CountNotifications(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetNotificationSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetNotificationSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetNotificationSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetNotificationSettings operation middleware
+func (siw *ServerInterfaceWrapper) SetNotificationSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetNotificationSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// MarkNotificationThreadDone operation middleware
+func (siw *ServerInterfaceWrapper) MarkNotificationThreadDone(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "threadId" -------------
+	var threadId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "threadId", chi.URLParam(r, "threadId"), &threadId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "threadId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MarkNotificationThreadDone(w, r, threadId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetNotificationThread operation middleware
+func (siw *ServerInterfaceWrapper) GetNotificationThread(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "threadId" -------------
+	var threadId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "threadId", chi.URLParam(r, "threadId"), &threadId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "threadId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetNotificationThread(w, r, threadId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// MarkNotificationThreadRead operation middleware
+func (siw *ServerInterfaceWrapper) MarkNotificationThreadRead(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "threadId" -------------
+	var threadId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "threadId", chi.URLParam(r, "threadId"), &threadId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "threadId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MarkNotificationThreadRead(w, r, threadId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteThreadSubscription operation middleware
+func (siw *ServerInterfaceWrapper) DeleteThreadSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "threadId" -------------
+	var threadId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "threadId", chi.URLParam(r, "threadId"), &threadId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "threadId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteThreadSubscription(w, r, threadId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetThreadSubscription operation middleware
+func (siw *ServerInterfaceWrapper) GetThreadSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "threadId" -------------
+	var threadId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "threadId", chi.URLParam(r, "threadId"), &threadId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "threadId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetThreadSubscription(w, r, threadId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetThreadSubscription operation middleware
+func (siw *ServerInterfaceWrapper) SetThreadSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "threadId" -------------
+	var threadId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "threadId", chi.URLParam(r, "threadId"), &threadId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "threadId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetThreadSubscription(w, r, threadId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListMyOrgs operation middleware
 func (siw *ServerInterfaceWrapper) ListMyOrgs(w http.ResponseWriter, r *http.Request) {
 
@@ -5642,6 +6647,404 @@ func (siw *ServerInterfaceWrapper) ListOrgAudit(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListOrgAudit(w, r, org, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrgWebhooks operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgWebhooks(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgWebhooks(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateOrgWebhook operation middleware
+func (siw *ServerInterfaceWrapper) CreateOrgWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateOrgWebhook(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteOrgWebhook operation middleware
+func (siw *ServerInterfaceWrapper) DeleteOrgWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteOrgWebhook(w, r, org, hookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOrgWebhook operation middleware
+func (siw *ServerInterfaceWrapper) GetOrgWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOrgWebhook(w, r, org, hookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateOrgWebhook operation middleware
+func (siw *ServerInterfaceWrapper) UpdateOrgWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateOrgWebhook(w, r, org, hookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrgWebhookDeliveries operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgWebhookDeliveries(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListOrgWebhookDeliveriesParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgWebhookDeliveries(w, r, org, hookId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOrgWebhookDelivery operation middleware
+func (siw *ServerInterfaceWrapper) GetOrgWebhookDelivery(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "deliveryId" -------------
+	var deliveryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "deliveryId", chi.URLParam(r, "deliveryId"), &deliveryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "deliveryId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOrgWebhookDelivery(w, r, org, hookId, deliveryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RedeliverOrgWebhookDelivery operation middleware
+func (siw *ServerInterfaceWrapper) RedeliverOrgWebhookDelivery(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "deliveryId" -------------
+	var deliveryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "deliveryId", chi.URLParam(r, "deliveryId"), &deliveryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "deliveryId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RedeliverOrgWebhookDelivery(w, r, org, hookId, deliveryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PingOrgWebhook operation middleware
+func (siw *ServerInterfaceWrapper) PingOrgWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PingOrgWebhook(w, r, org, hookId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7661,6 +9064,503 @@ func (siw *ServerInterfaceWrapper) RunGitHubSync(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RunGitHubSync(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListRepoWebhooks operation middleware
+func (siw *ServerInterfaceWrapper) ListRepoWebhooks(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRepoWebhooks(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateRepoWebhook operation middleware
+func (siw *ServerInterfaceWrapper) CreateRepoWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateRepoWebhook(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteRepoWebhook operation middleware
+func (siw *ServerInterfaceWrapper) DeleteRepoWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteRepoWebhook(w, r, owner, name, hookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRepoWebhook operation middleware
+func (siw *ServerInterfaceWrapper) GetRepoWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRepoWebhook(w, r, owner, name, hookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateRepoWebhook operation middleware
+func (siw *ServerInterfaceWrapper) UpdateRepoWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateRepoWebhook(w, r, owner, name, hookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListRepoWebhookDeliveries operation middleware
+func (siw *ServerInterfaceWrapper) ListRepoWebhookDeliveries(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListRepoWebhookDeliveriesParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRepoWebhookDeliveries(w, r, owner, name, hookId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRepoWebhookDelivery operation middleware
+func (siw *ServerInterfaceWrapper) GetRepoWebhookDelivery(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "deliveryId" -------------
+	var deliveryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "deliveryId", chi.URLParam(r, "deliveryId"), &deliveryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "deliveryId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRepoWebhookDelivery(w, r, owner, name, hookId, deliveryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RedeliverRepoWebhookDelivery operation middleware
+func (siw *ServerInterfaceWrapper) RedeliverRepoWebhookDelivery(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "deliveryId" -------------
+	var deliveryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "deliveryId", chi.URLParam(r, "deliveryId"), &deliveryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "deliveryId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RedeliverRepoWebhookDelivery(w, r, owner, name, hookId, deliveryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PingRepoWebhook operation middleware
+func (siw *ServerInterfaceWrapper) PingRepoWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "hookId" -------------
+	var hookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "hookId", chi.URLParam(r, "hookId"), &hookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hookId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PingRepoWebhook(w, r, owner, name, hookId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -10358,6 +12258,92 @@ func (siw *ServerInterfaceWrapper) SearchCode(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// GetRepoSubscription operation middleware
+func (siw *ServerInterfaceWrapper) GetRepoSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRepoSubscription(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetRepoSubscription operation middleware
+func (siw *ServerInterfaceWrapper) SetRepoSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetRepoSubscription(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListTagRules operation middleware
 func (siw *ServerInterfaceWrapper) ListTagRules(w http.ResponseWriter, r *http.Request) {
 
@@ -12373,6 +14359,99 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/repos/{owner}/{name}/github/sync/resolve", wrapper.ResolveGitHubSyncConflict)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/hooks", wrapper.ListRepoWebhooks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/hooks", wrapper.CreateRepoWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/hooks/{hookId}", wrapper.DeleteRepoWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/hooks/{hookId}", wrapper.GetRepoWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/repos/{owner}/{name}/hooks/{hookId}", wrapper.UpdateRepoWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/hooks/{hookId}/pings", wrapper.PingRepoWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/hooks/{hookId}/deliveries", wrapper.ListRepoWebhookDeliveries)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/hooks/{hookId}/deliveries/{deliveryId}", wrapper.GetRepoWebhookDelivery)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/hooks/{hookId}/deliveries/{deliveryId}/attempts", wrapper.RedeliverRepoWebhookDelivery)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/hooks", wrapper.ListOrgWebhooks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/orgs/{org}/hooks", wrapper.CreateOrgWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/orgs/{org}/hooks/{hookId}", wrapper.DeleteOrgWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/hooks/{hookId}", wrapper.GetOrgWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/orgs/{org}/hooks/{hookId}", wrapper.UpdateOrgWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/orgs/{org}/hooks/{hookId}/pings", wrapper.PingOrgWebhook)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/hooks/{hookId}/deliveries", wrapper.ListOrgWebhookDeliveries)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/hooks/{hookId}/deliveries/{deliveryId}", wrapper.GetOrgWebhookDelivery)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/orgs/{org}/hooks/{hookId}/deliveries/{deliveryId}/attempts", wrapper.RedeliverOrgWebhookDelivery)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/notifications", wrapper.ListNotifications)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/notifications", wrapper.MarkNotificationsRead)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/notifications/count", wrapper.CountNotifications)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/notifications/settings", wrapper.GetNotificationSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/notifications/settings", wrapper.SetNotificationSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/notifications/threads/{threadId}", wrapper.MarkNotificationThreadDone)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/notifications/threads/{threadId}", wrapper.GetNotificationThread)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/notifications/threads/{threadId}", wrapper.MarkNotificationThreadRead)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/notifications/threads/{threadId}/subscription", wrapper.DeleteThreadSubscription)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/notifications/threads/{threadId}/subscription", wrapper.GetThreadSubscription)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/notifications/threads/{threadId}/subscription", wrapper.SetThreadSubscription)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/subscription", wrapper.GetRepoSubscription)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/subscription", wrapper.SetRepoSubscription)
 	})
 
 	return r
@@ -14724,6 +16803,726 @@ func (response GetMetadefaultApplicationProblemPlusJSONResponse) VisitGetMetaRes
 	return err
 }
 
+type ListNotificationsRequestObject struct {
+	Params ListNotificationsParams
+}
+
+type ListNotificationsResponseObject interface {
+	VisitListNotificationsResponse(w http.ResponseWriter) error
+}
+
+type ListNotifications200JSONResponse []NotificationThread
+
+func (response ListNotifications200JSONResponse) VisitListNotificationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListNotifications400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListNotifications400ApplicationProblemPlusJSONResponse) VisitListNotificationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListNotifications503ApplicationProblemPlusJSONResponse Problem
+
+func (response ListNotifications503ApplicationProblemPlusJSONResponse) VisitListNotificationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListNotificationsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListNotificationsdefaultApplicationProblemPlusJSONResponse) VisitListNotificationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MarkNotificationsReadRequestObject struct {
+	Body *MarkNotificationsReadJSONRequestBody
+}
+
+type MarkNotificationsReadResponseObject interface {
+	VisitMarkNotificationsReadResponse(w http.ResponseWriter) error
+}
+
+type MarkNotificationsRead204Response struct {
+}
+
+func (response MarkNotificationsRead204Response) VisitMarkNotificationsReadResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type MarkNotificationsRead400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response MarkNotificationsRead400ApplicationProblemPlusJSONResponse) VisitMarkNotificationsReadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MarkNotificationsRead503ApplicationProblemPlusJSONResponse Problem
+
+func (response MarkNotificationsRead503ApplicationProblemPlusJSONResponse) VisitMarkNotificationsReadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MarkNotificationsReaddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response MarkNotificationsReaddefaultApplicationProblemPlusJSONResponse) VisitMarkNotificationsReadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CountNotificationsRequestObject struct {
+}
+
+type CountNotificationsResponseObject interface {
+	VisitCountNotificationsResponse(w http.ResponseWriter) error
+}
+
+type CountNotifications200JSONResponse NotificationCount
+
+func (response CountNotifications200JSONResponse) VisitCountNotificationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CountNotifications503ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CountNotifications503ApplicationProblemPlusJSONResponse) VisitCountNotificationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CountNotificationsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CountNotificationsdefaultApplicationProblemPlusJSONResponse) VisitCountNotificationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationSettingsRequestObject struct {
+}
+
+type GetNotificationSettingsResponseObject interface {
+	VisitGetNotificationSettingsResponse(w http.ResponseWriter) error
+}
+
+type GetNotificationSettings200JSONResponse NotificationSettings
+
+func (response GetNotificationSettings200JSONResponse) VisitGetNotificationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationSettings503ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetNotificationSettings503ApplicationProblemPlusJSONResponse) VisitGetNotificationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationSettingsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetNotificationSettingsdefaultApplicationProblemPlusJSONResponse) VisitGetNotificationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetNotificationSettingsRequestObject struct {
+	Body *SetNotificationSettingsJSONRequestBody
+}
+
+type SetNotificationSettingsResponseObject interface {
+	VisitSetNotificationSettingsResponse(w http.ResponseWriter) error
+}
+
+type SetNotificationSettings200JSONResponse NotificationSettings
+
+func (response SetNotificationSettings200JSONResponse) VisitSetNotificationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetNotificationSettings400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetNotificationSettings400ApplicationProblemPlusJSONResponse) VisitSetNotificationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetNotificationSettings503ApplicationProblemPlusJSONResponse Problem
+
+func (response SetNotificationSettings503ApplicationProblemPlusJSONResponse) VisitSetNotificationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetNotificationSettingsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetNotificationSettingsdefaultApplicationProblemPlusJSONResponse) VisitSetNotificationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MarkNotificationThreadDoneRequestObject struct {
+	ThreadId openapi_types.UUID `json:"threadId"`
+}
+
+type MarkNotificationThreadDoneResponseObject interface {
+	VisitMarkNotificationThreadDoneResponse(w http.ResponseWriter) error
+}
+
+type MarkNotificationThreadDone204Response struct {
+}
+
+func (response MarkNotificationThreadDone204Response) VisitMarkNotificationThreadDoneResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type MarkNotificationThreadDone404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response MarkNotificationThreadDone404ApplicationProblemPlusJSONResponse) VisitMarkNotificationThreadDoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MarkNotificationThreadDone503ApplicationProblemPlusJSONResponse Problem
+
+func (response MarkNotificationThreadDone503ApplicationProblemPlusJSONResponse) VisitMarkNotificationThreadDoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MarkNotificationThreadDonedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response MarkNotificationThreadDonedefaultApplicationProblemPlusJSONResponse) VisitMarkNotificationThreadDoneResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationThreadRequestObject struct {
+	ThreadId openapi_types.UUID `json:"threadId"`
+}
+
+type GetNotificationThreadResponseObject interface {
+	VisitGetNotificationThreadResponse(w http.ResponseWriter) error
+}
+
+type GetNotificationThread200JSONResponse NotificationThread
+
+func (response GetNotificationThread200JSONResponse) VisitGetNotificationThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationThread404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetNotificationThread404ApplicationProblemPlusJSONResponse) VisitGetNotificationThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationThread503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetNotificationThread503ApplicationProblemPlusJSONResponse) VisitGetNotificationThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationThreaddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetNotificationThreaddefaultApplicationProblemPlusJSONResponse) VisitGetNotificationThreadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MarkNotificationThreadReadRequestObject struct {
+	ThreadId openapi_types.UUID `json:"threadId"`
+}
+
+type MarkNotificationThreadReadResponseObject interface {
+	VisitMarkNotificationThreadReadResponse(w http.ResponseWriter) error
+}
+
+type MarkNotificationThreadRead204Response struct {
+}
+
+func (response MarkNotificationThreadRead204Response) VisitMarkNotificationThreadReadResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type MarkNotificationThreadRead404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response MarkNotificationThreadRead404ApplicationProblemPlusJSONResponse) VisitMarkNotificationThreadReadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MarkNotificationThreadRead503ApplicationProblemPlusJSONResponse Problem
+
+func (response MarkNotificationThreadRead503ApplicationProblemPlusJSONResponse) VisitMarkNotificationThreadReadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MarkNotificationThreadReaddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response MarkNotificationThreadReaddefaultApplicationProblemPlusJSONResponse) VisitMarkNotificationThreadReadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteThreadSubscriptionRequestObject struct {
+	ThreadId openapi_types.UUID `json:"threadId"`
+}
+
+type DeleteThreadSubscriptionResponseObject interface {
+	VisitDeleteThreadSubscriptionResponse(w http.ResponseWriter) error
+}
+
+type DeleteThreadSubscription204Response struct {
+}
+
+func (response DeleteThreadSubscription204Response) VisitDeleteThreadSubscriptionResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteThreadSubscription404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteThreadSubscription404ApplicationProblemPlusJSONResponse) VisitDeleteThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteThreadSubscription503ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteThreadSubscription503ApplicationProblemPlusJSONResponse) VisitDeleteThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteThreadSubscriptiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteThreadSubscriptiondefaultApplicationProblemPlusJSONResponse) VisitDeleteThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetThreadSubscriptionRequestObject struct {
+	ThreadId openapi_types.UUID `json:"threadId"`
+}
+
+type GetThreadSubscriptionResponseObject interface {
+	VisitGetThreadSubscriptionResponse(w http.ResponseWriter) error
+}
+
+type GetThreadSubscription200JSONResponse ThreadSubscription
+
+func (response GetThreadSubscription200JSONResponse) VisitGetThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetThreadSubscription404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetThreadSubscription404ApplicationProblemPlusJSONResponse) VisitGetThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetThreadSubscription503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetThreadSubscription503ApplicationProblemPlusJSONResponse) VisitGetThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetThreadSubscriptiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetThreadSubscriptiondefaultApplicationProblemPlusJSONResponse) VisitGetThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetThreadSubscriptionRequestObject struct {
+	ThreadId openapi_types.UUID `json:"threadId"`
+	Body     *SetThreadSubscriptionJSONRequestBody
+}
+
+type SetThreadSubscriptionResponseObject interface {
+	VisitSetThreadSubscriptionResponse(w http.ResponseWriter) error
+}
+
+type SetThreadSubscription200JSONResponse ThreadSubscription
+
+func (response SetThreadSubscription200JSONResponse) VisitSetThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetThreadSubscription400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetThreadSubscription400ApplicationProblemPlusJSONResponse) VisitSetThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetThreadSubscription404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetThreadSubscription404ApplicationProblemPlusJSONResponse) VisitSetThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetThreadSubscription503ApplicationProblemPlusJSONResponse Problem
+
+func (response SetThreadSubscription503ApplicationProblemPlusJSONResponse) VisitSetThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetThreadSubscriptiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetThreadSubscriptiondefaultApplicationProblemPlusJSONResponse) VisitSetThreadSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListMyOrgsRequestObject struct {
 }
 
@@ -15175,6 +17974,801 @@ type ListOrgAuditdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response ListOrgAuditdefaultApplicationProblemPlusJSONResponse) VisitListOrgAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgWebhooksRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type ListOrgWebhooksResponseObject interface {
+	VisitListOrgWebhooksResponse(w http.ResponseWriter) error
+}
+
+type ListOrgWebhooks200JSONResponse []Webhook
+
+func (response ListOrgWebhooks200JSONResponse) VisitListOrgWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgWebhooks403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgWebhooks403ApplicationProblemPlusJSONResponse) VisitListOrgWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgWebhooks404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgWebhooks404ApplicationProblemPlusJSONResponse) VisitListOrgWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgWebhooks503ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgWebhooks503ApplicationProblemPlusJSONResponse) VisitListOrgWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgWebhooksdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgWebhooksdefaultApplicationProblemPlusJSONResponse) VisitListOrgWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgWebhookRequestObject struct {
+	Org  OrgName `json:"org"`
+	Body *CreateOrgWebhookJSONRequestBody
+}
+
+type CreateOrgWebhookResponseObject interface {
+	VisitCreateOrgWebhookResponse(w http.ResponseWriter) error
+}
+
+type CreateOrgWebhook201JSONResponse Webhook
+
+func (response CreateOrgWebhook201JSONResponse) VisitCreateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgWebhook400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateOrgWebhook400ApplicationProblemPlusJSONResponse) VisitCreateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgWebhook403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgWebhook403ApplicationProblemPlusJSONResponse) VisitCreateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgWebhook404ApplicationProblemPlusJSONResponse) VisitCreateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgWebhook409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgWebhook409ApplicationProblemPlusJSONResponse) VisitCreateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgWebhook503ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgWebhook503ApplicationProblemPlusJSONResponse) VisitCreateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgWebhookdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateOrgWebhookdefaultApplicationProblemPlusJSONResponse) VisitCreateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgWebhookRequestObject struct {
+	Org    OrgName            `json:"org"`
+	HookId openapi_types.UUID `json:"hookId"`
+}
+
+type DeleteOrgWebhookResponseObject interface {
+	VisitDeleteOrgWebhookResponse(w http.ResponseWriter) error
+}
+
+type DeleteOrgWebhook204Response struct {
+}
+
+func (response DeleteOrgWebhook204Response) VisitDeleteOrgWebhookResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteOrgWebhook403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteOrgWebhook403ApplicationProblemPlusJSONResponse) VisitDeleteOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteOrgWebhook404ApplicationProblemPlusJSONResponse) VisitDeleteOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgWebhook503ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteOrgWebhook503ApplicationProblemPlusJSONResponse) VisitDeleteOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgWebhookdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteOrgWebhookdefaultApplicationProblemPlusJSONResponse) VisitDeleteOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgWebhookRequestObject struct {
+	Org    OrgName            `json:"org"`
+	HookId openapi_types.UUID `json:"hookId"`
+}
+
+type GetOrgWebhookResponseObject interface {
+	VisitGetOrgWebhookResponse(w http.ResponseWriter) error
+}
+
+type GetOrgWebhook200JSONResponse Webhook
+
+func (response GetOrgWebhook200JSONResponse) VisitGetOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgWebhook403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetOrgWebhook403ApplicationProblemPlusJSONResponse) VisitGetOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetOrgWebhook404ApplicationProblemPlusJSONResponse) VisitGetOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgWebhook503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetOrgWebhook503ApplicationProblemPlusJSONResponse) VisitGetOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgWebhookdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetOrgWebhookdefaultApplicationProblemPlusJSONResponse) VisitGetOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrgWebhookRequestObject struct {
+	Org    OrgName            `json:"org"`
+	HookId openapi_types.UUID `json:"hookId"`
+	Body   *UpdateOrgWebhookJSONRequestBody
+}
+
+type UpdateOrgWebhookResponseObject interface {
+	VisitUpdateOrgWebhookResponse(w http.ResponseWriter) error
+}
+
+type UpdateOrgWebhook200JSONResponse Webhook
+
+func (response UpdateOrgWebhook200JSONResponse) VisitUpdateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrgWebhook400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateOrgWebhook400ApplicationProblemPlusJSONResponse) VisitUpdateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrgWebhook403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateOrgWebhook403ApplicationProblemPlusJSONResponse) VisitUpdateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrgWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateOrgWebhook404ApplicationProblemPlusJSONResponse) VisitUpdateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrgWebhook503ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateOrgWebhook503ApplicationProblemPlusJSONResponse) VisitUpdateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrgWebhookdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateOrgWebhookdefaultApplicationProblemPlusJSONResponse) VisitUpdateOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgWebhookDeliveriesRequestObject struct {
+	Org    OrgName            `json:"org"`
+	HookId openapi_types.UUID `json:"hookId"`
+	Params ListOrgWebhookDeliveriesParams
+}
+
+type ListOrgWebhookDeliveriesResponseObject interface {
+	VisitListOrgWebhookDeliveriesResponse(w http.ResponseWriter) error
+}
+
+type ListOrgWebhookDeliveries200JSONResponse []WebhookDelivery
+
+func (response ListOrgWebhookDeliveries200JSONResponse) VisitListOrgWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgWebhookDeliveries403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgWebhookDeliveries403ApplicationProblemPlusJSONResponse) VisitListOrgWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgWebhookDeliveries404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgWebhookDeliveries404ApplicationProblemPlusJSONResponse) VisitListOrgWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgWebhookDeliveries503ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgWebhookDeliveries503ApplicationProblemPlusJSONResponse) VisitListOrgWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgWebhookDeliveriesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgWebhookDeliveriesdefaultApplicationProblemPlusJSONResponse) VisitListOrgWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgWebhookDeliveryRequestObject struct {
+	Org        OrgName            `json:"org"`
+	HookId     openapi_types.UUID `json:"hookId"`
+	DeliveryId openapi_types.UUID `json:"deliveryId"`
+}
+
+type GetOrgWebhookDeliveryResponseObject interface {
+	VisitGetOrgWebhookDeliveryResponse(w http.ResponseWriter) error
+}
+
+type GetOrgWebhookDelivery200JSONResponse WebhookDeliveryDetail
+
+func (response GetOrgWebhookDelivery200JSONResponse) VisitGetOrgWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgWebhookDelivery403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetOrgWebhookDelivery403ApplicationProblemPlusJSONResponse) VisitGetOrgWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgWebhookDelivery404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetOrgWebhookDelivery404ApplicationProblemPlusJSONResponse) VisitGetOrgWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgWebhookDelivery503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetOrgWebhookDelivery503ApplicationProblemPlusJSONResponse) VisitGetOrgWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgWebhookDeliverydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetOrgWebhookDeliverydefaultApplicationProblemPlusJSONResponse) VisitGetOrgWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverOrgWebhookDeliveryRequestObject struct {
+	Org        OrgName            `json:"org"`
+	HookId     openapi_types.UUID `json:"hookId"`
+	DeliveryId openapi_types.UUID `json:"deliveryId"`
+}
+
+type RedeliverOrgWebhookDeliveryResponseObject interface {
+	VisitRedeliverOrgWebhookDeliveryResponse(w http.ResponseWriter) error
+}
+
+type RedeliverOrgWebhookDelivery202JSONResponse WebhookDelivery
+
+func (response RedeliverOrgWebhookDelivery202JSONResponse) VisitRedeliverOrgWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverOrgWebhookDelivery403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RedeliverOrgWebhookDelivery403ApplicationProblemPlusJSONResponse) VisitRedeliverOrgWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverOrgWebhookDelivery404ApplicationProblemPlusJSONResponse Problem
+
+func (response RedeliverOrgWebhookDelivery404ApplicationProblemPlusJSONResponse) VisitRedeliverOrgWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverOrgWebhookDelivery503ApplicationProblemPlusJSONResponse Problem
+
+func (response RedeliverOrgWebhookDelivery503ApplicationProblemPlusJSONResponse) VisitRedeliverOrgWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverOrgWebhookDeliverydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RedeliverOrgWebhookDeliverydefaultApplicationProblemPlusJSONResponse) VisitRedeliverOrgWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PingOrgWebhookRequestObject struct {
+	Org    OrgName            `json:"org"`
+	HookId openapi_types.UUID `json:"hookId"`
+}
+
+type PingOrgWebhookResponseObject interface {
+	VisitPingOrgWebhookResponse(w http.ResponseWriter) error
+}
+
+type PingOrgWebhook202JSONResponse WebhookDelivery
+
+func (response PingOrgWebhook202JSONResponse) VisitPingOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PingOrgWebhook403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PingOrgWebhook403ApplicationProblemPlusJSONResponse) VisitPingOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PingOrgWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response PingOrgWebhook404ApplicationProblemPlusJSONResponse) VisitPingOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PingOrgWebhook503ApplicationProblemPlusJSONResponse Problem
+
+func (response PingOrgWebhook503ApplicationProblemPlusJSONResponse) VisitPingOrgWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PingOrgWebhookdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PingOrgWebhookdefaultApplicationProblemPlusJSONResponse) VisitPingOrgWebhookResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -18917,6 +22511,963 @@ type RunGitHubSyncdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response RunGitHubSyncdefaultApplicationProblemPlusJSONResponse) VisitRunGitHubSyncResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhooksRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type ListRepoWebhooksResponseObject interface {
+	VisitListRepoWebhooksResponse(w http.ResponseWriter) error
+}
+
+type ListRepoWebhooks200JSONResponse []Webhook
+
+func (response ListRepoWebhooks200JSONResponse) VisitListRepoWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhooks307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoWebhooks307ApplicationProblemPlusJSONResponse) VisitListRepoWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhooks403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoWebhooks403ApplicationProblemPlusJSONResponse) VisitListRepoWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhooks404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListRepoWebhooks404ApplicationProblemPlusJSONResponse) VisitListRepoWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhooks503ApplicationProblemPlusJSONResponse Problem
+
+func (response ListRepoWebhooks503ApplicationProblemPlusJSONResponse) VisitListRepoWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhooksdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListRepoWebhooksdefaultApplicationProblemPlusJSONResponse) VisitListRepoWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoWebhookRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *CreateRepoWebhookJSONRequestBody
+}
+
+type CreateRepoWebhookResponseObject interface {
+	VisitCreateRepoWebhookResponse(w http.ResponseWriter) error
+}
+
+type CreateRepoWebhook201JSONResponse Webhook
+
+func (response CreateRepoWebhook201JSONResponse) VisitCreateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoWebhook307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateRepoWebhook307ApplicationProblemPlusJSONResponse) VisitCreateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoWebhook400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateRepoWebhook400ApplicationProblemPlusJSONResponse) VisitCreateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoWebhook403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateRepoWebhook403ApplicationProblemPlusJSONResponse) VisitCreateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateRepoWebhook404ApplicationProblemPlusJSONResponse) VisitCreateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoWebhook409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateRepoWebhook409ApplicationProblemPlusJSONResponse) VisitCreateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoWebhook503ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateRepoWebhook503ApplicationProblemPlusJSONResponse) VisitCreateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoWebhookdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateRepoWebhookdefaultApplicationProblemPlusJSONResponse) VisitCreateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoWebhookRequestObject struct {
+	Owner  RepoOwner          `json:"owner"`
+	Name   RepoName           `json:"name"`
+	HookId openapi_types.UUID `json:"hookId"`
+}
+
+type DeleteRepoWebhookResponseObject interface {
+	VisitDeleteRepoWebhookResponse(w http.ResponseWriter) error
+}
+
+type DeleteRepoWebhook204Response struct {
+}
+
+func (response DeleteRepoWebhook204Response) VisitDeleteRepoWebhookResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteRepoWebhook307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoWebhook307ApplicationProblemPlusJSONResponse) VisitDeleteRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoWebhook403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoWebhook403ApplicationProblemPlusJSONResponse) VisitDeleteRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteRepoWebhook404ApplicationProblemPlusJSONResponse) VisitDeleteRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoWebhook503ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteRepoWebhook503ApplicationProblemPlusJSONResponse) VisitDeleteRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoWebhookdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteRepoWebhookdefaultApplicationProblemPlusJSONResponse) VisitDeleteRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhookRequestObject struct {
+	Owner  RepoOwner          `json:"owner"`
+	Name   RepoName           `json:"name"`
+	HookId openapi_types.UUID `json:"hookId"`
+}
+
+type GetRepoWebhookResponseObject interface {
+	VisitGetRepoWebhookResponse(w http.ResponseWriter) error
+}
+
+type GetRepoWebhook200JSONResponse Webhook
+
+func (response GetRepoWebhook200JSONResponse) VisitGetRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhook307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetRepoWebhook307ApplicationProblemPlusJSONResponse) VisitGetRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhook403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetRepoWebhook403ApplicationProblemPlusJSONResponse) VisitGetRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetRepoWebhook404ApplicationProblemPlusJSONResponse) VisitGetRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhook503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetRepoWebhook503ApplicationProblemPlusJSONResponse) VisitGetRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhookdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetRepoWebhookdefaultApplicationProblemPlusJSONResponse) VisitGetRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepoWebhookRequestObject struct {
+	Owner  RepoOwner          `json:"owner"`
+	Name   RepoName           `json:"name"`
+	HookId openapi_types.UUID `json:"hookId"`
+	Body   *UpdateRepoWebhookJSONRequestBody
+}
+
+type UpdateRepoWebhookResponseObject interface {
+	VisitUpdateRepoWebhookResponse(w http.ResponseWriter) error
+}
+
+type UpdateRepoWebhook200JSONResponse Webhook
+
+func (response UpdateRepoWebhook200JSONResponse) VisitUpdateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepoWebhook307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateRepoWebhook307ApplicationProblemPlusJSONResponse) VisitUpdateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepoWebhook400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateRepoWebhook400ApplicationProblemPlusJSONResponse) VisitUpdateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepoWebhook403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateRepoWebhook403ApplicationProblemPlusJSONResponse) VisitUpdateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepoWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateRepoWebhook404ApplicationProblemPlusJSONResponse) VisitUpdateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepoWebhook503ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateRepoWebhook503ApplicationProblemPlusJSONResponse) VisitUpdateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepoWebhookdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateRepoWebhookdefaultApplicationProblemPlusJSONResponse) VisitUpdateRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhookDeliveriesRequestObject struct {
+	Owner  RepoOwner          `json:"owner"`
+	Name   RepoName           `json:"name"`
+	HookId openapi_types.UUID `json:"hookId"`
+	Params ListRepoWebhookDeliveriesParams
+}
+
+type ListRepoWebhookDeliveriesResponseObject interface {
+	VisitListRepoWebhookDeliveriesResponse(w http.ResponseWriter) error
+}
+
+type ListRepoWebhookDeliveries200JSONResponse []WebhookDelivery
+
+func (response ListRepoWebhookDeliveries200JSONResponse) VisitListRepoWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhookDeliveries307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoWebhookDeliveries307ApplicationProblemPlusJSONResponse) VisitListRepoWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhookDeliveries403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoWebhookDeliveries403ApplicationProblemPlusJSONResponse) VisitListRepoWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhookDeliveries404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListRepoWebhookDeliveries404ApplicationProblemPlusJSONResponse) VisitListRepoWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhookDeliveries503ApplicationProblemPlusJSONResponse Problem
+
+func (response ListRepoWebhookDeliveries503ApplicationProblemPlusJSONResponse) VisitListRepoWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoWebhookDeliveriesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListRepoWebhookDeliveriesdefaultApplicationProblemPlusJSONResponse) VisitListRepoWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhookDeliveryRequestObject struct {
+	Owner      RepoOwner          `json:"owner"`
+	Name       RepoName           `json:"name"`
+	HookId     openapi_types.UUID `json:"hookId"`
+	DeliveryId openapi_types.UUID `json:"deliveryId"`
+}
+
+type GetRepoWebhookDeliveryResponseObject interface {
+	VisitGetRepoWebhookDeliveryResponse(w http.ResponseWriter) error
+}
+
+type GetRepoWebhookDelivery200JSONResponse WebhookDeliveryDetail
+
+func (response GetRepoWebhookDelivery200JSONResponse) VisitGetRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhookDelivery307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetRepoWebhookDelivery307ApplicationProblemPlusJSONResponse) VisitGetRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhookDelivery403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetRepoWebhookDelivery403ApplicationProblemPlusJSONResponse) VisitGetRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhookDelivery404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetRepoWebhookDelivery404ApplicationProblemPlusJSONResponse) VisitGetRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhookDelivery503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetRepoWebhookDelivery503ApplicationProblemPlusJSONResponse) VisitGetRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoWebhookDeliverydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetRepoWebhookDeliverydefaultApplicationProblemPlusJSONResponse) VisitGetRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverRepoWebhookDeliveryRequestObject struct {
+	Owner      RepoOwner          `json:"owner"`
+	Name       RepoName           `json:"name"`
+	HookId     openapi_types.UUID `json:"hookId"`
+	DeliveryId openapi_types.UUID `json:"deliveryId"`
+}
+
+type RedeliverRepoWebhookDeliveryResponseObject interface {
+	VisitRedeliverRepoWebhookDeliveryResponse(w http.ResponseWriter) error
+}
+
+type RedeliverRepoWebhookDelivery202JSONResponse WebhookDelivery
+
+func (response RedeliverRepoWebhookDelivery202JSONResponse) VisitRedeliverRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverRepoWebhookDelivery307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response RedeliverRepoWebhookDelivery307ApplicationProblemPlusJSONResponse) VisitRedeliverRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverRepoWebhookDelivery403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RedeliverRepoWebhookDelivery403ApplicationProblemPlusJSONResponse) VisitRedeliverRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverRepoWebhookDelivery404ApplicationProblemPlusJSONResponse Problem
+
+func (response RedeliverRepoWebhookDelivery404ApplicationProblemPlusJSONResponse) VisitRedeliverRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverRepoWebhookDelivery503ApplicationProblemPlusJSONResponse Problem
+
+func (response RedeliverRepoWebhookDelivery503ApplicationProblemPlusJSONResponse) VisitRedeliverRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverRepoWebhookDeliverydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RedeliverRepoWebhookDeliverydefaultApplicationProblemPlusJSONResponse) VisitRedeliverRepoWebhookDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PingRepoWebhookRequestObject struct {
+	Owner  RepoOwner          `json:"owner"`
+	Name   RepoName           `json:"name"`
+	HookId openapi_types.UUID `json:"hookId"`
+}
+
+type PingRepoWebhookResponseObject interface {
+	VisitPingRepoWebhookResponse(w http.ResponseWriter) error
+}
+
+type PingRepoWebhook202JSONResponse WebhookDelivery
+
+func (response PingRepoWebhook202JSONResponse) VisitPingRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PingRepoWebhook307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response PingRepoWebhook307ApplicationProblemPlusJSONResponse) VisitPingRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PingRepoWebhook403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PingRepoWebhook403ApplicationProblemPlusJSONResponse) VisitPingRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PingRepoWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response PingRepoWebhook404ApplicationProblemPlusJSONResponse) VisitPingRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PingRepoWebhook503ApplicationProblemPlusJSONResponse Problem
+
+func (response PingRepoWebhook503ApplicationProblemPlusJSONResponse) VisitPingRepoWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PingRepoWebhookdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PingRepoWebhookdefaultApplicationProblemPlusJSONResponse) VisitPingRepoWebhookResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -22761,6 +27312,195 @@ func (response SearchCodedefaultApplicationProblemPlusJSONResponse) VisitSearchC
 	return err
 }
 
+type GetRepoSubscriptionRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type GetRepoSubscriptionResponseObject interface {
+	VisitGetRepoSubscriptionResponse(w http.ResponseWriter) error
+}
+
+type GetRepoSubscription200JSONResponse RepoSubscription
+
+func (response GetRepoSubscription200JSONResponse) VisitGetRepoSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoSubscription307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetRepoSubscription307ApplicationProblemPlusJSONResponse) VisitGetRepoSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoSubscription404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetRepoSubscription404ApplicationProblemPlusJSONResponse) VisitGetRepoSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoSubscription503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetRepoSubscription503ApplicationProblemPlusJSONResponse) VisitGetRepoSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoSubscriptiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetRepoSubscriptiondefaultApplicationProblemPlusJSONResponse) VisitGetRepoSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetRepoSubscriptionRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *SetRepoSubscriptionJSONRequestBody
+}
+
+type SetRepoSubscriptionResponseObject interface {
+	VisitSetRepoSubscriptionResponse(w http.ResponseWriter) error
+}
+
+type SetRepoSubscription200JSONResponse RepoSubscription
+
+func (response SetRepoSubscription200JSONResponse) VisitSetRepoSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetRepoSubscription307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response SetRepoSubscription307ApplicationProblemPlusJSONResponse) VisitSetRepoSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetRepoSubscription400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetRepoSubscription400ApplicationProblemPlusJSONResponse) VisitSetRepoSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetRepoSubscription404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetRepoSubscription404ApplicationProblemPlusJSONResponse) VisitSetRepoSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetRepoSubscription503ApplicationProblemPlusJSONResponse Problem
+
+func (response SetRepoSubscription503ApplicationProblemPlusJSONResponse) VisitSetRepoSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetRepoSubscriptiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetRepoSubscriptiondefaultApplicationProblemPlusJSONResponse) VisitSetRepoSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListTagRulesRequestObject struct {
 	Owner RepoOwner `json:"owner"`
 	Name  RepoName  `json:"name"`
@@ -26310,6 +31050,39 @@ type StrictServerInterface interface {
 	// GetMeta Public information about this instance
 	// (GET /meta)
 	GetMeta(ctx context.Context, request GetMetaRequestObject) (GetMetaResponseObject, error)
+	// ListNotifications Notification threads of the caller, most recently updated first
+	// (GET /notifications)
+	ListNotifications(ctx context.Context, request ListNotificationsRequestObject) (ListNotificationsResponseObject, error)
+	// MarkNotificationsRead Mark every notification thread as read
+	// (PUT /notifications)
+	MarkNotificationsRead(ctx context.Context, request MarkNotificationsReadRequestObject) (MarkNotificationsReadResponseObject, error)
+	// CountNotifications Number of unread notification threads (for polling)
+	// (GET /notifications/count)
+	CountNotifications(ctx context.Context, request CountNotificationsRequestObject) (CountNotificationsResponseObject, error)
+	// GetNotificationSettings Notification settings of the caller
+	// (GET /notifications/settings)
+	GetNotificationSettings(ctx context.Context, request GetNotificationSettingsRequestObject) (GetNotificationSettingsResponseObject, error)
+	// SetNotificationSettings Change the notification settings of the caller
+	// (PUT /notifications/settings)
+	SetNotificationSettings(ctx context.Context, request SetNotificationSettingsRequestObject) (SetNotificationSettingsResponseObject, error)
+	// MarkNotificationThreadDone Mark a thread as done (removed from the inbox until it is updated)
+	// (DELETE /notifications/threads/{threadId})
+	MarkNotificationThreadDone(ctx context.Context, request MarkNotificationThreadDoneRequestObject) (MarkNotificationThreadDoneResponseObject, error)
+	// GetNotificationThread A notification thread of the caller
+	// (GET /notifications/threads/{threadId})
+	GetNotificationThread(ctx context.Context, request GetNotificationThreadRequestObject) (GetNotificationThreadResponseObject, error)
+	// MarkNotificationThreadRead Mark a thread as read
+	// (PATCH /notifications/threads/{threadId})
+	MarkNotificationThreadRead(ctx context.Context, request MarkNotificationThreadReadRequestObject) (MarkNotificationThreadReadResponseObject, error)
+	// DeleteThreadSubscription Remove the explicit subscription (back to the default rules)
+	// (DELETE /notifications/threads/{threadId}/subscription)
+	DeleteThreadSubscription(ctx context.Context, request DeleteThreadSubscriptionRequestObject) (DeleteThreadSubscriptionResponseObject, error)
+	// GetThreadSubscription Subscription of the caller to the subject of a thread
+	// (GET /notifications/threads/{threadId}/subscription)
+	GetThreadSubscription(ctx context.Context, request GetThreadSubscriptionRequestObject) (GetThreadSubscriptionResponseObject, error)
+	// SetThreadSubscription Subscribe to (or ignore) the subject of a thread
+	// (PUT /notifications/threads/{threadId}/subscription)
+	SetThreadSubscription(ctx context.Context, request SetThreadSubscriptionRequestObject) (SetThreadSubscriptionResponseObject, error)
 	// ListMyOrgs Organizations the caller is a member of
 	// (GET /orgs)
 	ListMyOrgs(ctx context.Context, request ListMyOrgsRequestObject) (ListMyOrgsResponseObject, error)
@@ -26331,6 +31104,33 @@ type StrictServerInterface interface {
 	// ListOrgAudit Audit log of an organization, newest first
 	// (GET /orgs/{org}/audit)
 	ListOrgAudit(ctx context.Context, request ListOrgAuditRequestObject) (ListOrgAuditResponseObject, error)
+	// ListOrgWebhooks Webhooks of the organization
+	// (GET /orgs/{org}/hooks)
+	ListOrgWebhooks(ctx context.Context, request ListOrgWebhooksRequestObject) (ListOrgWebhooksResponseObject, error)
+	// CreateOrgWebhook Create a webhook on the organization
+	// (POST /orgs/{org}/hooks)
+	CreateOrgWebhook(ctx context.Context, request CreateOrgWebhookRequestObject) (CreateOrgWebhookResponseObject, error)
+	// DeleteOrgWebhook Delete a webhook of the organization with its deliveries
+	// (DELETE /orgs/{org}/hooks/{hookId})
+	DeleteOrgWebhook(ctx context.Context, request DeleteOrgWebhookRequestObject) (DeleteOrgWebhookResponseObject, error)
+	// GetOrgWebhook A webhook of the organization
+	// (GET /orgs/{org}/hooks/{hookId})
+	GetOrgWebhook(ctx context.Context, request GetOrgWebhookRequestObject) (GetOrgWebhookResponseObject, error)
+	// UpdateOrgWebhook Change a webhook of the organization
+	// (PATCH /orgs/{org}/hooks/{hookId})
+	UpdateOrgWebhook(ctx context.Context, request UpdateOrgWebhookRequestObject) (UpdateOrgWebhookResponseObject, error)
+	// ListOrgWebhookDeliveries Deliveries of a webhook of the organization, newest first
+	// (GET /orgs/{org}/hooks/{hookId}/deliveries)
+	ListOrgWebhookDeliveries(ctx context.Context, request ListOrgWebhookDeliveriesRequestObject) (ListOrgWebhookDeliveriesResponseObject, error)
+	// GetOrgWebhookDelivery A delivery with its request and response
+	// (GET /orgs/{org}/hooks/{hookId}/deliveries/{deliveryId})
+	GetOrgWebhookDelivery(ctx context.Context, request GetOrgWebhookDeliveryRequestObject) (GetOrgWebhookDeliveryResponseObject, error)
+	// RedeliverOrgWebhookDelivery Deliver the payload of a delivery again
+	// (POST /orgs/{org}/hooks/{hookId}/deliveries/{deliveryId}/attempts)
+	RedeliverOrgWebhookDelivery(ctx context.Context, request RedeliverOrgWebhookDeliveryRequestObject) (RedeliverOrgWebhookDeliveryResponseObject, error)
+	// PingOrgWebhook Send a ping event to a webhook of the organization
+	// (POST /orgs/{org}/hooks/{hookId}/pings)
+	PingOrgWebhook(ctx context.Context, request PingOrgWebhookRequestObject) (PingOrgWebhookResponseObject, error)
 	// ListOrgInvites Pending invitations, expired ones included
 	// (GET /orgs/{org}/invites)
 	ListOrgInvites(ctx context.Context, request ListOrgInvitesRequestObject) (ListOrgInvitesResponseObject, error)
@@ -26460,6 +31260,33 @@ type StrictServerInterface interface {
 	// RunGitHubSync Run the GitHub sync link now (clears the backoff)
 	// (POST /repos/{owner}/{name}/github/sync/run)
 	RunGitHubSync(ctx context.Context, request RunGitHubSyncRequestObject) (RunGitHubSyncResponseObject, error)
+	// ListRepoWebhooks Webhooks of the repository
+	// (GET /repos/{owner}/{name}/hooks)
+	ListRepoWebhooks(ctx context.Context, request ListRepoWebhooksRequestObject) (ListRepoWebhooksResponseObject, error)
+	// CreateRepoWebhook Create a webhook on the repository
+	// (POST /repos/{owner}/{name}/hooks)
+	CreateRepoWebhook(ctx context.Context, request CreateRepoWebhookRequestObject) (CreateRepoWebhookResponseObject, error)
+	// DeleteRepoWebhook Delete a webhook of the repository with its deliveries
+	// (DELETE /repos/{owner}/{name}/hooks/{hookId})
+	DeleteRepoWebhook(ctx context.Context, request DeleteRepoWebhookRequestObject) (DeleteRepoWebhookResponseObject, error)
+	// GetRepoWebhook A webhook of the repository
+	// (GET /repos/{owner}/{name}/hooks/{hookId})
+	GetRepoWebhook(ctx context.Context, request GetRepoWebhookRequestObject) (GetRepoWebhookResponseObject, error)
+	// UpdateRepoWebhook Change a webhook of the repository
+	// (PATCH /repos/{owner}/{name}/hooks/{hookId})
+	UpdateRepoWebhook(ctx context.Context, request UpdateRepoWebhookRequestObject) (UpdateRepoWebhookResponseObject, error)
+	// ListRepoWebhookDeliveries Deliveries of a webhook of the repository, newest first
+	// (GET /repos/{owner}/{name}/hooks/{hookId}/deliveries)
+	ListRepoWebhookDeliveries(ctx context.Context, request ListRepoWebhookDeliveriesRequestObject) (ListRepoWebhookDeliveriesResponseObject, error)
+	// GetRepoWebhookDelivery A delivery with its request and response
+	// (GET /repos/{owner}/{name}/hooks/{hookId}/deliveries/{deliveryId})
+	GetRepoWebhookDelivery(ctx context.Context, request GetRepoWebhookDeliveryRequestObject) (GetRepoWebhookDeliveryResponseObject, error)
+	// RedeliverRepoWebhookDelivery Deliver the payload of a delivery again
+	// (POST /repos/{owner}/{name}/hooks/{hookId}/deliveries/{deliveryId}/attempts)
+	RedeliverRepoWebhookDelivery(ctx context.Context, request RedeliverRepoWebhookDeliveryRequestObject) (RedeliverRepoWebhookDeliveryResponseObject, error)
+	// PingRepoWebhook Send a ping event to a webhook of the repository
+	// (POST /repos/{owner}/{name}/hooks/{hookId}/pings)
+	PingRepoWebhook(ctx context.Context, request PingRepoWebhookRequestObject) (PingRepoWebhookResponseObject, error)
 	// ListIssueTemplates Issue templates of the default branch
 	// (GET /repos/{owner}/{name}/issue-templates)
 	ListIssueTemplates(ctx context.Context, request ListIssueTemplatesRequestObject) (ListIssueTemplatesResponseObject, error)
@@ -26586,6 +31413,12 @@ type StrictServerInterface interface {
 	// SearchCode Search the text files of a ref (git grep)
 	// (GET /repos/{owner}/{name}/search/code)
 	SearchCode(ctx context.Context, request SearchCodeRequestObject) (SearchCodeResponseObject, error)
+	// GetRepoSubscription Watch level of the caller on the repository
+	// (GET /repos/{owner}/{name}/subscription)
+	GetRepoSubscription(ctx context.Context, request GetRepoSubscriptionRequestObject) (GetRepoSubscriptionResponseObject, error)
+	// SetRepoSubscription Watch, participate in or ignore the repository
+	// (PUT /repos/{owner}/{name}/subscription)
+	SetRepoSubscription(ctx context.Context, request SetRepoSubscriptionRequestObject) (SetRepoSubscriptionResponseObject, error)
 	// ListTagRules Tag rules of the repository
 	// (GET /repos/{owner}/{name}/tag-rules)
 	ListTagRules(ctx context.Context, request ListTagRulesRequestObject) (ListTagRulesResponseObject, error)
@@ -27652,6 +32485,308 @@ func (sh *strictHandler) GetMeta(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ListNotifications operation middleware
+func (sh *strictHandler) ListNotifications(w http.ResponseWriter, r *http.Request, params ListNotificationsParams) {
+	var request ListNotificationsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListNotifications(ctx, request.(ListNotificationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListNotifications")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListNotificationsResponseObject); ok {
+		if err := validResponse.VisitListNotificationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// MarkNotificationsRead operation middleware
+func (sh *strictHandler) MarkNotificationsRead(w http.ResponseWriter, r *http.Request) {
+	var request MarkNotificationsReadRequestObject
+
+	var body MarkNotificationsReadJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.MarkNotificationsRead(ctx, request.(MarkNotificationsReadRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "MarkNotificationsRead")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(MarkNotificationsReadResponseObject); ok {
+		if err := validResponse.VisitMarkNotificationsReadResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CountNotifications operation middleware
+func (sh *strictHandler) CountNotifications(w http.ResponseWriter, r *http.Request) {
+	var request CountNotificationsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CountNotifications(ctx, request.(CountNotificationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CountNotifications")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CountNotificationsResponseObject); ok {
+		if err := validResponse.VisitCountNotificationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetNotificationSettings operation middleware
+func (sh *strictHandler) GetNotificationSettings(w http.ResponseWriter, r *http.Request) {
+	var request GetNotificationSettingsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetNotificationSettings(ctx, request.(GetNotificationSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetNotificationSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetNotificationSettingsResponseObject); ok {
+		if err := validResponse.VisitGetNotificationSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetNotificationSettings operation middleware
+func (sh *strictHandler) SetNotificationSettings(w http.ResponseWriter, r *http.Request) {
+	var request SetNotificationSettingsRequestObject
+
+	var body SetNotificationSettingsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetNotificationSettings(ctx, request.(SetNotificationSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetNotificationSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetNotificationSettingsResponseObject); ok {
+		if err := validResponse.VisitSetNotificationSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// MarkNotificationThreadDone operation middleware
+func (sh *strictHandler) MarkNotificationThreadDone(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	var request MarkNotificationThreadDoneRequestObject
+
+	request.ThreadId = threadId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.MarkNotificationThreadDone(ctx, request.(MarkNotificationThreadDoneRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "MarkNotificationThreadDone")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(MarkNotificationThreadDoneResponseObject); ok {
+		if err := validResponse.VisitMarkNotificationThreadDoneResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetNotificationThread operation middleware
+func (sh *strictHandler) GetNotificationThread(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	var request GetNotificationThreadRequestObject
+
+	request.ThreadId = threadId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetNotificationThread(ctx, request.(GetNotificationThreadRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetNotificationThread")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetNotificationThreadResponseObject); ok {
+		if err := validResponse.VisitGetNotificationThreadResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// MarkNotificationThreadRead operation middleware
+func (sh *strictHandler) MarkNotificationThreadRead(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	var request MarkNotificationThreadReadRequestObject
+
+	request.ThreadId = threadId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.MarkNotificationThreadRead(ctx, request.(MarkNotificationThreadReadRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "MarkNotificationThreadRead")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(MarkNotificationThreadReadResponseObject); ok {
+		if err := validResponse.VisitMarkNotificationThreadReadResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteThreadSubscription operation middleware
+func (sh *strictHandler) DeleteThreadSubscription(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	var request DeleteThreadSubscriptionRequestObject
+
+	request.ThreadId = threadId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteThreadSubscription(ctx, request.(DeleteThreadSubscriptionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteThreadSubscription")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteThreadSubscriptionResponseObject); ok {
+		if err := validResponse.VisitDeleteThreadSubscriptionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetThreadSubscription operation middleware
+func (sh *strictHandler) GetThreadSubscription(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	var request GetThreadSubscriptionRequestObject
+
+	request.ThreadId = threadId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetThreadSubscription(ctx, request.(GetThreadSubscriptionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetThreadSubscription")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetThreadSubscriptionResponseObject); ok {
+		if err := validResponse.VisitGetThreadSubscriptionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetThreadSubscription operation middleware
+func (sh *strictHandler) SetThreadSubscription(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID) {
+	var request SetThreadSubscriptionRequestObject
+
+	request.ThreadId = threadId
+
+	var body SetThreadSubscriptionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetThreadSubscription(ctx, request.(SetThreadSubscriptionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetThreadSubscription")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetThreadSubscriptionResponseObject); ok {
+		if err := validResponse.VisitSetThreadSubscriptionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListMyOrgs operation middleware
 func (sh *strictHandler) ListMyOrgs(w http.ResponseWriter, r *http.Request) {
 	var request ListMyOrgsRequestObject
@@ -27843,6 +32978,264 @@ func (sh *strictHandler) ListOrgAudit(w http.ResponseWriter, r *http.Request, or
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListOrgAuditResponseObject); ok {
 		if err := validResponse.VisitListOrgAuditResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrgWebhooks operation middleware
+func (sh *strictHandler) ListOrgWebhooks(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request ListOrgWebhooksRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgWebhooks(ctx, request.(ListOrgWebhooksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgWebhooks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgWebhooksResponseObject); ok {
+		if err := validResponse.VisitListOrgWebhooksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateOrgWebhook operation middleware
+func (sh *strictHandler) CreateOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request CreateOrgWebhookRequestObject
+
+	request.Org = org
+
+	var body CreateOrgWebhookJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateOrgWebhook(ctx, request.(CreateOrgWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateOrgWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateOrgWebhookResponseObject); ok {
+		if err := validResponse.VisitCreateOrgWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteOrgWebhook operation middleware
+func (sh *strictHandler) DeleteOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID) {
+	var request DeleteOrgWebhookRequestObject
+
+	request.Org = org
+	request.HookId = hookId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteOrgWebhook(ctx, request.(DeleteOrgWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteOrgWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteOrgWebhookResponseObject); ok {
+		if err := validResponse.VisitDeleteOrgWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOrgWebhook operation middleware
+func (sh *strictHandler) GetOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID) {
+	var request GetOrgWebhookRequestObject
+
+	request.Org = org
+	request.HookId = hookId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOrgWebhook(ctx, request.(GetOrgWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOrgWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOrgWebhookResponseObject); ok {
+		if err := validResponse.VisitGetOrgWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateOrgWebhook operation middleware
+func (sh *strictHandler) UpdateOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID) {
+	var request UpdateOrgWebhookRequestObject
+
+	request.Org = org
+	request.HookId = hookId
+
+	var body UpdateOrgWebhookJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateOrgWebhook(ctx, request.(UpdateOrgWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateOrgWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateOrgWebhookResponseObject); ok {
+		if err := validResponse.VisitUpdateOrgWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrgWebhookDeliveries operation middleware
+func (sh *strictHandler) ListOrgWebhookDeliveries(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID, params ListOrgWebhookDeliveriesParams) {
+	var request ListOrgWebhookDeliveriesRequestObject
+
+	request.Org = org
+	request.HookId = hookId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgWebhookDeliveries(ctx, request.(ListOrgWebhookDeliveriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgWebhookDeliveries")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgWebhookDeliveriesResponseObject); ok {
+		if err := validResponse.VisitListOrgWebhookDeliveriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOrgWebhookDelivery operation middleware
+func (sh *strictHandler) GetOrgWebhookDelivery(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID, deliveryId openapi_types.UUID) {
+	var request GetOrgWebhookDeliveryRequestObject
+
+	request.Org = org
+	request.HookId = hookId
+	request.DeliveryId = deliveryId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOrgWebhookDelivery(ctx, request.(GetOrgWebhookDeliveryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOrgWebhookDelivery")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOrgWebhookDeliveryResponseObject); ok {
+		if err := validResponse.VisitGetOrgWebhookDeliveryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RedeliverOrgWebhookDelivery operation middleware
+func (sh *strictHandler) RedeliverOrgWebhookDelivery(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID, deliveryId openapi_types.UUID) {
+	var request RedeliverOrgWebhookDeliveryRequestObject
+
+	request.Org = org
+	request.HookId = hookId
+	request.DeliveryId = deliveryId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RedeliverOrgWebhookDelivery(ctx, request.(RedeliverOrgWebhookDeliveryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RedeliverOrgWebhookDelivery")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RedeliverOrgWebhookDeliveryResponseObject); ok {
+		if err := validResponse.VisitRedeliverOrgWebhookDeliveryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PingOrgWebhook operation middleware
+func (sh *strictHandler) PingOrgWebhook(w http.ResponseWriter, r *http.Request, org OrgName, hookId openapi_types.UUID) {
+	var request PingOrgWebhookRequestObject
+
+	request.Org = org
+	request.HookId = hookId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PingOrgWebhook(ctx, request.(PingOrgWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PingOrgWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PingOrgWebhookResponseObject); ok {
+		if err := validResponse.VisitPingOrgWebhookResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -29108,6 +34501,273 @@ func (sh *strictHandler) RunGitHubSync(w http.ResponseWriter, r *http.Request, o
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RunGitHubSyncResponseObject); ok {
 		if err := validResponse.VisitRunGitHubSyncResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListRepoWebhooks operation middleware
+func (sh *strictHandler) ListRepoWebhooks(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request ListRepoWebhooksRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListRepoWebhooks(ctx, request.(ListRepoWebhooksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListRepoWebhooks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListRepoWebhooksResponseObject); ok {
+		if err := validResponse.VisitListRepoWebhooksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateRepoWebhook operation middleware
+func (sh *strictHandler) CreateRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request CreateRepoWebhookRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body CreateRepoWebhookJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateRepoWebhook(ctx, request.(CreateRepoWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateRepoWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateRepoWebhookResponseObject); ok {
+		if err := validResponse.VisitCreateRepoWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteRepoWebhook operation middleware
+func (sh *strictHandler) DeleteRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID) {
+	var request DeleteRepoWebhookRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.HookId = hookId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteRepoWebhook(ctx, request.(DeleteRepoWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteRepoWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteRepoWebhookResponseObject); ok {
+		if err := validResponse.VisitDeleteRepoWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetRepoWebhook operation middleware
+func (sh *strictHandler) GetRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID) {
+	var request GetRepoWebhookRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.HookId = hookId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetRepoWebhook(ctx, request.(GetRepoWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRepoWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetRepoWebhookResponseObject); ok {
+		if err := validResponse.VisitGetRepoWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateRepoWebhook operation middleware
+func (sh *strictHandler) UpdateRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID) {
+	var request UpdateRepoWebhookRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.HookId = hookId
+
+	var body UpdateRepoWebhookJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateRepoWebhook(ctx, request.(UpdateRepoWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateRepoWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateRepoWebhookResponseObject); ok {
+		if err := validResponse.VisitUpdateRepoWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListRepoWebhookDeliveries operation middleware
+func (sh *strictHandler) ListRepoWebhookDeliveries(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID, params ListRepoWebhookDeliveriesParams) {
+	var request ListRepoWebhookDeliveriesRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.HookId = hookId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListRepoWebhookDeliveries(ctx, request.(ListRepoWebhookDeliveriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListRepoWebhookDeliveries")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListRepoWebhookDeliveriesResponseObject); ok {
+		if err := validResponse.VisitListRepoWebhookDeliveriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetRepoWebhookDelivery operation middleware
+func (sh *strictHandler) GetRepoWebhookDelivery(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID, deliveryId openapi_types.UUID) {
+	var request GetRepoWebhookDeliveryRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.HookId = hookId
+	request.DeliveryId = deliveryId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetRepoWebhookDelivery(ctx, request.(GetRepoWebhookDeliveryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRepoWebhookDelivery")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetRepoWebhookDeliveryResponseObject); ok {
+		if err := validResponse.VisitGetRepoWebhookDeliveryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RedeliverRepoWebhookDelivery operation middleware
+func (sh *strictHandler) RedeliverRepoWebhookDelivery(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID, deliveryId openapi_types.UUID) {
+	var request RedeliverRepoWebhookDeliveryRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.HookId = hookId
+	request.DeliveryId = deliveryId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RedeliverRepoWebhookDelivery(ctx, request.(RedeliverRepoWebhookDeliveryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RedeliverRepoWebhookDelivery")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RedeliverRepoWebhookDeliveryResponseObject); ok {
+		if err := validResponse.VisitRedeliverRepoWebhookDeliveryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PingRepoWebhook operation middleware
+func (sh *strictHandler) PingRepoWebhook(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, hookId openapi_types.UUID) {
+	var request PingRepoWebhookRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.HookId = hookId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PingRepoWebhook(ctx, request.(PingRepoWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PingRepoWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PingRepoWebhookResponseObject); ok {
+		if err := validResponse.VisitPingRepoWebhookResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -30386,6 +36046,67 @@ func (sh *strictHandler) SearchCode(w http.ResponseWriter, r *http.Request, owne
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SearchCodeResponseObject); ok {
 		if err := validResponse.VisitSearchCodeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetRepoSubscription operation middleware
+func (sh *strictHandler) GetRepoSubscription(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request GetRepoSubscriptionRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetRepoSubscription(ctx, request.(GetRepoSubscriptionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRepoSubscription")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetRepoSubscriptionResponseObject); ok {
+		if err := validResponse.VisitGetRepoSubscriptionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetRepoSubscription operation middleware
+func (sh *strictHandler) SetRepoSubscription(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request SetRepoSubscriptionRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body SetRepoSubscriptionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetRepoSubscription(ctx, request.(SetRepoSubscriptionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetRepoSubscription")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetRepoSubscriptionResponseObject); ok {
+		if err := validResponse.VisitSetRepoSubscriptionResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

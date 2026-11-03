@@ -1,0 +1,29 @@
+{
+  "group": "Collaborazione / Issue e notifiche",
+  "title": "Issue, notifiche e impostazioni repo",
+  "question": "Quale composizione Console usiamo per lista issue, dettaglio, inbox notifiche e impostazioni repo?",
+  "kind": "page",
+  "viewports": [
+    "laptop",
+    "mobile"
+  ],
+  "head": [],
+  "variants": [
+    {
+      "id": "a",
+      "label": "A",
+      "notes": ""
+    },
+    {
+      "id": "b",
+      "label": "B",
+      "notes": ""
+    },
+    {
+      "id": "c",
+      "label": "C",
+      "notes": ""
+    }
+  ],
+  "created": "2026-11-03T16:13:35.749Z"
+}

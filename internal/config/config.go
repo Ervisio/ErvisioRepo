@@ -25,6 +25,7 @@ type Config struct {
 	Mail     Mail     `toml:"mail"`
 	Git      Git      `toml:"git"`
 	SSH      SSH      `toml:"ssh"`
+	Webhooks Webhooks `toml:"webhooks"`
 }
 
 type Server struct {
@@ -128,6 +129,21 @@ type Mail struct {
 	Timeout  Duration `toml:"timeout"`
 }
 
+// Webhooks configures outgoing webhook deliveries (PLAN §5.7).
+type Webhooks struct {
+	// AllowPrivate lets hooks reach loopback, private, link-local, CGNAT and
+	// other non-public addresses. Off by default (SSRF protection).
+	AllowPrivate bool `toml:"allow_private"`
+	// AllowedCIDRs are non-public networks hooks may reach even when
+	// AllowPrivate is off (for example an internal CI host).
+	AllowedCIDRs []string `toml:"allowed_cidrs"`
+	// Timeout bounds one delivery attempt (connect, request and response).
+	Timeout Duration `toml:"timeout"`
+	// MaxAttempts is the number of attempts of a delivery, retried with an
+	// exponential backoff.
+	MaxAttempts int `toml:"max_attempts"`
+}
+
 // Storage describes the physical targets and, for each data type, the policy
 // that places it on them (PLAN §4.2).
 type Storage struct {
@@ -228,9 +244,10 @@ func Default() Config {
 			Require2FA:               Require2FAOff,
 			TokenMaxTTL:              Duration(366 * 24 * time.Hour),
 		},
-		Mail: Mail{Port: 587, TLS: "starttls", Timeout: Duration(30 * time.Second)},
-		Git:  defaultGit(),
-		SSH:  defaultSSH(),
+		Mail:     Mail{Port: 587, TLS: "starttls", Timeout: Duration(30 * time.Second)},
+		Git:      defaultGit(),
+		SSH:      defaultSSH(),
+		Webhooks: Webhooks{Timeout: Duration(10 * time.Second), MaxAttempts: 8},
 	}
 }
 

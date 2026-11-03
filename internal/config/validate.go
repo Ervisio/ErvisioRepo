@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -99,6 +100,7 @@ func (c *Config) validate() []error {
 	v.mail(&c.Mail)
 	v.git(&c.Git)
 	v.ssh(&c.SSH)
+	v.webhooks(&c.Webhooks)
 	return v.errs
 }
 
@@ -286,6 +288,19 @@ func (v *validator) mail(m *Mail) {
 	}
 	if m.PasswordFile != "" && m.Username == "" {
 		v.add("mail.username", "is required when mail.password_file is set")
+	}
+}
+
+func (v *validator) webhooks(w *Webhooks) {
+	v.positive("webhooks.timeout", w.Timeout)
+	if w.Timeout > Duration(5*time.Minute) {
+		v.add("webhooks.timeout", "must not exceed 5m")
+	}
+	v.intRange("webhooks.max_attempts", w.MaxAttempts, 1, 25)
+	for i, cidr := range w.AllowedCIDRs {
+		if _, _, err := net.ParseCIDR(cidr); err != nil {
+			v.add(fmt.Sprintf("webhooks.allowed_cidrs[%d]", i), "must be a CIDR such as 10.0.0.0/8, got %q", cidr)
+		}
 	}
 }
 
