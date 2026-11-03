@@ -277,3 +277,31 @@ func TestDevConfigIsValid(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestHotPath(t *testing.T) {
+	cfg, err := Parse([]byte(fullStorage), noEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Storage.HotPath != "/var/lib/ervisio-repo/hot/.hot" {
+		t.Fatalf("default hot path %q", cfg.Storage.HotPath)
+	}
+	cfg, err = Parse([]byte(fullStorage), envMap(map[string]string{"EREPO_STORAGE_HOT_PATH": "/srv/hot"}))
+	if err != nil || cfg.Storage.HotPath != "/srv/hot" {
+		t.Fatalf("override %v %v", cfg, err)
+	}
+	for _, bad := range []string{"relative", "/var/lib/ervisio-repo/hot", "/var/lib/ervisio-repo/hot/git"} {
+		_, err := Parse([]byte(fullStorage), envMap(map[string]string{"EREPO_STORAGE_HOT_PATH": bad}))
+		if err == nil || !strings.Contains(err.Error(), "storage.hot_path") {
+			t.Errorf("%q: %v", bad, err)
+		}
+	}
+	// A git policy without any local target needs an explicit hot path.
+	noLocal := minimal + "[[storage.target]]\nname=\"o\"\nkind=\"s3\"\nendpoint=\"https://s3.example.com\"\nbucket=\"b\"\n[storage.policy.git]\nprimary=\"o\"\n"
+	if _, err := Parse([]byte(noLocal), noEnv); err == nil || !strings.Contains(err.Error(), "storage.hot_path") {
+		t.Fatalf("missing hot path %v", err)
+	}
+	if _, err := Parse([]byte(noLocal+"[storage]\nhot_path=\"/srv/hot\"\n"), noEnv); err != nil {
+		t.Fatal(err)
+	}
+}

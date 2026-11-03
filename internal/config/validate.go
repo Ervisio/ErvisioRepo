@@ -143,6 +143,36 @@ func (v *validator) storage(s *Storage) {
 		}
 		v.oneOf(p+".durability", pol.Durability, "sync", "async")
 	}
+	v.hotPath(s)
+}
+
+// hotPath checks storage.hot_path. The hot repositories must live outside
+// every blob namespace of a local target, or the cache loader would treat
+// them as unregistered objects and delete them.
+func (v *validator) hotPath(s *Storage) {
+	if s.HotPath == "" {
+		if _, ok := s.Policy["git"]; ok {
+			v.add("storage.hot_path", "is required when the git policy has no local cache or primary")
+		}
+		return
+	}
+	if !filepath.IsAbs(s.HotPath) {
+		v.add("storage.hot_path", "must be an absolute path")
+		return
+	}
+	hot := filepath.Clean(s.HotPath)
+	for _, t := range s.Targets {
+		if t.Kind != "local" || !filepath.IsAbs(t.Path) {
+			continue
+		}
+		rel, err := filepath.Rel(filepath.Clean(t.Path), hot)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, "../") {
+			continue // outside the target
+		}
+		if rel == "." || !strings.HasPrefix(rel, ".") {
+			v.add("storage.hot_path", "must not be inside the blob namespace of target %q (use a directory starting with '.' or a separate path)", t.Name)
+		}
+	}
 }
 
 func (v *validator) targetRef(path, name string, kinds map[string]string) bool {

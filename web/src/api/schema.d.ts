@@ -1077,6 +1077,179 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/user/repos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Repositories the caller reaches by ownership, membership or grant */
+        get: operations["listMyRepos"];
+        put?: never;
+        /**
+         * Create an empty repository owned by the caller
+         * @description Restricted users cannot create repositories (403). The quota of the owner applies (409).
+         */
+        post: operations["createUserRepo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{username}/repos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        /** Repositories of a user the caller can see */
+        get: operations["listUserRepos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org}/repos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        /** Repositories of an organization the caller can see */
+        get: operations["listOrgRepos"];
+        put?: never;
+        /**
+         * Create an empty repository in an organization
+         * @description Members of the organization. A plain member becomes the admin
+         *     collaborator of the new repository.
+         */
+        post: operations["createOrgRepo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * A repository
+         * @description Repositories the caller cannot read answer 404. The old path of a
+         *     renamed or transferred repository answers 301 with the new location.
+         */
+        get: operations["getRepo"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a repository
+         * @description Admins of the repository. The data is purged in the background.
+         */
+        delete: operations["deleteRepo"];
+        options?: never;
+        head?: never;
+        /**
+         * Change the settings of a repository
+         * @description Description and default branch need maintain; name and visibility
+         *     need admin. A rename keeps the old path as a redirect.
+         */
+        patch: operations["updateRepo"];
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/transfer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Move a repository to another user or organization
+         * @description Admins of the repository who can create repositories in the target.
+         *     Team grants are dropped; the old path redirects.
+         */
+        post: operations["transferRepo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/collaborators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Users granted a permission on the repository directly */
+        get: operations["listRepoCollaborators"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/collaborators/{username}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Grant a permission to a user
+         * @description Admins of the repository.
+         */
+        put: operations["setRepoCollaborator"];
+        post?: never;
+        /**
+         * Revoke the direct grant of a user
+         * @description Admins of the repository, or the collaborator.
+         */
+        delete: operations["removeRepoCollaborator"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1421,6 +1594,61 @@ export interface components {
             webauthnAvailable: boolean;
         };
         /** @enum {string} */
+        Visibility: "public" | "internal" | "private";
+        Repo: {
+            /** Format: uuid */
+            id: string;
+            owner: string;
+            /** @enum {string} */
+            ownerKind: "user" | "org";
+            name: string;
+            /** @description owner/name */
+            fullName: string;
+            description: string;
+            visibility: components["schemas"]["Visibility"];
+            defaultBranch: string;
+            /**
+             * @description Where the git data is; cold repositories are restored on first access.
+             * @enum {string}
+             */
+            storageState: "hot" | "cold" | "hydrating" | "evicting" | "degraded";
+            /** Format: int64 */
+            sizeBytes: number;
+            permission: components["schemas"]["Permission"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        RepoCreate: {
+            name: string;
+            description?: string;
+            visibility?: components["schemas"]["Visibility"];
+            defaultBranch?: string;
+        };
+        RepoUpdate: {
+            name?: string;
+            description?: string;
+            visibility?: components["schemas"]["Visibility"];
+            defaultBranch?: string;
+        };
+        RepoTransfer: {
+            newOwner: string;
+            /** @description Defaults to the current name */
+            newName?: string;
+        };
+        RepoCollaborator: {
+            username: string;
+            displayName: string;
+            permission: components["schemas"]["Permission"];
+            /** Format: date-time */
+            since: string;
+        };
+        RepoPermissionRequest: {
+            /** @enum {string} */
+            permission: "read" | "triage" | "write" | "maintain" | "admin";
+        };
+        /** @enum {string} */
         OrgRole: "owner" | "admin" | "member" | "billing";
         /** @enum {string} */
         Permission: "none" | "read" | "triage" | "write" | "maintain" | "admin";
@@ -1570,6 +1798,19 @@ export interface components {
         };
     };
     responses: {
+        /**
+         * @description The repository was renamed or transferred; Location is its new URL
+         *     (301 for GET, 307 for the other methods, which must be repeated there).
+         */
+        Moved: {
+            headers: {
+                Location: string;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description Error in RFC 9457 format */
         Problem: {
             headers: {
@@ -1591,6 +1832,11 @@ export interface components {
         };
     };
     parameters: {
+        /** @description User or organization name */
+        RepoOwner: string;
+        RepoName: string;
+        PageOffset: number;
+        PageLimit: number;
         CredentialID: string;
         OrgName: string;
         TeamName: string;
@@ -3302,6 +3548,350 @@ export interface operations {
                     "application/json": components["schemas"]["AuditPage"];
                 };
             };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listMyRepos: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repositories with the caller's permission */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"][];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createUserRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepoCreate"];
+            };
+        };
+        responses: {
+            /** @description Repository created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listUserRepos: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repositories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"][];
+                };
+            };
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listOrgRepos: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repositories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"][];
+                };
+            };
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createOrgRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepoCreate"];
+            };
+        };
+        responses: {
+            /** @description Repository created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repository */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepoUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated repository */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    transferRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepoTransfer"];
+            };
+        };
+        responses: {
+            /** @description Transferred repository */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listRepoCollaborators: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Collaborators */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepoCollaborator"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    setRepoCollaborator: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RepoPermissionRequest"];
+            };
+        };
+        responses: {
+            /** @description Granted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    removeRepoCollaborator: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

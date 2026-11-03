@@ -12,6 +12,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const adjustUsage = `-- name: AdjustUsage :exec
+UPDATE usage_counters
+SET repos = GREATEST(repos + $1::integer, 0),
+    storage_bytes = GREATEST(storage_bytes + $2::bigint, 0),
+    updated_at = now()
+WHERE namespace_id = $3::uuid
+`
+
+type AdjustUsageParams struct {
+	Repos       int32
+	Bytes       int64
+	NamespaceID uuid.UUID
+}
+
+// Applies the deltas regardless of the limits (never below zero): for usage
+// that has already happened, such as the growth of a repository after a
+// push. Call EnsureUsageCounter first.
+func (q *Queries) AdjustUsage(ctx context.Context, arg AdjustUsageParams) error {
+	_, err := q.db.Exec(ctx, adjustUsage, arg.Repos, arg.Bytes, arg.NamespaceID)
+	return err
+}
+
 const deleteQuotaOverride = `-- name: DeleteQuotaOverride :execrows
 DELETE FROM quotas WHERE namespace_id = $1
 `

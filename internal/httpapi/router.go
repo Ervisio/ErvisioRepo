@@ -64,6 +64,8 @@ type Deps struct {
 	MFA *mfa.Service
 	// Orgs serves /orgs; nil makes those endpoints answer 503.
 	Orgs Orgs
+	// Repos serves /repos, /user/repos and the owner listings; nil answers 503.
+	Repos Repos
 	// Audit reads the instance audit log for /admin/audit; nil answers 503.
 	Audit audit.Lister
 	// Credentials serves /user/tokens and /user/keys; nil answers 503.
@@ -171,7 +173,7 @@ func directLoopback(r *http.Request) bool {
 // is also guarded as a whole, so that a misdeclared operation cannot leak.
 func mountV1(r chi.Router, d Deps) {
 	r.Use(d.Auth.LoadSession, d.Auth.CSRF, adminOnly(d.Auth), mfaCookie(d.Auth.Cookies))
-	srv := &v1Server{meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies, mfa: d.MFA, orgs: d.Orgs, audit: d.Audit,
+	srv := &v1Server{meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies, mfa: d.MFA, orgs: d.Orgs, repos: d.Repos, audit: d.Audit,
 		creds: d.Credentials, sso: d.SSO}
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {

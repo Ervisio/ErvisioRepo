@@ -141,3 +141,26 @@ func Reserve(ctx context.Context, q Queries, ns uuid.UUID, d Delta) error {
 func Release(ctx context.Context, q Queries, ns uuid.UUID, d Delta) error {
 	return Reserve(ctx, q, ns, Delta{Repos: -max(d.Repos, 0), Bytes: -max(d.Bytes, 0)})
 }
+
+// Adjuster is what Adjust needs.
+type Adjuster interface {
+	EnsureUsageCounter(ctx context.Context, namespaceID uuid.UUID) error
+	AdjustUsage(ctx context.Context, arg dbgen.AdjustUsageParams) error
+}
+
+// Adjust applies d regardless of the limits (usage never goes below zero).
+// It records usage that has already happened and cannot be refused, such as
+// the growth of a repository after an accepted push; the next Reserve then
+// fails until usage is back under the limit.
+func Adjust(ctx context.Context, q Adjuster, ns uuid.UUID, d Delta) error {
+	if d == (Delta{}) {
+		return nil
+	}
+	if err := q.EnsureUsageCounter(ctx, ns); err != nil {
+		return fmt.Errorf("ensure usage counter: %w", err)
+	}
+	if err := q.AdjustUsage(ctx, dbgen.AdjustUsageParams{NamespaceID: ns, Repos: d.Repos, Bytes: d.Bytes}); err != nil {
+		return fmt.Errorf("adjust usage: %w", err)
+	}
+	return nil
+}

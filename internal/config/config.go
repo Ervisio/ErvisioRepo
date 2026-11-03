@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -130,7 +131,17 @@ type Mail struct {
 type Storage struct {
 	Targets []Target          `toml:"target"`
 	Policy  map[string]Policy `toml:"policy"`
+	// HotPath is the local directory holding the hot (checked out) bare
+	// repositories, laid out as <hot_path>/git/<aa>/<uuid>.git, and the
+	// eviction trash <hot_path>/.trash. It must not be a blob namespace:
+	// when empty it defaults to "<path>/.hot" of the local target that is the
+	// git policy's cache, or else its primary (blob keys never start with '.').
+	HotPath string `toml:"hot_path"`
 }
+
+// HotDirName is the directory created inside a local target when
+// storage.hot_path is not set.
+const HotDirName = ".hot"
 
 // Target is a physical storage. Which fields apply depends on Kind.
 type Target struct {
@@ -262,6 +273,15 @@ type FieldError struct {
 
 func (e *FieldError) Error() string { return e.Path + ": " + e.Msg }
 
+func (s *Storage) target(name string) *Target {
+	for i := range s.Targets {
+		if s.Targets[i].Name == name {
+			return &s.Targets[i]
+		}
+	}
+	return nil
+}
+
 func applyStorageDefaults(s *Storage) {
 	for i := range s.Targets {
 		t := &s.Targets[i]
@@ -279,6 +299,14 @@ func applyStorageDefaults(s *Storage) {
 			}
 			if t.MaxConns == 0 {
 				t.MaxConns = 4
+			}
+		}
+	}
+	if p, ok := s.Policy["git"]; ok && s.HotPath == "" {
+		for _, name := range []string{p.Cache, p.Primary} {
+			if t := s.target(name); name != "" && t != nil && t.Kind == "local" && t.Path != "" {
+				s.HotPath = filepath.Join(t.Path, HotDirName)
+				break
 			}
 		}
 	}

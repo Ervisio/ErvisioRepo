@@ -14,6 +14,7 @@ tags:
   - name: users
   - name: admin
   - name: orgs
+  - name: repos
 # Every operation needs a session unless it declares `security: []`. The
 # "admin" scope means an instance admin. Unsafe methods also need the
 # X-CSRF-Token header (see components.securitySchemes.session).
@@ -1580,6 +1581,339 @@ paths:
                 $ref: "#/components/schemas/AuditPage"
         default:
           $ref: "#/components/responses/Problem"
+  /user/repos:
+    get:
+      operationId: listMyRepos
+      tags: [repos]
+      summary: Repositories the caller reaches by ownership, membership or grant
+      security:
+        - session: []
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Repositories with the caller's permission
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repo"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createUserRepo
+      tags: [repos]
+      summary: Create an empty repository owned by the caller
+      description: Restricted users cannot create repositories (403). The quota of the owner applies (409).
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RepoCreate"
+      responses:
+        "201":
+          description: Repository created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repo"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /users/{username}/repos:
+    parameters:
+      - $ref: "#/components/parameters/Username"
+    get:
+      operationId: listUserRepos
+      tags: [repos]
+      summary: Repositories of a user the caller can see
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Repositories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repo"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/repos:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgRepos
+      tags: [repos]
+      summary: Repositories of an organization the caller can see
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Repositories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repo"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createOrgRepo
+      tags: [repos]
+      summary: Create an empty repository in an organization
+      description: |
+        Members of the organization. A plain member becomes the admin
+        collaborator of the new repository.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RepoCreate"
+      responses:
+        "201":
+          description: Repository created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repo"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getRepo
+      tags: [repos]
+      summary: A repository
+      description: |
+        Repositories the caller cannot read answer 404. The old path of a
+        renamed or transferred repository answers 301 with the new location.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Repository
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repo"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateRepo
+      tags: [repos]
+      summary: Change the settings of a repository
+      description: |
+        Description and default branch need maintain; name and visibility
+        need admin. A rename keeps the old path as a redirect.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RepoUpdate"
+      responses:
+        "200":
+          description: Updated repository
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repo"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteRepo
+      tags: [repos]
+      summary: Delete a repository
+      description: Admins of the repository. The data is purged in the background.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Deleted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/transfer:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    post:
+      operationId: transferRepo
+      tags: [repos]
+      summary: Move a repository to another user or organization
+      description: |
+        Admins of the repository who can create repositories in the target.
+        Team grants are dropped; the old path redirects.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RepoTransfer"
+      responses:
+        "200":
+          description: Transferred repository
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repo"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/collaborators:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listRepoCollaborators
+      tags: [repos]
+      summary: Users granted a permission on the repository directly
+      security:
+        - session: []
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Collaborators
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RepoCollaborator"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/collaborators/{username}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/Username"
+    put:
+      operationId: setRepoCollaborator
+      tags: [repos]
+      summary: Grant a permission to a user
+      description: Admins of the repository.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RepoPermissionRequest"
+      responses:
+        "204":
+          description: Granted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: removeRepoCollaborator
+      tags: [repos]
+      summary: Revoke the direct grant of a user
+      description: Admins of the repository, or the collaborator.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Revoked
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
 components:
   securitySchemes:
     session:
@@ -1599,6 +1933,36 @@ components:
         operations that list the token scheme accept it, and the token must
         hold every scope listed there. Tokens skip the CSRF check.
   parameters:
+    RepoOwner:
+      name: owner
+      in: path
+      required: true
+      description: User or organization name
+      schema:
+        type: string
+        maxLength: 39
+    RepoName:
+      name: name
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 100
+    PageOffset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    PageLimit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 30
     CredentialID:
       name: id
       in: path
@@ -1650,6 +2014,19 @@ components:
         type: string
         maxLength: 100
   responses:
+    Moved:
+      description: |
+        The repository was renamed or transferred; Location is its new URL
+        (301 for GET, 307 for the other methods, which must be repeated there).
+      headers:
+        Location:
+          required: true
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
     Problem:
       description: Error in RFC 9457 format
       content:
@@ -2294,6 +2671,108 @@ components:
           description: Policy (instance or organization) requires a second factor
         webauthnAvailable:
           type: boolean
+    Visibility:
+      type: string
+      enum: [public, internal, private]
+    Repo:
+      type: object
+      required: [id, owner, ownerKind, name, fullName, description, visibility, defaultBranch, storageState,
+        sizeBytes, permission, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner:
+          type: string
+        ownerKind:
+          type: string
+          enum: [user, org]
+        name:
+          type: string
+        fullName:
+          type: string
+          description: owner/name
+        description:
+          type: string
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        defaultBranch:
+          type: string
+        storageState:
+          type: string
+          enum: [hot, cold, hydrating, evicting, degraded]
+          description: Where the git data is; cold repositories are restored on first access.
+        sizeBytes:
+          type: integer
+          format: int64
+        permission:
+          $ref: "#/components/schemas/Permission"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    RepoCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        defaultBranch:
+          type: string
+          maxLength: 255
+    RepoUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        defaultBranch:
+          type: string
+          maxLength: 255
+    RepoTransfer:
+      type: object
+      required: [newOwner]
+      properties:
+        newOwner:
+          type: string
+          maxLength: 39
+        newName:
+          type: string
+          maxLength: 100
+          description: Defaults to the current name
+    RepoCollaborator:
+      type: object
+      required: [username, displayName, permission, since]
+      properties:
+        username:
+          type: string
+        displayName:
+          type: string
+        permission:
+          $ref: "#/components/schemas/Permission"
+        since:
+          type: string
+          format: date-time
+    RepoPermissionRequest:
+      type: object
+      required: [permission]
+      properties:
+        permission:
+          type: string
+          enum: [read, triage, write, maintain, admin]
     OrgRole:
       type: string
       enum: [owner, admin, member, billing]

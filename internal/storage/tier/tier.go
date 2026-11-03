@@ -223,6 +223,14 @@ func (t *Tier) Targets() []*Target {
 // Name is the data type of the class.
 func (c *Class) Name() string { return c.name }
 
+// Primary returns the target holding the canonical copies of the class.
+// Mutable metadata that cannot be content-addressed (the git pack journal
+// manifest) is written there directly, with conditional puts.
+func (c *Class) Primary() *Target { return c.primary }
+
+// Replicas returns the replica targets of the class, in policy order.
+func (c *Class) Replicas() []*Target { return slices.Clone(c.replicas) }
+
 // FullKey returns the key used on the targets for a relative key.
 func (c *Class) FullKey(key string) string { return c.name + "/" + key }
 

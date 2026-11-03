@@ -79,7 +79,10 @@ func TestMigrationOrgs(t *testing.T) {
 		exec(`INSERT INTO team_members (team_id, org_id, user_id) VALUES ($1, $2, $3)`, team, org, bob))
 	mustFail("team repo permission none", "team_repos_permission_check",
 		exec(`INSERT INTO team_repos (team_id, repo_id, permission) VALUES ($1, $2, 'none')`, team, uuid.New()))
-	must(exec(`INSERT INTO team_repos (team_id, repo_id, permission) VALUES ($1, $2, 'write')`, team, uuid.New()))
+	// Since 00060 team_repos references repos.
+	repoID := uuid.New()
+	must(exec(`INSERT INTO repos (id, owner_id, name) VALUES ($1, $2, 'r')`, repoID, org))
+	must(exec(`INSERT INTO team_repos (team_id, repo_id, permission) VALUES ($1, $2, 'write')`, team, repoID))
 
 	// Leaving the org drops the team memberships.
 	must(exec(`DELETE FROM org_members WHERE org_id = $1 AND user_id = $2`, org, alice))
@@ -113,6 +116,7 @@ func TestMigrationOrgs(t *testing.T) {
 	// Deleting the org cascades to teams, invites and quotas; audit entries stay.
 	must(exec(`INSERT INTO quotas (namespace_id, max_repos) VALUES ($1, 5)`, org))
 	must(exec(`INSERT INTO audit_log (id, action, org_id) VALUES ($1, 'org.created', $2)`, uuid.New(), org))
+	must(exec(`DELETE FROM repos WHERE id = $1`, repoID)) // repositories block the deletion (00060)
 	must(exec(`DELETE FROM namespaces WHERE id = $1`, org))
 	for _, table := range []string{"teams", "org_invites"} {
 		must(pool.QueryRow(ctx, `SELECT count(*) FROM `+table+` WHERE org_id = $1`, org).Scan(&n))

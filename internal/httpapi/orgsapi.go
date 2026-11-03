@@ -59,7 +59,8 @@ func orgsProblem(err error) (problemResponse, bool) {
 		return problemResponse{status: http.StatusNotFound, detail: err.Error()}, true
 	case errors.Is(err, orgs.ErrForbidden), errors.Is(err, orgs.ErrEmailMismatch), errors.Is(err, orgs.ErrEmailNotVerified):
 		return problemResponse{status: http.StatusForbidden, detail: err.Error()}, true
-	case errors.Is(err, orgs.ErrNameTaken), errors.Is(err, orgs.ErrInvitePending), errors.Is(err, orgs.ErrLastOwner):
+	case errors.Is(err, orgs.ErrNameTaken), errors.Is(err, orgs.ErrInvitePending), errors.Is(err, orgs.ErrLastOwner),
+		errors.Is(err, orgs.ErrHasRepos):
 		return problemResponse{status: http.StatusConflict, detail: err.Error()}, true
 	}
 	return identityProblem(err)

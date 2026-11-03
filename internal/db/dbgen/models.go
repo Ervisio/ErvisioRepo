@@ -177,6 +177,40 @@ type QuotaDefault struct {
 	UpdatedAt       pgtype.Timestamptz
 }
 
+type Repo struct {
+	ID             uuid.UUID
+	OwnerID        uuid.UUID
+	Name           string
+	NameLower      pgtype.Text
+	Description    string
+	Visibility     string
+	DefaultBranch  string
+	StorageState   string
+	StateChangedAt pgtype.Timestamptz
+	Pinned         bool
+	SizeBytes      int64
+	LastAccessAt   pgtype.Timestamptz
+	ManifestSeq    int64
+	CreatedBy      uuid.NullUUID
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
+type RepoCollaborator struct {
+	RepoID     uuid.UUID
+	UserID     uuid.UUID
+	Permission string
+	AddedBy    uuid.NullUUID
+	CreatedAt  pgtype.Timestamptz
+}
+
+type RepoRedirect struct {
+	OwnerID   uuid.UUID
+	NameLower string
+	RepoID    uuid.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
 type Session struct {
 	ID         uuid.UUID
 	TokenHash  []byte

@@ -81,6 +81,11 @@ func TestSecAuthTokenScopes(t *testing.T) {
 		{"session still works", http.MethodPost, []string{}, []string{auth.ScopeWriteUser}, session, 200},
 		{"anonymous on token op", http.MethodGet, []string{}, []string{auth.ScopeReadUser}, nil, 401},
 		{"token-only op refuses sessions", http.MethodGet, nil, []string{auth.ScopeReadUser}, session, 401},
+		{"anonymous allowed", http.MethodGet, []string{auth.ScopeAnonymous}, []string{auth.ScopeReadRepo}, nil, 200},
+		{"anonymous op with session", http.MethodGet, []string{auth.ScopeAnonymous}, []string{auth.ScopeReadRepo}, session, 200},
+		{"anonymous op still checks token scopes", http.MethodGet, []string{auth.ScopeAnonymous}, []string{auth.ScopeReadRepo}, bearer(reader), 403},
+		{"anonymous op, invalid token", http.MethodGet, []string{auth.ScopeAnonymous}, []string{auth.ScopeReadRepo}, bearer("erp_nope"), 401},
+		{"anonymous op without token scheme", http.MethodGet, []string{auth.ScopeAnonymous}, nil, bearer(writer), 403},
 	}
 	for _, c := range cases {
 		mods := []func(*http.Request){}

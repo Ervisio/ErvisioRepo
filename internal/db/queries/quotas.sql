@@ -51,3 +51,13 @@ WHERE c.namespace_id = sqlc.arg(namespace_id)::uuid AND n.id = c.namespace_id
        OR c.repos + sqlc.arg(repos)::integer <= COALESCE(q.max_repos, d.max_repos))
   AND (sqlc.arg(bytes)::bigint <= 0 OR COALESCE(q.max_storage_bytes, d.max_storage_bytes) IS NULL
        OR c.storage_bytes + sqlc.arg(bytes)::bigint <= COALESCE(q.max_storage_bytes, d.max_storage_bytes));
+
+-- name: AdjustUsage :exec
+-- Applies the deltas regardless of the limits (never below zero): for usage
+-- that has already happened, such as the growth of a repository after a
+-- push. Call EnsureUsageCounter first.
+UPDATE usage_counters
+SET repos = GREATEST(repos + sqlc.arg(repos)::integer, 0),
+    storage_bytes = GREATEST(storage_bytes + sqlc.arg(bytes)::bigint, 0),
+    updated_at = now()
+WHERE namespace_id = sqlc.arg(namespace_id)::uuid;

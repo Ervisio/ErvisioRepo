@@ -18,6 +18,10 @@ type Querier interface {
 	AcquireRegistrationLock(ctx context.Context) error
 	// Adds a user to the given teams of an organization, keeping existing roles.
 	AddTeamMembers(ctx context.Context, arg AddTeamMembersParams) error
+	// Applies the deltas regardless of the limits (never below zero): for usage
+	// that has already happened, such as the growth of a repository after a
+	// push. Call EnsureUsageCounter first.
+	AdjustUsage(ctx context.Context, arg AdjustUsageParams) error
 	// Accepts a code for step only once: a replay in the same window matches
 	// no row.
 	AdvanceTOTPStep(ctx context.Context, arg AdvanceTOTPStepParams) (int64, error)
@@ -28,6 +32,7 @@ type Querier interface {
 	// Deletes and returns a token; the caller checks expires_at.
 	ConsumeOneTimeToken(ctx context.Context, arg ConsumeOneTimeTokenParams) (ConsumeOneTimeTokenRow, error)
 	CountOrgOwners(ctx context.Context, orgID uuid.UUID) (int64, error)
+	CountOwnerRepos(ctx context.Context, ownerID uuid.UUID) (int64, error)
 	CountRecoveryCodes(ctx context.Context, userID uuid.UUID) (CountRecoveryCodesRow, error)
 	CountTeamsInOrg(ctx context.Context, arg CountTeamsInOrgParams) (int64, error)
 	CountUserGPGKeys(ctx context.Context, userID uuid.UUID) (int64, error)
@@ -52,6 +57,11 @@ type Querier interface {
 	DeleteOrgNamespace(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteQuotaOverride(ctx context.Context, namespaceID uuid.UUID) (int64, error)
 	DeleteRecoveryCodes(ctx context.Context, userID uuid.UUID) error
+	DeleteRepo(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteRepoCollaborator(ctx context.Context, arg DeleteRepoCollaboratorParams) (int64, error)
+	DeleteRepoRedirect(ctx context.Context, arg DeleteRepoRedirectParams) error
+	// Removes the team grants of a repository (on transfer to another owner).
+	DeleteRepoTeamGrants(ctx context.Context, repoID uuid.UUID) error
 	DeleteSession(ctx context.Context, id uuid.UUID) error
 	// Removes an expired pending invitation for the address, so a new one can
 	// take its place.
@@ -94,6 +104,16 @@ type Querier interface {
 	GetOrgMemberRole(ctx context.Context, arg GetOrgMemberRoleParams) (string, error)
 	GetQuotaDefaults(ctx context.Context) ([]QuotaDefault, error)
 	GetQuotaOverride(ctx context.Context, namespaceID uuid.UUID) (Quota, error)
+	GetRepo(ctx context.Context, id uuid.UUID) (GetRepoRow, error)
+	// What the permission of a user on a repository depends on, besides the
+	// teams (ListUserTeamRepoPermissions) and the account itself.
+	GetRepoAccess(ctx context.Context, arg GetRepoAccessParams) (GetRepoAccessRow, error)
+	GetRepoByPath(ctx context.Context, arg GetRepoByPathParams) (GetRepoByPathRow, error)
+	GetRepoForUpdate(ctx context.Context, id uuid.UUID) (Repo, error)
+	// The repository an old path points to.
+	GetRepoRedirect(ctx context.Context, arg GetRepoRedirectParams) (uuid.UUID, error)
+	// Tiering state read by gitstore.Tier.Acquire.
+	GetRepoStorage(ctx context.Context, id uuid.UUID) (GetRepoStorageRow, error)
 	// Used by the SSH server (Phase 3) to authenticate a public key.
 	GetSSHKeyByFingerprint(ctx context.Context, fingerprint string) (GetSSHKeyByFingerprintRow, error)
 	GetSessionByTokenHash(ctx context.Context, tokenHash []byte) (GetSessionByTokenHashRow, error)
@@ -125,6 +145,8 @@ type Querier interface {
 	InsertOrgInvite(ctx context.Context, arg InsertOrgInviteParams) error
 	InsertOrgMember(ctx context.Context, arg InsertOrgMemberParams) (int64, error)
 	InsertRecoveryCode(ctx context.Context, arg InsertRecoveryCodeParams) error
+	// Repositories, redirects, collaborators and tiering state (PLAN §4.3, §5.2).
+	InsertRepo(ctx context.Context, arg InsertRepoParams) error
 	InsertSSHKey(ctx context.Context, arg InsertSSHKeyParams) error
 	InsertSession(ctx context.Context, arg InsertSessionParams) error
 	InsertSettingIfAbsent(ctx context.Context, arg InsertSettingIfAbsentParams) error
@@ -137,14 +159,25 @@ type Querier interface {
 	// Newest first; pass the last id of a page as before to get the next one.
 	// action matches exactly, or a whole prefix when it ends with ".".
 	ListAuditEvents(ctx context.Context, arg ListAuditEventsParams) ([]ListAuditEventsRow, error)
+	ListEvictionCandidates(ctx context.Context, arg ListEvictionCandidatesParams) ([]ListEvictionCandidatesRow, error)
 	// Pending invitations, expired ones included (the UI shows them as such).
 	ListOrgInvites(ctx context.Context, orgID uuid.UUID) ([]ListOrgInvitesRow, error)
 	ListOrgMembers(ctx context.Context, orgID uuid.UUID) ([]ListOrgMembersRow, error)
+	// Repositories of a namespace visible to a viewer. all = the viewer sees
+	// every repository (instance admin, the user himself, organization
+	// owner/admin); internal = the viewer is signed in and not restricted.
+	ListOwnerRepos(ctx context.Context, arg ListOwnerReposParams) ([]ListOwnerReposRow, error)
+	ListRepoCollaborators(ctx context.Context, repoID uuid.UUID) ([]ListRepoCollaboratorsRow, error)
+	ListRepoRedirects(ctx context.Context, repoID uuid.UUID) ([]ListRepoRedirectsRow, error)
 	ListStorageObjectsByKeys(ctx context.Context, arg ListStorageObjectsByKeysParams) ([]StorageObject, error)
 	ListStorageObjectsPendingReplicas(ctx context.Context, arg ListStorageObjectsPendingReplicasParams) ([]StorageObject, error)
 	ListTeamMembers(ctx context.Context, teamID uuid.UUID) ([]ListTeamMembersRow, error)
 	ListTeamRepos(ctx context.Context, teamID uuid.UUID) ([]ListTeamReposRow, error)
 	ListTeams(ctx context.Context, orgID uuid.UUID) ([]ListTeamsRow, error)
+	// Repositories a user can reach without public or internal visibility: his
+	// own, those of organizations he owns or administers or whose base
+	// permission he receives, and those granted through teams or directly.
+	ListUserAccessibleRepos(ctx context.Context, arg ListUserAccessibleReposParams) ([]ListUserAccessibleReposRow, error)
 	ListUserGPGKeys(ctx context.Context, userID uuid.UUID) ([]ListUserGPGKeysRow, error)
 	ListUserOIDCLinks(ctx context.Context, userID uuid.UUID) ([]ListUserOIDCLinksRow, error)
 	ListUserOrgs(ctx context.Context, userID uuid.UUID) ([]ListUserOrgsRow, error)
@@ -158,6 +191,13 @@ type Querier interface {
 	// Serializes membership changes of one organization inside a transaction,
 	// so that the last-owner check cannot race.
 	LockOrgMembers(ctx context.Context, orgID uuid.UUID) error
+	// Session-scoped repository write lock held by gitstore.Tier.Acquire on a
+	// dedicated connection; release it with UnlockRepoSession on the same one.
+	LockRepoSession(ctx context.Context, repoID uuid.UUID) error
+	// Transaction-scoped form of the repository write lock taken by
+	// gitstore.Tier.Acquire (same key): use it for metadata changes that must
+	// not interleave with a git write.
+	LockRepoWrite(ctx context.Context, repoID uuid.UUID) error
 	// Serializes credential changes of one account.
 	LockUserForUpdate(ctx context.Context, id uuid.UUID) (uuid.UUID, error)
 	MarkEmailVerified(ctx context.Context, arg MarkEmailVerifiedParams) (int64, error)
@@ -165,6 +205,7 @@ type Querier interface {
 	MarkStorageObjectReplicated(ctx context.Context, arg MarkStorageObjectReplicatedParams) error
 	MarkStorageObjectVerified(ctx context.Context, arg MarkStorageObjectVerifiedParams) error
 	NamespaceTaken(ctx context.Context, name string) (bool, error)
+	RenameRepo(ctx context.Context, arg RenameRepoParams) error
 	// Adds the deltas to the usage of a namespace only if the result stays
 	// within its effective limits. Negative deltas (releases) always apply and
 	// never go below zero. Zero rows means the quota would be exceeded; call
@@ -181,6 +222,15 @@ type Querier interface {
 	SetOrgMemberRole(ctx context.Context, arg SetOrgMemberRoleParams) (int64, error)
 	SetQuotaDefault(ctx context.Context, arg SetQuotaDefaultParams) (int64, error)
 	SetQuotaOverride(ctx context.Context, arg SetQuotaOverrideParams) error
+	// Records the manifest sequence after a successful CAS save.
+	SetRepoManifestSeq(ctx context.Context, arg SetRepoManifestSeqParams) error
+	SetRepoPinned(ctx context.Context, arg SetRepoPinnedParams) error
+	// Sets the size of a repository and returns the previous one, so that the
+	// caller can adjust the storage usage of the owner by the difference.
+	SetRepoSize(ctx context.Context, arg SetRepoSizeParams) (int64, error)
+	// Compare-and-set of the tiering state: zero rows means the state was not
+	// from_state (someone else moved it).
+	SetRepoStorageState(ctx context.Context, arg SetRepoStorageStateParams) (int64, error)
 	SetStorageObjectError(ctx context.Context, arg SetStorageObjectErrorParams) error
 	SetStorageObjectReplicasPending(ctx context.Context, arg SetStorageObjectReplicasPendingParams) error
 	SetTeamRepoPermission(ctx context.Context, arg SetTeamRepoPermissionParams) error
@@ -191,17 +241,26 @@ type Querier interface {
 	TakeOIDCFlow(ctx context.Context, stateHash []byte) (OidcFlow, error)
 	TokenNameTaken(ctx context.Context, arg TokenNameTakenParams) (bool, error)
 	TouchOIDCLink(ctx context.Context, arg TouchOIDCLinkParams) error
+	// Records an access at time "at"; skipped when the last recorded access is
+	// newer than not_before, to keep writes off the read path.
+	TouchRepoAccess(ctx context.Context, arg TouchRepoAccessParams) error
 	// Records activity at most once a minute to keep writes low.
 	TouchSession(ctx context.Context, id uuid.UUID) error
 	// Records use at most once a minute to keep writes low.
 	TouchToken(ctx context.Context, id uuid.UUID) error
+	TransferRepo(ctx context.Context, arg TransferRepoParams) error
+	TryLockRepoSession(ctx context.Context, repoID uuid.UUID) (bool, error)
+	UnlockRepoSession(ctx context.Context, repoID uuid.UUID) (bool, error)
 	UpdateOrg(ctx context.Context, arg UpdateOrgParams) error
+	UpdateRepo(ctx context.Context, arg UpdateRepoParams) error
 	UpdateTeam(ctx context.Context, arg UpdateTeamParams) error
 	UpdateWebAuthnCredentialUse(ctx context.Context, arg UpdateWebAuthnCredentialUseParams) error
 	UpsertOrgMember(ctx context.Context, arg UpsertOrgMemberParams) error
 	UpsertPassword(ctx context.Context, arg UpsertPasswordParams) error
 	// Starts (or restarts) a TOTP enrollment; a confirmed secret is kept.
 	UpsertPendingTOTP(ctx context.Context, arg UpsertPendingTOTPParams) (int64, error)
+	UpsertRepoCollaborator(ctx context.Context, arg UpsertRepoCollaboratorParams) error
+	UpsertRepoRedirect(ctx context.Context, arg UpsertRepoRedirectParams) error
 	UpsertSetting(ctx context.Context, arg UpsertSettingParams) error
 	// Called only after the object is confirmed on the primary. Re-uploading an
 	// existing key with the same content keeps its replica and verification state.

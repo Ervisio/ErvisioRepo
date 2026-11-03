@@ -39,6 +39,7 @@ var (
 	ErrInvalidToken     = errors.New("the invitation is invalid or expired")
 	ErrEmailMismatch    = errors.New("the invitation was sent to an email address of another account")
 	ErrEmailNotVerified = errors.New("verify the invited email address before accepting")
+	ErrHasRepos         = errors.New("delete or transfer the repositories of the organization first")
 )
 
 // ValidationError is an invalid input; its message is safe to show.
@@ -332,6 +333,13 @@ func (s *Service) DeleteOrg(ctx context.Context, who auth.Principal, name string
 		}
 		if !sc.actor.CanDelete() {
 			return ErrForbidden
+		}
+		n, err := q.CountOwnerRepos(ctx, sc.org.ID)
+		if err != nil {
+			return fmt.Errorf("count repos: %w", err)
+		}
+		if n > 0 {
+			return ErrHasRepos
 		}
 		if _, err := q.DeleteOrgNamespace(ctx, sc.org.ID); err != nil {
 			return fmt.Errorf("delete org: %w", err)

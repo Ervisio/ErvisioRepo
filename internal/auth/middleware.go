@@ -179,6 +179,12 @@ func (m *Middleware) Scopes(scopes func(context.Context) ([]string, bool)) func(
 	return m.Authorize(scopes, nil)
 }
 
+// ScopeAnonymous in the session scheme of an operation lets callers without
+// a session through (the principal is then the zero value): the handler
+// decides what they may see, as for public repositories. Signed-in callers
+// and access tokens are checked as usual.
+const ScopeAnonymous = "anonymous"
+
 // Authorize enforces the security requirement of an OpenAPI operation,
 // given the scopes the generated router put in the context for the session
 // scheme and for the access token scheme. An operation with neither is
@@ -207,6 +213,8 @@ func (m *Middleware) Authorize(session, token func(context.Context) ([]string, b
 			case !sessionOK:
 				// Only tokens are accepted here.
 				m.Problem(w, http.StatusUnauthorized, "access token required")
+			case slices.Contains(ss, ScopeAnonymous):
+				next.ServeHTTP(w, r)
 			case slices.Contains(ss, RoleAdmin):
 				admin.ServeHTTP(w, r)
 			default:

@@ -70,6 +70,22 @@ func TestReserveDB(t *testing.T) {
 	if s.Repos != 0 || s.StorageBytes != 20 || s.MaxRepos != 3 {
 		t.Fatalf("after release %+v", s)
 	}
+	// Adjust ignores the limits; Reserve then refuses growth.
+	if err := Adjust(ctx, q, ns, Delta{Bytes: 5000}); err != nil {
+		t.Fatal(err)
+	}
+	if s, _ = Get(ctx, q, ns); s.StorageBytes != 5020 {
+		t.Fatalf("after adjust %+v", s)
+	}
+	if err := Reserve(ctx, q, ns, Delta{Bytes: 1}); !IsExceeded(err) {
+		t.Fatalf("reserve over limit %v", err)
+	}
+	if err := Adjust(ctx, q, ns, Delta{Bytes: -10000}); err != nil {
+		t.Fatal(err)
+	}
+	if s, _ = Get(ctx, q, ns); s.StorageBytes != 0 {
+		t.Fatalf("adjust below zero %+v", s)
+	}
 	// Without an override the default applies.
 	if _, err := q.DeleteQuotaOverride(ctx, ns); err != nil {
 		t.Fatal(err)

@@ -19,6 +19,7 @@ type v1Server struct {
 	cookies  auth.Cookies
 	mfa      *mfa.Service
 	orgs     Orgs
+	repos    Repos
 	audit    audit.Lister
 	creds    *credentials.Service
 	sso      *sso.Manager

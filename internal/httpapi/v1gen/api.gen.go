@@ -173,6 +173,78 @@ func (e RegisterRequestLocale) Valid() bool {
 	}
 }
 
+// Defines values for RepoOwnerKind.
+const (
+	RepoOwnerKindOrg  RepoOwnerKind = "org"
+	RepoOwnerKindUser RepoOwnerKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the RepoOwnerKind enum.
+func (e RepoOwnerKind) Valid() bool {
+	switch e {
+	case RepoOwnerKindOrg:
+		return true
+	case RepoOwnerKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RepoStorageState.
+const (
+	Cold      RepoStorageState = "cold"
+	Degraded  RepoStorageState = "degraded"
+	Evicting  RepoStorageState = "evicting"
+	Hot       RepoStorageState = "hot"
+	Hydrating RepoStorageState = "hydrating"
+)
+
+// Valid indicates whether the value is a known member of the RepoStorageState enum.
+func (e RepoStorageState) Valid() bool {
+	switch e {
+	case Cold:
+		return true
+	case Degraded:
+		return true
+	case Evicting:
+		return true
+	case Hot:
+		return true
+	case Hydrating:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RepoPermissionRequestPermission.
+const (
+	RepoPermissionRequestPermissionAdmin    RepoPermissionRequestPermission = "admin"
+	RepoPermissionRequestPermissionMaintain RepoPermissionRequestPermission = "maintain"
+	RepoPermissionRequestPermissionRead     RepoPermissionRequestPermission = "read"
+	RepoPermissionRequestPermissionTriage   RepoPermissionRequestPermission = "triage"
+	RepoPermissionRequestPermissionWrite    RepoPermissionRequestPermission = "write"
+)
+
+// Valid indicates whether the value is a known member of the RepoPermissionRequestPermission enum.
+func (e RepoPermissionRequestPermission) Valid() bool {
+	switch e {
+	case RepoPermissionRequestPermissionAdmin:
+		return true
+	case RepoPermissionRequestPermissionMaintain:
+		return true
+	case RepoPermissionRequestPermissionRead:
+		return true
+	case RepoPermissionRequestPermissionTriage:
+		return true
+	case RepoPermissionRequestPermissionWrite:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for StorageCheckStepName.
 const (
 	Delete StorageCheckStepName = "delete"
@@ -317,6 +389,27 @@ func (e UserRole) Valid() bool {
 	case UserRoleRestricted:
 		return true
 	case UserRoleUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Visibility.
+const (
+	Internal Visibility = "internal"
+	Private  Visibility = "private"
+	Public   Visibility = "public"
+)
+
+// Valid indicates whether the value is a known member of the Visibility enum.
+func (e Visibility) Valid() bool {
+	switch e {
+	case Internal:
+		return true
+	case Private:
+		return true
+	case Public:
 		return true
 	default:
 		return false
@@ -655,6 +748,72 @@ type RegisterRequest struct {
 // RegisterRequestLocale defines model for RegisterRequest.Locale.
 type RegisterRequestLocale string
 
+// Repo defines model for Repo.
+type Repo struct {
+	CreatedAt     time.Time `json:"createdAt"`
+	DefaultBranch string    `json:"defaultBranch"`
+	Description   string    `json:"description"`
+
+	// FullName owner/name
+	FullName   string             `json:"fullName"`
+	Id         openapi_types.UUID `json:"id"`
+	Name       string             `json:"name"`
+	Owner      string             `json:"owner"`
+	OwnerKind  RepoOwnerKind      `json:"ownerKind"`
+	Permission Permission         `json:"permission"`
+	SizeBytes  int64              `json:"sizeBytes"`
+
+	// StorageState Where the git data is; cold repositories are restored on first access.
+	StorageState RepoStorageState `json:"storageState"`
+	UpdatedAt    time.Time        `json:"updatedAt"`
+	Visibility   Visibility       `json:"visibility"`
+}
+
+// RepoOwnerKind defines model for Repo.OwnerKind.
+type RepoOwnerKind string
+
+// RepoStorageState Where the git data is; cold repositories are restored on first access.
+type RepoStorageState string
+
+// RepoCollaborator defines model for RepoCollaborator.
+type RepoCollaborator struct {
+	DisplayName string     `json:"displayName"`
+	Permission  Permission `json:"permission"`
+	Since       time.Time  `json:"since"`
+	Username    string     `json:"username"`
+}
+
+// RepoCreate defines model for RepoCreate.
+type RepoCreate struct {
+	DefaultBranch *string     `json:"defaultBranch,omitempty"`
+	Description   *string     `json:"description,omitempty"`
+	Name          string      `json:"name"`
+	Visibility    *Visibility `json:"visibility,omitempty"`
+}
+
+// RepoPermissionRequest defines model for RepoPermissionRequest.
+type RepoPermissionRequest struct {
+	Permission RepoPermissionRequestPermission `json:"permission"`
+}
+
+// RepoPermissionRequestPermission defines model for RepoPermissionRequest.Permission.
+type RepoPermissionRequestPermission string
+
+// RepoTransfer defines model for RepoTransfer.
+type RepoTransfer struct {
+	// NewName Defaults to the current name
+	NewName  *string `json:"newName,omitempty"`
+	NewOwner string  `json:"newOwner"`
+}
+
+// RepoUpdate defines model for RepoUpdate.
+type RepoUpdate struct {
+	DefaultBranch *string     `json:"defaultBranch,omitempty"`
+	Description   *string     `json:"description,omitempty"`
+	Name          *string     `json:"name,omitempty"`
+	Visibility    *Visibility `json:"visibility,omitempty"`
+}
+
 // ResetPasswordRequest defines model for ResetPasswordRequest.
 type ResetPasswordRequest struct {
 	Password string `json:"password"`
@@ -871,6 +1030,9 @@ type UserLocale string
 // UserRole defines model for User.Role.
 type UserRole string
 
+// Visibility defines model for Visibility.
+type Visibility string
+
 // WebAuthnCredentialRequest defines model for WebAuthnCredentialRequest.
 type WebAuthnCredentialRequest struct {
 	// Credential PublicKeyCredential JSON (toJSON), binary fields in base64url
@@ -898,11 +1060,26 @@ type CredentialID = openapi_types.UUID
 // OrgName defines model for OrgName.
 type OrgName = string
 
+// PageLimit defines model for PageLimit.
+type PageLimit = int
+
+// PageOffset defines model for PageOffset.
+type PageOffset = int
+
+// RepoName defines model for RepoName.
+type RepoName = string
+
+// RepoOwner defines model for RepoOwner.
+type RepoOwner = string
+
 // TeamName defines model for TeamName.
 type TeamName = string
 
 // Username defines model for Username.
 type Username = string
+
+// Moved defines model for Moved.
+type Moved = Problem
 
 // TooManyRequests defines model for TooManyRequests.
 type TooManyRequests = Problem
@@ -937,6 +1114,24 @@ type ListOrgAuditParams struct {
 
 	// Action Exact action, or a prefix ending with "." (e.g. org.)
 	Action *AuditAction `form:"action,omitempty" json:"action,omitempty"`
+}
+
+// ListOrgReposParams defines parameters for ListOrgRepos.
+type ListOrgReposParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListMyReposParams defines parameters for ListMyRepos.
+type ListMyReposParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListUserReposParams defines parameters for ListUserRepos.
+type ListUserReposParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // CreateInviteJSONRequestBody defines body for CreateInvite for application/json ContentType.
@@ -990,6 +1185,9 @@ type CreateOrgInviteJSONRequestBody = OrgInviteRequest
 // SetOrgMemberRoleJSONRequestBody defines body for SetOrgMemberRole for application/json ContentType.
 type SetOrgMemberRoleJSONRequestBody = OrgRoleRequest
 
+// CreateOrgRepoJSONRequestBody defines body for CreateOrgRepo for application/json ContentType.
+type CreateOrgRepoJSONRequestBody = RepoCreate
+
 // CreateTeamJSONRequestBody defines body for CreateTeam for application/json ContentType.
 type CreateTeamJSONRequestBody = TeamCreate
 
@@ -999,6 +1197,15 @@ type UpdateTeamJSONRequestBody = TeamUpdate
 // SetTeamMemberJSONRequestBody defines body for SetTeamMember for application/json ContentType.
 type SetTeamMemberJSONRequestBody = TeamRoleRequest
 
+// UpdateRepoJSONRequestBody defines body for UpdateRepo for application/json ContentType.
+type UpdateRepoJSONRequestBody = RepoUpdate
+
+// SetRepoCollaboratorJSONRequestBody defines body for SetRepoCollaborator for application/json ContentType.
+type SetRepoCollaboratorJSONRequestBody = RepoPermissionRequest
+
+// TransferRepoJSONRequestBody defines body for TransferRepo for application/json ContentType.
+type TransferRepoJSONRequestBody = RepoTransfer
+
 // AddGpgKeyJSONRequestBody defines body for AddGpgKey for application/json ContentType.
 type AddGpgKeyJSONRequestBody = GpgKeyCreate
 
@@ -1007,6 +1214,9 @@ type AddSshKeyJSONRequestBody = SshKeyCreate
 
 // BeginOidcLinkJSONRequestBody defines body for BeginOidcLink for application/json ContentType.
 type BeginOidcLinkJSONRequestBody = OidcLinkRequest
+
+// CreateUserRepoJSONRequestBody defines body for CreateUserRepo for application/json ContentType.
+type CreateUserRepoJSONRequestBody = RepoCreate
 
 // RegisterPasskeyJSONRequestBody defines body for RegisterPasskey for application/json ContentType.
 type RegisterPasskeyJSONRequestBody = PasskeyRegisterRequest
@@ -1142,6 +1352,12 @@ type ServerInterface interface {
 	// GetOrgQuota Limits and current usage of an organization
 	// (GET /orgs/{org}/quota)
 	GetOrgQuota(w http.ResponseWriter, r *http.Request, org OrgName)
+	// ListOrgRepos Repositories of an organization the caller can see
+	// (GET /orgs/{org}/repos)
+	ListOrgRepos(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgReposParams)
+	// CreateOrgRepo Create an empty repository in an organization
+	// (POST /orgs/{org}/repos)
+	CreateOrgRepo(w http.ResponseWriter, r *http.Request, org OrgName)
 	// ListTeams Teams of an organization
 	// (GET /orgs/{org}/teams)
 	ListTeams(w http.ResponseWriter, r *http.Request, org OrgName)
@@ -1166,6 +1382,27 @@ type ServerInterface interface {
 	// SetTeamMember Add a member of the organization to a team, or change its team role
 	// (PUT /orgs/{org}/teams/{team}/members/{username})
 	SetTeamMember(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName, username Username)
+	// DeleteRepo Delete a repository
+	// (DELETE /repos/{owner}/{name})
+	DeleteRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// GetRepo A repository
+	// (GET /repos/{owner}/{name})
+	GetRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// UpdateRepo Change the settings of a repository
+	// (PATCH /repos/{owner}/{name})
+	UpdateRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// ListRepoCollaborators Users granted a permission on the repository directly
+	// (GET /repos/{owner}/{name}/collaborators)
+	ListRepoCollaborators(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// RemoveRepoCollaborator Revoke the direct grant of a user
+	// (DELETE /repos/{owner}/{name}/collaborators/{username})
+	RemoveRepoCollaborator(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, username Username)
+	// SetRepoCollaborator Grant a permission to a user
+	// (PUT /repos/{owner}/{name}/collaborators/{username})
+	SetRepoCollaborator(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, username Username)
+	// TransferRepo Move a repository to another user or organization
+	// (POST /repos/{owner}/{name}/transfer)
+	TransferRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
 	// GetCurrentUser The signed-in user
 	// (GET /user)
 	GetCurrentUser(w http.ResponseWriter, r *http.Request)
@@ -1196,6 +1433,12 @@ type ServerInterface interface {
 	// BeginOidcLink Start linking an external identity
 	// (POST /user/oidc/{provider}/link)
 	BeginOidcLink(w http.ResponseWriter, r *http.Request, provider string)
+	// ListMyRepos Repositories the caller reaches by ownership, membership or grant
+	// (GET /user/repos)
+	ListMyRepos(w http.ResponseWriter, r *http.Request, params ListMyReposParams)
+	// CreateUserRepo Create an empty repository owned by the caller
+	// (POST /user/repos)
+	CreateUserRepo(w http.ResponseWriter, r *http.Request)
 	// GetSecurity Second factors of the signed-in user
 	// (GET /user/security)
 	GetSecurity(w http.ResponseWriter, r *http.Request)
@@ -1229,6 +1472,9 @@ type ServerInterface interface {
 	// RevokeAccessToken Revoke a personal access token
 	// (DELETE /user/tokens/{id})
 	RevokeAccessToken(w http.ResponseWriter, r *http.Request, id CredentialID)
+	// ListUserRepos Repositories of a user the caller can see
+	// (GET /users/{username}/repos)
+	ListUserRepos(w http.ResponseWriter, r *http.Request, username Username, params ListUserReposParams)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -1451,6 +1697,18 @@ func (_ Unimplemented) GetOrgQuota(w http.ResponseWriter, r *http.Request, org O
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListOrgRepos Repositories of an organization the caller can see
+// (GET /orgs/{org}/repos)
+func (_ Unimplemented) ListOrgRepos(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgReposParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateOrgRepo Create an empty repository in an organization
+// (POST /orgs/{org}/repos)
+func (_ Unimplemented) CreateOrgRepo(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListTeams Teams of an organization
 // (GET /orgs/{org}/teams)
 func (_ Unimplemented) ListTeams(w http.ResponseWriter, r *http.Request, org OrgName) {
@@ -1496,6 +1754,48 @@ func (_ Unimplemented) RemoveTeamMember(w http.ResponseWriter, r *http.Request, 
 // SetTeamMember Add a member of the organization to a team, or change its team role
 // (PUT /orgs/{org}/teams/{team}/members/{username})
 func (_ Unimplemented) SetTeamMember(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName, username Username) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteRepo Delete a repository
+// (DELETE /repos/{owner}/{name})
+func (_ Unimplemented) DeleteRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetRepo A repository
+// (GET /repos/{owner}/{name})
+func (_ Unimplemented) GetRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateRepo Change the settings of a repository
+// (PATCH /repos/{owner}/{name})
+func (_ Unimplemented) UpdateRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListRepoCollaborators Users granted a permission on the repository directly
+// (GET /repos/{owner}/{name}/collaborators)
+func (_ Unimplemented) ListRepoCollaborators(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RemoveRepoCollaborator Revoke the direct grant of a user
+// (DELETE /repos/{owner}/{name}/collaborators/{username})
+func (_ Unimplemented) RemoveRepoCollaborator(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, username Username) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetRepoCollaborator Grant a permission to a user
+// (PUT /repos/{owner}/{name}/collaborators/{username})
+func (_ Unimplemented) SetRepoCollaborator(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, username Username) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// TransferRepo Move a repository to another user or organization
+// (POST /repos/{owner}/{name}/transfer)
+func (_ Unimplemented) TransferRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1556,6 +1856,18 @@ func (_ Unimplemented) UnlinkOidc(w http.ResponseWriter, r *http.Request, id Cre
 // BeginOidcLink Start linking an external identity
 // (POST /user/oidc/{provider}/link)
 func (_ Unimplemented) BeginOidcLink(w http.ResponseWriter, r *http.Request, provider string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListMyRepos Repositories the caller reaches by ownership, membership or grant
+// (GET /user/repos)
+func (_ Unimplemented) ListMyRepos(w http.ResponseWriter, r *http.Request, params ListMyReposParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateUserRepo Create an empty repository owned by the caller
+// (POST /user/repos)
+func (_ Unimplemented) CreateUserRepo(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1622,6 +1934,12 @@ func (_ Unimplemented) CreateAccessToken(w http.ResponseWriter, r *http.Request)
 // RevokeAccessToken Revoke a personal access token
 // (DELETE /user/tokens/{id})
 func (_ Unimplemented) RevokeAccessToken(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListUserRepos Repositories of a user the caller can see
+// (GET /users/{username}/repos)
+func (_ Unimplemented) ListUserRepos(w http.ResponseWriter, r *http.Request, username Username, params ListUserReposParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2530,6 +2848,103 @@ func (siw *ServerInterfaceWrapper) GetOrgQuota(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// ListOrgRepos operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgRepos(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListOrgReposParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgRepos(w, r, org, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateOrgRepo operation middleware
+func (siw *ServerInterfaceWrapper) CreateOrgRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateOrgRepo(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListTeams operation middleware
 func (siw *ServerInterfaceWrapper) ListTeams(w http.ResponseWriter, r *http.Request) {
 
@@ -2858,6 +3273,325 @@ func (siw *ServerInterfaceWrapper) SetTeamMember(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteRepo operation middleware
+func (siw *ServerInterfaceWrapper) DeleteRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteRepo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRepo operation middleware
+func (siw *ServerInterfaceWrapper) GetRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRepo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateRepo operation middleware
+func (siw *ServerInterfaceWrapper) UpdateRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateRepo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListRepoCollaborators operation middleware
+func (siw *ServerInterfaceWrapper) ListRepoCollaborators(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRepoCollaborators(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveRepoCollaborator operation middleware
+func (siw *ServerInterfaceWrapper) RemoveRepoCollaborator(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveRepoCollaborator(w, r, owner, name, username)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetRepoCollaborator operation middleware
+func (siw *ServerInterfaceWrapper) SetRepoCollaborator(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetRepoCollaborator(w, r, owner, name, username)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TransferRepo operation middleware
+func (siw *ServerInterfaceWrapper) TransferRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TransferRepo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetCurrentUser operation middleware
 func (siw *ServerInterfaceWrapper) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 
@@ -3120,6 +3854,82 @@ func (siw *ServerInterfaceWrapper) BeginOidcLink(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// ListMyRepos operation middleware
+func (siw *ServerInterfaceWrapper) ListMyRepos(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListMyReposParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMyRepos(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateUserRepo operation middleware
+func (siw *ServerInterfaceWrapper) CreateUserRepo(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateUserRepo(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetSecurity operation middleware
 func (siw *ServerInterfaceWrapper) GetSecurity(w http.ResponseWriter, r *http.Request) {
 
@@ -3355,6 +4165,69 @@ func (siw *ServerInterfaceWrapper) RevokeAccessToken(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RevokeAccessToken(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListUserRepos operation middleware
+func (siw *ServerInterfaceWrapper) ListUserRepos(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListUserReposParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUserRepos(w, r, username, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3672,8 +4545,53 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/admin/audit", wrapper.ListAdminAudit)
 	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/repos", wrapper.ListMyRepos)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/repos", wrapper.CreateUserRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/users/{username}/repos", wrapper.ListUserRepos)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/repos", wrapper.ListOrgRepos)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/orgs/{org}/repos", wrapper.CreateOrgRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}", wrapper.DeleteRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}", wrapper.GetRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/repos/{owner}/{name}", wrapper.UpdateRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/transfer", wrapper.TransferRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/collaborators", wrapper.ListRepoCollaborators)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/collaborators/{username}", wrapper.RemoveRepoCollaborator)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/collaborators/{username}", wrapper.SetRepoCollaborator)
+	})
 
 	return r
+}
+
+type MovedResponseHeaders struct {
+	Location string
+}
+type MovedApplicationProblemPlusJSONResponse struct {
+	Body Problem
+
+	Headers MovedResponseHeaders
 }
 
 type ProblemApplicationProblemPlusJSONResponse Problem
@@ -6198,6 +7116,160 @@ func (response GetOrgQuotadefaultApplicationProblemPlusJSONResponse) VisitGetOrg
 	return err
 }
 
+type ListOrgReposRequestObject struct {
+	Org    OrgName `json:"org"`
+	Params ListOrgReposParams
+}
+
+type ListOrgReposResponseObject interface {
+	VisitListOrgReposResponse(w http.ResponseWriter) error
+}
+
+type ListOrgRepos200JSONResponse []Repo
+
+func (response ListOrgRepos200JSONResponse) VisitListOrgReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgRepos404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgRepos404ApplicationProblemPlusJSONResponse) VisitListOrgReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgReposdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgReposdefaultApplicationProblemPlusJSONResponse) VisitListOrgReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgRepoRequestObject struct {
+	Org  OrgName `json:"org"`
+	Body *CreateOrgRepoJSONRequestBody
+}
+
+type CreateOrgRepoResponseObject interface {
+	VisitCreateOrgRepoResponse(w http.ResponseWriter) error
+}
+
+type CreateOrgRepo201JSONResponse Repo
+
+func (response CreateOrgRepo201JSONResponse) VisitCreateOrgRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgRepo400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateOrgRepo400ApplicationProblemPlusJSONResponse) VisitCreateOrgRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgRepo403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgRepo403ApplicationProblemPlusJSONResponse) VisitCreateOrgRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgRepo404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgRepo404ApplicationProblemPlusJSONResponse) VisitCreateOrgRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgRepo409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgRepo409ApplicationProblemPlusJSONResponse) VisitCreateOrgRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateOrgRepodefaultApplicationProblemPlusJSONResponse) VisitCreateOrgRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListTeamsRequestObject struct {
 	Org OrgName `json:"org"`
 }
@@ -6774,6 +7846,644 @@ type SetTeamMemberdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response SetTeamMemberdefaultApplicationProblemPlusJSONResponse) VisitSetTeamMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type DeleteRepoResponseObject interface {
+	VisitDeleteRepoResponse(w http.ResponseWriter) error
+}
+
+type DeleteRepo204Response struct {
+}
+
+func (response DeleteRepo204Response) VisitDeleteRepoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteRepo307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepo307ApplicationProblemPlusJSONResponse) VisitDeleteRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepo403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepo403ApplicationProblemPlusJSONResponse) VisitDeleteRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepo404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteRepo404ApplicationProblemPlusJSONResponse) VisitDeleteRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteRepodefaultApplicationProblemPlusJSONResponse) VisitDeleteRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type GetRepoResponseObject interface {
+	VisitGetRepoResponse(w http.ResponseWriter) error
+}
+
+type GetRepo200JSONResponse Repo
+
+func (response GetRepo200JSONResponse) VisitGetRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepo301ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetRepo301ApplicationProblemPlusJSONResponse) VisitGetRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(301)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepo404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetRepo404ApplicationProblemPlusJSONResponse) VisitGetRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetRepodefaultApplicationProblemPlusJSONResponse) VisitGetRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *UpdateRepoJSONRequestBody
+}
+
+type UpdateRepoResponseObject interface {
+	VisitUpdateRepoResponse(w http.ResponseWriter) error
+}
+
+type UpdateRepo200JSONResponse Repo
+
+func (response UpdateRepo200JSONResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepo307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateRepo307ApplicationProblemPlusJSONResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepo400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateRepo400ApplicationProblemPlusJSONResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepo403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateRepo403ApplicationProblemPlusJSONResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepo404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateRepo404ApplicationProblemPlusJSONResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepo409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateRepo409ApplicationProblemPlusJSONResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateRepodefaultApplicationProblemPlusJSONResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoCollaboratorsRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type ListRepoCollaboratorsResponseObject interface {
+	VisitListRepoCollaboratorsResponse(w http.ResponseWriter) error
+}
+
+type ListRepoCollaborators200JSONResponse []RepoCollaborator
+
+func (response ListRepoCollaborators200JSONResponse) VisitListRepoCollaboratorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoCollaborators307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoCollaborators307ApplicationProblemPlusJSONResponse) VisitListRepoCollaboratorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoCollaborators404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoCollaborators404ApplicationProblemPlusJSONResponse) VisitListRepoCollaboratorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoCollaboratorsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListRepoCollaboratorsdefaultApplicationProblemPlusJSONResponse) VisitListRepoCollaboratorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveRepoCollaboratorRequestObject struct {
+	Owner    RepoOwner `json:"owner"`
+	Name     RepoName  `json:"name"`
+	Username Username  `json:"username"`
+}
+
+type RemoveRepoCollaboratorResponseObject interface {
+	VisitRemoveRepoCollaboratorResponse(w http.ResponseWriter) error
+}
+
+type RemoveRepoCollaborator204Response struct {
+}
+
+func (response RemoveRepoCollaborator204Response) VisitRemoveRepoCollaboratorResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RemoveRepoCollaborator307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveRepoCollaborator307ApplicationProblemPlusJSONResponse) VisitRemoveRepoCollaboratorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveRepoCollaborator403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveRepoCollaborator403ApplicationProblemPlusJSONResponse) VisitRemoveRepoCollaboratorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveRepoCollaborator404ApplicationProblemPlusJSONResponse Problem
+
+func (response RemoveRepoCollaborator404ApplicationProblemPlusJSONResponse) VisitRemoveRepoCollaboratorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveRepoCollaboratordefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RemoveRepoCollaboratordefaultApplicationProblemPlusJSONResponse) VisitRemoveRepoCollaboratorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetRepoCollaboratorRequestObject struct {
+	Owner    RepoOwner `json:"owner"`
+	Name     RepoName  `json:"name"`
+	Username Username  `json:"username"`
+	Body     *SetRepoCollaboratorJSONRequestBody
+}
+
+type SetRepoCollaboratorResponseObject interface {
+	VisitSetRepoCollaboratorResponse(w http.ResponseWriter) error
+}
+
+type SetRepoCollaborator204Response struct {
+}
+
+func (response SetRepoCollaborator204Response) VisitSetRepoCollaboratorResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SetRepoCollaborator307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response SetRepoCollaborator307ApplicationProblemPlusJSONResponse) VisitSetRepoCollaboratorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetRepoCollaborator400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetRepoCollaborator400ApplicationProblemPlusJSONResponse) VisitSetRepoCollaboratorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetRepoCollaborator403ApplicationProblemPlusJSONResponse Problem
+
+func (response SetRepoCollaborator403ApplicationProblemPlusJSONResponse) VisitSetRepoCollaboratorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetRepoCollaborator404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetRepoCollaborator404ApplicationProblemPlusJSONResponse) VisitSetRepoCollaboratorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetRepoCollaboratordefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetRepoCollaboratordefaultApplicationProblemPlusJSONResponse) VisitSetRepoCollaboratorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferRepoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *TransferRepoJSONRequestBody
+}
+
+type TransferRepoResponseObject interface {
+	VisitTransferRepoResponse(w http.ResponseWriter) error
+}
+
+type TransferRepo200JSONResponse Repo
+
+func (response TransferRepo200JSONResponse) VisitTransferRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferRepo307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response TransferRepo307ApplicationProblemPlusJSONResponse) VisitTransferRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferRepo400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response TransferRepo400ApplicationProblemPlusJSONResponse) VisitTransferRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferRepo403ApplicationProblemPlusJSONResponse Problem
+
+func (response TransferRepo403ApplicationProblemPlusJSONResponse) VisitTransferRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferRepo404ApplicationProblemPlusJSONResponse Problem
+
+func (response TransferRepo404ApplicationProblemPlusJSONResponse) VisitTransferRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferRepo409ApplicationProblemPlusJSONResponse Problem
+
+func (response TransferRepo409ApplicationProblemPlusJSONResponse) VisitTransferRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response TransferRepodefaultApplicationProblemPlusJSONResponse) VisitTransferRepoResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -7443,6 +9153,128 @@ type BeginOidcLinkdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response BeginOidcLinkdefaultApplicationProblemPlusJSONResponse) VisitBeginOidcLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMyReposRequestObject struct {
+	Params ListMyReposParams
+}
+
+type ListMyReposResponseObject interface {
+	VisitListMyReposResponse(w http.ResponseWriter) error
+}
+
+type ListMyRepos200JSONResponse []Repo
+
+func (response ListMyRepos200JSONResponse) VisitListMyReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMyReposdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListMyReposdefaultApplicationProblemPlusJSONResponse) VisitListMyReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateUserRepoRequestObject struct {
+	Body *CreateUserRepoJSONRequestBody
+}
+
+type CreateUserRepoResponseObject interface {
+	VisitCreateUserRepoResponse(w http.ResponseWriter) error
+}
+
+type CreateUserRepo201JSONResponse Repo
+
+func (response CreateUserRepo201JSONResponse) VisitCreateUserRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateUserRepo400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateUserRepo400ApplicationProblemPlusJSONResponse) VisitCreateUserRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateUserRepo403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateUserRepo403ApplicationProblemPlusJSONResponse) VisitCreateUserRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateUserRepo409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateUserRepo409ApplicationProblemPlusJSONResponse) VisitCreateUserRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateUserRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateUserRepodefaultApplicationProblemPlusJSONResponse) VisitCreateUserRepoResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -8478,6 +10310,62 @@ func (response RevokeAccessTokendefaultApplicationProblemPlusJSONResponse) Visit
 	return err
 }
 
+type ListUserReposRequestObject struct {
+	Username Username `json:"username"`
+	Params   ListUserReposParams
+}
+
+type ListUserReposResponseObject interface {
+	VisitListUserReposResponse(w http.ResponseWriter) error
+}
+
+type ListUserRepos200JSONResponse []Repo
+
+func (response ListUserRepos200JSONResponse) VisitListUserReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserRepos404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListUserRepos404ApplicationProblemPlusJSONResponse) VisitListUserReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserReposdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListUserReposdefaultApplicationProblemPlusJSONResponse) VisitListUserReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// ListAdminAudit Instance audit log, newest first
@@ -8588,6 +10476,12 @@ type StrictServerInterface interface {
 	// GetOrgQuota Limits and current usage of an organization
 	// (GET /orgs/{org}/quota)
 	GetOrgQuota(ctx context.Context, request GetOrgQuotaRequestObject) (GetOrgQuotaResponseObject, error)
+	// ListOrgRepos Repositories of an organization the caller can see
+	// (GET /orgs/{org}/repos)
+	ListOrgRepos(ctx context.Context, request ListOrgReposRequestObject) (ListOrgReposResponseObject, error)
+	// CreateOrgRepo Create an empty repository in an organization
+	// (POST /orgs/{org}/repos)
+	CreateOrgRepo(ctx context.Context, request CreateOrgRepoRequestObject) (CreateOrgRepoResponseObject, error)
 	// ListTeams Teams of an organization
 	// (GET /orgs/{org}/teams)
 	ListTeams(ctx context.Context, request ListTeamsRequestObject) (ListTeamsResponseObject, error)
@@ -8612,6 +10506,27 @@ type StrictServerInterface interface {
 	// SetTeamMember Add a member of the organization to a team, or change its team role
 	// (PUT /orgs/{org}/teams/{team}/members/{username})
 	SetTeamMember(ctx context.Context, request SetTeamMemberRequestObject) (SetTeamMemberResponseObject, error)
+	// DeleteRepo Delete a repository
+	// (DELETE /repos/{owner}/{name})
+	DeleteRepo(ctx context.Context, request DeleteRepoRequestObject) (DeleteRepoResponseObject, error)
+	// GetRepo A repository
+	// (GET /repos/{owner}/{name})
+	GetRepo(ctx context.Context, request GetRepoRequestObject) (GetRepoResponseObject, error)
+	// UpdateRepo Change the settings of a repository
+	// (PATCH /repos/{owner}/{name})
+	UpdateRepo(ctx context.Context, request UpdateRepoRequestObject) (UpdateRepoResponseObject, error)
+	// ListRepoCollaborators Users granted a permission on the repository directly
+	// (GET /repos/{owner}/{name}/collaborators)
+	ListRepoCollaborators(ctx context.Context, request ListRepoCollaboratorsRequestObject) (ListRepoCollaboratorsResponseObject, error)
+	// RemoveRepoCollaborator Revoke the direct grant of a user
+	// (DELETE /repos/{owner}/{name}/collaborators/{username})
+	RemoveRepoCollaborator(ctx context.Context, request RemoveRepoCollaboratorRequestObject) (RemoveRepoCollaboratorResponseObject, error)
+	// SetRepoCollaborator Grant a permission to a user
+	// (PUT /repos/{owner}/{name}/collaborators/{username})
+	SetRepoCollaborator(ctx context.Context, request SetRepoCollaboratorRequestObject) (SetRepoCollaboratorResponseObject, error)
+	// TransferRepo Move a repository to another user or organization
+	// (POST /repos/{owner}/{name}/transfer)
+	TransferRepo(ctx context.Context, request TransferRepoRequestObject) (TransferRepoResponseObject, error)
 	// GetCurrentUser The signed-in user
 	// (GET /user)
 	GetCurrentUser(ctx context.Context, request GetCurrentUserRequestObject) (GetCurrentUserResponseObject, error)
@@ -8642,6 +10557,12 @@ type StrictServerInterface interface {
 	// BeginOidcLink Start linking an external identity
 	// (POST /user/oidc/{provider}/link)
 	BeginOidcLink(ctx context.Context, request BeginOidcLinkRequestObject) (BeginOidcLinkResponseObject, error)
+	// ListMyRepos Repositories the caller reaches by ownership, membership or grant
+	// (GET /user/repos)
+	ListMyRepos(ctx context.Context, request ListMyReposRequestObject) (ListMyReposResponseObject, error)
+	// CreateUserRepo Create an empty repository owned by the caller
+	// (POST /user/repos)
+	CreateUserRepo(ctx context.Context, request CreateUserRepoRequestObject) (CreateUserRepoResponseObject, error)
 	// GetSecurity Second factors of the signed-in user
 	// (GET /user/security)
 	GetSecurity(ctx context.Context, request GetSecurityRequestObject) (GetSecurityResponseObject, error)
@@ -8675,6 +10596,9 @@ type StrictServerInterface interface {
 	// RevokeAccessToken Revoke a personal access token
 	// (DELETE /user/tokens/{id})
 	RevokeAccessToken(ctx context.Context, request RevokeAccessTokenRequestObject) (RevokeAccessTokenResponseObject, error)
+	// ListUserRepos Repositories of a user the caller can see
+	// (GET /users/{username}/repos)
+	ListUserRepos(ctx context.Context, request ListUserReposRequestObject) (ListUserReposResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -9729,6 +11653,66 @@ func (sh *strictHandler) GetOrgQuota(w http.ResponseWriter, r *http.Request, org
 	}
 }
 
+// ListOrgRepos operation middleware
+func (sh *strictHandler) ListOrgRepos(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgReposParams) {
+	var request ListOrgReposRequestObject
+
+	request.Org = org
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgRepos(ctx, request.(ListOrgReposRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgRepos")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgReposResponseObject); ok {
+		if err := validResponse.VisitListOrgReposResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateOrgRepo operation middleware
+func (sh *strictHandler) CreateOrgRepo(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request CreateOrgRepoRequestObject
+
+	request.Org = org
+
+	var body CreateOrgRepoJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateOrgRepo(ctx, request.(CreateOrgRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateOrgRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateOrgRepoResponseObject); ok {
+		if err := validResponse.VisitCreateOrgRepoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListTeams operation middleware
 func (sh *strictHandler) ListTeams(w http.ResponseWriter, r *http.Request, org OrgName) {
 	var request ListTeamsRequestObject
@@ -9959,6 +11943,218 @@ func (sh *strictHandler) SetTeamMember(w http.ResponseWriter, r *http.Request, o
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SetTeamMemberResponseObject); ok {
 		if err := validResponse.VisitSetTeamMemberResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteRepo operation middleware
+func (sh *strictHandler) DeleteRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request DeleteRepoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteRepo(ctx, request.(DeleteRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteRepoResponseObject); ok {
+		if err := validResponse.VisitDeleteRepoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetRepo operation middleware
+func (sh *strictHandler) GetRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request GetRepoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetRepo(ctx, request.(GetRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetRepoResponseObject); ok {
+		if err := validResponse.VisitGetRepoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateRepo operation middleware
+func (sh *strictHandler) UpdateRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request UpdateRepoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body UpdateRepoJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateRepo(ctx, request.(UpdateRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateRepoResponseObject); ok {
+		if err := validResponse.VisitUpdateRepoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListRepoCollaborators operation middleware
+func (sh *strictHandler) ListRepoCollaborators(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request ListRepoCollaboratorsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListRepoCollaborators(ctx, request.(ListRepoCollaboratorsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListRepoCollaborators")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListRepoCollaboratorsResponseObject); ok {
+		if err := validResponse.VisitListRepoCollaboratorsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveRepoCollaborator operation middleware
+func (sh *strictHandler) RemoveRepoCollaborator(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, username Username) {
+	var request RemoveRepoCollaboratorRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Username = username
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveRepoCollaborator(ctx, request.(RemoveRepoCollaboratorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveRepoCollaborator")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveRepoCollaboratorResponseObject); ok {
+		if err := validResponse.VisitRemoveRepoCollaboratorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetRepoCollaborator operation middleware
+func (sh *strictHandler) SetRepoCollaborator(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, username Username) {
+	var request SetRepoCollaboratorRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Username = username
+
+	var body SetRepoCollaboratorJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetRepoCollaborator(ctx, request.(SetRepoCollaboratorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetRepoCollaborator")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetRepoCollaboratorResponseObject); ok {
+		if err := validResponse.VisitSetRepoCollaboratorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TransferRepo operation middleware
+func (sh *strictHandler) TransferRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request TransferRepoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body TransferRepoJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TransferRepo(ctx, request.(TransferRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TransferRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TransferRepoResponseObject); ok {
+		if err := validResponse.VisitTransferRepoResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -10231,6 +12427,63 @@ func (sh *strictHandler) BeginOidcLink(w http.ResponseWriter, r *http.Request, p
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(BeginOidcLinkResponseObject); ok {
 		if err := validResponse.VisitBeginOidcLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListMyRepos operation middleware
+func (sh *strictHandler) ListMyRepos(w http.ResponseWriter, r *http.Request, params ListMyReposParams) {
+	var request ListMyReposRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListMyRepos(ctx, request.(ListMyReposRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListMyRepos")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListMyReposResponseObject); ok {
+		if err := validResponse.VisitListMyReposResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateUserRepo operation middleware
+func (sh *strictHandler) CreateUserRepo(w http.ResponseWriter, r *http.Request) {
+	var request CreateUserRepoRequestObject
+
+	var body CreateUserRepoJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateUserRepo(ctx, request.(CreateUserRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateUserRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateUserRepoResponseObject); ok {
+		if err := validResponse.VisitCreateUserRepoResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -10555,6 +12808,33 @@ func (sh *strictHandler) RevokeAccessToken(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RevokeAccessTokenResponseObject); ok {
 		if err := validResponse.VisitRevokeAccessTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListUserRepos operation middleware
+func (sh *strictHandler) ListUserRepos(w http.ResponseWriter, r *http.Request, username Username, params ListUserReposParams) {
+	var request ListUserReposRequestObject
+
+	request.Username = username
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListUserRepos(ctx, request.(ListUserReposRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListUserRepos")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListUserReposResponseObject); ok {
+		if err := validResponse.VisitListUserReposResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
