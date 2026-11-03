@@ -1,0 +1,58 @@
+# Development services. Not for production: see deploy/docker/compose.yaml.
+name: ervisio-repo-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ervisio_repo
+      POSTGRES_PASSWORD: ervisio_repo
+      POSTGRES_DB: ervisio_repo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ervisio_repo -d ervisio_repo"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    # The official minio/minio and quay.io/minio images are no longer published.
+    # bitnamilegacy/minio is frozen but pullable; it creates the bucket itself.
+    image: bitnamilegacy/minio:2025.7.23-debian-12-r3
+    environment:
+      MINIO_ROOT_USER: ervisio_repo
+      MINIO_ROOT_PASSWORD: ervisio_repo_secret
+      MINIO_DEFAULT_BUCKETS: ervisio-repo
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/bitnami/minio/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/live"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  sftp:
+    image: atmoz/sftp:alpine
+    # user:password:uid:gid:folder
+    command: dev:dev:1001:100:upload
+    ports:
+      - "2223:22"
+    volumes:
+      - sftp-data:/home/dev/upload
+
+  mailpit:
+    image: axllent/mailpit:v1.24.1
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  postgres-data:
+  minio-data:
+  sftp-data:
