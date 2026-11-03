@@ -19,17 +19,37 @@ export type PullReviewComment = S["PullReviewComment"];
 export type PullReviewCommentCreate = S["PullReviewCommentCreate"];
 export type PullCommitPage = S["PullCommitPage"];
 export type MergeMethod = NonNullable<PullMergeRequest["method"]>;
+export type PullUpdateBranchRequest = S["PullUpdateBranchRequest"];
+export type LinkedPull = S["LinkedPull"];
+export type CombinedStatus = S["CombinedStatus"];
+export type CheckRun = S["CheckRun"];
+export type CommitStatus = S["CommitStatus"];
 
 const enc = encodeURIComponent;
 const base = (owner: string, name: string) => `${repoBase(owner, name)}/pulls`;
 const key = (owner: string, name: string, ...rest: unknown[]) => ["pulls", owner, name, ...rest];
 
-export type PullFilter = { state: "open" | "closed" | "merged" | "all"; author?: string; base?: string; sort?: "created" | "updated"; page: number };
+export type PullFilter = {
+  state: "open" | "closed" | "merged" | "all";
+  q?: string;
+  author?: string;
+  reviewRequested?: string;
+  base?: string;
+  sort?: "created" | "updated";
+  page: number;
+};
 
 export const usePulls = (owner: string, name: string, f: PullFilter) =>
   useQuery({
     queryKey: key(owner, name, "list", f),
-    queryFn: () => paged<PullRequest>(base(owner, name), f.page, { state: f.state, author: f.author, base: f.base, sort: f.sort }),
+    queryFn: () => paged<PullRequest>(base(owner, name), f.page, {
+        state: f.state,
+        q: f.q,
+        author: f.author,
+        reviewRequested: f.reviewRequested,
+        base: f.base,
+        sort: f.sort,
+      }),
     placeholderData: keepPreviousData,
   });
 
@@ -55,6 +75,24 @@ export const useMergeability = (owner: string, name: string, number: number, ena
     queryFn: () => request<PullMergeability>("GET", `${base(owner, name)}/${number}/mergeability`),
     enabled,
   });
+
+/** Combined commit status and latest check runs of the head commit. */
+export const useHeadStatus = (owner: string, name: string, sha: string, enabled = true) =>
+  useQuery({
+    queryKey: key(owner, name, "status", sha),
+    queryFn: () => request<CombinedStatus>("GET", `${repoBase(owner, name)}/commits/${enc(sha)}/status`),
+    enabled: enabled && sha !== "",
+  });
+export const useHeadChecks = (owner: string, name: string, sha: string, enabled = true) =>
+  useQuery({
+    queryKey: key(owner, name, "checks", sha),
+    queryFn: () => request<S["CheckRunList"]>("GET", `${repoBase(owner, name)}/commits/${enc(sha)}/check-runs${qs({ filter: "latest", limit: 100 })}`),
+    enabled: enabled && sha !== "",
+  });
+
+/** Pull requests whose body or comments reference an issue. */
+export const useLinkedPulls = (owner: string, name: string, number: number) =>
+  useQuery({ queryKey: ["issues", owner, name, "linked-pulls", number], queryFn: () => request<LinkedPull[]>("GET", `${repoBase(owner, name)}/issues/${number}/linked-pulls`) });
 
 export const useReviews = (owner: string, name: string, number: number) =>
   useQuery({ queryKey: key(owner, name, "reviews", number), queryFn: () => request<PullReview[]>("GET", `${base(owner, name)}/${number}/reviews`) });
@@ -82,6 +120,8 @@ export const useUpdatePull = (owner: string, name: string, number: number) =>
   usePullMutation<PullRequestUpdate, PullRequest>(owner, name, (b) => request("PATCH", `${base(owner, name)}/${number}`, b));
 export const useMerge = (owner: string, name: string, number: number) =>
   usePullMutation<PullMergeRequest, S["PullMergeResult"]>(owner, name, (b) => request("PUT", `${base(owner, name)}/${number}/merge`, b));
+export const useUpdateBranch = (owner: string, name: string, number: number) =>
+  usePullMutation<PullUpdateBranchRequest, S["PullMergeResult"]>(owner, name, (b) => request("PUT", `${base(owner, name)}/${number}/update-branch`, b));
 export const useAutoMerge = (owner: string, name: string, number: number) =>
   usePullMutation<PullAutoMergeRequest | null, PullRequest | void>(owner, name, (b) =>
     b ? request("PUT", `${base(owner, name)}/${number}/auto-merge`, b) : request("DELETE", `${base(owner, name)}/${number}/auto-merge`),

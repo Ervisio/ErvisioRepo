@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"slices"
 	"strings"
 	"time"
@@ -234,6 +235,46 @@ func (s *Service) GetImport(ctx context.Context, who auth.Principal, owner, name
 		return Import{}, fmt.Errorf("get import: %w", err)
 	}
 	return toImport(row, repo.FullName()), nil
+}
+
+// ListImports returns a page of the imports the caller started, the most
+// recent first, and whether more follow. Imports of repositories the
+// caller can no longer read are left out.
+func (s *Service) ListImports(ctx context.Context, who auth.Principal, offset, limit int) ([]Import, bool, error) {
+	if who.UserID == uuid.Nil {
+		return nil, false, ErrForbidden
+	}
+	if limit <= 0 {
+		limit = 30
+	}
+	limit = min(limit, 100)
+	offset = min(max(offset, 0), math.MaxInt32)
+	rs, err := s.repoSvc()
+	if err != nil {
+		return nil, false, err
+	}
+	rows, err := s.q.ListGitHubImportsByCreator(ctx, dbgen.ListGitHubImportsByCreatorParams{
+		CreatedBy: uuid.NullUUID{UUID: who.UserID, Valid: true}, Off: int32(offset), Lim: int32(limit + 1)}) //nolint:gosec // bounded above
+	if err != nil {
+		return nil, false, fmt.Errorf("list imports: %w", err)
+	}
+	more := len(rows) > limit
+	if more {
+		rows = rows[:limit]
+	}
+	out := make([]Import, 0, len(rows))
+	for _, r := range rows {
+		repo, err := rs.Authorize(ctx, who, r.OwnerName, r.RepoName, authz.ActRead)
+		var mv *repos.MovedError
+		switch {
+		case errors.Is(err, repos.ErrNotFound), errors.Is(err, repos.ErrForbidden), errors.As(err, &mv):
+			continue
+		case err != nil:
+			return nil, false, err
+		}
+		out = append(out, toImport(r.GithubImport, repo.FullName()))
+	}
+	return out, more, nil
 }
 
 // runImport runs an import job: git data first, then the importers.

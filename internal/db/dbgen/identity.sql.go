@@ -569,6 +569,83 @@ func (q *Queries) NamespaceTaken(ctx context.Context, name string) (bool, error)
 	return exists, err
 }
 
+const searchUsers = `-- name: SearchUsers :many
+WITH visible AS (
+    SELECT $5::uuid AS user_id
+    UNION SELECT m2.user_id FROM org_members m1 JOIN org_members m2 ON m2.org_id = m1.org_id WHERE m1.user_id = $5
+    UNION SELECT c.user_id FROM repo_collaborators c JOIN repos r ON r.id = c.repo_id WHERE r.owner_id = $5
+    UNION SELECT c2.user_id FROM repo_collaborators c1 JOIN repo_collaborators c2 ON c2.repo_id = c1.repo_id
+        WHERE c1.user_id = $5
+    UNION SELECT r.owner_id FROM repo_collaborators c JOIN repos r ON r.id = c.repo_id WHERE c.user_id = $5
+    UNION SELECT c.user_id FROM repo_collaborators c WHERE c.repo_id = $6::uuid
+    UNION SELECT r.owner_id FROM repos r WHERE r.id = $6::uuid
+    UNION SELECT m.user_id FROM org_members m JOIN repos r ON r.owner_id = m.org_id
+        WHERE r.id = $6::uuid
+)
+SELECT u.id, n.name AS username, u.display_name, u.avatar_url
+FROM users u
+JOIN namespaces n ON n.id = u.id
+WHERE u.suspended_at IS NULL
+    AND ($1::boolean OR u.id IN (SELECT v.user_id FROM visible v))
+    AND (n.name_lower LIKE $2::text OR lower(u.display_name) LIKE $2::text)
+ORDER BY (n.name_lower = $3::text) DESC, (n.name_lower LIKE $2::text) DESC, n.name_lower
+LIMIT $4
+`
+
+type SearchUsersParams struct {
+	Instance bool
+	Pattern  string
+	Exact    string
+	Lim      int32
+	Caller   uuid.UUID
+	RepoID   uuid.NullUUID
+}
+
+type SearchUsersRow struct {
+	ID          uuid.UUID
+	Username    string
+	DisplayName string
+	AvatarUrl   string
+}
+
+// Active users whose username or display name starts with pattern (a
+// LIKE pattern, lower case), exact username first. Without instance only
+// the users visible to the caller: itself, the members of its
+// organizations, the people of the repositories it owns or collaborates
+// on and, with repo_id, the collaborators, owner and owning organization
+// members of that repository.
+func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error) {
+	rows, err := q.db.Query(ctx, searchUsers,
+		arg.Instance,
+		arg.Pattern,
+		arg.Exact,
+		arg.Lim,
+		arg.Caller,
+		arg.RepoID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SearchUsersRow{}
+	for rows.Next() {
+		var i SearchUsersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.DisplayName,
+			&i.AvatarUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setUserRole = `-- name: SetUserRole :exec
 UPDATE users SET role = $2, updated_at = now() WHERE id = $1
 `

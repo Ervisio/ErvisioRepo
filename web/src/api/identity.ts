@@ -13,6 +13,20 @@ export type Provider = S["OidcProvider"];
 export type MfaChallenge = S["MfaChallenge"];
 export type LoginResult = User | MfaChallenge;
 export type Reauth = S["ReauthRequest"];
+export type UserSummary = S["UserSummary"];
+
+/**
+ * Users matching a username or display name prefix, for the assignee and reviewer
+ * pickers. The server only returns the people the caller may see; repo (owner/name)
+ * adds the people of that repository.
+ */
+export const useUserSearch = (q: string, repo?: string) =>
+  useQuery({
+    queryKey: ["users", "search", q, repo],
+    queryFn: () => request<UserSummary[]>("GET", `/search/users?${new URLSearchParams({ q, ...(repo ? { repo } : {}) }).toString()}`),
+    enabled: q.trim() !== "",
+    staleTime: 30_000,
+  });
 export type Passkey = S["Passkey"];
 export type TotpSetup = S["TotpSetup"];
 export type SecurityStatus = S["SecurityStatus"];

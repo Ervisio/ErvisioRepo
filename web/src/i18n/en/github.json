@@ -91,5 +91,12 @@
   "sync.resolve.keep_ervisio": "Keep this side",
   "sync.resolve.keep_github": "Keep GitHub",
   "sync.resolve.merge_request": "Open a pull request",
-  "sync.resolved": "Divergence resolved"
+  "sync.resolved": "Divergence resolved",
+  "imports.title": "Your GitHub imports",
+  "imports.hint": "Imports you started, on every repository you can still see.",
+  "imports.empty": "You have not imported anything from GitHub yet.",
+  "imports.repo": "Repository",
+  "imports.source": "From GitHub",
+  "imports.status": "Status",
+  "imports.created": "Started"
 }

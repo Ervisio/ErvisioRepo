@@ -69,15 +69,19 @@ Legenda: **sì** supportato; **parziale** supportato con i limiti indicati;
 | `GET /repos/{o}/{r}/contents/{path}` | sì | File (base64), elenco di directory, symlink. Query `ref`. `Accept: application/vnd.github.raw` restituisce il file grezzo in streaming. I submodule sono elencati come `submodule`. |
 | `PUT /repos/{o}/{r}/contents/{path}` | parziale | Creazione (`201`) o aggiornamento con `sha` (`200`), `branch`. `committer` e `author` sono ignorati: l'autore del commit è il proprietario del token. |
 | `DELETE /repos/{o}/{r}/contents/{path}` | sì | `sha` obbligatorio. |
+| `GET /repos/{o}/{r}/readme[/{dir}]` | parziale | Il README della directory (quello mostrato dal browser del codice: il primo tra `README.md`, `.markdown`, `.mdown`, `.rst`, `.adoc`, `.txt` e `README` semplice, senza distinzione tra maiuscole e minuscole), restituito come un file di contents. Query `ref`. `Accept: application/vnd.github.raw` lo restituisce in streaming; `application/vnd.github.html` non è supportato (si riceve il JSON). `404` se non c'è. |
 | `GET /repos/{o}/{r}/commits` | parziale | `sha` e `path`; `author`, `since`, `until` sono ignorati. |
-| `GET /repos/{o}/{r}/commits/{ref}` | parziale | Con `stats` e `files`. Il ref non può contenere `/`: usare lo SHA. Gli utenti `author`/`committer` sono `null`. I media type diff e patch non sono supportati. |
+| `GET /repos/{o}/{r}/commits/{ref}` | parziale | Con `stats` e `files`. Il ref può contenere `/` (`feature/x`); un ref il cui ultimo segmento è `status`, `statuses`, `check-runs` o `check-suites` seleziona quella sotto-risorsa, come su GitHub. Gli utenti `author`/`committer` sono `null`. I media type diff e patch non sono supportati. |
 | `GET /repos/{o}/{r}/branches` | parziale | `protected` è sempre `false`; la protezione dei branch si gestisce con `/api/v1`. |
 | `GET /repos/{o}/{r}/branches/{branch}` | parziale | Come sopra. |
 | `GET /repos/{o}/{r}/tags` | sì | |
 | `GET /repos/{o}/{r}/git/ref/{ref}` | sì | |
 | `GET /repos/{o}/{r}/git/refs[/{prefix}]` | sì | Una corrispondenza esatta restituisce un oggetto, un prefisso una lista. |
 | `GET /repos/{o}/{r}/git/matching-refs/{prefix}` | sì | |
-| `POST/PATCH/DELETE /repos/{o}/{r}/git/refs` | no | Usare `git push`. |
+| `POST /repos/{o}/{r}/git/refs` | parziale | `ref` e `sha` (id completo); `201` con il ref. Solo `refs/heads/` e `refs/tags/` (un tag può puntare a un oggetto tag annotato). Ref esistente od oggetto sconosciuto: `422`. |
+| `PATCH /repos/{o}/{r}/git/refs/{ref}` | sì | `sha` e `force`. Senza `force` un aggiornamento non fast-forward risponde `422 Update is not a fast forward`. |
+| `DELETE /repos/{o}/{r}/git/refs/{ref}` | parziale | `204`. Ref inesistente: `422`. Il branch predefinito non si può eliminare. |
+| Scritture dei ref | | Richiedono il permesso di push e lo scope `repo:write`; passano dagli stessi hook di un push, quindi valgono la protezione di branch e tag, il journal, gli eventi e i webhook. Un aggiornamento rifiutato risponde `422`. |
 | Dati git (`git/blobs`, `git/trees`, `git/commits`, `git/tags`) | no | |
 
 ### Pull request
@@ -86,10 +90,10 @@ Legenda: **sì** supportato; **parziale** supportato con i limiti indicati;
 |---|---|---|
 | `GET /repos/{o}/{r}/pulls` | sì | `state`, `head` (`user:branch`), `base`, `sort=created/updated`. |
 | `POST /repos/{o}/{r}/pulls` | parziale | `title`, `body`, `head` (`branch` o `owner:branch`), `head_repo`, `base`, `draft`. La conversione di una issue (`issue`) non è supportata. |
-| `GET /repos/{o}/{r}/pulls/{n}` | sì | Con `mergeable`, `mergeable_state`, `commits`, `additions`, `deletions`, `changed_files`. |
+| `GET /repos/{o}/{r}/pulls/{n}` | sì | Con `mergeable`, `mergeable_state`, `commits`, `additions`, `deletions`, `changed_files`, `merged_by`. Con `Accept: application/vnd.github.diff` risponde il diff unificato dalla merge base, con `application/vnd.github.patch` i commit come serie `format-patch` (senza i merge commit); `406` se il diff supera i limiti o la serie ha più di 250 commit. |
 | `PATCH /repos/{o}/{r}/pulls/{n}` | sì | `title`, `body`, `state`, `base`, `draft`. |
 | `GET .../pulls/{n}/commits` | sì | |
-| `GET .../pulls/{n}/files` | parziale | I file non hanno `sha` del blob né `patch`. |
+| `GET .../pulls/{n}/files` | sì | `sha` del blob e `patch` dal diff dalla merge base; `patch` manca per i file binari e oltre i limiti del diff. |
 | `GET .../pulls/{n}/merge` | sì | `204` se fusa, `404` altrimenti. |
 | `PUT .../pulls/{n}/merge` | sì | `merge_method` merge/squash/rebase, `commit_title`, `commit_message`, `sha`. Si applica la protezione dei branch. |
 | `GET/POST .../pulls/{n}/reviews` | parziale | I commenti di una review richiedono `line` (e `side`/`start_line`); il vecchio `position` è rifiutato. |
@@ -101,7 +105,7 @@ Legenda: **sì** supportato; **parziale** supportato con i limiti indicati;
 | `PATCH/DELETE .../pulls/comments/{id}` | sì | In queste risposte `pull_request_url` non contiene il numero. |
 | `GET /repos/{o}/{r}/pulls/comments` | no | Elenco su tutto il repository. |
 | `GET/POST/DELETE .../pulls/{n}/requested_reviewers` | parziale | Solo utenti; `team_reviewers` è rifiutato. |
-| `PUT .../pulls/{n}/update-branch` | no | |
+| `PUT .../pulls/{n}/update-branch` | sì | Unisce il branch base nel branch head come il chiamante (serve la scrittura sul repository head, si applica la protezione del branch head); `expected_head_sha` viene verificato. Risponde `202` a operazione fatta, `422` se è già aggiornato, in conflitto o se l'head si è spostato. |
 
 ### Issue, label, milestone
 
@@ -222,17 +226,17 @@ nell'ambiente. In un clone il cui remote punta all'host, `-R` non serve.
 | Comando | Funziona | Note |
 |---|---|---|
 | `gh auth login --hostname`, `gh auth status` | sì | `GET /api/v3/` con `X-OAuth-Scopes`, poi `viewer { login }`. |
-| `gh repo view` | sì | Il README non viene mostrato (manca la rotta `/readme`). |
+| `gh repo view` | sì | |
 | `gh repo list` | sì | `repositoryOwner { repositories }`. |
 | `gh repo clone` | sì | Git puro. |
 | `gh repo create`, `fork`, `edit`, `delete` | no | Non implementati via GraphQL. |
 | `gh pr list`, `view`, `status` | sì | `status` usa `search` con `author:@me` e `review-requested:@me`. |
 | `gh pr create` (anche `--draft`, `--label`, `--assignee`, `--reviewer` utenti) | sì | Team come reviewer e project vengono rifiutati. |
 | `gh pr checkout` | sì | Scarica il branch head dal repository base. |
-| `gh pr merge` (`--merge`, `--squash`, `--rebase`, `--auto`) | sì | `--delete-branch` fallisce dopo il merge (manca `DELETE /git/refs`). Merge queue non supportata. |
+| `gh pr merge` (`--merge`, `--squash`, `--rebase`, `--auto`) | sì | `--delete-branch` elimina il branch head con `DELETE /git/refs` (soggetto alla protezione dei branch). Merge queue non supportata. |
 | `gh pr comment`, `close`, `reopen`, `ready`, `edit`, `review` | sì | |
 | `gh pr checks` | parziale | Status check rollup dal servizio statuses; nessun link alle esecuzioni dei workflow. |
-| `gh pr diff` | no | Il media type diff di `GET /pulls/{number}` non è servito. |
+| `gh pr diff` (anche `--patch`, `--name-only`) | sì | Media type diff e patch di `GET /pulls/{number}`. |
 | `gh issue list`, `view`, `create`, `close`, `reopen`, `comment`, `edit` | sì | I project vengono ignorati. |
 | `gh issue status` | sì | `search` con `repo:`. |
 | `gh release list` | sì | GraphQL `releases`. |

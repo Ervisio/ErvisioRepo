@@ -22,6 +22,8 @@ import (
 type Pulls interface {
 	Get(ctx context.Context, who auth.Principal, owner, name string, number int64) (pulls.Pull, error)
 	List(ctx context.Context, who auth.Principal, owner, name string, o pulls.ListOptions) ([]pulls.Pull, error)
+	UpdateBranch(ctx context.Context, who auth.Principal, owner, name string, number int64, in pulls.UpdateBranchInput) (string, error)
+	LinkedPulls(ctx context.Context, who auth.Principal, owner, name string, number int64) ([]pulls.LinkedPull, error)
 	Create(ctx context.Context, who auth.Principal, owner, name string, in pulls.CreateInput) (pulls.Pull, error)
 	Update(ctx context.Context, who auth.Principal, owner, name string, number int64, in pulls.UpdateInput) (pulls.Pull, error)
 	ListCommits(ctx context.Context, who auth.Principal, owner, name string, number int64, offset, limit int) ([]gitbrowse.Commit, bool, error)
@@ -102,7 +104,8 @@ func (s *v1Server) ListPulls(ctx context.Context, req v1gen.ListPullsRequestObje
 		return errPullsUnavailable, nil
 	}
 	p := req.Params
-	o := pulls.ListOptions{State: string(deref(p.State)), Base: deref(p.Base), Author: deref(p.Author), Sort: string(deref(p.Sort))}
+	o := pulls.ListOptions{State: string(deref(p.State)), Base: deref(p.Base), Author: deref(p.Author), Sort: string(deref(p.Sort)),
+		ReviewRequested: deref(p.ReviewRequested), Q: deref(p.Q)}
 	if h := deref(p.Head); h != "" {
 		// "owner:branch" selects a head branch of the owner's fork.
 		if owner, branch, ok := strings.Cut(h, ":"); ok {
@@ -237,6 +240,37 @@ func (s *v1Server) MergePull(ctx context.Context, req v1gen.MergePullRequestObje
 		return pullsFail(err, http.MethodPost, pullSuffix(req.Number, "/merge"))
 	}
 	return v1gen.MergePull200JSONResponse{Sha: sha}, nil
+}
+
+func (s *v1Server) UpdatePullBranch(ctx context.Context, req v1gen.UpdatePullBranchRequestObject) (v1gen.UpdatePullBranchResponseObject, error) {
+	if s.pulls == nil {
+		return errPullsUnavailable, nil
+	}
+	in := pulls.UpdateBranchInput{}
+	if b := req.Body; b != nil {
+		in = pulls.UpdateBranchInput{Method: string(deref(b.Method)), ExpectedHeadSHA: deref(b.ExpectedHeadSha)}
+	}
+	sha, err := s.pulls.UpdateBranch(ctx, principal(ctx), req.Owner, req.Name, req.Number, in)
+	if err != nil {
+		return pullsFail(err, http.MethodPut, pullSuffix(req.Number, "/update-branch"))
+	}
+	return v1gen.UpdatePullBranch200JSONResponse{Sha: sha}, nil
+}
+
+func (s *v1Server) ListIssueLinkedPulls(ctx context.Context, req v1gen.ListIssueLinkedPullsRequestObject) (v1gen.ListIssueLinkedPullsResponseObject, error) {
+	if s.pulls == nil {
+		return errPullsUnavailable, nil
+	}
+	list, err := s.pulls.LinkedPulls(ctx, principal(ctx), req.Owner, req.Name, req.Number)
+	if err != nil {
+		return pullsFail(err, http.MethodGet, "/issues/"+strconv.FormatInt(req.Number, 10)+"/linked-pulls")
+	}
+	out := make(v1gen.ListIssueLinkedPulls200JSONResponse, 0, len(list))
+	for _, lp := range list {
+		out = append(out, v1gen.LinkedPull{Repo: lp.Repo, Number: lp.Number, Title: lp.Title,
+			State: v1gen.LinkedPullState(lp.State), Draft: lp.Draft, Author: lp.Author})
+	}
+	return out, nil
 }
 
 func (s *v1Server) EnablePullAutoMerge(ctx context.Context, req v1gen.EnablePullAutoMergeRequestObject) (v1gen.EnablePullAutoMergeResponseObject, error) {
@@ -614,6 +648,8 @@ type pullResponse interface {
 	v1gen.GetPullDiffResponseObject
 	v1gen.ListPullFilesResponseObject
 	v1gen.MergePullResponseObject
+	v1gen.UpdatePullBranchResponseObject
+	v1gen.ListIssueLinkedPullsResponseObject
 	v1gen.GetPullMergeabilityResponseObject
 	v1gen.RemovePullReviewersResponseObject
 	v1gen.RequestPullReviewersResponseObject
@@ -663,6 +699,12 @@ func (p problemResponse) VisitListPullCommitsResponse(w http.ResponseWriter) err
 func (p problemResponse) VisitGetPullDiffResponse(w http.ResponseWriter) error     { return p.write(w) }
 func (p problemResponse) VisitListPullFilesResponse(w http.ResponseWriter) error   { return p.write(w) }
 func (p problemResponse) VisitMergePullResponse(w http.ResponseWriter) error       { return p.write(w) }
+func (p problemResponse) VisitUpdatePullBranchResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (p problemResponse) VisitListIssueLinkedPullsResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
 func (p problemResponse) VisitGetPullMergeabilityResponse(w http.ResponseWriter) error {
 	return p.write(w)
 }
@@ -725,6 +767,12 @@ func (m movedResponse) VisitListPullCommitsResponse(w http.ResponseWriter) error
 func (m movedResponse) VisitGetPullDiffResponse(w http.ResponseWriter) error     { return m.write(w) }
 func (m movedResponse) VisitListPullFilesResponse(w http.ResponseWriter) error   { return m.write(w) }
 func (m movedResponse) VisitMergePullResponse(w http.ResponseWriter) error       { return m.write(w) }
+func (m movedResponse) VisitUpdatePullBranchResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (m movedResponse) VisitListIssueLinkedPullsResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
 func (m movedResponse) VisitGetPullMergeabilityResponse(w http.ResponseWriter) error {
 	return m.write(w)
 }

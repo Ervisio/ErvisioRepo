@@ -530,6 +530,64 @@ func (q *Queries) ListGitHubConnections(ctx context.Context, ownerID uuid.UUID) 
 	return items, nil
 }
 
+const listGitHubImportsByCreator = `-- name: ListGitHubImportsByCreator :many
+SELECT i.id, i.repo_id, i.connection_id, i.remote_owner, i.remote_name, i.status, i.last_error, i.created_by, i.created_at, i.started_at, i.finished_at, i.include, n.name AS owner_name, r.name AS repo_name
+FROM github_imports i
+JOIN repos r ON r.id = i.repo_id
+JOIN namespaces n ON n.id = r.owner_id
+WHERE i.created_by = $1
+ORDER BY i.created_at DESC, i.id DESC
+LIMIT $3 OFFSET $2
+`
+
+type ListGitHubImportsByCreatorParams struct {
+	CreatedBy uuid.NullUUID
+	Off       int32
+	Lim       int32
+}
+
+type ListGitHubImportsByCreatorRow struct {
+	GithubImport GithubImport
+	OwnerName    string
+	RepoName     string
+}
+
+// The imports a user started, the most recent first.
+func (q *Queries) ListGitHubImportsByCreator(ctx context.Context, arg ListGitHubImportsByCreatorParams) ([]ListGitHubImportsByCreatorRow, error) {
+	rows, err := q.db.Query(ctx, listGitHubImportsByCreator, arg.CreatedBy, arg.Off, arg.Lim)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListGitHubImportsByCreatorRow{}
+	for rows.Next() {
+		var i ListGitHubImportsByCreatorRow
+		if err := rows.Scan(
+			&i.GithubImport.ID,
+			&i.GithubImport.RepoID,
+			&i.GithubImport.ConnectionID,
+			&i.GithubImport.RemoteOwner,
+			&i.GithubImport.RemoteName,
+			&i.GithubImport.Status,
+			&i.GithubImport.LastError,
+			&i.GithubImport.CreatedBy,
+			&i.GithubImport.CreatedAt,
+			&i.GithubImport.StartedAt,
+			&i.GithubImport.FinishedAt,
+			&i.GithubImport.Include,
+			&i.OwnerName,
+			&i.RepoName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listGitHubSyncLinksByRemote = `-- name: ListGitHubSyncLinksByRemote :many
 SELECT id, repo_id, connection_id, mode, remote_owner, remote_name, prune, trust_github, create_missing, interval_seconds, enabled, status, last_error, failures, next_attempt_at, last_run_at, last_success_at, lfs_skipped, created_by, created_at, updated_at FROM github_sync_links
 WHERE connection_id = $1 AND lower(remote_owner) = lower($2::text)

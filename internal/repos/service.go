@@ -10,7 +10,9 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"slices"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -96,6 +98,43 @@ type Service struct {
 	tier *gitstore.Tier
 	jobs identity.Enqueuer
 	log  *slog.Logger
+
+	hooksMu     sync.RWMutex
+	deleteHooks []DeleteHook
+}
+
+// DeleteHook is told about the deletion of a repository. RepoDeleting runs
+// inside the transaction that deletes the row, before the delete (the rows
+// that cascade with it are still there); the returned function, if any,
+// runs after the commit with a context that is not cancelled. An error
+// aborts the deletion.
+type DeleteHook interface {
+	RepoDeleting(ctx context.Context, q *dbgen.Queries, repoID uuid.UUID) (after func(context.Context), err error)
+}
+
+// OnDelete registers a deletion hook (wiring, before serving).
+func (s *Service) OnDelete(h DeleteHook) {
+	s.hooksMu.Lock()
+	defer s.hooksMu.Unlock()
+	s.deleteHooks = append(s.deleteHooks, h)
+}
+
+// runDeleteHooks calls the deletion hooks inside the delete transaction.
+func (s *Service) runDeleteHooks(ctx context.Context, q *dbgen.Queries, id uuid.UUID) ([]func(context.Context), error) {
+	s.hooksMu.RLock()
+	hooks := slices.Clone(s.deleteHooks)
+	s.hooksMu.RUnlock()
+	var after []func(context.Context)
+	for _, h := range hooks {
+		fn, err := h.RepoDeleting(ctx, q, id)
+		if err != nil {
+			return nil, fmt.Errorf("deletion hook: %w", err)
+		}
+		if fn != nil {
+			after = append(after, fn)
+		}
+	}
+	return after, nil
 }
 
 // Options configures a Service.
@@ -671,6 +710,7 @@ func keepAdmin(ctx context.Context, q *dbgen.Queries, ns namespace, repo uuid.UU
 // copy is moved to the trash and the remote objects are purged by a job.
 func (s *Service) Delete(ctx context.Context, who auth.Principal, owner, name string, c identity.Client) error {
 	var id uuid.UUID
+	var after []func(context.Context)
 	err := s.tx(ctx, func(q *dbgen.Queries) error {
 		r, _, err := s.resolve(ctx, q, who, owner, name)
 		if err != nil {
@@ -697,6 +737,9 @@ func (s *Service) Delete(ctx context.Context, who auth.Principal, owner, name st
 		if err != nil {
 			return fmt.Errorf("sum issue attachment size: %w", err)
 		}
+		if after, err = s.runDeleteHooks(ctx, q, r.ID); err != nil {
+			return err
+		}
 		if _, err := q.DeleteRepo(ctx, r.ID); err != nil {
 			return fmt.Errorf("delete repo: %w", err)
 		}
@@ -720,6 +763,46 @@ func (s *Service) Delete(ctx context.Context, who auth.Principal, owner, name st
 			s.log.ErrorContext(ctx, "enqueue repository purge", "repo", id, "error", err)
 		}
 	}
+	for _, fn := range after {
+		fn(ctx)
+	}
+	return nil
+}
+
+// Abandon removes a repository that another service created and could not
+// finish (a fork whose content copy failed): the row, its quota and its
+// storage go, without a permission check or an audit entry of its own. It
+// is not an API operation.
+func (s *Service) Abandon(ctx context.Context, id uuid.UUID) error {
+	var after []func(context.Context)
+	err := s.tx(ctx, func(q *dbgen.Queries) error {
+		if err := q.LockRepoWrite(ctx, id); err != nil {
+			return fmt.Errorf("lock repo: %w", err)
+		}
+		st, err := q.GetRepoStorage(ctx, id)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("get repo size: %w", err)
+		}
+		if after, err = s.runDeleteHooks(ctx, q, id); err != nil {
+			return err
+		}
+		if _, err := q.DeleteRepo(ctx, id); err != nil {
+			return fmt.Errorf("delete repo: %w", err)
+		}
+		return quota.Release(ctx, q, st.OwnerID, quota.Delta{Repos: 1, Bytes: st.SizeBytes})
+	})
+	if err != nil {
+		return err
+	}
+	s.discard(ctx, id)
+	ctx = context.WithoutCancel(ctx)
+	for _, fn := range after {
+		fn(ctx)
+	}
+	s.log.InfoContext(ctx, "repository abandoned", "repo", id)
 	return nil
 }
 

@@ -377,11 +377,16 @@ func (s *v1Server) ListRepoWebhookDeliveries(ctx context.Context, req v1gen.List
 		return repoHooksFail(err, http.MethodGet, suffix)
 	}
 	offset, limit := page(req.Params.Offset, req.Params.Limit)
-	ds, err := s.webhooks.Deliveries(ctx, sc, req.HookId, offset, limit)
+	ds, more, err := s.webhooks.Deliveries(ctx, sc, req.HookId, offset, limit)
 	if err != nil {
 		return repoHooksFail(err, http.MethodGet, suffix)
 	}
-	return v1gen.ListRepoWebhookDeliveries200JSONResponse(deliveriesDTO(ds)), nil
+	return v1gen.ListRepoWebhookDeliveries200JSONResponse{Body: deliveriesDTO(ds),
+		Headers: v1gen.ListRepoWebhookDeliveries200ResponseHeaders{XHasMore: hasMoreHeader(more)}}, nil
+}
+
+func (s *v1Server) ListWebhookEvents(_ context.Context, _ v1gen.ListWebhookEventsRequestObject) (v1gen.ListWebhookEventsResponseObject, error) {
+	return v1gen.ListWebhookEvents200JSONResponse{Events: webhooks.KnownEvents()}, nil
 }
 
 func (s *v1Server) GetRepoWebhookDelivery(ctx context.Context, req v1gen.GetRepoWebhookDeliveryRequestObject) (v1gen.GetRepoWebhookDeliveryResponseObject, error) {
@@ -519,11 +524,12 @@ func (s *v1Server) ListOrgWebhookDeliveries(ctx context.Context, req v1gen.ListO
 		return orgHooksFail(err)
 	}
 	offset, limit := page(req.Params.Offset, req.Params.Limit)
-	ds, err := s.webhooks.Deliveries(ctx, sc, req.HookId, offset, limit)
+	ds, more, err := s.webhooks.Deliveries(ctx, sc, req.HookId, offset, limit)
 	if err != nil {
 		return orgHooksFail(err)
 	}
-	return v1gen.ListOrgWebhookDeliveries200JSONResponse(deliveriesDTO(ds)), nil
+	return v1gen.ListOrgWebhookDeliveries200JSONResponse{Body: deliveriesDTO(ds),
+		Headers: v1gen.ListOrgWebhookDeliveries200ResponseHeaders{XHasMore: hasMoreHeader(more)}}, nil
 }
 
 func (s *v1Server) GetOrgWebhookDelivery(ctx context.Context, req v1gen.GetOrgWebhookDeliveryRequestObject) (v1gen.GetOrgWebhookDeliveryResponseObject, error) {

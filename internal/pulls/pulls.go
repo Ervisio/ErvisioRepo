@@ -36,9 +36,13 @@ type ListOptions struct {
 	Head     string
 	HeadRepo string // owner/name
 	Author   string
-	Sort     string // created (default) or updated
-	Offset   int
-	Limit    int
+	// ReviewRequested keeps the pull requests with a pending review
+	// request for this username.
+	ReviewRequested string
+	Q               string // full-text search on title and body
+	Sort            string // created (default) or updated
+	Offset          int
+	Limit           int
 }
 
 // UpdateInput edits a pull request; nil fields are left alone.
@@ -226,6 +230,17 @@ func (s *Service) List(ctx context.Context, who auth.Principal, owner, name stri
 		}
 		arg.ByAuthor, arg.AuthorID = true, us[0].ID
 	}
+	if o.ReviewRequested != "" {
+		us, err := s.q.IssueUsersByNames(ctx, []string{strings.ToLower(o.ReviewRequested)})
+		if err != nil {
+			return nil, fmt.Errorf("resolve reviewer: %w", err)
+		}
+		if len(us) == 0 {
+			return []Pull{}, nil
+		}
+		arg.ByReviewer, arg.ReviewerID = true, us[0].ID
+	}
+	arg.Query = strings.TrimSpace(o.Q)
 	arg.Off, arg.Lim = pageArgs(o.Offset, o.Limit)
 	rows, err := s.q.SearchPullRequests(ctx, arg)
 	if err != nil {
@@ -402,6 +417,9 @@ func (s *Service) Create(ctx context.Context, who auth.Principal, owner, name st
 			}
 			return fmt.Errorf("insert pull request: %w", err)
 		}
+		if err := s.recordRefs(ctx, q, base, who, row, uuid.Nil, in.Body); err != nil {
+			return err
+		}
 		return s.emitPull(ctx, q, "opened", who.UserID, row, pr, nil)
 	})
 	if err != nil {
@@ -486,8 +504,14 @@ func (s *Service) Update(ctx context.Context, who auth.Principal, owner, name st
 			if err != nil {
 				return notFound(err, ErrNotFound, "lock pull request")
 			}
+			before := row.Body
 			if err := s.updateContent(ctx, q, who.UserID, &row, pr, in.Title, in.Body); err != nil {
 				return err
+			}
+			if row.Body != before {
+				if err := s.recordRefs(ctx, q, r, who, row, uuid.Nil, row.Body); err != nil {
+					return err
+				}
 			}
 			if in.Draft != nil && *in.Draft != pr.Draft {
 				if pr.MergedAt.Valid {

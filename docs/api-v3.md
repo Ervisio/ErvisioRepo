@@ -67,15 +67,19 @@ or `501`.
 | `GET /repos/{o}/{r}/contents/{path}` | yes | File (base64), directory listing, symlink. `ref` query. `Accept: application/vnd.github.raw` streams the raw file. Submodules are listed as `submodule`. |
 | `PUT /repos/{o}/{r}/contents/{path}` | partial | Create (`201`) or update with `sha` (`200`), `branch`. `committer` and `author` are ignored: the commit is authored by the token owner. |
 | `DELETE /repos/{o}/{r}/contents/{path}` | yes | `sha` required. |
+| `GET /repos/{o}/{r}/readme[/{dir}]` | partial | The README of the directory (the one the code browser shows: first of `README.md`, `.markdown`, `.mdown`, `.rst`, `.adoc`, `.txt`, plain `README`, case-insensitive), answered like a contents file. `ref` query. `Accept: application/vnd.github.raw` streams it; `application/vnd.github.html` is not supported (JSON is returned). `404` when there is none. |
 | `GET /repos/{o}/{r}/commits` | partial | `sha` and `path`; `author`, `since`, `until` are ignored. |
-| `GET /repos/{o}/{r}/commits/{ref}` | partial | With `stats` and `files`. The ref cannot contain `/`; use the SHA. `author`/`committer` users are `null`. Diff and patch media types are not supported. |
+| `GET /repos/{o}/{r}/commits/{ref}` | partial | With `stats` and `files`. The ref may contain `/` (`feature/x`); a ref whose last segment is `status`, `statuses`, `check-runs` or `check-suites` selects that sub-resource, as on GitHub. `author`/`committer` users are `null`. Diff and patch media types are not supported. |
 | `GET /repos/{o}/{r}/branches` | partial | `protected` is always `false`; branch protection is managed with `/api/v1`. |
 | `GET /repos/{o}/{r}/branches/{branch}` | partial | As above. |
 | `GET /repos/{o}/{r}/tags` | yes | |
 | `GET /repos/{o}/{r}/git/ref/{ref}` | yes | |
 | `GET /repos/{o}/{r}/git/refs[/{prefix}]` | yes | Exact match answers an object, a prefix a list. |
 | `GET /repos/{o}/{r}/git/matching-refs/{prefix}` | yes | |
-| `POST/PATCH/DELETE /repos/{o}/{r}/git/refs` | no | Use `git push`. |
+| `POST /repos/{o}/{r}/git/refs` | partial | `ref` and `sha` (full id); `201` with the ref. Only `refs/heads/` and `refs/tags/` (a tag may point to an annotated tag object). Existing ref or unknown object: `422`. |
+| `PATCH /repos/{o}/{r}/git/refs/{ref}` | yes | `sha` and `force`. Not a fast-forward without `force`: `422 Update is not a fast forward`. |
+| `DELETE /repos/{o}/{r}/git/refs/{ref}` | partial | `204`. Missing ref: `422`. The default branch cannot be deleted. |
+| Ref writes | | Need push permission and the `repo:write` scope; they run through the same hooks as a push, so branch and tag protection, the journal, events and webhooks apply. A refused update answers `422`. |
 | Git data (`git/blobs`, `git/trees`, `git/commits`, `git/tags`) | no | |
 
 ### Pull requests
@@ -84,10 +88,10 @@ or `501`.
 |---|---|---|
 | `GET /repos/{o}/{r}/pulls` | yes | `state`, `head` (`user:branch`), `base`, `sort=created/updated`. |
 | `POST /repos/{o}/{r}/pulls` | partial | `title`, `body`, `head` (`branch` or `owner:branch`), `head_repo`, `base`, `draft`. Converting an issue (`issue`) is not supported. |
-| `GET /repos/{o}/{r}/pulls/{n}` | yes | With `mergeable`, `mergeable_state`, `commits`, `additions`, `deletions`, `changed_files`. |
+| `GET /repos/{o}/{r}/pulls/{n}` | yes | With `mergeable`, `mergeable_state`, `commits`, `additions`, `deletions`, `changed_files`, `merged_by`. `Accept: application/vnd.github.diff` answers the unified diff from the merge base, `application/vnd.github.patch` the commits as a `format-patch` series (merge commits left out); `406` when the diff is over the limits or the series has more than 250 commits. |
 | `PATCH /repos/{o}/{r}/pulls/{n}` | yes | `title`, `body`, `state`, `base`, `draft`. |
 | `GET .../pulls/{n}/commits` | yes | |
-| `GET .../pulls/{n}/files` | partial | Files have no blob `sha` and no `patch`. |
+| `GET .../pulls/{n}/files` | yes | Blob `sha` and `patch` from the merge base diff; `patch` is missing for binary files and over the diff limits. |
 | `GET .../pulls/{n}/merge` | yes | `204` merged, `404` not merged. |
 | `PUT .../pulls/{n}/merge` | yes | `merge_method` merge/squash/rebase, `commit_title`, `commit_message`, `sha`. Branch protection applies. |
 | `GET/POST .../pulls/{n}/reviews` | partial | Comments in a review need `line` (and `side`/`start_line`); the legacy `position` is refused. |
@@ -99,7 +103,7 @@ or `501`.
 | `PATCH/DELETE .../pulls/comments/{id}` | yes | `pull_request_url` has no number in these answers. |
 | `GET /repos/{o}/{r}/pulls/comments` | no | Repository-wide listing. |
 | `GET/POST/DELETE .../pulls/{n}/requested_reviewers` | partial | Users only; `team_reviewers` is refused. |
-| `PUT .../pulls/{n}/update-branch` | no | |
+| `PUT .../pulls/{n}/update-branch` | yes | Merges the base branch into the head branch as the caller (write access to the head repository, branch protection of the head applies); `expected_head_sha` is checked. Answers `202` when done, `422` when already up to date, conflicting or the head moved. |
 
 ### Issues, labels, milestones
 
@@ -221,17 +225,17 @@ environment work as well. Inside a clone whose remote points at the host,
 | Command | Expected to work | Notes |
 |---|---|---|
 | `gh auth login --hostname`, `gh auth status` | yes | `GET /api/v3/` with `X-OAuth-Scopes`, then `viewer { login }`. |
-| `gh repo view` | yes | The README is not shown (no `/readme` route). |
+| `gh repo view` | yes | |
 | `gh repo list` | yes | `repositoryOwner { repositories }`. |
 | `gh repo clone` | yes | Plain git. |
 | `gh repo create`, `fork`, `edit`, `delete` | no | Not implemented over GraphQL. |
 | `gh pr list`, `view`, `status` | yes | `status` uses `search` with `author:@me` and `review-requested:@me`. |
 | `gh pr create` (also `--draft`, `--label`, `--assignee`, `--reviewer` users) | yes | Team reviewers and projects are refused. |
 | `gh pr checkout` | yes | Fetches the head branch from the base repository. |
-| `gh pr merge` (`--merge`, `--squash`, `--rebase`, `--auto`) | yes | `--delete-branch` fails after the merge (no `DELETE /git/refs`). Merge queue not supported. |
+| `gh pr merge` (`--merge`, `--squash`, `--rebase`, `--auto`) | yes | `--delete-branch` deletes the head branch with `DELETE /git/refs` (subject to branch protection). Merge queue not supported. |
 | `gh pr comment`, `close`, `reopen`, `ready`, `edit`, `review` | yes | |
 | `gh pr checks` | partial | Status check rollup from the statuses service; no workflow run links. |
-| `gh pr diff` | no | The diff media type of `GET /pulls/{number}` is not served. |
+| `gh pr diff` (also `--patch`, `--name-only`) | yes | Diff and patch media types of `GET /pulls/{number}`. |
 | `gh issue list`, `view`, `create`, `close`, `reopen`, `comment`, `edit` | yes | Projects are ignored. |
 | `gh issue status` | yes | `search` with `repo:`. |
 | `gh release list` | yes | GraphQL `releases`. |

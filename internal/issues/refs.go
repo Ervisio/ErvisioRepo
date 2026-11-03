@@ -118,6 +118,7 @@ func ParseRefs(text string) []Ref {
 type refSource struct {
 	issue   dbgen.Issue
 	comment uuid.UUID
+	review  uuid.UUID // a pull request review comment (no issue_comments row)
 	repo    uuid.UUID
 	commit  string
 }
@@ -128,6 +129,8 @@ func (src refSource) key() string {
 		return "commit:" + src.repo.String() + ":" + src.commit
 	case src.comment != uuid.Nil:
 		return "comment:" + src.comment.String()
+	case src.review != uuid.Nil:
+		return "review_comment:" + src.review.String()
 	default:
 		return "issue:" + src.issue.ID.String()
 	}
@@ -155,6 +158,13 @@ func (s *Service) targetRepo(ctx context.Context, who auth.Principal, r repos.Re
 		return repos.Repo{}, false, fmt.Errorf("resolve referenced repository: %w", err)
 	}
 	return t, true, nil
+}
+
+// RecordRefs records the references written by who in the title or body
+// of issue (a pull request, in the pulls service) or, when reviewComment is
+// set, in that review comment of it. It runs in the caller's transaction q.
+func (s *Service) RecordRefs(ctx context.Context, q *dbgen.Queries, r repos.Repo, who auth.Principal, issue dbgen.Issue, reviewComment uuid.UUID, text string) error {
+	return s.recordRefs(ctx, q, r, who, refSource{issue: issue, review: reviewComment}, text)
 }
 
 // recordRefs records the references of text written in src of repository r

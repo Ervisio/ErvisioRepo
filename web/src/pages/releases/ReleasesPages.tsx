@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState, type FormEvent } from "react";
 import { canWrite, PAGE_SIZE } from "../../api/code.ts";
+import { useSession } from "../../api/identity.ts";
+import { useSetSubjectSubscription, useSubjectSubscription } from "../../api/notifications.ts";
 import type { Repo } from "../../api/repos.ts";
 import {
   assetDownloadUrl,
@@ -137,6 +139,7 @@ function ReleaseDetail({ repo, id }: { repo: Repo; id: string }) {
             actions={
               <>
                 <ReleaseBadges r={r} />
+                <ReleaseSubscription repo={repo} id={r.id} />
                 {writer && (
                   <>
                     <Link to="/$owner/$name/releases/$id/edit" params={{ owner, name, id: r.id }}>
@@ -184,6 +187,31 @@ function ReleaseDetail({ repo, id }: { repo: Repo; id: string }) {
         </>
       )}
     </Gate>
+  );
+}
+
+/** The viewer's subscription to the notifications about this release. */
+function ReleaseSubscription({ repo, id }: { repo: Repo; id: string }) {
+  const t = useT("releases");
+  const notify = useNotify();
+  const signedIn = useSession().data !== undefined;
+  const ref = { owner: repo.owner, name: repo.name, release: id };
+  const subject = useSubjectSubscription(ref, signedIn);
+  const set = useSetSubjectSubscription(ref);
+  if (!subject.data) return null;
+  const subscribed = subject.data.subscription.subscribed;
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      icon="bell"
+      disabled={set.isPending}
+      aria-pressed={subscribed}
+      title={t(subscribed ? "sub.subscribedHint" : "sub.unsubscribedHint")}
+      onClick={() => set.mutate(!subscribed, { onSuccess: (s) => notify.ok(t(s.subscription.subscribed ? "sub.subscribedOk" : "sub.unsubscribedOk")), onError: notify.fail })}
+    >
+      {t(subscribed ? "sub.unsubscribe" : "sub.subscribe")}
+    </Button>
   );
 }
 

@@ -61,6 +61,7 @@ type ghsyncResponse interface {
 	v1gen.CheckGitHubConnectionResponseObject
 	v1gen.ImportGitHubRepoResponseObject
 	v1gen.GetGitHubImportResponseObject
+	v1gen.ListGitHubImportsResponseObject
 	v1gen.GetGitHubSyncLinkResponseObject
 	v1gen.PutGitHubSyncLinkResponseObject
 	v1gen.DeleteGitHubSyncLinkResponseObject
@@ -102,6 +103,9 @@ func (p problemResponse) VisitImportGitHubRepoResponse(w http.ResponseWriter) er
 	return p.write(w)
 }
 func (p problemResponse) VisitGetGitHubImportResponse(w http.ResponseWriter) error { return p.write(w) }
+func (p problemResponse) VisitListGitHubImportsResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
 func (p problemResponse) VisitGetGitHubSyncLinkResponse(w http.ResponseWriter) error {
 	return p.write(w)
 }
@@ -149,6 +153,9 @@ func (m movedResponse) VisitCheckGitHubConnectionResponse(w http.ResponseWriter)
 
 func (m movedResponse) VisitImportGitHubRepoResponse(w http.ResponseWriter) error { return m.write(w) }
 func (m movedResponse) VisitGetGitHubImportResponse(w http.ResponseWriter) error  { return m.write(w) }
+func (m movedResponse) VisitListGitHubImportsResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
 func (m movedResponse) VisitGetGitHubSyncLinkResponse(w http.ResponseWriter) error {
 	return m.write(w)
 }
@@ -331,6 +338,23 @@ func (s *v1Server) GetGitHubImport(ctx context.Context, req v1gen.GetGitHubImpor
 		return ghsyncFail(err, http.MethodGet, "/github/import")
 	}
 	return v1gen.GetGitHubImport200JSONResponse(importDTO(i)), nil
+}
+
+func (s *v1Server) ListGitHubImports(ctx context.Context, req v1gen.ListGitHubImportsRequestObject) (v1gen.ListGitHubImportsResponseObject, error) {
+	if s.github == nil {
+		return errGitHubUnavailable, nil
+	}
+	offset, limit := page(req.Params.Offset, req.Params.Limit)
+	is, more, err := s.github.ListImports(ctx, principal(ctx), offset, limit)
+	if err != nil {
+		return ghsyncFail(err, http.MethodGet, "")
+	}
+	out := v1gen.ListGitHubImports200JSONResponse{Body: make([]v1gen.GitHubImport, 0, len(is)),
+		Headers: v1gen.ListGitHubImports200ResponseHeaders{XHasMore: hasMoreHeader(more)}}
+	for _, i := range is {
+		out.Body = append(out.Body, importDTO(i))
+	}
+	return out, nil
 }
 
 func (s *v1Server) GetGitHubSyncLink(ctx context.Context, req v1gen.GetGitHubSyncLinkRequestObject) (v1gen.GetGitHubSyncLinkResponseObject, error) {

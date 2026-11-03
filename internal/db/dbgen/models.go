@@ -110,6 +110,19 @@ type EventsOutbox struct {
 	DispatchedAt pgtype.Timestamptz
 }
 
+type ForkNetwork struct {
+	ID         uuid.UUID
+	RootRepoID uuid.NullUUID
+	CreatedAt  pgtype.Timestamptz
+}
+
+type ForkNetworkMember struct {
+	RepoID    uuid.UUID
+	NetworkID uuid.UUID
+	Pooled    bool
+	CreatedAt pgtype.Timestamptz
+}
+
 type GhapiID struct {
 	Uuid uuid.UUID
 	ID   int64

@@ -136,6 +136,9 @@ type RepoAccess interface {
 	Get(ctx context.Context, who auth.Principal, owner, name string) (repos.Repo, error)
 	GetByID(ctx context.Context, who auth.Principal, id uuid.UUID) (repos.Repo, error)
 	Create(ctx context.Context, who auth.Principal, in repos.CreateInput, c identity.Client) (repos.Repo, error)
+	// Abandon removes a repository created by the service that could not
+	// be finished (a half-created fork).
+	Abandon(ctx context.Context, id uuid.UUID) error
 }
 
 // Browser reads and edits repository content (*gitbrowse.Service).
@@ -153,6 +156,7 @@ type Browser interface {
 type Issues interface {
 	Hydrate(ctx context.Context, viewer uuid.UUID, rows []dbgen.Issue) ([]issues.Issue, error)
 	CloseFromText(ctx context.Context, repoID, actorID uuid.UUID, text string, src issues.CloseSource) ([]issues.Ref, error)
+	RecordRefs(ctx context.Context, q *dbgen.Queries, r repos.Repo, who auth.Principal, issue dbgen.Issue, reviewComment uuid.UUID, text string) error
 }
 
 // Protection evaluates the merge requirements (*protection.Engine).

@@ -90,5 +90,18 @@
   "watch.ignoring": "Ignora",
   "watch.watching.hint": "Ricevi una notifica per ogni issue, pull request e release.",
   "watch.participating.hint": "Ricevi notifiche solo quando partecipi o qualcuno ti menziona.",
-  "watch.ignoring.hint": "Non ricevi notifiche da questo repository."
+  "watch.ignoring.hint": "Non ricevi notifiche da questo repository.",
+  "side.searchPeople": "Cerca persone…",
+  "side.searchLabel": "Trova una persona",
+  "side.searchNone": "Nessuno trovato.",
+  "side.searchFailed": "La ricerca non è riuscita.",
+  "side.searchResults": "Persone trovate",
+  "side.searchDone": "Fine",
+  "subject.subscribe": "Iscriviti",
+  "subject.unsubscribe": "Annulla iscrizione",
+  "subject.subscribedHint": "Ricevi le notifiche di questa conversazione.",
+  "subject.unsubscribedHint": "Non ricevi notifiche di questa conversazione.",
+  "subject.subscribedOk": "Iscrizione alla conversazione attivata",
+  "subject.unsubscribedOk": "Iscrizione alla conversazione annullata",
+  "subject.reset": "Usa l'impostazione del repository"
 }

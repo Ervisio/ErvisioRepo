@@ -127,3 +127,13 @@ SET status = $2, last_error = $3,
     started_at = CASE WHEN $2::text = 'running' THEN now() ELSE started_at END,
     finished_at = CASE WHEN $2::text IN ('done', 'error') THEN now() ELSE finished_at END
 WHERE id = $1;
+
+-- name: ListGitHubImportsByCreator :many
+-- The imports a user started, the most recent first.
+SELECT sqlc.embed(i), n.name AS owner_name, r.name AS repo_name
+FROM github_imports i
+JOIN repos r ON r.id = i.repo_id
+JOIN namespaces n ON n.id = r.owner_id
+WHERE i.created_by = @created_by
+ORDER BY i.created_at DESC, i.id DESC
+LIMIT @lim OFFSET @off;

@@ -143,6 +143,10 @@ a.wk-title:hover { color: var(--hue); }
 .wk-people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .wk-people li { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; min-width: 0; }
 .wk-ms { display: flex; flex-direction: column; gap: 6px; }
+.wk-psearch { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.wk-psearch-hit { display: flex; align-items: center; gap: 8px; min-width: 0; text-align: left; }
+.wk-psearch-hit[aria-pressed="true"] { font-weight: 800; }
+.wk-subj { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-bottom: 10px; }
 
 /* B: symmetric strip. Every block gets the same column; six blocks per row on desktop. */
 .wk-strip {
@@ -219,6 +223,12 @@ a.wk-title:hover { color: var(--hue); }
 .wk-files { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; }
 .wk-merge-auto { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 10px; border-radius: var(--r-ctl); background: var(--raise); }
 .wk-merge-form { display: flex; flex-direction: column; gap: 10px; max-width: 560px; }
+.wk-merge-checks { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--raise); }
+.wk-merge-checks h4 { margin: 0; font-size: 13px; }
+.wk-check .ui-btn { margin-left: 8px; }
+.wk-linked { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.wk-linked li { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.wk-linked a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .wk-files-tab { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .wk-threads { scroll-margin-top: 12px; }

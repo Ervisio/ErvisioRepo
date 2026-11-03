@@ -266,7 +266,9 @@ const pullsRoute = createRoute({
   path: "/$owner/$name/pulls",
   validateSearch: (s: Record<string, unknown>): PullSearch => ({
     state: pullStates.find((x) => x === s.state),
+    q: str(s.q),
     author: str(s.author),
+    reviewRequested: str(s.reviewRequested),
     base: str(s.base),
     sort: s.sort === "updated" ? "updated" : undefined,
     compare: bool(s.compare),
@@ -292,7 +294,7 @@ const inboxFilters = ["participating", "all"] as const;
 const notificationsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/notifications",
-  validateSearch: (s: Record<string, unknown>): InboxSearch => ({ filter: inboxFilters.find((x) => x === s.filter), page: num(s.page) }),
+  validateSearch: (s: Record<string, unknown>): InboxSearch => ({ filter: inboxFilters.find((x) => x === s.filter), page: num(s.page), repo: str(s.repo) }),
   component: () => guard(<NotificationsPage search={notificationsRoute.useSearch()} />),
 });
 const settingsSections = ["protection", "tags", "hooks", "github"] as const;

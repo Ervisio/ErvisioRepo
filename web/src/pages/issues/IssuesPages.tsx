@@ -15,6 +15,7 @@ import {
   type IssueTemplate,
 } from "../../api/issues.ts";
 import { useSession } from "../../api/identity.ts";
+import { useLinkedPulls } from "../../api/pulls.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Button, Card, EmptyState, Icon, Input, Select } from "../../ui/index.ts";
@@ -518,12 +519,7 @@ function IssueDetail({ repo, issue }: { repo: Repo; issue: Issue }) {
       strip={[
         <StripState key="s" label={t("strip.state")} value={<StatePill state={state} label={t(`state.${state}`)} />} />,
         ...blocks.slice(0, 3),
-        <div key="p" className="wk-side-b">
-          <div className="wk-side-h">
-            <h4>{t("strip.linked")}</h4>
-          </div>
-          <p className="ui-note">{t("strip.linkedNone")}</p>
-        </div>,
+        <LinkedPullsBlock key="p" repo={repo} issue={issue} />,
         blocks[3],
       ]}
       sidebar={
@@ -542,6 +538,39 @@ function IssueDetail({ repo, issue }: { repo: Repo; issue: Issue }) {
         closeLabels={{ close: t("detail.close"), reopen: t("detail.reopen"), withComment: t("detail.closeWithComment") }}
       />
     </DetailLayout>
+  );
+}
+
+/** Pull requests whose body or comments reference the issue. */
+function LinkedPullsBlock({ repo, issue }: { repo: Repo; issue: Issue }) {
+  const t = useT("issues");
+  const linked = useLinkedPulls(repo.owner, repo.name, issue.number);
+  const items = linked.data ?? [];
+  return (
+    <div className="wk-side-b">
+      <div className="wk-side-h">
+        <h4>{t("strip.linked")}</h4>
+      </div>
+      {items.length === 0 ? (
+        <p className="ui-note">{linked.isPending ? t("strip.linkedLoading") : t("strip.linkedNone")}</p>
+      ) : (
+        <ul className="wk-linked">
+          {items.map((p) => {
+            const [owner = repo.owner, name = repo.name] = p.repo.split("/");
+            const state: WorkState = p.state === "open" && p.draft ? "draft" : p.state;
+            const local = owner === repo.owner && name === repo.name;
+            return (
+              <li key={`${p.repo}#${p.number}`}>
+                <StateIcon kind="pull" state={state} label={t(`strip.linkedState.${state}`)} />
+                <Link to="/$owner/$name/pulls/$number" params={{ owner, name, number: String(p.number) }} title={p.title}>
+                  {local ? `#${p.number}` : `${p.repo}#${p.number}`} {p.title}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 

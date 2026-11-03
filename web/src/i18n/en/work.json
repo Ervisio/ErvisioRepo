@@ -90,5 +90,18 @@
   "watch.ignoring": "Ignore",
   "watch.watching.hint": "You get a notification for every issue, pull request and release.",
   "watch.participating.hint": "You get notified only when you take part or someone mentions you.",
-  "watch.ignoring.hint": "You get no notifications from this repository."
+  "watch.ignoring.hint": "You get no notifications from this repository.",
+  "side.searchPeople": "Search people…",
+  "side.searchLabel": "Find a person",
+  "side.searchNone": "No one found.",
+  "side.searchFailed": "The search failed.",
+  "side.searchResults": "People found",
+  "side.searchDone": "Done",
+  "subject.subscribe": "Subscribe",
+  "subject.unsubscribe": "Unsubscribe",
+  "subject.subscribedHint": "You get notifications for this conversation.",
+  "subject.unsubscribedHint": "You get no notifications for this conversation.",
+  "subject.subscribedOk": "Subscribed to this conversation",
+  "subject.unsubscribedOk": "Unsubscribed from this conversation",
+  "subject.reset": "Use the repository setting"
 }

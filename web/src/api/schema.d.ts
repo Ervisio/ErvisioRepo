@@ -1862,6 +1862,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/search/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search the users visible to the caller by username or display name prefix
+         * @description For assignee and reviewer pickers. Active users only, exact username
+         *     first, then username prefixes, then display name prefixes. With
+         *     security.user_directory = "shared" (the default) a user sees the
+         *     members of the organizations it belongs to, the collaborators of
+         *     the repositories it owns or collaborates on and, with repo, the
+         *     collaborators and owning organization members of that repository
+         *     (which it must be able to read). With "instance", and for
+         *     administrators, every active user is visible. Restricted users
+         *     always get the shared scope.
+         */
+        get: operations["searchUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/repos/{owner}/{name}/issues": {
         parameters: {
             query?: never;
@@ -2146,6 +2174,34 @@ export interface paths {
         post?: never;
         /** Remove the caller's reaction */
         delete: operations["removeIssueCommentReaction"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/issues/{number}/linked-pulls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        /**
+         * Pull requests that reference an issue
+         * @description Pull requests whose body or comments reference the issue ("#n",
+         *     "owner/name#n"), newest first, at most 100. Pull requests of
+         *     repositories the caller cannot read are left out.
+         */
+        get: operations["listIssueLinkedPulls"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2530,6 +2586,37 @@ export interface paths {
          *     the head moved (sha) or the branches conflict.
          */
         put: operations["mergePull"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/pulls/{number}/update-branch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Bring the head branch up to date with the base
+         * @description Merges the base branch into the head branch (or rebases the head onto
+         *     it) as the caller, who needs the write permission on the head
+         *     repository. The head branch protection applies; the push then
+         *     synchronizes the pull request. 409 when the head moved
+         *     (expectedHeadSha), the branches conflict or the head is already up to
+         *     date.
+         */
+        put: operations["updatePullBranch"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3081,7 +3168,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Imports started by the caller, newest first
+         * @description Repositories the caller can no longer read are left out.
+         */
+        get: operations["listGitHubImports"];
         put?: never;
         /**
          * Import a GitHub repository into a new repository
@@ -3220,6 +3311,26 @@ export interface paths {
          *     refs/heads/sync-conflict/github/<branch>.
          */
         post: operations["resolveGitHubSyncConflict"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Events a webhook can subscribe to
+         * @description GitHub event names accepted in events, "*" (every event) first.
+         */
+        get: operations["listWebhookEvents"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3541,6 +3652,53 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/repos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Number of notification threads per repository
+         * @description The repositories with threads in the inbox, with the threads that
+         *     match all and participating (as in GET /notifications) and the
+         *     unread ones among them, the most recently updated first.
+         */
+        get: operations["listNotificationRepos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/subject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Thread and subscription of the caller for an issue, pull request or release
+         * @description Looks up the caller's thread for a subject (absent when the caller
+         *     never received it) and whether the caller is subscribed to it. Without
+         *     an explicit choice the caller is subscribed when it has a thread,
+         *     takes part in the conversation or watches the repository.
+         */
+        get: operations["getNotificationSubject"];
+        /** Subscribe to (or ignore) an issue, pull request or release */
+        put: operations["setNotificationSubjectSubscription"];
+        post?: never;
+        /** Remove the explicit subscription to a subject (back to the default rules) */
+        delete: operations["deleteNotificationSubjectSubscription"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4595,6 +4753,12 @@ export interface components {
             /** @description Defaults to the current name */
             newName?: string;
         };
+        UserSummary: {
+            username: string;
+            displayName: string;
+            /** @description Absolute https URL of the avatar; empty when unset */
+            avatarUrl: string;
+        };
         RepoCollaborator: {
             username: string;
             displayName: string;
@@ -5359,6 +5523,27 @@ export interface components {
             /** @description The new tip of the branch */
             sha: string;
         };
+        PullUpdateBranchRequest: {
+            /**
+             * @description Default merge
+             * @enum {string}
+             */
+            method?: "merge" | "rebase";
+            /** @description Expected head commit; empty skips the check */
+            expectedHeadSha?: string;
+        };
+        LinkedPull: {
+            /** @description owner/name of the pull request repository */
+            repo: string;
+            /** Format: int64 */
+            number: number;
+            title: string;
+            /** @enum {string} */
+            state: "open" | "closed" | "merged";
+            draft: boolean;
+            /** @description Username of the author; empty when deleted */
+            author: string;
+        };
         PullAutoMerge: {
             /** @enum {string} */
             method: "merge" | "squash" | "rebase";
@@ -5682,6 +5867,10 @@ export interface components {
             /** @description Truncated */
             responseBody: string;
         };
+        WebhookEventCatalog: {
+            /** @description GitHub event names; "*" (every event) first */
+            events: string[];
+        };
         /** @enum {string} */
         NotificationReason: "author" | "assigned" | "mentioned" | "review_requested" | "subscribed" | "comment" | "state_change";
         NotificationThread: {
@@ -5731,6 +5920,26 @@ export interface components {
         ThreadSubscriptionUpdate: {
             /** @description True unsubscribes from the subject */
             ignored?: boolean;
+        };
+        NotificationRepoCount: {
+            /** Format: uuid */
+            repoId: string;
+            owner: string;
+            repo: string;
+            /**
+             * Format: int64
+             * @description Threads matching the filter
+             */
+            count: number;
+            /**
+             * Format: int64
+             * @description Unread threads among them
+             */
+            unread: number;
+        };
+        NotificationSubject: {
+            thread?: components["schemas"]["NotificationThread"];
+            subscription: components["schemas"]["ThreadSubscription"];
         };
         /** @enum {string} */
         RepoWatchLevel: "watching" | "participating" | "ignoring";
@@ -5835,9 +6044,20 @@ export interface components {
         CodePath: string;
         /** @description File path */
         CodeFilePath: string;
+        /** @description Only the threads of this repository (owner/name) */
+        NotificationRepo: string;
+        /** @description Repository of the subject (owner/name) */
+        SubjectRepo: string;
+        /** @description Issue or pull request number (exactly one of number and release) */
+        SubjectNumber: number;
+        /** @description Release id (exactly one of number and release) */
+        SubjectRelease: string;
     };
     requestBodies: never;
-    headers: never;
+    headers: {
+        /** @description "true" when there is a page after this one, "false" otherwise */
+        HasMore: "true" | "false";
+    };
     pathItems: never;
 }
 export type $defs = Record<string, never>;
@@ -8881,6 +9101,35 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    searchUsers: {
+        parameters: {
+            query: {
+                q: string;
+                /** @description owner/name of a repository whose people are also visible */
+                repo?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Users */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSummary"][];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
     listIssues: {
         parameters: {
             query?: {
@@ -8918,6 +9167,7 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    "X-Has-More": components["headers"]["HasMore"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -9512,6 +9762,36 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    listIssueLinkedPulls: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkedPull"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
     listIssueTimeline: {
         parameters: {
             query?: {
@@ -9894,6 +10174,10 @@ export interface operations {
                 head?: string;
                 /** @description Username of the author */
                 author?: string;
+                /** @description Username with a pending review request */
+                reviewRequested?: string;
+                /** @description Full-text search on title and body (websearch syntax) */
+                q?: string;
                 /** @description Default created */
                 sort?: "created" | "updated";
                 offset?: components["parameters"]["PageOffset"];
@@ -10188,6 +10472,43 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             405: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updatePullBranch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Pull request number */
+                number: components["parameters"]["PullNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PullUpdateBranchRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PullMergeResult"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             503: components["responses"]["Unavailable"];
             default: components["responses"]["Problem"];
@@ -11362,6 +11683,33 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    listGitHubImports: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Imports */
+            200: {
+                headers: {
+                    "X-Has-More": components["headers"]["HasMore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GitHubImport"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
     importGitHubRepo: {
         parameters: {
             query?: never;
@@ -11592,6 +11940,27 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    listWebhookEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event catalogue */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookEventCatalog"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
     listRepoWebhooks: {
         parameters: {
             query?: never;
@@ -11799,6 +12168,7 @@ export interface operations {
             /** @description Deliveries */
             200: {
                 headers: {
+                    "X-Has-More": components["headers"]["HasMore"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -12061,6 +12431,7 @@ export interface operations {
             /** @description Deliveries */
             200: {
                 headers: {
+                    "X-Has-More": components["headers"]["HasMore"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -12137,6 +12508,8 @@ export interface operations {
                 participating?: boolean;
                 /** @description Only threads updated at or after this time */
                 since?: string;
+                /** @description Only the threads of this repository (owner/name) */
+                repo?: components["parameters"]["NotificationRepo"];
                 offset?: components["parameters"]["PageOffset"];
                 limit?: components["parameters"]["PageLimit"];
             };
@@ -12149,6 +12522,7 @@ export interface operations {
             /** @description Threads */
             200: {
                 headers: {
+                    "X-Has-More": components["headers"]["HasMore"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -12203,6 +12577,128 @@ export interface operations {
                     "application/json": components["schemas"]["NotificationCount"];
                 };
             };
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listNotificationRepos: {
+        parameters: {
+            query?: {
+                all?: boolean;
+                participating?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Counts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationRepoCount"][];
+                };
+            };
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getNotificationSubject: {
+        parameters: {
+            query: {
+                /** @description Repository of the subject (owner/name) */
+                repo: components["parameters"]["SubjectRepo"];
+                /** @description Issue or pull request number (exactly one of number and release) */
+                number?: components["parameters"]["SubjectNumber"];
+                /** @description Release id (exactly one of number and release) */
+                release?: components["parameters"]["SubjectRelease"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Subject */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationSubject"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    setNotificationSubjectSubscription: {
+        parameters: {
+            query: {
+                /** @description Repository of the subject (owner/name) */
+                repo: components["parameters"]["SubjectRepo"];
+                /** @description Issue or pull request number (exactly one of number and release) */
+                number?: components["parameters"]["SubjectNumber"];
+                /** @description Release id (exactly one of number and release) */
+                release?: components["parameters"]["SubjectRelease"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThreadSubscriptionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Subject */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationSubject"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteNotificationSubjectSubscription: {
+        parameters: {
+            query: {
+                /** @description Repository of the subject (owner/name) */
+                repo: components["parameters"]["SubjectRepo"];
+                /** @description Issue or pull request number (exactly one of number and release) */
+                number?: components["parameters"]["SubjectNumber"];
+                /** @description Release id (exactly one of number and release) */
+                release?: components["parameters"]["SubjectRelease"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Subject */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationSubject"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };

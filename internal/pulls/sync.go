@@ -105,6 +105,11 @@ func (s *Service) refresh(ctx context.Context, l *gitstore.Lease, actor uuid.UUI
 	if err != nil {
 		return p, fmt.Errorf("record mergeability: %w", err)
 	}
+	if p.MergeBaseSha != "" && arg.MergeBaseSha != "" && p.MergeBaseSha != arg.MergeBaseSha {
+		if err := s.reanchorLeft(ctx, l, np, p.MergeBaseSha, arg.MergeBaseSha); err != nil {
+			s.log.WarnContext(ctx, "base side review comments re-anchoring failed", "repo", p.RepoID, "number", p.Number, "err", err)
+		}
+	}
 	return np, nil
 }
 
@@ -239,19 +244,4 @@ func (s *Service) AutoMergeHandler() events.Handler {
 		}
 		return nil
 	})
-}
-
-// RepoDeleted detaches the pull requests whose head lived in a deleted
-// repository; they stay readable but can no longer be merged or updated.
-func (s *Service) RepoDeleted(ctx context.Context, repoID uuid.UUID) error {
-	ps, err := s.q.OpenPullsWithHeadRepo(ctx, nullID(repoID))
-	if err != nil {
-		return fmt.Errorf("pulls with head repo: %w", err)
-	}
-	for _, p := range ps {
-		if err := s.q.ClearPullHeadRepo(ctx, p.IssueID); err != nil {
-			return fmt.Errorf("clear head repo: %w", err)
-		}
-	}
-	return nil
 }

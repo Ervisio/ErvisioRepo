@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PAGE_SIZE, qs, repoBase } from "./code.ts";
 import { CSRF_HEADER, csrfToken } from "./csrf.ts";
-import { ApiError, request } from "./http.ts";
+import { ApiError, request, requestWithHeaders } from "./http.ts";
 import type { components } from "./schema";
 
 // Issues, comments, reactions, labels, milestones, templates and attachments.
@@ -57,11 +57,17 @@ export async function paged<T>(path: string, page: number, params: Record<string
   return { items: rows.slice(0, PAGE_SIZE), hasMore: rows.length > PAGE_SIZE };
 }
 
+/** A page of a list endpoint that answers the X-Has-More header. */
+export async function pagedHeader<T>(path: string, page: number, params: Record<string, string | number | boolean | undefined> = {}): Promise<Paged<T>> {
+  const { data, headers } = await requestWithHeaders<T[]>("GET", `${path}${qs({ ...params, offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE })}`);
+  return { items: data, hasMore: headers.get("X-Has-More") === "true" };
+}
+
 export const useIssues = (owner: string, name: string, f: IssueFilter) =>
   useQuery({
     queryKey: key(owner, name, "list", f),
     queryFn: () =>
-      paged<Issue>(base(owner, name), f.page, {
+      pagedHeader<Issue>(base(owner, name), f.page, {
         state: f.state,
         labels: f.labels?.join(","),
         milestone: f.milestone,

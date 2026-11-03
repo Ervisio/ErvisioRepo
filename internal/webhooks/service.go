@@ -68,6 +68,10 @@ var knownEvents = []string{
 	"check_run", "check_suite",
 }
 
+// KnownEvents returns the event names a hook can subscribe to, "*" (every
+// event) first.
+func KnownEvents() []string { return slices.Clone(knownEvents) }
+
 var (
 	// ErrNotFound means the hook or the delivery does not exist in the scope.
 	ErrNotFound = errors.New("webhook not found")
@@ -496,10 +500,11 @@ func deliveryOut(d dbgen.WebhookDelivery) Delivery {
 		Error: d.Error, CreatedAt: d.CreatedAt.Time, DeliveredAt: tsPtr(d.DeliveredAt)}
 }
 
-// Deliveries lists the deliveries of a hook, newest first.
-func (s *Service) Deliveries(ctx context.Context, sc Scope, id uuid.UUID, offset, limit int) ([]Delivery, error) {
+// Deliveries returns a page of the deliveries of a hook, the most recent
+// first, and whether more deliveries follow the page.
+func (s *Service) Deliveries(ctx context.Context, sc Scope, id uuid.UUID, offset, limit int) ([]Delivery, bool, error) {
 	if _, err := s.hook(ctx, sc, id); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	if limit <= 0 {
 		limit = defaultPageSize
@@ -507,9 +512,13 @@ func (s *Service) Deliveries(ctx context.Context, sc Scope, id uuid.UUID, offset
 	limit = min(limit, maxPageSize)
 	offset = max(offset, 0)
 	rows, err := s.q.ListWebhookDeliveries(ctx, dbgen.ListWebhookDeliveriesParams{WebhookID: id,
-		Limit: int32(limit), Offset: int32(min(offset, 1<<30))}) //nolint:gosec // bounded above
+		Limit: int32(limit + 1), Offset: int32(min(offset, 1<<30))}) //nolint:gosec // bounded above
 	if err != nil {
-		return nil, fmt.Errorf("list deliveries: %w", err)
+		return nil, false, fmt.Errorf("list deliveries: %w", err)
+	}
+	more := len(rows) > limit
+	if more {
+		rows = rows[:limit]
 	}
 	out := make([]Delivery, 0, len(rows))
 	for _, r := range rows {
@@ -517,7 +526,7 @@ func (s *Service) Deliveries(ctx context.Context, sc Scope, id uuid.UUID, offset
 			Status: r.Status, Attempts: int(r.Attempts), StatusCode: int(r.StatusCode), DurationMs: int(r.DurationMs),
 			Error: r.Error, CreatedAt: r.CreatedAt.Time, DeliveredAt: tsPtr(r.DeliveredAt)})
 	}
-	return out, nil
+	return out, more, nil
 }
 
 func (s *Service) delivery(ctx context.Context, sc Scope, hookID, id uuid.UUID) (dbgen.WebhookDelivery, error) {

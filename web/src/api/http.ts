@@ -22,6 +22,11 @@ export class ApiError extends Error {
  * Sends the CSRF header on unsafe methods; throws ApiError on any non-2xx answer.
  */
 export async function request<T = void>(method: string, path: string, body?: unknown): Promise<T> {
+  return (await requestWithHeaders<T>(method, path, body)).data;
+}
+
+/** Like request, also returning the response headers (for X-Has-More and the like). */
+export async function requestWithHeaders<T = void>(method: string, path: string, body?: unknown): Promise<{ data: T; headers: Headers }> {
   const headers: Record<string, string> = { Accept: "application/json, application/problem+json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (needsCSRF(method) && typeof document !== "undefined") {
@@ -35,9 +40,9 @@ export async function request<T = void>(method: string, path: string, body?: unk
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) throw await toError(res);
-  if (res.status === 204) return undefined as T;
+  if (res.status === 204) return { data: undefined as T, headers: res.headers };
   const text = await res.text();
-  return (text ? JSON.parse(text) : undefined) as T;
+  return { data: (text ? JSON.parse(text) : undefined) as T, headers: res.headers };
 }
 
 async function toError(res: Response): Promise<ApiError> {

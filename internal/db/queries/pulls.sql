@@ -30,7 +30,9 @@ SELECT * FROM pull_requests WHERE issue_id = ANY(@ids::uuid[]);
 
 -- name: SearchPullRequests :many
 -- Pull requests of a repository. state is open, closed (not merged), merged,
--- all ('' = all). base/head filter on the branch names ('' = any).
+-- all ('' = all). base/head filter on the branch names ('' = any); query is
+-- websearch text matched against title and body; by_reviewer keeps the pull
+-- requests with a pending review request for reviewer_id.
 SELECT i.* FROM issues i
 JOIN pull_requests p ON p.issue_id = i.id
 WHERE i.repo_id = @repo_id AND i.kind = 'pull'
@@ -43,6 +45,10 @@ WHERE i.repo_id = @repo_id AND i.kind = 'pull'
   AND (@head_ref::text = '' OR p.head_ref = @head_ref::text)
   AND (NOT @by_head_repo::boolean OR p.head_repo_id = @head_repo_id::uuid)
   AND (NOT @by_author::boolean OR i.author_id = @author_id::uuid)
+  AND (NOT @by_reviewer::boolean OR EXISTS (
+         SELECT 1 FROM pull_review_requests rr WHERE rr.pull_id = p.issue_id AND rr.reviewer_id = @reviewer_id::uuid))
+  AND (@query::text = '' OR
+       issue_search_vector(i.title, i.body) @@ websearch_to_tsquery('simple', @query::text))
 ORDER BY
   CASE WHEN @sort::text = 'updated' THEN i.updated_at END DESC,
   i.number DESC
@@ -228,3 +234,41 @@ SELECT count(*) FROM pull_review_comments WHERE review_id = @review_id;
 
 -- name: GetPullReviewCommentInRepo :one
 SELECT * FROM pull_review_comments WHERE id = @id AND repo_id = @repo_id;
+
+-- ---- fork networks ----
+
+-- name: GetForkNetworkMember :one
+SELECT * FROM fork_network_members WHERE repo_id = @repo_id;
+
+-- name: InsertForkNetwork :exec
+INSERT INTO fork_networks (id, root_repo_id) VALUES (@id, @root_repo_id);
+
+-- name: AddForkNetworkMember :exec
+INSERT INTO fork_network_members (repo_id, network_id, pooled) VALUES (@repo_id, @network_id, @pooled)
+ON CONFLICT (repo_id) DO NOTHING;
+
+-- name: SetForkNetworkMemberPooled :exec
+UPDATE fork_network_members SET pooled = @pooled WHERE repo_id = @repo_id;
+
+-- name: DeleteEmptyForkNetwork :execrows
+-- Removes a network without members (its pool can then be trashed).
+DELETE FROM fork_networks n WHERE n.id = @id
+  AND NOT EXISTS (SELECT 1 FROM fork_network_members m WHERE m.network_id = n.id);
+
+-- ---- deletion and cross-references ----
+
+-- name: PullsWithHeadRepoForDelete :many
+-- Open pull requests of other repositories whose head lives in head_repo_id,
+-- locked for the deletion of that repository.
+SELECT p.* FROM pull_requests p JOIN issues i ON i.id = p.issue_id
+WHERE p.head_repo_id = @head_repo_id AND p.repo_id <> @head_repo_id AND i.state = 'open' AND p.merged_at IS NULL
+ORDER BY p.repo_id, p.number
+FOR UPDATE OF p;
+
+-- name: LinkedPullsOfIssue :many
+-- Pull requests whose body or comments reference issue_id, newest first.
+SELECT sqlc.embed(i), p.merged_at, p.draft FROM issues i JOIN pull_requests p ON p.issue_id = i.id
+WHERE i.kind = 'pull' AND EXISTS (
+  SELECT 1 FROM issue_references r WHERE r.source_issue_id = i.id AND r.target_issue_id = @issue_id)
+ORDER BY i.created_at DESC, i.id DESC
+LIMIT 100;

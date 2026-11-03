@@ -1,6 +1,5 @@
 import { useState, type FormEvent } from "react";
 import {
-  WEBHOOK_EVENTS,
   useDeleteHook,
   useDeliveries,
   useDelivery,
@@ -8,6 +7,7 @@ import {
   usePingHook,
   useRedeliver,
   useSaveHook,
+  useWebhookEvents,
   type Webhook,
   type WebhookCreate,
   type WebhookDelivery,
@@ -101,6 +101,9 @@ function HookEditor({ base, hook, close }: { base: string; hook?: Webhook; close
   const [events, setEvents] = useState<string[]>(hook ? hook.events.filter((e) => e !== "*") : ["push"]);
   const [active, setActive] = useState(hook?.active ?? true);
   const toggle = (e: string) => setEvents((xs) => (xs.includes(e) ? xs.filter((x) => x !== e) : [...xs, e]));
+  const catalog = useWebhookEvents();
+  // The server catalogue, plus any event the hook already has (kept selectable).
+  const known = [...new Set([...(catalog.data ?? []).filter((e) => e !== "*"), ...(hook?.events ?? []).filter((e) => e !== "*")])];
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -123,7 +126,7 @@ function HookEditor({ base, hook, close }: { base: string; hook?: Webhook; close
         </label>
         {!all && (
           <div className="wk-evgrid">
-            {WEBHOOK_EVENTS.map((ev) => (
+            {known.map((ev) => (
               <label key={ev} className="acc-check">
                 <input type="checkbox" checked={events.includes(ev)} onChange={() => toggle(ev)} />
                 <span className="ui-mono">{ev}</span>

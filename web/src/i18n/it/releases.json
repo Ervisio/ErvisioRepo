@@ -47,5 +47,11 @@
   "form.cancel": "Annulla",
   "form.created": "Release creata",
   "form.saved": "Release salvata",
-  "form.notAllowed": "Servono permessi di scrittura per gestire le release"
+  "form.notAllowed": "Servono permessi di scrittura per gestire le release",
+  "sub.subscribe": "Iscriviti",
+  "sub.unsubscribe": "Annulla iscrizione",
+  "sub.subscribedHint": "Ricevi le notifiche su questa release.",
+  "sub.unsubscribedHint": "Non ricevi notifiche su questa release.",
+  "sub.subscribedOk": "Iscrizione a questa release attivata",
+  "sub.unsubscribedOk": "Iscrizione a questa release annullata"
 }

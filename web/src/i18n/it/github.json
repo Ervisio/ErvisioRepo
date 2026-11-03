@@ -91,5 +91,12 @@
   "sync.resolve.keep_ervisio": "Mantieni questa versione",
   "sync.resolve.keep_github": "Mantieni GitHub",
   "sync.resolve.merge_request": "Apri una pull request",
-  "sync.resolved": "Divergenza risolta"
+  "sync.resolved": "Divergenza risolta",
+  "imports.title": "Le tue importazioni da GitHub",
+  "imports.hint": "Le importazioni che hai avviato, su tutti i repository che puoi ancora vedere.",
+  "imports.empty": "Non hai ancora importato nulla da GitHub.",
+  "imports.repo": "Repository",
+  "imports.source": "Da GitHub",
+  "imports.status": "Stato",
+  "imports.created": "Avviata"
 }

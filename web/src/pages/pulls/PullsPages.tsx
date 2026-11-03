@@ -6,6 +6,8 @@ import { useCollaborators } from "../../api/issues.ts";
 import {
   useAutoMerge,
   useCreatePull,
+  useHeadChecks,
+  useHeadStatus,
   useDismissReview,
   useMerge,
   useMergeability,
@@ -14,7 +16,10 @@ import {
   usePulls,
   useRequestReviewers,
   useReviews,
+  useUpdateBranch,
   useUpdatePull,
+  type CheckRun,
+  type CommitStatus,
   type MergeMethod,
   type PullFilter,
   type PullRequest,
@@ -34,7 +39,9 @@ import { PullFiles } from "./PullFiles.tsx";
 
 export type PullSearch = {
   state?: "closed" | "merged" | "all";
+  q?: string;
   author?: string;
+  reviewRequested?: string;
   base?: string;
   sort?: "updated";
   compare?: boolean;
@@ -61,9 +68,18 @@ function PullList({ repo, search }: { repo: Repo; search: PullSearch }) {
   const layout = useListLayout();
   const me = useSession().data?.username;
   const page = search.page ?? 1;
-  const filter: PullFilter = { state: search.state ?? "open", author: search.author, base: search.base, sort: search.sort, page };
+  const filter: PullFilter = {
+    state: search.state ?? "open",
+    q: search.q,
+    author: search.author,
+    reviewRequested: search.reviewRequested,
+    base: search.base,
+    sort: search.sort,
+    page,
+  };
   const list = usePulls(owner, name, filter);
   const branches = useBranches(owner, name, 0, 100);
+  const [q, setQ] = useState(search.q ?? "");
 
   const go = (patch: Partial<PullSearch>) =>
     void navigate({ to: "/$owner/$name/pulls", params: { owner, name }, search: { ...search, page: undefined, ...patch } });
@@ -79,12 +95,17 @@ function PullList({ repo, search }: { repo: Repo; search: PullSearch }) {
   const filters = (
     <>
       <FilterGroup title={t("filters.views")}>
-        <FilterItem active={!search.author} onClick={() => go({ author: undefined })}>
+        <FilterItem active={!search.author && !search.reviewRequested} onClick={() => go({ author: undefined, reviewRequested: undefined })}>
           {t("view.all")}
         </FilterItem>
         {me && (
-          <FilterItem active={search.author === me} onClick={() => go({ author: me })}>
+          <FilterItem active={search.author === me} onClick={() => go({ author: me, reviewRequested: undefined })}>
             {t("view.created")}
+          </FilterItem>
+        )}
+        {me && (
+          <FilterItem active={search.reviewRequested === me} onClick={() => go({ reviewRequested: me, author: undefined })}>
+            {t("view.reviewRequested")}
           </FilterItem>
         )}
       </FilterGroup>
@@ -114,6 +135,17 @@ function PullList({ repo, search }: { repo: Repo; search: PullSearch }) {
             );
           })}
         </div>
+        <form
+          className="wk-search"
+          role="search"
+          onSubmit={(e) => {
+            e.preventDefault();
+            go({ q: q.trim() || undefined });
+          }}
+        >
+          <Icon name="search" />
+          <input className="ui-input" type="search" aria-label={t("list.search")} placeholder={t("list.searchPlaceholder")} value={q} onChange={(e) => setQ(e.target.value)} />
+        </form>
         {layout !== "b" && (
           <Select
             label={t("list.base")}
@@ -644,6 +676,43 @@ function Check({ ok, children, tone }: { ok: boolean; children: ReactNode; tone?
   );
 }
 
+const statusTone = (s: string): "ok" | "warn" | "err" => (s === "success" ? "ok" : s === "pending" ? "warn" : "err");
+const runTone = (r: CheckRun): "ok" | "warn" | "err" =>
+  r.status !== "completed" ? "warn" : r.conclusion === "success" || r.conclusion === "neutral" || r.conclusion === "skipped" ? "ok" : "err";
+
+/** Commit statuses and latest check runs of the head commit. */
+function HeadChecks({ repo, sha }: { repo: Repo; sha: string }) {
+  const t = useT("pulls");
+  const status = useHeadStatus(repo.owner, repo.name, sha);
+  const checks = useHeadChecks(repo.owner, repo.name, sha);
+  const statuses: CommitStatus[] = status.data?.statuses ?? [];
+  const runs = checks.data?.checkRuns ?? [];
+  if (statuses.length === 0 && runs.length === 0) return null;
+  const row = (key: string, tone: "ok" | "warn" | "err", name: string, detail: string, url: string) => (
+    <Check key={key} ok={tone === "ok"} tone={tone === "warn" ? "warn" : undefined}>
+      <b>{name}</b>
+      {detail && <span className="ui-note"> {detail}</span>}
+      {url && (
+        <a href={url} target="_blank" rel="noreferrer noopener">
+          {" "}
+          {t("checks.details")}
+        </a>
+      )}
+    </Check>
+  );
+  return (
+    <div className="wk-merge-checks">
+      <h4>{t("checks.title", { sha: shortSha(sha) })}</h4>
+      <ul className="wk-checks" aria-label={t("checks.title", { sha: shortSha(sha) })}>
+        {statuses.map((s) => row(`s:${s.context}`, statusTone(s.state), s.context, s.description || t(`checks.state.${s.state}`), s.targetUrl))}
+        {runs.map((r) =>
+          row(`r:${r.id}`, runTone(r), r.name, r.title || (r.status === "completed" ? t("checks.conclusion", { conclusion: r.conclusion }) : t(`checks.run.${r.status}`)), r.detailsUrl),
+        )}
+      </ul>
+    </div>
+  );
+}
+
 function MergeBox({ repo, pr }: { repo: Repo; pr: PullRequest }) {
   const t = useT("pulls");
   const notify = useNotify();
@@ -652,6 +721,10 @@ function MergeBox({ repo, pr }: { repo: Repo; pr: PullRequest }) {
   const m = useMergeability(repo.owner, repo.name, pr.issue.number, open);
   const merge = useMerge(repo.owner, repo.name, pr.issue.number);
   const auto = useAutoMerge(repo.owner, repo.name, pr.issue.number);
+  const update = useUpdateBranch(repo.owner, repo.name, pr.issue.number);
+  // The server checks the push permission on the head repository.
+  const me = useSession().data?.username;
+  const canUpdate = writer || (me !== undefined && me === pr.issue.author);
   const [method, setMethod] = useState<MergeMethod>(pr.autoMerge?.method ?? "merge");
   const [deleteBranch, setDeleteBranch] = useState(false);
   const [title, setTitle] = useState("");
@@ -733,6 +806,17 @@ function MergeBox({ repo, pr }: { repo: Repo; pr: PullRequest }) {
           {data.behind && (
             <Check ok={false} tone="warn">
               {t("merge.behind", { base: pr.base.ref })}
+              {canUpdate && (
+                <Button
+                  size="sm"
+                  disabled={update.isPending}
+                  onClick={() =>
+                    update.mutate({ method: "merge", expectedHeadSha: pr.head.sha }, { onSuccess: () => notify.ok(t("merge.updated")), onError: notify.fail })
+                  }
+                >
+                  {t("merge.updateBranch")}
+                </Button>
+              )}
             </Check>
           )}
           {data.codeOwners.map((c) => (
@@ -753,6 +837,7 @@ function MergeBox({ repo, pr }: { repo: Repo; pr: PullRequest }) {
           ))}
         </ul>
       )}
+      <HeadChecks repo={repo} sha={pr.head.sha} />
       {pr.autoMerge && (
         <div className="ui-note wk-merge-auto">
           <Icon name="clock" />

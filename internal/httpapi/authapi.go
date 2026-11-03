@@ -27,6 +27,7 @@ type Identity interface {
 	RequestPasswordReset(ctx context.Context, address string, c identity.Client) error
 	ResetPassword(ctx context.Context, token, password string, c identity.Client) error
 	CreateInvite(ctx context.Context, actor auth.Principal, email string, c identity.Client) (identity.Invite, error)
+	SearchUsers(ctx context.Context, who auth.Principal, query string, repoID uuid.UUID, limit int) ([]identity.UserSummary, error)
 }
 
 // problemResponse is an error answer usable by every operation.

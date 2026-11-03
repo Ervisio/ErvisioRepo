@@ -130,3 +130,31 @@ ON CONFLICT (org_id, user_id) DO UPDATE SET role = EXCLUDED.role;
 
 -- name: GetOrgMemberRole :one
 SELECT role FROM org_members WHERE org_id = $1 AND user_id = $2;
+
+-- name: SearchUsers :many
+-- Active users whose username or display name starts with pattern (a
+-- LIKE pattern, lower case), exact username first. Without instance only
+-- the users visible to the caller: itself, the members of its
+-- organizations, the people of the repositories it owns or collaborates
+-- on and, with repo_id, the collaborators, owner and owning organization
+-- members of that repository.
+WITH visible AS (
+    SELECT @caller::uuid AS user_id
+    UNION SELECT m2.user_id FROM org_members m1 JOIN org_members m2 ON m2.org_id = m1.org_id WHERE m1.user_id = @caller
+    UNION SELECT c.user_id FROM repo_collaborators c JOIN repos r ON r.id = c.repo_id WHERE r.owner_id = @caller
+    UNION SELECT c2.user_id FROM repo_collaborators c1 JOIN repo_collaborators c2 ON c2.repo_id = c1.repo_id
+        WHERE c1.user_id = @caller
+    UNION SELECT r.owner_id FROM repo_collaborators c JOIN repos r ON r.id = c.repo_id WHERE c.user_id = @caller
+    UNION SELECT c.user_id FROM repo_collaborators c WHERE c.repo_id = sqlc.narg('repo_id')::uuid
+    UNION SELECT r.owner_id FROM repos r WHERE r.id = sqlc.narg('repo_id')::uuid
+    UNION SELECT m.user_id FROM org_members m JOIN repos r ON r.owner_id = m.org_id
+        WHERE r.id = sqlc.narg('repo_id')::uuid
+)
+SELECT u.id, n.name AS username, u.display_name, u.avatar_url
+FROM users u
+JOIN namespaces n ON n.id = u.id
+WHERE u.suspended_at IS NULL
+    AND (@instance::boolean OR u.id IN (SELECT v.user_id FROM visible v))
+    AND (n.name_lower LIKE @pattern::text OR lower(u.display_name) LIKE @pattern::text)
+ORDER BY (n.name_lower = @exact::text) DESC, (n.name_lower LIKE @pattern::text) DESC, n.name_lower
+LIMIT @lim;

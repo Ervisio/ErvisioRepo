@@ -700,13 +700,13 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 
 ### Fase 5 — Collaborazione, API e migrazione
 
-- [ ] PR con fork e pool di oggetti, `merge-tree`, review inline, suggested changes, tre strategie di merge, auto-merge.
-- [ ] Branch protection e regole sui tag applicate in `pre-receive`, CODEOWNERS.
-- [ ] Issue, label, milestone, menzioni, riferimenti incrociati, chiusura automatica, template, ricerca full-text.
-- [ ] Notifiche in-app ed email.
-- [ ] Webhook in formato GitHub e Ervisio, con cronologia delle consegne.
-- [ ] Completamento di `/api/v1` e del sottoinsieme `/api/v3`, con test di contratto che usano `gh` e `go-github`.
-- [ ] Import da GitHub (repo e organizzazioni con issue, PR, release), pull mirror, backup e sync bidirezionale con GitHub tramite GitHub App (§5.6).
+- [x] PR con fork e pool di oggetti, `merge-tree`, review inline, suggested changes, tre strategie di merge, auto-merge.
+- [x] Branch protection e regole sui tag applicate in `pre-receive`, CODEOWNERS.
+- [x] Issue, label, milestone, menzioni, riferimenti incrociati, chiusura automatica, template, ricerca full-text.
+- [x] Notifiche in-app ed email.
+- [x] Webhook in formato GitHub e Ervisio, con cronologia delle consegne.
+- [x] Completamento di `/api/v1` e del sottoinsieme `/api/v3`; i test di contratto con `gh` e `go-github` li fa l'utente.
+- [x] Import da GitHub (repo e organizzazioni con issue, PR, release), pull mirror, backup e sync bidirezionale con GitHub tramite GitHub App (§5.6).
 
 **Accettazione**: import completo di un'organizzazione GitHub reale di prova; `gh pr list`, `gh issue create` e `gh release view` funzionano con `GH_HOST`; nessuna regola di branch protection aggirabile via SSH (test `sec_protect_*`).
 
@@ -721,7 +721,10 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 
 **Accettazione**: una suite di workflow reali (Node, Go, Python, Docker build e push, matrix, servizi Postgres) gira senza modifiche e dà lo stesso esito che su GitHub; le PR da fork non vedono mai i segreti.
 
-### Fase 7 — Registry OCI e dogfooding
+### Fase 7 — Registry OCI e dogfooding (rinviata)
+
+> Rinviata su decisione dell'utente (2026-11-03): non serve per ora.
+
 
 - [ ] Distribution Spec v1.1 (§7), token auth, upload a chunk, mount, referrers, retention e GC.
 - [ ] Pagine dei pacchetti nella UI e collegamento ai repo.
@@ -731,17 +734,22 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 
 ### Fase 8 — Integrazione Ervisio e installazione
 
-- [ ] Socket admin `/api/plugin/*` con segreto per processo.
-- [ ] Plugin in `plugin/` (pagine, widget, capabilities §9.2) con test `node --test` e release tramite il workflow riutilizzabile.
+> Ambito ridotto su decisione dell'utente (2026-11-03). Le distribuzioni sono due: **standalone** (binario nativo) e **Docker**. Il plugin Ervisio non è una terza distribuzione: automatizza l'installazione di una delle due, scelta dall'utente, e offre una configurazione grafica nelle impostazioni di Ervisio. Niente SSO col core: Ervisio usa il login con gli account Linux, che non si adatta.
+
+- [ ] Docker: Dockerfile multi-stage, `compose.yaml`, `setup.sh` e `setup.bat`.
+- [ ] Standalone: pacchetti nativi nfpm (.deb e .rpm), unit systemd, `install.sh`, release firmate.
+- [ ] Socket admin `/api/plugin/*` con segreto per processo, usato dal plugin per leggere e scrivere la configurazione.
+- [ ] Plugin in `plugin/`: installazione automatica in modalità standalone o Docker (a scelta dell'utente) e pagina di configurazione grafica nelle impostazioni di Ervisio.
 - [ ] Flusso Caddy in TS (dal plugin) e in Go (`ervisio-repo caddy setup`), con i parametri Git del §9.4.
-- [ ] Docker: Dockerfile multi-stage, `compose.yaml`, `setup.sh` e `setup.bat`, smoke test in CI.
-- [ ] Pacchetti nativi nfpm (.deb e .rpm), unit systemd, `install.sh`, release firmate.
-- [ ] SSO col core: PR su `ervisio` e `plugin-sdk` per `sdk.identity.assertion`, poi pairing e login (§9.3).
 - [ ] Voce nel catalogo `Ervisio/plugins`.
+- ~~SSO col core~~ (tolto).
 
-**Accettazione**: dal pannello Ervisio si installa ErvisioRepo (Docker e nativo), si configura `git.<dominio>` con TLS e si entra con SSO senza digitare password.
+**Accettazione**: ErvisioRepo si installa standalone e con Docker senza il plugin; dal pannello Ervisio il plugin installa una delle due modalità, configura `git.<dominio>` con TLS e permette di modificare la configurazione dalle impostazioni.
 
-### Fase 9 — Isolamento e hardening per l'istanza pubblica
+### Fase 9 — Isolamento e hardening per l'istanza pubblica (rinviata)
+
+> Rinviata su decisione dell'utente (2026-11-03).
+
 
 - [ ] Backend `microvm` con Firecracker: immagini kernel e rootfs, rete tap con egress filtrato, snapshot per avvio rapido, pulizia garantita.
 - [ ] Policy di fiducia (§6.3) e approvazione dei workflow per i contributor esterni.
@@ -753,9 +761,9 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 
 ### Fase 10 — Beta e v1.0
 
-- [ ] Documentazione per admin e utenti (en e it), guida alla migrazione da GitHub, guida al DR.
-- [ ] Test di carico: 100 clone concorrenti in cache, 20 push concorrenti, 5 hydration concorrenti.
-- [ ] Esercitazione DR reale su Hetzner: server nuovo, restore da Object Storage, misura di RTO e RPO.
+- ~~Documentazione per admin e utenti, guida alla migrazione da GitHub~~ (tolte su decisione dell'utente, 2026-11-03).
+- [ ] Guida al DR (en e it).
+- ~~Test di carico ed esercitazione DR su Hetzner~~: li esegue l'utente (2026-11-03), non fanno parte del lavoro degli agenti.
 - [ ] Release v1.0.0 firmata, pacchetti, immagini e plugin nel catalogo.
 
 **Accettazione**: obiettivi del §1 misurati e rispettati; l'esercitazione DR è documentata con i tempi reali.

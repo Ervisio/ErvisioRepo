@@ -149,6 +149,52 @@ func (q *Queries) GetNotificationThread(ctx context.Context, arg GetNotification
 	return i, err
 }
 
+const getNotificationThreadBySubject = `-- name: GetNotificationThreadBySubject :one
+SELECT t.id, t.user_id, t.repo_id, t.subject_type, t.subject_key, t.number, t.title, t.reason, t.summary, t.unread, t.done, t.last_event_id, t.last_actor_id, t.last_read_at, t.emailed_at, t.created_at, t.updated_at, n.name AS owner_name, r.name AS repo_name
+FROM notification_threads t
+JOIN repos r ON r.id = t.repo_id
+JOIN namespaces n ON n.id = r.owner_id
+WHERE t.user_id = $1 AND t.subject_key = $2
+`
+
+type GetNotificationThreadBySubjectParams struct {
+	UserID     uuid.UUID
+	SubjectKey string
+}
+
+type GetNotificationThreadBySubjectRow struct {
+	NotificationThread NotificationThread
+	OwnerName          string
+	RepoName           string
+}
+
+func (q *Queries) GetNotificationThreadBySubject(ctx context.Context, arg GetNotificationThreadBySubjectParams) (GetNotificationThreadBySubjectRow, error) {
+	row := q.db.QueryRow(ctx, getNotificationThreadBySubject, arg.UserID, arg.SubjectKey)
+	var i GetNotificationThreadBySubjectRow
+	err := row.Scan(
+		&i.NotificationThread.ID,
+		&i.NotificationThread.UserID,
+		&i.NotificationThread.RepoID,
+		&i.NotificationThread.SubjectType,
+		&i.NotificationThread.SubjectKey,
+		&i.NotificationThread.Number,
+		&i.NotificationThread.Title,
+		&i.NotificationThread.Reason,
+		&i.NotificationThread.Summary,
+		&i.NotificationThread.Unread,
+		&i.NotificationThread.Done,
+		&i.NotificationThread.LastEventID,
+		&i.NotificationThread.LastActorID,
+		&i.NotificationThread.LastReadAt,
+		&i.NotificationThread.EmailedAt,
+		&i.NotificationThread.CreatedAt,
+		&i.NotificationThread.UpdatedAt,
+		&i.OwnerName,
+		&i.RepoName,
+	)
+	return i, err
+}
+
 const getRepoSubscription = `-- name: GetRepoSubscription :one
 SELECT user_id, repo_id, level, created_at, updated_at FROM repo_subscriptions WHERE user_id = $1 AND repo_id = $2
 `
@@ -191,6 +237,65 @@ func (q *Queries) GetThreadSubscription(ctx context.Context, arg GetThreadSubscr
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const listNotificationRepoCounts = `-- name: ListNotificationRepoCounts :many
+SELECT t.repo_id, n.name AS owner_name, r.name AS repo_name,
+    count(*)::bigint AS total,
+    (count(*) FILTER (WHERE t.unread))::bigint AS unread,
+    max(t.updated_at)::timestamptz AS last_updated_at
+FROM notification_threads t
+JOIN repos r ON r.id = t.repo_id
+JOIN namespaces n ON n.id = r.owner_id
+WHERE t.user_id = $1 AND NOT t.done
+    AND ($2::boolean OR t.unread)
+    AND (NOT $3::boolean OR t.reason <> 'subscribed')
+GROUP BY t.repo_id, n.name, r.name
+ORDER BY last_updated_at DESC, t.repo_id
+`
+
+type ListNotificationRepoCountsParams struct {
+	UserID        uuid.UUID
+	IncludeRead   bool
+	Participating bool
+}
+
+type ListNotificationRepoCountsRow struct {
+	RepoID        uuid.UUID
+	OwnerName     string
+	RepoName      string
+	Total         int64
+	Unread        int64
+	LastUpdatedAt pgtype.Timestamptz
+}
+
+// Threads per repository matching the inbox filters (as in
+// ListNotificationThreads), with the unread ones among them.
+func (q *Queries) ListNotificationRepoCounts(ctx context.Context, arg ListNotificationRepoCountsParams) ([]ListNotificationRepoCountsRow, error) {
+	rows, err := q.db.Query(ctx, listNotificationRepoCounts, arg.UserID, arg.IncludeRead, arg.Participating)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListNotificationRepoCountsRow{}
+	for rows.Next() {
+		var i ListNotificationRepoCountsRow
+		if err := rows.Scan(
+			&i.RepoID,
+			&i.OwnerName,
+			&i.RepoName,
+			&i.Total,
+			&i.Unread,
+			&i.LastUpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listNotificationThreads = `-- name: ListNotificationThreads :many

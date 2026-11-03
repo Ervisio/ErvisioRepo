@@ -84,6 +84,7 @@ func (c *Config) validate() []error {
 	v.required("security.master_key_file", c.Security.MasterKeyFile)
 	v.oneOf("security.registration", c.Security.Registration,
 		RegistrationOpen, RegistrationInvite, RegistrationClosed)
+	v.oneOf("security.user_directory", c.Security.UserDirectory, UserDirectoryShared, UserDirectoryInstance)
 
 	v.oneOf("actions.default_actions_url", c.Actions.DefaultActionsURL, "github", "mirror-only")
 	v.oneOf("log.level", c.Log.Level, "debug", "info", "warn", "error")

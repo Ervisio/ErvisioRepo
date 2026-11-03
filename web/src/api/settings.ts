@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { qs, repoBase } from "./code.ts";
 import { request } from "./http.ts";
-import { paged } from "./issues.ts";
+import { pagedHeader } from "./issues.ts";
 import type { components } from "./schema";
 
 // Repository and organization settings of phase 5: branch protection, tag rules, webhooks, GitHub.
@@ -54,21 +54,13 @@ export function useDeleteRule(owner: string, name: string, kind: RuleKind) {
 export const repoHooks = (owner: string, name: string) => `${repoBase(owner, name)}/hooks`;
 export const orgHooks = (org: string) => `/orgs/${enc(org)}/hooks`;
 
-/** Events a webhook can subscribe to ("*" means every event). */
-export const WEBHOOK_EVENTS = [
-  "push",
-  "create",
-  "delete",
-  "issues",
-  "issue_comment",
-  "label",
-  "milestone",
-  "release",
-  "pull_request",
-  "pull_request_review",
-  "pull_request_review_comment",
-  "status",
-] as const;
+/** Events a webhook can subscribe to, from the server ("*" means every event). */
+export const useWebhookEvents = () =>
+  useQuery({
+    queryKey: ["hooks", "events"],
+    queryFn: async () => (await request<S["WebhookEventCatalog"]>("GET", "/webhooks/events")).events,
+    staleTime: Infinity,
+  });
 
 export const useHooks = (base: string) => useQuery({ queryKey: ["hooks", base], queryFn: () => request<Webhook[]>("GET", base) });
 
@@ -82,7 +74,7 @@ export const usePingHook = (base: string) => useInvalidating<string, unknown>(["
 export const useDeliveries = (base: string, hookId: string, page: number) =>
   useQuery({
     queryKey: ["hooks", base, hookId, "deliveries", page],
-    queryFn: () => paged<WebhookDelivery>(`${base}/${enc(hookId)}/deliveries`, page),
+    queryFn: () => pagedHeader<WebhookDelivery>(`${base}/${enc(hookId)}/deliveries`, page),
     placeholderData: keepPreviousData,
   });
 export const useDelivery = (base: string, hookId: string, deliveryId: string | undefined) =>
@@ -107,6 +99,13 @@ export const useCheckConnection = () =>
   useMutation({ mutationFn: (id: string) => request<S["GitHubConnectionCheck"]>("POST", `/github/connections/${enc(id)}/check`) });
 
 export const useStartImport = () => useInvalidating<GitHubImportCreate, GitHubImport>(["github"], (b) => request("POST", "/github/imports", b));
+export const useMyImports = (page: number) =>
+  useQuery({
+    queryKey: ["github", "imports", page],
+    queryFn: () => pagedHeader<GitHubImport>("/github/imports", page),
+    placeholderData: keepPreviousData,
+    refetchInterval: (q) => (q.state.data?.items.some((i) => i.status === "pending" || i.status === "running") ? 5000 : false),
+  });
 export const useRepoImport = (owner: string, name: string) =>
   useQuery({
     queryKey: ["github", "import", owner, name],

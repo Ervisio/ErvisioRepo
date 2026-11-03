@@ -77,6 +77,8 @@ type Pulls interface {
 	ListCommits(ctx context.Context, who auth.Principal, owner, name string, number int64, offset, limit int) ([]gitbrowse.Commit, bool, error)
 	ListFiles(ctx context.Context, who auth.Principal, owner, name string, number int64) ([]gitbrowse.FileChange, error)
 	Merge(ctx context.Context, who auth.Principal, owner, name string, number int64, in pulls.MergeInput) (string, error)
+	Diff(ctx context.Context, who auth.Principal, owner, name string, number int64, paths []string) (gitbrowse.Diff, error)
+	UpdateBranch(ctx context.Context, who auth.Principal, owner, name string, number int64, in pulls.UpdateBranchInput) (string, error)
 
 	ListReviews(ctx context.Context, who auth.Principal, owner, name string, number int64, offset, limit int) ([]pulls.Review, error)
 	GetReview(ctx context.Context, who auth.Principal, owner, name string, number int64, id uuid.UUID) (pulls.Review, error)

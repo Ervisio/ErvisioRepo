@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/issues"
 	"github.com/Ervisio/ErvisioRepo/internal/pulls"
 )
@@ -260,6 +261,12 @@ func (c *call) getPull() error {
 	if err != nil {
 		return err
 	}
+	switch c.pullMedia() {
+	case "diff":
+		return c.pullDiff(n)
+	case "patch":
+		return c.pullPatch(p)
+	}
 	return c.onePull(http.StatusOK, p)
 }
 
@@ -368,12 +375,26 @@ func (c *call) listPullFiles() error {
 	if err != nil {
 		return err
 	}
+	d, err := c.s.d.Pulls.Diff(c.ctx, c.who, c.owner, c.repo, n, nil)
+	if err != nil {
+		return err
+	}
+	byPath := make(map[string]gitbrowse.FileDiff, len(d.Files))
+	for _, fd := range d.Files {
+		byPath[fileName(fd.OldPath, fd.NewPath)] = fd
+	}
 	p := c.pager()
 	page, more := slice(p, files)
 	out := make([]ghFile, len(page))
 	for i, f := range page {
-		// The blob ids are not part of the change list.
 		out[i] = c.fileObj(pr.Head.SHA, "", f)
+		if fd, ok := byPath[fileName(f.OldPath, f.NewPath)]; ok {
+			out[i].SHA = fd.NewOID
+			if out[i].SHA == "" {
+				out[i].SHA = fd.OldOID
+			}
+			out[i].Patch = filePatch(fd)
+		}
 	}
 	c.link(p, more)
 	return c.ok(http.StatusOK, out)

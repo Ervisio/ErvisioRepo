@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { useInbox, useMarkAllRead, useMarkDone, useMarkRead, useThreadIgnore, type NotificationThread } from "../../api/notifications.ts";
+import { useInbox, useInboxRepos, useMarkAllRead, useMarkDone, useMarkRead, useThreadIgnore, type NotificationThread } from "../../api/notifications.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Button, EmptyState, Icon, Page, type IconName } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
@@ -8,7 +8,8 @@ import { Gate, Pager, When } from "../code/common.tsx";
 import { FilterGroup, FilterItem, ListLayoutSwitch, WorkList } from "../work/common.tsx";
 import { useListLayout, type ListLayout } from "../work/layout.ts";
 
-export type InboxSearch = { filter?: "participating" | "all"; page?: number };
+/** repo (owner/name) shows the threads of one repository, filtered by the server. */
+export type InboxSearch = { filter?: "participating" | "all"; page?: number; repo?: string };
 
 const subjectIcon: Record<NotificationThread["subjectType"], IconName> = { issue: "issue", pull_request: "pr", release: "tag", commit: "commit" };
 
@@ -50,11 +51,13 @@ export function NotificationsPage({ search }: { search: InboxSearch }) {
   const layout = useListLayout();
   const filter = search.filter ?? "unread";
   const page = search.page ?? 1;
-  const inbox = useInbox({ filter, page });
+  const repo = search.repo;
+  const inbox = useInbox({ filter, page, repo });
+  const repoCounts = useInboxRepos(filter);
   const markAll = useMarkAllRead();
   const markRead = useMarkRead();
-  // Repository and reason filters of the filter column apply to the loaded page only.
-  const [repo, setRepo] = useState<string | undefined>(undefined);
+  const setRepo = (r: string | undefined) => go({ repo: r });
+  // The reason filter of the filter column applies to the loaded page only.
   const [reason, setReason] = useState<NotificationThread["reason"] | undefined>(undefined);
 
   const go = (patch: Partial<InboxSearch>) => void navigate({ to: "/notifications", search: { ...search, page: undefined, ...patch } });
@@ -101,19 +104,27 @@ export function NotificationsPage({ search }: { search: InboxSearch }) {
         {(res) => {
           const repos = Array.from(new Set(res.items.map((n) => `${n.owner}/${n.repo}`))).sort();
           const reasons = Array.from(new Set(res.items.map((n) => n.reason))).sort();
-          const items = layout === "b" ? res.items.filter((n) => (!repo || `${n.owner}/${n.repo}` === repo) && (!reason || n.reason === reason)) : res.items;
+          const items = layout === "b" ? res.items.filter((n) => !reason || n.reason === reason) : res.items;
+          const counts = repoCounts.data ?? [];
+          const countOf = (c: { count: number; unread: number }) => (filter === "unread" ? c.unread : c.count);
+          const listed = counts.map((c) => `${c.owner}/${c.repo}`);
+          // Keep the selected repository listed even when it has no thread left.
+          const filterRepos = repo && !listed.includes(repo) ? [...listed, repo] : listed;
           const empty = <EmptyState icon="bell" title={t(`empty.${filter}`)} description={t("emptyHint")} />;
           const filters = (
             <>
               <FilterGroup title={t("filters.repos")}>
-                <FilterItem active={!repo} onClick={() => setRepo(undefined)} count={res.items.length}>
+                <FilterItem active={!repo} onClick={() => setRepo(undefined)} count={counts.reduce((a, c) => a + countOf(c), 0)}>
                   {t("filters.allRepos")}
                 </FilterItem>
-                {repos.map((r) => (
-                  <FilterItem key={r} active={repo === r} onClick={() => setRepo(r)} count={res.items.filter((n) => `${n.owner}/${n.repo}` === r).length}>
-                    {r}
-                  </FilterItem>
-                ))}
+                {filterRepos.map((r) => {
+                  const c = counts.find((x) => `${x.owner}/${x.repo}` === r);
+                  return (
+                    <FilterItem key={r} active={repo === r} onClick={() => setRepo(r)} count={c ? countOf(c) : 0}>
+                      {r}
+                    </FilterItem>
+                  );
+                })}
               </FilterGroup>
               <FilterGroup title={t("filters.reasons")}>
                 <FilterItem active={!reason} onClick={() => setReason(undefined)}>

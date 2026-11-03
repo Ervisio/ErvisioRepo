@@ -126,3 +126,26 @@ SELECT email_notifications FROM users WHERE id = $1;
 
 -- name: SetEmailNotifications :exec
 UPDATE users SET email_notifications = $2 WHERE id = $1;
+
+-- name: GetNotificationThreadBySubject :one
+SELECT sqlc.embed(t), n.name AS owner_name, r.name AS repo_name
+FROM notification_threads t
+JOIN repos r ON r.id = t.repo_id
+JOIN namespaces n ON n.id = r.owner_id
+WHERE t.user_id = @user_id AND t.subject_key = @subject_key;
+
+-- name: ListNotificationRepoCounts :many
+-- Threads per repository matching the inbox filters (as in
+-- ListNotificationThreads), with the unread ones among them.
+SELECT t.repo_id, n.name AS owner_name, r.name AS repo_name,
+    count(*)::bigint AS total,
+    (count(*) FILTER (WHERE t.unread))::bigint AS unread,
+    max(t.updated_at)::timestamptz AS last_updated_at
+FROM notification_threads t
+JOIN repos r ON r.id = t.repo_id
+JOIN namespaces n ON n.id = r.owner_id
+WHERE t.user_id = @user_id AND NOT t.done
+    AND (@include_read::boolean OR t.unread)
+    AND (NOT @participating::boolean OR t.reason <> 'subscribed')
+GROUP BY t.repo_id, n.name, r.name
+ORDER BY last_updated_at DESC, t.repo_id;

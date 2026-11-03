@@ -203,6 +203,27 @@ Phase 5, GitHub compatible GraphQL for `gh`:
 - Authenticated `/api` answers carry `X-OAuth-Scopes` with the classic GitHub scope names, so `gh auth login --hostname` and `gh auth status` accept the token (it needs `repo:write` and `user:read`).
 - `gh repo view/list`, `gh pr list/view/create/checkout/merge/status/comment`, `gh issue list/view/create/close/reopen/comment`, `gh release list` and `gh label list` are expected to work; matrix and known gaps in `docs/api-v3.md` and `docs/api-v3.it.md`.
 
+Phase 5, pull request follow-ups:
+
+- Fork networks (migration `00190_fork_networks.sql`): forks of a public repository share a local, append-only object pool (`<hot>/pools/<aa>/<network>.git`, refs `refs/net/<parent>/...`) through `objects/info/alternates`; compaction repacks only local objects (`repack -l`) and the pool is dropped with the last member. Journals stay self-contained, so a fork hydrated from its journal is a full copy. Forks of private repositories and forks created before this change keep a full copy.
+- Fork lifecycle: fork creation is charged to the owner quota, a half-created fork is removed when the copy fails, and deleting a repository (new delete hook in `internal/repos`) closes the open pull requests of other repositories whose head it holds, removes their `refs/pull/<n>/merge` (the head ref stays readable) and drops the fork network pool when it was the last member.
+- `PUT /api/v1/repos/{owner}/{name}/pulls/{number}/update-branch` (`merge` or `rebase`, optional `expectedHeadSha`): brings the head branch up to date with the base as the caller, through a hook session (head branch protection applies); the push then synchronizes the pull request. The merge box offers it when the branch is behind.
+- Cross-references: `#n` and `owner/name#n` in pull request bodies and in review comments published outside a review are recorded like issue references; `GET /api/v1/repos/{owner}/{name}/issues/{number}/linked-pulls` lists the pull requests referencing an issue (filtered by read access) and the issue detail shows them.
+- Review comments on the base (LEFT) side are re-anchored when the merge base moves.
+- `GET /api/v1/repos/{owner}/{name}/pulls` accepts `q` (title and body) and `reviewRequested`; the pull request list has a search box and a "Review requested from you" view.
+- The merge box lists the commit statuses and latest check runs of the head commit.
+- `/api/v3`: `GET .../pulls/{n}` serves `Accept: application/vnd.github.diff` and `.patch` (so `gh pr diff` works), PR files carry the blob `sha` and `patch`, and `PUT .../pulls/{n}/update-branch` is implemented.
+
+Phase 5, notifications, pickers and paging follow-ups:
+
+- `GET/PUT/DELETE /api/v1/notifications/subject?repo=owner/name&number=|release=`: the caller's subscription to one issue, pull request or release (explicit or from the default rules); the issue and pull request sidebars and the release page have a subscribe/unsubscribe button, the sidebar also a reset to the repository setting.
+- `GET /api/v1/notifications` accepts `repo=owner/name`; `GET /api/v1/notifications/repos` returns the per-repository thread and unread counts. The inbox filters by repository on the server and its counts no longer depend on the loaded page.
+- `GET /api/v1/webhooks/events`: the catalogue of webhook events; the webhook form uses it instead of a hardcoded list.
+- `X-Has-More: true|false` header on the issue list, the notifications and the webhook deliveries (response bodies unchanged); the UI no longer asks for one extra row there.
+- `GET /api/v1/search/users?q=&repo=&limit=`: username or display name prefix search for the assignee and reviewer pickers. New setting `security.user_directory`: `shared` (default) finds only the people the caller shares an organization or a repository with, plus the people of `repo`; `instance` finds every active user. Administrators always search the whole instance, restricted users never do. The assignee picker has a "Search people" entry.
+- `GET /api/v1/github/imports`: the GitHub imports the caller started, on repositories it can still read (`X-Has-More` paging); listed in the GitHub settings page.
+- `/api/v3`: `GET /repos/{owner}/{repo}/readme` (and `readme/{dir}`), `POST /repos/{owner}/{repo}/git/refs`, `PATCH` and `DELETE /repos/{owner}/{repo}/git/refs/{ref}`; refs containing `/` are accepted in the commit and status endpoints. Limits: the readme has no `vnd.github.html` rendering and no `.github`/`docs` fallback, and only regular files are served; ref writes are limited to `heads/` and `tags/` with a full sha, deleting the default branch is refused, a branch protection refusal is a 422 and a concurrent change a 409, the returned object type is always `commit`, and no quota check is made. In `commits/{ref}/...` a ref whose last segment is `status`, `statuses`, `check-runs` or `check-suites` is read as that sub-resource, as on GitHub.
+
 ### Removed
 
 - Organization role `billing` (existing members become `member`).

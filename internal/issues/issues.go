@@ -92,20 +92,33 @@ func (s *Service) Get(ctx context.Context, who auth.Principal, owner, name strin
 
 // List searches the issues (not pull requests) of owner/name.
 func (s *Service) List(ctx context.Context, who auth.Principal, owner, name string, in ListInput) ([]Issue, error) {
+	out, _, err := s.ListPage(ctx, who, owner, name, in)
+	return out, err
+}
+
+// ListPage is List that also reports whether more issues follow the page.
+func (s *Service) ListPage(ctx context.Context, who auth.Principal, owner, name string, in ListInput) ([]Issue, bool, error) {
 	r, err := s.repo(ctx, who, owner, name)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	p, ok, err := s.searchParams(ctx, r, in)
 	if err != nil || !ok {
-		return []Issue{}, err
+		return []Issue{}, false, err
 	}
 	p.Kind = KindIssue
+	lim := p.Lim
+	p.Lim++
 	rows, err := s.q.SearchIssues(ctx, p)
 	if err != nil {
-		return nil, fmt.Errorf("search issues: %w", err)
+		return nil, false, fmt.Errorf("search issues: %w", err)
 	}
-	return s.hydrate(ctx, who.UserID, rows)
+	more := len(rows) > int(lim)
+	if more {
+		rows = rows[:lim]
+	}
+	out, err := s.hydrate(ctx, who.UserID, rows)
+	return out, more, err
 }
 
 // searchParams translates a ListInput; ok is false when a filter names

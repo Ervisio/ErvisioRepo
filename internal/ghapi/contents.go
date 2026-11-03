@@ -385,6 +385,7 @@ type ghFile struct {
 	RawURL           string  `json:"raw_url"`
 	ContentsURL      string  `json:"contents_url"`
 	PreviousFilename *string `json:"previous_filename,omitempty"`
+	Patch            *string `json:"patch,omitempty"`
 }
 
 func fileStatus(s string) string {

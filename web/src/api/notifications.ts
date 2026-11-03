@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { repoBase } from "./code.ts";
+import { qs, repoBase } from "./code.ts";
 import { request } from "./http.ts";
-import { paged } from "./issues.ts";
+import { pagedHeader } from "./issues.ts";
 import type { components } from "./schema";
 
 // Notification inbox, thread state, subscriptions and delivery settings.
@@ -11,14 +11,50 @@ export type NotificationSettings = S["NotificationSettings"];
 export type RepoSubscription = S["RepoSubscription"];
 export type ThreadSubscription = S["ThreadSubscription"];
 
-export type InboxFilter = { filter: "unread" | "participating" | "all"; page: number };
+export type NotificationRepoCount = S["NotificationRepoCount"];
+export type NotificationSubject = S["NotificationSubject"];
+
+/** repo is owner/name, to show one repository only. */
+export type InboxFilter = { filter: "unread" | "participating" | "all"; page: number; repo?: string };
+
+const inboxParams = (f: Pick<InboxFilter, "filter">) => ({ all: f.filter === "all", participating: f.filter === "participating" });
 
 export const useInbox = (f: InboxFilter) =>
   useQuery({
     queryKey: ["notifications", "list", f],
-    queryFn: () => paged<NotificationThread>("/notifications", f.page, { all: f.filter === "all", participating: f.filter === "participating" }),
+    queryFn: () => pagedHeader<NotificationThread>("/notifications", f.page, { ...inboxParams(f), repo: f.repo }),
     placeholderData: keepPreviousData,
   });
+
+/** Per-repository counts of the threads the inbox filter shows. */
+export const useInboxRepos = (filter: InboxFilter["filter"]) =>
+  useQuery({
+    queryKey: ["notifications", "repos", filter],
+    queryFn: () => request<NotificationRepoCount[]>("GET", `/notifications/repos${qs(inboxParams({ filter }))}`),
+    placeholderData: keepPreviousData,
+  });
+
+/** Subject of the subscription endpoints: an issue or pull request by number, or a release. */
+export type SubjectRef = { owner: string; name: string; number?: number; release?: string };
+
+const subjectPath = (r: SubjectRef) => `/notifications/subject${qs({ repo: `${r.owner}/${r.name}`, number: r.number, release: r.release })}`;
+const subjectKey = (r: SubjectRef) => ["notifications", "subject", r.owner, r.name, r.number ?? null, r.release ?? null];
+
+export const useSubjectSubscription = (r: SubjectRef, enabled = true) =>
+  useQuery({ queryKey: subjectKey(r), queryFn: () => request<NotificationSubject>("GET", subjectPath(r)), retry: false, enabled });
+
+/** subscribed null returns the subject to the default rules. */
+export function useSetSubjectSubscription(r: SubjectRef) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (subscribed: boolean | null) =>
+      subscribed === null ? request<NotificationSubject>("DELETE", subjectPath(r)) : request<NotificationSubject>("PUT", subjectPath(r), { ignored: !subscribed }),
+    onSuccess: async (s) => {
+      qc.setQueryData(subjectKey(r), s);
+      await qc.invalidateQueries({ queryKey: ["notifications", "list"] });
+    },
+  });
+}
 
 export const useUnreadCount = () =>
   useQuery({

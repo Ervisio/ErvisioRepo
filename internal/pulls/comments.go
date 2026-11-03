@@ -300,40 +300,57 @@ func shift(hunks []git.DiffHunk, line int) (int, bool) {
 
 // reanchor moves the RIGHT side threads of p from oldHead to newHead: the
 // lines shift with the changes above them, and a thread whose lines changed
-// becomes outdated. LEFT side threads stay on the base side.
+// becomes outdated. LEFT side threads follow the merge base (reanchorLeft).
 func (s *Service) reanchor(ctx context.Context, l *gitstore.Lease, p dbgen.PullRequest, oldHead, newHead string) error {
+	return s.reanchorSide(ctx, l, p, SideRight, oldHead, newHead, func(c dbgen.PullReviewComment) bool {
+		return c.CommitSha == oldHead
+	}, func(dbgen.PullReviewComment) string { return newHead })
+}
+
+// reanchorLeft moves the LEFT side threads of p, whose lines are lines of
+// the merge base, from the old merge base to the new one (the head was
+// rebased or the base merged into it).
+func (s *Service) reanchorLeft(ctx context.Context, l *gitstore.Lease, p dbgen.PullRequest, oldBase, newBase string) error {
+	return s.reanchorSide(ctx, l, p, SideLeft, oldBase, newBase, func(dbgen.PullReviewComment) bool { return true },
+		func(c dbgen.PullReviewComment) string { return c.CommitSha })
+}
+
+// reanchorSide shifts the threads of one side of p through the changes
+// from..to of their files; commit gives the commit_sha a moved thread keeps.
+func (s *Service) reanchorSide(ctx context.Context, l *gitstore.Lease, p dbgen.PullRequest, side, from, to string,
+	match func(dbgen.PullReviewComment) bool, commit func(dbgen.PullReviewComment) string) error {
 	roots, err := s.q.ThreadCommentsOfPull(ctx, p.IssueID)
 	if err != nil {
 		return fmt.Errorf("thread comments: %w", err)
 	}
-	var right []dbgen.PullReviewComment
+	var moved []dbgen.PullReviewComment
 	seen := map[string]bool{}
 	var paths []string
 	for _, c := range roots {
-		if c.Side != SideRight || !c.Line.Valid || c.CommitSha != oldHead {
+		if c.Side != side || !c.Line.Valid || !match(c) {
 			continue
 		}
-		right = append(right, c)
+		moved = append(moved, c)
 		if !seen[c.Path] && len(paths) < git.MaxDiffHunkFiles {
 			seen[c.Path] = true
 			paths = append(paths, c.Path)
 		}
 	}
-	if len(right) == 0 {
+	if len(moved) == 0 {
 		return nil
 	}
-	hunks, err := git.DiffHunks(ctx, l.Path, nil, oldHead, newHead, paths)
+	hunks, err := git.DiffHunks(ctx, l.Path, nil, from, to, paths)
 	if err != nil {
 		return fmt.Errorf("diff hunks: %w", err)
 	}
 	for _, hs := range hunks {
 		sort.Slice(hs, func(a, b int) bool { return hs[a].OldStart < hs[b].OldStart })
 	}
-	for _, c := range right {
+	for _, c := range moved {
 		if !seen[c.Path] {
 			continue
 		}
-		arg := dbgen.ReanchorPullReviewCommentParams{CommitSha: newHead, ID: c.ID}
+		arg := dbgen.ReanchorPullReviewCommentParams{CommitSha: commit(c), ID: c.ID}
 		line, ok := shift(hunks[c.Path], int(c.Line.Int32))
 		start, sok := 0, true
 		if c.StartLine.Valid {
@@ -363,7 +380,7 @@ func (s *Service) reanchor(ctx context.Context, l *gitstore.Lease, p dbgen.PullR
 // CreateComment adds a review comment. It joins the caller's pending
 // review when there is one, and is published at once otherwise.
 func (s *Service) CreateComment(ctx context.Context, who auth.Principal, owner, name string, number int64, in CommentInput) (Comment, error) {
-	r, _, p, err := s.openForReview(ctx, who, owner, name, number)
+	r, i, p, err := s.openForReview(ctx, who, owner, name, number)
 	if err != nil {
 		return Comment{}, err
 	}
@@ -412,6 +429,9 @@ func (s *Service) CreateComment(ctx context.Context, who auth.Principal, owner, 
 		}
 		if arg.ReviewID.Valid {
 			return nil // published with the review
+		}
+		if err := s.recordRefs(ctx, q, r, who, i, c.ID, c.Body); err != nil {
+			return err
 		}
 		return s.emitComment(ctx, q, "created", who.UserID, p, c)
 	})

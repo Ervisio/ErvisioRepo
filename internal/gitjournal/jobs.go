@@ -221,7 +221,17 @@ func (j *Journal) Compact(ctx context.Context, repo uuid.UUID, force bool) error
 	if h.refs == nil || (!force && !needsCompaction(h.m)) {
 		return nil
 	}
-	if err := git.Exec(ctx, git.Cmd{RepoPath: l.Path, Args: []string{"repack", "-a", "-d", "-q"}, Timeout: repackLimit}); err != nil {
+	// A fork that borrows from the object pool of its network keeps only
+	// its own objects locally (-l): the pool is append-only, so dropping the
+	// local copies of pooled objects is safe. The remote base generation
+	// below is still self-contained (pack-objects reads through alternates).
+	args := []string{"repack", "-a", "-d", "-q"}
+	if pooled, err := git.HasAlternates(l.Path); err != nil {
+		return fmt.Errorf("compact %s: %w", repo, err)
+	} else if pooled {
+		args = append(args, "-l")
+	}
+	if err := git.Exec(ctx, git.Cmd{RepoPath: l.Path, Args: args, Timeout: repackLimit}); err != nil {
 		return fmt.Errorf("compact %s: repack: %w", repo, err)
 	}
 	gen := h.m.Generation + 1

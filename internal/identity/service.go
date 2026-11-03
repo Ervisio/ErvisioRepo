@@ -63,6 +63,7 @@ type Service struct {
 	log      *slog.Logger
 	cfg      config.Auth
 	policy   string
+	userDir  string
 	mailOn   bool
 	now      func() time.Time
 }
@@ -92,7 +93,8 @@ func New(o Options) *Service {
 	return &Service{
 		pool: o.Pool, q: dbgen.New(o.Pool), hasher: o.Hasher, sessions: o.Sessions, limiter: o.Limiter,
 		jobs: o.Jobs, log: log, cfg: o.Config.Auth, policy: o.Config.Security.Registration,
-		mailOn: o.Config.Mail.Enabled, now: now,
+		userDir: o.Config.Security.UserDirectory,
+		mailOn:  o.Config.Mail.Enabled, now: now,
 	}
 }
 

@@ -159,14 +159,18 @@ type ListOptions struct {
 	// Participating leaves out the threads received as a watcher.
 	Participating bool
 	Since         *time.Time
+	// Owner and Name, when set, keep the threads of one repository the
+	// caller can read.
+	Owner, Name   string
 	Offset, Limit int
 }
 
 // List returns the threads of the caller that are not done, the most
-// recently updated first.
-func (s *Service) List(ctx context.Context, who auth.Principal, o ListOptions) ([]Thread, error) {
+// recently updated first, and whether more threads follow the page.
+// Repository errors (an unreadable Owner/Name) are returned as they are.
+func (s *Service) List(ctx context.Context, who auth.Principal, o ListOptions) ([]Thread, bool, error) {
 	if err := signedIn(who); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	if o.Limit <= 0 {
 		o.Limit = defaultPageSize
@@ -174,17 +178,58 @@ func (s *Service) List(ctx context.Context, who auth.Principal, o ListOptions) (
 	o.Limit = min(o.Limit, maxPageSize)
 	o.Offset = max(o.Offset, 0)
 	p := dbgen.ListNotificationThreadsParams{UserID: who.UserID, IncludeRead: o.All, Participating: o.Participating,
-		Off: int32(min(o.Offset, 1<<31-1)), Lim: int32(o.Limit)} //nolint:gosec // bounded
+		Off: int32(min(o.Offset, 1<<31-1)), Lim: int32(o.Limit + 1)} //nolint:gosec // bounded
 	if o.Since != nil {
 		p.Since = pgtype.Timestamptz{Time: *o.Since, Valid: true}
 	}
+	if o.Owner != "" || o.Name != "" {
+		rs, err := s.reposSvc()
+		if err != nil {
+			return nil, false, err
+		}
+		repo, err := rs.Get(ctx, who, o.Owner, o.Name)
+		if err != nil {
+			return nil, false, err
+		}
+		p.RepoID = uuid.NullUUID{UUID: repo.ID, Valid: true}
+	}
 	rows, err := s.q.ListNotificationThreads(ctx, p)
 	if err != nil {
-		return nil, fmt.Errorf("list notifications: %w", err)
+		return nil, false, fmt.Errorf("list notifications: %w", err)
+	}
+	more := len(rows) > o.Limit
+	if more {
+		rows = rows[:o.Limit]
 	}
 	out := make([]Thread, 0, len(rows))
 	for _, r := range rows {
 		out = append(out, threadOut(r.NotificationThread, r.OwnerName, r.RepoName))
+	}
+	return out, more, nil
+}
+
+// RepoCount is the number of threads of the caller in one repository.
+type RepoCount struct {
+	RepoID        uuid.UUID
+	Owner, Repo   string
+	Count, Unread int64
+}
+
+// RepoCounts returns, per repository, the threads of the caller that match
+// all and participating (as in List) and the unread ones among them, the
+// most recently updated repository first.
+func (s *Service) RepoCounts(ctx context.Context, who auth.Principal, all, participating bool) ([]RepoCount, error) {
+	if err := signedIn(who); err != nil {
+		return nil, err
+	}
+	rows, err := s.q.ListNotificationRepoCounts(ctx, dbgen.ListNotificationRepoCountsParams{UserID: who.UserID,
+		IncludeRead: all, Participating: participating})
+	if err != nil {
+		return nil, fmt.Errorf("count notifications per repository: %w", err)
+	}
+	out := make([]RepoCount, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, RepoCount{RepoID: r.RepoID, Owner: r.OwnerName, Repo: r.RepoName, Count: r.Total, Unread: r.Unread})
 	}
 	return out, nil
 }

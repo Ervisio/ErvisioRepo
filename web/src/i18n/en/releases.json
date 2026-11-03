@@ -47,5 +47,11 @@
   "form.cancel": "Cancel",
   "form.created": "Release created",
   "form.saved": "Release saved",
-  "form.notAllowed": "You need write access to manage releases"
+  "form.notAllowed": "You need write access to manage releases",
+  "sub.subscribe": "Subscribe",
+  "sub.unsubscribe": "Unsubscribe",
+  "sub.subscribedHint": "You get notifications for this release.",
+  "sub.unsubscribedHint": "You get no notifications for this release.",
+  "sub.subscribedOk": "Subscribed to this release",
+  "sub.unsubscribedOk": "Unsubscribed from this release"
 }

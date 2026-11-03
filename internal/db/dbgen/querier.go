@@ -18,6 +18,7 @@ type Querier interface {
 	AcquireRegistrationLock(ctx context.Context) error
 	// Active hooks of a repository and of the organization that owns it.
 	ActiveWebhooksForRepo(ctx context.Context, repoID uuid.NullUUID) ([]Webhook, error)
+	AddForkNetworkMember(ctx context.Context, arg AddForkNetworkMemberParams) error
 	AddIssueAssignee(ctx context.Context, arg AddIssueAssigneeParams) (int64, error)
 	AddIssueCommentCount(ctx context.Context, arg AddIssueCommentCountParams) error
 	AddIssueLabel(ctx context.Context, arg AddIssueLabelParams) (int64, error)
@@ -79,6 +80,8 @@ type Querier interface {
 	CountWebAuthnCredentials(ctx context.Context, userID uuid.UUID) (int64, error)
 	CreateLFSLock(ctx context.Context, arg CreateLFSLockParams) (LfsLock, error)
 	DeleteBranchProtection(ctx context.Context, arg DeleteBranchProtectionParams) (int64, error)
+	// Removes a network without members (its pool can then be trashed).
+	DeleteEmptyForkNetwork(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteExpiredLFSTokens(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	DeleteExpiredMFAChallenges(ctx context.Context) (int64, error)
 	DeleteExpiredOIDCFlows(ctx context.Context) (int64, error)
@@ -161,6 +164,8 @@ type Querier interface {
 	GetEmailByAddress(ctx context.Context, address string) (GetEmailByAddressRow, error)
 	GetEmailByID(ctx context.Context, id uuid.UUID) (GetEmailByIDRow, error)
 	GetEmailNotifications(ctx context.Context, id uuid.UUID) (bool, error)
+	// ---- fork networks ----
+	GetForkNetworkMember(ctx context.Context, repoID uuid.UUID) (ForkNetworkMember, error)
 	// The release of an asset: the asset URLs of /api/v3 carry no release id.
 	// The release service still checks access with the repository.
 	GetGitHubAPIAssetRelease(ctx context.Context, id uuid.UUID) (uuid.UUID, error)
@@ -198,6 +203,7 @@ type Querier interface {
 	GetNamespaceByName(ctx context.Context, name string) (GetNamespaceByNameRow, error)
 	GetNotificationForMail(ctx context.Context, id uuid.UUID) (GetNotificationForMailRow, error)
 	GetNotificationThread(ctx context.Context, arg GetNotificationThreadParams) (GetNotificationThreadRow, error)
+	GetNotificationThreadBySubject(ctx context.Context, arg GetNotificationThreadBySubjectParams) (GetNotificationThreadBySubjectRow, error)
 	GetOIDCLinkBySubject(ctx context.Context, arg GetOIDCLinkBySubjectParams) (GetOIDCLinkBySubjectRow, error)
 	GetOrgByName(ctx context.Context, name string) (GetOrgByNameRow, error)
 	// Organizations and their members (InsertOrg, GetOrgByName, UpsertOrgMember
@@ -281,6 +287,7 @@ type Querier interface {
 	// Commit statuses, check suites and check runs (PLAN §5).
 	InsertCommitStatus(ctx context.Context, arg InsertCommitStatusParams) (CommitStatus, error)
 	InsertEmail(ctx context.Context, arg InsertEmailParams) error
+	InsertForkNetwork(ctx context.Context, arg InsertForkNetworkParams) error
 	InsertGPGKey(ctx context.Context, arg InsertGPGKeyParams) error
 	// GitHub code sync (internal/ghsync).
 	InsertGitHubConnection(ctx context.Context, arg InsertGitHubConnectionParams) (GithubConnection, error)
@@ -362,6 +369,8 @@ type Querier interface {
 	// The latest decisive review (approved, changes_requested or dismissed) of
 	// each reviewer of a pull request.
 	LatestPullReviews(ctx context.Context, pullID uuid.UUID) ([]LatestPullReviewsRow, error)
+	// Pull requests whose body or comments reference issue_id, newest first.
+	LinkedPullsOfIssue(ctx context.Context, issueID uuid.NullUUID) ([]LinkedPullsOfIssueRow, error)
 	// Newest first; pass the last id of a page as before to get the next one.
 	// action matches exactly, or a whole prefix when it ends with ".".
 	ListAuditEvents(ctx context.Context, arg ListAuditEventsParams) ([]ListAuditEventsRow, error)
@@ -385,6 +394,8 @@ type Querier interface {
 	// Import of the non-git data of a GitHub repository (ghsync.Importer).
 	// ---- id map ----
 	ListGitHubImportMap(ctx context.Context, arg ListGitHubImportMapParams) ([]ListGitHubImportMapRow, error)
+	// The imports a user started, the most recent first.
+	ListGitHubImportsByCreator(ctx context.Context, arg ListGitHubImportsByCreatorParams) ([]ListGitHubImportsByCreatorRow, error)
 	// Links of a connection that follow one GitHub repository (webhooks).
 	ListGitHubSyncLinksByRemote(ctx context.Context, arg ListGitHubSyncLinksByRemoteParams) ([]GithubSyncLink, error)
 	ListGitHubSyncRefs(ctx context.Context, linkID uuid.UUID) ([]GithubSyncRef, error)
@@ -411,6 +422,9 @@ type Querier interface {
 	ListMischargedLFSObjects(ctx context.Context, maxRows int32) ([]ListMischargedLFSObjectsRow, error)
 	// Users and organizations by name, for the user objects of /api/v3.
 	ListNamespacesByName(ctx context.Context, names []string) ([]ListNamespacesByNameRow, error)
+	// Threads per repository matching the inbox filters (as in
+	// ListNotificationThreads), with the unread ones among them.
+	ListNotificationRepoCounts(ctx context.Context, arg ListNotificationRepoCountsParams) ([]ListNotificationRepoCountsRow, error)
 	ListNotificationThreads(ctx context.Context, arg ListNotificationThreadsParams) ([]ListNotificationThreadsRow, error)
 	// Pending invitations, expired ones included (the UI shows them as such).
 	ListOrgInvites(ctx context.Context, orgID uuid.UUID) ([]ListOrgInvitesRow, error)
@@ -544,6 +558,10 @@ type Querier interface {
 	PruneOutboxEvents(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	PruneWebhookDeliveries(ctx context.Context, createdAt pgtype.Timestamptz) (int64, error)
 	PullReviewRequestsOf(ctx context.Context, pullIds []uuid.UUID) ([]PullReviewRequestsOfRow, error)
+	// ---- deletion and cross-references ----
+	// Open pull requests of other repositories whose head lives in head_repo_id,
+	// locked for the deletion of that repository.
+	PullsWithHeadRepoForDelete(ctx context.Context, headRepoID uuid.NullUUID) ([]PullRequest, error)
 	// ---- issues ----
 	// Makes the next allocated number greater than number.
 	RaiseIssueCounter(ctx context.Context, arg RaiseIssueCounterParams) error
@@ -585,14 +603,24 @@ type Querier interface {
 	// sort is created, updated, comments or relevance.
 	SearchIssues(ctx context.Context, arg SearchIssuesParams) ([]Issue, error)
 	// Pull requests of a repository. state is open, closed (not merged), merged,
-	// all ('' = all). base/head filter on the branch names ('' = any).
+	// all ('' = all). base/head filter on the branch names ('' = any); query is
+	// websearch text matched against title and body; by_reviewer keeps the pull
+	// requests with a pending review request for reviewer_id.
 	SearchPullRequests(ctx context.Context, arg SearchPullRequestsParams) ([]Issue, error)
 	// Repositories whose name contains pattern (already lower-cased and with
 	// LIKE metacharacters escaped), visible to a viewer: all_repos = instance
 	// admin; internal = the viewer is signed in and not restricted. Exact and
 	// prefix matches come first.
 	SearchRepos(ctx context.Context, arg SearchReposParams) ([]SearchReposRow, error)
+	// Active users whose username or display name starts with pattern (a
+	// LIKE pattern, lower case), exact username first. Without instance only
+	// the users visible to the caller: itself, the members of its
+	// organizations, the people of the repositories it owns or collaborates
+	// on and, with repo_id, the collaborators, owner and owning organization
+	// members of that repository.
+	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error)
 	SetEmailNotifications(ctx context.Context, arg SetEmailNotificationsParams) error
+	SetForkNetworkMemberPooled(ctx context.Context, arg SetForkNetworkMemberPooledParams) error
 	SetGitHubImportInclude(ctx context.Context, arg SetGitHubImportIncludeParams) error
 	SetGitHubImportStatus(ctx context.Context, arg SetGitHubImportStatusParams) error
 	SetIssueLock(ctx context.Context, arg SetIssueLockParams) (Issue, error)

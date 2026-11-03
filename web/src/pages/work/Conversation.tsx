@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { Link, useParams } from "@tanstack/react-router";
+import { useDeferredValue, useState, type ReactNode } from "react";
 import {
   useAddComment,
   useCollaborators,
@@ -14,11 +14,11 @@ import {
   type IssueComment,
   type TimelineEvent,
 } from "../../api/issues.ts";
-import { useRepoSubscription, useSetRepoSubscription, type RepoSubscription } from "../../api/notifications.ts";
-import { useSession } from "../../api/identity.ts";
+import { useRepoSubscription, useSetRepoSubscription, useSetSubjectSubscription, useSubjectSubscription, type RepoSubscription } from "../../api/notifications.ts";
+import { useSession, useUserSearch } from "../../api/identity.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, Icon, Menu, MenuItem, MenuLabel, Select } from "../../ui/index.ts";
+import { Button, Icon, Input, Menu, MenuItem, MenuLabel, MenuSeparator, Select } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { Gate, shortSha, When } from "../code/common.tsx";
 import { Avatar, Body, CommentBox, Composer, EventRow, LabelChip, Meter, Reactions, SideBlock, type WorkState } from "./common.tsx";
@@ -338,6 +338,7 @@ export function AssigneesBlock({ repo, issue }: { repo: Repo; issue: Issue }) {
   const me = useSession().data?.username;
   const set = (assignees: string[]) => update.mutate({ assignees }, { onError: notify.fail });
   const names = Array.from(new Set([...(people.data ?? []).map((p) => p.username), ...issue.assignees, ...(me ? [me] : [])])).sort();
+  const [searching, setSearching] = useState(false);
   return (
     <SideBlock
       title={t("side.assignees")}
@@ -350,10 +351,17 @@ export function AssigneesBlock({ repo, issue }: { repo: Repo; issue: Issue }) {
                 {u}
               </MenuItem>
             ))}
+            <MenuSeparator />
+            <MenuItem icon="search" onSelect={() => setSearching(true)}>
+              {t("side.searchPeople")}
+            </MenuItem>
           </Menu>
         )
       }
     >
+      {searching && triage && (
+        <PeopleSearch repo={repo} selected={issue.assignees} busy={update.isPending} onToggle={(u) => set(toggle(issue.assignees, u))} onClose={() => setSearching(false)} />
+      )}
       {issue.assignees.length === 0 ? (
         <p className="ui-note">
           {t("side.noAssignees")}
@@ -377,6 +385,38 @@ export function AssigneesBlock({ repo, issue }: { repo: Repo; issue: Issue }) {
         </ul>
       )}
     </SideBlock>
+  );
+}
+
+/** Searches the people visible to the viewer (GET /search/users) to toggle them in a list. */
+export function PeopleSearch({ repo, selected, busy, onToggle, onClose }: { repo: Repo; selected: string[]; busy: boolean; onToggle: (username: string) => void; onClose: () => void }) {
+  const t = useT("work");
+  const [q, setQ] = useState("");
+  const deferred = useDeferredValue(q.trim());
+  const found = useUserSearch(deferred, `${repo.owner}/${repo.name}`);
+  return (
+    <div className="wk-psearch">
+      <Input label={t("side.searchLabel")} autoFocus autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Escape" && onClose()} />
+      {deferred !== "" && found.isSuccess && found.data.length === 0 && <p className="ui-note">{t("side.searchNone")}</p>}
+      {found.isError && <p className="ui-note">{t("side.searchFailed")}</p>}
+      {(found.data ?? []).length > 0 && (
+        <ul className="wk-people" aria-label={t("side.searchResults")}>
+          {(found.data ?? []).map((u) => (
+            <li key={u.username}>
+              <button type="button" className="wk-linkbtn wk-psearch-hit" disabled={busy} aria-pressed={selected.includes(u.username)} onClick={() => onToggle(u.username)}>
+                <Avatar user={u.username} size={20} />
+                <span>{u.username}</span>
+                {u.displayName && <span className="ui-note">{u.displayName}</span>}
+                {selected.includes(u.username) && <Icon name="check" />}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Button size="sm" variant="ghost" onClick={onClose}>
+        {t("side.searchDone")}
+      </Button>
+    </div>
   );
 }
 
@@ -454,15 +494,44 @@ export function MilestoneBlock({ repo, issue }: { repo: Repo; issue: Issue }) {
   );
 }
 
-/** Repository watch level: per-thread subscription has no lookup by issue number yet. */
-export function NotifyBlock({ repo }: { repo: Repo }) {
+/**
+ * Subscription to this issue or pull request and the repository watch level. number
+ * defaults to the $number route parameter.
+ */
+export function NotifyBlock({ repo, number }: { repo: Repo; number?: number }) {
   const t = useT("work");
   const notify = useNotify();
+  const params: { number?: string } = useParams({ strict: false });
+  const n = number ?? Number(params.number);
+  const signedIn = useSession().data !== undefined;
+  const ref = { owner: repo.owner, name: repo.name, number: n };
+  const subject = useSubjectSubscription(ref, signedIn && Number.isInteger(n) && n > 0);
+  const setSubject = useSetSubjectSubscription(ref);
   const sub = useRepoSubscription(repo.owner, repo.name);
   const set = useSetRepoSubscription(repo.owner, repo.name);
   const levels: RepoSubscription["level"][] = ["watching", "participating", "ignoring"];
+  const subscribed = subject.data?.subscription.subscribed ?? false;
   return (
     <SideBlock title={t("side.notifications")}>
+      {subject.data && (
+        <div className="wk-subj">
+          <Button
+            size="sm"
+            icon="bell"
+            disabled={setSubject.isPending}
+            aria-pressed={subscribed}
+            onClick={() => setSubject.mutate(!subscribed, { onSuccess: (s) => notify.ok(t(s.subscription.subscribed ? "subject.subscribedOk" : "subject.unsubscribedOk")), onError: notify.fail })}
+          >
+            {t(subscribed ? "subject.unsubscribe" : "subject.subscribe")}
+          </Button>
+          <p className="ui-note">{t(subscribed ? "subject.subscribedHint" : "subject.unsubscribedHint")}</p>
+          {subject.data.subscription.explicit && (
+            <button type="button" className="wk-linkbtn" disabled={setSubject.isPending} onClick={() => setSubject.mutate(null, { onError: notify.fail })}>
+              {t("subject.reset")}
+            </button>
+          )}
+        </div>
+      )}
       <Select
         label={t("side.watchLabel")}
         value={sub.data?.level ?? "participating"}

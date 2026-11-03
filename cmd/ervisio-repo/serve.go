@@ -245,6 +245,9 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 			pullOpts.Hooks, pullOpts.Protection = journal.Hooks, journal.Protection
 		}
 		pullSvc := pulls.New(pullOpts)
+		// Deleting a repository closes the pull requests whose head lived
+		// there and drops the pool of an empty fork network.
+		repoSvc.OnDelete(pullSvc)
 		bus.Register("pulls.sync", pullSvc.PushHandler(), events.KindPush)
 		// Commit statuses and checks: the required status checks of branch
 		// protection, and a new status or check re-evaluates auto-merge.

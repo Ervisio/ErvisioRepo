@@ -665,6 +665,27 @@ func (e IssueUpdateState) Valid() bool {
 	}
 }
 
+// Defines values for LinkedPullState.
+const (
+	LinkedPullStateClosed LinkedPullState = "closed"
+	LinkedPullStateMerged LinkedPullState = "merged"
+	LinkedPullStateOpen   LinkedPullState = "open"
+)
+
+// Valid indicates whether the value is a known member of the LinkedPullState enum.
+func (e LinkedPullState) Valid() bool {
+	switch e {
+	case LinkedPullStateClosed:
+		return true
+	case LinkedPullStateMerged:
+		return true
+	case LinkedPullStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MetaRegistration.
 const (
 	MetaRegistrationClosed MetaRegistration = "closed"
@@ -1184,6 +1205,24 @@ func (e PullReviewSubmitEvent) Valid() bool {
 	case PullReviewSubmitEventComment:
 		return true
 	case PullReviewSubmitEventRequestChanges:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PullUpdateBranchRequestMethod.
+const (
+	PullUpdateBranchRequestMethodMerge  PullUpdateBranchRequestMethod = "merge"
+	PullUpdateBranchRequestMethodRebase PullUpdateBranchRequestMethod = "rebase"
+)
+
+// Valid indicates whether the value is a known member of the PullUpdateBranchRequestMethod enum.
+func (e PullUpdateBranchRequestMethod) Valid() bool {
+	switch e {
+	case PullUpdateBranchRequestMethodMerge:
+		return true
+	case PullUpdateBranchRequestMethodRebase:
 		return true
 	default:
 		return false
@@ -2847,6 +2886,22 @@ type LfsPointer struct {
 	Size int64  `json:"size"`
 }
 
+// LinkedPull defines model for LinkedPull.
+type LinkedPull struct {
+	// Author Username of the author; empty when deleted
+	Author string `json:"author"`
+	Draft  bool   `json:"draft"`
+	Number int64  `json:"number"`
+
+	// Repo owner/name of the pull request repository
+	Repo  string          `json:"repo"`
+	State LinkedPullState `json:"state"`
+	Title string          `json:"title"`
+}
+
+// LinkedPullState defines model for LinkedPull.State.
+type LinkedPullState string
+
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
 	// Login Username or email address
@@ -2934,10 +2989,28 @@ type NotificationCount struct {
 // NotificationReason defines model for NotificationReason.
 type NotificationReason string
 
+// NotificationRepoCount defines model for NotificationRepoCount.
+type NotificationRepoCount struct {
+	// Count Threads matching the filter
+	Count  int64              `json:"count"`
+	Owner  string             `json:"owner"`
+	Repo   string             `json:"repo"`
+	RepoId openapi_types.UUID `json:"repoId"`
+
+	// Unread Unread threads among them
+	Unread int64 `json:"unread"`
+}
+
 // NotificationSettings defines model for NotificationSettings.
 type NotificationSettings struct {
 	// Email Also send notifications by mail
 	Email bool `json:"email"`
+}
+
+// NotificationSubject defines model for NotificationSubject.
+type NotificationSubject struct {
+	Subscription ThreadSubscription  `json:"subscription"`
+	Thread       *NotificationThread `json:"thread,omitempty"`
 }
 
 // NotificationThread defines model for NotificationThread.
@@ -3448,6 +3521,18 @@ type PullSuggestionApply struct {
 	// Message Commit message; a default one names the comment
 	Message *string `json:"message,omitempty"`
 }
+
+// PullUpdateBranchRequest defines model for PullUpdateBranchRequest.
+type PullUpdateBranchRequest struct {
+	// ExpectedHeadSha Expected head commit; empty skips the check
+	ExpectedHeadSha *string `json:"expectedHeadSha,omitempty"`
+
+	// Method Default merge
+	Method *PullUpdateBranchRequestMethod `json:"method,omitempty"`
+}
+
+// PullUpdateBranchRequestMethod Default merge
+type PullUpdateBranchRequestMethod string
 
 // Quota defines model for Quota.
 type Quota struct {
@@ -4086,6 +4171,14 @@ type UserLocale string
 // UserRole defines model for User.Role.
 type UserRole string
 
+// UserSummary defines model for UserSummary.
+type UserSummary struct {
+	// AvatarUrl Absolute https URL of the avatar; empty when unset
+	AvatarUrl   string `json:"avatarUrl"`
+	DisplayName string `json:"displayName"`
+	Username    string `json:"username"`
+}
+
 // Visibility defines model for Visibility.
 type Visibility string
 
@@ -4167,6 +4260,12 @@ type WebhookDeliveryDetail struct {
 // WebhookDeliveryStatus defines model for WebhookDeliveryStatus.
 type WebhookDeliveryStatus string
 
+// WebhookEventCatalog defines model for WebhookEventCatalog.
+type WebhookEventCatalog struct {
+	// Events GitHub event names; "*" (every event) first
+	Events []string `json:"events"`
+}
+
 // WebhookFormat github sends GitHub-compatible headers and payloads; ervisio sends the native envelope
 type WebhookFormat string
 
@@ -4231,6 +4330,9 @@ type CommitRef = string
 // CredentialID defines model for CredentialID.
 type CredentialID = openapi_types.UUID
 
+// NotificationRepo defines model for NotificationRepo.
+type NotificationRepo = string
+
 // OrgName defines model for OrgName.
 type OrgName = string
 
@@ -4257,6 +4359,15 @@ type RepoName = string
 
 // RepoOwner defines model for RepoOwner.
 type RepoOwner = string
+
+// SubjectNumber defines model for SubjectNumber.
+type SubjectNumber = int64
+
+// SubjectRelease defines model for SubjectRelease.
+type SubjectRelease = openapi_types.UUID
+
+// SubjectRepo defines model for SubjectRepo.
+type SubjectRepo = string
 
 // TeamName defines model for TeamName.
 type TeamName = string
@@ -4300,6 +4411,12 @@ type ListGitHubConnectionsParams struct {
 	Owner *string `form:"owner,omitempty" json:"owner,omitempty"`
 }
 
+// ListGitHubImportsParams defines parameters for ListGitHubImports.
+type ListGitHubImportsParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListNotificationsParams defines parameters for ListNotifications.
 type ListNotificationsParams struct {
 	All *bool `form:"all,omitempty" json:"all,omitempty"`
@@ -4308,9 +4425,54 @@ type ListNotificationsParams struct {
 	Participating *bool `form:"participating,omitempty" json:"participating,omitempty"`
 
 	// Since Only threads updated at or after this time
-	Since  *time.Time  `form:"since,omitempty" json:"since,omitempty"`
-	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
-	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+	Since *time.Time `form:"since,omitempty" json:"since,omitempty"`
+
+	// Repo Only the threads of this repository (owner/name)
+	Repo   *NotificationRepo `form:"repo,omitempty" json:"repo,omitempty"`
+	Offset *PageOffset       `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit        `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListNotificationReposParams defines parameters for ListNotificationRepos.
+type ListNotificationReposParams struct {
+	All           *bool `form:"all,omitempty" json:"all,omitempty"`
+	Participating *bool `form:"participating,omitempty" json:"participating,omitempty"`
+}
+
+// DeleteNotificationSubjectSubscriptionParams defines parameters for DeleteNotificationSubjectSubscription.
+type DeleteNotificationSubjectSubscriptionParams struct {
+	// Repo Repository of the subject (owner/name)
+	Repo SubjectRepo `form:"repo" json:"repo"`
+
+	// Number Issue or pull request number (exactly one of number and release)
+	Number *SubjectNumber `form:"number,omitempty" json:"number,omitempty"`
+
+	// Release Release id (exactly one of number and release)
+	Release *SubjectRelease `form:"release,omitempty" json:"release,omitempty"`
+}
+
+// GetNotificationSubjectParams defines parameters for GetNotificationSubject.
+type GetNotificationSubjectParams struct {
+	// Repo Repository of the subject (owner/name)
+	Repo SubjectRepo `form:"repo" json:"repo"`
+
+	// Number Issue or pull request number (exactly one of number and release)
+	Number *SubjectNumber `form:"number,omitempty" json:"number,omitempty"`
+
+	// Release Release id (exactly one of number and release)
+	Release *SubjectRelease `form:"release,omitempty" json:"release,omitempty"`
+}
+
+// SetNotificationSubjectSubscriptionParams defines parameters for SetNotificationSubjectSubscription.
+type SetNotificationSubjectSubscriptionParams struct {
+	// Repo Repository of the subject (owner/name)
+	Repo SubjectRepo `form:"repo" json:"repo"`
+
+	// Number Issue or pull request number (exactly one of number and release)
+	Number *SubjectNumber `form:"number,omitempty" json:"number,omitempty"`
+
+	// Release Release id (exactly one of number and release)
+	Release *SubjectRelease `form:"release,omitempty" json:"release,omitempty"`
 }
 
 // ListOrgAuditParams defines parameters for ListOrgAudit.
@@ -4557,6 +4719,12 @@ type ListPullsParams struct {
 	// Author Username of the author
 	Author *string `form:"author,omitempty" json:"author,omitempty"`
 
+	// ReviewRequested Username with a pending review request
+	ReviewRequested *string `form:"reviewRequested,omitempty" json:"reviewRequested,omitempty"`
+
+	// Q Full-text search on title and body (websearch syntax)
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+
 	// Sort Default created
 	Sort   *ListPullsParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
 	Offset *PageOffset          `form:"offset,omitempty" json:"offset,omitempty"`
@@ -4673,6 +4841,15 @@ type SearchReposParams struct {
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// SearchUsersParams defines parameters for SearchUsers.
+type SearchUsersParams struct {
+	Q string `form:"q" json:"q"`
+
+	// Repo owner/name of a repository whose people are also visible
+	Repo  *string `form:"repo,omitempty" json:"repo,omitempty"`
+	Limit *int    `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListMyReposParams defines parameters for ListMyRepos.
 type ListMyReposParams struct {
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
@@ -4735,6 +4912,9 @@ type MarkNotificationsReadJSONRequestBody = NotificationsMarkRead
 
 // SetNotificationSettingsJSONRequestBody defines body for SetNotificationSettings for application/json ContentType.
 type SetNotificationSettingsJSONRequestBody = NotificationSettings
+
+// SetNotificationSubjectSubscriptionJSONRequestBody defines body for SetNotificationSubjectSubscription for application/json ContentType.
+type SetNotificationSubjectSubscriptionJSONRequestBody = ThreadSubscriptionUpdate
 
 // SetThreadSubscriptionJSONRequestBody defines body for SetThreadSubscription for application/json ContentType.
 type SetThreadSubscriptionJSONRequestBody = ThreadSubscriptionUpdate
@@ -4876,6 +5056,9 @@ type DismissPullReviewJSONRequestBody = PullReviewDismiss
 
 // SubmitPullReviewJSONRequestBody defines body for SubmitPullReview for application/json ContentType.
 type SubmitPullReviewJSONRequestBody = PullReviewSubmit
+
+// UpdatePullBranchJSONRequestBody defines body for UpdatePullBranch for application/json ContentType.
+type UpdatePullBranchJSONRequestBody = PullUpdateBranchRequest
 
 // CreateReleaseJSONRequestBody defines body for CreateRelease for application/json ContentType.
 type CreateReleaseJSONRequestBody = ReleaseCreate
@@ -5038,6 +5221,9 @@ type ServerInterface interface {
 	// CheckGitHubConnection Verify the credentials of a connection against GitHub
 	// (POST /github/connections/{connectionId}/check)
 	CheckGitHubConnection(w http.ResponseWriter, r *http.Request, connectionId openapi_types.UUID)
+	// ListGitHubImports Imports started by the caller, newest first
+	// (GET /github/imports)
+	ListGitHubImports(w http.ResponseWriter, r *http.Request, params ListGitHubImportsParams)
 	// ImportGitHubRepo Import a GitHub repository into a new repository
 	// (POST /github/imports)
 	ImportGitHubRepo(w http.ResponseWriter, r *http.Request)
@@ -5053,12 +5239,24 @@ type ServerInterface interface {
 	// CountNotifications Number of unread notification threads (for polling)
 	// (GET /notifications/count)
 	CountNotifications(w http.ResponseWriter, r *http.Request)
+	// ListNotificationRepos Number of notification threads per repository
+	// (GET /notifications/repos)
+	ListNotificationRepos(w http.ResponseWriter, r *http.Request, params ListNotificationReposParams)
 	// GetNotificationSettings Notification settings of the caller
 	// (GET /notifications/settings)
 	GetNotificationSettings(w http.ResponseWriter, r *http.Request)
 	// SetNotificationSettings Change the notification settings of the caller
 	// (PUT /notifications/settings)
 	SetNotificationSettings(w http.ResponseWriter, r *http.Request)
+	// DeleteNotificationSubjectSubscription Remove the explicit subscription to a subject (back to the default rules)
+	// (DELETE /notifications/subject)
+	DeleteNotificationSubjectSubscription(w http.ResponseWriter, r *http.Request, params DeleteNotificationSubjectSubscriptionParams)
+	// GetNotificationSubject Thread and subscription of the caller for an issue, pull request or release
+	// (GET /notifications/subject)
+	GetNotificationSubject(w http.ResponseWriter, r *http.Request, params GetNotificationSubjectParams)
+	// SetNotificationSubjectSubscription Subscribe to (or ignore) an issue, pull request or release
+	// (PUT /notifications/subject)
+	SetNotificationSubjectSubscription(w http.ResponseWriter, r *http.Request, params SetNotificationSubjectSubscriptionParams)
 	// MarkNotificationThreadDone Mark a thread as done (removed from the inbox until it is updated)
 	// (DELETE /notifications/threads/{threadId})
 	MarkNotificationThreadDone(w http.ResponseWriter, r *http.Request, threadId openapi_types.UUID)
@@ -5362,6 +5560,9 @@ type ServerInterface interface {
 	// ListIssueEdits Previous bodies of an issue, newest first
 	// (GET /repos/{owner}/{name}/issues/{number}/edits)
 	ListIssueEdits(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64, params ListIssueEditsParams)
+	// ListIssueLinkedPulls Pull requests that reference an issue
+	// (GET /repos/{owner}/{name}/issues/{number}/linked-pulls)
+	ListIssueLinkedPulls(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64)
 	// UnlockIssue Unlock the conversation
 	// (DELETE /repos/{owner}/{name}/issues/{number}/lock)
 	UnlockIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64)
@@ -5488,6 +5689,9 @@ type ServerInterface interface {
 	// SubmitPullReview Submit a pending review
 	// (POST /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/submit)
 	SubmitPullReview(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber, reviewId PullReviewId)
+	// UpdatePullBranch Bring the head branch up to date with the base
+	// (PUT /repos/{owner}/{name}/pulls/{number}/update-branch)
+	UpdatePullBranch(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber)
 	// GetReadme The README of a directory
 	// (GET /repos/{owner}/{name}/readme)
 	GetReadme(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params GetReadmeParams)
@@ -5560,6 +5764,9 @@ type ServerInterface interface {
 	// SearchRepos Search the visible repositories by name
 	// (GET /search/repos)
 	SearchRepos(w http.ResponseWriter, r *http.Request, params SearchReposParams)
+	// SearchUsers Search the users visible to the caller by username or display name prefix
+	// (GET /search/users)
+	SearchUsers(w http.ResponseWriter, r *http.Request, params SearchUsersParams)
 	// GetCurrentUser The signed-in user
 	// (GET /user)
 	GetCurrentUser(w http.ResponseWriter, r *http.Request)
@@ -5662,6 +5869,9 @@ type ServerInterface interface {
 	// ListUserRepos Repositories of a user the caller can see
 	// (GET /users/{username}/repos)
 	ListUserRepos(w http.ResponseWriter, r *http.Request, username Username, params ListUserReposParams)
+	// ListWebhookEvents Events a webhook can subscribe to
+	// (GET /webhooks/events)
+	ListWebhookEvents(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -5848,6 +6058,12 @@ func (_ Unimplemented) CheckGitHubConnection(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListGitHubImports Imports started by the caller, newest first
+// (GET /github/imports)
+func (_ Unimplemented) ListGitHubImports(w http.ResponseWriter, r *http.Request, params ListGitHubImportsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ImportGitHubRepo Import a GitHub repository into a new repository
 // (POST /github/imports)
 func (_ Unimplemented) ImportGitHubRepo(w http.ResponseWriter, r *http.Request) {
@@ -5878,6 +6094,12 @@ func (_ Unimplemented) CountNotifications(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListNotificationRepos Number of notification threads per repository
+// (GET /notifications/repos)
+func (_ Unimplemented) ListNotificationRepos(w http.ResponseWriter, r *http.Request, params ListNotificationReposParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetNotificationSettings Notification settings of the caller
 // (GET /notifications/settings)
 func (_ Unimplemented) GetNotificationSettings(w http.ResponseWriter, r *http.Request) {
@@ -5887,6 +6109,24 @@ func (_ Unimplemented) GetNotificationSettings(w http.ResponseWriter, r *http.Re
 // SetNotificationSettings Change the notification settings of the caller
 // (PUT /notifications/settings)
 func (_ Unimplemented) SetNotificationSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteNotificationSubjectSubscription Remove the explicit subscription to a subject (back to the default rules)
+// (DELETE /notifications/subject)
+func (_ Unimplemented) DeleteNotificationSubjectSubscription(w http.ResponseWriter, r *http.Request, params DeleteNotificationSubjectSubscriptionParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetNotificationSubject Thread and subscription of the caller for an issue, pull request or release
+// (GET /notifications/subject)
+func (_ Unimplemented) GetNotificationSubject(w http.ResponseWriter, r *http.Request, params GetNotificationSubjectParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetNotificationSubjectSubscription Subscribe to (or ignore) an issue, pull request or release
+// (PUT /notifications/subject)
+func (_ Unimplemented) SetNotificationSubjectSubscription(w http.ResponseWriter, r *http.Request, params SetNotificationSubjectSubscriptionParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6496,6 +6736,12 @@ func (_ Unimplemented) ListIssueEdits(w http.ResponseWriter, r *http.Request, ow
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListIssueLinkedPulls Pull requests that reference an issue
+// (GET /repos/{owner}/{name}/issues/{number}/linked-pulls)
+func (_ Unimplemented) ListIssueLinkedPulls(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // UnlockIssue Unlock the conversation
 // (DELETE /repos/{owner}/{name}/issues/{number}/lock)
 func (_ Unimplemented) UnlockIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
@@ -6748,6 +6994,12 @@ func (_ Unimplemented) SubmitPullReview(w http.ResponseWriter, r *http.Request, 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// UpdatePullBranch Bring the head branch up to date with the base
+// (PUT /repos/{owner}/{name}/pulls/{number}/update-branch)
+func (_ Unimplemented) UpdatePullBranch(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetReadme The README of a directory
 // (GET /repos/{owner}/{name}/readme)
 func (_ Unimplemented) GetReadme(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params GetReadmeParams) {
@@ -6889,6 +7141,12 @@ func (_ Unimplemented) GetTree(w http.ResponseWriter, r *http.Request, owner Rep
 // SearchRepos Search the visible repositories by name
 // (GET /search/repos)
 func (_ Unimplemented) SearchRepos(w http.ResponseWriter, r *http.Request, params SearchReposParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SearchUsers Search the users visible to the caller by username or display name prefix
+// (GET /search/users)
+func (_ Unimplemented) SearchUsers(w http.ResponseWriter, r *http.Request, params SearchUsersParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7093,6 +7351,12 @@ func (_ Unimplemented) RevokeAccessToken(w http.ResponseWriter, r *http.Request,
 // ListUserRepos Repositories of a user the caller can see
 // (GET /users/{username}/repos)
 func (_ Unimplemented) ListUserRepos(w http.ResponseWriter, r *http.Request, username Username, params ListUserReposParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListWebhookEvents Events a webhook can subscribe to
+// (GET /webhooks/events)
+func (_ Unimplemented) ListWebhookEvents(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7828,6 +8092,60 @@ func (siw *ServerInterfaceWrapper) CheckGitHubConnection(w http.ResponseWriter, 
 	handler.ServeHTTP(w, r)
 }
 
+// ListGitHubImports operation middleware
+func (siw *ServerInterfaceWrapper) ListGitHubImports(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListGitHubImportsParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGitHubImports(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImportGitHubRepo operation middleware
 func (siw *ServerInterfaceWrapper) ImportGitHubRepo(w http.ResponseWriter, r *http.Request) {
 
@@ -7920,6 +8238,19 @@ func (siw *ServerInterfaceWrapper) ListNotifications(w http.ResponseWriter, r *h
 		return
 	}
 
+	// ------------- Optional query parameter "repo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "repo", r.URL.Query(), &params.Repo, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "repo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		}
+		return
+	}
+
 	// ------------- Optional query parameter "offset" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
@@ -8001,6 +8332,60 @@ func (siw *ServerInterfaceWrapper) CountNotifications(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// ListNotificationRepos operation middleware
+func (siw *ServerInterfaceWrapper) ListNotificationRepos(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListNotificationReposParams
+
+	// ------------- Optional query parameter "all" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "all", r.URL.Query(), &params.All, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "all"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "all", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "participating" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "participating", r.URL.Query(), &params.Participating, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "participating"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "participating", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListNotificationRepos(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetNotificationSettings operation middleware
 func (siw *ServerInterfaceWrapper) GetNotificationSettings(w http.ResponseWriter, r *http.Request) {
 
@@ -8036,6 +8421,207 @@ func (siw *ServerInterfaceWrapper) SetNotificationSettings(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SetNotificationSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteNotificationSubjectSubscription operation middleware
+func (siw *ServerInterfaceWrapper) DeleteNotificationSubjectSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteNotificationSubjectSubscriptionParams
+
+	// ------------- Required query parameter "repo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "repo", r.URL.Query(), &params.Repo, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "repo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "number" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "number", r.URL.Query(), &params.Number, runtime.BindQueryParameterOptions{Type: "integer", Format: "int64"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "number"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "release" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "release", r.URL.Query(), &params.Release, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "release"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "release", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteNotificationSubjectSubscription(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetNotificationSubject operation middleware
+func (siw *ServerInterfaceWrapper) GetNotificationSubject(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetNotificationSubjectParams
+
+	// ------------- Required query parameter "repo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "repo", r.URL.Query(), &params.Repo, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "repo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "number" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "number", r.URL.Query(), &params.Number, runtime.BindQueryParameterOptions{Type: "integer", Format: "int64"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "number"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "release" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "release", r.URL.Query(), &params.Release, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "release"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "release", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetNotificationSubject(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetNotificationSubjectSubscription operation middleware
+func (siw *ServerInterfaceWrapper) SetNotificationSubjectSubscription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SetNotificationSubjectSubscriptionParams
+
+	// ------------- Required query parameter "repo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "repo", r.URL.Query(), &params.Repo, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "repo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "number" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "number", r.URL.Query(), &params.Number, runtime.BindQueryParameterOptions{Type: "integer", Format: "int64"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "number"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "release" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "release", r.URL.Query(), &params.Release, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "release"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "release", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetNotificationSubjectSubscription(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -13276,6 +13862,58 @@ func (siw *ServerInterfaceWrapper) ListIssueEdits(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// ListIssueLinkedPulls operation middleware
+func (siw *ServerInterfaceWrapper) ListIssueLinkedPulls(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIssueLinkedPulls(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // UnlockIssue operation middleware
 func (siw *ServerInterfaceWrapper) UnlockIssue(w http.ResponseWriter, r *http.Request) {
 
@@ -14254,6 +14892,32 @@ func (siw *ServerInterfaceWrapper) ListPulls(w http.ResponseWriter, r *http.Requ
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "author"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "author", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "reviewRequested" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "reviewRequested", r.URL.Query(), &params.ReviewRequested, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "reviewRequested"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reviewRequested", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
 		}
 		return
 	}
@@ -15844,6 +16508,58 @@ func (siw *ServerInterfaceWrapper) SubmitPullReview(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// UpdatePullBranch operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePullBranch(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number PullNumber
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdatePullBranch(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetReadme operation middleware
 func (siw *ServerInterfaceWrapper) GetReadme(w http.ResponseWriter, r *http.Request) {
 
@@ -17276,6 +17992,73 @@ func (siw *ServerInterfaceWrapper) SearchRepos(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// SearchUsers operation middleware
+func (siw *ServerInterfaceWrapper) SearchUsers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SearchUsersParams
+
+	// ------------- Required query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "repo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "repo", r.URL.Query(), &params.Repo, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "repo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SearchUsers(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetCurrentUser operation middleware
 func (siw *ServerInterfaceWrapper) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 
@@ -18169,6 +18952,28 @@ func (siw *ServerInterfaceWrapper) ListUserRepos(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// ListWebhookEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListWebhookEvents(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWebhookEvents(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -18616,6 +19421,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/search/repos", wrapper.SearchRepos)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/search/users", wrapper.SearchUsers)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues", wrapper.ListIssues)
 	})
 	r.Group(func(r chi.Router) {
@@ -18671,6 +19479,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/repos/{owner}/{name}/issues/comments/{commentId}/reactions/{content}", wrapper.RemoveIssueCommentReaction)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues/{number}/linked-pulls", wrapper.ListIssueLinkedPulls)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues/{number}/timeline", wrapper.ListIssueTimeline)
@@ -18734,6 +19545,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/merge", wrapper.MergePull)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/update-branch", wrapper.UpdatePullBranch)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/repos/{owner}/{name}/pulls/{number}/auto-merge", wrapper.DisablePullAutoMerge)
@@ -18847,6 +19661,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/github/connections/{connectionId}/check", wrapper.CheckGitHubConnection)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/github/imports", wrapper.ListGitHubImports)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/github/imports", wrapper.ImportGitHubRepo)
 	})
 	r.Group(func(r chi.Router) {
@@ -18869,6 +19686,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/repos/{owner}/{name}/github/sync/resolve", wrapper.ResolveGitHubSyncConflict)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/webhooks/events", wrapper.ListWebhookEvents)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/hooks", wrapper.ListRepoWebhooks)
@@ -18932,6 +19752,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/notifications/count", wrapper.CountNotifications)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/notifications/repos", wrapper.ListNotificationRepos)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/notifications/subject", wrapper.DeleteNotificationSubjectSubscription)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/notifications/subject", wrapper.GetNotificationSubject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/notifications/subject", wrapper.SetNotificationSubjectSubscription)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/notifications/settings", wrapper.GetNotificationSettings)
@@ -21197,6 +22029,83 @@ func (response CheckGitHubConnectiondefaultApplicationProblemPlusJSONResponse) V
 	return err
 }
 
+type ListGitHubImportsRequestObject struct {
+	Params ListGitHubImportsParams
+}
+
+type ListGitHubImportsResponseObject interface {
+	VisitListGitHubImportsResponse(w http.ResponseWriter) error
+}
+
+type ListGitHubImports200ResponseHeaders struct {
+	XHasMore string
+}
+
+type ListGitHubImports200JSONResponse struct {
+	Body    []GitHubImport
+	Headers ListGitHubImports200ResponseHeaders
+}
+
+func (response ListGitHubImports200JSONResponse) VisitListGitHubImportsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Has-More", fmt.Sprint(response.Headers.XHasMore))
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubImports401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListGitHubImports401ApplicationProblemPlusJSONResponse) VisitListGitHubImportsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubImports503ApplicationProblemPlusJSONResponse Problem
+
+func (response ListGitHubImports503ApplicationProblemPlusJSONResponse) VisitListGitHubImportsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGitHubImportsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListGitHubImportsdefaultApplicationProblemPlusJSONResponse) VisitListGitHubImportsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ImportGitHubRepoRequestObject struct {
 	Body *ImportGitHubRepoJSONRequestBody
 }
@@ -21354,15 +22263,23 @@ type ListNotificationsResponseObject interface {
 	VisitListNotificationsResponse(w http.ResponseWriter) error
 }
 
-type ListNotifications200JSONResponse []NotificationThread
+type ListNotifications200ResponseHeaders struct {
+	XHasMore string
+}
+
+type ListNotifications200JSONResponse struct {
+	Body    []NotificationThread
+	Headers ListNotifications200ResponseHeaders
+}
 
 func (response ListNotifications200JSONResponse) VisitListNotificationsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Has-More", fmt.Sprint(response.Headers.XHasMore))
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
@@ -21532,6 +22449,61 @@ func (response CountNotificationsdefaultApplicationProblemPlusJSONResponse) Visi
 	return err
 }
 
+type ListNotificationReposRequestObject struct {
+	Params ListNotificationReposParams
+}
+
+type ListNotificationReposResponseObject interface {
+	VisitListNotificationReposResponse(w http.ResponseWriter) error
+}
+
+type ListNotificationRepos200JSONResponse []NotificationRepoCount
+
+func (response ListNotificationRepos200JSONResponse) VisitListNotificationReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListNotificationRepos503ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListNotificationRepos503ApplicationProblemPlusJSONResponse) VisitListNotificationReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListNotificationReposdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListNotificationReposdefaultApplicationProblemPlusJSONResponse) VisitListNotificationReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetNotificationSettingsRequestObject struct {
 }
 
@@ -21644,6 +22616,256 @@ type SetNotificationSettingsdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response SetNotificationSettingsdefaultApplicationProblemPlusJSONResponse) VisitSetNotificationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteNotificationSubjectSubscriptionRequestObject struct {
+	Params DeleteNotificationSubjectSubscriptionParams
+}
+
+type DeleteNotificationSubjectSubscriptionResponseObject interface {
+	VisitDeleteNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error
+}
+
+type DeleteNotificationSubjectSubscription200JSONResponse NotificationSubject
+
+func (response DeleteNotificationSubjectSubscription200JSONResponse) VisitDeleteNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteNotificationSubjectSubscription400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteNotificationSubjectSubscription400ApplicationProblemPlusJSONResponse) VisitDeleteNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteNotificationSubjectSubscription404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteNotificationSubjectSubscription404ApplicationProblemPlusJSONResponse) VisitDeleteNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteNotificationSubjectSubscription503ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteNotificationSubjectSubscription503ApplicationProblemPlusJSONResponse) VisitDeleteNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteNotificationSubjectSubscriptiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteNotificationSubjectSubscriptiondefaultApplicationProblemPlusJSONResponse) VisitDeleteNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationSubjectRequestObject struct {
+	Params GetNotificationSubjectParams
+}
+
+type GetNotificationSubjectResponseObject interface {
+	VisitGetNotificationSubjectResponse(w http.ResponseWriter) error
+}
+
+type GetNotificationSubject200JSONResponse NotificationSubject
+
+func (response GetNotificationSubject200JSONResponse) VisitGetNotificationSubjectResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationSubject400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetNotificationSubject400ApplicationProblemPlusJSONResponse) VisitGetNotificationSubjectResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationSubject404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetNotificationSubject404ApplicationProblemPlusJSONResponse) VisitGetNotificationSubjectResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationSubject503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetNotificationSubject503ApplicationProblemPlusJSONResponse) VisitGetNotificationSubjectResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetNotificationSubjectdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetNotificationSubjectdefaultApplicationProblemPlusJSONResponse) VisitGetNotificationSubjectResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetNotificationSubjectSubscriptionRequestObject struct {
+	Params SetNotificationSubjectSubscriptionParams
+	Body   *SetNotificationSubjectSubscriptionJSONRequestBody
+}
+
+type SetNotificationSubjectSubscriptionResponseObject interface {
+	VisitSetNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error
+}
+
+type SetNotificationSubjectSubscription200JSONResponse NotificationSubject
+
+func (response SetNotificationSubjectSubscription200JSONResponse) VisitSetNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetNotificationSubjectSubscription400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetNotificationSubjectSubscription400ApplicationProblemPlusJSONResponse) VisitSetNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetNotificationSubjectSubscription404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetNotificationSubjectSubscription404ApplicationProblemPlusJSONResponse) VisitSetNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetNotificationSubjectSubscription503ApplicationProblemPlusJSONResponse Problem
+
+func (response SetNotificationSubjectSubscription503ApplicationProblemPlusJSONResponse) VisitSetNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetNotificationSubjectSubscriptiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetNotificationSubjectSubscriptiondefaultApplicationProblemPlusJSONResponse) VisitSetNotificationSubjectSubscriptionResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -22994,15 +24216,23 @@ type ListOrgWebhookDeliveriesResponseObject interface {
 	VisitListOrgWebhookDeliveriesResponse(w http.ResponseWriter) error
 }
 
-type ListOrgWebhookDeliveries200JSONResponse []WebhookDelivery
+type ListOrgWebhookDeliveries200ResponseHeaders struct {
+	XHasMore string
+}
+
+type ListOrgWebhookDeliveries200JSONResponse struct {
+	Body    []WebhookDelivery
+	Headers ListOrgWebhookDeliveries200ResponseHeaders
+}
 
 func (response ListOrgWebhookDeliveries200JSONResponse) VisitListOrgWebhookDeliveriesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Has-More", fmt.Sprint(response.Headers.XHasMore))
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
@@ -28785,15 +30015,23 @@ type ListRepoWebhookDeliveriesResponseObject interface {
 	VisitListRepoWebhookDeliveriesResponse(w http.ResponseWriter) error
 }
 
-type ListRepoWebhookDeliveries200JSONResponse []WebhookDelivery
+type ListRepoWebhookDeliveries200ResponseHeaders struct {
+	XHasMore string
+}
+
+type ListRepoWebhookDeliveries200JSONResponse struct {
+	Body    []WebhookDelivery
+	Headers ListRepoWebhookDeliveries200ResponseHeaders
+}
 
 func (response ListRepoWebhookDeliveries200JSONResponse) VisitListRepoWebhookDeliveriesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Has-More", fmt.Sprint(response.Headers.XHasMore))
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
@@ -29268,15 +30506,23 @@ type ListIssuesResponseObject interface {
 	VisitListIssuesResponse(w http.ResponseWriter) error
 }
 
-type ListIssues200JSONResponse []Issue
+type ListIssues200ResponseHeaders struct {
+	XHasMore string
+}
+
+type ListIssues200JSONResponse struct {
+	Body    []Issue
+	Headers ListIssues200ResponseHeaders
+}
 
 func (response ListIssues200JSONResponse) VisitListIssuesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Has-More", fmt.Sprint(response.Headers.XHasMore))
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
@@ -30564,6 +31810,99 @@ type ListIssueEditsdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response ListIssueEditsdefaultApplicationProblemPlusJSONResponse) VisitListIssueEditsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueLinkedPullsRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+}
+
+type ListIssueLinkedPullsResponseObject interface {
+	VisitListIssueLinkedPullsResponse(w http.ResponseWriter) error
+}
+
+type ListIssueLinkedPulls200JSONResponse []LinkedPull
+
+func (response ListIssueLinkedPulls200JSONResponse) VisitListIssueLinkedPullsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueLinkedPulls307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueLinkedPulls307ApplicationProblemPlusJSONResponse) VisitListIssueLinkedPullsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueLinkedPulls404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueLinkedPulls404ApplicationProblemPlusJSONResponse) VisitListIssueLinkedPullsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueLinkedPulls503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListIssueLinkedPulls503ApplicationProblemPlusJSONResponse) VisitListIssueLinkedPullsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListIssueLinkedPullsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListIssueLinkedPullsdefaultApplicationProblemPlusJSONResponse) VisitListIssueLinkedPullsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -34927,6 +36266,142 @@ func (response SubmitPullReviewdefaultApplicationProblemPlusJSONResponse) VisitS
 	return err
 }
 
+type UpdatePullBranchRequestObject struct {
+	Owner  RepoOwner  `json:"owner"`
+	Name   RepoName   `json:"name"`
+	Number PullNumber `json:"number"`
+	Body   *UpdatePullBranchJSONRequestBody
+}
+
+type UpdatePullBranchResponseObject interface {
+	VisitUpdatePullBranchResponse(w http.ResponseWriter) error
+}
+
+type UpdatePullBranch200JSONResponse PullMergeResult
+
+func (response UpdatePullBranch200JSONResponse) VisitUpdatePullBranchResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullBranch307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response UpdatePullBranch307ApplicationProblemPlusJSONResponse) VisitUpdatePullBranchResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullBranch400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdatePullBranch400ApplicationProblemPlusJSONResponse) VisitUpdatePullBranchResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullBranch403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdatePullBranch403ApplicationProblemPlusJSONResponse) VisitUpdatePullBranchResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullBranch404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdatePullBranch404ApplicationProblemPlusJSONResponse) VisitUpdatePullBranchResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullBranch409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdatePullBranch409ApplicationProblemPlusJSONResponse) VisitUpdatePullBranchResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullBranch503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response UpdatePullBranch503ApplicationProblemPlusJSONResponse) VisitUpdatePullBranchResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePullBranchdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdatePullBranchdefaultApplicationProblemPlusJSONResponse) VisitUpdatePullBranchResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetReadmeRequestObject struct {
 	Owner  RepoOwner `json:"owner"`
 	Name   RepoName  `json:"name"`
@@ -37226,6 +38701,89 @@ type SearchReposdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response SearchReposdefaultApplicationProblemPlusJSONResponse) VisitSearchReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SearchUsersRequestObject struct {
+	Params SearchUsersParams
+}
+
+type SearchUsersResponseObject interface {
+	VisitSearchUsersResponse(w http.ResponseWriter) error
+}
+
+type SearchUsers200JSONResponse []UserSummary
+
+func (response SearchUsers200JSONResponse) VisitSearchUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SearchUsers400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SearchUsers400ApplicationProblemPlusJSONResponse) VisitSearchUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SearchUsers401ApplicationProblemPlusJSONResponse Problem
+
+func (response SearchUsers401ApplicationProblemPlusJSONResponse) VisitSearchUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SearchUsers404ApplicationProblemPlusJSONResponse Problem
+
+func (response SearchUsers404ApplicationProblemPlusJSONResponse) VisitSearchUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SearchUsersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SearchUsersdefaultApplicationProblemPlusJSONResponse) VisitSearchUsersResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -39827,6 +41385,44 @@ func (response ListUserReposdefaultApplicationProblemPlusJSONResponse) VisitList
 	return err
 }
 
+type ListWebhookEventsRequestObject struct {
+}
+
+type ListWebhookEventsResponseObject interface {
+	VisitListWebhookEventsResponse(w http.ResponseWriter) error
+}
+
+type ListWebhookEvents200JSONResponse WebhookEventCatalog
+
+func (response ListWebhookEvents200JSONResponse) VisitListWebhookEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWebhookEventsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListWebhookEventsdefaultApplicationProblemPlusJSONResponse) VisitListWebhookEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// ListAdminAudit Instance audit log, newest first
@@ -39919,6 +41515,9 @@ type StrictServerInterface interface {
 	// CheckGitHubConnection Verify the credentials of a connection against GitHub
 	// (POST /github/connections/{connectionId}/check)
 	CheckGitHubConnection(ctx context.Context, request CheckGitHubConnectionRequestObject) (CheckGitHubConnectionResponseObject, error)
+	// ListGitHubImports Imports started by the caller, newest first
+	// (GET /github/imports)
+	ListGitHubImports(ctx context.Context, request ListGitHubImportsRequestObject) (ListGitHubImportsResponseObject, error)
 	// ImportGitHubRepo Import a GitHub repository into a new repository
 	// (POST /github/imports)
 	ImportGitHubRepo(ctx context.Context, request ImportGitHubRepoRequestObject) (ImportGitHubRepoResponseObject, error)
@@ -39934,12 +41533,24 @@ type StrictServerInterface interface {
 	// CountNotifications Number of unread notification threads (for polling)
 	// (GET /notifications/count)
 	CountNotifications(ctx context.Context, request CountNotificationsRequestObject) (CountNotificationsResponseObject, error)
+	// ListNotificationRepos Number of notification threads per repository
+	// (GET /notifications/repos)
+	ListNotificationRepos(ctx context.Context, request ListNotificationReposRequestObject) (ListNotificationReposResponseObject, error)
 	// GetNotificationSettings Notification settings of the caller
 	// (GET /notifications/settings)
 	GetNotificationSettings(ctx context.Context, request GetNotificationSettingsRequestObject) (GetNotificationSettingsResponseObject, error)
 	// SetNotificationSettings Change the notification settings of the caller
 	// (PUT /notifications/settings)
 	SetNotificationSettings(ctx context.Context, request SetNotificationSettingsRequestObject) (SetNotificationSettingsResponseObject, error)
+	// DeleteNotificationSubjectSubscription Remove the explicit subscription to a subject (back to the default rules)
+	// (DELETE /notifications/subject)
+	DeleteNotificationSubjectSubscription(ctx context.Context, request DeleteNotificationSubjectSubscriptionRequestObject) (DeleteNotificationSubjectSubscriptionResponseObject, error)
+	// GetNotificationSubject Thread and subscription of the caller for an issue, pull request or release
+	// (GET /notifications/subject)
+	GetNotificationSubject(ctx context.Context, request GetNotificationSubjectRequestObject) (GetNotificationSubjectResponseObject, error)
+	// SetNotificationSubjectSubscription Subscribe to (or ignore) an issue, pull request or release
+	// (PUT /notifications/subject)
+	SetNotificationSubjectSubscription(ctx context.Context, request SetNotificationSubjectSubscriptionRequestObject) (SetNotificationSubjectSubscriptionResponseObject, error)
 	// MarkNotificationThreadDone Mark a thread as done (removed from the inbox until it is updated)
 	// (DELETE /notifications/threads/{threadId})
 	MarkNotificationThreadDone(ctx context.Context, request MarkNotificationThreadDoneRequestObject) (MarkNotificationThreadDoneResponseObject, error)
@@ -40243,6 +41854,9 @@ type StrictServerInterface interface {
 	// ListIssueEdits Previous bodies of an issue, newest first
 	// (GET /repos/{owner}/{name}/issues/{number}/edits)
 	ListIssueEdits(ctx context.Context, request ListIssueEditsRequestObject) (ListIssueEditsResponseObject, error)
+	// ListIssueLinkedPulls Pull requests that reference an issue
+	// (GET /repos/{owner}/{name}/issues/{number}/linked-pulls)
+	ListIssueLinkedPulls(ctx context.Context, request ListIssueLinkedPullsRequestObject) (ListIssueLinkedPullsResponseObject, error)
 	// UnlockIssue Unlock the conversation
 	// (DELETE /repos/{owner}/{name}/issues/{number}/lock)
 	UnlockIssue(ctx context.Context, request UnlockIssueRequestObject) (UnlockIssueResponseObject, error)
@@ -40369,6 +41983,9 @@ type StrictServerInterface interface {
 	// SubmitPullReview Submit a pending review
 	// (POST /repos/{owner}/{name}/pulls/{number}/reviews/{reviewId}/submit)
 	SubmitPullReview(ctx context.Context, request SubmitPullReviewRequestObject) (SubmitPullReviewResponseObject, error)
+	// UpdatePullBranch Bring the head branch up to date with the base
+	// (PUT /repos/{owner}/{name}/pulls/{number}/update-branch)
+	UpdatePullBranch(ctx context.Context, request UpdatePullBranchRequestObject) (UpdatePullBranchResponseObject, error)
 	// GetReadme The README of a directory
 	// (GET /repos/{owner}/{name}/readme)
 	GetReadme(ctx context.Context, request GetReadmeRequestObject) (GetReadmeResponseObject, error)
@@ -40441,6 +42058,9 @@ type StrictServerInterface interface {
 	// SearchRepos Search the visible repositories by name
 	// (GET /search/repos)
 	SearchRepos(ctx context.Context, request SearchReposRequestObject) (SearchReposResponseObject, error)
+	// SearchUsers Search the users visible to the caller by username or display name prefix
+	// (GET /search/users)
+	SearchUsers(ctx context.Context, request SearchUsersRequestObject) (SearchUsersResponseObject, error)
 	// GetCurrentUser The signed-in user
 	// (GET /user)
 	GetCurrentUser(ctx context.Context, request GetCurrentUserRequestObject) (GetCurrentUserResponseObject, error)
@@ -40543,6 +42163,9 @@ type StrictServerInterface interface {
 	// ListUserRepos Repositories of a user the caller can see
 	// (GET /users/{username}/repos)
 	ListUserRepos(ctx context.Context, request ListUserReposRequestObject) (ListUserReposResponseObject, error)
+	// ListWebhookEvents Events a webhook can subscribe to
+	// (GET /webhooks/events)
+	ListWebhookEvents(ctx context.Context, request ListWebhookEventsRequestObject) (ListWebhookEventsResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -41425,6 +43048,32 @@ func (sh *strictHandler) CheckGitHubConnection(w http.ResponseWriter, r *http.Re
 	}
 }
 
+// ListGitHubImports operation middleware
+func (sh *strictHandler) ListGitHubImports(w http.ResponseWriter, r *http.Request, params ListGitHubImportsParams) {
+	var request ListGitHubImportsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListGitHubImports(ctx, request.(ListGitHubImportsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListGitHubImports")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListGitHubImportsResponseObject); ok {
+		if err := validResponse.VisitListGitHubImportsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ImportGitHubRepo operation middleware
 func (sh *strictHandler) ImportGitHubRepo(w http.ResponseWriter, r *http.Request) {
 	var request ImportGitHubRepoRequestObject
@@ -41564,6 +43213,32 @@ func (sh *strictHandler) CountNotifications(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// ListNotificationRepos operation middleware
+func (sh *strictHandler) ListNotificationRepos(w http.ResponseWriter, r *http.Request, params ListNotificationReposParams) {
+	var request ListNotificationReposRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListNotificationRepos(ctx, request.(ListNotificationReposRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListNotificationRepos")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListNotificationReposResponseObject); ok {
+		if err := validResponse.VisitListNotificationReposResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetNotificationSettings operation middleware
 func (sh *strictHandler) GetNotificationSettings(w http.ResponseWriter, r *http.Request) {
 	var request GetNotificationSettingsRequestObject
@@ -41612,6 +43287,91 @@ func (sh *strictHandler) SetNotificationSettings(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SetNotificationSettingsResponseObject); ok {
 		if err := validResponse.VisitSetNotificationSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteNotificationSubjectSubscription operation middleware
+func (sh *strictHandler) DeleteNotificationSubjectSubscription(w http.ResponseWriter, r *http.Request, params DeleteNotificationSubjectSubscriptionParams) {
+	var request DeleteNotificationSubjectSubscriptionRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteNotificationSubjectSubscription(ctx, request.(DeleteNotificationSubjectSubscriptionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteNotificationSubjectSubscription")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteNotificationSubjectSubscriptionResponseObject); ok {
+		if err := validResponse.VisitDeleteNotificationSubjectSubscriptionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetNotificationSubject operation middleware
+func (sh *strictHandler) GetNotificationSubject(w http.ResponseWriter, r *http.Request, params GetNotificationSubjectParams) {
+	var request GetNotificationSubjectRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetNotificationSubject(ctx, request.(GetNotificationSubjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetNotificationSubject")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetNotificationSubjectResponseObject); ok {
+		if err := validResponse.VisitGetNotificationSubjectResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetNotificationSubjectSubscription operation middleware
+func (sh *strictHandler) SetNotificationSubjectSubscription(w http.ResponseWriter, r *http.Request, params SetNotificationSubjectSubscriptionParams) {
+	var request SetNotificationSubjectSubscriptionRequestObject
+
+	request.Params = params
+
+	var body SetNotificationSubjectSubscriptionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetNotificationSubjectSubscription(ctx, request.(SetNotificationSubjectSubscriptionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetNotificationSubjectSubscription")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetNotificationSubjectSubscriptionResponseObject); ok {
+		if err := validResponse.VisitSetNotificationSubjectSubscriptionResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -44587,6 +46347,34 @@ func (sh *strictHandler) ListIssueEdits(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
+// ListIssueLinkedPulls operation middleware
+func (sh *strictHandler) ListIssueLinkedPulls(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	var request ListIssueLinkedPullsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListIssueLinkedPulls(ctx, request.(ListIssueLinkedPullsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListIssueLinkedPulls")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListIssueLinkedPullsResponseObject); ok {
+		if err := validResponse.VisitListIssueLinkedPullsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // UnlockIssue operation middleware
 func (sh *strictHandler) UnlockIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
 	var request UnlockIssueRequestObject
@@ -45893,6 +47681,41 @@ func (sh *strictHandler) SubmitPullReview(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// UpdatePullBranch operation middleware
+func (sh *strictHandler) UpdatePullBranch(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number PullNumber) {
+	var request UpdatePullBranchRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	var body UpdatePullBranchJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdatePullBranch(ctx, request.(UpdatePullBranchRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdatePullBranch")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdatePullBranchResponseObject); ok {
+		if err := validResponse.VisitUpdatePullBranchResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetReadme operation middleware
 func (sh *strictHandler) GetReadme(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params GetReadmeParams) {
 	var request GetReadmeRequestObject
@@ -46608,6 +48431,32 @@ func (sh *strictHandler) SearchRepos(w http.ResponseWriter, r *http.Request, par
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SearchReposResponseObject); ok {
 		if err := validResponse.VisitSearchReposResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SearchUsers operation middleware
+func (sh *strictHandler) SearchUsers(w http.ResponseWriter, r *http.Request, params SearchUsersParams) {
+	var request SearchUsersRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SearchUsers(ctx, request.(SearchUsersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SearchUsers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SearchUsersResponseObject); ok {
+		if err := validResponse.VisitSearchUsersResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -47557,6 +49406,30 @@ func (sh *strictHandler) ListUserRepos(w http.ResponseWriter, r *http.Request, u
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListUserReposResponseObject); ok {
 		if err := validResponse.VisitListUserReposResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListWebhookEvents operation middleware
+func (sh *strictHandler) ListWebhookEvents(w http.ResponseWriter, r *http.Request) {
+	var request ListWebhookEventsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListWebhookEvents(ctx, request.(ListWebhookEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListWebhookEvents")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListWebhookEventsResponseObject); ok {
+		if err := validResponse.VisitListWebhookEventsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

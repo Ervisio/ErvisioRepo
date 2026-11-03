@@ -50,6 +50,16 @@ const (
 	RegistrationClosed = "closed"
 )
 
+// Values of security.user_directory: who a user can find in the user
+// search of the assignee and reviewer pickers.
+const (
+	// UserDirectoryShared limits the search to the people the caller
+	// shares an organization or a repository with.
+	UserDirectoryShared = "shared"
+	// UserDirectoryInstance lets every user find every active user.
+	UserDirectoryInstance = "instance"
+)
+
 // Values of auth.require_2fa.
 const (
 	Require2FAOff    = "off"
@@ -60,6 +70,8 @@ const (
 type Security struct {
 	MasterKeyFile string `toml:"master_key_file"`
 	Registration  string `toml:"registration"`
+	// UserDirectory is shared (default) or instance; see UserDirectory*.
+	UserDirectory string `toml:"user_directory"`
 }
 
 type Actions struct {
@@ -221,6 +233,7 @@ func Default() Config {
 		Security: Security{
 			MasterKeyFile: "/etc/ervisio-repo/master.key",
 			Registration:  RegistrationInvite,
+			UserDirectory: UserDirectoryShared,
 		},
 		Actions: Actions{Enabled: true, DefaultActionsURL: "github"},
 		Log:     Log{Level: "info", Format: "json"},

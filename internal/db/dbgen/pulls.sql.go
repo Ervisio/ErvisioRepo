@@ -12,6 +12,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addForkNetworkMember = `-- name: AddForkNetworkMember :exec
+INSERT INTO fork_network_members (repo_id, network_id, pooled) VALUES ($1, $2, $3)
+ON CONFLICT (repo_id) DO NOTHING
+`
+
+type AddForkNetworkMemberParams struct {
+	RepoID    uuid.UUID
+	NetworkID uuid.UUID
+	Pooled    bool
+}
+
+func (q *Queries) AddForkNetworkMember(ctx context.Context, arg AddForkNetworkMemberParams) error {
+	_, err := q.db.Exec(ctx, addForkNetworkMember, arg.RepoID, arg.NetworkID, arg.Pooled)
+	return err
+}
+
 const addPullReviewRequest = `-- name: AddPullReviewRequest :execrows
 
 INSERT INTO pull_review_requests (pull_id, reviewer_id) VALUES ($1, $2) ON CONFLICT DO NOTHING
@@ -114,6 +130,20 @@ func (q *Queries) CountRepoForks(ctx context.Context, parentID uuid.NullUUID) (i
 	return count, err
 }
 
+const deleteEmptyForkNetwork = `-- name: DeleteEmptyForkNetwork :execrows
+DELETE FROM fork_networks n WHERE n.id = $1
+  AND NOT EXISTS (SELECT 1 FROM fork_network_members m WHERE m.network_id = n.id)
+`
+
+// Removes a network without members (its pool can then be trashed).
+func (q *Queries) DeleteEmptyForkNetwork(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteEmptyForkNetwork, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deletePendingPullReview = `-- name: DeletePendingPullReview :execrows
 DELETE FROM pull_reviews WHERE id = $1 AND state = 'pending'
 `
@@ -168,6 +198,24 @@ func (q *Queries) DismissPullReview(ctx context.Context, arg DismissPullReviewPa
 		&i.DismissMessage,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getForkNetworkMember = `-- name: GetForkNetworkMember :one
+
+SELECT repo_id, network_id, pooled, created_at FROM fork_network_members WHERE repo_id = $1
+`
+
+// ---- fork networks ----
+func (q *Queries) GetForkNetworkMember(ctx context.Context, repoID uuid.UUID) (ForkNetworkMember, error) {
+	row := q.db.QueryRow(ctx, getForkNetworkMember, repoID)
+	var i ForkNetworkMember
+	err := row.Scan(
+		&i.RepoID,
+		&i.NetworkID,
+		&i.Pooled,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -487,6 +535,20 @@ func (q *Queries) GetRepoFork(ctx context.Context, repoID uuid.UUID) (RepoFork, 
 	return i, err
 }
 
+const insertForkNetwork = `-- name: InsertForkNetwork :exec
+INSERT INTO fork_networks (id, root_repo_id) VALUES ($1, $2)
+`
+
+type InsertForkNetworkParams struct {
+	ID         uuid.UUID
+	RootRepoID uuid.NullUUID
+}
+
+func (q *Queries) InsertForkNetwork(ctx context.Context, arg InsertForkNetworkParams) error {
+	_, err := q.db.Exec(ctx, insertForkNetwork, arg.ID, arg.RootRepoID)
+	return err
+}
+
 const insertPullRequest = `-- name: InsertPullRequest :one
 
 INSERT INTO pull_requests (issue_id, repo_id, number, head_repo_id, head_ref, head_sha, base_ref, base_sha, merge_base_sha, draft)
@@ -716,6 +778,63 @@ func (q *Queries) LatestPullReviews(ctx context.Context, pullID uuid.UUID) ([]La
 	for rows.Next() {
 		var i LatestPullReviewsRow
 		if err := rows.Scan(&i.ReviewerID, &i.State, &i.CommitSha); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const linkedPullsOfIssue = `-- name: LinkedPullsOfIssue :many
+SELECT i.id, i.repo_id, i.number, i.kind, i.title, i.body, i.state, i.state_reason, i.locked, i.lock_reason, i.author_id, i.milestone_id, i.comment_count, i.closed_at, i.closed_by, i.edited_at, i.edited_by, i.created_at, i.updated_at, p.merged_at, p.draft FROM issues i JOIN pull_requests p ON p.issue_id = i.id
+WHERE i.kind = 'pull' AND EXISTS (
+  SELECT 1 FROM issue_references r WHERE r.source_issue_id = i.id AND r.target_issue_id = $1)
+ORDER BY i.created_at DESC, i.id DESC
+LIMIT 100
+`
+
+type LinkedPullsOfIssueRow struct {
+	Issue    Issue
+	MergedAt pgtype.Timestamptz
+	Draft    bool
+}
+
+// Pull requests whose body or comments reference issue_id, newest first.
+func (q *Queries) LinkedPullsOfIssue(ctx context.Context, issueID uuid.NullUUID) ([]LinkedPullsOfIssueRow, error) {
+	rows, err := q.db.Query(ctx, linkedPullsOfIssue, issueID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []LinkedPullsOfIssueRow{}
+	for rows.Next() {
+		var i LinkedPullsOfIssueRow
+		if err := rows.Scan(
+			&i.Issue.ID,
+			&i.Issue.RepoID,
+			&i.Issue.Number,
+			&i.Issue.Kind,
+			&i.Issue.Title,
+			&i.Issue.Body,
+			&i.Issue.State,
+			&i.Issue.StateReason,
+			&i.Issue.Locked,
+			&i.Issue.LockReason,
+			&i.Issue.AuthorID,
+			&i.Issue.MilestoneID,
+			&i.Issue.CommentCount,
+			&i.Issue.ClosedAt,
+			&i.Issue.ClosedBy,
+			&i.Issue.EditedAt,
+			&i.Issue.EditedBy,
+			&i.Issue.CreatedAt,
+			&i.Issue.UpdatedAt,
+			&i.MergedAt,
+			&i.Draft,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -1101,6 +1220,62 @@ func (q *Queries) PullReviewRequestsOf(ctx context.Context, pullIds []uuid.UUID)
 	return items, nil
 }
 
+const pullsWithHeadRepoForDelete = `-- name: PullsWithHeadRepoForDelete :many
+
+SELECT p.issue_id, p.repo_id, p.number, p.head_repo_id, p.head_ref, p.head_sha, p.base_ref, p.base_sha, p.merge_base_sha, p.draft, p.mergeable_state, p.merge_sha, p.conflict_files, p.merged_at, p.merged_by, p.merge_commit_sha, p.merge_method, p.auto_merge_method, p.auto_merge_by, p.auto_merge_title, p.auto_merge_message, p.auto_merge_delete, p.created_at, p.updated_at FROM pull_requests p JOIN issues i ON i.id = p.issue_id
+WHERE p.head_repo_id = $1 AND p.repo_id <> $1 AND i.state = 'open' AND p.merged_at IS NULL
+ORDER BY p.repo_id, p.number
+FOR UPDATE OF p
+`
+
+// ---- deletion and cross-references ----
+// Open pull requests of other repositories whose head lives in head_repo_id,
+// locked for the deletion of that repository.
+func (q *Queries) PullsWithHeadRepoForDelete(ctx context.Context, headRepoID uuid.NullUUID) ([]PullRequest, error) {
+	rows, err := q.db.Query(ctx, pullsWithHeadRepoForDelete, headRepoID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PullRequest{}
+	for rows.Next() {
+		var i PullRequest
+		if err := rows.Scan(
+			&i.IssueID,
+			&i.RepoID,
+			&i.Number,
+			&i.HeadRepoID,
+			&i.HeadRef,
+			&i.HeadSha,
+			&i.BaseRef,
+			&i.BaseSha,
+			&i.MergeBaseSha,
+			&i.Draft,
+			&i.MergeableState,
+			&i.MergeSha,
+			&i.ConflictFiles,
+			&i.MergedAt,
+			&i.MergedBy,
+			&i.MergeCommitSha,
+			&i.MergeMethod,
+			&i.AutoMergeMethod,
+			&i.AutoMergeBy,
+			&i.AutoMergeTitle,
+			&i.AutoMergeMessage,
+			&i.AutoMergeDelete,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const reanchorPullReviewComment = `-- name: ReanchorPullReviewComment :exec
 UPDATE pull_review_comments SET line = $1, start_line = $2, commit_sha = $3,
   outdated = $4, updated_at = now()
@@ -1158,10 +1333,14 @@ WHERE i.repo_id = $1 AND i.kind = 'pull'
   AND ($4::text = '' OR p.head_ref = $4::text)
   AND (NOT $5::boolean OR p.head_repo_id = $6::uuid)
   AND (NOT $7::boolean OR i.author_id = $8::uuid)
+  AND (NOT $9::boolean OR EXISTS (
+         SELECT 1 FROM pull_review_requests rr WHERE rr.pull_id = p.issue_id AND rr.reviewer_id = $10::uuid))
+  AND ($11::text = '' OR
+       issue_search_vector(i.title, i.body) @@ websearch_to_tsquery('simple', $11::text))
 ORDER BY
-  CASE WHEN $9::text = 'updated' THEN i.updated_at END DESC,
+  CASE WHEN $12::text = 'updated' THEN i.updated_at END DESC,
   i.number DESC
-LIMIT $11 OFFSET $10
+LIMIT $14 OFFSET $13
 `
 
 type SearchPullRequestsParams struct {
@@ -1173,13 +1352,18 @@ type SearchPullRequestsParams struct {
 	HeadRepoID uuid.UUID
 	ByAuthor   bool
 	AuthorID   uuid.UUID
+	ByReviewer bool
+	ReviewerID uuid.UUID
+	Query      string
 	Sort       string
 	Off        int32
 	Lim        int32
 }
 
 // Pull requests of a repository. state is open, closed (not merged), merged,
-// all (” = all). base/head filter on the branch names (” = any).
+// all (” = all). base/head filter on the branch names (” = any); query is
+// websearch text matched against title and body; by_reviewer keeps the pull
+// requests with a pending review request for reviewer_id.
 func (q *Queries) SearchPullRequests(ctx context.Context, arg SearchPullRequestsParams) ([]Issue, error) {
 	rows, err := q.db.Query(ctx, searchPullRequests,
 		arg.RepoID,
@@ -1190,6 +1374,9 @@ func (q *Queries) SearchPullRequests(ctx context.Context, arg SearchPullRequests
 		arg.HeadRepoID,
 		arg.ByAuthor,
 		arg.AuthorID,
+		arg.ByReviewer,
+		arg.ReviewerID,
+		arg.Query,
 		arg.Sort,
 		arg.Off,
 		arg.Lim,
@@ -1230,6 +1417,20 @@ func (q *Queries) SearchPullRequests(ctx context.Context, arg SearchPullRequests
 		return nil, err
 	}
 	return items, nil
+}
+
+const setForkNetworkMemberPooled = `-- name: SetForkNetworkMemberPooled :exec
+UPDATE fork_network_members SET pooled = $1 WHERE repo_id = $2
+`
+
+type SetForkNetworkMemberPooledParams struct {
+	Pooled bool
+	RepoID uuid.UUID
+}
+
+func (q *Queries) SetForkNetworkMemberPooled(ctx context.Context, arg SetForkNetworkMemberPooledParams) error {
+	_, err := q.db.Exec(ctx, setForkNetworkMemberPooled, arg.Pooled, arg.RepoID)
+	return err
 }
 
 const setPullAutoMerge = `-- name: SetPullAutoMerge :one

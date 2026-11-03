@@ -15,6 +15,9 @@ max_conns = 10
 # Generate it once: see deploy/dev/master.key.example.
 master_key_file = "deploy/dev/master.key"
 registration = "open"
+# shared: the user search finds the people you share an organization or a
+# repository with; instance: every active user.
+user_directory = "shared"
 
 [actions]
 enabled = true

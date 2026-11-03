@@ -28,6 +28,7 @@ import (
 // implemented by *issues.Service.
 type Issues interface {
 	List(ctx context.Context, who auth.Principal, owner, name string, in issues.ListInput) ([]issues.Issue, error)
+	ListPage(ctx context.Context, who auth.Principal, owner, name string, in issues.ListInput) ([]issues.Issue, bool, error)
 	Get(ctx context.Context, who auth.Principal, owner, name string, number int64) (issues.Issue, error)
 	Create(ctx context.Context, who auth.Principal, owner, name string, in issues.CreateInput) (issues.Issue, error)
 	Update(ctx context.Context, who auth.Principal, owner, name string, number int64, in issues.UpdateInput) (issues.Issue, error)
@@ -305,13 +306,14 @@ func (s *v1Server) ListIssues(ctx context.Context, req v1gen.ListIssuesRequestOb
 			}
 		}
 	}
-	list, err := s.issues.List(ctx, principal(ctx), req.Owner, req.Name, in)
+	list, more, err := s.issues.ListPage(ctx, principal(ctx), req.Owner, req.Name, in)
 	if err != nil {
 		return issuesFail(err, http.MethodGet, issuesSuffix(""))
 	}
-	out := make(v1gen.ListIssues200JSONResponse, 0, len(list))
+	out := v1gen.ListIssues200JSONResponse{Body: make([]v1gen.Issue, 0, len(list)),
+		Headers: v1gen.ListIssues200ResponseHeaders{XHasMore: hasMoreHeader(more)}}
 	for _, i := range list {
-		out = append(out, issueDTO(i))
+		out.Body = append(out.Body, issueDTO(i))
 	}
 	return out, nil
 }

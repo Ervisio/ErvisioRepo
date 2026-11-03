@@ -1,10 +1,11 @@
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { ApiError } from "../../api/http.ts";
 import {
   useCheckConnection,
   useConnections,
   useDeleteConnection,
+  useMyImports,
   usePutSync,
   useRepoImport,
   useResolveSync,
@@ -22,6 +23,7 @@ import {
 import { useT } from "../../i18n/useT.ts";
 import { Badge, Button, Card, Dialog, DialogClose, Input, Select, Table, TableBody, TableHead, Td, Th, Tr, type BadgeTone } from "../../ui/index.ts";
 import { Async, formatDate, Secret, useNotify } from "../account/common.tsx";
+import { Gate, Pager } from "../code/common.tsx";
 import { splitList } from "./RulesSettings.tsx";
 
 const tone: Record<string, BadgeTone> = { ok: "ok", done: "ok", pending: "warn", running: "info", diverged: "warn", error: "err" };
@@ -35,6 +37,7 @@ export function GitHubSettings({ owner, name }: { owner: string; name: string })
       <SyncLink owner={owner} name={name} />
       <ImportStatus owner={owner} name={name} />
       <Connections owner={owner} />
+      <MyImports />
     </>
   );
 }
@@ -249,6 +252,63 @@ function ImportStatus({ owner, name }: { owner: string; name: string }) {
         {d.finishedAt ? <span className="ui-note">{t("import.finished", { when: formatDate(d.finishedAt) })}</span> : d.startedAt && <span className="ui-note">{t("import.startedAt", { when: formatDate(d.startedAt) })}</span>}
       </div>
       {d.lastError && <p className="ui-note acc-pad wk-dl-err">{d.lastError}</p>}
+    </Card>
+  );
+}
+
+/** The imports the viewer started, on any repository it can still read. */
+function MyImports() {
+  const t = useT("github");
+  const [page, setPage] = useState(1);
+  const list = useMyImports(page);
+  return (
+    <Card title={t("imports.title")}>
+      <p className="ui-note acc-pad">{t("imports.hint")}</p>
+      <Gate query={list}>
+        {(res) =>
+          res.items.length === 0 ? (
+            <p className="ui-note acc-pad">{t("imports.empty")}</p>
+          ) : (
+            <>
+              <Table>
+                <TableHead>
+                  <Tr>
+                    <Th>{t("imports.repo")}</Th>
+                    <Th>{t("imports.source")}</Th>
+                    <Th>{t("imports.status")}</Th>
+                    <Th>{t("imports.created")}</Th>
+                  </Tr>
+                </TableHead>
+                <TableBody>
+                  {res.items.map((i) => {
+                    const [o = "", n = ""] = i.repoFullName.split("/");
+                    return (
+                      <Tr key={i.id}>
+                        <Td>
+                          <Link className="ui-mono" to="/$owner/$name/settings" params={{ owner: o, name: n }} search={{ section: "github" }}>
+                            {i.repoFullName}
+                          </Link>
+                        </Td>
+                        <Td>
+                          <span className="ui-mono">
+                            {i.remoteOwner}/{i.remoteName}
+                          </span>
+                        </Td>
+                        <Td>
+                          <Badge tone={tone[i.status]}>{t(`import.status.${i.status}`)}</Badge>
+                          {i.lastError && <div className="ui-note wk-dl-err">{i.lastError}</div>}
+                        </Td>
+                        <Td>{formatDate(i.createdAt)}</Td>
+                      </Tr>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              <Pager page={page} hasMore={res.hasMore} onPage={setPage} />
+            </>
+          )
+        }
+      </Gate>
     </Card>
   );
 }
