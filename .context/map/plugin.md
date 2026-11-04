@@ -11,6 +11,7 @@ Invariants:
 - setKey keeps comments/CRLF and drops only a trailing comment on the replaced line; values go through tomlString (strconv.Quote) and control characters are rejected.
 - Errors are application/problem+json (problem.go); the TS client maps `detail` to RepoError.message.
 - caddy-core.ts is pure (no SDK, no I/O) so it can be unit-tested with node; keep it that way.
+- Never call React APIs (createContext, memo, forwardRef, etc.) at module top level. The SDK react shim throws "React is not ready" until activate() runs setReact, so the whole page fails to load. Create them lazily (see settingsCtx in SettingRows.tsx).
 Gotchas:
 - Settings changes only take effect after a server restart; responses carry restartRequired and the UI must say so.
 - apply() returns 409 for a read-only config mount  and 501 when no ConfigFile is set; do not treat as generic 500.
