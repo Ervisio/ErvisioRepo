@@ -63,5 +63,6 @@
   "audit.filter.actor": "Autore",
   "audit.filter.apply": "Filtra",
   "audit.newer": "Più recenti",
-  "audit.older": "Meno recenti"
+  "audit.older": "Meno recenti",
+  "overview.title": "Panoramica"
 }

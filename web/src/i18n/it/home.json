@@ -12,5 +12,22 @@
   "registration.invite": "Solo su invito",
   "registration.closed": "Chiusa",
   "error": "Impossibile raggiungere il server: {message}",
-  "error.title": "Server non raggiungibile"
+  "error.title": "Server non raggiungibile",
+  "dash.title": "Home",
+  "dash.loading": "Caricamento…",
+  "dash.attention": "Richiede la tua attenzione",
+  "dash.attentionEmpty": "Nulla richiede la tua attenzione.",
+  "dash.activity": "Attività",
+  "dash.activityEmpty": "Ancora nessuna attività.",
+  "dash.showAll": "Mostra tutto",
+  "dash.today": "Oggi",
+  "dash.yesterday": "Ieri",
+  "dash.repos": "Repository recenti",
+  "dash.allRepos": "Tutti ({count})",
+  "dash.reposEmpty": "Non hai ancora repository.",
+  "dash.health": "Stato dell'istanza",
+  "dash.details": "Dettagli",
+  "dash.runnersOnline": "runner online",
+  "dash.storageWarnings": "Avvisi di storage: {count}",
+  "dash.healthEmpty": "Nessun dato disponibile."
 }

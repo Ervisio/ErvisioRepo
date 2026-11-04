@@ -24,6 +24,7 @@ import { CreateRepoDialog, RepoRows } from "./repos/RepoList.tsx";
 import { Entries, Runners } from "./actions/Settings.tsx";
 import { Webhooks } from "./settings/Webhooks.tsx";
 import { Async, formatDate, Secret, useNotify } from "./account/common.tsx";
+import { orgTabs, type OrgTab } from "../ui/shell/nav.tsx";
 
 const roles: OrgRole[] = ["owner", "admin", "member"];
 const permissions: Permission[] = ["none", "read", "triage", "write", "maintain", "admin"];
@@ -268,7 +269,7 @@ function Settings({ org }: { org: Org }) {
 }
 
 /** Organization page: members, teams and invitations. Owners can manage; others read. */
-export function OrgPage({ name }: { name: string }) {
+export function OrgPage({ name, tab, onTab }: { name: string; tab: OrgTab; onTab: (tab: OrgTab) => void }) {
   const t = useT("org");
   const tc = useT("common");
   const org = useOrg(name);
@@ -307,7 +308,7 @@ export function OrgPage({ name }: { name: string }) {
       }
     >
       {o.description && <p className="acc-desc">{o.description}</p>}
-      <Tabs defaultValue="repos">
+      <Tabs value={orgTabs(canManage, isOwner).some((it) => it.tab === tab) ? tab : "repos"} onValueChange={(v) => onTab(v as OrgTab)}>
         <TabsList aria-label={t("tabs")}>
           <TabsTrigger value="repos">{t("tab.repos")}</TabsTrigger>
           <TabsTrigger value="members">{t("tab.members")}</TabsTrigger>

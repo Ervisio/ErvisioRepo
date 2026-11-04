@@ -28,7 +28,12 @@ import { RepoSettings, type SettingsSection } from "./pages/repos/RepoSettings.t
 import { IssuePage, IssuesPage, NewIssuePage, type IssueSearch } from "./pages/issues/IssuesPages.tsx";
 import { NotificationsPage, type InboxSearch } from "./pages/notifications/NotificationsPage.tsx";
 import { PullPage, PullsPage, type PullSearch, type PullTab } from "./pages/pulls/PullsPages.tsx";
-import { AppShell, ToastProvider } from "./ui/index.ts";
+import { AppShell, ToastProvider, type ShellDialogs } from "./ui/index.ts";
+import { CreateRepoDialog } from "./pages/repos/RepoList.tsx";
+import { CreateOrgDialog } from "./pages/account/CreateOrgDialog.tsx";
+import { AdminOverview } from "./pages/AdminOverview.tsx";
+import { OrgsPage } from "./pages/OrgsPage.tsx";
+import type { OrgTab } from "./ui/shell/nav.tsx";
 
 // The default search parser JSON-decodes values, so "1" arrives as a number: accept both forms.
 const str = (v: unknown) => (typeof v === "string" ? v : typeof v === "number" ? String(v) : undefined);
@@ -68,23 +73,37 @@ const verifyRoute = createRoute({ getParentRoute: () => bareRoute, path: "/verif
 const forgotRoute = createRoute({ getParentRoute: () => bareRoute, path: "/forgot-password", component: ForgotPassword });
 const resetRoute = createRoute({ getParentRoute: () => bareRoute, path: "/reset-password", validateSearch: tokenSearch, component: () => <ResetPassword token={resetRoute.useSearch().token} /> });
 
+const shellDialogs: ShellDialogs = { NewRepo: CreateRepoDialog, NewOrg: CreateOrgDialog };
+
 // Pages inside the navigation shell.
 const shellRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "shell",
   component: () => (
-    <AppShell>
+    <AppShell dialogs={shellDialogs}>
       <Outlet />
     </AppShell>
   ),
 });
 const guard = (node: ReactNode, admin = false) => <Protected admin={admin}>{node}</Protected>;
-const homeRoute = createRoute({ getParentRoute: () => shellRoute, path: "/", component: Home });
+const homeRoute = createRoute({ getParentRoute: () => shellRoute, path: "/", component: () => guard(<Home />) });
+const adminRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin", component: () => guard(<AdminOverview />, true) });
 const storageRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin/storage", component: () => guard(<AdminStorage />, true) });
 const auditRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin/audit", component: () => guard(<AdminAudit />, true) });
 const settingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/settings", validateSearch: oidcSearch, component: () => guard(<Account oidcError={settingsRoute.useSearch().oidc_error} />) });
 const orgInviteRoute = createRoute({ getParentRoute: () => shellRoute, path: "/org-invite", validateSearch: tokenSearch, component: () => guard(<OrgInviteAccept token={orgInviteRoute.useSearch().token} />) });
-const orgRoute = createRoute({ getParentRoute: () => shellRoute, path: "/orgs/$org", component: () => guard(<OrgPage name={orgRoute.useParams().org} />) });
+const orgTabValues: OrgTab[] = ["repos", "members", "teams", "invites", "hooks", "secrets", "variables", "runners", "settings"];
+const orgRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/orgs/$org",
+  validateSearch: (s: Record<string, unknown>): { tab?: OrgTab } => ({ tab: orgTabValues.find((v) => v === s.tab) }),
+  component: function OrgRoute() {
+    const tab = orgRoute.useSearch().tab;
+    const navigate = orgRoute.useNavigate();
+    return guard(<OrgPage name={orgRoute.useParams().org} tab={tab ?? "repos"} onTab={(v) => void navigate({ search: { tab: v === "repos" ? undefined : v } })} />);
+  },
+});
+const orgsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/orgs", component: () => guard(<OrgsPage />) });
 const reposRoute = createRoute({ getParentRoute: () => shellRoute, path: "/repos", component: () => guard(<MyReposPage />) });
 type RefPath = { ref?: string; path?: string };
 const refPathSearch = (s: Record<string, unknown>): RefPath => ({ ref: str(s.ref), path: str(s.path) });
@@ -335,7 +354,7 @@ const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
     bareRoute.addChildren([loginRoute, twoFactorRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
-    shellRoute.addChildren([homeRoute, storageRoute, auditRoute, runnersRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute,
+    shellRoute.addChildren([homeRoute, adminRoute, orgsRoute, storageRoute, auditRoute, runnersRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute,
       repoRoute,
       issuesRoute,
       issueNewRoute,

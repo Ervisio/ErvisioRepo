@@ -12,5 +12,22 @@
   "registration.invite": "Invite only",
   "registration.closed": "Closed",
   "error": "Cannot reach the server: {message}",
-  "error.title": "Server unavailable"
+  "error.title": "Server unavailable",
+  "dash.title": "Home",
+  "dash.loading": "Loading…",
+  "dash.attention": "Needs your attention",
+  "dash.attentionEmpty": "Nothing needs you right now.",
+  "dash.activity": "Activity",
+  "dash.activityEmpty": "No activity yet.",
+  "dash.showAll": "Show all",
+  "dash.today": "Today",
+  "dash.yesterday": "Yesterday",
+  "dash.repos": "Recent repositories",
+  "dash.allRepos": "All {count}",
+  "dash.reposEmpty": "You have no repositories yet.",
+  "dash.health": "Instance health",
+  "dash.details": "Details",
+  "dash.runnersOnline": "runners online",
+  "dash.storageWarnings": "Storage warnings: {count}",
+  "dash.healthEmpty": "No health data available."
 }

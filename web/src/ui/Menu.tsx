@@ -2,12 +2,12 @@ import * as RMenu from "@radix-ui/react-dropdown-menu";
 import type { ReactNode } from "react";
 import { Icon, type IconName } from "./Icon.tsx";
 
-export function Menu({ trigger, children, align = "start" }: { trigger: ReactNode; children: ReactNode; align?: "start" | "end" }) {
+export function Menu({ trigger, children, align = "start", className, label }: { trigger: ReactNode; children: ReactNode; align?: "start" | "end"; className?: string; label?: string }) {
   return (
     <RMenu.Root>
       <RMenu.Trigger asChild>{trigger}</RMenu.Trigger>
       <RMenu.Portal>
-        <RMenu.Content className="ui-pop" align={align} sideOffset={6}>
+        <RMenu.Content className={className ? `ui-pop ${className}` : "ui-pop"} align={align} sideOffset={6} aria-label={label}>
           {children}
         </RMenu.Content>
       </RMenu.Portal>

@@ -6,6 +6,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Web: the Console shell now has a 264 px sidebar with an owner / repository switcher, grouped navigation (global, repository or organization), recent repositories and an admin-only Administration block. A top bar adds a search field (repository scope, `/` shortcut), a New menu (repository, organization), the notifications count and a user menu, which now holds Sign out. Below 900 px the sidebar opens as a drawer.
+- Web: Home is a dashboard (needs your attention, activity, recent repositories, instance health for admins). The instance details moved to the new `/admin` overview. New `/orgs` page; `/_ui` is no longer linked from the navigation.
+
 ### Fixed
 
 - Plugin: the settings pages crashed with "Cannot use 'in' operator … in undefined" against a server older than 1.0.4, whose `GET /settings` has no `values`; they now say the server must be updated.

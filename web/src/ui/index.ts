@@ -11,5 +11,6 @@ export { Table, TableBody, TableHead, Td, Th, Tr } from "./Table.tsx";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "./Tabs.tsx";
 export { ToastProvider, useToast } from "./Toast.tsx";
 export { AppShell } from "./shell/AppShell.tsx";
+export type { ShellDialogs } from "./shell/ConsoleShell.tsx";
 export { LayoutPicker } from "./shell/LayoutPicker.tsx";
 export { Page } from "./shell/Page.tsx";

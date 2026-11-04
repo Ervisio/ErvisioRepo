@@ -1,9 +1,6 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { request } from "../../api/http.ts";
 import { useSession } from "../../api/identity.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, Page, Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/index.ts";
+import { Page, Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/index.ts";
 import { Keys } from "./Keys.tsx";
 import { Linked } from "./Linked.tsx";
 import { NotificationPrefs } from "./Notifications.tsx";
@@ -17,19 +14,9 @@ import { Tokens } from "./Tokens.tsx";
 export function Account({ oidcError }: { oidcError?: string }) {
   const t = useT("account");
   const user = useSession().data;
-  const qc = useQueryClient();
-  const navigate = useNavigate();
-  async function signOut() {
-    try {
-      await request("POST", "/auth/logout");
-    } finally {
-      qc.clear();
-      await navigate({ to: "/login" });
-    }
-  }
   if (!user) return null;
   return (
-    <Page section="issue" title={t("title")} subtitle={`@${user.username}`} actions={<Button variant="ghost" onClick={() => void signOut()}>{t("signOut")}</Button>}>
+    <Page section="issue" title={t("title")} subtitle={`@${user.username}`}>
       <Tabs defaultValue={oidcError ? "linked" : "profile"}>
         <TabsList aria-label={t("tabs")}>
           <TabsTrigger value="profile">{t("tab.profile")}</TabsTrigger>

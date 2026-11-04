@@ -63,5 +63,6 @@
   "audit.filter.actor": "Actor",
   "audit.filter.apply": "Filter",
   "audit.newer": "Newer",
-  "audit.older": "Older"
+  "audit.older": "Older",
+  "overview.title": "Overview"
 }

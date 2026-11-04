@@ -1,7 +1,6 @@
 {
   "title": "Impostazioni account",
   "tabs": "Sezioni dell'account",
-  "signOut": "Esci",
   "cancel": "Annulla",
   "remove": "Rimuovi",
   "copy": "Copia",
@@ -149,5 +148,6 @@
   "sessions.revokeFor": "Chiudi la sessione da {ip}",
   "sessions.revoked": "Sessione chiusa",
   "sessions.revokeOthers": "Esci da tutte le altre",
-  "sessions.revokedOthers": "Le altre sessioni sono state chiuse"
+  "sessions.revokedOthers": "Le altre sessioni sono state chiuse",
+  "orgs.dialogTitle": "Nuova organizzazione"
 }

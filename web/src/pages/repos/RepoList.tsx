@@ -33,12 +33,16 @@ export function RepoRows({ query }: { query: UseQueryResult<Repo[]> }) {
 }
 
 /** Dialog with the create form; with `org` the repository is created under that organization. */
-export function CreateRepoDialog({ org }: { org?: string }) {
+/** New-repository dialog. Pass `open`/`onOpenChange` to control it from outside (the shell's New menu): then no trigger is rendered. */
+export function CreateRepoDialog({ org, open: openProp, onOpenChange }: { org?: string; open?: boolean; onOpenChange?: (open: boolean) => void }) {
   const t = useT("repos");
   const notify = useNotify();
   const navigate = useNavigate();
   const create = useCreateRepo(org);
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : openState;
+  const setOpen = (o: boolean) => (controlled ? onOpenChange?.(o) : setOpenState(o));
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<Visibility>("private");
@@ -61,7 +65,7 @@ export function CreateRepoDialog({ org }: { org?: string }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen} title={t("create.title")} description={t("create.description")} trigger={<Button variant="primary" icon="plus">{t("create.button")}</Button>}>
+    <Dialog open={open} onOpenChange={setOpen} title={t("create.title")} description={t("create.description")} trigger={controlled ? undefined : <Button variant="primary" icon="plus">{t("create.button")}</Button>}>
       <form className="acc-form" onSubmit={submit}>
         <Input label={t("create.name")} required maxLength={100} autoComplete="off" mono value={name} onChange={(e) => setName(e.target.value)} />
         <Input label={t("create.descriptionLabel")} maxLength={350} value={description} onChange={(e) => setDescription(e.target.value)} />

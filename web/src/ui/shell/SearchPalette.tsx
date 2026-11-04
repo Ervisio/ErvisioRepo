@@ -1,42 +1,74 @@
-import { useNavigate } from "@tanstack/react-router";
-import { createContext, useContext, useEffect, useId, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import { createContext, useContext, useEffect, useId, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useRepoSearch } from "../../api/code.ts";
+import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Dialog } from "../Dialog.tsx";
 import { Icon } from "../Icon.tsx";
 
-const OpenContext = createContext<(() => void) | null>(null);
+export type SearchScope = { owner: string; name: string };
+const OpenContext = createContext<((scope?: SearchScope) => void) | null>(null);
 
-/** Global repository search dialog, opened from the shell or with Ctrl/Cmd+K. */
+const typing = (el: EventTarget | null) =>
+  el instanceof HTMLElement && (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName));
+
+/** Global search dialog, opened from the shell, with Ctrl/Cmd+K or with "/" outside text fields. */
 export function SearchPaletteProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState<{ scope?: SearchScope } | null>(null);
+  const scope = useScopeFromRoute();
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "k") {
+      const mod = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "k";
+      const slash = e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey && !typing(e.target);
+      if (mod || slash) {
         e.preventDefault();
-        setOpen(true);
+        setOpen({ scope });
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [scope]);
   return (
-    <OpenContext.Provider value={() => setOpen(true)}>
+    <OpenContext.Provider value={(s) => setOpen({ scope: s })}>
       {children}
-      {open && <Palette onClose={() => setOpen(false)} />}
+      {open && <Palette scope={open.scope} onClose={() => setOpen(null)} />}
     </OpenContext.Provider>
   );
 }
 
-/** Button that opens the palette; `iconOnly` for the rail. */
+function useScopeFromRoute(): SearchScope | undefined {
+  const p = useParams({ strict: false }) as { owner?: string; name?: string };
+  const owner = p.owner;
+  const name = p.name;
+  return useMemo(() => (owner && name ? { owner, name } : undefined), [owner, name]);
+}
+
+/** Button that opens the palette; `iconOnly` for compact bars. */
 export function SearchTrigger({ className, iconOnly }: { className?: string; iconOnly?: boolean }) {
   const t = useT("shell");
   const open = useContext(OpenContext);
+  const scope = useScopeFromRoute();
   if (!open) return null;
   return (
-    <button type="button" className={className} onClick={open} aria-label={t("search.open")} title={t("search.shortcut")} aria-keyshortcuts="Control+K Meta+K">
+    <button type="button" className={className} onClick={() => open(scope)} aria-label={t("search.open")} title={t("search.shortcut")} aria-keyshortcuts="/ Control+K Meta+K">
       <Icon name="search" />
       {!iconOnly && <span>{t("search.button")}</span>}
+    </button>
+  );
+}
+
+/** Field-shaped trigger for the Console top bar: placeholder, repository scope chip and the "/" hint. */
+export function SearchField({ className }: { className?: string }) {
+  const t = useT("shell");
+  const open = useContext(OpenContext);
+  const scope = useScopeFromRoute();
+  if (!open) return null;
+  return (
+    <button type="button" className={className} onClick={() => open(scope)} aria-label={scope ? t("search.openIn", { repo: `${scope.owner}/${scope.name}` }) : t("search.open")} aria-keyshortcuts="/ Control+K Meta+K">
+      <Icon name="search" />
+      {scope && <span className="sb-scope sec-code">{scope.name}</span>}
+      <span className="sb-q">{scope ? t("search.fieldRepo") : t("search.field")}</span>
+      <kbd className="sb-kbd">/</kbd>
     </button>
   );
 }
@@ -50,7 +82,9 @@ function useDebounced(v: string, ms: number) {
   return d;
 }
 
-function Palette({ onClose }: { onClose: () => void }) {
+type Option = { kind: "code" } | { kind: "repo"; repo: Repo };
+
+function Palette({ scope, onClose }: { scope?: SearchScope; onClose: () => void }) {
   const t = useT("shell");
   const navigate = useNavigate();
   const listId = useId();
@@ -58,12 +92,14 @@ function Palette({ onClose }: { onClose: () => void }) {
   const [active, setActive] = useState(0);
   const query = useDebounced(q.trim(), 200);
   const res = useRepoSearch(query);
-  const items = query ? (res.data ?? []) : [];
+  const repos = query ? (res.data ?? []) : [];
+  const items: Option[] = [...(scope && query ? [{ kind: "code" } as const] : []), ...repos.map((repo) => ({ kind: "repo", repo }) as const)];
   const go = (i: number) => {
-    const r = items[i];
-    if (!r) return;
+    const o = items[i];
+    if (!o) return;
     onClose();
-    void navigate({ to: "/$owner/$name", params: { owner: r.owner, name: r.name } });
+    if (o.kind === "code" && scope) void navigate({ to: "/$owner/$name/search", params: scope, search: { q: query } });
+    else if (o.kind === "repo") void navigate({ to: "/$owner/$name", params: { owner: o.repo.owner, name: o.repo.name } });
   };
   const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "ArrowDown") {
@@ -77,7 +113,7 @@ function Palette({ onClose }: { onClose: () => void }) {
       go(Math.min(active, items.length - 1));
     }
   };
-  const status = !query ? t("search.hint") : res.isError ? t("search.error") : res.isPending ? t("search.loading") : items.length === 0 ? t("search.none") : "";
+  const status = !query ? t("search.hint") : res.isError ? t("search.error") : res.isPending ? t("search.loading") : repos.length === 0 ? t("search.none") : "";
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()} title={t("search.title")}>
       <div className="pl">
@@ -99,9 +135,9 @@ function Palette({ onClose }: { onClose: () => void }) {
           onKeyDown={onKey}
         />
         <ul id={listId} role="listbox" className="pl-list" aria-label={t("search.results")}>
-          {items.map((r, i) => (
+          {items.map((o, i) => (
             <li
-              key={r.fullName}
+              key={o.kind === "code" ? "code" : o.repo.fullName}
               id={`${listId}-${i}`}
               role="option"
               aria-selected={i === active}
@@ -109,9 +145,18 @@ function Palette({ onClose }: { onClose: () => void }) {
               onMouseEnter={() => setActive(i)}
               onClick={() => go(i)}
             >
-              <Icon name={r.visibility === "public" ? "book" : "lock"} />
-              <b>{r.fullName}</b>
-              {r.description && <span className="pl-desc">{r.description}</span>}
+              {o.kind === "code" && scope ? (
+                <>
+                  <Icon name="code" />
+                  <b>{t("search.inRepo", { query, repo: `${scope.owner}/${scope.name}` })}</b>
+                </>
+              ) : o.kind === "repo" ? (
+                <>
+                  <Icon name={o.repo.visibility === "public" ? "book" : "lock"} />
+                  <b>{o.repo.fullName}</b>
+                  {o.repo.description && <span className="pl-desc">{o.repo.description}</span>}
+                </>
+              ) : null}
             </li>
           ))}
         </ul>

@@ -11,10 +11,10 @@ import { useListLayout, type ListLayout } from "../work/layout.ts";
 /** repo (owner/name) shows the threads of one repository, filtered by the server. */
 export type InboxSearch = { filter?: "participating" | "all"; page?: number; repo?: string };
 
-const subjectIcon: Record<NotificationThread["subjectType"], IconName> = { issue: "issue", pull_request: "pr", release: "tag", commit: "commit" };
+export const subjectIcon: Record<NotificationThread["subjectType"], IconName> = { issue: "issue", pull_request: "pr", release: "tag", commit: "commit" };
 
 /** Link to the page of a notification subject. */
-function SubjectLink({ n, className, children, onClick }: { n: NotificationThread; className?: string; children: ReactNode; onClick?: () => void }) {
+export function SubjectLink({ n, className, children, onClick }: { n: NotificationThread; className?: string; children: ReactNode; onClick?: () => void }) {
   const params = { owner: n.owner, name: n.repo };
   switch (n.subjectType) {
     case "issue":
