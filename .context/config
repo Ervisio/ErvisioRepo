@@ -1,1 +1,2 @@
-keeper=off
+keeper=on
+keeper_model=haiku
