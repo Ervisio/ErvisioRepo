@@ -1,0 +1,8 @@
+[Unit]
+Description=Ervisio Repo server (protected resources)
+
+[Slice]
+# The control plane keeps its memory and wins CPU contention against jobs.
+MemoryMin=4G
+CPUWeight=900
+IOWeight=900

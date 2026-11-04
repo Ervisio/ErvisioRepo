@@ -1,0 +1,46 @@
+[Unit]
+Description=Ervisio runner
+Documentation=https://github.com/Ervisio/ErvisioRepo
+After=network-online.target docker.service
+Wants=network-online.target
+ConditionPathExists=/etc/ervisio-repo/runner.toml
+
+[Service]
+Type=simple
+User=ervisio-repo
+Group=ervisio-repo
+SupplementaryGroups=docker
+Slice=ervisio-runner.slice
+ExecStart=/usr/lib/ervisio-repo/current/ervisio-runner run --config /etc/ervisio-repo/runner.toml
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=120
+LimitNOFILE=65536
+StateDirectory=ervisio-runner
+StateDirectoryMode=0750
+
+# Hardening. The runner talks to the Docker socket, so namespaces and
+# address families stay open; the rest is locked down.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+AmbientCapabilities=
+UMask=0027
+ReadWritePaths=/var/lib/ervisio-runner
+
+[Install]
+WantedBy=multi-user.target

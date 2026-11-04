@@ -1,0 +1,9 @@
+[Unit]
+Description=Ervisio runner (CI jobs, capped)
+
+[Slice]
+CPUQuota=600%
+MemoryMax=12G
+TasksMax=8192
+CPUWeight=100
+IOWeight=100

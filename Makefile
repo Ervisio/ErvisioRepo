@@ -13,12 +13,13 @@ GOLANGCI_LINT_VERSION := v2.15.0
 OAPI_CODEGEN_VERSION  := v2.8.2
 GOVULNCHECK_VERSION   := v1.9.0
 BUF_VERSION           := v1.75.0
+NFPM_VERSION          := v2.41.1
 
 GOBIN := $(shell go env GOPATH)/bin
 export PATH := $(GOBIN):$(PATH)
 
 .DEFAULT_GOAL := help
-.PHONY: help tools generate web build dev dev-down test lint vuln check-generate dist clean
+.PHONY: help tools generate web build dev dev-down test lint vuln check-generate dist docker package release clean
 
 help: ## Show this help
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -78,6 +79,16 @@ check-generate: generate ## Fail if generated code is out of date
 	git diff --exit-code
 
 dist: build ## Release build (alias of build)
+
+docker: ## Build the Docker image (ervisiorepo-app:local)
+	docker build --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) -t ervisiorepo-app:local .
+
+package: web ## Build .deb, .rpm and tarballs into dist/ (unsigned)
+	NFPM_VERSION=$(NFPM_VERSION) VERSION=$(VERSION) COMMIT=$(COMMIT) scripts/release/build.sh
+
+release: web ## Build packages and sign SHA256SUMS (needs RELEASE_SIGNING_KEY)
+	@test -n "$$RELEASE_SIGNING_KEY" || { echo "set RELEASE_SIGNING_KEY to a private key PEM"; exit 1; }
+	NFPM_VERSION=$(NFPM_VERSION) VERSION=$(VERSION) COMMIT=$(COMMIT) scripts/release/build.sh
 
 clean: ## Remove build output
 	rm -rf bin dist coverage.out

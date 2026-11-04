@@ -1,0 +1,35 @@
+# Ervisio Repo configuration. Any key can be overridden with EREPO_<SECTION>_<KEY>.
+# Restart after editing: systemctl restart ervisio-repo
+
+[server]
+# The address users reach the instance at; set it to your domain.
+public_url = "http://localhost:3400"
+listen = "127.0.0.1:3400"
+ssh_listen = "0.0.0.0:2222"
+# Admin socket for the Caddy plugin. Empty disables it.
+plugin_socket = "/run/ervisio-repo/plugin.sock"
+
+[database]
+# Created by the package when a local PostgreSQL is running (peer auth over
+# the unix socket). Point it elsewhere for an external server.
+url = "postgres://ervisio-repo@/ervisio_repo?host=/var/run/postgresql"
+max_conns = 20
+
+[security]
+master_key_file = "/etc/ervisio-repo/master.key"
+# The first account always becomes the instance administrator.
+registration = "invite"
+
+[log]
+level = "info"
+format = "json"
+
+# Local storage. Add a remote target to protect against disk failures.
+[[storage.target]]
+name = "hot"
+kind = "local"
+path = "/var/lib/ervisio-repo/data"
+budget = "50GB"
+
+[storage.policy.git]
+primary = "hot"

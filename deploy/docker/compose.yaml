@@ -1,0 +1,105 @@
+# Ervisio Repo production stack. Use ./setup.sh (or setup.bat) to generate .env
+# and config/, then start it with: docker compose up -d --build --wait
+name: ervisiorepo
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+x-app: &app
+  build:
+    context: ../..
+    dockerfile: Dockerfile
+    args:
+      VERSION: ${ERVISIO_VERSION:-dev}
+      COMMIT: ${ERVISIO_COMMIT:-unknown}
+  image: ervisiorepo-app:local
+  user: "${ERVISIO_UID:-1001}:${ERVISIO_GID:-1001}"
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging: *logging
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ervisio_repo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run setup.sh first}
+      POSTGRES_DB: ervisio_repo
+    volumes:
+      - ${ERVISIO_DATA_DIR:-./data}/postgres:/var/lib/postgresql/data
+    networks: [private]
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ervisio_repo -d ervisio_repo"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging: *logging
+
+  app:
+    <<: *app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      EREPO_DATABASE_URL: postgres://ervisio_repo:${POSTGRES_PASSWORD:?run setup.sh first}@postgres:5432/ervisio_repo?sslmode=disable
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-3400}:3400"
+      - "${BIND_ADDRESS:-127.0.0.1}:${SSH_PORT:-2222}:2222"
+    volumes:
+      - ./config:/etc/ervisio-repo:ro
+      - ${ERVISIO_DATA_DIR:-./data}/repo:/var/lib/ervisio-repo
+      - ${ERVISIO_SOCKET_DIR:-./run}:/run/ervisio-repo
+    networks:
+      private:
+      edge:
+        aliases: [ervisiorepo-app]
+
+  # Optional continuous WAL archiving and daily base backups: --profile backup.
+  walg:
+    image: postgres:16-alpine
+    profiles: [backup]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - path: ./config/walg.env
+        required: false
+    volumes:
+      - ${ERVISIO_DATA_DIR:-./data}/postgres:/var/lib/postgresql/data:ro
+    networks: [private]
+    security_opt:
+      - no-new-privileges:true
+    entrypoint: ["sh", "-c", "echo 'configure config/walg.env and a wal-g image before enabling this profile'; sleep infinity"]
+    logging: *logging
+
+  # Optional CI runner that executes jobs in containers: --profile runner.
+  runner:
+    <<: *app
+    profiles: [runner]
+    user: "${ERVISIO_UID:-1001}:${DOCKER_GID:-0}"
+    depends_on:
+      app:
+        condition: service_healthy
+    entrypoint: ["ervisio-runner"]
+    command: ["run"]
+    environment:
+      ERVISIO_RUNNER_URL: http://app:3400
+    volumes:
+      - ./config:/etc/ervisio-runner
+      - ${ERVISIO_DATA_DIR:-./data}/runner:/var/lib/ervisio-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [private]
+
+networks:
+  private:
+    internal: true
+  edge:
+    name: ervisiorepo_edge
