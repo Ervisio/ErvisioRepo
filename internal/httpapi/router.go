@@ -138,7 +138,7 @@ func NewRouter(d Deps) http.Handler {
 	}
 
 	r := chi.NewRouter()
-	r.Use(middleware.RequestID, accessLog(d.Log), recoverer(d.Log), securityHeaders, metrics.middleware)
+	r.Use(middleware.RequestID, accessLog(d.Log), recoverer(d.Log), securityHeaders, metrics.middleware, jobAPIAlias)
 
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -223,6 +223,29 @@ func readyz(d Deps) http.HandlerFunc {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("ok\n"))
 	}
+}
+
+// jobAPIAlias sends /api/v1 requests made with a job token to the
+// GitHub-compatible API: the act runtime hardcodes GITHUB_API_URL to
+// <server>/api/v1 (Gitea's API), while ErvisioRepo serves it at /api/v3.
+func jobAPIAlias(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if rest, ok := strings.CutPrefix(r.URL.Path, "/api/v1/"); ok && hasJobToken(r) {
+			r.URL.Path = ghapi.Prefix + "/" + rest
+			r.URL.RawPath = ""
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// hasJobToken reports whether the request carries a job token, in the
+// "Bearer" or "token" scheme the GitHub clients use.
+func hasJobToken(r *http.Request) bool {
+	scheme, cred, _ := strings.Cut(r.Header.Get("Authorization"), " ")
+	if !strings.EqualFold(scheme, "Bearer") && !strings.EqualFold(scheme, "token") {
+		return false
+	}
+	return strings.HasPrefix(strings.TrimSpace(cred), auth.JobTokenPrefix)
 }
 
 // loopbackOnly admits only direct connections from the local host. A request
