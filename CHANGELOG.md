@@ -9,6 +9,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - Plugin: the settings pages crashed with "Cannot use 'in' operator … in undefined" against a server older than 1.0.4, whose `GET /settings` has no `values`; they now say the server must be updated.
+- Plugin: the save bar and row hovers were transparent because `--raise` is not a core token; the plugin now defines it.
 
 ## [1.0.5] - 2026-11-04
 

@@ -4,9 +4,11 @@
    Accent = the term hue. No divider lines: spacing and tinted surfaces instead. Small grey text uses --ink2. */
 .rp-root { --acc: var(--h-term); --acc-s: var(--h-term-s); --on-acc: #000; --rp-mono: var(--mono, "JetBrains Mono", ui-monospace, monospace);
   --rp-ctl: var(--r-ctl, 12px); --rp-card: var(--r-card, 18px);
+  /* Not part of the core tokens (design/DESIGN.md): defined here or every --raise surface is transparent. */
+  --raise: #222226;
   font-variant-numeric: tabular-nums; color: var(--ink); min-height: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
 /* Light theme: the term hue is too pale for white text and for the ok colour on light surfaces. */
-.rp-root.rp-light { --acc: #0a6f5f; --on-acc: #fff; --ok: #0b6a45; }
+.rp-root.rp-light { --raise: #f0f0f3; --acc: #0a6f5f; --on-acc: #fff; --ok: #0b6a45; }
 .rp-light .ui-btn--primary { background: var(--acc); color: var(--on-acc); }
 .rp-root *, .rp-root *::before, .rp-root *::after { box-sizing: border-box; }
 .rp-root :where(button:not([class*="ui-"])) { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
