@@ -33,3 +33,6 @@ budget = "50GB"
 
 [storage.policy.git]
 primary = "hot"
+
+[storage.policy.actions]
+primary = "hot"

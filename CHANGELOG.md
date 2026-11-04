@@ -8,6 +8,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The server no longer exits at startup when Actions is enabled and no `actions` storage policy exists: the actions cache and artifacts are disabled with a warning. The generated and packaged configs now include `[storage.policy.actions]`.
 - `setup.sh` and `setup.bat` build the app image from the checkout when the published image cannot be pulled, instead of starting whatever image is already tagged locally.
 
 ## [1.0.2] - 2026-11-04

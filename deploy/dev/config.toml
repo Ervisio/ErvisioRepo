@@ -37,6 +37,9 @@ budget = "5GB"
 [storage.policy.git]
 primary = "hot"
 
+[storage.policy.actions]
+primary = "hot"
+
 # Mailpit from deploy/docker/compose.dev.yaml: messages at http://localhost:8025.
 [mail]
 enabled = true

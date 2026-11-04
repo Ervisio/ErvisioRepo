@@ -128,6 +128,9 @@ budget = "50GB"
 
 [storage.policy.git]
 primary = "hot"
+
+[storage.policy.actions]
+primary = "hot"
 TOML
   echo 'Created config/config.toml.'
 else

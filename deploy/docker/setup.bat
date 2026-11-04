@@ -102,6 +102,9 @@ if not exist config\config.toml (
     echo.
     echo [storage.policy.git]
     echo primary = "hot"
+    echo.
+    echo [storage.policy.actions]
+    echo primary = "hot"
   ) > config\config.toml
   echo Created config\config.toml.
 )

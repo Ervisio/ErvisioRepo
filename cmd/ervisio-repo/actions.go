@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -56,10 +57,15 @@ func wireActions(ctx context.Context, a *actions.Service, d actions.Deps, bus *e
 }
 
 // setupActionsResults builds the cache and artifact services the actions
-// toolkit talks to with the runtime token; nil when Actions is off.
+// toolkit talks to with the runtime token; nil when Actions is off or no
+// storage policy holds the actions data.
 func setupActionsResults(cfg *config.Config, pool *pgxpool.Pool, storage *tier.Tier, a *actions.Service,
 	log *slog.Logger) (http.Handler, []jobs.Option, error) {
-	if a == nil {
+	if a == nil || storage == nil {
+		return nil, nil, nil
+	}
+	if _, err := storage.Class("actions"); errors.Is(err, tier.ErrUnknownPolicy) {
+		log.Warn("no actions storage policy, the actions cache and artifacts are disabled", "component", "actions")
 		return nil, nil, nil
 	}
 	key, err := optionalMasterKey(cfg.Security.MasterKeyFile)
