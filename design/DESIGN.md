@@ -102,6 +102,8 @@ Riferimento visivo: `design/mock/direzione-a.html` e lo screenshot approvato in 
 - **Layout.** Il default lo sceglie l'admin a livello di istanza; ogni utente può sovrascriverlo nelle impostazioni. Per ora la scelta sta in `localStorage` (`ervisio.layout`, vedi `web/src/ui/shell/layout.ts`, con TODO per le due impostazioni).
 - **Screenshot di riferimento.** A Console a 1280x800 e 390x844; B Foglio e C Corsie solo a 1280x800. Stanno in `web/tests/visual/__screenshots__/` e si rigenerano con `npm run test:visual -- --update-snapshots`. I file dipendono dal sistema operativo (suffisso `-darwin`, `-linux`): i riferimenti per la CI vanno generati su Linux.
 
+- **Run delle Actions (2026-11-04).** Default A (righe dense), B e C selezionabili come per issue e notifiche. Dettaglio in `design/wip/003-actions-run/DECISION.md`.
+
 ## Implementazione (web/src/ui)
 
 - Kit sopra primitive Radix: Button, Input, Select, Dialog, Menu, Tabs, Table, Badge, Toast, EmptyState, più Card e Icon. Lo stile è nostro, solo da token (`web/src/ui/ui.css`).

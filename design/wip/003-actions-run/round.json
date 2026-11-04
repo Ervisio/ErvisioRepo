@@ -1,0 +1,43 @@
+{
+  "group": "Actions / Run",
+  "title": "Run delle Actions",
+  "question": "Quale composizione Console usiamo per lista run, dettaglio run con grafo job e log del job?",
+  "kind": "page",
+  "viewports": [
+    "laptop",
+    "mobile"
+  ],
+  "head": [
+    "/p/tokens.css",
+    "/p/mock/shared.css"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "label": "A Righe dense",
+      "notes": "Righe dense stile console: lista con workflow a sinistra, dettaglio con grafo orizzontale dei job (needs e matrice raggruppata) e pagina log con colonna job da 240px."
+    },
+    {
+      "id": "b",
+      "label": "B Grafo al centro",
+      "notes": "Grafo al centro: lista raggruppata per giorno, dettaglio con fasi a colonne e matrice compressa in una pila, il log si apre in un pannello laterale accanto alla pipeline."
+    },
+    {
+      "id": "c",
+      "label": "C Split log",
+      "notes": "Master-detail: lista e anteprima affiancate, dettaglio con gantt dei job, log a tutta altezza con striscia temporale dei passi sopra e colonna job da 240px."
+    }
+  ],
+  "created": "2026-11-04T07:53:07.037Z",
+  "states": [
+    "lista run",
+    "dettaglio run",
+    "log del job"
+  ],
+  "checklist": [
+    "Lista, dettaglio e log si leggono a 1280 e 390 px senza scroll orizzontale",
+    "Stati, icone e durata di run, job e passi sono riconoscibili senza affidarsi al solo colore",
+    "Il log ha numeri di riga, colori ANSI, gruppi comprimibili, ricerca, indicatore in corso e stato di approvazione",
+    "Un solo CTA pieno turchese, nessun divisore grigio, nessun gradiente o ombra, tema chiaro leggibile"
+  ]
+}
