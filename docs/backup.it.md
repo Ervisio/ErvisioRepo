@@ -8,6 +8,8 @@ Per ricostruire un'istanza ErvisioRepo servono tre cose:
 2. **Il database PostgreSQL**: utenti, permessi, metadati dei repository.
 3. **Il recovery kit**: file di configurazione, master key e chiavi host SSH.
 
+Per la procedura di ripristino passo per passo su un host nuovo, la prova di ripristino e gli scenari di guasto, vedi [dr.it.md](dr.it.md).
+
 ## Database: pg_dump giornaliero
 
 Se esiste una policy di storage chiamata `backup`, il server esegue

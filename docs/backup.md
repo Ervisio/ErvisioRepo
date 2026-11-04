@@ -8,6 +8,8 @@ ErvisioRepo keeps three things you need to rebuild an instance:
 2. **The PostgreSQL database**: users, permissions, repository metadata.
 3. **The recovery kit**: configuration file, master key and SSH host keys.
 
+For the step-by-step recovery procedure on a fresh host, drill and failure scenarios, see [dr.md](dr.md).
+
 ## Database: daily pg_dump
 
 When a storage policy named `backup` exists, the server runs `pg_dump -Fc`
