@@ -28,7 +28,7 @@ Invariants:
 - Archive: completed job logs moved to storage after completion; sweep archives lost-job logs after 15 min.
 Config (internal/config/config.go, section [actions]): enabled (default true), default_actions_url ("github" | "mirror-only", default "github"), max_job_timeout (6h), runner_offline_after (2m), registration_token_ttl (1h), max_jobs_per_run (512).
 Gotchas:
-- act hardcodes GITHUB_API_URL=<server>/api/v1; httpapi/router.go jobAPIAlias rewrites /api/v1/ requests carrying an erj_ token to /api/v3 (ghapi.Prefix). Other /api/v1 traffic is untouched. Do not remove the alias.
+- act hardcodes GITHUB_API_URL=<server>/api/v1; httpapi/router.go jobAPIAlias rewrites /api/v1/ requests carrying an erj_ token (Bearer or token scheme) to /api/v3 (ghapi.Prefix). Other /api/v1 traffic is untouched. Do not remove the alias.
 - Without security.master_key_file: secrets cannot be stored (ErrNoMasterKey; secrets() skips sealed secrets), and runtime tokens use a random key.
 - Actions are a separate river-driven pipeline: do not start jobs or run plan logic from HTTP handlers; enqueue via s.enqueue.
 - Fork/permission checks happen in service methods, not in the router; a new endpoint must call repoFor or manageRepo.

@@ -17,7 +17,7 @@ Gotchas:
 - make package passes VERSION from `git describe --dirty`; on a dirty tree the version contains "-dirty" and package/file names stop matching install.sh, so pass VERSION=x.y.z explicitly.
 - make release only checks RELEASE_SIGNING_KEY is set; build.sh signs only when that var is non-empty.
 - compose "walg" service is a placeholder (entrypoint prints a hint and sleeps); do not rely on it for backups.
-- setup.bat still sets ERVISIO_SOCKET_DIR=./run (setup.sh switches to /run/ervisio-repo when the Ervisio plugin is enabled), so the Windows flow differs for the admin socket.
+- Socket dir: setup.sh and setup.bat both switch ERVISIO_SOCKET_DIR to /run/ervisio-repo when the Ervisio plugin is enabled (the plugin looks there inside the Docker VM); otherwise ./run.
 - build.sh writes stub scripts for missing optional binaries so nfpm does not fail; a stub exits 1 by design.
 - Dockerfile and Makefile build ervisio-runner/erepo only if cmd/<name> has Go files (skips silently).
 Related: map/plugin.md (drives setup.sh/install.sh, uses the Caddy flow in TS), map/runner.md, map/repo-core.md
