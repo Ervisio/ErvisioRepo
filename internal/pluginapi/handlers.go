@@ -1,245 +1,76 @@
 package pluginapi
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	netmail "net/mail"
 	"net/url"
-	"slices"
+	"os"
+	"strings"
 	"time"
 
-	"github.com/Ervisio/ErvisioRepo/internal/config"
+	"github.com/google/uuid"
+
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
+	"github.com/Ervisio/ErvisioRepo/internal/mail"
 )
 
+type counts struct {
+	Repos int64 `json:"repos"`
+	Users int64 `json:"users"`
+	Orgs  int64 `json:"orgs"`
+}
+
 type statusResponse struct {
-	Version          string   `json:"version"`
-	Commit           string   `json:"commit,omitempty"`
-	PublicURL        string   `json:"publicUrl"`
-	Upstream         Upstream `json:"upstream"`
-	SSHEnabled       bool     `json:"sshEnabled"`
-	ConfigWritable   bool     `json:"configWritable"`
-	RestartRequired  bool     `json:"restartRequired"`
-	ActionsEnabled   bool     `json:"actionsEnabled"`
-	StorageConfigure bool     `json:"storageConfigured"`
+	Version          string    `json:"version"`
+	Commit           string    `json:"commit,omitempty"`
+	StartedAt        time.Time `json:"startedAt"`
+	PublicURL        string    `json:"publicUrl"`
+	Upstream         Upstream  `json:"upstream"`
+	SSHEnabled       bool      `json:"sshEnabled"`
+	SSHListen        string    `json:"sshListen"`
+	ConfigPath       string    `json:"configPath"`
+	ConfigWritable   bool      `json:"configWritable"`
+	ConfigError      string    `json:"configError"`
+	RestartRequired  bool      `json:"restartRequired"`
+	ActionsEnabled   bool      `json:"actionsEnabled"`
+	MailEnabled      bool      `json:"mailEnabled"`
+	StorageConfigure bool      `json:"storageConfigured"`
+	Counts           counts    `json:"counts"`
 }
 
-func (s *Server) status(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 	c := s.opt.Config
+	f := s.readFile()
+	var n counts
+	if s.opt.Counts != nil {
+		if row, err := s.opt.Counts.InstanceCounts(r.Context()); err != nil {
+			s.log.Warn("plugin API: instance counts", "err", err)
+		} else {
+			n = counts{row.Repos, row.Users, row.Orgs}
+		}
+	}
 	writeJSON(w, statusResponse{
-		Version: s.opt.Version, Commit: s.opt.Commit,
+		Version: s.opt.Version, Commit: s.opt.Commit, StartedAt: s.opt.StartedAt.UTC(),
 		PublicURL: c.Server.PublicURL, Upstream: s.upstream,
-		SSHEnabled: c.SSH.Enabled, ConfigWritable: s.opt.File != nil,
-		RestartRequired: s.restart.Load(), ActionsEnabled: c.Actions.Enabled,
-		StorageConfigure: len(c.Storage.Policy) > 0,
+		SSHEnabled: c.SSH.Enabled, SSHListen: c.Server.SSHListen,
+		ConfigPath: s.configPath(), ConfigWritable: s.writable(), ConfigError: f.errText(),
+		RestartRequired: s.restartRequired(f), ActionsEnabled: c.Actions.Enabled, MailEnabled: c.Mail.Enabled,
+		StorageConfigure: len(c.Storage.Policy) > 0, Counts: n,
 	})
-}
-
-/* ---------- settings ---------- */
-
-type settingsDoc struct {
-	PublicURL         string `json:"publicUrl"`
-	Registration      string `json:"registration"`
-	UserDirectory     string `json:"userDirectory"`
-	Require2FA        string `json:"require2fa"`
-	ActionsEnabled    bool   `json:"actionsEnabled"`
-	DefaultActionsURL string `json:"defaultActionsUrl"`
-	Limits            limits `json:"limits"`
-}
-
-type limits struct {
-	MaxPushSize        string `json:"maxPushSize"`
-	GitIdleTimeout     string `json:"gitIdleTimeout"`
-	GitMaxDuration     string `json:"gitMaxDuration"`
-	GitRequestsPerHour int    `json:"gitRequestsPerHour"`
-}
-
-type settingsResponse struct {
-	settingsDoc
-	RestartRequired bool `json:"restartRequired"`
-}
-
-// settingsPatch holds the fields of PUT settings; absent fields are kept.
-type settingsPatch struct {
-	PublicURL         *string `json:"publicUrl"`
-	Registration      *string `json:"registration"`
-	UserDirectory     *string `json:"userDirectory"`
-	Require2FA        *string `json:"require2fa"`
-	ActionsEnabled    *bool   `json:"actionsEnabled"`
-	DefaultActionsURL *string `json:"defaultActionsUrl"`
-	Limits            *struct {
-		MaxPushSize        *string `json:"maxPushSize"`
-		GitIdleTimeout     *string `json:"gitIdleTimeout"`
-		GitMaxDuration     *string `json:"gitMaxDuration"`
-		GitRequestsPerHour *int    `json:"gitRequestsPerHour"`
-	} `json:"limits"`
-}
-
-func docOf(c *config.Config) settingsDoc {
-	return settingsDoc{
-		PublicURL: c.Server.PublicURL, Registration: c.Security.Registration,
-		UserDirectory: c.Security.UserDirectory, Require2FA: c.Auth.Require2FA,
-		ActionsEnabled: c.Actions.Enabled, DefaultActionsURL: c.Actions.DefaultActionsURL,
-		Limits: limits{
-			MaxPushSize: c.Git.MaxPushSize.String(), GitIdleTimeout: c.Git.IdleTimeout.String(),
-			GitMaxDuration: c.Git.MaxDuration.String(), GitRequestsPerHour: c.Git.RequestsPerHour,
-		},
-	}
-}
-
-// fileConfigNow parses the file (with the environment overrides): the
-// configuration the next start will run with.
-func (s *Server) fileConfigNow() (*config.Config, []byte, error) {
-	data, err := s.opt.File.Read()
-	if err != nil {
-		return nil, nil, err
-	}
-	cfg, err := config.Parse(data, s.opt.LookupEnv)
-	if err != nil {
-		return nil, data, fmt.Errorf("parse config: %w", err)
-	}
-	return cfg, data, nil
-}
-
-func (s *Server) getSettings(w http.ResponseWriter, _ *http.Request) {
-	cfg := s.opt.Config
-	if s.opt.File != nil {
-		if next, _, err := s.fileConfigNow(); err == nil {
-			cfg = next
-		} else {
-			s.log.Warn("plugin API: read settings file", "err", err)
-		}
-	}
-	writeJSON(w, settingsResponse{docOf(cfg), s.restart.Load()})
-}
-
-type edit struct{ section, key, value string }
-
-func (p *settingsPatch) edits() ([]edit, error) {
-	var out []edit
-	str := func(section, key string, v *string) error {
-		if v == nil {
-			return nil
-		}
-		if hasControl(*v) {
-			return fmt.Errorf("%s.%s: control characters are not allowed", section, key)
-		}
-		out = append(out, edit{section, key, tomlString(*v)})
-		return nil
-	}
-	for _, e := range []error{
-		str("server", "public_url", p.PublicURL),
-		str("security", "registration", p.Registration),
-		str("security", "user_directory", p.UserDirectory),
-		str("auth", "require_2fa", p.Require2FA),
-		str("actions", "default_actions_url", p.DefaultActionsURL),
-	} {
-		if e != nil {
-			return nil, e
-		}
-	}
-	if p.ActionsEnabled != nil {
-		out = append(out, edit{"actions", "enabled", fmt.Sprint(*p.ActionsEnabled)})
-	}
-	if l := p.Limits; l != nil {
-		for _, e := range []error{
-			str("git", "max_push_size", l.MaxPushSize),
-			str("git", "idle_timeout", l.GitIdleTimeout),
-			str("git", "max_duration", l.GitMaxDuration),
-		} {
-			if e != nil {
-				return nil, e
-			}
-		}
-		if l.GitRequestsPerHour != nil {
-			out = append(out, edit{"git", "requests_per_hour", fmt.Sprint(*l.GitRequestsPerHour)})
-		}
-	}
-	return out, nil
-}
-
-func decode(r *http.Request, v any) error {
-	dec := json.NewDecoder(r.Body)
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(v); err != nil {
-		return fmt.Errorf("invalid JSON body: %w", err)
-	}
-	return nil
-}
-
-func (s *Server) putSettings(w http.ResponseWriter, r *http.Request) {
-	var p settingsPatch
-	if err := decode(r, &p); err != nil {
-		writeProblem(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	edits, err := p.edits()
-	if err != nil {
-		writeProblem(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if len(edits) == 0 {
-		writeProblem(w, http.StatusBadRequest, "no setting to change")
-		return
-	}
-	cfg, ok := s.apply(w, edits)
-	if !ok {
-		return
-	}
-	writeJSON(w, settingsResponse{docOf(cfg), true})
-}
-
-// apply patches the file, validates the result as a whole and writes it.
-func (s *Server) apply(w http.ResponseWriter, edits []edit) (*config.Config, bool) {
-	if s.opt.File == nil {
-		writeProblem(w, http.StatusNotImplemented, "the configuration file is not available")
-		return nil, false
-	}
-	data, err := s.opt.File.Read()
-	if err != nil {
-		s.log.Error("plugin API: read config", "err", err)
-		writeProblem(w, http.StatusInternalServerError, "cannot read the configuration file")
-		return nil, false
-	}
-	next := data
-	for _, e := range edits {
-		next = setKey(next, e.section, e.key, e.value)
-	}
-	cfg, err := config.Parse(next, s.opt.LookupEnv)
-	if err != nil {
-		writeProblem(w, http.StatusUnprocessableEntity, err.Error())
-		return nil, false
-	}
-	if bytes.Equal(next, data) {
-		return cfg, true
-	}
-	if err := s.opt.File.Write(next); err != nil {
-		s.log.Error("plugin API: write config", "err", err)
-		if errors.Is(err, errReadOnly) {
-			writeProblem(w, http.StatusConflict, "the configuration file is not writable (read-only mount or missing permission)")
-		} else {
-			writeProblem(w, http.StatusInternalServerError, "cannot write the configuration file")
-		}
-		return nil, false
-	}
-	s.restart.Store(true)
-	s.log.Info("plugin API: configuration updated", "keys", len(edits))
-	return cfg, true
 }
 
 /* ---------- public URL ---------- */
 
-// validPublicURL returns the origin of value: https, or http for loopback,
+// validPublicURL returns the origin of value: an absolute http(s) URL
 // without credentials, path, query or fragment.
 func validPublicURL(value string) (string, bool) {
 	u, err := url.Parse(value)
 	if err != nil || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || (u.Path != "" && u.Path != "/") {
 		return "", false
 	}
-	local := slices.Contains([]string{"localhost", "127.0.0.1", "::1"}, u.Hostname())
-	if u.Scheme != "https" && (u.Scheme != "http" || !local) {
+	if u.Scheme != "https" && u.Scheme != "http" {
 		return "", false
 	}
 	return u.Scheme + "://" + u.Host, true
@@ -255,7 +86,7 @@ func (s *Server) putPublicURL(w http.ResponseWriter, r *http.Request) {
 	}
 	origin, ok := validPublicURL(body.URL)
 	if !ok {
-		writeProblem(w, http.StatusBadRequest, "use an https:// address without a path")
+		writeProblem(w, http.StatusBadRequest, "use an http:// or https:// address without a path")
 		return
 	}
 	if _, ok := s.apply(w, []edit{{"server", "public_url", tomlString(origin)}}); !ok {
@@ -375,4 +206,110 @@ func (s *Server) runners(w http.ResponseWriter, r *http.Request) {
 		out = append(out, d)
 	}
 	writeJSON(w, map[string]any{"runners": out, "scope": "instance"})
+}
+
+// runnerToken issues an instance-scope runner registration token. The token
+// is in the response only, never in a log.
+func (s *Server) runnerToken(w http.ResponseWriter, r *http.Request) {
+	if s.opt.RunnerAdmin == nil {
+		writeProblem(w, http.StatusNotImplemented, "runners are not available")
+		return
+	}
+	tok, exp, err := s.opt.RunnerAdmin.CreateInstanceRegistrationToken(r.Context())
+	if err != nil {
+		s.log.Error("plugin API: create runner registration token", "err", err)
+		writeProblem(w, http.StatusInternalServerError, "cannot create a registration token")
+		return
+	}
+	writeJSON(w, map[string]any{
+		"token": tok, "expiresAt": exp.UTC(),
+		"command": "ervisio-runner register --url " + s.opt.Config.Server.PublicURL + " --token " + tok,
+	})
+}
+
+func (s *Server) deleteRunner(w http.ResponseWriter, r *http.Request, rawID string) {
+	if s.opt.RunnerAdmin == nil {
+		writeProblem(w, http.StatusNotImplemented, "runners are not available")
+		return
+	}
+	id, err := uuid.Parse(rawID)
+	if err != nil {
+		writeProblem(w, http.StatusNotFound, "")
+		return
+	}
+	if err := s.opt.RunnerAdmin.DeleteInstanceRunner(r.Context(), id); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			writeProblem(w, http.StatusNotFound, "no such runner")
+			return
+		}
+		s.log.Error("plugin API: delete runner", "err", err)
+		writeProblem(w, http.StatusInternalServerError, "cannot delete the runner")
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(http.StatusNoContent)
+}
+
+/* ---------- mail ---------- */
+
+// mailTest sends a test message with the [mail] settings of the file on
+// disk, so that they can be tried before a restart.
+func (s *Server) mailTest(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		To string `json:"to"`
+	}
+	if err := decode(r, &body); err != nil {
+		writeProblem(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if _, err := netmail.ParseAddress(body.To); err != nil {
+		writeValidation(w, "invalid recipient", []fieldError{{"to", "must be an email address"}})
+		return
+	}
+	f := s.readFile()
+	cfg := s.opt.Config
+	switch {
+	case f.err != nil:
+		writeValidation(w, "the configuration file is not valid", fieldErrors(f.err))
+		return
+	case f.cfg != nil:
+		cfg = f.cfg
+	}
+	if !cfg.Mail.Enabled {
+		writeValidation(w, "mail is disabled", []fieldError{{"mail.enabled", "mail is disabled"}})
+		return
+	}
+	password, err := readSecret(cfg.Mail.PasswordFile)
+	if err != nil {
+		writeValidation(w, "cannot read the mail password", []fieldError{{"mail.password_file", err.Error()}})
+		return
+	}
+	sender, err := mail.NewSMTP(cfg.Mail, password)
+	if err != nil {
+		writeValidation(w, "invalid mail settings", []fieldError{{"mail.from", err.Error()}})
+		return
+	}
+	msg := mail.Message{To: body.To, Subject: "ErvisioRepo test message",
+		Body: "This is a test message sent from the Ervisio plugin to check the mail settings of " +
+			cfg.Server.PublicURL + ".\n"}
+	if err := sender.Send(r.Context(), msg); err != nil {
+		s.log.Warn("plugin API: test mail failed", "err", err)
+		writeProblem(w, http.StatusBadGateway, err.Error())
+		return
+	}
+	s.log.Info("plugin API: test mail sent")
+	writeJSON(w, map[string]any{"sent": true})
+}
+
+// readSecret reads an operator-configured secret file, like serve does for
+// the mail password.
+func readSecret(path string) (string, error) {
+	if path == "" {
+		return "", nil
+	}
+	raw, err := os.ReadFile(path) //nolint:gosec // operator-configured secret file, not request data
+	if err != nil {
+		return "", fmt.Errorf("read %s: %w", path, err)
+	}
+	return strings.TrimRight(string(raw), "\r\n"), nil
 }

@@ -67,3 +67,17 @@ func (f fileConfig) Write(data []byte) error {
 	}
 	return nil
 }
+
+// Writable reports whether Write can replace the file: Write creates a
+// temporary file next to it and renames it over the original, so this is
+// the same operation without the rename.
+func (f fileConfig) Writable() error {
+	tmp, err := os.CreateTemp(filepath.Dir(string(f)), ".config-check-*")
+	if err != nil {
+		return fmt.Errorf("%w: %w", errReadOnly, err)
+	}
+	name := tmp.Name()
+	_ = tmp.Close()
+	_ = os.Remove(name)
+	return nil
+}

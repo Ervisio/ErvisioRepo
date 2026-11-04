@@ -150,6 +150,115 @@
         "description": "Read the output of the installation (the journal of ervisio-repo-install)",
         "name": "install-log",
         "timeoutSec": 30
+      },
+      {
+        "argv": [
+          "systemctl",
+          "show",
+          "ervisio-repo.service",
+          "--no-pager",
+          "--property=LoadState,ActiveState,SubState,Result,InactiveEnterTimestamp"
+        ],
+        "description": "Read the state of ervisio-repo.service (to tell a stopped native installation from a missing one)",
+        "name": "service-state"
+      },
+      {
+        "admin": true,
+        "argv": [
+          "systemctl",
+          "start",
+          "ervisio-repo.service"
+        ],
+        "description": "Start ervisio-repo.service",
+        "name": "service-start",
+        "timeoutSec": 120
+      },
+      {
+        "admin": true,
+        "argv": [
+          "systemctl",
+          "stop",
+          "ervisio-repo.service"
+        ],
+        "description": "Stop ervisio-repo.service",
+        "name": "service-stop",
+        "timeoutSec": 120
+      },
+      {
+        "admin": true,
+        "argv": [
+          "systemctl",
+          "restart",
+          "ervisio-repo.service"
+        ],
+        "description": "Restart ervisio-repo.service to apply saved settings",
+        "name": "service-restart",
+        "timeoutSec": 120
+      },
+      {
+        "admin": true,
+        "argv": [
+          "journalctl",
+          "-u",
+          "ervisio-repo.service",
+          "-n",
+          "300",
+          "-o",
+          "cat",
+          "--no-pager"
+        ],
+        "description": "Read the last 300 lines of the ervisio-repo.service journal",
+        "name": "service-log",
+        "timeoutSec": 30
+      },
+      {
+        "admin": true,
+        "args": [
+          {
+            "maxLen": 11,
+            "pattern": "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}"
+          }
+        ],
+        "argv": [
+          "sh",
+          "-c",
+          "systemctl stop ervisio-repo-update.service 2>/dev/null; systemctl reset-failed ervisio-repo-update.service 2>/dev/null; exec systemd-run --unit=ervisio-repo-update --description='Update ErvisioRepo (Docker)' --remain-after-exit --setenv=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh -c \"$0\" update-docker \"$1\"",
+          "set -eu\nv=\"$1\"; d=/opt/ervisio-repo/deploy/docker\n[ -f \"$d/compose.yaml\" ] || { echo \"No Docker installation in $d\"; exit 1; }\ncd \"$d\"\nc=config/config.toml; ts=$(date +%Y%m%d-%H%M%S)\necho \"==> backup\"\nif [ -f \"$c\" ]; then cp -p \"$c\" \"$c.bak-$ts\"; echo \"Saved $d/$c.bak-$ts\"; else echo \"No $c to back up\"; fi\ntouch .env\nif grep -q '^ERVISIO_VERSION=' .env; then sed -i \"s/^ERVISIO_VERSION=.*/ERVISIO_VERSION=$v/\" .env; else echo \"ERVISIO_VERSION=$v\" >> .env; fi\necho \"Set ERVISIO_VERSION=$v in $d/.env\"\necho \"==> pull\"\ndocker compose pull app\necho \"==> up\"\ndocker compose up -d\necho \"==> done\"",
+          "{0}"
+        ],
+        "description": "Update the Docker installation in /opt/ervisio-repo to a release, in a systemd unit (ervisio-repo-update): back up config.toml next to itself, set ERVISIO_VERSION in deploy/docker/.env, docker compose pull app, docker compose up -d",
+        "name": "update-docker",
+        "timeoutSec": 60
+      },
+      {
+        "argv": [
+          "systemctl",
+          "show",
+          "ervisio-repo-update.service",
+          "--no-pager",
+          "--property=LoadState,ActiveState,SubState,Result,InvocationID,Description"
+        ],
+        "description": "Read the state of the update unit (ervisio-repo-update)",
+        "name": "update-state"
+      },
+      {
+        "admin": true,
+        "args": [
+          {
+            "maxLen": 32,
+            "pattern": "[a-f0-9]{32}"
+          }
+        ],
+        "argv": [
+          "sh",
+          "-c",
+          "exec journalctl _SYSTEMD_INVOCATION_ID=\"$1\" -o cat --no-pager -n 400",
+          "log",
+          "{0}"
+        ],
+        "description": "Read the output of the update (the journal of ervisio-repo-update)",
+        "name": "update-log",
+        "timeoutSec": 30
       }
     ],
     "files": {
@@ -187,10 +296,37 @@
               "PUT"
             ],
             "path": "/api/plugin/(settings|public-url)"
+          },
+          {
+            "methods": [
+              "POST"
+            ],
+            "path": "/api/plugin/(config/check|mail/test|runners/token)"
+          },
+          {
+            "methods": [
+              "DELETE"
+            ],
+            "path": "/api/plugin/runners/[A-Za-z0-9-]{1,64}"
           }
         ],
         "socket": "/run/ervisio-repo/api.sock",
         "timeoutSec": 60
+      },
+      {
+        "headers": [],
+        "maxBody": 1048576,
+        "name": "repo-user",
+        "rules": [
+          {
+            "methods": [
+              "GET"
+            ],
+            "path": "/api/plugin/status"
+          }
+        ],
+        "socket": "/run/ervisio-repo/api.sock",
+        "timeoutSec": 15
       },
       {
         "admin": true,
@@ -229,7 +365,13 @@
             "methods": [
               "POST"
             ],
-            "path": "/v1\\.[0-9]+/containers/[a-f0-9]{12,64}/start"
+            "path": "/v1\\.[0-9]+/containers/[a-f0-9]{12,64}/(start|stop|restart)"
+          },
+          {
+            "methods": [
+              "GET"
+            ],
+            "path": "/v1\\.[0-9]+/containers/[a-f0-9]{12,64}/logs"
           },
           {
             "methods": [
@@ -276,7 +418,7 @@
       }
     ]
   },
-  "description": "Install and manage ErvisioRepo on this machine: settings, storage and runners, and publish the Git server on its own web address (git.<domain>) through Caddy.",
+  "description": "Install, run and update ErvisioRepo on this machine: settings, logs, runners and storage, and publish the Git server on its own web address (git.<domain>) through Caddy.",
   "entry": "index.js",
   "icon": "server",
   "id": "repo",

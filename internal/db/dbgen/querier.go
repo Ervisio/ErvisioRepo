@@ -419,6 +419,8 @@ type Querier interface {
 	// Records a delivery; for a bus event the id is derived from the event, so
 	// a repeated delivery conflicts and no row is returned.
 	InsertWebhookDelivery(ctx context.Context, arg InsertWebhookDeliveryParams) (uuid.UUID, error)
+	// Totals shown by the Ervisio plugin's status page.
+	InstanceCounts(ctx context.Context) (InstanceCountsRow, error)
 	// ---- assignees and users ----
 	IssueAssigneesOf(ctx context.Context, issueIds []uuid.UUID) ([]IssueAssigneesOfRow, error)
 	IssueLabelsOf(ctx context.Context, issueIds []uuid.UUID) ([]IssueLabelsOfRow, error)

@@ -5,7 +5,7 @@ import { RepoError } from '../api/repo';
 
 export const t = (key: string, vars?: Record<string, string | number>) => getSdk().t(key, vars);
 
-const locale = () => (getSdk().lang() === 'it' ? 'it-IT' : 'en-US');
+export const locale = () => (getSdk().lang() === 'it' ? 'it-IT' : 'en-US');
 
 export const num = (n: number) => new Intl.NumberFormat(locale()).format(n);
 

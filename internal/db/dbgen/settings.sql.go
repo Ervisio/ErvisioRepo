@@ -36,6 +36,26 @@ func (q *Queries) InsertSettingIfAbsent(ctx context.Context, arg InsertSettingIf
 	return err
 }
 
+const instanceCounts = `-- name: InstanceCounts :one
+SELECT (SELECT count(*) FROM repos)::bigint AS repos,
+       (SELECT count(*) FROM users)::bigint AS users,
+       (SELECT count(*) FROM orgs)::bigint  AS orgs
+`
+
+type InstanceCountsRow struct {
+	Repos int64
+	Users int64
+	Orgs  int64
+}
+
+// Totals shown by the Ervisio plugin's status page.
+func (q *Queries) InstanceCounts(ctx context.Context) (InstanceCountsRow, error) {
+	row := q.db.QueryRow(ctx, instanceCounts)
+	var i InstanceCountsRow
+	err := row.Scan(&i.Repos, &i.Users, &i.Orgs)
+	return i, err
+}
+
 const upsertSetting = `-- name: UpsertSetting :exec
 INSERT INTO settings (key, value, updated_at)
 VALUES ($1, $2, now())

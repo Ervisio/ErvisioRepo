@@ -71,13 +71,15 @@ export interface ContainerSummary {
   Image: string;
   Command: string;
   State: string;
+  /** Human text such as "Up 6 days" or "Exited (1) 2 hours ago". */
+  Status?: string;
   Labels: Record<string, string> | null;
 }
 
 export interface ContainerInspect {
   Id: string;
   Name: string;
-  State: { Status: string; Running: boolean };
+  State: { Status: string; Running: boolean; ExitCode?: number; StartedAt?: string; FinishedAt?: string };
   Config: { Image: string; Cmd: string[] | null; Entrypoint: string[] | null; Env: string[] | null; Labels: Record<string, string> | null };
   HostConfig?: { NetworkMode?: string };
   Mounts: { Type: string; Source: string; Destination: string; RW: boolean; Name?: string }[];
@@ -109,6 +111,99 @@ export async function connectNetwork(network: string, container: string): Promis
 export async function start(id: string): Promise<void> {
   const r = await request('POST', `/containers/${checkId(id)}/start`);
   if (r.status >= 400) throw toError(r);
+}
+
+/** Restarts a container (10 s to stop cleanly). */
+export async function restart(id: string): Promise<void> {
+  const r = await request('POST', `/containers/${checkId(id)}/restart`, { t: '10' });
+  if (r.status >= 400) throw toError(r);
+}
+
+/** Stops a container; one that is already stopped is fine (Docker answers 304). */
+export async function stop(id: string): Promise<void> {
+  const r = await request('POST', `/containers/${checkId(id)}/stop`, { t: '10' });
+  if (r.status >= 400) throw toError(r);
+}
+
+/* ---------- logs ---------- */
+
+const splitLines = (text: string) => text.split('\n').map((l) => l.replace(/\r$/, '')).filter((l) => l !== '');
+
+/** The last `tail` lines of a container's output (stdout and stderr, in order within each stream). */
+export async function logs(id: string, tail = 300): Promise<string[]> {
+  const r = await request('GET', `/containers/${checkId(id)}/logs`, { stdout: '1', stderr: '1', tail: String(tail) });
+  if (r.status >= 400) throw toError(r);
+  const { stdout, stderr } = demuxAll(r.bytes());
+  return splitLines(stdout + (stderr ? `\n${stderr}` : ''));
+}
+
+/**
+ * Follows a container's output: the last 300 lines, then new ones as they come. Frames can span chunks, so bytes are
+ * buffered until a frame is whole. Call the returned function to stop.
+ */
+export function followLogs(id: string, onLines: (lines: string[]) => void, onEnd?: (err?: unknown) => void): () => void {
+  let closed = false;
+  let stream: { close(): void } | undefined;
+  let buf = new Uint8Array(0);
+  let framed: boolean | undefined;
+  let partial = '';
+  const dec = new TextDecoder();
+  const emit = (text: string) => {
+    const all = partial + text;
+    const cut = all.lastIndexOf('\n');
+    if (cut < 0) {
+      partial = all;
+      return;
+    }
+    partial = all.slice(cut + 1);
+    const lines = splitLines(all.slice(0, cut));
+    if (lines.length) onLines(lines);
+  };
+  const onData = (chunk: Uint8Array) => {
+    const next = new Uint8Array(buf.length + chunk.length);
+    next.set(buf);
+    next.set(chunk, buf.length);
+    buf = next;
+    if (framed === undefined && buf.length >= 4) framed = buf[0] <= 2 && buf[1] === 0 && buf[2] === 0 && buf[3] === 0;
+    if (framed === false) {
+      emit(dec.decode(buf, { stream: true }));
+      buf = new Uint8Array(0);
+      return;
+    }
+    let i = 0;
+    let text = '';
+    while (buf.length - i >= 8) {
+      const size = ((buf[i + 4] << 24) >>> 0) + (buf[i + 5] << 16) + (buf[i + 6] << 8) + buf[i + 7];
+      if (buf.length - i - 8 < size) break;
+      text += dec.decode(buf.subarray(i + 8, i + 8 + size));
+      i += 8 + size;
+    }
+    buf = buf.slice(i);
+    if (text) emit(text);
+  };
+  apiVersion().then(
+    (v) => {
+      if (closed) return;
+      stream = getSdk().api.httpStream(
+        NAME,
+        { method: 'GET', path: `/v${v}/containers/${checkId(id)}/logs`, query: { follow: '1', stdout: '1', stderr: '1', tail: '300' } },
+        {
+          onData,
+          onEnd: () => {
+            if (partial) onLines([partial]);
+            partial = '';
+            onEnd?.();
+          },
+          onError: (e) => onEnd?.(e),
+        },
+      );
+    },
+    (e) => onEnd?.(e),
+  );
+  return () => {
+    closed = true;
+    stream?.close();
+  };
 }
 
 /* ---------- exec ---------- */

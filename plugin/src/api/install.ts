@@ -50,7 +50,8 @@ export async function start(mode: InstallMode, opts: { email: string; url: strin
   if (r.exitCode !== 0) throw new Error((r.stderr || r.stdout).trim() || `systemd-run exited with ${r.exitCode}`);
 }
 
-function props(text: string): Record<string, string> {
+/** Parses `systemctl show` output (KEY=value lines). */
+export function props(text: string): Record<string, string> {
   const out: Record<string, string> = {};
   for (const line of text.split('\n')) {
     const i = line.indexOf('=');
@@ -59,11 +60,21 @@ function props(text: string): Record<string, string> {
   return out;
 }
 
-/** Where the installation is, with the output of its last run. */
-export async function progress(): Promise<InstallProgress> {
+export interface UnitProgress {
+  state: InstallState;
+  log: string[];
+  description: string;
+}
+
+/**
+ * State and journal of a transient systemd unit started with --remain-after-exit, read with two manifest commands:
+ * `stateCmd` (systemctl show ... LoadState,ActiveState,SubState,Result,InvocationID,Description) and `logCmd` (the
+ * journal of one invocation id).
+ */
+export async function unitProgress(stateCmd: string, logCmd: string): Promise<UnitProgress> {
   const sdk = getSdk();
-  const p = props((await sdk.api.exec('install-state')).stdout);
-  if (p.LoadState !== 'loaded' || !p.InvocationID) return { state: 'idle', log: [], mode: null };
+  const p = props((await sdk.api.exec(stateCmd)).stdout);
+  if (p.LoadState !== 'loaded' || !p.InvocationID) return { state: 'idle', log: [], description: '' };
   const state: InstallState =
     p.ActiveState === 'failed' || (p.Result && p.Result !== 'success')
       ? 'failed'
@@ -72,7 +83,14 @@ export async function progress(): Promise<InstallProgress> {
         : p.ActiveState === 'inactive'
           ? 'idle'
           : 'running';
-  const journal = await sdk.api.exec('install-log', [p.InvocationID]);
+  const journal = await sdk.api.exec(logCmd, [p.InvocationID]);
   const log = journal.stdout.split('\n').filter((l) => l.trim());
-  return { state, log, mode: /docker/i.test(p.Description ?? '') ? 'docker' : 'native' };
+  return { state, log, description: p.Description ?? '' };
+}
+
+/** Where the installation is, with the output of its last run. */
+export async function progress(): Promise<InstallProgress> {
+  const u = await unitProgress('install-state', 'install-log');
+  if (u.state === 'idle' && !u.log.length) return { state: 'idle', log: [], mode: null };
+  return { state: u.state, log: u.log, mode: /docker/i.test(u.description) ? 'docker' : 'native' };
 }

@@ -9,6 +9,7 @@ import * as repo from '../api/repo';
 import { loadPrefs, savePrefs } from '../api/prefs';
 import { Badge, Button, ConfirmDialog, Icon, Input, Skeleton, Switch, toast } from '../kit';
 import { Blocked } from './RepoPage';
+import { FileBanners, Row, SetCard, useSettings } from './SettingRows';
 import { copy, t, useLoad } from './util';
 
 async function load(): Promise<caddy.Proposal> {
@@ -17,6 +18,26 @@ async function load(): Promise<caddy.Proposal> {
 }
 
 export function Address({ status, onChanged }: { status: repo.RepoStatus; onChanged(): void }) {
+  const s = useSettings();
+  return (
+    <>
+      <div className="rp-pagehead">
+        <h2>{t('nav.address')}</h2>
+        <p className="rp-lead">{t('lead.address')}</p>
+      </div>
+      <FileBanners />
+      <CaddyCard status={status} onChanged={() => { onChanged(); s?.reload(); }} />
+      {s?.doc && (
+        <SetCard title={t('card.publicUrl')}>
+          <Row k="server.public_url" />
+          <Row k="server.trusted_proxies" />
+        </SetCard>
+      )}
+    </>
+  );
+}
+
+function CaddyCard({ status, onChanged }: { status: repo.RepoStatus; onChanged(): void }) {
   const pr = useLoad(load);
   const [host, setHost] = useState('');
   const [touched, setTouched] = useState(false);
@@ -32,8 +53,8 @@ export function Address({ status, onChanged }: { status: repo.RepoStatus; onChan
   }, [initial, touched]);
 
   if (!p) {
-    if (pr.loading) return <Skeleton height={320} style={{ borderRadius: 18 }} />;
-    return <Blocked error={pr.error} onRetry={pr.reload} />;
+    if (pr.loading) return <Skeleton height={240} style={{ borderRadius: 18 }} />;
+    return <section className="rp-card"><Blocked error={pr.error} onRetry={pr.reload} /></section>;
   }
 
   const inst = p.instance;
@@ -93,10 +114,10 @@ export function Address({ status, onChanged }: { status: repo.RepoStatus; onChan
 
   const done = result?.ok && result.step === 'done';
   return (
-    <section className="rp-card">
+    <section className="rp-card rp-caddy">
       <h3>
-        <span className="rp-ki hue-svc"><Icon name="globe" /></span>{t('nav.address')}
-        <small>{p.current ? t('ad.configured') : inst ? t('ad.found') : ''}</small>
+        {t('ad.title')}
+        {(p.current || inst) && <span className="rp-h3-end"><span className={`rp-pill${p.current ? '' : ' is-info'}`}>{p.current ? t('ad.configured') : t('ad.found')}</span></span>}
       </h3>
 
       {inst ? (
@@ -135,9 +156,9 @@ export function Address({ status, onChanged }: { status: repo.RepoStatus; onChan
       {p.suggestion?.renamed && !p.current && <p className="rp-muted rp-pad">{t('ad.renamed', { base: p.suggestion.base })}</p>}
 
       {canApply && (
-        <div className="rp-set">
-          <div className="rp-set-t"><b>{t('ad.updateUrl')}</b><span>{t('ad.updateUrlHint')}</span></div>
-          <Switch checked={updateUrl} onChange={setUpdateUrl} aria-label={t('ad.updateUrl')} />
+        <div className="rp-row">
+          <div className="rp-row-t"><b>{t('ad.updateUrl')}</b><span className="rp-row-h">{t('ad.updateUrlHint')}</span></div>
+          <div className="rp-ctl"><Switch checked={updateUrl} onChange={setUpdateUrl} aria-label={t('ad.updateUrl')} /></div>
         </div>
       )}
 
@@ -159,16 +180,16 @@ export function Address({ status, onChanged }: { status: repo.RepoStatus; onChan
 
       <div className="rp-acts">
         {canApply && (
-          <Button variant="primary" icon="wand" loading={busy === 'apply'} disabled={!!busy} onClick={onApply}>
+          <Button variant="primary" size="sm" icon="wand" loading={busy === 'apply'} disabled={!!busy} onClick={onApply}>
             {p.current ? t('ad.update') : t('ad.apply')}
           </Button>
         )}
-        <Button variant="ghost" icon="copy" disabled={!snippet} onClick={onCopy}>{t('ad.copy')}</Button>
+        <Button variant="ghost" size="sm" icon="copy" disabled={!snippet} onClick={onCopy}>{t('ad.copy')}</Button>
         {p.current && inst && !inst.unsupported && (
-          <Button variant="ghost" icon="trash" disabled={!!busy} onClick={() => setConfirm(true)}>{t('ad.remove')}</Button>
+          <Button variant="ghost" size="sm" icon="trash" disabled={!!busy} onClick={() => setConfirm(true)}>{t('ad.remove')}</Button>
         )}
       </div>
-      <p className="rp-muted"><Icon name="info" size={13} /> {t('ad.note')}</p>
+      <p className="rp-muted rp-pad">{t('ad.note')}</p>
 
       <ConfirmDialog
         open={confirm}

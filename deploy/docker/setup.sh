@@ -70,12 +70,15 @@ if [[ ! -s config/master.key ]]; then
 fi
 chmod 600 config/master.key
 
-# .env: keep the database password across runs.
+# .env: keep the database password and the bind address across runs.
 pg_password=""
+bind_address=""
 if [[ -f .env ]]; then
   pg_password=$(sed -n 's/^POSTGRES_PASSWORD=//p' .env | head -n1)
+  bind_address=$(sed -n 's/^BIND_ADDRESS=//p' .env | head -n1)
 fi
 pg_password="${pg_password:-$(rand_hex 24)}"
+bind_address="${bind_address:-127.0.0.1}"
 # With the Ervisio plugin the socket must sit where the plugin looks for it.
 socket_dir=./run
 [[ "$ervisio" == yes ]] && socket_dir=/run/ervisio-repo
@@ -89,7 +92,7 @@ ERVISIO_UID=$uid
 ERVISIO_GID=$gid
 ERVISIO_DATA_DIR=./data
 ERVISIO_SOCKET_DIR=$socket_dir
-BIND_ADDRESS=127.0.0.1
+BIND_ADDRESS=$bind_address
 APP_PORT=3400
 SSH_PORT=2222
 DOCKER_GID=$docker_gid

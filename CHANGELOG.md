@@ -6,6 +6,18 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Plugin: new layout with an overview (service, repositories, space, runners, containers, access), a maintenance page (update to the plugin's version, start, stop, restart, configuration check, live logs) and settings pages for access, mail, Git and SSH, Actions, webhooks, logs and address.
+- Plugin API: every common setting is editable (`GET`/`PUT /api/plugin/settings` with flat `section.key` values and per-field 422 errors), `POST /api/plugin/config/check`, `POST /api/plugin/mail/test`, `POST /api/plugin/runners/token`, `DELETE /api/plugin/runners/{id}`, and instance counts in `/status`.
+
+### Fixed
+
+- Plugin: a stopped server shows its last log lines and a start button instead of the install wizard; the dashboard widget no longer asks for the admin unlock; client checks match the server (durations with `d`/`w`, sizes with a unit).
+- Plugin API: `configWritable` reflects whether the file can actually be written; a config file that does not parse is reported instead of silently showing the running values; settings writes are serialized; `public_url` accepts any http(s) URL.
+- Sizes print in the unit that gives the smallest whole number (`2GiB` instead of `2147483648B`).
+- `setup.sh` keeps an existing `BIND_ADDRESS` on re-run.
+
 ## [1.0.3] - 2026-11-04
 
 ### Fixed

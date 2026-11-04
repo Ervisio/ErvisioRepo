@@ -52,16 +52,21 @@ func parseDecimal(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
 }
 
+// String renders s in the unit that gives the smallest whole number, a
+// binary unit winning a tie: 2<<30 is "2GiB", 2e9 is "2GB", 1500 is "1500B".
+// ParseSize reads every result back to the same value.
 func (s Size) String() string {
+	n := int64(s)
+	best, unit := n, "B"
 	for _, u := range []struct {
 		suffix string
 		mult   int64
-	}{{"TB", 1e12}, {"GB", 1e9}, {"MB", 1e6}, {"KB", 1e3}} {
-		if s != 0 && int64(s)%u.mult == 0 {
-			return strconv.FormatInt(int64(s)/u.mult, 10) + u.suffix
+	}{{"TiB", 1 << 40}, {"TB", 1e12}, {"GiB", 1 << 30}, {"GB", 1e9}, {"MiB", 1 << 20}, {"MB", 1e6}, {"KiB", 1 << 10}, {"KB", 1e3}} {
+		if n != 0 && n%u.mult == 0 && n/u.mult < best {
+			best, unit = n/u.mult, u.suffix
 		}
 	}
-	return strconv.FormatInt(int64(s), 10) + "B"
+	return strconv.FormatInt(best, 10) + unit
 }
 
 func (s *Size) UnmarshalText(b []byte) error {

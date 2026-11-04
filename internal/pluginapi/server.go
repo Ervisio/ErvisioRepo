@@ -13,8 +13,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/Ervisio/ErvisioRepo/internal/config"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
@@ -32,6 +35,24 @@ type StorageSource interface {
 // RunnerSource lists runners; *dbgen.Queries satisfies it.
 type RunnerSource interface {
 	ListActionsRunners(ctx context.Context, arg dbgen.ListActionsRunnersParams) ([]dbgen.ActionsRunner, error)
+}
+
+// CountSource counts repositories, users and organizations; *dbgen.Queries
+// satisfies it.
+type CountSource interface {
+	InstanceCounts(ctx context.Context) (dbgen.InstanceCountsRow, error)
+}
+
+// ErrNotFound is returned by a RunnerAdmin for an unknown runner.
+var ErrNotFound = errors.New("not found")
+
+// RunnerAdmin manages the instance runners, as the web admin does.
+type RunnerAdmin interface {
+	// CreateInstanceRegistrationToken issues an instance-scope registration token.
+	CreateInstanceRegistrationToken(ctx context.Context) (token string, expiresAt time.Time, err error)
+	// DeleteInstanceRunner removes an instance runner; ErrNotFound when it
+	// does not exist or has another scope.
+	DeleteInstanceRunner(ctx context.Context, id uuid.UUID) error
 }
 
 // Upstream says where a reverse proxy reaches the server. It mirrors the
@@ -55,8 +76,12 @@ type Options struct {
 	LookupEnv func(string) (string, bool)
 	Version   string
 	Commit    string
-	Storage   StorageSource
-	Runners   RunnerSource
+	// StartedAt is when the process started (default: when New runs).
+	StartedAt   time.Time
+	Storage     StorageSource
+	Runners     RunnerSource
+	RunnerAdmin RunnerAdmin
+	Counts      CountSource
 	// Upstream overrides DefaultUpstream.
 	Upstream *Upstream
 	Logger   *slog.Logger
@@ -68,6 +93,7 @@ type Server struct {
 	secret   string
 	upstream Upstream
 	restart  atomic.Bool
+	mu       sync.Mutex // serializes the read-modify-write of the config file
 	log      *slog.Logger
 }
 
@@ -81,6 +107,9 @@ func New(opt Options) (*Server, error) {
 	}
 	if opt.Logger == nil {
 		opt.Logger = slog.Default()
+	}
+	if opt.StartedAt.IsZero() {
+		opt.StartedAt = time.Now()
 	}
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -157,9 +186,19 @@ func (s *Server) Handler() http.Handler {
 			s.only(w, r, http.MethodGet, s.storage)
 		case "runners":
 			s.only(w, r, http.MethodGet, s.runners)
+		case "runners/token":
+			s.only(w, r, http.MethodPost, s.runnerToken)
 		case "public-url":
 			s.only(w, r, http.MethodPut, s.putPublicURL)
+		case "config/check":
+			s.only(w, r, http.MethodPost, s.configCheck)
+		case "mail/test":
+			s.only(w, r, http.MethodPost, s.mailTest)
 		default:
+			if id, ok := strings.CutPrefix(route, "runners/"); ok && id != "" && !strings.Contains(id, "/") {
+				s.only(w, r, http.MethodDelete, func(w http.ResponseWriter, r *http.Request) { s.deleteRunner(w, r, id) })
+				return
+			}
 			writeProblem(w, http.StatusNotFound, "")
 		}
 	})

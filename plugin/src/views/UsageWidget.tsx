@@ -2,15 +2,15 @@
 import { getSdk } from '../sdk';
 import * as repo from '../api/repo';
 import { Button } from '../kit';
-import { errText, hostOf, isMissingError, t, useLoad } from './util';
+import { hostOf, t, useLoad } from './util';
 
 export function UsageWidget() {
-  const st = useLoad(repo.status);
+  const st = useLoad(repo.statusQuiet);
   const open = () => getSdk().open('repo');
 
   if (!st.data) {
     if (st.loading) return <p className="rp-w-muted">{t('w.loading')}</p>;
-    return <p className="rp-w-muted">{isMissingError(st.error) ? t('w.missing') : errText(st.error)}</p>;
+    return <p className="rp-w-muted">{t('w.unavailable')}</p>;
   }
   const host = hostOf(st.data.publicUrl || null);
   return (

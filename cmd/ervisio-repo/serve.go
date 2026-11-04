@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -51,6 +52,7 @@ const shutdownTimeout = 30 * time.Second
 // serve runs the server until ctx is cancelled. When ln is nil it listens on
 // cfg.Server.Listen.
 func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Listener) error {
+	startedAt := time.Now()
 	info := buildinfo.Get()
 	log.Info("starting ervisio-repo", "version", info.Version, "commit", info.Commit)
 
@@ -303,8 +305,11 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	handler := httpapi.NewRouter(deps)
 
 	if cfg.Server.PluginSocket != "" {
-		popt := pluginapi.Options{Config: cfg, Version: info.Version, Commit: info.Commit,
-			Storage: storage, Runners: dbgen.New(pool), Logger: log}
+		popt := pluginapi.Options{Config: cfg, Version: info.Version, Commit: info.Commit, StartedAt: startedAt,
+			Storage: storage, Runners: dbgen.New(pool), Counts: dbgen.New(pool), Logger: log}
+		if actionsSvc != nil {
+			popt.RunnerAdmin = pluginRunners{actionsSvc}
+		}
 		if cfg.File != "" {
 			popt.File = pluginapi.FileConfig(cfg.File)
 		}
@@ -404,6 +409,38 @@ func readSecretFile(path string) (string, error) {
 		return "", fmt.Errorf("read %s: %w", path, err)
 	}
 	return strings.TrimRight(string(raw), "\r\n"), nil
+}
+
+// pluginRunners manages the instance runners for the plugin API through the
+// same service calls as the web admin, acting as the instance admin.
+type pluginRunners struct{ svc *actions.Service }
+
+var pluginPrincipal = auth.Principal{Username: "ervisio-plugin", Role: auth.RoleAdmin}
+
+func (p pluginRunners) CreateInstanceRegistrationToken(ctx context.Context) (string, time.Time, error) {
+	sc, err := p.svc.InstanceScope(pluginPrincipal)
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("instance scope: %w", err)
+	}
+	t, err := p.svc.CreateRegistrationToken(ctx, pluginPrincipal, sc)
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("registration token: %w", err)
+	}
+	return t.Token, t.ExpiresAt, nil
+}
+
+func (p pluginRunners) DeleteInstanceRunner(ctx context.Context, id uuid.UUID) error {
+	sc, err := p.svc.InstanceScope(pluginPrincipal)
+	if err != nil {
+		return fmt.Errorf("instance scope: %w", err)
+	}
+	if err := p.svc.DeleteRunner(ctx, sc, id); err != nil {
+		if errors.Is(err, actions.ErrNotFound) {
+			return pluginapi.ErrNotFound
+		}
+		return fmt.Errorf("delete runner: %w", err)
+	}
+	return nil
 }
 
 // setupBrowse builds the code browsing service. Web edits go through the
