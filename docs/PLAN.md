@@ -765,7 +765,7 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 - ~~Documentazione per admin e utenti, guida alla migrazione da GitHub~~ (tolte su decisione dell'utente, 2026-11-03).
 - [x] Guida al DR (en e it).
 - ~~Test di carico ed esercitazione DR su Hetzner~~: li esegue l'utente (2026-11-03), non fanno parte del lavoro degli agenti.
-- [ ] Release v1.0.0 firmata, pacchetti, immagini e plugin nel catalogo. (strumenti pronti in `scripts/release`, release non ancora emessa)
+- [ ] Release v1.0.0 firmata, pacchetti, immagini e plugin nel catalogo. (pacchetti .deb/.rpm/tar firmati pubblicati come GitHub release v1.0.0 il 2026-11-04; mancano immagini Docker pubblicate e voce nel catalogo plugin)
 
 **Accettazione**: obiettivi del §1 misurati e rispettati; l'esercitazione DR è documentata con i tempi reali.
 

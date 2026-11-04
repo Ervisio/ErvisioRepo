@@ -1,6 +1,6 @@
 # Handoff: stato del lavoro (2026-11-04)
 
-Le Fasi 0-6, la Fase 8 ridotta e la guida al DR della Fase 10 sono completate. Tutto è committato e pushato su `main`; build, vet, lint, codegen e controlli web sono verdi. Restano la release firmata v1.0.0 (da fare solo dopo conferma dell'utente) e le questioni aperte qui sotto. Fase 7 (OCI) e Fase 9 (hardening) restano rinviate.
+Le Fasi 0-6, la Fase 8 ridotta e la guida al DR della Fase 10 sono completate. Tutto è committato e pushato su `main`; build, vet, lint, codegen e controlli web sono verdi. La release v1.0.0 (pacchetti e SHA256SUMS firmati) è pubblicata su GitHub; restano immagini Docker, catalogo plugin e le questioni aperte qui sotto. Fase 7 (OCI) e Fase 9 (hardening) restano rinviate.
 
 ## Obiettivo e ambito (deciso dall'utente il 2026-11-03)
 
@@ -54,10 +54,9 @@ Restano da fare: la Fase 6, la Fase 8 ridotta, e della Fase 10 la guida al DR e 
 
 ## Cosa resta
 
-1. **Fase 10, release v1.0.0 firmata:** pacchetti, immagini e plugin nel catalogo. Gli strumenti sono in `scripts/release`; chiedere all'utente prima di taggare o pubblicare.
+1. **Fase 10, resto della v1.0.0:** la GitHub release v1.0.0 con pacchetti e `SHA256SUMS.sig` è pubblicata (chiave privata ed25519 in `~/.ervisio-release/release.pem` sulla macchina del maintainer, fuori dal repo). Mancano la pubblicazione delle immagini Docker e la voce nel catalogo plugin; chiedere all'utente prima di pubblicare.
 2. **Punti aperti:**
    - il formato di `plugin/catalog-entry.json` non è confermato con il catalogo `Ervisio/plugins`;
-   - la chiave pubblica di release in `deploy/install.sh` è un segnaposto;
    - `docs/dr.md` contiene vari `TODO: confirm` (credenziali dei target fuori dal kit, owner e modo di `recovery-kit import`, entrypoint Docker e `restore`, runner dopo un restore, ri-replica su un nuovo target, evict di un singolo repo, chiavi di firma lato server).
 3. **Lacune note della Fase 6:**
    - `actions/upload-artifact@v4` e `download-artifact@v4` ufficiali rifiutano host diversi da github.com: usare un fork compatibile (per esempio `christopherhx/gitea-upload-artifact`);
