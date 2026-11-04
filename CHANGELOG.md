@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-11-04
+
+### Fixed
+
+- The Docker image build copies `web/.npmrc`, so `npm ci` in the web stage keeps `legacy-peer-deps` and no longer fails on the `openapi-typescript` peer range. v1.0.1 was tagged but never published because of this.
+
 ## [1.0.1] - 2026-11-04
 
 ### Added
