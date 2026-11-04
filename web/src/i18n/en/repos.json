@@ -55,5 +55,9 @@
   "confirm.type": "Type {name} to confirm",
   "cancel": "Cancel",
   "clone.button": "Clone",
-  "clone.title": "Clone this repository"
+  "clone.title": "Clone this repository",
+  "settings.section.secrets": "Secrets",
+  "settings.section.variables": "Variables",
+  "settings.section.environments": "Environments",
+  "settings.section.runners": "Runners"
 }

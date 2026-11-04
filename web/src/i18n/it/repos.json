@@ -55,5 +55,9 @@
   "confirm.type": "Scrivi {name} per confermare",
   "cancel": "Annulla",
   "clone.button": "Clona",
-  "clone.title": "Clona questo repository"
+  "clone.title": "Clona questo repository",
+  "settings.section.secrets": "Segreti",
+  "settings.section.variables": "Variabili",
+  "settings.section.environments": "Ambienti",
+  "settings.section.runners": "Runner"
 }

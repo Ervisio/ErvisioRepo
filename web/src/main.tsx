@@ -9,6 +9,7 @@ import "./styles/auth.css";
 import "./ui/ui.css";
 import "./ui/code/code.css";
 import "./styles/work.css";
+import "./styles/actions.css";
 import { initCspNonce } from "./ui/nonce.ts";
 import { initLayout } from "./ui/shell/layout.ts";
 

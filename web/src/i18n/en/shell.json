@@ -26,5 +26,6 @@
   "search.hint": "Type to search; ↑ ↓ to move, Enter to open.",
   "search.loading": "Searching…",
   "search.none": "No repositories found",
-  "search.error": "Search failed"
+  "search.error": "Search failed",
+  "nav.runners": "Runners"
 }

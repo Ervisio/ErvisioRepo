@@ -5,7 +5,7 @@ import type { IconName } from "../Icon.tsx";
 
 export type Section = "code" | "pr" | "issue" | "act" | "pkg";
 
-export type NavItem = { to: "/" | "/repos" | "/admin/storage" | "/admin/audit" | "/_ui" | "/settings" | "/login" | "/notifications"; icon: IconName; labelKey: string; section: Section };
+export type NavItem = { to: "/" | "/repos" | "/admin/storage" | "/admin/audit" | "/admin/runners" | "/_ui" | "/settings" | "/login" | "/notifications"; icon: IconName; labelKey: string; section: Section };
 
 // Placeholder navigation until the repo pages exist: the hue mapping is already the final one.
 const base: readonly NavItem[] = [
@@ -15,6 +15,7 @@ const base: readonly NavItem[] = [
 const reposItem: NavItem = { to: "/repos", icon: "code", labelKey: "nav.repos", section: "code" };
 const adminItems: readonly NavItem[] = [
   { to: "/admin/storage", icon: "pkg", labelKey: "nav.storage", section: "act" },
+  { to: "/admin/runners", icon: "play", labelKey: "nav.runners", section: "act" },
   { to: "/admin/audit", icon: "clock", labelKey: "nav.audit", section: "act" },
 ];
 const inboxItem: NavItem = { to: "/notifications", icon: "bell", labelKey: "nav.notifications", section: "issue" };

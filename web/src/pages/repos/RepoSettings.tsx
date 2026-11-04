@@ -5,13 +5,14 @@ import { useT } from "../../i18n/useT.ts";
 import { Button, Card, Dialog, DialogClose, EmptyState, Input, Page, Select } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { repoHooks } from "../../api/settings.ts";
+import { Entries, Environments, Runners } from "../actions/Settings.tsx";
 import { Webhooks } from "../settings/Webhooks.tsx";
 import { GitHubSettings } from "./GitHubSettings.tsx";
 import { visibilities } from "./RepoList.tsx";
 import { BranchProtections, TagRules } from "./RulesSettings.tsx";
 
-export type SettingsSection = "protection" | "tags" | "hooks" | "github";
-const sections: (SettingsSection | undefined)[] = [undefined, "protection", "tags", "hooks", "github"];
+export type SettingsSection = "protection" | "tags" | "hooks" | "github" | "secrets" | "variables" | "environments" | "runners";
+const sections: (SettingsSection | undefined)[] = [undefined, "protection", "tags", "hooks", "github", "secrets", "variables", "environments", "runners"];
 
 function General({ repo }: { repo: Repo }) {
   const t = useT("repos");
@@ -205,6 +206,10 @@ export function RepoSettings({ owner, name, section }: { owner: string; name: st
           {section === "tags" && <TagRules owner={r.owner} name={r.name} />}
           {section === "hooks" && <Webhooks base={repoHooks(r.owner, r.name)} scope="repo" />}
           {section === "github" && <GitHubSettings owner={r.owner} name={r.name} />}
+          {section === "secrets" && <Entries scope={{ kind: "repo", owner: r.owner, name: r.name }} kind="secrets" />}
+          {section === "variables" && <Entries scope={{ kind: "repo", owner: r.owner, name: r.name }} kind="variables" />}
+          {section === "environments" && <Environments owner={r.owner} name={r.name} />}
+          {section === "runners" && <Runners scope={{ kind: "repo", owner: r.owner, name: r.name }} />}
         </>
       ) : (
         <EmptyState icon="lock" title={t("settings.forbidden")} />

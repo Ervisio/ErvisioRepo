@@ -26,5 +26,6 @@
   "search.hint": "Scrivi per cercare; ↑ ↓ per spostarti, Invio per aprire.",
   "search.loading": "Ricerca…",
   "search.none": "Nessun repository trovato",
-  "search.error": "Ricerca non riuscita"
+  "search.error": "Ricerca non riuscita",
+  "nav.runners": "Runner"
 }

@@ -21,6 +21,7 @@ import { Badge, Button, Card, EmptyState, Input, Page, Select, Table, TableBody,
 import { useOwnerRepos } from "../api/repos.ts";
 import { orgHooks } from "../api/settings.ts";
 import { CreateRepoDialog, RepoRows } from "./repos/RepoList.tsx";
+import { Entries, Runners } from "./actions/Settings.tsx";
 import { Webhooks } from "./settings/Webhooks.tsx";
 import { Async, formatDate, Secret, useNotify } from "./account/common.tsx";
 
@@ -313,6 +314,9 @@ export function OrgPage({ name }: { name: string }) {
           <TabsTrigger value="teams">{t("tab.teams")}</TabsTrigger>
           {canManage && <TabsTrigger value="invites">{t("tab.invites")}</TabsTrigger>}
           {isOwner && <TabsTrigger value="hooks">{t("tab.hooks")}</TabsTrigger>}
+          {isOwner && <TabsTrigger value="secrets">{t("tab.secrets")}</TabsTrigger>}
+          {isOwner && <TabsTrigger value="variables">{t("tab.variables")}</TabsTrigger>}
+          {isOwner && <TabsTrigger value="runners">{t("tab.runners")}</TabsTrigger>}
           {isOwner && <TabsTrigger value="settings">{t("tab.settings")}</TabsTrigger>}
         </TabsList>
         <TabsContent value="repos"><OrgRepos org={o.name} /></TabsContent>
@@ -320,6 +324,9 @@ export function OrgPage({ name }: { name: string }) {
         <TabsContent value="teams"><Teams org={o.name} canManage={canManage} /></TabsContent>
         {canManage && <TabsContent value="invites"><Invites org={o.name} canManage={canManage} /></TabsContent>}
         {isOwner && <TabsContent value="hooks"><Webhooks base={orgHooks(o.name)} scope="org" /></TabsContent>}
+        {isOwner && <TabsContent value="secrets"><Entries scope={{ kind: "org", org: o.name }} kind="secrets" /></TabsContent>}
+        {isOwner && <TabsContent value="variables"><Entries scope={{ kind: "org", org: o.name }} kind="variables" /></TabsContent>}
+        {isOwner && <TabsContent value="runners"><Runners scope={{ kind: "org", org: o.name }} /></TabsContent>}
         {isOwner && <TabsContent value="settings"><Settings org={o} /></TabsContent>}
       </Tabs>
     </Page>

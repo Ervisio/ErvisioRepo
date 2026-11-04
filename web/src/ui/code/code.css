@@ -10,7 +10,7 @@
 .cv-row { display: flex; height: 21px; white-space: pre; tab-size: 4; }
 .cv-row:hover { background: var(--surface); }
 .cv-sel, .cv-sel:hover { background: var(--hue-s, var(--raise)); }
-.cv-ln { flex: none; width: var(--ln-w, 6ch); padding: 0 14px 0 8px; text-align: right; color: var(--ink3); user-select: none; box-sizing: content-box; }
+.cv-ln { flex: none; width: var(--ln-w, 6ch); padding: 0 14px 0 8px; text-align: right; color: var(--ink2); user-select: none; box-sizing: content-box; }
 .cv-ln:hover { color: var(--ink); }
 .cv-sel .cv-ln { color: var(--ink); }
 .cv-tx { flex: 1 0 auto; min-width: var(--cv-w, auto); padding-right: 14px; color: var(--ink); }
@@ -84,7 +84,7 @@
 .rp-tag-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .rp-msg { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink2); }
 a.rp-msg:hover { color: var(--ink); text-decoration: underline; }
-.rp-when { color: var(--ink3); font-size: 12.5px; white-space: nowrap; }
+.rp-when { color: var(--ink2); font-size: 12.5px; white-space: nowrap; }
 .rp-tag a.ui-note, .rp-brow a.ui-note { display: inline-flex; align-items: center; gap: 4px; }
 .rp-tag a.ui-note:hover, .rp-brow a.ui-note:hover { color: var(--ink); }
 .rp-pager { justify-content: center; padding: 10px; }
@@ -151,7 +151,7 @@ a.rp-msg:hover { color: var(--ink); text-decoration: underline; }
 .pl-item { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 10px; border-radius: var(--r-ctl); cursor: pointer; font-size: 13.5px; }
 .pl-item[aria-selected="true"] { background: var(--raise); }
 .pl-item .ui-icon { color: var(--ink3); }
-.pl-desc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink3); font-size: 12.5px; }
+.pl-desc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink2); font-size: 12.5px; }
 .sp-trigger { gap: 6px; }
 button.cs-ri { border: 0; cursor: pointer; padding: 0; font: inherit; }
 .cs-search { margin-left: auto; }

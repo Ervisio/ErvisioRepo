@@ -65,5 +65,8 @@
   "accept.noToken": "Invitation link missing",
   "accept.noTokenBody": "Open the link from the invitation email again.",
   "tab.repos": "Repositories",
-  "list.title": "Repositories"
+  "list.title": "Repositories",
+  "tab.secrets": "Secrets",
+  "tab.variables": "Variables",
+  "tab.runners": "Runners"
 }

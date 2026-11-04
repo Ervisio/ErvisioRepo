@@ -65,5 +65,8 @@
   "accept.noToken": "Link di invito mancante",
   "accept.noTokenBody": "Apri di nuovo il link dall'email di invito.",
   "tab.repos": "Repository",
-  "list.title": "Repository"
+  "list.title": "Repository",
+  "tab.secrets": "Segreti",
+  "tab.variables": "Variabili",
+  "tab.runners": "Runner"
 }

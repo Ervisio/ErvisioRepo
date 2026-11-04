@@ -2,6 +2,9 @@ import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/re
 import type { ReactNode } from "react";
 import { Protected } from "./auth/Protected.tsx";
 import { AdminAudit } from "./pages/AdminAudit.tsx";
+import { AdminRunners } from "./pages/AdminRunners.tsx";
+import { RunPage } from "./pages/actions/RunPage.tsx";
+import { RunsPage, type RunsSearch } from "./pages/actions/RunsPage.tsx";
 import { AdminStorage } from "./pages/AdminStorage.tsx";
 import { Account } from "./pages/account/Account.tsx";
 import { Login } from "./pages/auth/Login.tsx";
@@ -297,7 +300,7 @@ const notificationsRoute = createRoute({
   validateSearch: (s: Record<string, unknown>): InboxSearch => ({ filter: inboxFilters.find((x) => x === s.filter), page: num(s.page), repo: str(s.repo) }),
   component: () => guard(<NotificationsPage search={notificationsRoute.useSearch()} />),
 });
-const settingsSections = ["protection", "tags", "hooks", "github"] as const;
+const settingsSections = ["protection", "tags", "hooks", "github", "secrets", "variables", "environments", "runners"] as const;
 const repoSettingsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/$owner/$name/settings",
@@ -307,13 +310,32 @@ const repoSettingsRoute = createRoute({
     return guard(<RepoSettings owner={p.owner} name={p.name} section={repoSettingsRoute.useSearch().section} />);
   },
 });
+const runnersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin/runners", component: () => guard(<AdminRunners />, true) });
+const actionsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/actions",
+  validateSearch: (s: Record<string, unknown>): RunsSearch => ({ workflow: str(s.workflow), event: str(s.event), status: str(s.status), branch: str(s.branch), page: num(s.page) }),
+  component: function Actions() {
+    const p = actionsRoute.useParams();
+    return guard(<RunsPage owner={p.owner} name={p.name} search={actionsRoute.useSearch()} />);
+  },
+});
+const actionRunRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/actions/runs/$runId",
+  validateSearch: (s: Record<string, unknown>): { job?: string } => ({ job: str(s.job) }),
+  component: function ActionRun() {
+    const p = actionRunRoute.useParams();
+    return guard(<RunPage owner={p.owner} name={p.name} runId={p.runId} job={actionRunRoute.useSearch().job} />);
+  },
+});
 // Component catalog for the design kit (Fase UI).
 const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui", component: Catalog });
 
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
     bareRoute.addChildren([loginRoute, twoFactorRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
-    shellRoute.addChildren([homeRoute, storageRoute, auditRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute,
+    shellRoute.addChildren([homeRoute, storageRoute, auditRoute, runnersRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute,
       repoRoute,
       issuesRoute,
       issueNewRoute,
@@ -334,6 +356,8 @@ export const router = createRouter({
       releaseNewRoute,
       releaseRoute,
       releaseEditRoute,
+      actionsRoute,
+      actionRunRoute,
       repoSettingsRoute,
       catalogRoute,
     ]),
