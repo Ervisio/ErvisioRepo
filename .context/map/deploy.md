@@ -21,3 +21,5 @@ Gotchas:
 - build.sh writes stub scripts for missing optional binaries so nfpm does not fail; a stub exits 1 by design.
 - Dockerfile and Makefile build ervisio-runner/erepo only if cmd/<name> has Go files (skips silently).
 Related: map/plugin.md (drives setup.sh/install.sh, uses the Caddy flow in TS), map/runner.md, map/repo-core.md
+- Release bump: compose default ERVISIO_VERSION + plugin version (package.json, lock, manifest, catalog-entry) must equal the tag. Image: buildx builder erepo-release, multi-arch push to ghcr.io/ervisio/ervisio-repo:<ver>,latest. Plugin pack needs GNU tar: run `npx ervisio-plugin-pack pack` in node:24-bookworm with TAG=v<ver> after `npm run build`.
+- Dockerfile web stage must COPY web/.npmrc (legacy-peer-deps for openapi-typescript vs TS 6).

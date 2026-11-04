@@ -17,7 +17,7 @@
       "docker"
     ]
   },
-  "category": "Development",
+  "category": "Web servers",
   "trust": "team",
   "repo": "Ervisio/ErvisioRepo",
   "path": "plugin",

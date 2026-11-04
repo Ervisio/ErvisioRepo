@@ -765,7 +765,7 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 - ~~Documentazione per admin e utenti, guida alla migrazione da GitHub~~ (tolte su decisione dell'utente, 2026-11-03).
 - [x] Guida al DR (en e it).
 - ~~Test di carico ed esercitazione DR su Hetzner~~: li esegue l'utente (2026-11-03), non fanno parte del lavoro degli agenti.
-- [ ] Release v1.0.0 firmata, pacchetti, immagini e plugin nel catalogo. (pacchetti .deb/.rpm/tar firmati pubblicati come GitHub release v1.0.0 il 2026-11-04; mancano immagini Docker pubblicate e voce nel catalogo plugin)
+- [ ] Release v1.0.0 firmata, pacchetti, immagini e plugin nel catalogo. (v1.0.0 il 2026-11-04 con i pacchetti firmati; v1.0.2 lo stesso giorno con l'immagine `ghcr.io/ervisio/ervisio-repo` multi-arch e il plugin `repo-1.0.2.tar.gz`; registrazione nel catalogo aperta come Ervisio/plugins#41, in attesa di review; il package ghcr va reso pubblico)
 
 **Accettazione**: obiettivi del §1 misurati e rispettati; l'esercitazione DR è documentata con i tempi reali.
 
@@ -798,7 +798,7 @@ Driver WebDAV, `docker+gvisor`, OIDC per i job, runner arm64, ref advertisement 
 
 - **Domini multipli**: alias della stessa istanza oppure dominio per organizzazione (§9.4)?
 - **Topologia**: decisa, una sola VM con server e runner separati da cgroup (§3).
-- **Categoria nel catalogo plugin**: le categorie attuali non includono lo sviluppo software; si può aggiungere una categoria «Development» al registro `Ervisio/plugins`.
+- **Categoria nel catalogo plugin**: le categorie attuali non includono lo sviluppo software, quindi il plugin è registrato in «Web servers»; si può aggiungere una categoria «Development» al registro `Ervisio/plugins` e spostarlo lì.
 - **Direzione visiva** della UI: da decidere insieme nella Fase UI.
 
 ### Prossimi passi
