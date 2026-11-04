@@ -35,6 +35,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/mail"
 	"github.com/Ervisio/ErvisioRepo/internal/notify"
 	"github.com/Ervisio/ErvisioRepo/internal/orgs"
+	"github.com/Ervisio/ErvisioRepo/internal/pluginapi"
 	"github.com/Ervisio/ErvisioRepo/internal/pulls"
 	"github.com/Ervisio/ErvisioRepo/internal/releases"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
@@ -293,6 +294,23 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		}
 	}
 	handler := httpapi.NewRouter(deps)
+
+	if cfg.Server.PluginSocket != "" {
+		popt := pluginapi.Options{Config: cfg, Version: info.Version, Commit: info.Commit,
+			Storage: storage, Runners: dbgen.New(pool), Logger: log}
+		if cfg.File != "" {
+			popt.File = pluginapi.FileConfig(cfg.File)
+		}
+		plugin, err := pluginapi.New(popt)
+		if err != nil {
+			return err
+		}
+		go func() {
+			if err := plugin.ListenAndServe(ctx, cfg.Server.PluginSocket); err != nil {
+				log.Error("plugin API", "error", err)
+			}
+		}()
+	}
 
 	if ln == nil {
 		ln, err = net.Listen("tcp", cfg.Server.Listen)

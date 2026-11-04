@@ -15,6 +15,9 @@ import (
 
 // Config is the full server configuration.
 type Config struct {
+	// File is the path Load read the configuration from; empty after Parse.
+	File string `toml:"-"`
+
 	Server   Server   `toml:"server"`
 	Database Database `toml:"database"`
 	Security Security `toml:"security"`
@@ -285,6 +288,7 @@ func Load(path string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("config %s: %w", path, err)
 	}
+	cfg.File = path
 	return cfg, nil
 }
 
