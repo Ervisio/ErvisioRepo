@@ -135,8 +135,12 @@ else
 fi
 chmod 640 config/config.toml 2>/dev/null || true
 
-# Use the published image; if it cannot be pulled, compose builds it locally.
-docker compose pull --ignore-pull-failures --quiet
+# Use the published image; if it cannot be pulled, build it from this checkout
+# so a stale local image is never started by mistake.
+if ! docker compose pull --quiet app; then
+  echo "Could not pull the published image, building it from this checkout."
+  docker compose build app
+fi
 docker compose up -d --wait --wait-timeout 300
 
 echo

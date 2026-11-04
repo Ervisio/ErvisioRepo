@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `setup.sh` and `setup.bat` build the app image from the checkout when the published image cannot be pulled, instead of starting whatever image is already tagged locally.
+
 ## [1.0.2] - 2026-11-04
 
 ### Fixed
