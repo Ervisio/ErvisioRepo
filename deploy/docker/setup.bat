@@ -54,6 +54,11 @@ if not exist config\master.key (
   echo Created config\master.key: back it up somewhere safe.
 )
 
+rem With the Ervisio plugin the socket must sit where the plugin looks for it
+rem (a path inside the Docker Desktop VM).
+set "SOCKDIR=./run"
+if /i "%ERVISIO%"=="yes" set "SOCKDIR=/run/ervisio-repo"
+
 if not exist .env (
   for /f %%P in ('docker run --rm alpine:3.22 sh -c "head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n'"') do set "PGPASS=%%P"
   (
@@ -61,7 +66,7 @@ if not exist .env (
     echo ERVISIO_UID=1001
     echo ERVISIO_GID=1001
     echo ERVISIO_DATA_DIR=./data
-    echo ERVISIO_SOCKET_DIR=./run
+    echo ERVISIO_SOCKET_DIR=!SOCKDIR!
     echo BIND_ADDRESS=127.0.0.1
     echo APP_PORT=3400
     echo SSH_PORT=2222
