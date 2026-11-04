@@ -104,6 +104,23 @@ Riferimento visivo: `design/mock/direzione-a.html` e lo screenshot approvato in 
 
 - **Run delle Actions (2026-11-04).** Default A (righe dense), B e C selezionabili come per issue e notifiche. Dettaglio in `design/wip/003-actions-run/DECISION.md`.
 
+- **Shell e navigazione (2026-11-04).** Round `006-shell-navigazione`, variante B "Sidebar unica". Sostituisce rail + colonna della Console:
+  - Sidebar da 264 px:
+    - In alto un selettore di contesto (owner ▾ / repo ▾).
+    - Le voci sono divise in gruppi con titolini (Navigate, Pinned; dentro un repo Repository, Automation, Manage).
+    - In fondo il blocco "Administration", visibile solo agli admin, in hue ambra `--h-log`.
+  - Barra superiore: ricerca (con lo scope del repo quando sei dentro), New ▾, notifiche col numero dei non letti e menu utente (avatar).
+  - Home = dashboard: Needs your attention, Activity, Recent repositories, Instance health (solo admin).
+  - `/_ui` esce dalla nav.
+  - Audit dell'utente in `docs/design/ux-audit.md`.
+- **Impostazioni (2026-11-04).** Round `005-impostazioni`, variante A "Sottomenu". È un solo layout per account, repo, org e istanza:
+  - Sottonav verticale a gruppi da ~220 px dentro il pannello, con ricerca.
+  - Righe a due colonne (etichetta e descrizione | controllo) e marcatore sui campi modificati.
+  - Barra di salvataggio sticky che compare solo con modifiche pendenti.
+  - Zona pericolosa separata.
+  - I valori impostati nel file di config sono bloccati e lo dicono.
+  - In tema chiaro le etichette piccole usano `--ink2`, perché `--ink3` su `--surface` fa 4,46:1.
+
 ## Implementazione (web/src/ui)
 
 - Kit sopra primitive Radix: Button, Input, Select, Dialog, Menu, Tabs, Table, Badge, Toast, EmptyState, più Card e Icon. Lo stile è nostro, solo da token (`web/src/ui/ui.css`).
