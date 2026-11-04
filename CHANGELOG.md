@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-11-04
+
 ### Fixed
 
 - The server no longer exits at startup when Actions is enabled and no `actions` storage policy exists: the actions cache and artifacts are disabled with a warning. The generated and packaged configs now include `[storage.policy.actions]`.

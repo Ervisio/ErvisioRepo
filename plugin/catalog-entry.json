@@ -1,7 +1,7 @@
 {
   "id": "repo",
   "name": "ErvisioRepo",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Install and manage ErvisioRepo on this machine: settings, storage and runners, and publish the Git server on its own web address (git.<domain>) through Caddy.",
   "author": "Riccardo Reccia",
   "icon": "server",
