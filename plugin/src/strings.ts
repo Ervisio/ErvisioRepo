@@ -64,6 +64,8 @@ export const strings: Record<'en' | 'it', Record<string, string>> = {
     'set.refused': 'The server refused the change',
     'set.offline': 'The server is not answering',
     'set.offlineText': 'Start it to read and change this page.',
+    'set.outdated': 'This version of ErvisioRepo is too old for this page',
+    'set.outdatedText': 'Settings can be changed from the plugin starting with ErvisioRepo 1.0.4. Update it from Maintenance.',
 
     'card.signup': 'Sign-up and links',
     'card.sessions': 'Passwords and sessions',
@@ -504,6 +506,8 @@ export const strings: Record<'en' | 'it', Record<string, string>> = {
     'set.refused': 'Il server ha rifiutato la modifica',
     'set.offline': 'Il server non risponde',
     'set.offlineText': 'Avvialo per leggere e modificare questa pagina.',
+    'set.outdated': 'Questa versione di ErvisioRepo è troppo vecchia per questa pagina',
+    'set.outdatedText': 'Le impostazioni si modificano dal plugin a partire da ErvisioRepo 1.0.4. Aggiornalo da Manutenzione.',
 
     'card.signup': 'Registrazione e link',
     'card.sessions': 'Password e sessioni',

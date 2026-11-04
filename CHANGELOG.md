@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Plugin: the settings pages crashed with "Cannot use 'in' operator … in undefined" against a server older than 1.0.4, whose `GET /settings` has no `values`; they now say the server must be updated.
+
 ## [1.0.5] - 2026-11-04
 
 ### Fixed

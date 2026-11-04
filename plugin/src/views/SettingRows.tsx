@@ -38,6 +38,8 @@ export interface SettingsApi {
   readOnly: boolean;
   /** The server does not answer: nothing can be read or saved. */
   offline: boolean;
+  /** The server is older than 1.0.4 and has no editable settings. */
+  outdated: boolean;
 }
 
 // Created on first use: React APIs must not run at import time, before activate() calls setReact.
@@ -48,6 +50,7 @@ export const useSettings = () => useContext(settingsCtx());
 export function SettingsProvider({ enabled, children }: { enabled: boolean; children: ReactNode }) {
   const [doc, setDoc] = useState<SettingsDoc | null>(null);
   const [loadError, setLoadError] = useState<unknown>(null);
+  const [outdated, setOutdated] = useState(false);
   const [baseline, setBaseline] = useState<SettingValues | null>(null);
   const [drafts, setDrafts] = useState<SettingValues>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -61,6 +64,12 @@ export function SettingsProvider({ enabled, children }: { enabled: boolean; chil
     repo.getSettings().then(
       (d) => {
         if (!live) return;
+        // Before 1.0.4 GET settings answered a fixed set of fields with no `values`.
+        if (typeof d?.values !== 'object' || d.values === null) {
+          setOutdated(true);
+          return;
+        }
+        setOutdated(false);
         setDoc(d);
         setLoadError(null);
         setBaseline((b) => b ?? d.values);
@@ -186,6 +195,7 @@ export function SettingsProvider({ enabled, children }: { enabled: boolean; chil
     applied,
     readOnly: !!doc && !doc.configWritable,
     offline: !enabled,
+    outdated,
   };
   const Ctx = settingsCtx();
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
@@ -354,6 +364,8 @@ export function SettingsPage({ id, children }: { id: PageId; children: ReactNode
       {!s?.doc ? (
         s?.offline ? (
           <div className="rp-err"><Icon name="power" /><div><b>{t('set.offline')}</b><span>{t('set.offlineText')}</span></div></div>
+        ) : s?.outdated ? (
+          <div className="rp-err"><Icon name="info" /><div><b>{t('set.outdated')}</b><span>{t('set.outdatedText')}</span></div></div>
         ) : s?.loadError ? (
           <div className="rp-err"><Icon name="alert" /><div><b>{t('set.loadFailed')}</b><span>{errText(s.loadError)}</span></div>
             <Button size="sm" icon="refresh" onClick={s.reload}>{t('retry')}</Button></div>
