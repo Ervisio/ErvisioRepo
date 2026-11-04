@@ -106,7 +106,9 @@ if not exist config\config.toml (
   echo Created config\config.toml.
 )
 
-docker compose up -d --build --wait --wait-timeout 180
+rem Use the published image; if it cannot be pulled, compose builds it locally.
+docker compose pull --ignore-pull-failures --quiet
+docker compose up -d --wait --wait-timeout 300
 if errorlevel 1 exit /b 1
 
 echo.

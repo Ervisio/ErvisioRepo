@@ -6,6 +6,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-04
+
+### Added
+
+- The Docker image is published as `ghcr.io/ervisio/ervisio-repo` (linux/amd64 and linux/arm64). `deploy/docker/compose.yaml` uses it, tagged with the release it ships with (`ERVISIO_VERSION`), and `setup.sh`/`setup.bat` pull it before starting; when the pull fails, compose builds the image from the checkout.
+- The Ervisio core plugin (`repo`) is released as `repo-<version>.tar.gz` with its `.sha256` next to the server packages, and its version follows the server release.
+
+### Fixed
+
+- `scripts/release/build.sh` renders the nfpm config before packaging, since nfpm does not expand environment variables in `contents` paths.
+
 ## [1.0.0] - 2026-11-04
 
 ### Added

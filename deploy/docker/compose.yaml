@@ -1,5 +1,7 @@
 # Ervisio Repo production stack. Use ./setup.sh (or setup.bat) to generate .env
-# and config/, then start it with: docker compose up -d --build --wait
+# and config/, then start it with: docker compose up -d --wait. The app image is
+# pulled from GHCR; `docker compose up -d --build --wait` builds it from this
+# checkout instead. ERVISIO_VERSION defaults to the release this file ships with.
 name: ervisiorepo
 
 x-logging: &logging
@@ -13,9 +15,9 @@ x-app: &app
     context: ../..
     dockerfile: Dockerfile
     args:
-      VERSION: ${ERVISIO_VERSION:-dev}
+      VERSION: ${ERVISIO_VERSION:-1.0.1}
       COMMIT: ${ERVISIO_COMMIT:-unknown}
-  image: ervisiorepo-app:local
+  image: ghcr.io/ervisio/ervisio-repo:${ERVISIO_VERSION:-1.0.1}
   user: "${ERVISIO_UID:-1001}:${ERVISIO_GID:-1001}"
   restart: unless-stopped
   security_opt:

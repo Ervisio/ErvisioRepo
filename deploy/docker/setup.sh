@@ -135,7 +135,9 @@ else
 fi
 chmod 640 config/config.toml 2>/dev/null || true
 
-docker compose up -d --build --wait --wait-timeout 180
+# Use the published image; if it cannot be pulled, compose builds it locally.
+docker compose pull --ignore-pull-failures --quiet
+docker compose up -d --wait --wait-timeout 300
 
 echo
 echo "Ervisio Repo is running at $url"
