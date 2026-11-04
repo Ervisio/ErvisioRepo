@@ -5,7 +5,7 @@
  * field loses focus or on Enter). The server only reads the file at start, so what was saved since the page opened
  * is "saved, not active yet" until a restart. A value the server refuses stays in the field with its message.
  */
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type Context, type ReactNode } from 'react';
 import * as repo from '../api/repo';
 import type { SettingValue, SettingValues, SettingsDoc } from '../api/repo';
 import { Button, Icon, Input, Select, Switch } from '../kit';
@@ -40,8 +40,10 @@ export interface SettingsApi {
   offline: boolean;
 }
 
-const Ctx = createContext<SettingsApi | null>(null);
-export const useSettings = () => useContext(Ctx);
+// Created on first use: React APIs must not run at import time, before activate() calls setReact.
+let ctx: Context<SettingsApi | null> | undefined;
+const settingsCtx = () => (ctx ??= createContext<SettingsApi | null>(null));
+export const useSettings = () => useContext(settingsCtx());
 
 export function SettingsProvider({ enabled, children }: { enabled: boolean; children: ReactNode }) {
   const [doc, setDoc] = useState<SettingsDoc | null>(null);
@@ -185,6 +187,7 @@ export function SettingsProvider({ enabled, children }: { enabled: boolean; chil
     readOnly: !!doc && !doc.configWritable,
     offline: !enabled,
   };
+  const Ctx = settingsCtx();
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }
 
