@@ -60,7 +60,8 @@ type gitTransports struct {
 // setupGitTransports builds the Smart HTTP and SSH transports on t (PLAN
 // §5.1). hooks (internal/githooks, may be nil) journals every push.
 func setupGitTransports(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, rs *repos.Service, hooks gittransport.Hooks,
-	ids *identity.Stack, creds *credentials.Service, proxies []netip.Prefix, lfsSrv *lfs.Server, log *slog.Logger,
+	ids *identity.Stack, creds *credentials.Service, proxies []netip.Prefix, lfsSrv *lfs.Server,
+	jobTokens auth.JobTokenLookup, log *slog.Logger,
 ) (*gitTransports, error) {
 	// Interfaces stay nil (not typed nil) when LFS is off.
 	var lfsHTTP githttp.LFS
@@ -82,7 +83,7 @@ func setupGitTransports(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier
 	}
 	requests := auth.NewLimiter(auth.LimiterConfig{ActionsPerHour: g.RequestsPerHour}, nil)
 	h, err := githttp.New(githttp.Options{
-		Transport: ts, Repos: rs, Tokens: &auth.Tokens{Store: dbgen.New(pool)}, Sessions: ids.Sessions,
+		Transport: ts, Repos: rs, Tokens: &auth.Tokens{Store: dbgen.New(pool), Jobs: jobTokens}, Sessions: ids.Sessions,
 		Cookies: auth.CookiesFor(cfg.Server.PublicURL), TrustedProxies: proxies,
 		Failures: ids.Limiter, Requests: requests, LFS: lfsHTTP, Log: log.With("component", "git-http"),
 	})

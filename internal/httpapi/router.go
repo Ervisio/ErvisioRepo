@@ -111,6 +111,10 @@ type Deps struct {
 	Pulls Pulls
 	// Statuses serves the commit status and checks endpoints; nil answers 503.
 	Statuses Statuses
+	// ActionsRunner serves the Ervisio Actions runner protocol under
+	// /api/actions/runner (long polls, outside the request timeout); nil
+	// leaves it unmounted.
+	ActionsRunner http.Handler
 }
 
 // NewRouter builds the root handler.
@@ -151,6 +155,9 @@ func NewRouter(d Deps) http.Handler {
 	mountBrowse(r, d)
 	mountGit(r, d)
 	mountGitHubAPI(r, d)
+	if d.ActionsRunner != nil {
+		r.Handle("/api/actions/runner/*", d.ActionsRunner)
+	}
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Timeout(RequestTimeout))
 		r.Get("/readyz", readyz(d))

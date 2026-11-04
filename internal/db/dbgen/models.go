@@ -9,6 +9,182 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ActionsEnvironment struct {
+	ID              uuid.UUID
+	RepoID          uuid.UUID
+	Name            string
+	RequireApproval bool
+	Reviewers       []uuid.UUID
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+}
+
+type ActionsJob struct {
+	ID                uuid.UUID
+	RunID             uuid.UUID
+	RepoID            uuid.UUID
+	Attempt           int32
+	JobKey            string
+	Name              string
+	Needs             []string
+	Matrix            []byte
+	Payload           []byte
+	IfExpr            string
+	RunsOn            []string
+	TimeoutMinutes    int32
+	Permissions       []byte
+	Inputs            []byte
+	Environment       string
+	Status            string
+	Conclusion        string
+	CancelRequested   bool
+	ApprovedBy        uuid.NullUUID
+	ApprovedAt        pgtype.Timestamptz
+	ConcurrencyGroup  string
+	ConcurrencyCancel bool
+	FailFast          bool
+	MaxParallel       int32
+	RunnerID          uuid.NullUUID
+	Label             string
+	Outputs           []byte
+	TokenHash         []byte
+	TokenExpiresAt    pgtype.Timestamptz
+	LogLength         int64
+	LogKey            string
+	CheckRunID        uuid.NullUUID
+	StartedAt         pgtype.Timestamptz
+	CompletedAt       pgtype.Timestamptz
+	LastUpdateAt      pgtype.Timestamptz
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type ActionsLogRow struct {
+	JobID   uuid.UUID
+	Idx     int64
+	At      pgtype.Timestamptz
+	Content string
+}
+
+type ActionsRegistrationToken struct {
+	ID        uuid.UUID
+	TokenHash []byte
+	Scope     string
+	OwnerID   uuid.NullUUID
+	RepoID    uuid.NullUUID
+	CreatedBy uuid.NullUUID
+	ExpiresAt pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
+}
+
+type ActionsRun struct {
+	ID                uuid.UUID
+	RepoID            uuid.UUID
+	WorkflowPath      string
+	WorkflowName      string
+	Workflow          []byte
+	Event             string
+	EventAction       string
+	Ref               string
+	Sha               string
+	Title             string
+	RunNumber         int64
+	Attempt           int32
+	Status            string
+	Conclusion        string
+	ActorID           uuid.NullUUID
+	TriggerActorID    uuid.NullUUID
+	EventPayload      []byte
+	ConcurrencyGroup  string
+	ConcurrencyCancel bool
+	HeadRepoID        uuid.NullUUID
+	Fork              bool
+	NeedsApproval     bool
+	ApprovedBy        uuid.NullUUID
+	StartedAt         pgtype.Timestamptz
+	CompletedAt       pgtype.Timestamptz
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type ActionsRunNumber struct {
+	RepoID       uuid.UUID
+	WorkflowPath string
+	Last         int64
+}
+
+type ActionsRunner struct {
+	ID             uuid.UUID
+	Name           string
+	Scope          string
+	OwnerID        uuid.NullUUID
+	RepoID         uuid.NullUUID
+	Labels         []string
+	RawLabels      []string
+	Version        string
+	Ephemeral      bool
+	CredentialHash []byte
+	Online         bool
+	LastSeenAt     pgtype.Timestamptz
+	CreatedBy      uuid.NullUUID
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
+type ActionsSchedule struct {
+	ID           uuid.UUID
+	RepoID       uuid.UUID
+	WorkflowPath string
+	Cron         string
+	NextAt       pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+}
+
+type ActionsSecret struct {
+	ID          uuid.UUID
+	Scope       string
+	OwnerID     uuid.NullUUID
+	RepoID      uuid.NullUUID
+	Environment string
+	Name        string
+	Sealed      []byte
+	CreatedBy   uuid.NullUUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	ScopeID     uuid.NullUUID
+}
+
+type ActionsStep struct {
+	JobID       uuid.UUID
+	Idx         int32
+	Name        string
+	Status      string
+	Conclusion  string
+	LogIndex    int64
+	LogLength   int64
+	StartedAt   pgtype.Timestamptz
+	CompletedAt pgtype.Timestamptz
+}
+
+type ActionsTasksVersion struct {
+	ID      bool
+	Version int64
+}
+
+type ActionsVariable struct {
+	ID          uuid.UUID
+	Scope       string
+	OwnerID     uuid.NullUUID
+	RepoID      uuid.NullUUID
+	Environment string
+	Name        string
+	Value       string
+	CreatedBy   uuid.NullUUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	ScopeID     uuid.NullUUID
+}
+
 type AuditLog struct {
 	ID         uuid.UUID
 	At         pgtype.Timestamptz

@@ -63,6 +63,30 @@ func ValidAccessTokenFormat(s string) bool {
 	return err == nil
 }
 
+// JobTokenPrefix starts every Ervisio Actions job token (GITHUB_TOKEN of a
+// workflow job).
+const JobTokenPrefix = "erj_"
+
+// ValidCredentialFormat reports whether s looks like a personal access
+// token or an Ervisio Actions job token.
+func ValidCredentialFormat(s string) bool {
+	if ValidAccessTokenFormat(s) {
+		return true
+	}
+	rest, ok := strings.CutPrefix(s, JobTokenPrefix)
+	if !ok || len(rest) != base64.RawURLEncoding.EncodedLen(TokenBytes) {
+		return false
+	}
+	_, err := base64.RawURLEncoding.DecodeString(rest)
+	return err == nil
+}
+
+// JobTokenLookup authenticates Ervisio Actions job tokens. It returns
+// ErrNoToken for an unknown or expired token.
+type JobTokenLookup interface {
+	LookupJobToken(ctx context.Context, token string) (Principal, error)
+}
+
 // TokenHint is the part of a token shown in lists to recognize it.
 func TokenHint(token string) string {
 	if len(token) < len(TokenPrefix)+4 {
@@ -81,10 +105,18 @@ type TokenStore interface {
 type Tokens struct {
 	Store TokenStore
 	Now   func() time.Time // defaults to time.Now
+	// Jobs authenticates job tokens (erj_…); nil refuses them.
+	Jobs JobTokenLookup
 }
 
 // Lookup returns the caller authenticated by token.
 func (t *Tokens) Lookup(ctx context.Context, token string) (Principal, error) {
+	if strings.HasPrefix(token, JobTokenPrefix) {
+		if t.Jobs == nil || !ValidCredentialFormat(token) {
+			return Principal{}, ErrNoToken
+		}
+		return t.Jobs.LookupJobToken(ctx, token)
+	}
 	if !ValidAccessTokenFormat(token) {
 		return Principal{}, ErrNoToken
 	}

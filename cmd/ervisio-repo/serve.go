@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 
+	"github.com/Ervisio/ErvisioRepo/internal/actions"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/buildinfo"
@@ -37,8 +38,8 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/pulls"
 	"github.com/Ervisio/ErvisioRepo/internal/releases"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
-	"github.com/Ervisio/ErvisioRepo/internal/statuses"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
+	"github.com/Ervisio/ErvisioRepo/internal/statuses"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
 	"github.com/Ervisio/ErvisioRepo/internal/webhooks"
 	"github.com/Ervisio/ErvisioRepo/web"
@@ -132,6 +133,13 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	if journal != nil {
 		jobOpts = append(jobOpts, journal.GitHub.JobsOption())
 	}
+	actionsSvc, err := setupActions(cfg, pool, storage, log)
+	if err != nil {
+		return err
+	}
+	if actionsSvc != nil {
+		jobOpts = append(jobOpts, actionsSvc.JobsOption())
+	}
 	runner, err = jobs.New(pool, log, jobOpts...)
 	if err != nil {
 		return err
@@ -182,7 +190,8 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	var repoSvc *repos.Service
 	if gitTier != nil {
 		repoSvc = repos.New(repos.Options{Pool: pool, Tier: gitTier, Jobs: runner, Log: log})
-		if git, err = setupGitTransports(cfg, pool, gitTier, repoSvc, journal.TransportHooks(gitTier), ids, creds, proxies, lfsSrv, log); err != nil {
+		if git, err = setupGitTransports(cfg, pool, gitTier, repoSvc, journal.TransportHooks(gitTier), ids, creds, proxies, lfsSrv,
+			actionsJobTokens(actionsSvc), log); err != nil {
 			return err
 		}
 	}
@@ -212,7 +221,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		Credentials: creds,
 		SSO:         ssoMgr,
 		Auth: &auth.Middleware{
-			Sessions: ids.Sessions, Tokens: &auth.Tokens{Store: dbgen.New(pool)},
+			Sessions: ids.Sessions, Tokens: &auth.Tokens{Store: dbgen.New(pool), Jobs: actionsJobTokens(actionsSvc)},
 			Cookies: auth.CookiesFor(cfg.Server.PublicURL), TrustedProxies: proxies, Log: log,
 		},
 	}
@@ -260,6 +269,11 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		}
 		deps.Pulls = pullSvc
 		deps.Statuses = statusSvc
+		if actionsSvc != nil {
+			wireActions(ctx, actionsSvc, actions.Deps{Repos: repoSvc, Browse: browse, Statuses: statusSvc,
+				Payloads: hooks, Jobs: runner, Bus: bus}, bus)
+			deps.ActionsRunner = actionsSvc.RunnerHandler()
+		}
 
 		hooks.SetRepos(repoSvc)
 		notifier.SetRepos(repoSvc)

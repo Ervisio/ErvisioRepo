@@ -31,6 +31,19 @@ type Principal struct {
 	TokenID   uuid.UUID // set when Method is MethodToken
 	// Scopes are the scopes of the access token (MethodToken only).
 	Scopes []string
+	// Grant is set for an Ervisio Actions job token (erj_…): the caller
+	// acts on Grant.RepoID only, with Grant.Permission, and is anonymous
+	// everywhere else. UserID is uuid.Nil for such callers.
+	Grant *RepoGrant
+}
+
+// RepoGrant is the repository access of an Ervisio Actions job token.
+type RepoGrant struct {
+	RepoID uuid.UUID
+	// Permission is "read" or "write" (an authz permission name).
+	Permission string
+	// JobID is the job the token was issued to.
+	JobID uuid.UUID
 }
 
 // HasScope reports whether a token caller holds scope. A write scope

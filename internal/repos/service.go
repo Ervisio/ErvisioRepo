@@ -164,6 +164,16 @@ func repoFrom(r dbgen.Repo, owner, kind string, p authz.Permission) Repo {
 
 // Facts loads what the permission of who on repo depends on.
 func Facts(ctx context.Context, q *dbgen.Queries, who auth.Principal, r dbgen.Repo, ownerKind string) (authz.RepoFacts, error) {
+	if who.Grant != nil {
+		// An Actions job token: its grant on one repository, anonymous
+		// access elsewhere.
+		f := authz.RepoFacts{Visibility: authz.Visibility(r.Visibility)}
+		if r.ID == who.Grant.RepoID {
+			f.Signed = true
+			f.Collaborator, _ = authz.ParsePermission(who.Grant.Permission)
+		}
+		return f, nil
+	}
 	f := authz.RepoFacts{
 		Signed:        who.UserID != uuid.Nil,
 		InstanceAdmin: who.IsAdmin(),

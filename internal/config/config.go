@@ -77,6 +77,16 @@ type Security struct {
 type Actions struct {
 	Enabled           bool   `toml:"enabled"`
 	DefaultActionsURL string `toml:"default_actions_url"` // github | mirror-only
+	// MaxJobTimeout caps timeout-minutes of every job; it is also the
+	// timeout of jobs that set none.
+	MaxJobTimeout Duration `toml:"max_job_timeout"`
+	// RunnerOfflineAfter marks a runner offline when it has not polled for
+	// this long; its running jobs fail after twice as long.
+	RunnerOfflineAfter Duration `toml:"runner_offline_after"`
+	// RegistrationTokenTTL is the lifetime of runner registration tokens.
+	RegistrationTokenTTL Duration `toml:"registration_token_ttl"`
+	// MaxJobsPerRun bounds the jobs of one run (matrix included).
+	MaxJobsPerRun int `toml:"max_jobs_per_run"`
 }
 
 type Log struct {
@@ -235,8 +245,9 @@ func Default() Config {
 			Registration:  RegistrationInvite,
 			UserDirectory: UserDirectoryShared,
 		},
-		Actions: Actions{Enabled: true, DefaultActionsURL: "github"},
-		Log:     Log{Level: "info", Format: "json"},
+		Actions: Actions{Enabled: true, DefaultActionsURL: "github", MaxJobTimeout: Duration(6 * time.Hour),
+			RunnerOfflineAfter: Duration(2 * time.Minute), RegistrationTokenTTL: Duration(time.Hour), MaxJobsPerRun: 512},
+		Log: Log{Level: "info", Format: "json"},
 		Auth: Auth{
 			Argon2Memory:             64 << 20,
 			Argon2Iterations:         3,

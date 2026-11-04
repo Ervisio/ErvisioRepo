@@ -87,6 +87,9 @@ func (c *Config) validate() []error {
 	v.oneOf("security.user_directory", c.Security.UserDirectory, UserDirectoryShared, UserDirectoryInstance)
 
 	v.oneOf("actions.default_actions_url", c.Actions.DefaultActionsURL, "github", "mirror-only")
+	if c.Actions.Enabled {
+		v.actions(&c.Actions)
+	}
 	v.oneOf("log.level", c.Log.Level, "debug", "info", "warn", "error")
 	v.oneOf("log.format", c.Log.Format, "json", "text")
 
@@ -239,6 +242,19 @@ func (v *validator) positive(path string, d Duration) {
 	if d <= 0 {
 		v.add(path, "must be a positive duration")
 	}
+}
+
+func (v *validator) actions(a *Actions) {
+	if a.MaxJobTimeout < Duration(time.Minute) || a.MaxJobTimeout > Duration(72*time.Hour) {
+		v.add("actions.max_job_timeout", "must be between 1m and 72h")
+	}
+	if a.RunnerOfflineAfter < Duration(40*time.Second) || a.RunnerOfflineAfter > Duration(time.Hour) {
+		v.add("actions.runner_offline_after", "must be between 40s and 1h")
+	}
+	if a.RegistrationTokenTTL < Duration(time.Minute) || a.RegistrationTokenTTL > Duration(30*24*time.Hour) {
+		v.add("actions.registration_token_ttl", "must be between 1m and 720h")
+	}
+	v.intRange("actions.max_jobs_per_run", a.MaxJobsPerRun, 1, 10000)
 }
 
 func (v *validator) auth(a *Auth) {

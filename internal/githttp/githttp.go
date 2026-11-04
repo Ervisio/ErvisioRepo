@@ -239,16 +239,16 @@ func credentials(r *http.Request) (token string, hasAuth, ok bool) {
 	}
 	if user, pass, isBasic := r.BasicAuth(); isBasic {
 		switch {
-		case auth.ValidAccessTokenFormat(pass):
+		case auth.ValidCredentialFormat(pass):
 			return pass, true, true
-		case pass == "" && auth.ValidAccessTokenFormat(user):
+		case pass == "" && auth.ValidCredentialFormat(user):
 			return user, true, true // https://<token>@host/...
 		}
 		return "", true, false
 	}
 	if scheme, cred, found := strings.Cut(h, " "); found && strings.EqualFold(scheme, "Bearer") {
 		cred = strings.TrimSpace(cred)
-		return cred, true, auth.ValidAccessTokenFormat(cred)
+		return cred, true, auth.ValidCredentialFormat(cred)
 	}
 	return "", true, false
 }
