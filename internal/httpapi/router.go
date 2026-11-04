@@ -115,6 +115,9 @@ type Deps struct {
 	// /api/actions/runner (long polls, outside the request timeout); nil
 	// leaves it unmounted.
 	ActionsRunner http.Handler
+	// Actions serves the workflow run, log, secret and runner endpoints;
+	// nil answers 503.
+	Actions Actions
 }
 
 // NewRouter builds the root handler.
@@ -155,6 +158,7 @@ func NewRouter(d Deps) http.Handler {
 	mountBrowse(r, d)
 	mountGit(r, d)
 	mountGitHubAPI(r, d)
+	mountActions(r, d)
 	if d.ActionsRunner != nil {
 		r.Handle("/api/actions/runner/*", d.ActionsRunner)
 	}
@@ -282,6 +286,7 @@ func mountV1(r chi.Router, d Deps) {
 	srv.webhooks, srv.notify = d.Webhooks, d.Notify
 	srv.pulls = d.Pulls
 	srv.statuses = d.Statuses
+	srv.actions = d.Actions
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())

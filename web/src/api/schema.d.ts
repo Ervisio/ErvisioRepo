@@ -4014,10 +4014,977 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repos/{owner}/{name}/actions/workflows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Workflow files that ran in the repository */
+        get: operations["listActionsWorkflows"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/workflows/{workflow}/dispatches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Workflow file name (ci.yml) or path (.github/workflows/ci.yml, URL-encoded) */
+                workflow: components["parameters"]["ActionsWorkflowParam"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a workflow_dispatch run
+         * @description Needs write access. ref defaults to the default branch and must be a
+         *     branch or a tag; inputs are checked against the workflow_dispatch inputs.
+         */
+        post: operations["dispatchActionsWorkflow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/workflows/{workflow}/badge.svg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Workflow file name (ci.yml) or path (.github/workflows/ci.yml, URL-encoded) */
+                workflow: components["parameters"]["ActionsWorkflowParam"];
+            };
+            cookie?: never;
+        };
+        /**
+         * SVG status badge of a workflow
+         * @description The latest completed run of the workflow on branch (default: the
+         *     default branch).
+         */
+        get: operations["getActionsBadge"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Workflow runs of the repository, newest first */
+        get: operations["listActionsRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/runs/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runId: components["parameters"]["ActionsRunId"];
+            };
+            cookie?: never;
+        };
+        /** A workflow run */
+        get: operations["getActionsRun"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/runs/{runId}/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runId: components["parameters"]["ActionsRunId"];
+            };
+            cookie?: never;
+        };
+        /** Jobs of a run attempt */
+        get: operations["listActionsRunJobs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/runs/{runId}/rerun": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runId: components["parameters"]["ActionsRunId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a new attempt of a completed run
+         * @description Every job runs again from the workflow file the run was planned from.
+         */
+        post: operations["rerunActionsRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/runs/{runId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runId: components["parameters"]["ActionsRunId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a run that is not completed */
+        post: operations["cancelActionsRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/runs/{runId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runId: components["parameters"]["ActionsRunId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a run waiting for approval
+         * @description A pull request run from a fork by an outside contributor waits for a
+         *     writer of the repository to approve it.
+         */
+        post: operations["approveActionsRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        /** A job with its steps */
+        get: operations["getActionsJob"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/jobs/{jobId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel one job */
+        post: operations["cancelActionsJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/jobs/{jobId}/deployment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve or reject a job waiting for a protected environment
+         * @description Allowed to the environment reviewers, or to the repository maintainers
+         *     when the environment lists none. Rejecting cancels the job.
+         */
+        post: operations["reviewActionsDeployment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/jobs/{jobId}/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * A page of the log of a job
+         * @description Rows from index from; complete is true once the job ended and every
+         *     row was read.
+         */
+        get: operations["getActionsJobLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/jobs/{jobId}/logs/raw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * The whole log of a job as plain text
+         * @description Streamed outside the request timeout (not part of the generated Go
+         *     server).
+         */
+        get: operations["getActionsJobLogRaw"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/jobs/{jobId}/logs/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Live tail of the log of a job (server-sent events)
+         * @description Events: "log" with an ActionsLogPage as data and id the next row index
+         *     (Last-Event-ID resumes from it), "end" when the log is complete. Comment
+         *     lines keep the connection alive. Served outside the request timeout (not
+         *     part of the generated Go server).
+         */
+        get: operations["streamActionsJobLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/secrets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Actions secrets (names only) */
+        get: operations["listRepoActionsSecrets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/secrets/{secretName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                secretName: components["parameters"]["ActionsSecretName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Create or replace an Actions secret
+         * @description The value is encrypted with the instance master key (503 without one)
+         *     and never returned.
+         */
+        put: operations["putRepoActionsSecret"];
+        post?: never;
+        /** Delete an Actions secret */
+        delete: operations["deleteRepoActionsSecret"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/variables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Actions variables */
+        get: operations["listRepoActionsVariables"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/variables/{variableName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                variableName: components["parameters"]["ActionsVariableName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Create or replace an Actions variable */
+        put: operations["putRepoActionsVariable"];
+        post?: never;
+        /** Delete an Actions variable */
+        delete: operations["deleteRepoActionsVariable"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/environments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /** Deployment environments */
+        get: operations["listActionsEnvironments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/environments/{environment}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                environment: components["parameters"]["ActionsEnvironmentName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Create or update an environment */
+        put: operations["putActionsEnvironment"];
+        post?: never;
+        /** Delete an environment */
+        delete: operations["deleteActionsEnvironment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/runners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Self-hosted runners
+         * @description The runners that can take the jobs of the repository: its own, its
+         *     owner's and the instance runners (scope tells which). Maintainers only.
+         */
+        get: operations["listRepoActionsRunners"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/runners/{runnerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a self-hosted runner
+         * @description Its running jobs fail at the next sweep.
+         */
+        delete: operations["deleteRepoActionsRunner"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/runners/registration-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a runner registration token */
+        post: operations["createRepoActionsRegistrationToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org}/actions/secrets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        /** Actions secrets (names only) */
+        get: operations["listOrgActionsSecrets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org}/actions/secrets/{secretName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                secretName: components["parameters"]["ActionsSecretName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Create or replace an Actions secret
+         * @description The value is encrypted with the instance master key (503 without one)
+         *     and never returned.
+         */
+        put: operations["putOrgActionsSecret"];
+        post?: never;
+        /** Delete an Actions secret */
+        delete: operations["deleteOrgActionsSecret"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org}/actions/variables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        /** Actions variables */
+        get: operations["listOrgActionsVariables"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org}/actions/variables/{variableName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                variableName: components["parameters"]["ActionsVariableName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Create or replace an Actions variable */
+        put: operations["putOrgActionsVariable"];
+        post?: never;
+        /** Delete an Actions variable */
+        delete: operations["deleteOrgActionsVariable"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org}/actions/runners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Self-hosted runners
+         * @description Runners registered for the organization (or user). Owners only.
+         */
+        get: operations["listOrgActionsRunners"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org}/actions/runners/{runnerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a self-hosted runner
+         * @description Its running jobs fail at the next sweep.
+         */
+        delete: operations["deleteOrgActionsRunner"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org}/actions/runners/registration-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a runner registration token */
+        post: operations["createOrgActionsRegistrationToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/actions/runners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Self-hosted runners
+         * @description Instance runners. Instance admins only.
+         */
+        get: operations["listInstanceActionsRunners"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/actions/runners/{runnerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a self-hosted runner
+         * @description Its running jobs fail at the next sweep.
+         */
+        delete: operations["deleteInstanceActionsRunner"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/actions/runners/registration-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a runner registration token */
+        post: operations["createInstanceActionsRegistrationToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ActionsWorkflow: {
+            path: string;
+            name: string;
+            /** Format: date-time */
+            lastRunAt: string;
+        };
+        ActionsRun: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            runNumber: number;
+            attempt: number;
+            workflowPath: string;
+            workflowName: string;
+            event: string;
+            eventAction: string;
+            ref: string;
+            sha: string;
+            title: string;
+            /** @enum {string} */
+            status: "waiting" | "pending" | "queued" | "in_progress" | "completed";
+            /** @description Empty unless completed */
+            conclusion: string;
+            needsApproval: boolean;
+            fork: boolean;
+            actor: string;
+            triggerActor: string;
+            /** @description Web page of the run */
+            url: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ActionsRunList: {
+            /** Format: int64 */
+            totalCount: number;
+            runs: components["schemas"]["ActionsRun"][];
+        };
+        ActionsJob: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            runId: string;
+            key: string;
+            name: string;
+            needs: string[];
+            /** @enum {string} */
+            status: "blocked" | "waiting" | "queued" | "in_progress" | "completed";
+            /** @description success, failure, cancelled, skipped or timed_out; empty unless completed */
+            conclusion: string;
+            environment: string;
+            cancelRequested: boolean;
+            /** @description The deployment to environment was approved */
+            approved: boolean;
+            runsOn: string[];
+            /** @description Name of the runner that took the job */
+            runner: string;
+            /** @description The job calls a reusable workflow; its jobs follow with caller set */
+            reusable: boolean;
+            caller: string;
+            /** Format: int64 */
+            logLength: number;
+            url: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
+        };
+        ActionsStep: {
+            index: number;
+            name: string;
+            status: string;
+            conclusion: string;
+            /**
+             * Format: int64
+             * @description First log row of the step
+             */
+            logIndex: number;
+            /** Format: int64 */
+            logLength: number;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
+        };
+        ActionsJobDetail: {
+            job: components["schemas"]["ActionsJob"];
+            steps: components["schemas"]["ActionsStep"][];
+        };
+        ActionsLogLine: {
+            /** Format: int64 */
+            index: number;
+            /** Format: date-time */
+            time: string;
+            content: string;
+        };
+        ActionsLogPage: {
+            lines: components["schemas"]["ActionsLogLine"][];
+            /**
+             * Format: int64
+             * @description Index to read from next
+             */
+            next: number;
+            /** @description The job ended and every row was read */
+            complete: boolean;
+        };
+        ActionsDispatch: {
+            /** @description Branch or tag; defaults to the default branch */
+            ref?: string;
+            inputs?: {
+                [key: string]: unknown;
+            };
+        };
+        ActionsDeploymentReview: {
+            /** @description false rejects (cancels) the job */
+            approve: boolean;
+        };
+        ActionsSecret: {
+            name: string;
+            /** @description instance, org:<name> or repo:<owner>/<name> */
+            scope: string;
+            environment: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ActionsSecretPut: {
+            value: string;
+        };
+        ActionsVariable: {
+            name: string;
+            value: string;
+            scope: string;
+            environment: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ActionsVariablePut: {
+            value: string;
+        };
+        ActionsEnvironment: {
+            name: string;
+            requireApproval: boolean;
+            /** @description User ids */
+            reviewers: string[];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ActionsEnvironmentPut: {
+            requireApproval?: boolean;
+            /** @description Usernames; empty means the repository maintainers */
+            reviewers?: string[];
+        };
+        ActionsRunner: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description instance, org:<name> or repo:<owner>/<name> */
+            scope: string;
+            labels: string[];
+            version: string;
+            ephemeral: boolean;
+            online: boolean;
+            busy: boolean;
+            /** Format: date-time */
+            lastSeenAt?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ActionsRegistrationToken: {
+            /** @description errt_... secret, shown only once */
+            token: string;
+            scope: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
         CommitStatus: {
             /** Format: uuid */
             id: string;
@@ -6007,6 +6974,33 @@ export interface components {
         };
     };
     parameters: {
+        /** @description Workflow file name (ci.yml) or path (.github/workflows/ci.yml, URL-encoded) */
+        ActionsWorkflowParam: string;
+        ActionsRunId: string;
+        ActionsJobId: string;
+        ActionsRunnerId: string;
+        /** @description Letters, digits and underscores (stored upper case) */
+        ActionsSecretName: string;
+        /** @description Letters, digits and underscores (stored upper case) */
+        ActionsVariableName: string;
+        ActionsEnvironmentName: string;
+        /** @description An environment of the repository instead of the repository itself */
+        ActionsEnvironmentFilter: string;
+        /** @description Branch name or full ref */
+        ActionsBranch: string;
+        /** @description Workflow file name or path */
+        ActionsWorkflowFilter: string;
+        ActionsEventFilter: string;
+        /** @description A status (queued, in_progress, completed, ...) or a conclusion (success, failure, ...) */
+        ActionsStatusFilter: string;
+        ActionsShaFilter: string;
+        ActionsPage: number;
+        ActionsPerPage: number;
+        /** @description Run attempt (default the latest) */
+        ActionsAttempt: number;
+        /** @description First log row index */
+        ActionsLogFrom: number;
+        ActionsLogLimit: number;
         /** @description Commit id (full or abbreviated), branch or tag */
         CommitRef: string;
         CheckRunId: string;
@@ -13333,6 +14327,1183 @@ export interface operations {
             };
             307: components["responses"]["Moved"];
             400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listActionsWorkflows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Workflows */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsWorkflow"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    dispatchActionsWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Workflow file name (ci.yml) or path (.github/workflows/ci.yml, URL-encoded) */
+                workflow: components["parameters"]["ActionsWorkflowParam"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsDispatch"];
+            };
+        };
+        responses: {
+            /** @description Run started */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRun"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getActionsBadge: {
+        parameters: {
+            query?: {
+                /** @description Branch name or full ref */
+                branch?: components["parameters"]["ActionsBranch"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Workflow file name (ci.yml) or path (.github/workflows/ci.yml, URL-encoded) */
+                workflow: components["parameters"]["ActionsWorkflowParam"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Badge */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/svg+xml": string;
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listActionsRuns: {
+        parameters: {
+            query?: {
+                /** @description Workflow file name or path */
+                workflow?: components["parameters"]["ActionsWorkflowFilter"];
+                event?: components["parameters"]["ActionsEventFilter"];
+                /** @description A status (queued, in_progress, completed, ...) or a conclusion (success, failure, ...) */
+                status?: components["parameters"]["ActionsStatusFilter"];
+                /** @description Branch name or full ref */
+                branch?: components["parameters"]["ActionsBranch"];
+                sha?: components["parameters"]["ActionsShaFilter"];
+                page?: components["parameters"]["ActionsPage"];
+                perPage?: components["parameters"]["ActionsPerPage"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Runs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunList"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getActionsRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runId: components["parameters"]["ActionsRunId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Run */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRun"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listActionsRunJobs: {
+        parameters: {
+            query?: {
+                /** @description Run attempt (default the latest) */
+                attempt?: components["parameters"]["ActionsAttempt"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runId: components["parameters"]["ActionsRunId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Jobs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsJob"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    rerunActionsRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runId: components["parameters"]["ActionsRunId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description New attempt */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRun"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    cancelActionsRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runId: components["parameters"]["ActionsRunId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cancellation requested */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    approveActionsRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runId: components["parameters"]["ActionsRunId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Approved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getActionsJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Job */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsJobDetail"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    cancelActionsJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cancellation requested */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    reviewActionsDeployment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsDeploymentReview"];
+            };
+        };
+        responses: {
+            /** @description Reviewed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getActionsJobLog: {
+        parameters: {
+            query?: {
+                /** @description First log row index */
+                from?: components["parameters"]["ActionsLogFrom"];
+                limit?: components["parameters"]["ActionsLogLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Log rows */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsLogPage"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getActionsJobLogRaw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Log */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    streamActionsJobLog: {
+        parameters: {
+            query?: {
+                /** @description First log row index */
+                from?: components["parameters"]["ActionsLogFrom"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                jobId: components["parameters"]["ActionsJobId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event stream */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listRepoActionsSecrets: {
+        parameters: {
+            query?: {
+                /** @description An environment of the repository instead of the repository itself */
+                environment?: components["parameters"]["ActionsEnvironmentFilter"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Secrets */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsSecret"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    putRepoActionsSecret: {
+        parameters: {
+            query?: {
+                /** @description An environment of the repository instead of the repository itself */
+                environment?: components["parameters"]["ActionsEnvironmentFilter"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                secretName: components["parameters"]["ActionsSecretName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsSecretPut"];
+            };
+        };
+        responses: {
+            /** @description Secret stored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsSecret"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteRepoActionsSecret: {
+        parameters: {
+            query?: {
+                /** @description An environment of the repository instead of the repository itself */
+                environment?: components["parameters"]["ActionsEnvironmentFilter"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                secretName: components["parameters"]["ActionsSecretName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listRepoActionsVariables: {
+        parameters: {
+            query?: {
+                /** @description An environment of the repository instead of the repository itself */
+                environment?: components["parameters"]["ActionsEnvironmentFilter"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Variables */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsVariable"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    putRepoActionsVariable: {
+        parameters: {
+            query?: {
+                /** @description An environment of the repository instead of the repository itself */
+                environment?: components["parameters"]["ActionsEnvironmentFilter"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                variableName: components["parameters"]["ActionsVariableName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsVariablePut"];
+            };
+        };
+        responses: {
+            /** @description Variable stored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsVariable"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteRepoActionsVariable: {
+        parameters: {
+            query?: {
+                /** @description An environment of the repository instead of the repository itself */
+                environment?: components["parameters"]["ActionsEnvironmentFilter"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                variableName: components["parameters"]["ActionsVariableName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listActionsEnvironments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Environments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsEnvironment"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    putActionsEnvironment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                environment: components["parameters"]["ActionsEnvironmentName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsEnvironmentPut"];
+            };
+        };
+        responses: {
+            /** @description Environment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsEnvironment"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteActionsEnvironment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                environment: components["parameters"]["ActionsEnvironmentName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listRepoActionsRunners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Runners */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunner"][];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteRepoActionsRunner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createRepoActionsRegistrationToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Token (shown only once) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRegistrationToken"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listOrgActionsSecrets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Secrets */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsSecret"][];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    putOrgActionsSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                secretName: components["parameters"]["ActionsSecretName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsSecretPut"];
+            };
+        };
+        responses: {
+            /** @description Secret stored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsSecret"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteOrgActionsSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                secretName: components["parameters"]["ActionsSecretName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listOrgActionsVariables: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Variables */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsVariable"][];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    putOrgActionsVariable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                variableName: components["parameters"]["ActionsVariableName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsVariablePut"];
+            };
+        };
+        responses: {
+            /** @description Variable stored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsVariable"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteOrgActionsVariable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+                /** @description Letters, digits and underscores (stored upper case) */
+                variableName: components["parameters"]["ActionsVariableName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listOrgActionsRunners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Runners */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunner"][];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteOrgActionsRunner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createOrgActionsRegistrationToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Token (shown only once) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRegistrationToken"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listInstanceActionsRunners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Runners */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunner"][];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteInstanceActionsRunner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createInstanceActionsRegistrationToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Token (shown only once) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRegistrationToken"];
+                };
+            };
+            403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             503: components["responses"]["Unavailable"];
             default: components["responses"]["Problem"];

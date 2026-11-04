@@ -45,6 +45,8 @@ type v1Server struct {
 	pulls Pulls
 	// statuses serves the commit status and checks endpoints; nil answers 503.
 	statuses Statuses
+	// actions serves the Actions endpoints; nil answers 503.
+	actions Actions
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

@@ -21,6 +21,7 @@ tags:
   - name: webhooks
   - name: notifications
   - name: checks
+  - name: actions
 # Every operation needs a session unless it declares `security: []`. The
 # "admin" scope means an instance admin. Unsafe methods also need the
 # X-CSRF-Token header (see components.securitySchemes.session).
@@ -7248,6 +7249,1143 @@ paths:
         default:
           $ref: "#/components/responses/Problem"
   # --- end commit statuses and checks ---
+  # --- actions ---
+  /repos/{owner}/{name}/actions/workflows:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listActionsWorkflows
+      tags: [actions]
+      summary: Workflow files that ran in the repository
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ActionsWorkflow"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/workflows/{workflow}/dispatches:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsWorkflowParam"
+    post:
+      operationId: dispatchActionsWorkflow
+      tags: [actions]
+      summary: Start a workflow_dispatch run
+      description: |
+        Needs write access. ref defaults to the default branch and must be a
+        branch or a tag; inputs are checked against the workflow_dispatch inputs.
+      security:
+        - session: []
+        - token: [actions:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ActionsDispatch"}
+      responses:
+        "201":
+          description: Run started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRun"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/workflows/{workflow}/badge.svg:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsWorkflowParam"
+    get:
+      operationId: getActionsBadge
+      tags: [actions]
+      summary: SVG status badge of a workflow
+      description: |
+        The latest completed run of the workflow on branch (default: the
+        default branch).
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/ActionsBranch"
+      responses:
+        "200":
+          description: Badge
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/runs:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listActionsRuns
+      tags: [actions]
+      summary: Workflow runs of the repository, newest first
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/ActionsWorkflowFilter"
+        - $ref: "#/components/parameters/ActionsEventFilter"
+        - $ref: "#/components/parameters/ActionsStatusFilter"
+        - $ref: "#/components/parameters/ActionsBranch"
+        - $ref: "#/components/parameters/ActionsShaFilter"
+        - $ref: "#/components/parameters/ActionsPage"
+        - $ref: "#/components/parameters/ActionsPerPage"
+      responses:
+        "200":
+          description: Runs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRunList"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/runs/{runId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsRunId"
+    get:
+      operationId: getActionsRun
+      tags: [actions]
+      summary: A workflow run
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Run
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRun"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/runs/{runId}/jobs:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsRunId"
+    get:
+      operationId: listActionsRunJobs
+      tags: [actions]
+      summary: Jobs of a run attempt
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/ActionsAttempt"
+      responses:
+        "200":
+          description: Jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ActionsJob"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/runs/{runId}/rerun:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsRunId"
+    post:
+      operationId: rerunActionsRun
+      tags: [actions]
+      summary: Start a new attempt of a completed run
+      description: |
+        Every job runs again from the workflow file the run was planned from.
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "201":
+          description: New attempt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRun"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/runs/{runId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsRunId"
+    post:
+      operationId: cancelActionsRun
+      tags: [actions]
+      summary: Cancel a run that is not completed
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "202":
+          description: Cancellation requested
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/runs/{runId}/approve:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsRunId"
+    post:
+      operationId: approveActionsRun
+      tags: [actions]
+      summary: Approve a run waiting for approval
+      description: |
+        A pull request run from a fork by an outside contributor waits for a
+        writer of the repository to approve it.
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "204":
+          description: Approved
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/jobs/{jobId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsJobId"
+    get:
+      operationId: getActionsJob
+      tags: [actions]
+      summary: A job with its steps
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsJobDetail"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/jobs/{jobId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsJobId"
+    post:
+      operationId: cancelActionsJob
+      tags: [actions]
+      summary: Cancel one job
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "202":
+          description: Cancellation requested
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/jobs/{jobId}/deployment:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsJobId"
+    post:
+      operationId: reviewActionsDeployment
+      tags: [actions]
+      summary: Approve or reject a job waiting for a protected environment
+      description: |
+        Allowed to the environment reviewers, or to the repository maintainers
+        when the environment lists none. Rejecting cancels the job.
+      security:
+        - session: []
+        - token: [actions:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ActionsDeploymentReview"}
+      responses:
+        "204":
+          description: Reviewed
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/jobs/{jobId}/logs:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsJobId"
+    get:
+      operationId: getActionsJobLog
+      tags: [actions]
+      summary: A page of the log of a job
+      description: |
+        Rows from index from; complete is true once the job ended and every
+        row was read.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/ActionsLogFrom"
+        - $ref: "#/components/parameters/ActionsLogLimit"
+      responses:
+        "200":
+          description: Log rows
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsLogPage"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/jobs/{jobId}/logs/raw:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsJobId"
+    get:
+      operationId: getActionsJobLogRaw
+      tags: [actions]
+      summary: The whole log of a job as plain text
+      description: |
+        Streamed outside the request timeout (not part of the generated Go
+        server).
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Log
+          content:
+            text/plain:
+              schema:
+                type: string
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/jobs/{jobId}/logs/stream:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsJobId"
+    get:
+      operationId: streamActionsJobLog
+      tags: [actions]
+      summary: Live tail of the log of a job (server-sent events)
+      description: |
+        Events: "log" with an ActionsLogPage as data and id the next row index
+        (Last-Event-ID resumes from it), "end" when the log is complete. Comment
+        lines keep the connection alive. Served outside the request timeout (not
+        part of the generated Go server).
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/ActionsLogFrom"
+      responses:
+        "200":
+          description: Event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "307":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/secrets:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listRepoActionsSecrets
+      tags: [actions]
+      summary: Actions secrets (names only)
+      security:
+        - session: []
+        - token: [actions:write]
+      parameters:
+        - $ref: "#/components/parameters/ActionsEnvironmentFilter"
+      responses:
+        "200":
+          description: Secrets
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ActionsSecret"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/secrets/{secretName}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsSecretName"
+    put:
+      operationId: putRepoActionsSecret
+      tags: [actions]
+      summary: Create or replace an Actions secret
+      description: |
+        The value is encrypted with the instance master key (503 without one)
+        and never returned.
+      security:
+        - session: []
+        - token: [actions:write]
+      parameters:
+        - $ref: "#/components/parameters/ActionsEnvironmentFilter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ActionsSecretPut"}
+      responses:
+        "200":
+          description: Secret stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsSecret"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteRepoActionsSecret
+      tags: [actions]
+      summary: Delete an Actions secret
+      security:
+        - session: []
+        - token: [actions:write]
+      parameters:
+        - $ref: "#/components/parameters/ActionsEnvironmentFilter"
+      responses:
+        "204":
+          description: Deleted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/variables:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listRepoActionsVariables
+      tags: [actions]
+      summary: Actions variables
+      security:
+        - session: []
+        - token: [actions:write]
+      parameters:
+        - $ref: "#/components/parameters/ActionsEnvironmentFilter"
+      responses:
+        "200":
+          description: Variables
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ActionsVariable"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/variables/{variableName}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsVariableName"
+    put:
+      operationId: putRepoActionsVariable
+      tags: [actions]
+      summary: Create or replace an Actions variable
+      security:
+        - session: []
+        - token: [actions:write]
+      parameters:
+        - $ref: "#/components/parameters/ActionsEnvironmentFilter"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ActionsVariablePut"}
+      responses:
+        "200":
+          description: Variable stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsVariable"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteRepoActionsVariable
+      tags: [actions]
+      summary: Delete an Actions variable
+      security:
+        - session: []
+        - token: [actions:write]
+      parameters:
+        - $ref: "#/components/parameters/ActionsEnvironmentFilter"
+      responses:
+        "204":
+          description: Deleted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/environments:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listActionsEnvironments
+      tags: [actions]
+      summary: Deployment environments
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Environments
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ActionsEnvironment"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/environments/{environment}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsEnvironmentName"
+    put:
+      operationId: putActionsEnvironment
+      tags: [actions]
+      summary: Create or update an environment
+      security:
+        - session: []
+        - token: [actions:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ActionsEnvironmentPut"}
+      responses:
+        "200":
+          description: Environment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsEnvironment"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteActionsEnvironment
+      tags: [actions]
+      summary: Delete an environment
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "204":
+          description: Deleted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/runners:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listRepoActionsRunners
+      tags: [actions]
+      summary: Self-hosted runners
+      description: |
+        The runners that can take the jobs of the repository: its own, its
+        owner's and the instance runners (scope tells which). Maintainers only.
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "200":
+          description: Runners
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ActionsRunner"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/runners/{runnerId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsRunnerId"
+    delete:
+      operationId: deleteRepoActionsRunner
+      tags: [actions]
+      summary: Remove a self-hosted runner
+      description: |
+        Its running jobs fail at the next sweep.
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "204":
+          description: Deleted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/runners/registration-token:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    post:
+      operationId: createRepoActionsRegistrationToken
+      tags: [actions]
+      summary: Create a runner registration token
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "201":
+          description: Token (shown only once)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRegistrationToken"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/actions/secrets:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgActionsSecrets
+      tags: [actions]
+      summary: Actions secrets (names only)
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "200":
+          description: Secrets
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ActionsSecret"}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/actions/secrets/{secretName}:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - $ref: "#/components/parameters/ActionsSecretName"
+    put:
+      operationId: putOrgActionsSecret
+      tags: [actions]
+      summary: Create or replace an Actions secret
+      description: |
+        The value is encrypted with the instance master key (503 without one)
+        and never returned.
+      security:
+        - session: []
+        - token: [actions:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ActionsSecretPut"}
+      responses:
+        "200":
+          description: Secret stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsSecret"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteOrgActionsSecret
+      tags: [actions]
+      summary: Delete an Actions secret
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/actions/variables:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgActionsVariables
+      tags: [actions]
+      summary: Actions variables
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "200":
+          description: Variables
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ActionsVariable"}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/actions/variables/{variableName}:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - $ref: "#/components/parameters/ActionsVariableName"
+    put:
+      operationId: putOrgActionsVariable
+      tags: [actions]
+      summary: Create or replace an Actions variable
+      security:
+        - session: []
+        - token: [actions:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ActionsVariablePut"}
+      responses:
+        "200":
+          description: Variable stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsVariable"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteOrgActionsVariable
+      tags: [actions]
+      summary: Delete an Actions variable
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/actions/runners:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgActionsRunners
+      tags: [actions]
+      summary: Self-hosted runners
+      description: |
+        Runners registered for the organization (or user). Owners only.
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "200":
+          description: Runners
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ActionsRunner"}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/actions/runners/{runnerId}:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - $ref: "#/components/parameters/ActionsRunnerId"
+    delete:
+      operationId: deleteOrgActionsRunner
+      tags: [actions]
+      summary: Remove a self-hosted runner
+      description: |
+        Its running jobs fail at the next sweep.
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/actions/runners/registration-token:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    post:
+      operationId: createOrgActionsRegistrationToken
+      tags: [actions]
+      summary: Create a runner registration token
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "201":
+          description: Token (shown only once)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRegistrationToken"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/actions/runners:
+    get:
+      operationId: listInstanceActionsRunners
+      tags: [actions]
+      summary: Self-hosted runners
+      description: |
+        Instance runners. Instance admins only.
+      security:
+        - session: [admin]
+        - token: [admin]
+      responses:
+        "200":
+          description: Runners
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/ActionsRunner"}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/actions/runners/{runnerId}:
+    parameters:
+      - $ref: "#/components/parameters/ActionsRunnerId"
+    delete:
+      operationId: deleteInstanceActionsRunner
+      tags: [actions]
+      summary: Remove a self-hosted runner
+      description: |
+        Its running jobs fail at the next sweep.
+      security:
+        - session: [admin]
+        - token: [admin]
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/actions/runners/registration-token:
+    post:
+      operationId: createInstanceActionsRegistrationToken
+      tags: [actions]
+      summary: Create a runner registration token
+      security:
+        - session: [admin]
+        - token: [admin]
+      responses:
+        "201":
+          description: Token (shown only once)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRegistrationToken"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  # --- end actions ---
 components:
   securitySchemes:
     session:
@@ -7267,6 +8405,139 @@ components:
         operations that list the token scheme accept it, and the token must
         hold every scope listed there. Tokens skip the CSRF check.
   parameters:
+    # --- actions parameters ---
+    ActionsWorkflowParam:
+      name: workflow
+      in: path
+      required: true
+      description: Workflow file name (ci.yml) or path (.github/workflows/ci.yml, URL-encoded)
+      schema:
+        type: string
+        maxLength: 255
+    ActionsRunId:
+      name: runId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ActionsJobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ActionsRunnerId:
+      name: runnerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ActionsSecretName:
+      name: secretName
+      in: path
+      required: true
+      description: Letters, digits and underscores (stored upper case)
+      schema:
+        type: string
+        maxLength: 255
+    ActionsVariableName:
+      name: variableName
+      in: path
+      required: true
+      description: Letters, digits and underscores (stored upper case)
+      schema:
+        type: string
+        maxLength: 255
+    ActionsEnvironmentName:
+      name: environment
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 255
+    ActionsEnvironmentFilter:
+      name: environment
+      in: query
+      description: An environment of the repository instead of the repository itself
+      schema:
+        type: string
+        maxLength: 255
+    ActionsBranch:
+      name: branch
+      in: query
+      description: Branch name or full ref
+      schema:
+        type: string
+        maxLength: 255
+    ActionsWorkflowFilter:
+      name: workflow
+      in: query
+      description: Workflow file name or path
+      schema:
+        type: string
+        maxLength: 255
+    ActionsEventFilter:
+      name: event
+      in: query
+      schema:
+        type: string
+        maxLength: 64
+    ActionsStatusFilter:
+      name: status
+      in: query
+      description: A status (queued, in_progress, completed, ...) or a conclusion (success, failure, ...)
+      schema:
+        type: string
+        maxLength: 32
+    ActionsShaFilter:
+      name: sha
+      in: query
+      schema:
+        type: string
+        maxLength: 64
+    ActionsPage:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    ActionsPerPage:
+      name: perPage
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 30
+    ActionsAttempt:
+      name: attempt
+      in: query
+      description: Run attempt (default the latest)
+      schema:
+        type: integer
+        minimum: 1
+    ActionsLogFrom:
+      name: from
+      in: query
+      description: First log row index
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        default: 0
+    ActionsLogLimit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 1000
+    # --- end actions parameters ---
     # --- commit statuses and checks parameters ---
     CommitRef:
       name: sha
@@ -7538,6 +8809,197 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    # --- actions schemas ---
+    ActionsWorkflow:
+      type: object
+      required: [path, name, lastRunAt]
+      properties:
+        path: {type: string}
+        name: {type: string}
+        lastRunAt: {type: string, format: date-time}
+    ActionsRun:
+      type: object
+      required: [id, runNumber, attempt, workflowPath, workflowName, event, eventAction, ref, sha, title, status,
+        conclusion, needsApproval, fork, actor, triggerActor, url, createdAt, updatedAt]
+      properties:
+        id: {type: string, format: uuid}
+        runNumber: {type: integer, format: int64}
+        attempt: {type: integer}
+        workflowPath: {type: string}
+        workflowName: {type: string}
+        event: {type: string}
+        eventAction: {type: string}
+        ref: {type: string}
+        sha: {type: string}
+        title: {type: string}
+        status: {type: string, enum: [waiting, pending, queued, in_progress, completed]}
+        conclusion: {type: string, description: Empty unless completed}
+        needsApproval: {type: boolean}
+        fork: {type: boolean}
+        actor: {type: string}
+        triggerActor: {type: string}
+        url: {type: string, description: Web page of the run}
+        startedAt: {type: string, format: date-time, nullable: true}
+        completedAt: {type: string, format: date-time, nullable: true}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    ActionsRunList:
+      type: object
+      required: [totalCount, runs]
+      properties:
+        totalCount: {type: integer, format: int64}
+        runs:
+          type: array
+          items: {$ref: "#/components/schemas/ActionsRun"}
+    ActionsJob:
+      type: object
+      required: [id, runId, key, name, needs, status, conclusion, environment, cancelRequested, approved, runsOn,
+        runner, reusable, caller, logLength, url]
+      properties:
+        id: {type: string, format: uuid}
+        runId: {type: string, format: uuid}
+        key: {type: string}
+        name: {type: string}
+        needs:
+          type: array
+          items: {type: string}
+        status: {type: string, enum: [blocked, waiting, queued, in_progress, completed]}
+        conclusion: {type: string, description: "success, failure, cancelled, skipped or timed_out; empty unless completed"}
+        environment: {type: string}
+        cancelRequested: {type: boolean}
+        approved: {type: boolean, description: The deployment to environment was approved}
+        runsOn:
+          type: array
+          items: {type: string}
+        runner: {type: string, description: Name of the runner that took the job}
+        reusable: {type: boolean, description: The job calls a reusable workflow; its jobs follow with caller set}
+        caller: {type: string}
+        logLength: {type: integer, format: int64}
+        url: {type: string}
+        startedAt: {type: string, format: date-time, nullable: true}
+        completedAt: {type: string, format: date-time, nullable: true}
+    ActionsStep:
+      type: object
+      required: [index, name, status, conclusion, logIndex, logLength]
+      properties:
+        index: {type: integer}
+        name: {type: string}
+        status: {type: string}
+        conclusion: {type: string}
+        logIndex: {type: integer, format: int64, description: First log row of the step}
+        logLength: {type: integer, format: int64}
+        startedAt: {type: string, format: date-time, nullable: true}
+        completedAt: {type: string, format: date-time, nullable: true}
+    ActionsJobDetail:
+      type: object
+      required: [job, steps]
+      properties:
+        job: {$ref: "#/components/schemas/ActionsJob"}
+        steps:
+          type: array
+          items: {$ref: "#/components/schemas/ActionsStep"}
+    ActionsLogLine:
+      type: object
+      required: [index, time, content]
+      properties:
+        index: {type: integer, format: int64}
+        time: {type: string, format: date-time}
+        content: {type: string}
+    ActionsLogPage:
+      type: object
+      required: [lines, next, complete]
+      properties:
+        lines:
+          type: array
+          items: {$ref: "#/components/schemas/ActionsLogLine"}
+        next: {type: integer, format: int64, description: Index to read from next}
+        complete: {type: boolean, description: The job ended and every row was read}
+    ActionsDispatch:
+      type: object
+      properties:
+        ref: {type: string, maxLength: 255, description: Branch or tag; defaults to the default branch}
+        inputs:
+          type: object
+          additionalProperties: true
+    ActionsDeploymentReview:
+      type: object
+      required: [approve]
+      properties:
+        approve: {type: boolean, description: false rejects (cancels) the job}
+    ActionsSecret:
+      type: object
+      required: [name, scope, environment, createdAt, updatedAt]
+      properties:
+        name: {type: string}
+        scope: {type: string, description: "instance, org:<name> or repo:<owner>/<name>"}
+        environment: {type: string}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    ActionsSecretPut:
+      type: object
+      required: [value]
+      properties:
+        value: {type: string, maxLength: 49152, writeOnly: true}
+    ActionsVariable:
+      type: object
+      required: [name, value, scope, environment, createdAt, updatedAt]
+      properties:
+        name: {type: string}
+        value: {type: string}
+        scope: {type: string}
+        environment: {type: string}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    ActionsVariablePut:
+      type: object
+      required: [value]
+      properties:
+        value: {type: string, maxLength: 65536}
+    ActionsEnvironment:
+      type: object
+      required: [name, requireApproval, reviewers, createdAt, updatedAt]
+      properties:
+        name: {type: string}
+        requireApproval: {type: boolean}
+        reviewers:
+          type: array
+          description: User ids
+          items: {type: string, format: uuid}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    ActionsEnvironmentPut:
+      type: object
+      properties:
+        requireApproval: {type: boolean}
+        reviewers:
+          type: array
+          description: Usernames; empty means the repository maintainers
+          maxItems: 100
+          items: {type: string, maxLength: 39}
+    ActionsRunner:
+      type: object
+      required: [id, name, scope, labels, version, ephemeral, online, busy, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        scope: {type: string, description: "instance, org:<name> or repo:<owner>/<name>"}
+        labels:
+          type: array
+          items: {type: string}
+        version: {type: string}
+        ephemeral: {type: boolean}
+        online: {type: boolean}
+        busy: {type: boolean}
+        lastSeenAt: {type: string, format: date-time, nullable: true}
+        createdAt: {type: string, format: date-time}
+    ActionsRegistrationToken:
+      type: object
+      required: [token, scope, expiresAt]
+      properties:
+        token: {type: string, description: "errt_... secret, shown only once"}
+        scope: {type: string}
+        expiresAt: {type: string, format: date-time}
+    # --- end actions schemas ---
     # --- commit statuses and checks schemas ---
     CommitStatus:
       type: object

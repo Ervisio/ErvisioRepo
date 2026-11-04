@@ -59,6 +59,60 @@ func (e AccessTokenCreateScopes) Valid() bool {
 	}
 }
 
+// Defines values for ActionsJobStatus.
+const (
+	ActionsJobStatusBlocked    ActionsJobStatus = "blocked"
+	ActionsJobStatusCompleted  ActionsJobStatus = "completed"
+	ActionsJobStatusInProgress ActionsJobStatus = "in_progress"
+	ActionsJobStatusQueued     ActionsJobStatus = "queued"
+	ActionsJobStatusWaiting    ActionsJobStatus = "waiting"
+)
+
+// Valid indicates whether the value is a known member of the ActionsJobStatus enum.
+func (e ActionsJobStatus) Valid() bool {
+	switch e {
+	case ActionsJobStatusBlocked:
+		return true
+	case ActionsJobStatusCompleted:
+		return true
+	case ActionsJobStatusInProgress:
+		return true
+	case ActionsJobStatusQueued:
+		return true
+	case ActionsJobStatusWaiting:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ActionsRunStatus.
+const (
+	ActionsRunStatusCompleted  ActionsRunStatus = "completed"
+	ActionsRunStatusInProgress ActionsRunStatus = "in_progress"
+	ActionsRunStatusPending    ActionsRunStatus = "pending"
+	ActionsRunStatusQueued     ActionsRunStatus = "queued"
+	ActionsRunStatusWaiting    ActionsRunStatus = "waiting"
+)
+
+// Valid indicates whether the value is a known member of the ActionsRunStatus enum.
+func (e ActionsRunStatus) Valid() bool {
+	switch e {
+	case ActionsRunStatusCompleted:
+		return true
+	case ActionsRunStatusInProgress:
+		return true
+	case ActionsRunStatusPending:
+		return true
+	case ActionsRunStatusQueued:
+		return true
+	case ActionsRunStatusWaiting:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CheckAnnotationLevel.
 const (
 	CheckAnnotationLevelFailure CheckAnnotationLevel = "failure"
@@ -1972,6 +2026,209 @@ type AccessTokenCreate struct {
 
 // AccessTokenCreateScopes defines model for AccessTokenCreate.Scopes.
 type AccessTokenCreateScopes string
+
+// ActionsDeploymentReview defines model for ActionsDeploymentReview.
+type ActionsDeploymentReview struct {
+	// Approve false rejects (cancels) the job
+	Approve bool `json:"approve"`
+}
+
+// ActionsDispatch defines model for ActionsDispatch.
+type ActionsDispatch struct {
+	Inputs *map[string]interface{} `json:"inputs,omitempty"`
+
+	// Ref Branch or tag; defaults to the default branch
+	Ref *string `json:"ref,omitempty"`
+}
+
+// ActionsEnvironment defines model for ActionsEnvironment.
+type ActionsEnvironment struct {
+	CreatedAt       time.Time `json:"createdAt"`
+	Name            string    `json:"name"`
+	RequireApproval bool      `json:"requireApproval"`
+
+	// Reviewers User ids
+	Reviewers []openapi_types.UUID `json:"reviewers"`
+	UpdatedAt time.Time            `json:"updatedAt"`
+}
+
+// ActionsEnvironmentPut defines model for ActionsEnvironmentPut.
+type ActionsEnvironmentPut struct {
+	RequireApproval *bool `json:"requireApproval,omitempty"`
+
+	// Reviewers Usernames; empty means the repository maintainers
+	Reviewers *[]string `json:"reviewers,omitempty"`
+}
+
+// ActionsJob defines model for ActionsJob.
+type ActionsJob struct {
+	// Approved The deployment to environment was approved
+	Approved        bool       `json:"approved"`
+	Caller          string     `json:"caller"`
+	CancelRequested bool       `json:"cancelRequested"`
+	CompletedAt     *time.Time `json:"completedAt,omitempty"`
+
+	// Conclusion success, failure, cancelled, skipped or timed_out; empty unless completed
+	Conclusion  string             `json:"conclusion"`
+	Environment string             `json:"environment"`
+	Id          openapi_types.UUID `json:"id"`
+	Key         string             `json:"key"`
+	LogLength   int64              `json:"logLength"`
+	Name        string             `json:"name"`
+	Needs       []string           `json:"needs"`
+
+	// Reusable The job calls a reusable workflow; its jobs follow with caller set
+	Reusable bool               `json:"reusable"`
+	RunId    openapi_types.UUID `json:"runId"`
+
+	// Runner Name of the runner that took the job
+	Runner    string           `json:"runner"`
+	RunsOn    []string         `json:"runsOn"`
+	StartedAt *time.Time       `json:"startedAt,omitempty"`
+	Status    ActionsJobStatus `json:"status"`
+	Url       string           `json:"url"`
+}
+
+// ActionsJobStatus defines model for ActionsJob.Status.
+type ActionsJobStatus string
+
+// ActionsJobDetail defines model for ActionsJobDetail.
+type ActionsJobDetail struct {
+	Job   ActionsJob    `json:"job"`
+	Steps []ActionsStep `json:"steps"`
+}
+
+// ActionsLogLine defines model for ActionsLogLine.
+type ActionsLogLine struct {
+	Content string    `json:"content"`
+	Index   int64     `json:"index"`
+	Time    time.Time `json:"time"`
+}
+
+// ActionsLogPage defines model for ActionsLogPage.
+type ActionsLogPage struct {
+	// Complete The job ended and every row was read
+	Complete bool             `json:"complete"`
+	Lines    []ActionsLogLine `json:"lines"`
+
+	// Next Index to read from next
+	Next int64 `json:"next"`
+}
+
+// ActionsRegistrationToken defines model for ActionsRegistrationToken.
+type ActionsRegistrationToken struct {
+	ExpiresAt time.Time `json:"expiresAt"`
+	Scope     string    `json:"scope"`
+
+	// Token errt_... secret, shown only once
+	Token string `json:"token"`
+}
+
+// ActionsRun defines model for ActionsRun.
+type ActionsRun struct {
+	Actor       string     `json:"actor"`
+	Attempt     int        `json:"attempt"`
+	CompletedAt *time.Time `json:"completedAt,omitempty"`
+
+	// Conclusion Empty unless completed
+	Conclusion    string             `json:"conclusion"`
+	CreatedAt     time.Time          `json:"createdAt"`
+	Event         string             `json:"event"`
+	EventAction   string             `json:"eventAction"`
+	Fork          bool               `json:"fork"`
+	Id            openapi_types.UUID `json:"id"`
+	NeedsApproval bool               `json:"needsApproval"`
+	Ref           string             `json:"ref"`
+	RunNumber     int64              `json:"runNumber"`
+	Sha           string             `json:"sha"`
+	StartedAt     *time.Time         `json:"startedAt,omitempty"`
+	Status        ActionsRunStatus   `json:"status"`
+	Title         string             `json:"title"`
+	TriggerActor  string             `json:"triggerActor"`
+	UpdatedAt     time.Time          `json:"updatedAt"`
+
+	// Url Web page of the run
+	Url          string `json:"url"`
+	WorkflowName string `json:"workflowName"`
+	WorkflowPath string `json:"workflowPath"`
+}
+
+// ActionsRunStatus defines model for ActionsRun.Status.
+type ActionsRunStatus string
+
+// ActionsRunList defines model for ActionsRunList.
+type ActionsRunList struct {
+	Runs       []ActionsRun `json:"runs"`
+	TotalCount int64        `json:"totalCount"`
+}
+
+// ActionsRunner defines model for ActionsRunner.
+type ActionsRunner struct {
+	Busy       bool               `json:"busy"`
+	CreatedAt  time.Time          `json:"createdAt"`
+	Ephemeral  bool               `json:"ephemeral"`
+	Id         openapi_types.UUID `json:"id"`
+	Labels     []string           `json:"labels"`
+	LastSeenAt *time.Time         `json:"lastSeenAt,omitempty"`
+	Name       string             `json:"name"`
+	Online     bool               `json:"online"`
+
+	// Scope instance, org:<name> or repo:<owner>/<name>
+	Scope   string `json:"scope"`
+	Version string `json:"version"`
+}
+
+// ActionsSecret defines model for ActionsSecret.
+type ActionsSecret struct {
+	CreatedAt   time.Time `json:"createdAt"`
+	Environment string    `json:"environment"`
+	Name        string    `json:"name"`
+
+	// Scope instance, org:<name> or repo:<owner>/<name>
+	Scope     string    `json:"scope"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// ActionsSecretPut defines model for ActionsSecretPut.
+type ActionsSecretPut struct {
+	Value *string `json:"value,omitempty"`
+}
+
+// ActionsStep defines model for ActionsStep.
+type ActionsStep struct {
+	CompletedAt *time.Time `json:"completedAt,omitempty"`
+	Conclusion  string     `json:"conclusion"`
+	Index       int        `json:"index"`
+
+	// LogIndex First log row of the step
+	LogIndex  int64      `json:"logIndex"`
+	LogLength int64      `json:"logLength"`
+	Name      string     `json:"name"`
+	StartedAt *time.Time `json:"startedAt,omitempty"`
+	Status    string     `json:"status"`
+}
+
+// ActionsVariable defines model for ActionsVariable.
+type ActionsVariable struct {
+	CreatedAt   time.Time `json:"createdAt"`
+	Environment string    `json:"environment"`
+	Name        string    `json:"name"`
+	Scope       string    `json:"scope"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+	Value       string    `json:"value"`
+}
+
+// ActionsVariablePut defines model for ActionsVariablePut.
+type ActionsVariablePut struct {
+	Value string `json:"value"`
+}
+
+// ActionsWorkflow defines model for ActionsWorkflow.
+type ActionsWorkflow struct {
+	LastRunAt time.Time `json:"lastRunAt"`
+	Name      string    `json:"name"`
+	Path      string    `json:"path"`
+}
 
 // AuditEntry defines model for AuditEntry.
 type AuditEntry struct {
@@ -4288,6 +4545,60 @@ type WebhookUpdate struct {
 	Url    *string        `json:"url,omitempty"`
 }
 
+// ActionsAttempt defines model for ActionsAttempt.
+type ActionsAttempt = int
+
+// ActionsBranch defines model for ActionsBranch.
+type ActionsBranch = string
+
+// ActionsEnvironmentFilter defines model for ActionsEnvironmentFilter.
+type ActionsEnvironmentFilter = string
+
+// ActionsEnvironmentName defines model for ActionsEnvironmentName.
+type ActionsEnvironmentName = string
+
+// ActionsEventFilter defines model for ActionsEventFilter.
+type ActionsEventFilter = string
+
+// ActionsJobId defines model for ActionsJobId.
+type ActionsJobId = openapi_types.UUID
+
+// ActionsLogFrom defines model for ActionsLogFrom.
+type ActionsLogFrom = int64
+
+// ActionsLogLimit defines model for ActionsLogLimit.
+type ActionsLogLimit = int
+
+// ActionsPage defines model for ActionsPage.
+type ActionsPage = int
+
+// ActionsPerPage defines model for ActionsPerPage.
+type ActionsPerPage = int
+
+// ActionsRunId defines model for ActionsRunId.
+type ActionsRunId = openapi_types.UUID
+
+// ActionsRunnerId defines model for ActionsRunnerId.
+type ActionsRunnerId = openapi_types.UUID
+
+// ActionsSecretName defines model for ActionsSecretName.
+type ActionsSecretName = string
+
+// ActionsShaFilter defines model for ActionsShaFilter.
+type ActionsShaFilter = string
+
+// ActionsStatusFilter defines model for ActionsStatusFilter.
+type ActionsStatusFilter = string
+
+// ActionsVariableName defines model for ActionsVariableName.
+type ActionsVariableName = string
+
+// ActionsWorkflowFilter defines model for ActionsWorkflowFilter.
+type ActionsWorkflowFilter = string
+
+// ActionsWorkflowParam defines model for ActionsWorkflowParam.
+type ActionsWorkflowParam = string
+
 // AuditAction defines model for AuditAction.
 type AuditAction = string
 
@@ -4495,6 +4806,77 @@ type ListOrgWebhookDeliveriesParams struct {
 type ListOrgReposParams struct {
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetActionsJobLogParams defines parameters for GetActionsJobLog.
+type GetActionsJobLogParams struct {
+	// From First log row index
+	From  *ActionsLogFrom  `form:"from,omitempty" json:"from,omitempty"`
+	Limit *ActionsLogLimit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListActionsRunsParams defines parameters for ListActionsRuns.
+type ListActionsRunsParams struct {
+	// Workflow Workflow file name or path
+	Workflow *ActionsWorkflowFilter `form:"workflow,omitempty" json:"workflow,omitempty"`
+	Event    *ActionsEventFilter    `form:"event,omitempty" json:"event,omitempty"`
+
+	// Status A status (queued, in_progress, completed, ...) or a conclusion (success, failure, ...)
+	Status *ActionsStatusFilter `form:"status,omitempty" json:"status,omitempty"`
+
+	// Branch Branch name or full ref
+	Branch  *ActionsBranch    `form:"branch,omitempty" json:"branch,omitempty"`
+	Sha     *ActionsShaFilter `form:"sha,omitempty" json:"sha,omitempty"`
+	Page    *ActionsPage      `form:"page,omitempty" json:"page,omitempty"`
+	PerPage *ActionsPerPage   `form:"perPage,omitempty" json:"perPage,omitempty"`
+}
+
+// ListActionsRunJobsParams defines parameters for ListActionsRunJobs.
+type ListActionsRunJobsParams struct {
+	// Attempt Run attempt (default the latest)
+	Attempt *ActionsAttempt `form:"attempt,omitempty" json:"attempt,omitempty"`
+}
+
+// ListRepoActionsSecretsParams defines parameters for ListRepoActionsSecrets.
+type ListRepoActionsSecretsParams struct {
+	// Environment An environment of the repository instead of the repository itself
+	Environment *ActionsEnvironmentFilter `form:"environment,omitempty" json:"environment,omitempty"`
+}
+
+// DeleteRepoActionsSecretParams defines parameters for DeleteRepoActionsSecret.
+type DeleteRepoActionsSecretParams struct {
+	// Environment An environment of the repository instead of the repository itself
+	Environment *ActionsEnvironmentFilter `form:"environment,omitempty" json:"environment,omitempty"`
+}
+
+// PutRepoActionsSecretParams defines parameters for PutRepoActionsSecret.
+type PutRepoActionsSecretParams struct {
+	// Environment An environment of the repository instead of the repository itself
+	Environment *ActionsEnvironmentFilter `form:"environment,omitempty" json:"environment,omitempty"`
+}
+
+// ListRepoActionsVariablesParams defines parameters for ListRepoActionsVariables.
+type ListRepoActionsVariablesParams struct {
+	// Environment An environment of the repository instead of the repository itself
+	Environment *ActionsEnvironmentFilter `form:"environment,omitempty" json:"environment,omitempty"`
+}
+
+// DeleteRepoActionsVariableParams defines parameters for DeleteRepoActionsVariable.
+type DeleteRepoActionsVariableParams struct {
+	// Environment An environment of the repository instead of the repository itself
+	Environment *ActionsEnvironmentFilter `form:"environment,omitempty" json:"environment,omitempty"`
+}
+
+// PutRepoActionsVariableParams defines parameters for PutRepoActionsVariable.
+type PutRepoActionsVariableParams struct {
+	// Environment An environment of the repository instead of the repository itself
+	Environment *ActionsEnvironmentFilter `form:"environment,omitempty" json:"environment,omitempty"`
+}
+
+// GetActionsBadgeParams defines parameters for GetActionsBadge.
+type GetActionsBadgeParams struct {
+	// Branch Branch name or full ref
+	Branch *ActionsBranch `form:"branch,omitempty" json:"branch,omitempty"`
 }
 
 // GetBlameParams defines parameters for GetBlame.
@@ -4928,6 +5310,12 @@ type AcceptOrgInviteJSONRequestBody = TokenRequest
 // UpdateOrgJSONRequestBody defines body for UpdateOrg for application/json ContentType.
 type UpdateOrgJSONRequestBody = OrgUpdate
 
+// PutOrgActionsSecretJSONRequestBody defines body for PutOrgActionsSecret for application/json ContentType.
+type PutOrgActionsSecretJSONRequestBody = ActionsSecretPut
+
+// PutOrgActionsVariableJSONRequestBody defines body for PutOrgActionsVariable for application/json ContentType.
+type PutOrgActionsVariableJSONRequestBody = ActionsVariablePut
+
 // CreateOrgWebhookJSONRequestBody defines body for CreateOrgWebhook for application/json ContentType.
 type CreateOrgWebhookJSONRequestBody = WebhookCreate
 
@@ -4954,6 +5342,21 @@ type SetTeamMemberJSONRequestBody = TeamRoleRequest
 
 // UpdateRepoJSONRequestBody defines body for UpdateRepo for application/json ContentType.
 type UpdateRepoJSONRequestBody = RepoUpdate
+
+// PutActionsEnvironmentJSONRequestBody defines body for PutActionsEnvironment for application/json ContentType.
+type PutActionsEnvironmentJSONRequestBody = ActionsEnvironmentPut
+
+// ReviewActionsDeploymentJSONRequestBody defines body for ReviewActionsDeployment for application/json ContentType.
+type ReviewActionsDeploymentJSONRequestBody = ActionsDeploymentReview
+
+// PutRepoActionsSecretJSONRequestBody defines body for PutRepoActionsSecret for application/json ContentType.
+type PutRepoActionsSecretJSONRequestBody = ActionsSecretPut
+
+// PutRepoActionsVariableJSONRequestBody defines body for PutRepoActionsVariable for application/json ContentType.
+type PutRepoActionsVariableJSONRequestBody = ActionsVariablePut
+
+// DispatchActionsWorkflowJSONRequestBody defines body for DispatchActionsWorkflow for application/json ContentType.
+type DispatchActionsWorkflowJSONRequestBody = ActionsDispatch
 
 // CreateBranchProtectionJSONRequestBody defines body for CreateBranchProtection for application/json ContentType.
 type CreateBranchProtectionJSONRequestBody = BranchProtectionInput
@@ -5131,6 +5534,15 @@ type CreateAccessTokenJSONRequestBody = AccessTokenCreate
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// ListInstanceActionsRunners Self-hosted runners
+	// (GET /admin/actions/runners)
+	ListInstanceActionsRunners(w http.ResponseWriter, r *http.Request)
+	// CreateInstanceActionsRegistrationToken Create a runner registration token
+	// (POST /admin/actions/runners/registration-token)
+	CreateInstanceActionsRegistrationToken(w http.ResponseWriter, r *http.Request)
+	// DeleteInstanceActionsRunner Remove a self-hosted runner
+	// (DELETE /admin/actions/runners/{runnerId})
+	DeleteInstanceActionsRunner(w http.ResponseWriter, r *http.Request, runnerId ActionsRunnerId)
 	// ListAdminAudit Instance audit log, newest first
 	// (GET /admin/audit)
 	ListAdminAudit(w http.ResponseWriter, r *http.Request, params ListAdminAuditParams)
@@ -5293,6 +5705,33 @@ type ServerInterface interface {
 	// UpdateOrg Change the settings of an organization
 	// (PATCH /orgs/{org})
 	UpdateOrg(w http.ResponseWriter, r *http.Request, org OrgName)
+	// ListOrgActionsRunners Self-hosted runners
+	// (GET /orgs/{org}/actions/runners)
+	ListOrgActionsRunners(w http.ResponseWriter, r *http.Request, org OrgName)
+	// CreateOrgActionsRegistrationToken Create a runner registration token
+	// (POST /orgs/{org}/actions/runners/registration-token)
+	CreateOrgActionsRegistrationToken(w http.ResponseWriter, r *http.Request, org OrgName)
+	// DeleteOrgActionsRunner Remove a self-hosted runner
+	// (DELETE /orgs/{org}/actions/runners/{runnerId})
+	DeleteOrgActionsRunner(w http.ResponseWriter, r *http.Request, org OrgName, runnerId ActionsRunnerId)
+	// ListOrgActionsSecrets Actions secrets (names only)
+	// (GET /orgs/{org}/actions/secrets)
+	ListOrgActionsSecrets(w http.ResponseWriter, r *http.Request, org OrgName)
+	// DeleteOrgActionsSecret Delete an Actions secret
+	// (DELETE /orgs/{org}/actions/secrets/{secretName})
+	DeleteOrgActionsSecret(w http.ResponseWriter, r *http.Request, org OrgName, secretName ActionsSecretName)
+	// PutOrgActionsSecret Create or replace an Actions secret
+	// (PUT /orgs/{org}/actions/secrets/{secretName})
+	PutOrgActionsSecret(w http.ResponseWriter, r *http.Request, org OrgName, secretName ActionsSecretName)
+	// ListOrgActionsVariables Actions variables
+	// (GET /orgs/{org}/actions/variables)
+	ListOrgActionsVariables(w http.ResponseWriter, r *http.Request, org OrgName)
+	// DeleteOrgActionsVariable Delete an Actions variable
+	// (DELETE /orgs/{org}/actions/variables/{variableName})
+	DeleteOrgActionsVariable(w http.ResponseWriter, r *http.Request, org OrgName, variableName ActionsVariableName)
+	// PutOrgActionsVariable Create or replace an Actions variable
+	// (PUT /orgs/{org}/actions/variables/{variableName})
+	PutOrgActionsVariable(w http.ResponseWriter, r *http.Request, org OrgName, variableName ActionsVariableName)
 	// ListOrgAudit Audit log of an organization, newest first
 	// (GET /orgs/{org}/audit)
 	ListOrgAudit(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgAuditParams)
@@ -5383,6 +5822,81 @@ type ServerInterface interface {
 	// UpdateRepo Change the settings of a repository
 	// (PATCH /repos/{owner}/{name})
 	UpdateRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// ListActionsEnvironments Deployment environments
+	// (GET /repos/{owner}/{name}/actions/environments)
+	ListActionsEnvironments(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeleteActionsEnvironment Delete an environment
+	// (DELETE /repos/{owner}/{name}/actions/environments/{environment})
+	DeleteActionsEnvironment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, environment ActionsEnvironmentName)
+	// PutActionsEnvironment Create or update an environment
+	// (PUT /repos/{owner}/{name}/actions/environments/{environment})
+	PutActionsEnvironment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, environment ActionsEnvironmentName)
+	// GetActionsJob A job with its steps
+	// (GET /repos/{owner}/{name}/actions/jobs/{jobId})
+	GetActionsJob(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId)
+	// CancelActionsJob Cancel one job
+	// (POST /repos/{owner}/{name}/actions/jobs/{jobId}/cancel)
+	CancelActionsJob(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId)
+	// ReviewActionsDeployment Approve or reject a job waiting for a protected environment
+	// (POST /repos/{owner}/{name}/actions/jobs/{jobId}/deployment)
+	ReviewActionsDeployment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId)
+	// GetActionsJobLog A page of the log of a job
+	// (GET /repos/{owner}/{name}/actions/jobs/{jobId}/logs)
+	GetActionsJobLog(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId, params GetActionsJobLogParams)
+	// ListRepoActionsRunners Self-hosted runners
+	// (GET /repos/{owner}/{name}/actions/runners)
+	ListRepoActionsRunners(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// CreateRepoActionsRegistrationToken Create a runner registration token
+	// (POST /repos/{owner}/{name}/actions/runners/registration-token)
+	CreateRepoActionsRegistrationToken(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeleteRepoActionsRunner Remove a self-hosted runner
+	// (DELETE /repos/{owner}/{name}/actions/runners/{runnerId})
+	DeleteRepoActionsRunner(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runnerId ActionsRunnerId)
+	// ListActionsRuns Workflow runs of the repository, newest first
+	// (GET /repos/{owner}/{name}/actions/runs)
+	ListActionsRuns(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListActionsRunsParams)
+	// GetActionsRun A workflow run
+	// (GET /repos/{owner}/{name}/actions/runs/{runId})
+	GetActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId)
+	// ApproveActionsRun Approve a run waiting for approval
+	// (POST /repos/{owner}/{name}/actions/runs/{runId}/approve)
+	ApproveActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId)
+	// CancelActionsRun Cancel a run that is not completed
+	// (POST /repos/{owner}/{name}/actions/runs/{runId}/cancel)
+	CancelActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId)
+	// ListActionsRunJobs Jobs of a run attempt
+	// (GET /repos/{owner}/{name}/actions/runs/{runId}/jobs)
+	ListActionsRunJobs(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId, params ListActionsRunJobsParams)
+	// RerunActionsRun Start a new attempt of a completed run
+	// (POST /repos/{owner}/{name}/actions/runs/{runId}/rerun)
+	RerunActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId)
+	// ListRepoActionsSecrets Actions secrets (names only)
+	// (GET /repos/{owner}/{name}/actions/secrets)
+	ListRepoActionsSecrets(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListRepoActionsSecretsParams)
+	// DeleteRepoActionsSecret Delete an Actions secret
+	// (DELETE /repos/{owner}/{name}/actions/secrets/{secretName})
+	DeleteRepoActionsSecret(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, secretName ActionsSecretName, params DeleteRepoActionsSecretParams)
+	// PutRepoActionsSecret Create or replace an Actions secret
+	// (PUT /repos/{owner}/{name}/actions/secrets/{secretName})
+	PutRepoActionsSecret(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, secretName ActionsSecretName, params PutRepoActionsSecretParams)
+	// ListRepoActionsVariables Actions variables
+	// (GET /repos/{owner}/{name}/actions/variables)
+	ListRepoActionsVariables(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListRepoActionsVariablesParams)
+	// DeleteRepoActionsVariable Delete an Actions variable
+	// (DELETE /repos/{owner}/{name}/actions/variables/{variableName})
+	DeleteRepoActionsVariable(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, variableName ActionsVariableName, params DeleteRepoActionsVariableParams)
+	// PutRepoActionsVariable Create or replace an Actions variable
+	// (PUT /repos/{owner}/{name}/actions/variables/{variableName})
+	PutRepoActionsVariable(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, variableName ActionsVariableName, params PutRepoActionsVariableParams)
+	// ListActionsWorkflows Workflow files that ran in the repository
+	// (GET /repos/{owner}/{name}/actions/workflows)
+	ListActionsWorkflows(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// GetActionsBadge SVG status badge of a workflow
+	// (GET /repos/{owner}/{name}/actions/workflows/{workflow}/badge.svg)
+	GetActionsBadge(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, workflow ActionsWorkflowParam, params GetActionsBadgeParams)
+	// DispatchActionsWorkflow Start a workflow_dispatch run
+	// (POST /repos/{owner}/{name}/actions/workflows/{workflow}/dispatches)
+	DispatchActionsWorkflow(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, workflow ActionsWorkflowParam)
 	// GetBlame Line authorship of a text file
 	// (GET /repos/{owner}/{name}/blame)
 	GetBlame(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params GetBlameParams)
@@ -5878,6 +6392,24 @@ type ServerInterface interface {
 
 type Unimplemented struct{}
 
+// ListInstanceActionsRunners Self-hosted runners
+// (GET /admin/actions/runners)
+func (_ Unimplemented) ListInstanceActionsRunners(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateInstanceActionsRegistrationToken Create a runner registration token
+// (POST /admin/actions/runners/registration-token)
+func (_ Unimplemented) CreateInstanceActionsRegistrationToken(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteInstanceActionsRunner Remove a self-hosted runner
+// (DELETE /admin/actions/runners/{runnerId})
+func (_ Unimplemented) DeleteInstanceActionsRunner(w http.ResponseWriter, r *http.Request, runnerId ActionsRunnerId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListAdminAudit Instance audit log, newest first
 // (GET /admin/audit)
 func (_ Unimplemented) ListAdminAudit(w http.ResponseWriter, r *http.Request, params ListAdminAuditParams) {
@@ -6202,6 +6734,60 @@ func (_ Unimplemented) UpdateOrg(w http.ResponseWriter, r *http.Request, org Org
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListOrgActionsRunners Self-hosted runners
+// (GET /orgs/{org}/actions/runners)
+func (_ Unimplemented) ListOrgActionsRunners(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateOrgActionsRegistrationToken Create a runner registration token
+// (POST /orgs/{org}/actions/runners/registration-token)
+func (_ Unimplemented) CreateOrgActionsRegistrationToken(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteOrgActionsRunner Remove a self-hosted runner
+// (DELETE /orgs/{org}/actions/runners/{runnerId})
+func (_ Unimplemented) DeleteOrgActionsRunner(w http.ResponseWriter, r *http.Request, org OrgName, runnerId ActionsRunnerId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOrgActionsSecrets Actions secrets (names only)
+// (GET /orgs/{org}/actions/secrets)
+func (_ Unimplemented) ListOrgActionsSecrets(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteOrgActionsSecret Delete an Actions secret
+// (DELETE /orgs/{org}/actions/secrets/{secretName})
+func (_ Unimplemented) DeleteOrgActionsSecret(w http.ResponseWriter, r *http.Request, org OrgName, secretName ActionsSecretName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PutOrgActionsSecret Create or replace an Actions secret
+// (PUT /orgs/{org}/actions/secrets/{secretName})
+func (_ Unimplemented) PutOrgActionsSecret(w http.ResponseWriter, r *http.Request, org OrgName, secretName ActionsSecretName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOrgActionsVariables Actions variables
+// (GET /orgs/{org}/actions/variables)
+func (_ Unimplemented) ListOrgActionsVariables(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteOrgActionsVariable Delete an Actions variable
+// (DELETE /orgs/{org}/actions/variables/{variableName})
+func (_ Unimplemented) DeleteOrgActionsVariable(w http.ResponseWriter, r *http.Request, org OrgName, variableName ActionsVariableName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PutOrgActionsVariable Create or replace an Actions variable
+// (PUT /orgs/{org}/actions/variables/{variableName})
+func (_ Unimplemented) PutOrgActionsVariable(w http.ResponseWriter, r *http.Request, org OrgName, variableName ActionsVariableName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListOrgAudit Audit log of an organization, newest first
 // (GET /orgs/{org}/audit)
 func (_ Unimplemented) ListOrgAudit(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgAuditParams) {
@@ -6379,6 +6965,156 @@ func (_ Unimplemented) GetRepo(w http.ResponseWriter, r *http.Request, owner Rep
 // UpdateRepo Change the settings of a repository
 // (PATCH /repos/{owner}/{name})
 func (_ Unimplemented) UpdateRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListActionsEnvironments Deployment environments
+// (GET /repos/{owner}/{name}/actions/environments)
+func (_ Unimplemented) ListActionsEnvironments(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteActionsEnvironment Delete an environment
+// (DELETE /repos/{owner}/{name}/actions/environments/{environment})
+func (_ Unimplemented) DeleteActionsEnvironment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, environment ActionsEnvironmentName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PutActionsEnvironment Create or update an environment
+// (PUT /repos/{owner}/{name}/actions/environments/{environment})
+func (_ Unimplemented) PutActionsEnvironment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, environment ActionsEnvironmentName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetActionsJob A job with its steps
+// (GET /repos/{owner}/{name}/actions/jobs/{jobId})
+func (_ Unimplemented) GetActionsJob(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CancelActionsJob Cancel one job
+// (POST /repos/{owner}/{name}/actions/jobs/{jobId}/cancel)
+func (_ Unimplemented) CancelActionsJob(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ReviewActionsDeployment Approve or reject a job waiting for a protected environment
+// (POST /repos/{owner}/{name}/actions/jobs/{jobId}/deployment)
+func (_ Unimplemented) ReviewActionsDeployment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetActionsJobLog A page of the log of a job
+// (GET /repos/{owner}/{name}/actions/jobs/{jobId}/logs)
+func (_ Unimplemented) GetActionsJobLog(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId, params GetActionsJobLogParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListRepoActionsRunners Self-hosted runners
+// (GET /repos/{owner}/{name}/actions/runners)
+func (_ Unimplemented) ListRepoActionsRunners(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateRepoActionsRegistrationToken Create a runner registration token
+// (POST /repos/{owner}/{name}/actions/runners/registration-token)
+func (_ Unimplemented) CreateRepoActionsRegistrationToken(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteRepoActionsRunner Remove a self-hosted runner
+// (DELETE /repos/{owner}/{name}/actions/runners/{runnerId})
+func (_ Unimplemented) DeleteRepoActionsRunner(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runnerId ActionsRunnerId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListActionsRuns Workflow runs of the repository, newest first
+// (GET /repos/{owner}/{name}/actions/runs)
+func (_ Unimplemented) ListActionsRuns(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListActionsRunsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetActionsRun A workflow run
+// (GET /repos/{owner}/{name}/actions/runs/{runId})
+func (_ Unimplemented) GetActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ApproveActionsRun Approve a run waiting for approval
+// (POST /repos/{owner}/{name}/actions/runs/{runId}/approve)
+func (_ Unimplemented) ApproveActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CancelActionsRun Cancel a run that is not completed
+// (POST /repos/{owner}/{name}/actions/runs/{runId}/cancel)
+func (_ Unimplemented) CancelActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListActionsRunJobs Jobs of a run attempt
+// (GET /repos/{owner}/{name}/actions/runs/{runId}/jobs)
+func (_ Unimplemented) ListActionsRunJobs(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId, params ListActionsRunJobsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RerunActionsRun Start a new attempt of a completed run
+// (POST /repos/{owner}/{name}/actions/runs/{runId}/rerun)
+func (_ Unimplemented) RerunActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListRepoActionsSecrets Actions secrets (names only)
+// (GET /repos/{owner}/{name}/actions/secrets)
+func (_ Unimplemented) ListRepoActionsSecrets(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListRepoActionsSecretsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteRepoActionsSecret Delete an Actions secret
+// (DELETE /repos/{owner}/{name}/actions/secrets/{secretName})
+func (_ Unimplemented) DeleteRepoActionsSecret(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, secretName ActionsSecretName, params DeleteRepoActionsSecretParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PutRepoActionsSecret Create or replace an Actions secret
+// (PUT /repos/{owner}/{name}/actions/secrets/{secretName})
+func (_ Unimplemented) PutRepoActionsSecret(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, secretName ActionsSecretName, params PutRepoActionsSecretParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListRepoActionsVariables Actions variables
+// (GET /repos/{owner}/{name}/actions/variables)
+func (_ Unimplemented) ListRepoActionsVariables(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListRepoActionsVariablesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteRepoActionsVariable Delete an Actions variable
+// (DELETE /repos/{owner}/{name}/actions/variables/{variableName})
+func (_ Unimplemented) DeleteRepoActionsVariable(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, variableName ActionsVariableName, params DeleteRepoActionsVariableParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PutRepoActionsVariable Create or replace an Actions variable
+// (PUT /repos/{owner}/{name}/actions/variables/{variableName})
+func (_ Unimplemented) PutRepoActionsVariable(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, variableName ActionsVariableName, params PutRepoActionsVariableParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListActionsWorkflows Workflow files that ran in the repository
+// (GET /repos/{owner}/{name}/actions/workflows)
+func (_ Unimplemented) ListActionsWorkflows(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetActionsBadge SVG status badge of a workflow
+// (GET /repos/{owner}/{name}/actions/workflows/{workflow}/badge.svg)
+func (_ Unimplemented) GetActionsBadge(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, workflow ActionsWorkflowParam, params GetActionsBadgeParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DispatchActionsWorkflow Start a workflow_dispatch run
+// (POST /repos/{owner}/{name}/actions/workflows/{workflow}/dispatches)
+func (_ Unimplemented) DispatchActionsWorkflow(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, workflow ActionsWorkflowParam) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7368,6 +8104,84 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// ListInstanceActionsRunners operation middleware
+func (siw *ServerInterfaceWrapper) ListInstanceActionsRunners(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListInstanceActionsRunners(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateInstanceActionsRegistrationToken operation middleware
+func (siw *ServerInterfaceWrapper) CreateInstanceActionsRegistrationToken(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateInstanceActionsRegistrationToken(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteInstanceActionsRunner operation middleware
+func (siw *ServerInterfaceWrapper) DeleteInstanceActionsRunner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "runnerId" -------------
+	var runnerId ActionsRunnerId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runnerId", chi.URLParam(r, "runnerId"), &runnerId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runnerId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteInstanceActionsRunner(w, r, runnerId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // ListAdminAudit operation middleware
 func (siw *ServerInterfaceWrapper) ListAdminAudit(w http.ResponseWriter, r *http.Request) {
@@ -8991,6 +9805,357 @@ func (siw *ServerInterfaceWrapper) UpdateOrg(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r)
 }
 
+// ListOrgActionsRunners operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgActionsRunners(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgActionsRunners(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateOrgActionsRegistrationToken operation middleware
+func (siw *ServerInterfaceWrapper) CreateOrgActionsRegistrationToken(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateOrgActionsRegistrationToken(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteOrgActionsRunner operation middleware
+func (siw *ServerInterfaceWrapper) DeleteOrgActionsRunner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "runnerId" -------------
+	var runnerId ActionsRunnerId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runnerId", chi.URLParam(r, "runnerId"), &runnerId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runnerId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteOrgActionsRunner(w, r, org, runnerId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrgActionsSecrets operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgActionsSecrets(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgActionsSecrets(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteOrgActionsSecret operation middleware
+func (siw *ServerInterfaceWrapper) DeleteOrgActionsSecret(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "secretName" -------------
+	var secretName ActionsSecretName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "secretName", chi.URLParam(r, "secretName"), &secretName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "secretName", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteOrgActionsSecret(w, r, org, secretName)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutOrgActionsSecret operation middleware
+func (siw *ServerInterfaceWrapper) PutOrgActionsSecret(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "secretName" -------------
+	var secretName ActionsSecretName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "secretName", chi.URLParam(r, "secretName"), &secretName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "secretName", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutOrgActionsSecret(w, r, org, secretName)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrgActionsVariables operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgActionsVariables(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgActionsVariables(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteOrgActionsVariable operation middleware
+func (siw *ServerInterfaceWrapper) DeleteOrgActionsVariable(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "variableName" -------------
+	var variableName ActionsVariableName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "variableName", chi.URLParam(r, "variableName"), &variableName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "variableName", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteOrgActionsVariable(w, r, org, variableName)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutOrgActionsVariable operation middleware
+func (siw *ServerInterfaceWrapper) PutOrgActionsVariable(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "variableName" -------------
+	var variableName ActionsVariableName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "variableName", chi.URLParam(r, "variableName"), &variableName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "variableName", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutOrgActionsVariable(w, r, org, variableName)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListOrgAudit operation middleware
 func (siw *ServerInterfaceWrapper) ListOrgAudit(w http.ResponseWriter, r *http.Request) {
 
@@ -10259,6 +11424,1494 @@ func (siw *ServerInterfaceWrapper) UpdateRepo(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateRepo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListActionsEnvironments operation middleware
+func (siw *ServerInterfaceWrapper) ListActionsEnvironments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListActionsEnvironments(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteActionsEnvironment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteActionsEnvironment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "environment" -------------
+	var environment ActionsEnvironmentName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "environment", chi.URLParam(r, "environment"), &environment, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteActionsEnvironment(w, r, owner, name, environment)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutActionsEnvironment operation middleware
+func (siw *ServerInterfaceWrapper) PutActionsEnvironment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "environment" -------------
+	var environment ActionsEnvironmentName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "environment", chi.URLParam(r, "environment"), &environment, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutActionsEnvironment(w, r, owner, name, environment)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetActionsJob operation middleware
+func (siw *ServerInterfaceWrapper) GetActionsJob(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "jobId" -------------
+	var jobId ActionsJobId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "jobId", chi.URLParam(r, "jobId"), &jobId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "jobId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetActionsJob(w, r, owner, name, jobId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CancelActionsJob operation middleware
+func (siw *ServerInterfaceWrapper) CancelActionsJob(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "jobId" -------------
+	var jobId ActionsJobId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "jobId", chi.URLParam(r, "jobId"), &jobId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "jobId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CancelActionsJob(w, r, owner, name, jobId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReviewActionsDeployment operation middleware
+func (siw *ServerInterfaceWrapper) ReviewActionsDeployment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "jobId" -------------
+	var jobId ActionsJobId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "jobId", chi.URLParam(r, "jobId"), &jobId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "jobId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReviewActionsDeployment(w, r, owner, name, jobId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetActionsJobLog operation middleware
+func (siw *ServerInterfaceWrapper) GetActionsJobLog(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "jobId" -------------
+	var jobId ActionsJobId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "jobId", chi.URLParam(r, "jobId"), &jobId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "jobId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetActionsJobLogParams
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "from", r.URL.Query(), &params.From, runtime.BindQueryParameterOptions{Type: "integer", Format: "int64"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetActionsJobLog(w, r, owner, name, jobId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListRepoActionsRunners operation middleware
+func (siw *ServerInterfaceWrapper) ListRepoActionsRunners(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRepoActionsRunners(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateRepoActionsRegistrationToken operation middleware
+func (siw *ServerInterfaceWrapper) CreateRepoActionsRegistrationToken(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateRepoActionsRegistrationToken(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteRepoActionsRunner operation middleware
+func (siw *ServerInterfaceWrapper) DeleteRepoActionsRunner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "runnerId" -------------
+	var runnerId ActionsRunnerId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runnerId", chi.URLParam(r, "runnerId"), &runnerId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runnerId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteRepoActionsRunner(w, r, owner, name, runnerId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListActionsRuns operation middleware
+func (siw *ServerInterfaceWrapper) ListActionsRuns(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListActionsRunsParams
+
+	// ------------- Optional query parameter "workflow" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "workflow", r.URL.Query(), &params.Workflow, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "workflow"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "workflow", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "event" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "event", r.URL.Query(), &params.Event, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "event"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "event", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "branch" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "branch", r.URL.Query(), &params.Branch, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "branch"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "branch", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sha" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sha", r.URL.Query(), &params.Sha, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sha"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sha", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "perPage" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "perPage", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "perPage"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "perPage", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListActionsRuns(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetActionsRun operation middleware
+func (siw *ServerInterfaceWrapper) GetActionsRun(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "runId" -------------
+	var runId ActionsRunId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runId", chi.URLParam(r, "runId"), &runId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetActionsRun(w, r, owner, name, runId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ApproveActionsRun operation middleware
+func (siw *ServerInterfaceWrapper) ApproveActionsRun(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "runId" -------------
+	var runId ActionsRunId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runId", chi.URLParam(r, "runId"), &runId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ApproveActionsRun(w, r, owner, name, runId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CancelActionsRun operation middleware
+func (siw *ServerInterfaceWrapper) CancelActionsRun(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "runId" -------------
+	var runId ActionsRunId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runId", chi.URLParam(r, "runId"), &runId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CancelActionsRun(w, r, owner, name, runId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListActionsRunJobs operation middleware
+func (siw *ServerInterfaceWrapper) ListActionsRunJobs(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "runId" -------------
+	var runId ActionsRunId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runId", chi.URLParam(r, "runId"), &runId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListActionsRunJobsParams
+
+	// ------------- Optional query parameter "attempt" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "attempt", r.URL.Query(), &params.Attempt, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "attempt"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attempt", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListActionsRunJobs(w, r, owner, name, runId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RerunActionsRun operation middleware
+func (siw *ServerInterfaceWrapper) RerunActionsRun(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "runId" -------------
+	var runId ActionsRunId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runId", chi.URLParam(r, "runId"), &runId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RerunActionsRun(w, r, owner, name, runId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListRepoActionsSecrets operation middleware
+func (siw *ServerInterfaceWrapper) ListRepoActionsSecrets(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListRepoActionsSecretsParams
+
+	// ------------- Optional query parameter "environment" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "environment", r.URL.Query(), &params.Environment, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "environment"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRepoActionsSecrets(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteRepoActionsSecret operation middleware
+func (siw *ServerInterfaceWrapper) DeleteRepoActionsSecret(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "secretName" -------------
+	var secretName ActionsSecretName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "secretName", chi.URLParam(r, "secretName"), &secretName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "secretName", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteRepoActionsSecretParams
+
+	// ------------- Optional query parameter "environment" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "environment", r.URL.Query(), &params.Environment, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "environment"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteRepoActionsSecret(w, r, owner, name, secretName, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutRepoActionsSecret operation middleware
+func (siw *ServerInterfaceWrapper) PutRepoActionsSecret(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "secretName" -------------
+	var secretName ActionsSecretName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "secretName", chi.URLParam(r, "secretName"), &secretName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "secretName", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PutRepoActionsSecretParams
+
+	// ------------- Optional query parameter "environment" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "environment", r.URL.Query(), &params.Environment, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "environment"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutRepoActionsSecret(w, r, owner, name, secretName, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListRepoActionsVariables operation middleware
+func (siw *ServerInterfaceWrapper) ListRepoActionsVariables(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListRepoActionsVariablesParams
+
+	// ------------- Optional query parameter "environment" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "environment", r.URL.Query(), &params.Environment, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "environment"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRepoActionsVariables(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteRepoActionsVariable operation middleware
+func (siw *ServerInterfaceWrapper) DeleteRepoActionsVariable(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "variableName" -------------
+	var variableName ActionsVariableName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "variableName", chi.URLParam(r, "variableName"), &variableName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "variableName", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteRepoActionsVariableParams
+
+	// ------------- Optional query parameter "environment" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "environment", r.URL.Query(), &params.Environment, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "environment"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteRepoActionsVariable(w, r, owner, name, variableName, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutRepoActionsVariable operation middleware
+func (siw *ServerInterfaceWrapper) PutRepoActionsVariable(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "variableName" -------------
+	var variableName ActionsVariableName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "variableName", chi.URLParam(r, "variableName"), &variableName, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "variableName", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PutRepoActionsVariableParams
+
+	// ------------- Optional query parameter "environment" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "environment", r.URL.Query(), &params.Environment, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "environment"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "environment", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutRepoActionsVariable(w, r, owner, name, variableName, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListActionsWorkflows operation middleware
+func (siw *ServerInterfaceWrapper) ListActionsWorkflows(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListActionsWorkflows(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetActionsBadge operation middleware
+func (siw *ServerInterfaceWrapper) GetActionsBadge(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "workflow" -------------
+	var workflow ActionsWorkflowParam
+
+	err = runtime.BindStyledParameterWithOptions("simple", "workflow", chi.URLParam(r, "workflow"), &workflow, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "workflow", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetActionsBadgeParams
+
+	// ------------- Optional query parameter "branch" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "branch", r.URL.Query(), &params.Branch, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "branch"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "branch", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetActionsBadge(w, r, owner, name, workflow, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DispatchActionsWorkflow operation middleware
+func (siw *ServerInterfaceWrapper) DispatchActionsWorkflow(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "workflow" -------------
+	var workflow ActionsWorkflowParam
+
+	err = runtime.BindStyledParameterWithOptions("simple", "workflow", chi.URLParam(r, "workflow"), &workflow, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "workflow", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DispatchActionsWorkflow(w, r, owner, name, workflow)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -19828,6 +22481,117 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/check-suites/{checkSuiteId}/check-runs", wrapper.ListCheckSuiteRuns)
 	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/workflows", wrapper.ListActionsWorkflows)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/actions/workflows/{workflow}/dispatches", wrapper.DispatchActionsWorkflow)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/workflows/{workflow}/badge.svg", wrapper.GetActionsBadge)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/runs", wrapper.ListActionsRuns)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/runs/{runId}", wrapper.GetActionsRun)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/runs/{runId}/jobs", wrapper.ListActionsRunJobs)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/actions/runs/{runId}/rerun", wrapper.RerunActionsRun)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/actions/runs/{runId}/cancel", wrapper.CancelActionsRun)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/actions/runs/{runId}/approve", wrapper.ApproveActionsRun)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/jobs/{jobId}", wrapper.GetActionsJob)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/actions/jobs/{jobId}/cancel", wrapper.CancelActionsJob)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/actions/jobs/{jobId}/deployment", wrapper.ReviewActionsDeployment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/jobs/{jobId}/logs", wrapper.GetActionsJobLog)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/secrets", wrapper.ListRepoActionsSecrets)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/actions/secrets/{secretName}", wrapper.DeleteRepoActionsSecret)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/actions/secrets/{secretName}", wrapper.PutRepoActionsSecret)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/variables", wrapper.ListRepoActionsVariables)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/actions/variables/{variableName}", wrapper.DeleteRepoActionsVariable)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/actions/variables/{variableName}", wrapper.PutRepoActionsVariable)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/environments", wrapper.ListActionsEnvironments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/actions/environments/{environment}", wrapper.DeleteActionsEnvironment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/actions/environments/{environment}", wrapper.PutActionsEnvironment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/runners", wrapper.ListRepoActionsRunners)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/actions/runners/{runnerId}", wrapper.DeleteRepoActionsRunner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/actions/runners/registration-token", wrapper.CreateRepoActionsRegistrationToken)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/actions/secrets", wrapper.ListOrgActionsSecrets)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/orgs/{org}/actions/secrets/{secretName}", wrapper.DeleteOrgActionsSecret)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/orgs/{org}/actions/secrets/{secretName}", wrapper.PutOrgActionsSecret)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/actions/variables", wrapper.ListOrgActionsVariables)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/orgs/{org}/actions/variables/{variableName}", wrapper.DeleteOrgActionsVariable)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/orgs/{org}/actions/variables/{variableName}", wrapper.PutOrgActionsVariable)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/actions/runners", wrapper.ListOrgActionsRunners)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/orgs/{org}/actions/runners/{runnerId}", wrapper.DeleteOrgActionsRunner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/orgs/{org}/actions/runners/registration-token", wrapper.CreateOrgActionsRegistrationToken)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/actions/runners", wrapper.ListInstanceActionsRunners)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/admin/actions/runners/{runnerId}", wrapper.DeleteInstanceActionsRunner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/actions/runners/registration-token", wrapper.CreateInstanceActionsRegistrationToken)
+	})
 
 	return r
 }
@@ -19859,6 +22623,262 @@ type UnavailableApplicationProblemPlusJSONResponse struct {
 	Body Problem
 
 	Headers UnavailableResponseHeaders
+}
+
+type ListInstanceActionsRunnersRequestObject struct {
+}
+
+type ListInstanceActionsRunnersResponseObject interface {
+	VisitListInstanceActionsRunnersResponse(w http.ResponseWriter) error
+}
+
+type ListInstanceActionsRunners200JSONResponse []ActionsRunner
+
+func (response ListInstanceActionsRunners200JSONResponse) VisitListInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListInstanceActionsRunners403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListInstanceActionsRunners403ApplicationProblemPlusJSONResponse) VisitListInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListInstanceActionsRunners404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListInstanceActionsRunners404ApplicationProblemPlusJSONResponse) VisitListInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListInstanceActionsRunners503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListInstanceActionsRunners503ApplicationProblemPlusJSONResponse) VisitListInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListInstanceActionsRunnersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListInstanceActionsRunnersdefaultApplicationProblemPlusJSONResponse) VisitListInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateInstanceActionsRegistrationTokenRequestObject struct {
+}
+
+type CreateInstanceActionsRegistrationTokenResponseObject interface {
+	VisitCreateInstanceActionsRegistrationTokenResponse(w http.ResponseWriter) error
+}
+
+type CreateInstanceActionsRegistrationToken201JSONResponse ActionsRegistrationToken
+
+func (response CreateInstanceActionsRegistrationToken201JSONResponse) VisitCreateInstanceActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateInstanceActionsRegistrationToken403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateInstanceActionsRegistrationToken403ApplicationProblemPlusJSONResponse) VisitCreateInstanceActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateInstanceActionsRegistrationToken404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateInstanceActionsRegistrationToken404ApplicationProblemPlusJSONResponse) VisitCreateInstanceActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateInstanceActionsRegistrationToken503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response CreateInstanceActionsRegistrationToken503ApplicationProblemPlusJSONResponse) VisitCreateInstanceActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateInstanceActionsRegistrationTokendefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateInstanceActionsRegistrationTokendefaultApplicationProblemPlusJSONResponse) VisitCreateInstanceActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteInstanceActionsRunnerRequestObject struct {
+	RunnerId ActionsRunnerId `json:"runnerId"`
+}
+
+type DeleteInstanceActionsRunnerResponseObject interface {
+	VisitDeleteInstanceActionsRunnerResponse(w http.ResponseWriter) error
+}
+
+type DeleteInstanceActionsRunner204Response struct {
+}
+
+func (response DeleteInstanceActionsRunner204Response) VisitDeleteInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteInstanceActionsRunner403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteInstanceActionsRunner403ApplicationProblemPlusJSONResponse) VisitDeleteInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteInstanceActionsRunner404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteInstanceActionsRunner404ApplicationProblemPlusJSONResponse) VisitDeleteInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteInstanceActionsRunner503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteInstanceActionsRunner503ApplicationProblemPlusJSONResponse) VisitDeleteInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteInstanceActionsRunnerdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteInstanceActionsRunnerdefaultApplicationProblemPlusJSONResponse) VisitDeleteInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type ListAdminAuditRequestObject struct {
@@ -23680,6 +26700,815 @@ func (response UpdateOrgdefaultApplicationProblemPlusJSONResponse) VisitUpdateOr
 	return err
 }
 
+type ListOrgActionsRunnersRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type ListOrgActionsRunnersResponseObject interface {
+	VisitListOrgActionsRunnersResponse(w http.ResponseWriter) error
+}
+
+type ListOrgActionsRunners200JSONResponse []ActionsRunner
+
+func (response ListOrgActionsRunners200JSONResponse) VisitListOrgActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsRunners403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgActionsRunners403ApplicationProblemPlusJSONResponse) VisitListOrgActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsRunners404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgActionsRunners404ApplicationProblemPlusJSONResponse) VisitListOrgActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsRunners503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgActionsRunners503ApplicationProblemPlusJSONResponse) VisitListOrgActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsRunnersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgActionsRunnersdefaultApplicationProblemPlusJSONResponse) VisitListOrgActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgActionsRegistrationTokenRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type CreateOrgActionsRegistrationTokenResponseObject interface {
+	VisitCreateOrgActionsRegistrationTokenResponse(w http.ResponseWriter) error
+}
+
+type CreateOrgActionsRegistrationToken201JSONResponse ActionsRegistrationToken
+
+func (response CreateOrgActionsRegistrationToken201JSONResponse) VisitCreateOrgActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgActionsRegistrationToken403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateOrgActionsRegistrationToken403ApplicationProblemPlusJSONResponse) VisitCreateOrgActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgActionsRegistrationToken404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgActionsRegistrationToken404ApplicationProblemPlusJSONResponse) VisitCreateOrgActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgActionsRegistrationToken503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response CreateOrgActionsRegistrationToken503ApplicationProblemPlusJSONResponse) VisitCreateOrgActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgActionsRegistrationTokendefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateOrgActionsRegistrationTokendefaultApplicationProblemPlusJSONResponse) VisitCreateOrgActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsRunnerRequestObject struct {
+	Org      OrgName         `json:"org"`
+	RunnerId ActionsRunnerId `json:"runnerId"`
+}
+
+type DeleteOrgActionsRunnerResponseObject interface {
+	VisitDeleteOrgActionsRunnerResponse(w http.ResponseWriter) error
+}
+
+type DeleteOrgActionsRunner204Response struct {
+}
+
+func (response DeleteOrgActionsRunner204Response) VisitDeleteOrgActionsRunnerResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteOrgActionsRunner403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteOrgActionsRunner403ApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsRunner404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteOrgActionsRunner404ApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsRunner503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteOrgActionsRunner503ApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsRunnerdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteOrgActionsRunnerdefaultApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsSecretsRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type ListOrgActionsSecretsResponseObject interface {
+	VisitListOrgActionsSecretsResponse(w http.ResponseWriter) error
+}
+
+type ListOrgActionsSecrets200JSONResponse []ActionsSecret
+
+func (response ListOrgActionsSecrets200JSONResponse) VisitListOrgActionsSecretsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsSecrets403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgActionsSecrets403ApplicationProblemPlusJSONResponse) VisitListOrgActionsSecretsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsSecrets404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgActionsSecrets404ApplicationProblemPlusJSONResponse) VisitListOrgActionsSecretsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsSecrets503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgActionsSecrets503ApplicationProblemPlusJSONResponse) VisitListOrgActionsSecretsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsSecretsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgActionsSecretsdefaultApplicationProblemPlusJSONResponse) VisitListOrgActionsSecretsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsSecretRequestObject struct {
+	Org        OrgName           `json:"org"`
+	SecretName ActionsSecretName `json:"secretName"`
+}
+
+type DeleteOrgActionsSecretResponseObject interface {
+	VisitDeleteOrgActionsSecretResponse(w http.ResponseWriter) error
+}
+
+type DeleteOrgActionsSecret204Response struct {
+}
+
+func (response DeleteOrgActionsSecret204Response) VisitDeleteOrgActionsSecretResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteOrgActionsSecret403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteOrgActionsSecret403ApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsSecret404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteOrgActionsSecret404ApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsSecret503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteOrgActionsSecret503ApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsSecretdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteOrgActionsSecretdefaultApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsSecretRequestObject struct {
+	Org        OrgName           `json:"org"`
+	SecretName ActionsSecretName `json:"secretName"`
+	Body       *PutOrgActionsSecretJSONRequestBody
+}
+
+type PutOrgActionsSecretResponseObject interface {
+	VisitPutOrgActionsSecretResponse(w http.ResponseWriter) error
+}
+
+type PutOrgActionsSecret200JSONResponse ActionsSecret
+
+func (response PutOrgActionsSecret200JSONResponse) VisitPutOrgActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsSecret400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutOrgActionsSecret400ApplicationProblemPlusJSONResponse) VisitPutOrgActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsSecret403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutOrgActionsSecret403ApplicationProblemPlusJSONResponse) VisitPutOrgActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsSecret404ApplicationProblemPlusJSONResponse Problem
+
+func (response PutOrgActionsSecret404ApplicationProblemPlusJSONResponse) VisitPutOrgActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsSecret503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response PutOrgActionsSecret503ApplicationProblemPlusJSONResponse) VisitPutOrgActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsSecretdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PutOrgActionsSecretdefaultApplicationProblemPlusJSONResponse) VisitPutOrgActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsVariablesRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type ListOrgActionsVariablesResponseObject interface {
+	VisitListOrgActionsVariablesResponse(w http.ResponseWriter) error
+}
+
+type ListOrgActionsVariables200JSONResponse []ActionsVariable
+
+func (response ListOrgActionsVariables200JSONResponse) VisitListOrgActionsVariablesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsVariables403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgActionsVariables403ApplicationProblemPlusJSONResponse) VisitListOrgActionsVariablesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsVariables404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgActionsVariables404ApplicationProblemPlusJSONResponse) VisitListOrgActionsVariablesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsVariables503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgActionsVariables503ApplicationProblemPlusJSONResponse) VisitListOrgActionsVariablesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgActionsVariablesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgActionsVariablesdefaultApplicationProblemPlusJSONResponse) VisitListOrgActionsVariablesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsVariableRequestObject struct {
+	Org          OrgName             `json:"org"`
+	VariableName ActionsVariableName `json:"variableName"`
+}
+
+type DeleteOrgActionsVariableResponseObject interface {
+	VisitDeleteOrgActionsVariableResponse(w http.ResponseWriter) error
+}
+
+type DeleteOrgActionsVariable204Response struct {
+}
+
+func (response DeleteOrgActionsVariable204Response) VisitDeleteOrgActionsVariableResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteOrgActionsVariable403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteOrgActionsVariable403ApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsVariable404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteOrgActionsVariable404ApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsVariable503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteOrgActionsVariable503ApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgActionsVariabledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteOrgActionsVariabledefaultApplicationProblemPlusJSONResponse) VisitDeleteOrgActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsVariableRequestObject struct {
+	Org          OrgName             `json:"org"`
+	VariableName ActionsVariableName `json:"variableName"`
+	Body         *PutOrgActionsVariableJSONRequestBody
+}
+
+type PutOrgActionsVariableResponseObject interface {
+	VisitPutOrgActionsVariableResponse(w http.ResponseWriter) error
+}
+
+type PutOrgActionsVariable200JSONResponse ActionsVariable
+
+func (response PutOrgActionsVariable200JSONResponse) VisitPutOrgActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsVariable400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutOrgActionsVariable400ApplicationProblemPlusJSONResponse) VisitPutOrgActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsVariable403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutOrgActionsVariable403ApplicationProblemPlusJSONResponse) VisitPutOrgActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsVariable404ApplicationProblemPlusJSONResponse Problem
+
+func (response PutOrgActionsVariable404ApplicationProblemPlusJSONResponse) VisitPutOrgActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsVariable503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response PutOrgActionsVariable503ApplicationProblemPlusJSONResponse) VisitPutOrgActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgActionsVariabledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PutOrgActionsVariabledefaultApplicationProblemPlusJSONResponse) VisitPutOrgActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListOrgAuditRequestObject struct {
 	Org    OrgName `json:"org"`
 	Params ListOrgAuditParams
@@ -26085,6 +29914,2717 @@ type UpdateRepodefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response UpdateRepodefaultApplicationProblemPlusJSONResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsEnvironmentsRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type ListActionsEnvironmentsResponseObject interface {
+	VisitListActionsEnvironmentsResponse(w http.ResponseWriter) error
+}
+
+type ListActionsEnvironments200JSONResponse []ActionsEnvironment
+
+func (response ListActionsEnvironments200JSONResponse) VisitListActionsEnvironmentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsEnvironments307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsEnvironments307ApplicationProblemPlusJSONResponse) VisitListActionsEnvironmentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsEnvironments403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsEnvironments403ApplicationProblemPlusJSONResponse) VisitListActionsEnvironmentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsEnvironments404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListActionsEnvironments404ApplicationProblemPlusJSONResponse) VisitListActionsEnvironmentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsEnvironments503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsEnvironments503ApplicationProblemPlusJSONResponse) VisitListActionsEnvironmentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsEnvironmentsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListActionsEnvironmentsdefaultApplicationProblemPlusJSONResponse) VisitListActionsEnvironmentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteActionsEnvironmentRequestObject struct {
+	Owner       RepoOwner              `json:"owner"`
+	Name        RepoName               `json:"name"`
+	Environment ActionsEnvironmentName `json:"environment"`
+}
+
+type DeleteActionsEnvironmentResponseObject interface {
+	VisitDeleteActionsEnvironmentResponse(w http.ResponseWriter) error
+}
+
+type DeleteActionsEnvironment204Response struct {
+}
+
+func (response DeleteActionsEnvironment204Response) VisitDeleteActionsEnvironmentResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteActionsEnvironment307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteActionsEnvironment307ApplicationProblemPlusJSONResponse) VisitDeleteActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteActionsEnvironment403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteActionsEnvironment403ApplicationProblemPlusJSONResponse) VisitDeleteActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteActionsEnvironment404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteActionsEnvironment404ApplicationProblemPlusJSONResponse) VisitDeleteActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteActionsEnvironment503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteActionsEnvironment503ApplicationProblemPlusJSONResponse) VisitDeleteActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteActionsEnvironmentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteActionsEnvironmentdefaultApplicationProblemPlusJSONResponse) VisitDeleteActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutActionsEnvironmentRequestObject struct {
+	Owner       RepoOwner              `json:"owner"`
+	Name        RepoName               `json:"name"`
+	Environment ActionsEnvironmentName `json:"environment"`
+	Body        *PutActionsEnvironmentJSONRequestBody
+}
+
+type PutActionsEnvironmentResponseObject interface {
+	VisitPutActionsEnvironmentResponse(w http.ResponseWriter) error
+}
+
+type PutActionsEnvironment200JSONResponse ActionsEnvironment
+
+func (response PutActionsEnvironment200JSONResponse) VisitPutActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutActionsEnvironment307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response PutActionsEnvironment307ApplicationProblemPlusJSONResponse) VisitPutActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutActionsEnvironment400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutActionsEnvironment400ApplicationProblemPlusJSONResponse) VisitPutActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutActionsEnvironment403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutActionsEnvironment403ApplicationProblemPlusJSONResponse) VisitPutActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutActionsEnvironment404ApplicationProblemPlusJSONResponse Problem
+
+func (response PutActionsEnvironment404ApplicationProblemPlusJSONResponse) VisitPutActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutActionsEnvironment503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response PutActionsEnvironment503ApplicationProblemPlusJSONResponse) VisitPutActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutActionsEnvironmentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PutActionsEnvironmentdefaultApplicationProblemPlusJSONResponse) VisitPutActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsJobRequestObject struct {
+	Owner RepoOwner    `json:"owner"`
+	Name  RepoName     `json:"name"`
+	JobId ActionsJobId `json:"jobId"`
+}
+
+type GetActionsJobResponseObject interface {
+	VisitGetActionsJobResponse(w http.ResponseWriter) error
+}
+
+type GetActionsJob200JSONResponse ActionsJobDetail
+
+func (response GetActionsJob200JSONResponse) VisitGetActionsJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsJob307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsJob307ApplicationProblemPlusJSONResponse) VisitGetActionsJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsJob404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsJob404ApplicationProblemPlusJSONResponse) VisitGetActionsJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsJob503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsJob503ApplicationProblemPlusJSONResponse) VisitGetActionsJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsJobdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetActionsJobdefaultApplicationProblemPlusJSONResponse) VisitGetActionsJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsJobRequestObject struct {
+	Owner RepoOwner    `json:"owner"`
+	Name  RepoName     `json:"name"`
+	JobId ActionsJobId `json:"jobId"`
+}
+
+type CancelActionsJobResponseObject interface {
+	VisitCancelActionsJobResponse(w http.ResponseWriter) error
+}
+
+type CancelActionsJob202Response struct {
+}
+
+func (response CancelActionsJob202Response) VisitCancelActionsJobResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type CancelActionsJob307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CancelActionsJob307ApplicationProblemPlusJSONResponse) VisitCancelActionsJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsJob403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CancelActionsJob403ApplicationProblemPlusJSONResponse) VisitCancelActionsJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsJob404ApplicationProblemPlusJSONResponse Problem
+
+func (response CancelActionsJob404ApplicationProblemPlusJSONResponse) VisitCancelActionsJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsJob409ApplicationProblemPlusJSONResponse Problem
+
+func (response CancelActionsJob409ApplicationProblemPlusJSONResponse) VisitCancelActionsJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsJob503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response CancelActionsJob503ApplicationProblemPlusJSONResponse) VisitCancelActionsJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsJobdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CancelActionsJobdefaultApplicationProblemPlusJSONResponse) VisitCancelActionsJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewActionsDeploymentRequestObject struct {
+	Owner RepoOwner    `json:"owner"`
+	Name  RepoName     `json:"name"`
+	JobId ActionsJobId `json:"jobId"`
+	Body  *ReviewActionsDeploymentJSONRequestBody
+}
+
+type ReviewActionsDeploymentResponseObject interface {
+	VisitReviewActionsDeploymentResponse(w http.ResponseWriter) error
+}
+
+type ReviewActionsDeployment204Response struct {
+}
+
+func (response ReviewActionsDeployment204Response) VisitReviewActionsDeploymentResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ReviewActionsDeployment307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ReviewActionsDeployment307ApplicationProblemPlusJSONResponse) VisitReviewActionsDeploymentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewActionsDeployment400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ReviewActionsDeployment400ApplicationProblemPlusJSONResponse) VisitReviewActionsDeploymentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewActionsDeployment403ApplicationProblemPlusJSONResponse Problem
+
+func (response ReviewActionsDeployment403ApplicationProblemPlusJSONResponse) VisitReviewActionsDeploymentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewActionsDeployment404ApplicationProblemPlusJSONResponse Problem
+
+func (response ReviewActionsDeployment404ApplicationProblemPlusJSONResponse) VisitReviewActionsDeploymentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewActionsDeployment409ApplicationProblemPlusJSONResponse Problem
+
+func (response ReviewActionsDeployment409ApplicationProblemPlusJSONResponse) VisitReviewActionsDeploymentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewActionsDeployment503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ReviewActionsDeployment503ApplicationProblemPlusJSONResponse) VisitReviewActionsDeploymentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewActionsDeploymentdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ReviewActionsDeploymentdefaultApplicationProblemPlusJSONResponse) VisitReviewActionsDeploymentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsJobLogRequestObject struct {
+	Owner  RepoOwner    `json:"owner"`
+	Name   RepoName     `json:"name"`
+	JobId  ActionsJobId `json:"jobId"`
+	Params GetActionsJobLogParams
+}
+
+type GetActionsJobLogResponseObject interface {
+	VisitGetActionsJobLogResponse(w http.ResponseWriter) error
+}
+
+type GetActionsJobLog200JSONResponse ActionsLogPage
+
+func (response GetActionsJobLog200JSONResponse) VisitGetActionsJobLogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsJobLog307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsJobLog307ApplicationProblemPlusJSONResponse) VisitGetActionsJobLogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsJobLog404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsJobLog404ApplicationProblemPlusJSONResponse) VisitGetActionsJobLogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsJobLog503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsJobLog503ApplicationProblemPlusJSONResponse) VisitGetActionsJobLogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsJobLogdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetActionsJobLogdefaultApplicationProblemPlusJSONResponse) VisitGetActionsJobLogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsRunnersRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type ListRepoActionsRunnersResponseObject interface {
+	VisitListRepoActionsRunnersResponse(w http.ResponseWriter) error
+}
+
+type ListRepoActionsRunners200JSONResponse []ActionsRunner
+
+func (response ListRepoActionsRunners200JSONResponse) VisitListRepoActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsRunners307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoActionsRunners307ApplicationProblemPlusJSONResponse) VisitListRepoActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsRunners403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoActionsRunners403ApplicationProblemPlusJSONResponse) VisitListRepoActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsRunners404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListRepoActionsRunners404ApplicationProblemPlusJSONResponse) VisitListRepoActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsRunners503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoActionsRunners503ApplicationProblemPlusJSONResponse) VisitListRepoActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsRunnersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListRepoActionsRunnersdefaultApplicationProblemPlusJSONResponse) VisitListRepoActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoActionsRegistrationTokenRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type CreateRepoActionsRegistrationTokenResponseObject interface {
+	VisitCreateRepoActionsRegistrationTokenResponse(w http.ResponseWriter) error
+}
+
+type CreateRepoActionsRegistrationToken201JSONResponse ActionsRegistrationToken
+
+func (response CreateRepoActionsRegistrationToken201JSONResponse) VisitCreateRepoActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoActionsRegistrationToken307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreateRepoActionsRegistrationToken307ApplicationProblemPlusJSONResponse) VisitCreateRepoActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoActionsRegistrationToken403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateRepoActionsRegistrationToken403ApplicationProblemPlusJSONResponse) VisitCreateRepoActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoActionsRegistrationToken404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateRepoActionsRegistrationToken404ApplicationProblemPlusJSONResponse) VisitCreateRepoActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoActionsRegistrationToken503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response CreateRepoActionsRegistrationToken503ApplicationProblemPlusJSONResponse) VisitCreateRepoActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRepoActionsRegistrationTokendefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateRepoActionsRegistrationTokendefaultApplicationProblemPlusJSONResponse) VisitCreateRepoActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsRunnerRequestObject struct {
+	Owner    RepoOwner       `json:"owner"`
+	Name     RepoName        `json:"name"`
+	RunnerId ActionsRunnerId `json:"runnerId"`
+}
+
+type DeleteRepoActionsRunnerResponseObject interface {
+	VisitDeleteRepoActionsRunnerResponse(w http.ResponseWriter) error
+}
+
+type DeleteRepoActionsRunner204Response struct {
+}
+
+func (response DeleteRepoActionsRunner204Response) VisitDeleteRepoActionsRunnerResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteRepoActionsRunner307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoActionsRunner307ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsRunner403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoActionsRunner403ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsRunner404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteRepoActionsRunner404ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsRunner503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoActionsRunner503ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsRunnerdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteRepoActionsRunnerdefaultApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsRunsRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params ListActionsRunsParams
+}
+
+type ListActionsRunsResponseObject interface {
+	VisitListActionsRunsResponse(w http.ResponseWriter) error
+}
+
+type ListActionsRuns200JSONResponse ActionsRunList
+
+func (response ListActionsRuns200JSONResponse) VisitListActionsRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsRuns307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsRuns307ApplicationProblemPlusJSONResponse) VisitListActionsRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsRuns400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsRuns400ApplicationProblemPlusJSONResponse) VisitListActionsRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsRuns404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListActionsRuns404ApplicationProblemPlusJSONResponse) VisitListActionsRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsRuns503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsRuns503ApplicationProblemPlusJSONResponse) VisitListActionsRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsRunsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListActionsRunsdefaultApplicationProblemPlusJSONResponse) VisitListActionsRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsRunRequestObject struct {
+	Owner RepoOwner    `json:"owner"`
+	Name  RepoName     `json:"name"`
+	RunId ActionsRunId `json:"runId"`
+}
+
+type GetActionsRunResponseObject interface {
+	VisitGetActionsRunResponse(w http.ResponseWriter) error
+}
+
+type GetActionsRun200JSONResponse ActionsRun
+
+func (response GetActionsRun200JSONResponse) VisitGetActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsRun307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsRun307ApplicationProblemPlusJSONResponse) VisitGetActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsRun404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsRun404ApplicationProblemPlusJSONResponse) VisitGetActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsRun503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsRun503ApplicationProblemPlusJSONResponse) VisitGetActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsRundefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetActionsRundefaultApplicationProblemPlusJSONResponse) VisitGetActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApproveActionsRunRequestObject struct {
+	Owner RepoOwner    `json:"owner"`
+	Name  RepoName     `json:"name"`
+	RunId ActionsRunId `json:"runId"`
+}
+
+type ApproveActionsRunResponseObject interface {
+	VisitApproveActionsRunResponse(w http.ResponseWriter) error
+}
+
+type ApproveActionsRun204Response struct {
+}
+
+func (response ApproveActionsRun204Response) VisitApproveActionsRunResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ApproveActionsRun307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ApproveActionsRun307ApplicationProblemPlusJSONResponse) VisitApproveActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApproveActionsRun403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ApproveActionsRun403ApplicationProblemPlusJSONResponse) VisitApproveActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApproveActionsRun404ApplicationProblemPlusJSONResponse Problem
+
+func (response ApproveActionsRun404ApplicationProblemPlusJSONResponse) VisitApproveActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApproveActionsRun409ApplicationProblemPlusJSONResponse Problem
+
+func (response ApproveActionsRun409ApplicationProblemPlusJSONResponse) VisitApproveActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApproveActionsRun503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ApproveActionsRun503ApplicationProblemPlusJSONResponse) VisitApproveActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApproveActionsRundefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ApproveActionsRundefaultApplicationProblemPlusJSONResponse) VisitApproveActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsRunRequestObject struct {
+	Owner RepoOwner    `json:"owner"`
+	Name  RepoName     `json:"name"`
+	RunId ActionsRunId `json:"runId"`
+}
+
+type CancelActionsRunResponseObject interface {
+	VisitCancelActionsRunResponse(w http.ResponseWriter) error
+}
+
+type CancelActionsRun202Response struct {
+}
+
+func (response CancelActionsRun202Response) VisitCancelActionsRunResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type CancelActionsRun307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CancelActionsRun307ApplicationProblemPlusJSONResponse) VisitCancelActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsRun403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CancelActionsRun403ApplicationProblemPlusJSONResponse) VisitCancelActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsRun404ApplicationProblemPlusJSONResponse Problem
+
+func (response CancelActionsRun404ApplicationProblemPlusJSONResponse) VisitCancelActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsRun409ApplicationProblemPlusJSONResponse Problem
+
+func (response CancelActionsRun409ApplicationProblemPlusJSONResponse) VisitCancelActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsRun503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response CancelActionsRun503ApplicationProblemPlusJSONResponse) VisitCancelActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelActionsRundefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CancelActionsRundefaultApplicationProblemPlusJSONResponse) VisitCancelActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsRunJobsRequestObject struct {
+	Owner  RepoOwner    `json:"owner"`
+	Name   RepoName     `json:"name"`
+	RunId  ActionsRunId `json:"runId"`
+	Params ListActionsRunJobsParams
+}
+
+type ListActionsRunJobsResponseObject interface {
+	VisitListActionsRunJobsResponse(w http.ResponseWriter) error
+}
+
+type ListActionsRunJobs200JSONResponse []ActionsJob
+
+func (response ListActionsRunJobs200JSONResponse) VisitListActionsRunJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsRunJobs307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsRunJobs307ApplicationProblemPlusJSONResponse) VisitListActionsRunJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsRunJobs404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsRunJobs404ApplicationProblemPlusJSONResponse) VisitListActionsRunJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsRunJobs503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsRunJobs503ApplicationProblemPlusJSONResponse) VisitListActionsRunJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsRunJobsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListActionsRunJobsdefaultApplicationProblemPlusJSONResponse) VisitListActionsRunJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RerunActionsRunRequestObject struct {
+	Owner RepoOwner    `json:"owner"`
+	Name  RepoName     `json:"name"`
+	RunId ActionsRunId `json:"runId"`
+}
+
+type RerunActionsRunResponseObject interface {
+	VisitRerunActionsRunResponse(w http.ResponseWriter) error
+}
+
+type RerunActionsRun201JSONResponse ActionsRun
+
+func (response RerunActionsRun201JSONResponse) VisitRerunActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RerunActionsRun307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response RerunActionsRun307ApplicationProblemPlusJSONResponse) VisitRerunActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RerunActionsRun400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RerunActionsRun400ApplicationProblemPlusJSONResponse) VisitRerunActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RerunActionsRun403ApplicationProblemPlusJSONResponse Problem
+
+func (response RerunActionsRun403ApplicationProblemPlusJSONResponse) VisitRerunActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RerunActionsRun404ApplicationProblemPlusJSONResponse Problem
+
+func (response RerunActionsRun404ApplicationProblemPlusJSONResponse) VisitRerunActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RerunActionsRun409ApplicationProblemPlusJSONResponse Problem
+
+func (response RerunActionsRun409ApplicationProblemPlusJSONResponse) VisitRerunActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RerunActionsRun503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response RerunActionsRun503ApplicationProblemPlusJSONResponse) VisitRerunActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RerunActionsRundefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RerunActionsRundefaultApplicationProblemPlusJSONResponse) VisitRerunActionsRunResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsSecretsRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params ListRepoActionsSecretsParams
+}
+
+type ListRepoActionsSecretsResponseObject interface {
+	VisitListRepoActionsSecretsResponse(w http.ResponseWriter) error
+}
+
+type ListRepoActionsSecrets200JSONResponse []ActionsSecret
+
+func (response ListRepoActionsSecrets200JSONResponse) VisitListRepoActionsSecretsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsSecrets307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoActionsSecrets307ApplicationProblemPlusJSONResponse) VisitListRepoActionsSecretsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsSecrets403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoActionsSecrets403ApplicationProblemPlusJSONResponse) VisitListRepoActionsSecretsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsSecrets404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListRepoActionsSecrets404ApplicationProblemPlusJSONResponse) VisitListRepoActionsSecretsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsSecrets503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoActionsSecrets503ApplicationProblemPlusJSONResponse) VisitListRepoActionsSecretsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsSecretsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListRepoActionsSecretsdefaultApplicationProblemPlusJSONResponse) VisitListRepoActionsSecretsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsSecretRequestObject struct {
+	Owner      RepoOwner         `json:"owner"`
+	Name       RepoName          `json:"name"`
+	SecretName ActionsSecretName `json:"secretName"`
+	Params     DeleteRepoActionsSecretParams
+}
+
+type DeleteRepoActionsSecretResponseObject interface {
+	VisitDeleteRepoActionsSecretResponse(w http.ResponseWriter) error
+}
+
+type DeleteRepoActionsSecret204Response struct {
+}
+
+func (response DeleteRepoActionsSecret204Response) VisitDeleteRepoActionsSecretResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteRepoActionsSecret307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoActionsSecret307ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsSecret403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoActionsSecret403ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsSecret404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteRepoActionsSecret404ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsSecret503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoActionsSecret503ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsSecretdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteRepoActionsSecretdefaultApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsSecretRequestObject struct {
+	Owner      RepoOwner         `json:"owner"`
+	Name       RepoName          `json:"name"`
+	SecretName ActionsSecretName `json:"secretName"`
+	Params     PutRepoActionsSecretParams
+	Body       *PutRepoActionsSecretJSONRequestBody
+}
+
+type PutRepoActionsSecretResponseObject interface {
+	VisitPutRepoActionsSecretResponse(w http.ResponseWriter) error
+}
+
+type PutRepoActionsSecret200JSONResponse ActionsSecret
+
+func (response PutRepoActionsSecret200JSONResponse) VisitPutRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsSecret307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response PutRepoActionsSecret307ApplicationProblemPlusJSONResponse) VisitPutRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsSecret400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutRepoActionsSecret400ApplicationProblemPlusJSONResponse) VisitPutRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsSecret403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutRepoActionsSecret403ApplicationProblemPlusJSONResponse) VisitPutRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsSecret404ApplicationProblemPlusJSONResponse Problem
+
+func (response PutRepoActionsSecret404ApplicationProblemPlusJSONResponse) VisitPutRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsSecret503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response PutRepoActionsSecret503ApplicationProblemPlusJSONResponse) VisitPutRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsSecretdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PutRepoActionsSecretdefaultApplicationProblemPlusJSONResponse) VisitPutRepoActionsSecretResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsVariablesRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params ListRepoActionsVariablesParams
+}
+
+type ListRepoActionsVariablesResponseObject interface {
+	VisitListRepoActionsVariablesResponse(w http.ResponseWriter) error
+}
+
+type ListRepoActionsVariables200JSONResponse []ActionsVariable
+
+func (response ListRepoActionsVariables200JSONResponse) VisitListRepoActionsVariablesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsVariables307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoActionsVariables307ApplicationProblemPlusJSONResponse) VisitListRepoActionsVariablesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsVariables403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoActionsVariables403ApplicationProblemPlusJSONResponse) VisitListRepoActionsVariablesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsVariables404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListRepoActionsVariables404ApplicationProblemPlusJSONResponse) VisitListRepoActionsVariablesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsVariables503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListRepoActionsVariables503ApplicationProblemPlusJSONResponse) VisitListRepoActionsVariablesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRepoActionsVariablesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListRepoActionsVariablesdefaultApplicationProblemPlusJSONResponse) VisitListRepoActionsVariablesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsVariableRequestObject struct {
+	Owner        RepoOwner           `json:"owner"`
+	Name         RepoName            `json:"name"`
+	VariableName ActionsVariableName `json:"variableName"`
+	Params       DeleteRepoActionsVariableParams
+}
+
+type DeleteRepoActionsVariableResponseObject interface {
+	VisitDeleteRepoActionsVariableResponse(w http.ResponseWriter) error
+}
+
+type DeleteRepoActionsVariable204Response struct {
+}
+
+func (response DeleteRepoActionsVariable204Response) VisitDeleteRepoActionsVariableResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteRepoActionsVariable307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoActionsVariable307ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsVariable403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoActionsVariable403ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsVariable404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteRepoActionsVariable404ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsVariable503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoActionsVariable503ApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoActionsVariabledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteRepoActionsVariabledefaultApplicationProblemPlusJSONResponse) VisitDeleteRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsVariableRequestObject struct {
+	Owner        RepoOwner           `json:"owner"`
+	Name         RepoName            `json:"name"`
+	VariableName ActionsVariableName `json:"variableName"`
+	Params       PutRepoActionsVariableParams
+	Body         *PutRepoActionsVariableJSONRequestBody
+}
+
+type PutRepoActionsVariableResponseObject interface {
+	VisitPutRepoActionsVariableResponse(w http.ResponseWriter) error
+}
+
+type PutRepoActionsVariable200JSONResponse ActionsVariable
+
+func (response PutRepoActionsVariable200JSONResponse) VisitPutRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsVariable307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response PutRepoActionsVariable307ApplicationProblemPlusJSONResponse) VisitPutRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsVariable400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutRepoActionsVariable400ApplicationProblemPlusJSONResponse) VisitPutRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsVariable403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutRepoActionsVariable403ApplicationProblemPlusJSONResponse) VisitPutRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsVariable404ApplicationProblemPlusJSONResponse Problem
+
+func (response PutRepoActionsVariable404ApplicationProblemPlusJSONResponse) VisitPutRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsVariable503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response PutRepoActionsVariable503ApplicationProblemPlusJSONResponse) VisitPutRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoActionsVariabledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PutRepoActionsVariabledefaultApplicationProblemPlusJSONResponse) VisitPutRepoActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsWorkflowsRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type ListActionsWorkflowsResponseObject interface {
+	VisitListActionsWorkflowsResponse(w http.ResponseWriter) error
+}
+
+type ListActionsWorkflows200JSONResponse []ActionsWorkflow
+
+func (response ListActionsWorkflows200JSONResponse) VisitListActionsWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsWorkflows307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsWorkflows307ApplicationProblemPlusJSONResponse) VisitListActionsWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsWorkflows404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsWorkflows404ApplicationProblemPlusJSONResponse) VisitListActionsWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsWorkflows503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListActionsWorkflows503ApplicationProblemPlusJSONResponse) VisitListActionsWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListActionsWorkflowsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListActionsWorkflowsdefaultApplicationProblemPlusJSONResponse) VisitListActionsWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsBadgeRequestObject struct {
+	Owner    RepoOwner            `json:"owner"`
+	Name     RepoName             `json:"name"`
+	Workflow ActionsWorkflowParam `json:"workflow"`
+	Params   GetActionsBadgeParams
+}
+
+type GetActionsBadgeResponseObject interface {
+	VisitGetActionsBadgeResponse(w http.ResponseWriter) error
+}
+
+type GetActionsBadge200ImagesvgXmlResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GetActionsBadge200ImagesvgXmlResponse) VisitGetActionsBadgeResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "image/svg+xml")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetActionsBadge307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsBadge307ApplicationProblemPlusJSONResponse) VisitGetActionsBadgeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsBadge404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsBadge404ApplicationProblemPlusJSONResponse) VisitGetActionsBadgeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsBadge503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsBadge503ApplicationProblemPlusJSONResponse) VisitGetActionsBadgeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsBadgedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetActionsBadgedefaultApplicationProblemPlusJSONResponse) VisitGetActionsBadgeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DispatchActionsWorkflowRequestObject struct {
+	Owner    RepoOwner            `json:"owner"`
+	Name     RepoName             `json:"name"`
+	Workflow ActionsWorkflowParam `json:"workflow"`
+	Body     *DispatchActionsWorkflowJSONRequestBody
+}
+
+type DispatchActionsWorkflowResponseObject interface {
+	VisitDispatchActionsWorkflowResponse(w http.ResponseWriter) error
+}
+
+type DispatchActionsWorkflow201JSONResponse ActionsRun
+
+func (response DispatchActionsWorkflow201JSONResponse) VisitDispatchActionsWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DispatchActionsWorkflow307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DispatchActionsWorkflow307ApplicationProblemPlusJSONResponse) VisitDispatchActionsWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DispatchActionsWorkflow400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DispatchActionsWorkflow400ApplicationProblemPlusJSONResponse) VisitDispatchActionsWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DispatchActionsWorkflow403ApplicationProblemPlusJSONResponse Problem
+
+func (response DispatchActionsWorkflow403ApplicationProblemPlusJSONResponse) VisitDispatchActionsWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DispatchActionsWorkflow404ApplicationProblemPlusJSONResponse Problem
+
+func (response DispatchActionsWorkflow404ApplicationProblemPlusJSONResponse) VisitDispatchActionsWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DispatchActionsWorkflow503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response DispatchActionsWorkflow503ApplicationProblemPlusJSONResponse) VisitDispatchActionsWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DispatchActionsWorkflowdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DispatchActionsWorkflowdefaultApplicationProblemPlusJSONResponse) VisitDispatchActionsWorkflowResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -41425,6 +47965,15 @@ func (response ListWebhookEventsdefaultApplicationProblemPlusJSONResponse) Visit
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// ListInstanceActionsRunners Self-hosted runners
+	// (GET /admin/actions/runners)
+	ListInstanceActionsRunners(ctx context.Context, request ListInstanceActionsRunnersRequestObject) (ListInstanceActionsRunnersResponseObject, error)
+	// CreateInstanceActionsRegistrationToken Create a runner registration token
+	// (POST /admin/actions/runners/registration-token)
+	CreateInstanceActionsRegistrationToken(ctx context.Context, request CreateInstanceActionsRegistrationTokenRequestObject) (CreateInstanceActionsRegistrationTokenResponseObject, error)
+	// DeleteInstanceActionsRunner Remove a self-hosted runner
+	// (DELETE /admin/actions/runners/{runnerId})
+	DeleteInstanceActionsRunner(ctx context.Context, request DeleteInstanceActionsRunnerRequestObject) (DeleteInstanceActionsRunnerResponseObject, error)
 	// ListAdminAudit Instance audit log, newest first
 	// (GET /admin/audit)
 	ListAdminAudit(ctx context.Context, request ListAdminAuditRequestObject) (ListAdminAuditResponseObject, error)
@@ -41587,6 +48136,33 @@ type StrictServerInterface interface {
 	// UpdateOrg Change the settings of an organization
 	// (PATCH /orgs/{org})
 	UpdateOrg(ctx context.Context, request UpdateOrgRequestObject) (UpdateOrgResponseObject, error)
+	// ListOrgActionsRunners Self-hosted runners
+	// (GET /orgs/{org}/actions/runners)
+	ListOrgActionsRunners(ctx context.Context, request ListOrgActionsRunnersRequestObject) (ListOrgActionsRunnersResponseObject, error)
+	// CreateOrgActionsRegistrationToken Create a runner registration token
+	// (POST /orgs/{org}/actions/runners/registration-token)
+	CreateOrgActionsRegistrationToken(ctx context.Context, request CreateOrgActionsRegistrationTokenRequestObject) (CreateOrgActionsRegistrationTokenResponseObject, error)
+	// DeleteOrgActionsRunner Remove a self-hosted runner
+	// (DELETE /orgs/{org}/actions/runners/{runnerId})
+	DeleteOrgActionsRunner(ctx context.Context, request DeleteOrgActionsRunnerRequestObject) (DeleteOrgActionsRunnerResponseObject, error)
+	// ListOrgActionsSecrets Actions secrets (names only)
+	// (GET /orgs/{org}/actions/secrets)
+	ListOrgActionsSecrets(ctx context.Context, request ListOrgActionsSecretsRequestObject) (ListOrgActionsSecretsResponseObject, error)
+	// DeleteOrgActionsSecret Delete an Actions secret
+	// (DELETE /orgs/{org}/actions/secrets/{secretName})
+	DeleteOrgActionsSecret(ctx context.Context, request DeleteOrgActionsSecretRequestObject) (DeleteOrgActionsSecretResponseObject, error)
+	// PutOrgActionsSecret Create or replace an Actions secret
+	// (PUT /orgs/{org}/actions/secrets/{secretName})
+	PutOrgActionsSecret(ctx context.Context, request PutOrgActionsSecretRequestObject) (PutOrgActionsSecretResponseObject, error)
+	// ListOrgActionsVariables Actions variables
+	// (GET /orgs/{org}/actions/variables)
+	ListOrgActionsVariables(ctx context.Context, request ListOrgActionsVariablesRequestObject) (ListOrgActionsVariablesResponseObject, error)
+	// DeleteOrgActionsVariable Delete an Actions variable
+	// (DELETE /orgs/{org}/actions/variables/{variableName})
+	DeleteOrgActionsVariable(ctx context.Context, request DeleteOrgActionsVariableRequestObject) (DeleteOrgActionsVariableResponseObject, error)
+	// PutOrgActionsVariable Create or replace an Actions variable
+	// (PUT /orgs/{org}/actions/variables/{variableName})
+	PutOrgActionsVariable(ctx context.Context, request PutOrgActionsVariableRequestObject) (PutOrgActionsVariableResponseObject, error)
 	// ListOrgAudit Audit log of an organization, newest first
 	// (GET /orgs/{org}/audit)
 	ListOrgAudit(ctx context.Context, request ListOrgAuditRequestObject) (ListOrgAuditResponseObject, error)
@@ -41677,6 +48253,81 @@ type StrictServerInterface interface {
 	// UpdateRepo Change the settings of a repository
 	// (PATCH /repos/{owner}/{name})
 	UpdateRepo(ctx context.Context, request UpdateRepoRequestObject) (UpdateRepoResponseObject, error)
+	// ListActionsEnvironments Deployment environments
+	// (GET /repos/{owner}/{name}/actions/environments)
+	ListActionsEnvironments(ctx context.Context, request ListActionsEnvironmentsRequestObject) (ListActionsEnvironmentsResponseObject, error)
+	// DeleteActionsEnvironment Delete an environment
+	// (DELETE /repos/{owner}/{name}/actions/environments/{environment})
+	DeleteActionsEnvironment(ctx context.Context, request DeleteActionsEnvironmentRequestObject) (DeleteActionsEnvironmentResponseObject, error)
+	// PutActionsEnvironment Create or update an environment
+	// (PUT /repos/{owner}/{name}/actions/environments/{environment})
+	PutActionsEnvironment(ctx context.Context, request PutActionsEnvironmentRequestObject) (PutActionsEnvironmentResponseObject, error)
+	// GetActionsJob A job with its steps
+	// (GET /repos/{owner}/{name}/actions/jobs/{jobId})
+	GetActionsJob(ctx context.Context, request GetActionsJobRequestObject) (GetActionsJobResponseObject, error)
+	// CancelActionsJob Cancel one job
+	// (POST /repos/{owner}/{name}/actions/jobs/{jobId}/cancel)
+	CancelActionsJob(ctx context.Context, request CancelActionsJobRequestObject) (CancelActionsJobResponseObject, error)
+	// ReviewActionsDeployment Approve or reject a job waiting for a protected environment
+	// (POST /repos/{owner}/{name}/actions/jobs/{jobId}/deployment)
+	ReviewActionsDeployment(ctx context.Context, request ReviewActionsDeploymentRequestObject) (ReviewActionsDeploymentResponseObject, error)
+	// GetActionsJobLog A page of the log of a job
+	// (GET /repos/{owner}/{name}/actions/jobs/{jobId}/logs)
+	GetActionsJobLog(ctx context.Context, request GetActionsJobLogRequestObject) (GetActionsJobLogResponseObject, error)
+	// ListRepoActionsRunners Self-hosted runners
+	// (GET /repos/{owner}/{name}/actions/runners)
+	ListRepoActionsRunners(ctx context.Context, request ListRepoActionsRunnersRequestObject) (ListRepoActionsRunnersResponseObject, error)
+	// CreateRepoActionsRegistrationToken Create a runner registration token
+	// (POST /repos/{owner}/{name}/actions/runners/registration-token)
+	CreateRepoActionsRegistrationToken(ctx context.Context, request CreateRepoActionsRegistrationTokenRequestObject) (CreateRepoActionsRegistrationTokenResponseObject, error)
+	// DeleteRepoActionsRunner Remove a self-hosted runner
+	// (DELETE /repos/{owner}/{name}/actions/runners/{runnerId})
+	DeleteRepoActionsRunner(ctx context.Context, request DeleteRepoActionsRunnerRequestObject) (DeleteRepoActionsRunnerResponseObject, error)
+	// ListActionsRuns Workflow runs of the repository, newest first
+	// (GET /repos/{owner}/{name}/actions/runs)
+	ListActionsRuns(ctx context.Context, request ListActionsRunsRequestObject) (ListActionsRunsResponseObject, error)
+	// GetActionsRun A workflow run
+	// (GET /repos/{owner}/{name}/actions/runs/{runId})
+	GetActionsRun(ctx context.Context, request GetActionsRunRequestObject) (GetActionsRunResponseObject, error)
+	// ApproveActionsRun Approve a run waiting for approval
+	// (POST /repos/{owner}/{name}/actions/runs/{runId}/approve)
+	ApproveActionsRun(ctx context.Context, request ApproveActionsRunRequestObject) (ApproveActionsRunResponseObject, error)
+	// CancelActionsRun Cancel a run that is not completed
+	// (POST /repos/{owner}/{name}/actions/runs/{runId}/cancel)
+	CancelActionsRun(ctx context.Context, request CancelActionsRunRequestObject) (CancelActionsRunResponseObject, error)
+	// ListActionsRunJobs Jobs of a run attempt
+	// (GET /repos/{owner}/{name}/actions/runs/{runId}/jobs)
+	ListActionsRunJobs(ctx context.Context, request ListActionsRunJobsRequestObject) (ListActionsRunJobsResponseObject, error)
+	// RerunActionsRun Start a new attempt of a completed run
+	// (POST /repos/{owner}/{name}/actions/runs/{runId}/rerun)
+	RerunActionsRun(ctx context.Context, request RerunActionsRunRequestObject) (RerunActionsRunResponseObject, error)
+	// ListRepoActionsSecrets Actions secrets (names only)
+	// (GET /repos/{owner}/{name}/actions/secrets)
+	ListRepoActionsSecrets(ctx context.Context, request ListRepoActionsSecretsRequestObject) (ListRepoActionsSecretsResponseObject, error)
+	// DeleteRepoActionsSecret Delete an Actions secret
+	// (DELETE /repos/{owner}/{name}/actions/secrets/{secretName})
+	DeleteRepoActionsSecret(ctx context.Context, request DeleteRepoActionsSecretRequestObject) (DeleteRepoActionsSecretResponseObject, error)
+	// PutRepoActionsSecret Create or replace an Actions secret
+	// (PUT /repos/{owner}/{name}/actions/secrets/{secretName})
+	PutRepoActionsSecret(ctx context.Context, request PutRepoActionsSecretRequestObject) (PutRepoActionsSecretResponseObject, error)
+	// ListRepoActionsVariables Actions variables
+	// (GET /repos/{owner}/{name}/actions/variables)
+	ListRepoActionsVariables(ctx context.Context, request ListRepoActionsVariablesRequestObject) (ListRepoActionsVariablesResponseObject, error)
+	// DeleteRepoActionsVariable Delete an Actions variable
+	// (DELETE /repos/{owner}/{name}/actions/variables/{variableName})
+	DeleteRepoActionsVariable(ctx context.Context, request DeleteRepoActionsVariableRequestObject) (DeleteRepoActionsVariableResponseObject, error)
+	// PutRepoActionsVariable Create or replace an Actions variable
+	// (PUT /repos/{owner}/{name}/actions/variables/{variableName})
+	PutRepoActionsVariable(ctx context.Context, request PutRepoActionsVariableRequestObject) (PutRepoActionsVariableResponseObject, error)
+	// ListActionsWorkflows Workflow files that ran in the repository
+	// (GET /repos/{owner}/{name}/actions/workflows)
+	ListActionsWorkflows(ctx context.Context, request ListActionsWorkflowsRequestObject) (ListActionsWorkflowsResponseObject, error)
+	// GetActionsBadge SVG status badge of a workflow
+	// (GET /repos/{owner}/{name}/actions/workflows/{workflow}/badge.svg)
+	GetActionsBadge(ctx context.Context, request GetActionsBadgeRequestObject) (GetActionsBadgeResponseObject, error)
+	// DispatchActionsWorkflow Start a workflow_dispatch run
+	// (POST /repos/{owner}/{name}/actions/workflows/{workflow}/dispatches)
+	DispatchActionsWorkflow(ctx context.Context, request DispatchActionsWorkflowRequestObject) (DispatchActionsWorkflowResponseObject, error)
 	// GetBlame Line authorship of a text file
 	// (GET /repos/{owner}/{name}/blame)
 	GetBlame(ctx context.Context, request GetBlameRequestObject) (GetBlameResponseObject, error)
@@ -42205,6 +48856,80 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// ListInstanceActionsRunners operation middleware
+func (sh *strictHandler) ListInstanceActionsRunners(w http.ResponseWriter, r *http.Request) {
+	var request ListInstanceActionsRunnersRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListInstanceActionsRunners(ctx, request.(ListInstanceActionsRunnersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListInstanceActionsRunners")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListInstanceActionsRunnersResponseObject); ok {
+		if err := validResponse.VisitListInstanceActionsRunnersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateInstanceActionsRegistrationToken operation middleware
+func (sh *strictHandler) CreateInstanceActionsRegistrationToken(w http.ResponseWriter, r *http.Request) {
+	var request CreateInstanceActionsRegistrationTokenRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateInstanceActionsRegistrationToken(ctx, request.(CreateInstanceActionsRegistrationTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateInstanceActionsRegistrationToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateInstanceActionsRegistrationTokenResponseObject); ok {
+		if err := validResponse.VisitCreateInstanceActionsRegistrationTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteInstanceActionsRunner operation middleware
+func (sh *strictHandler) DeleteInstanceActionsRunner(w http.ResponseWriter, r *http.Request, runnerId ActionsRunnerId) {
+	var request DeleteInstanceActionsRunnerRequestObject
+
+	request.RunnerId = runnerId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteInstanceActionsRunner(ctx, request.(DeleteInstanceActionsRunnerRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteInstanceActionsRunner")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteInstanceActionsRunnerResponseObject); ok {
+		if err := validResponse.VisitDeleteInstanceActionsRunnerResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // ListAdminAudit operation middleware
@@ -43713,6 +50438,259 @@ func (sh *strictHandler) UpdateOrg(w http.ResponseWriter, r *http.Request, org O
 	}
 }
 
+// ListOrgActionsRunners operation middleware
+func (sh *strictHandler) ListOrgActionsRunners(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request ListOrgActionsRunnersRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgActionsRunners(ctx, request.(ListOrgActionsRunnersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgActionsRunners")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgActionsRunnersResponseObject); ok {
+		if err := validResponse.VisitListOrgActionsRunnersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateOrgActionsRegistrationToken operation middleware
+func (sh *strictHandler) CreateOrgActionsRegistrationToken(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request CreateOrgActionsRegistrationTokenRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateOrgActionsRegistrationToken(ctx, request.(CreateOrgActionsRegistrationTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateOrgActionsRegistrationToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateOrgActionsRegistrationTokenResponseObject); ok {
+		if err := validResponse.VisitCreateOrgActionsRegistrationTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteOrgActionsRunner operation middleware
+func (sh *strictHandler) DeleteOrgActionsRunner(w http.ResponseWriter, r *http.Request, org OrgName, runnerId ActionsRunnerId) {
+	var request DeleteOrgActionsRunnerRequestObject
+
+	request.Org = org
+	request.RunnerId = runnerId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteOrgActionsRunner(ctx, request.(DeleteOrgActionsRunnerRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteOrgActionsRunner")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteOrgActionsRunnerResponseObject); ok {
+		if err := validResponse.VisitDeleteOrgActionsRunnerResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrgActionsSecrets operation middleware
+func (sh *strictHandler) ListOrgActionsSecrets(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request ListOrgActionsSecretsRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgActionsSecrets(ctx, request.(ListOrgActionsSecretsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgActionsSecrets")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgActionsSecretsResponseObject); ok {
+		if err := validResponse.VisitListOrgActionsSecretsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteOrgActionsSecret operation middleware
+func (sh *strictHandler) DeleteOrgActionsSecret(w http.ResponseWriter, r *http.Request, org OrgName, secretName ActionsSecretName) {
+	var request DeleteOrgActionsSecretRequestObject
+
+	request.Org = org
+	request.SecretName = secretName
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteOrgActionsSecret(ctx, request.(DeleteOrgActionsSecretRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteOrgActionsSecret")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteOrgActionsSecretResponseObject); ok {
+		if err := validResponse.VisitDeleteOrgActionsSecretResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutOrgActionsSecret operation middleware
+func (sh *strictHandler) PutOrgActionsSecret(w http.ResponseWriter, r *http.Request, org OrgName, secretName ActionsSecretName) {
+	var request PutOrgActionsSecretRequestObject
+
+	request.Org = org
+	request.SecretName = secretName
+
+	var body PutOrgActionsSecretJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutOrgActionsSecret(ctx, request.(PutOrgActionsSecretRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutOrgActionsSecret")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutOrgActionsSecretResponseObject); ok {
+		if err := validResponse.VisitPutOrgActionsSecretResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrgActionsVariables operation middleware
+func (sh *strictHandler) ListOrgActionsVariables(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request ListOrgActionsVariablesRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgActionsVariables(ctx, request.(ListOrgActionsVariablesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgActionsVariables")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgActionsVariablesResponseObject); ok {
+		if err := validResponse.VisitListOrgActionsVariablesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteOrgActionsVariable operation middleware
+func (sh *strictHandler) DeleteOrgActionsVariable(w http.ResponseWriter, r *http.Request, org OrgName, variableName ActionsVariableName) {
+	var request DeleteOrgActionsVariableRequestObject
+
+	request.Org = org
+	request.VariableName = variableName
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteOrgActionsVariable(ctx, request.(DeleteOrgActionsVariableRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteOrgActionsVariable")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteOrgActionsVariableResponseObject); ok {
+		if err := validResponse.VisitDeleteOrgActionsVariableResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutOrgActionsVariable operation middleware
+func (sh *strictHandler) PutOrgActionsVariable(w http.ResponseWriter, r *http.Request, org OrgName, variableName ActionsVariableName) {
+	var request PutOrgActionsVariableRequestObject
+
+	request.Org = org
+	request.VariableName = variableName
+
+	var body PutOrgActionsVariableJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutOrgActionsVariable(ctx, request.(PutOrgActionsVariableRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutOrgActionsVariable")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutOrgActionsVariableResponseObject); ok {
+		if err := validResponse.VisitPutOrgActionsVariableResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListOrgAudit operation middleware
 func (sh *strictHandler) ListOrgAudit(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgAuditParams) {
 	var request ListOrgAuditRequestObject
@@ -44575,6 +51553,744 @@ func (sh *strictHandler) UpdateRepo(w http.ResponseWriter, r *http.Request, owne
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateRepoResponseObject); ok {
 		if err := validResponse.VisitUpdateRepoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListActionsEnvironments operation middleware
+func (sh *strictHandler) ListActionsEnvironments(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request ListActionsEnvironmentsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListActionsEnvironments(ctx, request.(ListActionsEnvironmentsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListActionsEnvironments")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListActionsEnvironmentsResponseObject); ok {
+		if err := validResponse.VisitListActionsEnvironmentsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteActionsEnvironment operation middleware
+func (sh *strictHandler) DeleteActionsEnvironment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, environment ActionsEnvironmentName) {
+	var request DeleteActionsEnvironmentRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Environment = environment
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteActionsEnvironment(ctx, request.(DeleteActionsEnvironmentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteActionsEnvironment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteActionsEnvironmentResponseObject); ok {
+		if err := validResponse.VisitDeleteActionsEnvironmentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutActionsEnvironment operation middleware
+func (sh *strictHandler) PutActionsEnvironment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, environment ActionsEnvironmentName) {
+	var request PutActionsEnvironmentRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Environment = environment
+
+	var body PutActionsEnvironmentJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutActionsEnvironment(ctx, request.(PutActionsEnvironmentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutActionsEnvironment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutActionsEnvironmentResponseObject); ok {
+		if err := validResponse.VisitPutActionsEnvironmentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetActionsJob operation middleware
+func (sh *strictHandler) GetActionsJob(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId) {
+	var request GetActionsJobRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.JobId = jobId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetActionsJob(ctx, request.(GetActionsJobRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetActionsJob")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetActionsJobResponseObject); ok {
+		if err := validResponse.VisitGetActionsJobResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CancelActionsJob operation middleware
+func (sh *strictHandler) CancelActionsJob(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId) {
+	var request CancelActionsJobRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.JobId = jobId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CancelActionsJob(ctx, request.(CancelActionsJobRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CancelActionsJob")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CancelActionsJobResponseObject); ok {
+		if err := validResponse.VisitCancelActionsJobResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReviewActionsDeployment operation middleware
+func (sh *strictHandler) ReviewActionsDeployment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId) {
+	var request ReviewActionsDeploymentRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.JobId = jobId
+
+	var body ReviewActionsDeploymentJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReviewActionsDeployment(ctx, request.(ReviewActionsDeploymentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReviewActionsDeployment")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReviewActionsDeploymentResponseObject); ok {
+		if err := validResponse.VisitReviewActionsDeploymentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetActionsJobLog operation middleware
+func (sh *strictHandler) GetActionsJobLog(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId, params GetActionsJobLogParams) {
+	var request GetActionsJobLogRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.JobId = jobId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetActionsJobLog(ctx, request.(GetActionsJobLogRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetActionsJobLog")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetActionsJobLogResponseObject); ok {
+		if err := validResponse.VisitGetActionsJobLogResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListRepoActionsRunners operation middleware
+func (sh *strictHandler) ListRepoActionsRunners(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request ListRepoActionsRunnersRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListRepoActionsRunners(ctx, request.(ListRepoActionsRunnersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListRepoActionsRunners")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListRepoActionsRunnersResponseObject); ok {
+		if err := validResponse.VisitListRepoActionsRunnersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateRepoActionsRegistrationToken operation middleware
+func (sh *strictHandler) CreateRepoActionsRegistrationToken(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request CreateRepoActionsRegistrationTokenRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateRepoActionsRegistrationToken(ctx, request.(CreateRepoActionsRegistrationTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateRepoActionsRegistrationToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateRepoActionsRegistrationTokenResponseObject); ok {
+		if err := validResponse.VisitCreateRepoActionsRegistrationTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteRepoActionsRunner operation middleware
+func (sh *strictHandler) DeleteRepoActionsRunner(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runnerId ActionsRunnerId) {
+	var request DeleteRepoActionsRunnerRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RunnerId = runnerId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteRepoActionsRunner(ctx, request.(DeleteRepoActionsRunnerRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteRepoActionsRunner")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteRepoActionsRunnerResponseObject); ok {
+		if err := validResponse.VisitDeleteRepoActionsRunnerResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListActionsRuns operation middleware
+func (sh *strictHandler) ListActionsRuns(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListActionsRunsParams) {
+	var request ListActionsRunsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListActionsRuns(ctx, request.(ListActionsRunsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListActionsRuns")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListActionsRunsResponseObject); ok {
+		if err := validResponse.VisitListActionsRunsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetActionsRun operation middleware
+func (sh *strictHandler) GetActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId) {
+	var request GetActionsRunRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RunId = runId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetActionsRun(ctx, request.(GetActionsRunRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetActionsRun")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetActionsRunResponseObject); ok {
+		if err := validResponse.VisitGetActionsRunResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ApproveActionsRun operation middleware
+func (sh *strictHandler) ApproveActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId) {
+	var request ApproveActionsRunRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RunId = runId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ApproveActionsRun(ctx, request.(ApproveActionsRunRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ApproveActionsRun")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ApproveActionsRunResponseObject); ok {
+		if err := validResponse.VisitApproveActionsRunResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CancelActionsRun operation middleware
+func (sh *strictHandler) CancelActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId) {
+	var request CancelActionsRunRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RunId = runId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CancelActionsRun(ctx, request.(CancelActionsRunRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CancelActionsRun")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CancelActionsRunResponseObject); ok {
+		if err := validResponse.VisitCancelActionsRunResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListActionsRunJobs operation middleware
+func (sh *strictHandler) ListActionsRunJobs(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId, params ListActionsRunJobsParams) {
+	var request ListActionsRunJobsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RunId = runId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListActionsRunJobs(ctx, request.(ListActionsRunJobsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListActionsRunJobs")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListActionsRunJobsResponseObject); ok {
+		if err := validResponse.VisitListActionsRunJobsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RerunActionsRun operation middleware
+func (sh *strictHandler) RerunActionsRun(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, runId ActionsRunId) {
+	var request RerunActionsRunRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.RunId = runId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RerunActionsRun(ctx, request.(RerunActionsRunRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RerunActionsRun")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RerunActionsRunResponseObject); ok {
+		if err := validResponse.VisitRerunActionsRunResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListRepoActionsSecrets operation middleware
+func (sh *strictHandler) ListRepoActionsSecrets(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListRepoActionsSecretsParams) {
+	var request ListRepoActionsSecretsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListRepoActionsSecrets(ctx, request.(ListRepoActionsSecretsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListRepoActionsSecrets")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListRepoActionsSecretsResponseObject); ok {
+		if err := validResponse.VisitListRepoActionsSecretsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteRepoActionsSecret operation middleware
+func (sh *strictHandler) DeleteRepoActionsSecret(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, secretName ActionsSecretName, params DeleteRepoActionsSecretParams) {
+	var request DeleteRepoActionsSecretRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.SecretName = secretName
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteRepoActionsSecret(ctx, request.(DeleteRepoActionsSecretRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteRepoActionsSecret")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteRepoActionsSecretResponseObject); ok {
+		if err := validResponse.VisitDeleteRepoActionsSecretResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutRepoActionsSecret operation middleware
+func (sh *strictHandler) PutRepoActionsSecret(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, secretName ActionsSecretName, params PutRepoActionsSecretParams) {
+	var request PutRepoActionsSecretRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.SecretName = secretName
+	request.Params = params
+
+	var body PutRepoActionsSecretJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutRepoActionsSecret(ctx, request.(PutRepoActionsSecretRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutRepoActionsSecret")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutRepoActionsSecretResponseObject); ok {
+		if err := validResponse.VisitPutRepoActionsSecretResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListRepoActionsVariables operation middleware
+func (sh *strictHandler) ListRepoActionsVariables(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListRepoActionsVariablesParams) {
+	var request ListRepoActionsVariablesRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListRepoActionsVariables(ctx, request.(ListRepoActionsVariablesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListRepoActionsVariables")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListRepoActionsVariablesResponseObject); ok {
+		if err := validResponse.VisitListRepoActionsVariablesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteRepoActionsVariable operation middleware
+func (sh *strictHandler) DeleteRepoActionsVariable(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, variableName ActionsVariableName, params DeleteRepoActionsVariableParams) {
+	var request DeleteRepoActionsVariableRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.VariableName = variableName
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteRepoActionsVariable(ctx, request.(DeleteRepoActionsVariableRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteRepoActionsVariable")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteRepoActionsVariableResponseObject); ok {
+		if err := validResponse.VisitDeleteRepoActionsVariableResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutRepoActionsVariable operation middleware
+func (sh *strictHandler) PutRepoActionsVariable(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, variableName ActionsVariableName, params PutRepoActionsVariableParams) {
+	var request PutRepoActionsVariableRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.VariableName = variableName
+	request.Params = params
+
+	var body PutRepoActionsVariableJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutRepoActionsVariable(ctx, request.(PutRepoActionsVariableRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutRepoActionsVariable")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutRepoActionsVariableResponseObject); ok {
+		if err := validResponse.VisitPutRepoActionsVariableResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListActionsWorkflows operation middleware
+func (sh *strictHandler) ListActionsWorkflows(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request ListActionsWorkflowsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListActionsWorkflows(ctx, request.(ListActionsWorkflowsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListActionsWorkflows")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListActionsWorkflowsResponseObject); ok {
+		if err := validResponse.VisitListActionsWorkflowsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetActionsBadge operation middleware
+func (sh *strictHandler) GetActionsBadge(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, workflow ActionsWorkflowParam, params GetActionsBadgeParams) {
+	var request GetActionsBadgeRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Workflow = workflow
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetActionsBadge(ctx, request.(GetActionsBadgeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetActionsBadge")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetActionsBadgeResponseObject); ok {
+		if err := validResponse.VisitGetActionsBadgeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DispatchActionsWorkflow operation middleware
+func (sh *strictHandler) DispatchActionsWorkflow(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, workflow ActionsWorkflowParam) {
+	var request DispatchActionsWorkflowRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Workflow = workflow
+
+	var body DispatchActionsWorkflowJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DispatchActionsWorkflow(ctx, request.(DispatchActionsWorkflowRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DispatchActionsWorkflow")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DispatchActionsWorkflowResponseObject); ok {
+		if err := validResponse.VisitDispatchActionsWorkflowResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

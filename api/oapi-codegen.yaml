@@ -8,6 +8,9 @@ generate:
   embedded-spec: false
 output-options:
   skip-prune: false
+  # Streamed outside the request timeout by hand-written handlers
+  # (internal/httpapi/actionsapi.go).
+  exclude-operation-ids: [getActionsJobLogRaw, streamActionsJobLog]
 compatibility:
   # Puts the security scopes of each operation in the request context
   # (v1gen.SessionScopes), read by the authorization middleware.

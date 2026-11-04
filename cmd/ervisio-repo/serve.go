@@ -274,6 +274,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 			wireActions(ctx, actionsSvc, actions.Deps{Repos: repoSvc, Browse: browse, Statuses: statusSvc,
 				Payloads: hooks, Jobs: runner, Bus: bus}, bus)
 			deps.ActionsRunner = actionsSvc.RunnerHandler()
+			deps.Actions = actionsSvc
 		}
 
 		hooks.SetRepos(repoSvc)
