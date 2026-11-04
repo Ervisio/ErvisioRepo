@@ -1,0 +1,8 @@
+version: v2
+plugins:
+  - local: ["go", "run", "google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.12"]
+    out: ../..
+    opt: module=github.com/Ervisio/ErvisioRepo
+  - local: ["go", "run", "connectrpc.com/connect/cmd/protoc-gen-connect-go@v1.21.1"]
+    out: ../..
+    opt: module=github.com/Ervisio/ErvisioRepo

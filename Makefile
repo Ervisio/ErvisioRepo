@@ -12,6 +12,7 @@ SQLC_VERSION          := v1.31.1
 GOLANGCI_LINT_VERSION := v2.15.0
 OAPI_CODEGEN_VERSION  := v2.8.2
 GOVULNCHECK_VERSION   := v1.9.0
+BUF_VERSION           := v1.75.0
 
 GOBIN := $(shell go env GOPATH)/bin
 export PATH := $(GOBIN):$(PATH)
@@ -30,6 +31,7 @@ generate: ## Regenerate oapi-codegen, sqlc and the web API client
 	go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@$(OAPI_CODEGEN_VERSION) -config api/oapi-codegen.yaml api/openapi.yaml
 	go run github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION) generate -f internal/db/sqlc.yaml
 	npm --prefix web run gen:api
+	cd api/runner && go run github.com/bufbuild/buf/cmd/buf@$(BUF_VERSION) generate
 
 web: ## Install web dependencies and build the SPA
 	npm --prefix web ci

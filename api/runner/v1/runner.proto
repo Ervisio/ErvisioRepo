@@ -1,0 +1,188 @@
+// Runner protocol of Ervisio Actions (PLAN §6.2).
+//
+// The runner only dials out: every call is a ConnectRPC request over HTTPS
+// from ervisio-runner to the server, mounted under /api/actions/runner/.
+//
+// Authentication:
+//   - Register carries a registration token (errt_…) in the request body;
+//   - every other call carries the runner credential returned by Register
+//     as "Authorization: Bearer erun_…".
+// Job tokens (erj_…) travel inside Task and are never used on this service.
+syntax = "proto3";
+
+package ervisio.runner.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Ervisio/ErvisioRepo/internal/runnerapi/runnerv1;runnerv1";
+
+service RunnerService {
+  // Register exchanges a registration token for a runner credential.
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  // Declare updates the version and labels of an already registered runner.
+  // Called at every daemon start.
+  rpc Declare(DeclareRequest) returns (DeclareResponse);
+  // FetchTask long-polls (up to ~30 s) for the next job matching the
+  // runner labels. An empty response means "nothing to do, poll again".
+  rpc FetchTask(FetchTaskRequest) returns (FetchTaskResponse);
+  // UpdateTask reports the job and step state. The response tells the
+  // runner whether the job was cancelled on the server.
+  rpc UpdateTask(UpdateTaskRequest) returns (UpdateTaskResponse);
+  // UpdateLog appends log rows of a job. Rows are idempotent by index: the
+  // server keeps rows from ack_index on and ignores the ones it already has.
+  rpc UpdateLog(UpdateLogRequest) returns (UpdateLogResponse);
+  // Heartbeat keeps the runner online and returns the ids of running tasks
+  // the server wants cancelled.
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+}
+
+enum Result {
+  RESULT_UNSPECIFIED = 0;
+  RESULT_SUCCESS = 1;
+  RESULT_FAILURE = 2;
+  RESULT_CANCELLED = 3;
+  RESULT_SKIPPED = 4;
+}
+
+message RegisterRequest {
+  string token = 1;
+  string name = 2;
+  string version = 3;
+  // labels are "name" or "name:scheme://image", e.g.
+  // "ubuntu-latest:docker://ghcr.io/catthehacker/ubuntu:act-24.04".
+  repeated string labels = 4;
+  // ephemeral runners take a single job and are then removed.
+  bool ephemeral = 5;
+}
+
+message RegisterResponse {
+  Runner runner = 1;
+  // credential is the erun_… secret; it is shown only here.
+  string credential = 2;
+}
+
+message DeclareRequest {
+  string version = 1;
+  repeated string labels = 2;
+}
+
+message DeclareResponse {
+  Runner runner = 1;
+}
+
+message Runner {
+  string id = 1;
+  string name = 2;
+  string version = 3;
+  repeated string labels = 4;
+  bool ephemeral = 5;
+  // scope is "instance", "org:<name>" or "repo:<owner>/<name>".
+  string scope = 6;
+}
+
+message FetchTaskRequest {
+  // tasks_version lets the server answer at once when nothing changed
+  // since the previous poll; 0 forces a full check.
+  int64 tasks_version = 1;
+  // capacity is how many more jobs the runner can take right now.
+  int32 capacity = 2;
+}
+
+message FetchTaskResponse {
+  // task is unset when there is nothing to run.
+  Task task = 1;
+  int64 tasks_version = 2;
+}
+
+message Task {
+  // id is the job id (uuid).
+  string id = 1;
+  // workflow_payload is a single-job workflow (YAML) with the matrix
+  // already expanded and expressions known to the server resolved.
+  bytes workflow_payload = 2;
+  // context is the "github" context of the job.
+  google.protobuf.Struct context = 3;
+  map<string, string> secrets = 4;
+  map<string, string> vars = 5;
+  map<string, TaskNeed> needs = 6;
+  // token is the job token (erj_…), exposed as GITHUB_TOKEN.
+  string token = 7;
+  // runtime_url, results_url and cache_url back ACTIONS_RUNTIME_URL,
+  // ACTIONS_RESULTS_URL and ACTIONS_CACHE_URL.
+  string runtime_url = 8;
+  string results_url = 9;
+  string cache_url = 10;
+  // timeout_minutes is the effective job timeout (instance cap applied).
+  int32 timeout_minutes = 11;
+  // label is the runs-on label the job matched.
+  string label = 12;
+  // attempt is the run attempt, starting at 1.
+  int32 attempt = 13;
+}
+
+message TaskNeed {
+  map<string, string> outputs = 1;
+  Result result = 2;
+}
+
+message TaskState {
+  string id = 1;
+  // result is unset while the job is running.
+  Result result = 2;
+  google.protobuf.Timestamp started_at = 3;
+  google.protobuf.Timestamp stopped_at = 4;
+  repeated StepState steps = 5;
+}
+
+message StepState {
+  // index is the position of the step in the job, from 0.
+  int32 index = 1;
+  string name = 2;
+  Result result = 3;
+  google.protobuf.Timestamp started_at = 4;
+  google.protobuf.Timestamp stopped_at = 5;
+  // log_index and log_length locate the step rows in the job log.
+  int64 log_index = 6;
+  int64 log_length = 7;
+}
+
+message UpdateTaskRequest {
+  TaskState state = 1;
+  // outputs are job outputs; the server keeps the first value of each key.
+  map<string, string> outputs = 2;
+}
+
+message UpdateTaskResponse {
+  // cancelled is true when the job was cancelled and must stop.
+  bool cancelled = 1;
+  // sent_outputs lists the output keys the server has stored.
+  repeated string sent_outputs = 2;
+}
+
+message LogRow {
+  google.protobuf.Timestamp time = 1;
+  string content = 2;
+}
+
+message UpdateLogRequest {
+  string task_id = 1;
+  // index is the position of rows[0] in the job log.
+  int64 index = 2;
+  repeated LogRow rows = 3;
+  // no_more marks the end of the log; the server then archives it.
+  bool no_more = 4;
+}
+
+message UpdateLogResponse {
+  // ack_index is the number of rows the server has stored.
+  int64 ack_index = 1;
+}
+
+message HeartbeatRequest {
+  repeated string running_task_ids = 1;
+}
+
+message HeartbeatResponse {
+  repeated string cancel_task_ids = 1;
+}
