@@ -16,4 +16,5 @@ __pycache__/
 *.tsbuildinfo
 .variant-studio/
 .context/now.md
+.context/archive/
 .context/.last-nudge

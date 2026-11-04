@@ -3,7 +3,7 @@ Purpose: how ErvisioRepo is built, packaged, signed, installed (Docker or native
 Entry points: Dockerfile, deploy/docker/compose.yaml, deploy/docker/setup.sh, deploy/docker/setup.bat, deploy/install.sh, packaging/nfpm.yaml, packaging/scripts/postinstall.sh, packaging/systemd/*.service, scripts/release/build.sh, scripts/release/sign/main.go, internal/caddy/apply.go:Apply, internal/caddy/instance.go:Detect, cmd/ervisio-repo/caddy.go:caddyCmd, Makefile (docker, package, release)
 Flow (release): make web → scripts/release/build.sh (cross-build ervisio-repo, ervisio-runner, erepo per arch; tar.gz + nfpm deb/rpm with stable names ervisio-repo_<ver>_linux_<arch>.<ext>) → dist/SHA256SUMS → sign tool writes SHA256SUMS.sig (raw ed25519, PEM keys) → GitHub release.
 Flow (native install): install.sh resolves version → downloads package + SHA256SUMS + .sig → openssl pkeyutl -rawin verify with embedded PUBKEY → checksum → apt/dnf install → postinstall.sh creates user, dirs, master.key, best-effort local PG role and flips /usr/lib/ervisio-repo/current symlink to the newest versions/<ver>.
-Flow (Docker): setup.sh generates master.key and POSTGRES_PASSWORD (safe to re-run, keeps secrets), writes config and .env, starts compose (app, postgres, optional profiles: runner, walg).
+Flow (Docker): setup.sh generates master.key and POSTGRES_PASSWORD (safe to re-run, keeps secrets), writes config (storage.policy.git and storage.policy.actions) and .env, then `docker compose pull app`; if the pull fails it runs `compose build app` from the checkout, then `up -d --wait` (app, postgres, optional profiles: runner, walg). setup.bat mirrors this.
 Flow (Caddy): `ervisio-repo caddy setup|status|remove` → caddy.Detect (system caddy.service or Docker containers) → Apply: write ervisio-repo.caddy + import line (or inline marked block) → validate → reload → rollback files on failure.
 Invariants:
 - One Alpine image holds server, runner and CLI; runs as uid 1001, entrypoint tini, healthcheck on /healthz :3400.
@@ -20,6 +20,8 @@ Gotchas:
 - Socket dir: setup.sh and setup.bat both switch ERVISIO_SOCKET_DIR to /run/ervisio-repo when the Ervisio plugin is enabled (the plugin looks there inside the Docker VM); otherwise ./run.
 - build.sh writes stub scripts for missing optional binaries so nfpm does not fail; a stub exits 1 by design.
 - Dockerfile and Makefile build ervisio-runner/erepo only if cmd/<name> has Go files (skips silently).
+- build.sh renders packaging/nfpm.yaml with sed (only ${VERSION}, ${ARCH}, ${BIN_DIR}) into dist/build/nfpm-<arch>.yaml, because nfpm does not expand env vars; a new placeholder must be added to that sed line.
+- compose app image is ghcr.io/ervisio/ervisio-repo:${ERVISIO_VERSION}; `up --build` builds from the checkout under that same name, so a later `up` without pull reuses the local build.
 Related: map/plugin.md (drives setup.sh/install.sh, uses the Caddy flow in TS), map/runner.md, map/repo-core.md
 - Release bump: compose default ERVISIO_VERSION + plugin version (package.json, lock, manifest, catalog-entry) must equal the tag. Image: buildx builder erepo-release, multi-arch push to ghcr.io/ervisio/ervisio-repo:<ver>,latest. Plugin pack needs GNU tar: run `npx ervisio-plugin-pack pack` in node:24-bookworm with TAG=v<ver> after `npm run build`.
 - Dockerfile web stage must COPY web/.npmrc (legacy-peer-deps for openapi-typescript vs TS 6).

@@ -34,4 +34,5 @@ Gotchas:
 - Fork/permission checks happen in service methods, not in the router; a new endpoint must call repoFor or manageRepo.
 - Events are dispatched by bus registration in serve.go (actions.trigger): a new event kind must be added to actions.EventKinds or it never triggers workflows.
 - sqlc queries live in internal/db/queries/actions.sql (CLAUDE.md rule 5); new SQL goes there.
+- setupActionsResults (cmd/ervisio-repo/actions.go) returns nil with a warning when no [storage.policy.actions] exists (tier.ErrUnknownPolicy), so the actions cache and artifact services stay off. Shipped configs (packaging, setup.sh/setup.bat, deploy/dev) include the policy; hand-written configs must add it.
 Related: map/runner.md (ervisio-runner client side, act library, reporter), map/repo-core.md (events bus, jobs, storage).
