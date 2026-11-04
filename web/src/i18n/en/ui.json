@@ -69,5 +69,20 @@
   "hue.pr": "Pull requests",
   "hue.issue": "Issues",
   "hue.act": "Actions",
-  "hue.pkg": "Packages"
+  "hue.pkg": "Packages",
+  "settings.search": "Search settings",
+  "settings.noMatch": "No setting matches.",
+  "settings.changed": "Changed",
+  "settings.was": "Was: {value}",
+  "settings.empty": "empty",
+  "settings.unsaved.one": "1 unsaved change",
+  "settings.unsaved.other": "{count} unsaved changes",
+  "settings.discard": "Discard",
+  "settings.save": "Save changes",
+  "settings.saving": "Saving…",
+  "settings.leave.title": "Leave without saving?",
+  "settings.leave.description": "Your unsaved changes on this page will be lost.",
+  "settings.leave.stay": "Stay",
+  "settings.leave.go": "Leave and discard",
+  "confirm.type": "Type {text} to confirm"
 }

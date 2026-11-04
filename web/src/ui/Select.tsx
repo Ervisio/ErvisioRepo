@@ -13,13 +13,15 @@ export type SelectProps = {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Keeps the label for assistive tech only, when a settings row already shows it. */
+  hideLabel?: boolean;
 };
 
-export function Select({ label, value, onValueChange, options, placeholder, disabled, className }: SelectProps) {
+export function Select({ label, value, onValueChange, options, placeholder, disabled, className, hideLabel }: SelectProps) {
   const id = useId();
   return (
     <div className={["ui-field", className].filter(Boolean).join(" ")}>
-      <label id={id}>{label}</label>
+      <label id={id} className={hideLabel ? "sr-only" : undefined}>{label}</label>
       <RSelect.Root value={value} onValueChange={onValueChange} disabled={disabled}>
         <RSelect.Trigger className="ui-select" aria-labelledby={id}>
           <RSelect.Value placeholder={placeholder} />

@@ -127,6 +127,12 @@ export const useLabels = (owner: string, name: string) =>
   useQuery({ queryKey: ["issues", owner, name, "labels"], queryFn: () => request<Label[]>("GET", `${repoBase(owner, name)}/labels${qs({ limit: 100 })}`) });
 export const useCreateLabel = (owner: string, name: string) =>
   useIssueMutation<LabelCreate, Label>(owner, name, (b) => request("POST", `${repoBase(owner, name)}/labels`, b));
+export const useUpdateLabel = (owner: string, name: string) =>
+  useIssueMutation<{ label: string; body: S["LabelUpdate"] }, Label>(owner, name, ({ label, body }) =>
+    request("PATCH", `${repoBase(owner, name)}/labels/${enc(label)}`, body),
+  );
+export const useDeleteLabel = (owner: string, name: string) =>
+  useIssueMutation<string, void>(owner, name, (label) => request("DELETE", `${repoBase(owner, name)}/labels/${enc(label)}`));
 
 export const useMilestones = (owner: string, name: string, state: "open" | "closed" | "all" = "open") =>
   useQuery({
@@ -135,6 +141,12 @@ export const useMilestones = (owner: string, name: string, state: "open" | "clos
   });
 export const useCreateMilestone = (owner: string, name: string) =>
   useIssueMutation<S["MilestoneCreate"], Milestone>(owner, name, (b) => request("POST", `${repoBase(owner, name)}/milestones`, b));
+export const useUpdateMilestone = (owner: string, name: string) =>
+  useIssueMutation<{ id: string; body: S["MilestoneUpdate"] }, Milestone>(owner, name, ({ id, body }) =>
+    request("PATCH", `${repoBase(owner, name)}/milestones/${enc(id)}`, body),
+  );
+export const useDeleteMilestone = (owner: string, name: string) =>
+  useIssueMutation<string, void>(owner, name, (id) => request("DELETE", `${repoBase(owner, name)}/milestones/${enc(id)}`));
 
 export const useIssueTemplates = (owner: string, name: string) =>
   useQuery({ queryKey: ["issues", owner, name, "templates"], queryFn: () => request<IssueTemplates>("GET", `${repoBase(owner, name)}/issue-templates`), retry: false });
@@ -147,6 +159,18 @@ export const useCollaborators = (owner: string, name: string, enabled = true) =>
     enabled,
     retry: false,
   });
+
+export type CollaboratorPermission = S["RepoPermissionRequest"]["permission"];
+function useCollaboratorMutation<V>(owner: string, name: string, fn: (v: V) => Promise<void>) {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey: ["repos", owner, name, "collaborators"] }) });
+}
+export const useSetCollaborator = (owner: string, name: string) =>
+  useCollaboratorMutation<{ username: string; permission: CollaboratorPermission }>(owner, name, ({ username, permission }) =>
+    request("PUT", `${repoBase(owner, name)}/collaborators/${enc(username)}`, { permission }),
+  );
+export const useRemoveCollaborator = (owner: string, name: string) =>
+  useCollaboratorMutation<string>(owner, name, (username) => request("DELETE", `${repoBase(owner, name)}/collaborators/${enc(username)}`));
 
 /** Uploads an attachment as the raw request body (route outside the OpenAPI document). */
 export async function uploadAttachment(owner: string, name: string, file: File): Promise<IssueAttachment> {

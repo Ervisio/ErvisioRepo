@@ -11,7 +11,7 @@ import { useT } from "../../i18n/useT.ts";
 import { Icon } from "../Icon.tsx";
 import { Menu, MenuItem, MenuLabel } from "../Menu.tsx";
 import {
-  adminItems, homeItem, inboxItem, NavLink, orgsItem, orgTabs, repoGroups, reposItem, repoSub,
+  adminItems, homeItem, inboxItem, isOrgSettingsTab, NavLink, orgsItem, orgTabs, repoGroups, reposItem, repoSub,
   usePathname, useShellContext, type NavItem,
 } from "./nav.tsx";
 import { SearchField, SearchTrigger } from "./SearchPalette.tsx";
@@ -249,7 +249,7 @@ function OrgNav({ org, admin }: { org: string; admin: boolean }) {
   const search = useSearch({ strict: false }) as { tab?: string };
   const isOwner = o?.role === "owner" || admin;
   const canManage = isOwner || o?.role === "admin";
-  const active = search.tab ?? "repos";
+  const active = search.tab === undefined ? "repos" : isOrgSettingsTab(search.tab) ? "settings" : search.tab;
   return (
     <>
       <span className="sb-gt">{t("group.organization")}</span>

@@ -174,6 +174,24 @@ export const useCreateTeam = (org: string) =>
   useInvalidating<S["TeamCreate"], Team>([["orgs", org, "teams"]], (b) => request("POST", `/orgs/${enc(org)}/teams`, b));
 export const useDeleteTeam = (org: string) =>
   useInvalidating<string, void>([["orgs", org, "teams"]], (n) => request("DELETE", `/orgs/${enc(org)}/teams/${enc(n)}`));
+export const useUpdateTeam = (org: string) =>
+  useInvalidating<{ team: string; body: S["TeamUpdate"] }, Team>([["orgs", org, "teams"]], ({ team, body }) =>
+    request("PATCH", `/orgs/${enc(org)}/teams/${enc(team)}`, body),
+  );
+export type TeamMember = S["TeamMember"];
+export type TeamRole = TeamMember["role"];
+export const useTeamMembers = (org: string, team: string) =>
+  useQuery({ queryKey: ["orgs", org, "teams", team, "members"], queryFn: () => request<TeamMember[]>("GET", `/orgs/${enc(org)}/teams/${enc(team)}/members`) });
+export const useSetTeamMember = (org: string, team: string) =>
+  useInvalidating<{ username: string; role: TeamRole }, void>([["orgs", org, "teams"]], ({ username, role }) =>
+    request("PUT", `/orgs/${enc(org)}/teams/${enc(team)}/members/${enc(username)}`, { role }),
+  );
+export const useRemoveTeamMember = (org: string, team: string) =>
+  useInvalidating<string, void>([["orgs", org, "teams"]], (u) => request("DELETE", `/orgs/${enc(org)}/teams/${enc(team)}/members/${enc(u)}`));
+export const useDeleteOrg = (org: string) => useInvalidating<void, void>([["orgs"]], () => request("DELETE", `/orgs/${enc(org)}`));
+/** Instance invitation (admins only). The token comes back once; there is no list or revoke endpoint. */
+export const useCreateInstanceInvite = () =>
+  useMutation({ mutationFn: (b: S["InviteRequest"]) => request<Invite>("POST", "/admin/invites", b) });
 
 export function useAudit(filter: { action: string; actor: string }, before: string | undefined) {
   const q = new URLSearchParams({ limit: "50" });

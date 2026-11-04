@@ -149,5 +149,9 @@
   "sessions.revoked": "Session ended",
   "sessions.revokeOthers": "Sign out everywhere else",
   "sessions.revokedOthers": "Other sessions ended",
-  "orgs.dialogTitle": "New organization"
+  "orgs.dialogTitle": "New organization",
+  "tab.emails": "Emails",
+  "tab.sessions": "Sessions",
+  "group.personal": "Personal",
+  "group.access": "Access and security"
 }

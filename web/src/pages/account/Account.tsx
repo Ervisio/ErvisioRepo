@@ -1,6 +1,8 @@
+import { Link } from "@tanstack/react-router";
 import { useSession } from "../../api/identity.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Page, Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/index.ts";
+import { Page, SettingsLayout, type SettingsNavGroup, type SettingsNavItem } from "../../ui/index.ts";
+import { Emails } from "./Emails.tsx";
 import { Keys } from "./Keys.tsx";
 import { Linked } from "./Linked.tsx";
 import { NotificationPrefs } from "./Notifications.tsx";
@@ -10,29 +12,37 @@ import { Security } from "./Security.tsx";
 import { Sessions } from "./Sessions.tsx";
 import { Tokens } from "./Tokens.tsx";
 
+export const accountSections = ["emails", "notifications", "security", "sessions", "tokens", "keys", "linked"] as const;
+export type AccountSection = (typeof accountSections)[number];
+
 /** Account settings. Rendered inside <Protected>, so the session is already loaded. */
-export function Account({ oidcError }: { oidcError?: string }) {
+export function Account({ section, oidcError }: { section?: AccountSection; oidcError?: string }) {
   const t = useT("account");
   const user = useSession().data;
   if (!user) return null;
+  const active = section ?? (oidcError ? "linked" : undefined);
+  const item = (id: AccountSection | "profile", icon: SettingsNavItem["icon"]): SettingsNavItem => ({ id, icon, label: t(`tab.${id}`) });
+  const groups: SettingsNavGroup[] = [
+    { title: t("group.personal"), items: [item("profile", "user"), item("emails", "info"), item("notifications", "bell")] },
+    { title: t("group.access"), items: [item("security", "shield"), item("sessions", "clock"), item("tokens", "lock"), item("keys", "code"), item("linked", "users")] },
+  ];
   return (
     <Page section="issue" title={t("title")} subtitle={`@${user.username}`}>
-      <Tabs defaultValue={oidcError ? "linked" : "profile"}>
-        <TabsList aria-label={t("tabs")}>
-          <TabsTrigger value="profile">{t("tab.profile")}</TabsTrigger>
-          <TabsTrigger value="security">{t("tab.security")}</TabsTrigger>
-          <TabsTrigger value="tokens">{t("tab.tokens")}</TabsTrigger>
-          <TabsTrigger value="keys">{t("tab.keys")}</TabsTrigger>
-          <TabsTrigger value="linked">{t("tab.linked")}</TabsTrigger>
-          <TabsTrigger value="notifications">{t("tab.notifications")}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="profile"><Profile user={user} /></TabsContent>
-        <TabsContent value="security"><Password /><Security /><Sessions /></TabsContent>
-        <TabsContent value="tokens"><Tokens /></TabsContent>
-        <TabsContent value="keys"><Keys /></TabsContent>
-        <TabsContent value="linked"><Linked oidcError={oidcError} /></TabsContent>
-        <TabsContent value="notifications"><NotificationPrefs /></TabsContent>
-      </Tabs>
+      <SettingsLayout
+        label={t("tabs")}
+        groups={groups}
+        active={active ?? "profile"}
+        renderLink={(it, props) => <Link to="/settings" search={{ section: it.id === "profile" ? undefined : (it.id as AccountSection) }} {...props} />}
+      >
+        {active === undefined && <Profile user={user} />}
+        {active === "emails" && <Emails />}
+        {active === "notifications" && <NotificationPrefs />}
+        {active === "security" && <><Password /><Security /></>}
+        {active === "sessions" && <Sessions />}
+        {active === "tokens" && <Tokens />}
+        {active === "keys" && <Keys />}
+        {active === "linked" && <Linked oidcError={oidcError} />}
+      </SettingsLayout>
     </Page>
   );
 }

@@ -69,5 +69,20 @@
   "hue.pr": "Pull request",
   "hue.issue": "Issue",
   "hue.act": "Actions",
-  "hue.pkg": "Pacchetti"
+  "hue.pkg": "Pacchetti",
+  "settings.search": "Cerca impostazioni",
+  "settings.noMatch": "Nessuna impostazione corrisponde.",
+  "settings.changed": "Modificato",
+  "settings.was": "Prima: {value}",
+  "settings.empty": "vuoto",
+  "settings.unsaved.one": "1 modifica non salvata",
+  "settings.unsaved.other": "{count} modifiche non salvate",
+  "settings.discard": "Annulla modifiche",
+  "settings.save": "Salva modifiche",
+  "settings.saving": "Salvataggio…",
+  "settings.leave.title": "Uscire senza salvare?",
+  "settings.leave.description": "Le modifiche non salvate in questa pagina andranno perse.",
+  "settings.leave.stay": "Resta",
+  "settings.leave.go": "Esci e scarta",
+  "confirm.type": "Scrivi {text} per confermare"
 }

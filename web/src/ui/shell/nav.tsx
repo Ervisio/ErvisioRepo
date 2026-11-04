@@ -72,17 +72,14 @@ export function orgTabs(canManage: boolean, isOwner: boolean): OrgNavItem[] {
     { tab: "members", icon: "users", section: "pr" },
     { tab: "teams", icon: "users", section: "pr" },
     ...(canManage ? [{ tab: "invites" as const, icon: "plus" as const, section: "pr" as const }] : []),
-    ...(isOwner
-      ? ([
-          { tab: "hooks", icon: "layers", section: "act" },
-          { tab: "secrets", icon: "lock", section: "act" },
-          { tab: "variables", icon: "edit", section: "act" },
-          { tab: "runners", icon: "cpu", section: "act" },
-          { tab: "settings", icon: "gear", section: "issue" },
-        ] satisfies OrgNavItem[])
-      : []),
+    // Webhooks, secrets, variables and runners live under Settings, in its own sub-navigation.
+    ...(isOwner ? [{ tab: "settings" as const, icon: "gear" as const, section: "issue" as const }] : []),
   ];
 }
+
+const orgSettingsTabs = ["settings", "hooks", "secrets", "variables", "runners"] as const;
+export type OrgSettingsTab = (typeof orgSettingsTabs)[number];
+export const isOrgSettingsTab = (tab: string): tab is OrgSettingsTab => (orgSettingsTabs as readonly string[]).includes(tab);
 
 export type ShellContext =
   | { kind: "global" }

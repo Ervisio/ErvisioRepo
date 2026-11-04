@@ -1,7 +1,9 @@
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
   useCancelInvite,
   useCreateTeam,
+  useDeleteOrg,
   useDeleteTeam,
   useInviteMember,
   useOrg,
@@ -9,22 +11,61 @@ import {
   useOrgMembers,
   useOrgTeams,
   useRemoveMember,
+  useRemoveTeamMember,
   useSession,
   useSetMemberRole,
+  useSetTeamMember,
+  useTeamMembers,
   useUpdateOrg,
+  useUpdateTeam,
   type Org,
   type OrgRole,
   type Permission,
+  type Team,
+  type TeamRole,
 } from "../api/identity.ts";
 import { useT } from "../i18n/useT.ts";
-import { Badge, Button, Card, EmptyState, Input, Page, Select, Table, TableBody, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, Td, Th, Tr } from "../ui/index.ts";
+import {
+  Badge,
+  Button,
+  Card,
+  ConfirmDialog,
+  DangerRow,
+  DangerZone,
+  Dialog,
+  DialogClose,
+  EmptyState,
+  Input,
+  Page,
+  SaveBar,
+  Select,
+  SettingRow,
+  SettingsCard,
+  SettingsLayout,
+  SettingsSection,
+  Table,
+  TableBody,
+  TableHead,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Td,
+  Th,
+  Toggle,
+  Tr,
+  useDraft,
+  type SettingsNavGroup,
+  type SettingsNavItem,
+} from "../ui/index.ts";
+import { useLayout } from "../ui/shell/layout.ts";
 import { useOwnerRepos } from "../api/repos.ts";
 import { orgHooks } from "../api/settings.ts";
 import { CreateRepoDialog, RepoRows } from "./repos/RepoList.tsx";
 import { Entries, Runners } from "./actions/Settings.tsx";
 import { Webhooks } from "./settings/Webhooks.tsx";
 import { Async, formatDate, Secret, useNotify } from "./account/common.tsx";
-import { orgTabs, type OrgTab } from "../ui/shell/nav.tsx";
+import { isOrgSettingsTab, orgTabs, type OrgSettingsTab, type OrgTab } from "../ui/shell/nav.tsx";
 
 const roles: OrgRole[] = ["owner", "admin", "member"];
 const permissions: Permission[] = ["none", "read", "triage", "write", "maintain", "admin"];
@@ -73,9 +114,14 @@ function Members({ org, canManage }: { org: string; canManage: boolean }) {
                   <Td>{formatDate(m.since)}</Td>
                   {canManage && (
                     <Td>
-                      <Button size="sm" variant="ghost" aria-label={t("members.remove", { user: m.username })} onClick={() => remove.mutate(m.username, { onSuccess: () => notify.ok(t("members.removed")), onError: notify.fail })}>
-                        {t("members.removeButton")}
-                      </Button>
+                      <ConfirmDialog
+                        trigger={<Button variant="ghost" aria-label={t("members.remove", { user: m.username })}>{t("members.removeButton")}</Button>}
+                        title={t("members.removeTitle", { user: m.username })}
+                        description={t("members.removeHint")}
+                        confirmLabel={t("members.removeButton")}
+                        pending={remove.isPending}
+                        onConfirm={() => remove.mutate(m.username, { onSuccess: () => notify.ok(t("members.removed")), onError: notify.fail })}
+                      />
                     </Td>
                   )}
                 </Tr>
@@ -85,6 +131,98 @@ function Members({ org, canManage }: { org: string; canManage: boolean }) {
         )}
       </Async>
     </Card>
+  );
+}
+
+const teamRoles: TeamRole[] = ["maintainer", "member"];
+
+function TeamMembers({ org, team, canManage }: { org: string; team: string; canManage: boolean }) {
+  const t = useT("org");
+  const notify = useNotify();
+  const members = useTeamMembers(org, team);
+  const set = useSetTeamMember(org, team);
+  const remove = useRemoveTeamMember(org, team);
+  const [user, setUser] = useState("");
+  const [role, setRole] = useState<TeamRole>("member");
+  const options = teamRoles.map((r) => ({ value: r, label: t(`teams.role.${r}`) }));
+
+  function add(e: FormEvent) {
+    e.preventDefault();
+    const username = user.trim();
+    set.mutate({ username, role }, { onSuccess: () => { setUser(""); notify.ok(t("teams.memberAdded", { user: username })); }, onError: notify.fail });
+  }
+
+  return (
+    <div className="acc-form">
+      <Async query={members} empty={t("teams.noMembers")}>
+        {(rows) => (
+          <div className="st-list">
+            {rows.map((m) => (
+              <div key={m.username} className="st-item">
+                <div className="st-item-m">
+                  <b>{m.displayName || m.username}</b> <span className="ui-mono">@{m.username}</span>
+                </div>
+                {canManage ? (
+                  <div className="st-item-a">
+                    <Select
+                      hideLabel
+                      label={t("teams.roleOf", { user: m.username })}
+                      value={m.role}
+                      options={options}
+                      onValueChange={(r) => set.mutate({ username: m.username, role: r as TeamRole }, { onError: notify.fail })}
+                    />
+                    <Button variant="ghost" icon="trash" aria-label={t("teams.removeMember", { user: m.username })} onClick={() => remove.mutate(m.username, { onSuccess: () => notify.ok(t("teams.memberRemoved")), onError: notify.fail })} />
+                  </div>
+                ) : (
+                  <Badge>{t(`teams.role.${m.role}`)}</Badge>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Async>
+      {canManage && (
+        <form className="st-add" onSubmit={add}>
+          <Input label={t("teams.addMember")} mono required autoComplete="off" value={user} onChange={(e) => setUser(e.target.value)} />
+          <Select className="st-narrow" label={t("members.role")} value={role} onValueChange={(r) => setRole(r as TeamRole)} options={options} />
+          <Button type="submit" disabled={set.isPending || user.trim() === ""}>{t("teams.add")}</Button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+function EditTeam({ org, team }: { org: string; team: Team }) {
+  const t = useT("org");
+  const notify = useNotify();
+  const update = useUpdateTeam(org);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(team.name);
+  const [description, setDescription] = useState(team.description);
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => { setOpen(o); if (o) { setName(team.name); setDescription(team.description); } }}
+      title={t("teams.editTitle", { name: team.name })}
+      trigger={<Button variant="ghost" icon="edit" aria-label={t("teams.edit", { name: team.name })} />}
+      footer={
+        <>
+          <DialogClose asChild><Button variant="ghost">{t("cancel")}</Button></DialogClose>
+          <Button
+            variant="primary"
+            disabled={update.isPending || name.trim() === ""}
+            onClick={() => update.mutate({ team: team.name, body: { name: name.trim(), description: description.trim() } }, { onSuccess: () => { setOpen(false); notify.ok(t("teams.saved")); }, onError: notify.fail })}
+          >
+            {t("settings.save")}
+          </Button>
+        </>
+      }
+    >
+      <div className="acc-form">
+        <Input label={t("teams.name")} required maxLength={39} value={name} onChange={(e) => setName(e.target.value)} />
+        <Input label={t("teams.description")} maxLength={200} value={description} onChange={(e) => setDescription(e.target.value)} />
+      </div>
+    </Dialog>
   );
 }
 
@@ -116,22 +254,37 @@ function Teams({ org, canManage }: { org: string; canManage: boolean }) {
     <>
       <Card title={t("teams.title")}>
         <Async query={teams} empty={t("teams.empty")}>
-          {(rows) =>
-            rows.map((tm) => (
-              <div key={tm.name} className="ui-row acc-wrap">
-                <div className="acc-grow">
-                  <div className="acc-title">{tm.name}</div>
-                  {tm.description && <div className="ui-note">{tm.description}</div>}
+          {(rows) => (
+            <div className="st-list">
+              {rows.map((tm) => (
+                <div key={tm.name} className="st-item">
+                  <div className="st-item-m">
+                    <div className="acc-title">{tm.name}</div>
+                    {tm.description && <div className="ui-note">{tm.description}</div>}
+                  </div>
+                  <div className="st-item-a">
+                    <Dialog
+                      title={t("teams.membersTitle", { name: tm.name })}
+                      trigger={<Button variant="ghost" icon="users">{t("teams.members", { count: tm.members })}</Button>}
+                    >
+                      <TeamMembers org={org} team={tm.name} canManage={canManage} />
+                    </Dialog>
+                    {canManage && <EditTeam org={org} team={tm} />}
+                    {canManage && (
+                      <ConfirmDialog
+                        trigger={<Button variant="ghost" icon="trash" aria-label={t("teams.delete", { name: tm.name })} />}
+                        title={t("teams.deleteTitle", { name: tm.name })}
+                        description={t("teams.deleteHint")}
+                        confirmLabel={t("teams.deleteButton")}
+                        pending={del.isPending}
+                        onConfirm={() => del.mutate(tm.name, { onSuccess: () => notify.ok(t("teams.deleted")), onError: notify.fail })}
+                      />
+                    )}
+                  </div>
                 </div>
-                <span className="ui-note">{t("teams.members", { count: tm.members })}</span>
-                {canManage && (
-                  <Button size="sm" variant="ghost" aria-label={t("teams.delete", { name: tm.name })} onClick={() => del.mutate(tm.name, { onSuccess: () => notify.ok(t("teams.deleted")), onError: notify.fail })}>
-                    {t("teams.deleteButton")}
-                  </Button>
-                )}
-              </div>
-            ))
-          }
+              ))}
+            </div>
+          )}
         </Async>
       </Card>
       {canManage && (
@@ -193,9 +346,13 @@ function Invites({ org, canManage }: { org: string; canManage: boolean }) {
                 </div>
                 <Badge>{t(`role.${i.role}`)}</Badge>
                 {canManage && (
-                  <Button size="sm" variant="ghost" aria-label={t("invites.cancel", { email: i.email })} onClick={() => cancel.mutate(i.id, { onSuccess: () => notify.ok(t("invites.cancelled")), onError: notify.fail })}>
-                    {t("invites.cancelButton")}
-                  </Button>
+                  <ConfirmDialog
+                    trigger={<Button variant="ghost" aria-label={t("invites.cancel", { email: i.email })}>{t("invites.cancelButton")}</Button>}
+                    title={t("invites.cancelTitle", { email: i.email })}
+                    confirmLabel={t("invites.cancelConfirm")}
+                    pending={cancel.isPending}
+                    onConfirm={() => cancel.mutate(i.id, { onSuccess: () => notify.ok(t("invites.cancelled")), onError: notify.fail })}
+                  />
                 )}
               </div>
             ))
@@ -230,41 +387,96 @@ function OrgRepos({ org }: { org: string }) {
 function Settings({ org }: { org: Org }) {
   const t = useT("org");
   const notify = useNotify();
+  const navigate = useNavigate();
   const update = useUpdateOrg(org.name);
-  const [displayName, setDisplayName] = useState(org.displayName);
-  const [description, setDescription] = useState(org.description);
-  const [base, setBase] = useState<Permission>(org.basePermission);
-  const [require2fa, setRequire2fa] = useState(org.require2fa);
+  const del = useDeleteOrg(org.name);
+  const draft = useDraft({ displayName: org.displayName, description: org.description, basePermission: org.basePermission as Permission, require2fa: org.require2fa });
+  const v = draft.value;
+  const permLabel = (p: Permission) => t(`permission.${p}`);
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    update.mutate(
-      { displayName: displayName.trim(), description: description.trim(), basePermission: base, require2fa },
-      { onSuccess: () => notify.ok(t("settings.saved")), onError: notify.fail },
-    );
+  function save() {
+    const next = { displayName: v.displayName.trim(), description: v.description.trim(), basePermission: v.basePermission, require2fa: v.require2fa };
+    update.mutate(next, { onSuccess: () => { draft.rebase(next); notify.ok(t("settings.saved")); }, onError: notify.fail });
   }
 
   return (
-    <Card title={t("settings.title")}>
-      <form className="acc-form" onSubmit={submit}>
-        <Input label={t("settings.displayName")} maxLength={80} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-        <Input label={t("settings.description")} maxLength={200} value={description} onChange={(e) => setDescription(e.target.value)} />
-        <Select
-          label={t("settings.basePermission")}
-          value={base}
-          onValueChange={(v) => setBase(v as Permission)}
-          options={permissions.map((p) => ({ value: p, label: t(`permission.${p}`) }))}
+    <>
+      <SettingsSection title={t("settings.title")}>
+        <SettingsCard>
+          <SettingRow label={t("settings.displayName")} dirty={draft.isDirty("displayName")} was={draft.initial.displayName}>
+            <Input label={t("settings.displayName")} hideLabel maxLength={80} value={v.displayName} onChange={(e) => draft.set("displayName", e.target.value)} />
+          </SettingRow>
+          <SettingRow label={t("settings.description")} dirty={draft.isDirty("description")} was={draft.initial.description}>
+            <Input label={t("settings.description")} hideLabel maxLength={200} value={v.description} onChange={(e) => draft.set("description", e.target.value)} />
+          </SettingRow>
+          <SettingRow label={t("settings.basePermission")} description={t("settings.basePermissionHint")} dirty={draft.isDirty("basePermission")} was={permLabel(draft.initial.basePermission)}>
+            <Select
+              label={t("settings.basePermission")}
+              hideLabel
+              value={v.basePermission}
+              onValueChange={(x) => draft.set("basePermission", x as Permission)}
+              options={permissions.map((p) => ({ value: p, label: permLabel(p) }))}
+            />
+          </SettingRow>
+          <SettingRow
+            label={t("settings.require2fa")}
+            description={t("settings.require2faHint")}
+            dirty={draft.isDirty("require2fa")}
+            was={draft.initial.require2fa ? t("settings.on") : t("settings.off")}
+          >
+            <Toggle label={t("settings.require2fa")} checked={v.require2fa} onChange={(x) => draft.set("require2fa", x)} />
+          </SettingRow>
+        </SettingsCard>
+        <SaveBar
+          draft={draft}
+          labels={{ displayName: t("settings.displayName"), description: t("settings.description"), basePermission: t("settings.basePermission"), require2fa: t("settings.require2fa") }}
+          onSave={save}
+          saving={update.isPending}
         />
-        <label className="acc-toggle">
-          <input type="checkbox" checked={require2fa} onChange={(e) => setRequire2fa(e.target.checked)} />
-          <span>{t("settings.require2fa")}</span>
-        </label>
-        <p className="ui-note">{t("settings.require2faHint")}</p>
-        <div className="acc-actions">
-          <Button variant="primary" type="submit" disabled={update.isPending}>{t("settings.save")}</Button>
-        </div>
-      </form>
-    </Card>
+      </SettingsSection>
+      <DangerZone title={t("danger.title")}>
+        <DangerRow
+          title={t("danger.delete")}
+          description={t("danger.deleteHint")}
+          action={
+            <ConfirmDialog
+              trigger={<Button variant="danger">{t("danger.deleteButton")}</Button>}
+              title={t("danger.deleteTitle", { name: org.name })}
+              description={t("danger.deleteDialogHint")}
+              confirmLabel={t("danger.deleteConfirm")}
+              typeToConfirm={org.name}
+              pending={del.isPending}
+              onConfirm={() => del.mutate(undefined, { onSuccess: () => { notify.ok(t("danger.deleted")); void navigate({ to: "/orgs" }); }, onError: notify.fail })}
+            />
+          }
+        />
+      </DangerZone>
+    </>
+  );
+}
+
+/** Settings-type tabs share one SettingsLayout; the sidebar shows them as a single entry. */
+function OrgSettings({ org, tab }: { org: Org; tab: OrgSettingsTab }) {
+  const t = useT("org");
+  const scope = { kind: "org" as const, org: org.name };
+  const item = (id: OrgSettingsTab, icon: SettingsNavItem["icon"]): SettingsNavItem => ({ id, icon, label: t(id === "settings" ? "settings.general" : `tab.${id}`) });
+  const groups: SettingsNavGroup[] = [
+    { title: t("settings.group.org"), items: [item("settings", "gear"), item("hooks", "bell")] },
+    { title: t("settings.group.actions"), items: [item("secrets", "lock"), item("variables", "code"), item("runners", "cpu")] },
+  ];
+  return (
+    <SettingsLayout
+      label={t("settings.sections")}
+      groups={groups}
+      active={tab}
+      renderLink={(it, props) => <Link to="/orgs/$org" params={{ org: org.name }} search={{ tab: it.id as OrgTab }} {...props} />}
+    >
+      {tab === "settings" && <Settings key={org.updatedAt} org={org} />}
+      {tab === "hooks" && <Webhooks base={orgHooks(org.name)} scope="org" />}
+      {tab === "secrets" && <Entries scope={scope} kind="secrets" />}
+      {tab === "variables" && <Entries scope={scope} kind="variables" />}
+      {tab === "runners" && <Runners scope={scope} />}
+    </SettingsLayout>
   );
 }
 
@@ -273,6 +485,7 @@ export function OrgPage({ name, tab, onTab }: { name: string; tab: OrgTab; onTab
   const t = useT("org");
   const tc = useT("common");
   const org = useOrg(name);
+  const layout = useLayout();
   const instanceAdmin = useSession().data?.role === "admin";
 
   if (org.isPending) {
@@ -295,6 +508,8 @@ export function OrgPage({ name, tab, onTab }: { name: string; tab: OrgTab; onTab
   // The server enforces the rules; this only hides controls. Instance admins act as owners.
   const isOwner = o.role === "owner" || instanceAdmin;
   const canManage = isOwner || o.role === "admin";
+  const settingsTab = isOrgSettingsTab(tab) && isOwner ? tab : undefined;
+  const current = settingsTab ? "settings" : orgTabs(canManage, isOwner).some((it) => it.tab === tab) ? tab : "repos";
   return (
     <Page
       section="pr"
@@ -308,27 +523,18 @@ export function OrgPage({ name, tab, onTab }: { name: string; tab: OrgTab; onTab
       }
     >
       {o.description && <p className="acc-desc">{o.description}</p>}
-      <Tabs value={orgTabs(canManage, isOwner).some((it) => it.tab === tab) ? tab : "repos"} onValueChange={(v) => onTab(v as OrgTab)}>
-        <TabsList aria-label={t("tabs")}>
-          <TabsTrigger value="repos">{t("tab.repos")}</TabsTrigger>
-          <TabsTrigger value="members">{t("tab.members")}</TabsTrigger>
-          <TabsTrigger value="teams">{t("tab.teams")}</TabsTrigger>
-          {canManage && <TabsTrigger value="invites">{t("tab.invites")}</TabsTrigger>}
-          {isOwner && <TabsTrigger value="hooks">{t("tab.hooks")}</TabsTrigger>}
-          {isOwner && <TabsTrigger value="secrets">{t("tab.secrets")}</TabsTrigger>}
-          {isOwner && <TabsTrigger value="variables">{t("tab.variables")}</TabsTrigger>}
-          {isOwner && <TabsTrigger value="runners">{t("tab.runners")}</TabsTrigger>}
-          {isOwner && <TabsTrigger value="settings">{t("tab.settings")}</TabsTrigger>}
-        </TabsList>
+      <Tabs value={current} onValueChange={(v) => onTab(v as OrgTab)}>
+        {/* The console sidebar already lists these sections. */}
+        {layout !== "console" && (
+          <TabsList aria-label={t("tabs")}>
+            {orgTabs(canManage, isOwner).map((it) => <TabsTrigger key={it.tab} value={it.tab}>{t(`tab.${it.tab}`)}</TabsTrigger>)}
+          </TabsList>
+        )}
         <TabsContent value="repos"><OrgRepos org={o.name} /></TabsContent>
         <TabsContent value="members"><Members org={o.name} canManage={canManage} /></TabsContent>
         <TabsContent value="teams"><Teams org={o.name} canManage={canManage} /></TabsContent>
         {canManage && <TabsContent value="invites"><Invites org={o.name} canManage={canManage} /></TabsContent>}
-        {isOwner && <TabsContent value="hooks"><Webhooks base={orgHooks(o.name)} scope="org" /></TabsContent>}
-        {isOwner && <TabsContent value="secrets"><Entries scope={{ kind: "org", org: o.name }} kind="secrets" /></TabsContent>}
-        {isOwner && <TabsContent value="variables"><Entries scope={{ kind: "org", org: o.name }} kind="variables" /></TabsContent>}
-        {isOwner && <TabsContent value="runners"><Runners scope={{ kind: "org", org: o.name }} /></TabsContent>}
-        {isOwner && <TabsContent value="settings"><Settings org={o} /></TabsContent>}
+        {settingsTab && <TabsContent value="settings"><OrgSettings org={o} tab={settingsTab} /></TabsContent>}
       </Tabs>
     </Page>
   );

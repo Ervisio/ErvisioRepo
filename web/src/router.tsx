@@ -6,7 +6,7 @@ import { AdminRunners } from "./pages/AdminRunners.tsx";
 import { RunPage } from "./pages/actions/RunPage.tsx";
 import { RunsPage, type RunsSearch } from "./pages/actions/RunsPage.tsx";
 import { AdminStorage } from "./pages/AdminStorage.tsx";
-import { Account } from "./pages/account/Account.tsx";
+import { Account, accountSections, type AccountSection } from "./pages/account/Account.tsx";
 import { Login } from "./pages/auth/Login.tsx";
 import { ForgotPassword, ResetPassword } from "./pages/auth/PasswordReset.tsx";
 import { Register } from "./pages/auth/Register.tsx";
@@ -24,7 +24,7 @@ import { SearchPage, type CodeSearchParams } from "./pages/code/SearchPage.tsx";
 import { TreePage } from "./pages/code/TreePage.tsx";
 import { ReleaseFormPage, ReleasePage, ReleasesPage } from "./pages/releases/ReleasesPages.tsx";
 import { MyReposPage } from "./pages/repos/MyReposPage.tsx";
-import { RepoSettings, type SettingsSection } from "./pages/repos/RepoSettings.tsx";
+import { RepoSettings, repoSettingsSections, type RepoSettingsSection } from "./pages/repos/RepoSettings.tsx";
 import { IssuePage, IssuesPage, NewIssuePage, type IssueSearch } from "./pages/issues/IssuesPages.tsx";
 import { NotificationsPage, type InboxSearch } from "./pages/notifications/NotificationsPage.tsx";
 import { PullPage, PullsPage, type PullSearch, type PullTab } from "./pages/pulls/PullsPages.tsx";
@@ -90,7 +90,15 @@ const homeRoute = createRoute({ getParentRoute: () => shellRoute, path: "/", com
 const adminRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin", component: () => guard(<AdminOverview />, true) });
 const storageRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin/storage", component: () => guard(<AdminStorage />, true) });
 const auditRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin/audit", component: () => guard(<AdminAudit />, true) });
-const settingsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/settings", validateSearch: oidcSearch, component: () => guard(<Account oidcError={settingsRoute.useSearch().oidc_error} />) });
+const settingsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/settings",
+  validateSearch: (s: Record<string, unknown>): { section?: AccountSection; oidc_error?: string } => ({ section: accountSections.find((x) => x === s.section), ...oidcSearch(s) }),
+  component: function AccountRoute() {
+    const s = settingsRoute.useSearch();
+    return guard(<Account section={s.section} oidcError={s.oidc_error} />);
+  },
+});
 const orgInviteRoute = createRoute({ getParentRoute: () => shellRoute, path: "/org-invite", validateSearch: tokenSearch, component: () => guard(<OrgInviteAccept token={orgInviteRoute.useSearch().token} />) });
 const orgTabValues: OrgTab[] = ["repos", "members", "teams", "invites", "hooks", "secrets", "variables", "runners", "settings"];
 const orgRoute = createRoute({
@@ -319,11 +327,10 @@ const notificationsRoute = createRoute({
   validateSearch: (s: Record<string, unknown>): InboxSearch => ({ filter: inboxFilters.find((x) => x === s.filter), page: num(s.page), repo: str(s.repo) }),
   component: () => guard(<NotificationsPage search={notificationsRoute.useSearch()} />),
 });
-const settingsSections = ["protection", "tags", "hooks", "github", "secrets", "variables", "environments", "runners"] as const;
 const repoSettingsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/$owner/$name/settings",
-  validateSearch: (s: Record<string, unknown>): { section?: SettingsSection } => ({ section: settingsSections.find((x) => x === s.section) }),
+  validateSearch: (s: Record<string, unknown>): { section?: RepoSettingsSection } => ({ section: repoSettingsSections.find((x) => x === s.section) }),
   component: function Settings() {
     const p = repoSettingsRoute.useParams();
     return guard(<RepoSettings owner={p.owner} name={p.name} section={repoSettingsRoute.useSearch().section} />);

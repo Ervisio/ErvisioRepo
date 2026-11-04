@@ -149,5 +149,9 @@
   "sessions.revoked": "Sessione chiusa",
   "sessions.revokeOthers": "Esci da tutte le altre",
   "sessions.revokedOthers": "Le altre sessioni sono state chiuse",
-  "orgs.dialogTitle": "Nuova organizzazione"
+  "orgs.dialogTitle": "Nuova organizzazione",
+  "tab.emails": "Email",
+  "tab.sessions": "Sessioni",
+  "group.personal": "Personale",
+  "group.access": "Accesso e sicurezza"
 }

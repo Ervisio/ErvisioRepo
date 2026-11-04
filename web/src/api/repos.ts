@@ -38,5 +38,7 @@ export const useUpdateRepo = (owner: string, name: string) =>
   useRepoMutation<RepoUpdate, Repo>((b) => request("PATCH", repoPath(owner, name), b));
 export const useTransferRepo = (owner: string, name: string) =>
   useRepoMutation<RepoTransfer, Repo>((b) => request("POST", `${repoPath(owner, name)}/transfer`, b));
+export const useForkRepo = (owner: string, name: string) =>
+  useRepoMutation<S["ForkCreate"], Repo>((b) => request("POST", `${repoPath(owner, name)}/forks`, b));
 export const useDeleteRepo = (owner: string, name: string) =>
   useRepoMutation<void, void>(() => request("DELETE", repoPath(owner, name)));

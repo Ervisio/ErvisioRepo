@@ -7,6 +7,10 @@ export { Icon, type IconName } from "./Icon.tsx";
 export { Input } from "./Input.tsx";
 export { Menu, MenuItem, MenuLabel, MenuSeparator } from "./Menu.tsx";
 export { Select, type SelectOption } from "./Select.tsx";
+export {
+  ConfirmDialog, DangerRow, DangerZone, SaveBar, SettingRow, SettingsCard, SettingsLayout, SettingsSection, Toggle, useDraft,
+  type Draft, type SettingsLinkProps, type SettingsNavGroup, type SettingsNavItem,
+} from "./SettingsLayout.tsx";
 export { Table, TableBody, TableHead, Td, Th, Tr } from "./Table.tsx";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "./Tabs.tsx";
 export { ToastProvider, useToast } from "./Toast.tsx";
