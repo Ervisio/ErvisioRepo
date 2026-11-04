@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-04
+
 ### Added
 
 Phase 0, foundations (see `docs/PLAN.md` section 11):

@@ -13,7 +13,7 @@ Invariants:
 - Caddy changes are transactional: read, write, validate, reload; on failure files are restored exactly and Caddy reloads. All commands go through internal/sys, never a shell.
 - Release signature must stay verifiable with plain openssl 3 (raw ed25519 over SHA256SUMS), the sign tool format matches that.
 Gotchas:
-- deploy/install.sh PUBKEY is still the placeholder REPLACE_WITH_RELEASE_PUBLIC_KEY: signature check fails until the first release key is generated (sign genkey) and pasted in; ERVISIO_SKIP_VERIFY=1 bypasses it.
+- deploy/install.sh PUBKEY is the ed25519 release key (private half on the maintainer machine, ~/.ervisio-release/release.pem, not in repo). ERVISIO_SKIP_VERIFY=1 bypasses the check.
 - make package passes VERSION from `git describe --dirty`; on a dirty tree the version contains "-dirty" and package/file names stop matching install.sh, so pass VERSION=x.y.z explicitly.
 - make release only checks RELEASE_SIGNING_KEY is set; build.sh signs only when that var is non-empty.
 - compose "walg" service is a placeholder (entrypoint prints a hint and sleeps); do not rely on it for backups.

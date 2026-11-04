@@ -13,9 +13,9 @@ REPO="Ervisio/ErvisioRepo"
 BASE="${ERVISIO_RELEASE_BASE:-https://github.com/$REPO/releases}"
 VERSION=""
 
-# Release signing public key (ed25519). Replaced when the first release is cut.
+# Release signing public key (ed25519). Private half kept offline by the maintainer.
 PUBKEY='-----BEGIN PUBLIC KEY-----
-REPLACE_WITH_RELEASE_PUBLIC_KEY
+MCowBQYDK2VwAyEAp9H+DlnaYwvdIfRNk7libuyY4c7n23DfBNQ6G02YJ34=
 -----END PUBLIC KEY-----'
 
 die() { echo "install.sh: $*" >&2; exit 1; }
