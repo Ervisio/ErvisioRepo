@@ -1,0 +1,22 @@
+# Sample runs-on mapping for ervisio-runner. Copy the [runner] labels block
+# into /etc/ervisio-runner/config.toml (see "ervisio-runner generate-config").
+#
+# "name=docker://image" runs the job in that image; "name=host" runs it on the
+# runner machine itself and needs [host] enabled = true.
+
+[runner]
+labels = [
+  # GitHub-compatible names, backed by the catthehacker act images.
+  "ubuntu-latest=docker://ghcr.io/catthehacker/ubuntu:act-24.04",
+  "ubuntu-24.04=docker://ghcr.io/catthehacker/ubuntu:act-24.04",
+  "ubuntu-22.04=docker://ghcr.io/catthehacker/ubuntu:act-22.04",
+  # Larger image with most of the GitHub hosted toolchain (~20 GB).
+  # "ubuntu-latest-full=docker://ghcr.io/catthehacker/ubuntu:full-24.04",
+  # Plain images for jobs that install their own tools.
+  # "node-22=docker://node:22-bookworm",
+  # Unisolated host execution (trusted repositories only).
+  # "self-hosted=host",
+]
+
+# [host]
+# enabled = true

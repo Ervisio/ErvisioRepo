@@ -89,7 +89,7 @@ services:
       app:
         condition: service_healthy
     entrypoint: ["ervisio-runner"]
-    command: ["run"]
+    command: ["daemon", "--config", "/etc/ervisio-runner/config.toml"]
     environment:
       ERVISIO_RUNNER_URL: http://app:3400
     volumes:
