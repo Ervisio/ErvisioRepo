@@ -9,6 +9,37 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ActionsArtifact struct {
+	ID          int64
+	RepoID      uuid.UUID
+	RunID       uuid.UUID
+	JobID       uuid.NullUUID
+	Name        string
+	MimeType    string
+	Size        int64
+	Digest      string
+	StorageKey  string
+	Finalized   bool
+	ExpiresAt   pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	FinalizedAt pgtype.Timestamptz
+}
+
+type ActionsCache struct {
+	ID          int64
+	RepoID      uuid.UUID
+	Scope       string
+	Key         string
+	Version     string
+	Size        int64
+	Complete    bool
+	StorageKey  string
+	RunID       uuid.NullUUID
+	CreatedAt   pgtype.Timestamptz
+	CompletedAt pgtype.Timestamptz
+	LastUsedAt  pgtype.Timestamptz
+}
+
 type ActionsEnvironment struct {
 	ID              uuid.UUID
 	RepoID          uuid.UUID
@@ -169,6 +200,15 @@ type ActionsStep struct {
 type ActionsTasksVersion struct {
 	ID      bool
 	Version int64
+}
+
+type ActionsUploadPart struct {
+	Owner      string
+	Block      string
+	Seq        pgtype.Int8
+	Size       int64
+	StorageKey string
+	CreatedAt  pgtype.Timestamptz
 }
 
 type ActionsVariable struct {

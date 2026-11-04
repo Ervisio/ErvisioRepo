@@ -141,6 +141,11 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	if actionsSvc != nil {
 		jobOpts = append(jobOpts, actionsSvc.JobsOption())
 	}
+	actionsResults, resultsJobs, err := setupActionsResults(cfg, pool, storage, actionsSvc, log)
+	if err != nil {
+		return err
+	}
+	jobOpts = append(jobOpts, resultsJobs...)
 	runner, err = jobs.New(pool, log, jobOpts...)
 	if err != nil {
 		return err
@@ -275,6 +280,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 				Payloads: hooks, Jobs: runner, Bus: bus}, bus)
 			deps.ActionsRunner = actionsSvc.RunnerHandler()
 			deps.Actions = actionsSvc
+			deps.ActionsResults = actionsResults
 		}
 
 		hooks.SetRepos(repoSvc)

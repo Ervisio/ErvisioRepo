@@ -115,6 +115,10 @@ type Deps struct {
 	// /api/actions/runner (long polls, outside the request timeout); nil
 	// leaves it unmounted.
 	ActionsRunner http.Handler
+	// ActionsResults serves the actions/cache and artifact services
+	// (/twirp, /api/actions/results, /api/actions/cache; long uploads,
+	// outside the request timeout); nil leaves it unmounted.
+	ActionsResults http.Handler
 	// Actions serves the workflow run, log, secret and runner endpoints;
 	// nil answers 503.
 	Actions Actions
@@ -161,6 +165,11 @@ func NewRouter(d Deps) http.Handler {
 	mountActions(r, d)
 	if d.ActionsRunner != nil {
 		r.Handle("/api/actions/runner/*", d.ActionsRunner)
+	}
+	if d.ActionsResults != nil {
+		for _, p := range []string{"/twirp/*", "/api/actions/results/*", "/api/actions/cache/*"} {
+			r.Handle(p, d.ActionsResults)
+		}
 	}
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Timeout(RequestTimeout))

@@ -255,6 +255,15 @@ func (v *validator) actions(a *Actions) {
 		v.add("actions.registration_token_ttl", "must be between 1m and 720h")
 	}
 	v.intRange("actions.max_jobs_per_run", a.MaxJobsPerRun, 1, 10000)
+	if a.CacheMaxRepoSize < 1<<20 {
+		v.add("actions.cache_max_repo_size", "must be at least 1MiB")
+	}
+	if a.CacheTTL < Duration(time.Hour) {
+		v.add("actions.cache_ttl", "must be at least 1h")
+	}
+	if a.ArtifactRetention < Duration(24*time.Hour) || a.ArtifactRetention > Duration(400*24*time.Hour) {
+		v.add("actions.artifact_retention", "must be between 1d and 400d")
+	}
 }
 
 func (v *validator) auth(a *Auth) {

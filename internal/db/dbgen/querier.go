@@ -57,6 +57,7 @@ type Querier interface {
 	// the repository write lease, so no change can slip in between.
 	ClearRepoJournalDirty(ctx context.Context, id uuid.UUID) error
 	CommentReactionGroups(ctx context.Context, arg CommentReactionGroupsParams) ([]CommentReactionGroupsRow, error)
+	CompleteActionsCache(ctx context.Context, arg CompleteActionsCacheParams) (ActionsCache, error)
 	// The job ends: its token stops working at once.
 	CompleteActionsJob(ctx context.Context, arg CompleteActionsJobParams) error
 	// Steps left open when a job ends are closed with the job.
@@ -92,14 +93,21 @@ type Querier interface {
 	CountUserTokens(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CountWebAuthnCredentials(ctx context.Context, userID uuid.UUID) (int64, error)
+	// ---- artifacts ----
+	// Creates an artifact, or restarts an upload not finalized yet. A
+	// finalized artifact of the same name returns no row.
+	CreateActionsArtifact(ctx context.Context, arg CreateActionsArtifactParams) (ActionsArtifact, error)
 	CreateLFSLock(ctx context.Context, arg CreateLFSLockParams) (LfsLock, error)
 	DeclareActionsRunner(ctx context.Context, arg DeclareActionsRunnerParams) (ActionsRunner, error)
+	DeleteActionsArtifact(ctx context.Context, id int64) error
+	DeleteActionsCache(ctx context.Context, id int64) error
 	DeleteActionsEnvironment(ctx context.Context, arg DeleteActionsEnvironmentParams) (int64, error)
 	DeleteActionsLogRows(ctx context.Context, jobID uuid.UUID) error
 	DeleteActionsRunner(ctx context.Context, id uuid.UUID) (int64, error)
 	// ---- schedules ----
 	DeleteActionsSchedules(ctx context.Context, repoID uuid.UUID) error
 	DeleteActionsSecret(ctx context.Context, arg DeleteActionsSecretParams) (int64, error)
+	DeleteActionsUploadParts(ctx context.Context, owner string) error
 	DeleteActionsVariable(ctx context.Context, arg DeleteActionsVariableParams) (int64, error)
 	DeleteBranchProtection(ctx context.Context, arg DeleteBranchProtectionParams) (int64, error)
 	// Removes a network without members (its pool can then be trashed).
@@ -170,6 +178,10 @@ type Querier interface {
 	EmailTaken(ctx context.Context, address string) (bool, error)
 	EnsureUsageCounter(ctx context.Context, namespaceID uuid.UUID) error
 	FailMFAChallenge(ctx context.Context, id uuid.UUID) (int32, error)
+	FinalizeActionsArtifact(ctx context.Context, id int64) (ActionsArtifact, error)
+	// The newest complete entry of a scope whose key matches pattern (LIKE,
+	// already escaped by the caller).
+	FindActionsCache(ctx context.Context, arg FindActionsCacheParams) (ActionsCache, error)
 	// The local user whose external identity is the GitHub account with the
 	// numeric id subject. Matched on the id only, never on the e-mail.
 	FindLinkedGitHubUser(ctx context.Context, arg FindLinkedGitHubUserParams) (uuid.UUID, error)
@@ -177,6 +189,10 @@ type Querier interface {
 	// Sets the state unconditionally (restore only, nothing else runs).
 	ForceRepoStorageState(ctx context.Context, arg ForceRepoStorageStateParams) error
 	GPGKeyFingerprintTaken(ctx context.Context, fingerprint string) (bool, error)
+	GetActionsArtifact(ctx context.Context, id int64) (ActionsArtifact, error)
+	GetActionsArtifactByName(ctx context.Context, arg GetActionsArtifactByNameParams) (ActionsArtifact, error)
+	GetActionsCache(ctx context.Context, id int64) (ActionsCache, error)
+	GetActionsCacheByKey(ctx context.Context, arg GetActionsCacheByKeyParams) (ActionsCache, error)
 	GetActionsEnvironment(ctx context.Context, arg GetActionsEnvironmentParams) (ActionsEnvironment, error)
 	GetActionsJob(ctx context.Context, id uuid.UUID) (ActionsJob, error)
 	// The running job of a job token, with what the token principal needs.
@@ -184,6 +200,8 @@ type Querier interface {
 	GetActionsJobForUpdate(ctx context.Context, id uuid.UUID) (ActionsJob, error)
 	GetActionsNamespaceName(ctx context.Context, id uuid.UUID) (string, error)
 	GetActionsRegistrationToken(ctx context.Context, tokenHash []byte) (ActionsRegistrationToken, error)
+	// The job a runtime token was issued for, with what cache scoping needs.
+	GetActionsResultsJob(ctx context.Context, arg GetActionsResultsJobParams) (GetActionsResultsJobRow, error)
 	GetActionsRun(ctx context.Context, id uuid.UUID) (ActionsRun, error)
 	GetActionsRunForUpdate(ctx context.Context, id uuid.UUID) (ActionsRun, error)
 	GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRunner, error)
@@ -421,6 +439,10 @@ type Querier interface {
 	LatestPullReviews(ctx context.Context, pullID uuid.UUID) ([]LatestPullReviewsRow, error)
 	// Pull requests whose body or comments reference issue_id, newest first.
 	LinkedPullsOfIssue(ctx context.Context, issueID uuid.NullUUID) ([]LinkedPullsOfIssueRow, error)
+	ListActionsArtifacts(ctx context.Context, arg ListActionsArtifactsParams) ([]ActionsArtifact, error)
+	// Repositories whose complete cache entries exceed max_size bytes.
+	ListActionsCacheReposOver(ctx context.Context, maxSize int64) ([]ListActionsCacheReposOverRow, error)
+	ListActionsCachesLRU(ctx context.Context, arg ListActionsCachesLRUParams) ([]ActionsCache, error)
 	ListActionsEnvironments(ctx context.Context, repoID uuid.UUID) ([]ActionsEnvironment, error)
 	ListActionsJobs(ctx context.Context, arg ListActionsJobsParams) ([]ActionsJob, error)
 	ListActionsJobsForUpdate(ctx context.Context, arg ListActionsJobsForUpdateParams) ([]ActionsJob, error)
@@ -438,6 +460,7 @@ type Querier interface {
 	// Every secret visible to a job; the caller resolves the precedence.
 	ListActionsSecretsForJob(ctx context.Context, arg ListActionsSecretsForJobParams) ([]ActionsSecret, error)
 	ListActionsSteps(ctx context.Context, jobID uuid.UUID) ([]ActionsStep, error)
+	ListActionsUploadParts(ctx context.Context, owner string) ([]ActionsUploadPart, error)
 	ListActionsVariables(ctx context.Context, arg ListActionsVariablesParams) ([]ActionsVariable, error)
 	ListActionsVariablesForJob(ctx context.Context, arg ListActionsVariablesForJobParams) ([]ActionsVariable, error)
 	// The workflow files that ever ran in a repository, with their last name.
@@ -462,6 +485,11 @@ type Querier interface {
 	// Enabled links whose scheduled run is due and not held by a backoff.
 	ListDueGitHubSyncLinks(ctx context.Context, limit int32) ([]GithubSyncLink, error)
 	ListEvictionCandidates(ctx context.Context, arg ListEvictionCandidatesParams) ([]ListEvictionCandidatesRow, error)
+	// Expired artifacts and uploads not finalized before stale_before.
+	ListExpiredActionsArtifacts(ctx context.Context, arg ListExpiredActionsArtifactsParams) ([]ActionsArtifact, error)
+	// Complete entries unused since used_before and uploads abandoned before
+	// stale_before.
+	ListExpiredActionsCaches(ctx context.Context, arg ListExpiredActionsCachesParams) ([]ActionsCache, error)
 	ListGitHubAPIIDs(ctx context.Context, uuids []uuid.UUID) ([]GhapiID, error)
 	// Every enabled backup or sync link of a hot repository (nightly check).
 	ListGitHubBackupLinks(ctx context.Context, arg ListGitHubBackupLinksParams) ([]GithubSyncLink, error)
@@ -549,6 +577,7 @@ type Querier interface {
 	// Newest first.
 	ListRetiredGenerations(ctx context.Context, repoID uuid.UUID) ([]GitGenerationsRetired, error)
 	ListRunningActionsJobsOfRunner(ctx context.Context, runnerID uuid.NullUUID) ([]ListRunningActionsJobsOfRunnerRow, error)
+	ListStaleActionsUploadOwners(ctx context.Context, arg ListStaleActionsUploadOwnersParams) ([]string, error)
 	ListStorageObjectsByKeys(ctx context.Context, arg ListStorageObjectsByKeysParams) ([]StorageObject, error)
 	ListStorageObjectsPendingReplicas(ctx context.Context, arg ListStorageObjectsPendingReplicasParams) ([]StorageObject, error)
 	// Runs not completed and not touched since before: the sweeper advances
@@ -681,6 +710,10 @@ type Querier interface {
 	RepoJournalDirty(ctx context.Context, id uuid.UUID) (bool, error)
 	RepoLFSUsage(ctx context.Context, repoID uuid.UUID) (RepoLFSUsageRow, error)
 	RequestActionsJobCancel(ctx context.Context, id uuid.UUID) error
+	// ---- cache ----
+	// Reserves a cache entry. An existing entry is taken over only when it is
+	// an upload abandoned before stale_before; otherwise no row comes back.
+	ReserveActionsCache(ctx context.Context, arg ReserveActionsCacheParams) (ActionsCache, error)
 	// Adds the deltas to the usage of a namespace only if the result stays
 	// within its effective limits. Negative deltas (releases) always apply and
 	// never go below zero. Zero rows means the quota would be exceeded; call
@@ -721,6 +754,7 @@ type Querier interface {
 	// on and, with repo_id, the collaborators, owner and owning organization
 	// members of that repository.
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error)
+	SetActionsArtifactBlob(ctx context.Context, arg SetActionsArtifactBlobParams) (ActionsArtifact, error)
 	SetActionsJobCheckRun(ctx context.Context, arg SetActionsJobCheckRunParams) error
 	SetActionsJobLogKey(ctx context.Context, arg SetActionsJobLogKeyParams) error
 	SetActionsJobLogLength(ctx context.Context, arg SetActionsJobLogLengthParams) error
@@ -783,6 +817,7 @@ type Querier interface {
 	// Root comments (not replies) of a pull request, for re-anchoring.
 	ThreadCommentsOfPull(ctx context.Context, pullID uuid.UUID) ([]PullReviewComment, error)
 	TokenNameTaken(ctx context.Context, arg TokenNameTakenParams) (bool, error)
+	TouchActionsCache(ctx context.Context, id int64) error
 	TouchActionsJob(ctx context.Context, id uuid.UUID) error
 	TouchActionsRun(ctx context.Context, id uuid.UUID) error
 	TouchActionsRunner(ctx context.Context, id uuid.UUID) error
@@ -824,6 +859,8 @@ type Querier interface {
 	UpsertActionsSecret(ctx context.Context, arg UpsertActionsSecretParams) (UpsertActionsSecretRow, error)
 	// ---- steps ----
 	UpsertActionsStep(ctx context.Context, arg UpsertActionsStepParams) error
+	// ---- upload parts ----
+	UpsertActionsUploadPart(ctx context.Context, arg UpsertActionsUploadPartParams) error
 	UpsertActionsVariable(ctx context.Context, arg UpsertActionsVariableParams) (ActionsVariable, error)
 	// The suite of (commit, app), created queued when missing.
 	UpsertCheckSuite(ctx context.Context, arg UpsertCheckSuiteParams) (CheckSuite, error)
