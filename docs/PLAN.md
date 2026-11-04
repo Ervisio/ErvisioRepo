@@ -765,7 +765,7 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 - ~~Documentazione per admin e utenti, guida alla migrazione da GitHub~~ (tolte su decisione dell'utente, 2026-11-03).
 - [x] Guida al DR (en e it).
 - ~~Test di carico ed esercitazione DR su Hetzner~~: li esegue l'utente (2026-11-03), non fanno parte del lavoro degli agenti.
-- [ ] Release v1.0.0 firmata, pacchetti, immagini e plugin nel catalogo. (v1.0.0 il 2026-11-04 con i pacchetti firmati; v1.0.2 lo stesso giorno con l'immagine `ghcr.io/ervisio/ervisio-repo` multi-arch e il plugin `repo-1.0.2.tar.gz`; registrazione nel catalogo aperta come Ervisio/plugins#41, in attesa di review; il package ghcr va reso pubblico)
+- [x] Release v1.0.0 firmata, pacchetti, immagini e plugin nel catalogo. (v1.0.0 il 2026-11-04 con i pacchetti firmati; v1.0.2 e v1.0.3 lo stesso giorno con l'immagine pubblica `ghcr.io/ervisio/ervisio-repo` multi-arch e il plugin `repo`, registrato nel catalogo con Ervisio/plugins#41 e aggiornato a 1.0.3 con #42)
 
 **Accettazione**: obiettivi del §1 misurati e rispettati; l'esercitazione DR è documentata con i tempi reali.
 

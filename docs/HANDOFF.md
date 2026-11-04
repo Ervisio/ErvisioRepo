@@ -1,6 +1,6 @@
 # Handoff: stato del lavoro (2026-11-04)
 
-Le Fasi 0-6, la Fase 8 ridotta e la guida al DR della Fase 10 sono completate. Tutto è committato e pushato su `main`; build, vet, lint, codegen e controlli web sono verdi. Le release v1.0.0 e v1.0.2 sono pubblicate su GitHub (pacchetti e SHA256SUMS firmati; la v1.0.2 ha anche il plugin `repo-1.0.2.tar.gz`); l'immagine `ghcr.io/ervisio/ervisio-repo:1.0.2`/`latest` è su ghcr. La v1.0.1 è solo un tag, mai pubblicata. Fase 7 (OCI) e Fase 9 (hardening) restano rinviate.
+Le Fasi 0-6, la Fase 8 ridotta e la guida al DR della Fase 10 sono completate. Tutto è committato e pushato su `main`; build, vet, lint, codegen e controlli web sono verdi. Le release v1.0.0, v1.0.2 e v1.0.3 sono pubblicate su GitHub (pacchetti e SHA256SUMS firmati; dalla v1.0.2 anche il plugin `repo-<ver>.tar.gz`); l'immagine pubblica `ghcr.io/ervisio/ervisio-repo:1.0.3`/`latest` è su ghcr e il plugin `repo` 1.0.3 è nel catalogo (categoria «Web servers»). La v1.0.1 è solo un tag, mai pubblicata; la v1.0.2 non parte senza `[storage.policy.actions]` nel config. Fase 7 (OCI) e Fase 9 (hardening) restano rinviate.
 
 ## Obiettivo e ambito (deciso dall'utente il 2026-11-03)
 
@@ -54,7 +54,7 @@ Restano da fare: la Fase 6, la Fase 8 ridotta, e della Fase 10 la guida al DR e 
 
 ## Cosa resta
 
-1. **Fase 10, chiusura:** la chiave privata ed25519 è in `~/.ervisio-release/release.pem` sulla macchina del maintainer, fuori dal repo. Restano due passi manuali: rendere pubblico il package ghcr `ervisio-repo` (impostazioni del package su GitHub) e fare la review e il merge di Ervisio/plugins#41 (registrazione del plugin `repo`, categoria «Web servers»). A ogni release vanno alzati insieme il default `ERVISIO_VERSION` in `deploy/docker/compose.yaml` e la versione del plugin (`package.json`, `package-lock.json`, `plugin/manifest.json`, `catalog-entry.json`), che deve coincidere con il tag; gli asset sono costruiti in locale perché la CI è disabilitata.
+1. **Fase 10, chiusura:** la chiave privata ed25519 è in `~/.ervisio-release/release.pem` sulla macchina del maintainer, fuori dal repo. Il catalogo sincronizza le nuove release da solo ogni 15 minuti (workflow «Sync plugin releases» di Ervisio/plugins, lanciabile a mano). A ogni release vanno alzati insieme il default `ERVISIO_VERSION` in `deploy/docker/compose.yaml` e la versione del plugin (`package.json`, `package-lock.json`, `plugin/manifest.json`, `catalog-entry.json`), che deve coincidere con il tag; gli asset sono costruiti in locale perché la CI è disabilitata.
 2. **Punti aperti:**
    - `docs/dr.md` contiene vari `TODO: confirm` (credenziali dei target fuori dal kit, owner e modo di `recovery-kit import`, entrypoint Docker e `restore`, runner dopo un restore, ri-replica su un nuovo target, evict di un singolo repo, chiavi di firma lato server).
 3. **Lacune note della Fase 6:**
