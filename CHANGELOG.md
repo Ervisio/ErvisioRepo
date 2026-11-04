@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-11-04
+
 ### Fixed
 
 - Plugin: the page failed to load with "React is not ready" because the settings context was created at import time, before `activate()` set React.
