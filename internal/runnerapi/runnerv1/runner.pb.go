@@ -534,7 +534,13 @@ type Task struct {
 	// label is the runs-on label the job matched.
 	Label string `protobuf:"bytes,12,opt,name=label,proto3" json:"label,omitempty"`
 	// attempt is the run attempt, starting at 1.
-	Attempt       int32 `protobuf:"varint,13,opt,name=attempt,proto3" json:"attempt,omitempty"`
+	Attempt int32 `protobuf:"varint,13,opt,name=attempt,proto3" json:"attempt,omitempty"`
+	// runtime_token is a short-lived JWT exposed as ACTIONS_RUNTIME_TOKEN
+	// for the cache and artifact services (the toolkit decodes its claims).
+	RuntimeToken string `protobuf:"bytes,14,opt,name=runtime_token,json=runtimeToken,proto3" json:"runtime_token,omitempty"`
+	// actions_url is the base URL remote actions (uses: owner/repo@ref) are
+	// cloned from: the server proxy-cache, or https://github.com.
+	ActionsUrl    string `protobuf:"bytes,15,opt,name=actions_url,json=actionsUrl,proto3" json:"actions_url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -658,6 +664,20 @@ func (x *Task) GetAttempt() int32 {
 		return x.Attempt
 	}
 	return 0
+}
+
+func (x *Task) GetRuntimeToken() string {
+	if x != nil {
+		return x.RuntimeToken
+	}
+	return ""
+}
+
+func (x *Task) GetActionsUrl() string {
+	if x != nil {
+		return x.ActionsUrl
+	}
+	return ""
 }
 
 type TaskNeed struct {
@@ -1278,7 +1298,7 @@ const file_v1_runner_proto_rawDesc = "" +
 	"\bcapacity\x18\x02 \x01(\x05R\bcapacity\"e\n" +
 	"\x11FetchTaskResponse\x12+\n" +
 	"\x04task\x18\x01 \x01(\v2\x17.ervisio.runner.v1.TaskR\x04task\x12#\n" +
-	"\rtasks_version\x18\x02 \x01(\x03R\ftasksVersion\"\xbf\x05\n" +
+	"\rtasks_version\x18\x02 \x01(\x03R\ftasksVersion\"\x85\x06\n" +
 	"\x04Task\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12)\n" +
 	"\x10workflow_payload\x18\x02 \x01(\fR\x0fworkflowPayload\x121\n" +
@@ -1295,7 +1315,10 @@ const file_v1_runner_proto_rawDesc = "" +
 	" \x01(\tR\bcacheUrl\x12'\n" +
 	"\x0ftimeout_minutes\x18\v \x01(\x05R\x0etimeoutMinutes\x12\x14\n" +
 	"\x05label\x18\f \x01(\tR\x05label\x12\x18\n" +
-	"\aattempt\x18\r \x01(\x05R\aattempt\x1a:\n" +
+	"\aattempt\x18\r \x01(\x05R\aattempt\x12#\n" +
+	"\rruntime_token\x18\x0e \x01(\tR\fruntimeToken\x12\x1f\n" +
+	"\vactions_url\x18\x0f \x01(\tR\n" +
+	"actionsUrl\x1a:\n" +
 	"\fSecretsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a7\n" +

@@ -119,6 +119,12 @@ message Task {
   string label = 12;
   // attempt is the run attempt, starting at 1.
   int32 attempt = 13;
+  // runtime_token is a short-lived JWT exposed as ACTIONS_RUNTIME_TOKEN
+  // for the cache and artifact services (the toolkit decodes its claims).
+  string runtime_token = 14;
+  // actions_url is the base URL remote actions (uses: owner/repo@ref) are
+  // cloned from: the server proxy-cache, or https://github.com.
+  string actions_url = 15;
 }
 
 message TaskNeed {
