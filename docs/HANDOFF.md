@@ -1,6 +1,6 @@
-# Handoff: stato del lavoro (2026-11-03)
+# Handoff: stato del lavoro (2026-11-04)
 
-La Fase 5 è chiusa. Tutto è committato e pushato su `main`, e build, vet, lint, codegen e controlli web sono verdi. Il lavoro si è fermato qui su richiesta dell'utente; la prossima sessione riparte dalla **Fase 6, Actions**.
+Le Fasi 0-6, la Fase 8 ridotta e la guida al DR della Fase 10 sono completate. Tutto è committato e pushato su `main`; build, vet, lint, codegen e controlli web sono verdi. Restano la release firmata v1.0.0 (da fare solo dopo conferma dell'utente) e le questioni aperte qui sotto. Fase 7 (OCI) e Fase 9 (hardening) restano rinviate.
 
 ## Obiettivo e ambito (deciso dall'utente il 2026-11-03)
 
@@ -46,18 +46,27 @@ Restano da fare: la Fase 6, la Fase 8 ridotta, e della Fase 10 la guida al DR e 
 
 ## Fatto
 
-- Fasi 0–4 e Fase UI.
-- **Fase 5:**
-  - eventi (outbox, dispatcher River, bus);
-  - issue, protezione dei branch e regole sui tag, CODEOWNERS;
-  - pull request con fork e pool, merge-tree, review inline, suggested change, tre strategie di merge, auto-merge, update-branch;
-  - notifiche in-app ed email, webhook github ed ervisio;
-  - commit status e check run;
-  - `/api/v1`, `/api/v3` compatibile con GitHub (`docs/api-v3.md`) e un sottoinsieme GraphQL per `gh`;
-  - import da GitHub di issue, PR, label, milestone e release;
-  - UI di issue, PR, notifiche, webhook, regole e GitHub.
-  - Il dettaglio di ogni blocco è nel `CHANGELOG.md`, sezione Unreleased.
-- Ultima migrazione: `00190_fork_networks`.
+- Fasi 0-5 e Fase UI (dettaglio nel `CHANGELOG.md`, sezione Unreleased). Ultima migrazione: `00210_actions_results`.
+- **Fase 6, Actions:** contratto runner ConnectRPC, `ervisio-runner` su act con backend Docker, server Actions (parser, trigger, matrice, `needs`, ambienti con approvazione, workflow riutilizzabili, segreti sigillati, log), REST API, servizi cache v2 e artifact v4, UI dei run, dei log e delle impostazioni.
+- **Fase 8 ridotta:** Dockerfile, compose, `setup.sh` e `setup.bat`; pacchetti nfpm, systemd, `install.sh`; socket `/api/plugin/*`; plugin in `plugin/`; Caddy in Go e nel plugin; `plugin/catalog-entry.json`.
+- **Fase 10:** guida al DR in `docs/dr.md` e `docs/dr.it.md`.
+- `docs/PLAN.md` §11 ha le caselle aggiornate.
+
+## Cosa resta
+
+1. **Fase 10, release v1.0.0 firmata:** pacchetti, immagini e plugin nel catalogo. Gli strumenti sono in `scripts/release`; chiedere all'utente prima di taggare o pubblicare.
+2. **Punti aperti:**
+   - il formato di `plugin/catalog-entry.json` non è confermato con il catalogo `Ervisio/plugins`;
+   - la chiave pubblica di release in `deploy/install.sh` è un segnaposto;
+   - `docs/dr.md` contiene vari `TODO: confirm` (credenziali dei target fuori dal kit, owner e modo di `recovery-kit import`, entrypoint Docker e `restore`, runner dopo un restore, ri-replica su un nuovo target, evict di un singolo repo, chiavi di firma lato server).
+3. **Lacune note della Fase 6:**
+   - `actions/upload-artifact@v4` e `download-artifact@v4` ufficiali rifiutano host diversi da github.com: usare un fork compatibile (per esempio `christopherhx/gitea-upload-artifact`);
+   - il proxy-cache `_actions` non è costruito (serve un mirror git sul server);
+   - nessun download con `Range`;
+   - le impostazioni Actions richiedono un riavvio;
+   - nella UI non ci sono segreti per ambiente;
+   - il test chaos della Fase 3 non è scritto (niente test per decisione dell'utente).
+4. Test di carico, esercitazione DR e contratti con `gh`/`go-github` li fa l'utente.
 
 ## Lacune note della Fase 5 (non bloccanti)
 
@@ -80,19 +89,6 @@ Restano da fare: la Fase 6, la Fase 8 ridotta, e della Fase 10 la guida al DR e 
   - `search` richiede il qualificatore `repo:`;
   - l'introspection è minima.
 - **Web:** il chunk principale è di circa 850 kB. La UI non è mai stata aperta in un browser.
-
-## Prossimi passi
-
-1. **Fase 6, Actions** (`docs/PLAN.md` §6 e §11):
-   - parser dei workflow e trigger;
-   - scheduler su River con ConnectRPC e i `.proto` del runner, contratto prima;
-   - `ervisio-runner` con il fork di act e backend Docker;
-   - segreti e log in streaming;
-   - cache v2 e artifact v4;
-   - check run nelle PR (riusare `internal/statuses`);
-   - UI dei run, con un round di galleria prima.
-2. **Fase 8 ridotta:** Docker, standalone, socket admin, plugin (installazione più configurazione grafica), Caddy, catalogo.
-3. **Fase 10:** guida al DR (en e it) e release v1.0.
 
 ## Punti aperti noti
 

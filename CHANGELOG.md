@@ -224,6 +224,31 @@ Phase 5, notifications, pickers and paging follow-ups:
 - `GET /api/v1/github/imports`: the GitHub imports the caller started, on repositories it can still read (`X-Has-More` paging); listed in the GitHub settings page.
 - `/api/v3`: `GET /repos/{owner}/{repo}/readme` (and `readme/{dir}`), `POST /repos/{owner}/{repo}/git/refs`, `PATCH` and `DELETE /repos/{owner}/{repo}/git/refs/{ref}`; refs containing `/` are accepted in the commit and status endpoints. Limits: the readme has no `vnd.github.html` rendering and no `.github`/`docs` fallback, and only regular files are served; ref writes are limited to `heads/` and `tags/` with a full sha, deleting the default branch is refused, a branch protection refusal is a 422 and a concurrent change a 409, the returned object type is always `commit`, and no quota check is made. In `commits/{ref}/...` a ref whose last segment is `status`, `statuses`, `check-runs` or `check-suites` is read as that sub-resource, as on GitHub.
 
+Phase 6, Actions (Docker backend):
+
+- Runner protocol: ConnectRPC contract in `proto/` (registration, declare, fetch task, update task and log), served on `/api/actions/runner/*`.
+- `ervisio-runner` daemon (`cmd/ervisio-runner`) built on the act library: registration with labels, Docker backend with cgroup limits, log streaming, systemd unit.
+- Migration 00200: workflow runs, jobs, steps, logs, secrets, variables, runners and registration tokens. `internal/actions`: workflow parser, triggers and filters, matrix, `needs`, `concurrency`, `environment` approval, reusable workflows, River scheduling, job tokens, sealed secrets (HKDF from the master key), masking, log storage, check runs and commit statuses on PRs. Job tokens also work on `/api/v1` (aliased to the GitHub-compatible API).
+- REST (`/api/v1`): runs, jobs, logs (SSE), re-run, re-run failed jobs, cancel, approve, dispatch, workflow badges, repository and organization secrets and variables, runners and registration tokens.
+- Migration 00210: cache v2 and artifact v4 results services (Twirp) with blob storage on the tiered store, mounted next to the runner API.
+- Web UI: run list, run page with job graph and live logs, runner administration and Actions settings (layout A from `design/wip/003-actions-run/DECISION.md`).
+- Documentation: disaster recovery guide in English and Italian (`docs/dr.md`, `docs/dr.it.md`).
+
+Phase 8, Ervisio integration and installation (reduced scope):
+
+- Docker: multi-stage `Dockerfile`, `deploy/docker/compose.yaml`, `setup.sh` and `setup.bat`.
+- Standalone: nfpm `.deb` and `.rpm` packages, systemd units, `deploy/install.sh` and signed release tooling (`scripts/release`).
+- Plugin admin socket `/api/plugin/*` (per-process secret) to read and write the configuration; the Ervisio core plugin in `plugin/` installs standalone or Docker mode and offers a graphical configuration page.
+- Caddy setup in Go (`ervisio-repo caddy setup`) and in the plugin, with the Git parameters of PLAN section 9.4.
+
+Known limitations of Phase 6:
+
+- The official `actions/upload-artifact@v4` and `actions/download-artifact@v4` refuse hosts other than github.com: use a compatible fork such as `christopherhx/gitea-upload-artifact` and its download counterpart.
+- The proxy cache for remote actions (`_actions`) is not built (it needs a server-side git mirror).
+- Artifact and cache downloads do not support `Range` requests.
+- Changing Actions settings requires a server restart (no live reload).
+- The UI has no per-environment secrets.
+
 ### Removed
 
 - Organization role `billing` (existing members become `member`).

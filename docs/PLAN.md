@@ -637,54 +637,54 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 
 ### Fase 0 — Fondamenta
 
-- [ ] Scaffold del monorepo come in §10.1, `Makefile`, `CLAUDE.md`, licenza, `CHANGELOG.md`, README in inglese e italiano.
-- [ ] Config TOML + env con validazione e messaggi chiari; `ervisio-repo serve` con `/healthz` e `/readyz`.
-- [ ] Postgres: pool pgx, goose incorporato, sqlc, River avviato.
-- [ ] Pipeline OpenAPI: `api/openapi.yaml` → server Go (oapi-codegen strict) e client TS (`openapi-typescript`).
-- [ ] SPA vuota (Vite, TanStack Router e Query, token del core, i18n en/it) incorporata nel binario.
-- [ ] Ambiente di sviluppo `deploy/docker/compose.dev.yaml`: Postgres, MinIO, `atmoz/sftp`, Mailpit.
-- [ ] CI GitHub Actions (finché non c'è il dogfooding): `go vet`, `gofmt`, `golangci-lint`, `govulncheck`, test Go con `-race`, ESLint, `node --test`, build.
+- [x] Scaffold del monorepo come in §10.1, `Makefile`, `CLAUDE.md`, licenza, `CHANGELOG.md`, README in inglese e italiano.
+- [x] Config TOML + env con validazione e messaggi chiari; `ervisio-repo serve` con `/healthz` e `/readyz`.
+- [x] Postgres: pool pgx, goose incorporato, sqlc, River avviato.
+- [x] Pipeline OpenAPI: `api/openapi.yaml` → server Go (oapi-codegen strict) e client TS (`openapi-typescript`).
+- [x] SPA vuota (Vite, TanStack Router e Query, token del core, i18n en/it) incorporata nel binario.
+- [x] Ambiente di sviluppo `deploy/docker/compose.dev.yaml`: Postgres, MinIO, `atmoz/sftp`, Mailpit.
+- [x] CI GitHub Actions (finché non c'è il dogfooding): `go vet`, `gofmt`, `golangci-lint`, `govulncheck`, test Go con `-race`, ESLint, `node --test`, build.
 
 **Accettazione**: `make dev` avvia tutto in locale; la CI è verde; un endpoint d'esempio è generato da OpenAPI e chiamato dalla SPA con tipi generati.
 
 ### Fase 1 — Livello di storage
 
-- [ ] Interfaccia `blob.Store` e driver `local`, `s3`, `sftp` (§4.1).
-- [ ] Una suite di test di conformità comune che ogni driver deve passare: put e get, range, oggetti da 0 byte e da 5 GiB, sovrascrittura, list paginato, errori di rete simulati, scritture concorrenti.
-- [ ] Wrapper `crypt` (AES-256-GCM a chunk, range su dati cifrati), `retry`, `metered`.
-- [ ] Motore `tier` per oggetti indirizzati per contenuto: policy, cache LRU con budget e TTL, scrittura primary-first, job di replica e di verifica, tabella `storage_objects`.
-- [ ] Comando `ervisio-repo storage test <target>` e pagina admin con l'esito del test di connessione.
+- [x] Interfaccia `blob.Store` e driver `local`, `s3`, `sftp` (§4.1).
+- [x] Una suite di test di conformità comune che ogni driver deve passare: put e get, range, oggetti da 0 byte e da 5 GiB, sovrascrittura, list paginato, errori di rete simulati, scritture concorrenti.
+- [x] Wrapper `crypt` (AES-256-GCM a chunk, range su dati cifrati), `retry`, `metered`.
+- [x] Motore `tier` per oggetti indirizzati per contenuto: policy, cache LRU con budget e TTL, scrittura primary-first, job di replica e di verifica, tabella `storage_objects`.
+- [x] Comando `ervisio-repo storage test <target>` e pagina admin con l'esito del test di connessione.
 
 **Accettazione**: la suite di conformità passa su MinIO, SFTP e local; un oggetto cancellato dalla cache torna dal primary in modo trasparente; un'interruzione di rete a metà upload non lascia oggetti corrotti.
 
 ### Fase 2 — Identità e organizzazioni
 
-- [ ] Registrazione e login locale, verifica email, reset, argon2id, sessioni in DB, CSRF.
-- [ ] TOTP, WebAuthn (passkey), codici di recupero, 2FA obbligatoria per policy.
-- [ ] Provider OIDC configurabili e collegamento degli account.
-- [ ] Token personali con scope e scadenza, chiavi SSH e GPG.
-- [ ] Organizzazioni, team, ruoli (§5.3), inviti, quote di base, log di audit.
-- [ ] UI: login, registrazione, impostazioni account, pagina organizzazione (provvisorie, si rifiniscono dopo la Fase UI).
+- [x] Registrazione e login locale, verifica email, reset, argon2id, sessioni in DB, CSRF.
+- [x] TOTP, WebAuthn (passkey), codici di recupero, 2FA obbligatoria per policy.
+- [x] Provider OIDC configurabili e collegamento degli account.
+- [x] Token personali con scope e scadenza, chiavi SSH e GPG.
+- [x] Organizzazioni, team, ruoli (§5.3), inviti, quote di base, log di audit.
+- [x] UI: login, registrazione, impostazioni account, pagina organizzazione (provvisorie, si rifiniscono dopo la Fase UI).
 
 **Accettazione**: i test `sec_auth_*` coprono brute force, riuso delle sessioni, CSRF, enumerazione degli utenti e takeover OIDC via email; il login funziona con un IdP OIDC di test (Dex in testcontainers).
 
 ### Fase 3 — Motore Git e tiering
 
-- [ ] CRUD dei repo, layout per UUID, redirect dopo rename e transfer.
-- [ ] `internal/git` (argv, ambiente pulito, pool `cat-file`).
-- [ ] Smart HTTP (protocollo v2) e server SSH sulla porta 2222.
-- [ ] Hook installati dal binario, che parlano col server via socket.
-- [ ] Pack journal: segmenti in `pre-receive`, manifest in `reference-transaction`, modalità `sync` e `async`, compattazione (§4.3).
-- [ ] Stati del repo, hydration con singleflight e avanzamento (SSH stderr e SSE), eviction con watermark, cestino, pin.
-- [ ] Backup Postgres con wal-g, recovery kit, `ervisio-repo restore`, `prewarm`.
-- [ ] Test «chaos»: 50 repo con storia reale, si cancellano disco e DB, si ripristina e si confrontano ref e `fsck`.
+- [x] CRUD dei repo, layout per UUID, redirect dopo rename e transfer.
+- [x] `internal/git` (argv, ambiente pulito, pool `cat-file`).
+- [x] Smart HTTP (protocollo v2) e server SSH sulla porta 2222.
+- [x] Hook installati dal binario, che parlano col server via socket.
+- [x] Pack journal: segmenti in `pre-receive`, manifest in `reference-transaction`, modalità `sync` e `async`, compattazione (§4.3).
+- [x] Stati del repo, hydration con singleflight e avanzamento (SSH stderr e SSE), eviction con watermark, cestino, pin.
+- [x] Backup Postgres con wal-g, recovery kit, `ervisio-repo restore`, `prewarm`.
+- [ ] Test «chaos»: 50 repo con storia reale, si cancellano disco e DB, si ripristina e si confrontano ref e `fsck`. (non scritto: niente test per decisione dell'utente)
 
 **Accettazione**: clone, push e fetch funzionano su HTTP e SSH con git 2.30 e con la versione più recente; un repo sfrattato torna con un clone; il test chaos è verde in CI; il kill del processo a metà push non lascia mai un manifest che punta a segmenti mancanti.
 
 ### Fase UI — Design system (con te)
 
-- [ ] Proposta di 2–3 direzioni visive coerenti con i token del core (OLED, hue per sezione) per le schermate chiave: home del repo, vista file, diff della PR, run delle Actions, pagina pacchetto.
-- [ ] Scelta insieme, poi kit di componenti in `web/src/ui` (Button, Input, Select, Dialog, Menu, Tabs, Table, Badge, Toast, EmptyState) e pagina di catalogo dei componenti.
+- [x] Proposta di 2–3 direzioni visive coerenti con i token del core (OLED, hue per sezione) per le schermate chiave: home del repo, vista file, diff della PR, run delle Actions, pagina pacchetto.
+- [x] Scelta insieme, poi kit di componenti in `web/src/ui` (Button, Input, Select, Dialog, Menu, Tabs, Table, Badge, Toast, EmptyState) e pagina di catalogo dei componenti.
 
 **Accettazione**: kit approvato da te; screenshot di riferimento a 1280 e 390 px salvati per i test visivi.
 
@@ -712,12 +712,13 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 
 ### Fase 6 — Actions (backend Docker)
 
-- [ ] Parser dei workflow, trigger, filtri, matrix, `needs`, `concurrency`, `environment` con approvazione, workflow riutilizzabili.
-- [ ] Scheduler su River, protocollo ConnectRPC, registrazione dei runner, etichette.
-- [ ] `ervisio-runner` con il fork di act e backend Docker con limiti cgroup.
-- [ ] Token del job, segreti, variabili, mascheramento, log in streaming e archiviazione.
-- [ ] Servizi cache v2 e artifact v4; proxy-cache delle action remote.
-- [ ] Check run nelle PR, badge, UI dei run con log xterm, re-run di job falliti.
+- [x] Parser dei workflow, trigger, filtri, matrix, `needs`, `concurrency`, `environment` con approvazione, workflow riutilizzabili.
+- [x] Scheduler su River, protocollo ConnectRPC, registrazione dei runner, etichette.
+- [x] `ervisio-runner` con il fork di act e backend Docker con limiti cgroup.
+- [x] Token del job, segreti, variabili, mascheramento, log in streaming e archiviazione.
+- [x] Servizi cache v2 e artifact v4.
+- [ ] Proxy-cache delle action remote (`_actions`): non costruito, serve un mirror git sul server.
+- [x] Check run nelle PR, badge, UI dei run con log xterm, re-run di job falliti. (log con rendering testuale, senza xterm)
 
 **Accettazione**: una suite di workflow reali (Node, Go, Python, Docker build e push, matrix, servizi Postgres) gira senza modifiche e dà lo stesso esito che su GitHub; le PR da fork non vedono mai i segreti.
 
@@ -736,12 +737,12 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 
 > Ambito ridotto su decisione dell'utente (2026-11-03). Le distribuzioni sono due: **standalone** (binario nativo) e **Docker**. Il plugin Ervisio non è una terza distribuzione: automatizza l'installazione di una delle due, scelta dall'utente, e offre una configurazione grafica nelle impostazioni di Ervisio. Niente SSO col core: Ervisio usa il login con gli account Linux, che non si adatta.
 
-- [ ] Docker: Dockerfile multi-stage, `compose.yaml`, `setup.sh` e `setup.bat`.
-- [ ] Standalone: pacchetti nativi nfpm (.deb e .rpm), unit systemd, `install.sh`, release firmate.
-- [ ] Socket admin `/api/plugin/*` con segreto per processo, usato dal plugin per leggere e scrivere la configurazione.
-- [ ] Plugin in `plugin/`: installazione automatica in modalità standalone o Docker (a scelta dell'utente) e pagina di configurazione grafica nelle impostazioni di Ervisio.
-- [ ] Flusso Caddy in TS (dal plugin) e in Go (`ervisio-repo caddy setup`), con i parametri Git del §9.4.
-- [ ] Voce nel catalogo `Ervisio/plugins`.
+- [x] Docker: Dockerfile multi-stage, `compose.yaml`, `setup.sh` e `setup.bat`.
+- [x] Standalone: pacchetti nativi nfpm (.deb e .rpm), unit systemd, `install.sh`, release firmate.
+- [x] Socket admin `/api/plugin/*` con segreto per processo, usato dal plugin per leggere e scrivere la configurazione.
+- [x] Plugin in `plugin/`: installazione automatica in modalità standalone o Docker (a scelta dell'utente) e pagina di configurazione grafica nelle impostazioni di Ervisio.
+- [x] Flusso Caddy in TS (dal plugin) e in Go (`ervisio-repo caddy setup`), con i parametri Git del §9.4.
+- [x] Voce nel catalogo `Ervisio/plugins`.
 - ~~SSO col core~~ (tolto).
 
 **Accettazione**: ErvisioRepo si installa standalone e con Docker senza il plugin; dal pannello Ervisio il plugin installa una delle due modalità, configura `git.<dominio>` con TLS e permette di modificare la configurazione dalle impostazioni.
@@ -762,9 +763,9 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 ### Fase 10 — Beta e v1.0
 
 - ~~Documentazione per admin e utenti, guida alla migrazione da GitHub~~ (tolte su decisione dell'utente, 2026-11-03).
-- [ ] Guida al DR (en e it).
+- [x] Guida al DR (en e it).
 - ~~Test di carico ed esercitazione DR su Hetzner~~: li esegue l'utente (2026-11-03), non fanno parte del lavoro degli agenti.
-- [ ] Release v1.0.0 firmata, pacchetti, immagini e plugin nel catalogo.
+- [ ] Release v1.0.0 firmata, pacchetti, immagini e plugin nel catalogo. (strumenti pronti in `scripts/release`, release non ancora emessa)
 
 **Accettazione**: obiettivi del §1 misurati e rispettati; l'esercitazione DR è documentata con i tempi reali.
 
