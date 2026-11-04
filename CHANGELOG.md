@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-11-04
+
 ### Added
 
 - Plugin: new layout with an overview (service, repositories, space, runners, containers, access), a maintenance page (update to the plugin's version, start, stop, restart, configuration check, live logs) and settings pages for access, mail, Git and SSH, Actions, webhooks, logs and address.
