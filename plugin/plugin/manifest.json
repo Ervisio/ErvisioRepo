@@ -1,0 +1,296 @@
+{
+  "author": "Riccardo Reccia",
+  "capabilities": {
+    "commands": [
+      {
+        "argv": [
+          "systemctl",
+          "show",
+          "caddy.service",
+          "--no-pager",
+          "--property=LoadState,ActiveState,SubState,ExecStart,FragmentPath"
+        ],
+        "description": "Read the state of caddy.service and the Caddyfile it loads (to offer a web address for the Git server)",
+        "name": "service-show"
+      },
+      {
+        "admin": true,
+        "args": [
+          {
+            "maxLen": 220,
+            "pattern": "/etc/caddy/[A-Za-z0-9._-]{1,100}(/[A-Za-z0-9._-]{1,100})?"
+          }
+        ],
+        "argv": [
+          "env",
+          "HOME=/run/ervisio-repo-caddy",
+          "XDG_DATA_HOME=/run/ervisio-repo-caddy/data",
+          "XDG_CONFIG_HOME=/run/ervisio-repo-caddy/config",
+          "caddy",
+          "validate",
+          "--config",
+          "{0}",
+          "--adapter",
+          "caddyfile"
+        ],
+        "description": "Check the Caddyfile with caddy validate before Caddy reloads it (in a scratch data folder, so nothing in Caddy's storage changes)",
+        "name": "validate",
+        "timeoutSec": 60
+      },
+      {
+        "admin": true,
+        "argv": [
+          "systemctl",
+          "reload",
+          "caddy.service"
+        ],
+        "description": "Reload caddy.service after adding or removing the Git server's site",
+        "name": "reload",
+        "timeoutSec": 120
+      },
+      {
+        "argv": [
+          "test",
+          "-S",
+          "/var/run/docker.sock"
+        ],
+        "description": "Check whether Docker is installed (to find the Caddy containers, and before installing with Docker)",
+        "name": "has-docker"
+      },
+      {
+        "argv": [
+          "id",
+          "-un"
+        ],
+        "description": "Read your user name (root uses Docker without an unlock prompt)",
+        "name": "user"
+      },
+      {
+        "argv": [
+          "id",
+          "-Gn"
+        ],
+        "description": "Read your groups (members of docker use Docker without an unlock prompt)",
+        "name": "groups"
+      },
+      {
+        "admin": true,
+        "args": [
+          {
+            "maxLen": 11,
+            "pattern": "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}"
+          },
+          {
+            "maxLen": 254,
+            "pattern": "[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}(\\.[A-Za-z0-9-]{1,63}){1,8}"
+          },
+          {
+            "maxLen": 200,
+            "pattern": "https?://[A-Za-z0-9.-]{1,150}(:[0-9]{1,5})?"
+          }
+        ],
+        "argv": [
+          "sh",
+          "-c",
+          "systemctl stop ervisio-repo-install.service 2>/dev/null; systemctl reset-failed ervisio-repo-install.service 2>/dev/null; exec systemd-run --unit=ervisio-repo-install --description='Install ErvisioRepo (Docker)' --remain-after-exit --setenv=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh -c \"$0\" install-docker \"$1\" \"$2\" \"$3\"",
+          "set -eu\nv=\"$1\"; email=\"$2\"; url=\"$3\"; d=/opt/ervisio-repo\ncommand -v docker >/dev/null || { echo \"Docker is not installed\"; exit 1; }\nif [ ! -f \"$d/deploy/docker/compose.yaml\" ]; then\n  mkdir -p \"$d\"\n  u=\"https://github.com/Ervisio/ErvisioRepo/archive/refs/tags/v$v.tar.gz\"\n  echo \"Downloading $u\"\n  if command -v curl >/dev/null; then curl -fsSL \"$u\"; else wget -qO- \"$u\"; fi | tar -xz --strip-components=1 -C \"$d\"\nfi\ncd \"$d/deploy/docker\"\nexec ./setup.sh --non-interactive --ervisio yes --admin-email \"$email\" --url \"$url\"",
+          "{0}",
+          "{1}",
+          "{2}"
+        ],
+        "description": "Install ErvisioRepo with Docker in /opt/ervisio-repo: download the release matching this plugin from GitHub and run deploy/docker/setup.sh --ervisio yes in a systemd unit (ervisio-repo-install), which starts the Docker Compose stack",
+        "name": "install-docker",
+        "timeoutSec": 60
+      },
+      {
+        "admin": true,
+        "args": [
+          {
+            "maxLen": 11,
+            "pattern": "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}"
+          }
+        ],
+        "argv": [
+          "sh",
+          "-c",
+          "systemctl stop ervisio-repo-install.service 2>/dev/null; systemctl reset-failed ervisio-repo-install.service 2>/dev/null; exec systemd-run --unit=ervisio-repo-install --description='Install ErvisioRepo (native)' --remain-after-exit --setenv=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh -c \"$0\" install-native \"$1\"",
+          "set -eu\nv=\"$1\"\nu=\"https://raw.githubusercontent.com/Ervisio/ErvisioRepo/v$v/deploy/install.sh\"\necho \"Downloading $u\"\nif command -v curl >/dev/null; then curl -fsSL \"$u\"; else wget -qO- \"$u\"; fi | sh -s -- --version \"$v\"",
+          "{0}"
+        ],
+        "description": "Install ErvisioRepo as a native package (deploy/install.sh of the release matching this plugin: downloads, verifies the signature, installs with apt or dnf) in a systemd unit (ervisio-repo-install)",
+        "name": "install-native",
+        "timeoutSec": 60
+      },
+      {
+        "argv": [
+          "systemctl",
+          "show",
+          "ervisio-repo-install.service",
+          "--no-pager",
+          "--property=LoadState,ActiveState,SubState,Result,InvocationID,Description"
+        ],
+        "description": "Read the state of the installation unit (ervisio-repo-install)",
+        "name": "install-state"
+      },
+      {
+        "admin": true,
+        "args": [
+          {
+            "maxLen": 32,
+            "pattern": "[a-f0-9]{32}"
+          }
+        ],
+        "argv": [
+          "sh",
+          "-c",
+          "exec journalctl _SYSTEMD_INVOCATION_ID=\"$1\" -o cat --no-pager -n 400",
+          "log",
+          "{0}"
+        ],
+        "description": "Read the output of the installation (the journal of ervisio-repo-install)",
+        "name": "install-log",
+        "timeoutSec": 30
+      }
+    ],
+    "files": {
+      "read": [
+        "/etc/caddy"
+      ],
+      "write": [
+        {
+          "admin": true,
+          "path": "/etc/caddy"
+        },
+        {
+          "create": true,
+          "path": "~/.config/ervisio/plugins/repo"
+        }
+      ]
+    },
+    "http": [
+      {
+        "admin": true,
+        "headers": [
+          "Content-Type"
+        ],
+        "maxBody": 1048576,
+        "name": "repo",
+        "rules": [
+          {
+            "methods": [
+              "GET"
+            ],
+            "path": "/api/plugin/(status|settings|storage|runners)"
+          },
+          {
+            "methods": [
+              "PUT"
+            ],
+            "path": "/api/plugin/(settings|public-url)"
+          }
+        ],
+        "socket": "/run/ervisio-repo/api.sock",
+        "timeoutSec": 60
+      },
+      {
+        "admin": true,
+        "adminUnlessGroup": "docker",
+        "headers": [
+          "Content-Type"
+        ],
+        "maxBody": 8388608,
+        "name": "docker",
+        "rules": [
+          {
+            "methods": [
+              "GET"
+            ],
+            "path": "/version"
+          },
+          {
+            "methods": [
+              "GET"
+            ],
+            "path": "/v1\\.[0-9]+/containers/json"
+          },
+          {
+            "methods": [
+              "GET"
+            ],
+            "path": "/v1\\.[0-9]+/containers/[a-f0-9]{12,64}/json"
+          },
+          {
+            "methods": [
+              "POST"
+            ],
+            "path": "/v1\\.[0-9]+/containers/[a-f0-9]{12,64}/exec"
+          },
+          {
+            "methods": [
+              "POST"
+            ],
+            "path": "/v1\\.[0-9]+/containers/[a-f0-9]{12,64}/start"
+          },
+          {
+            "methods": [
+              "POST"
+            ],
+            "path": "/v1\\.[0-9]+/exec/[a-f0-9]{64}/start"
+          },
+          {
+            "methods": [
+              "GET"
+            ],
+            "path": "/v1\\.[0-9]+/exec/[a-f0-9]{64}/json"
+          },
+          {
+            "methods": [
+              "POST"
+            ],
+            "path": "/v1\\.[0-9]+/networks/ervisiorepo_edge/connect"
+          }
+        ],
+        "socket": "/var/run/docker.sock",
+        "timeoutSec": 120
+      }
+    ],
+    "sockets": [
+      "/run/ervisio-repo/api.sock",
+      "/var/run/docker.sock"
+    ]
+  },
+  "color": "term",
+  "contributes": {
+    "pages": [
+      {
+        "icon": "server",
+        "id": "repo",
+        "title": "ErvisioRepo"
+      }
+    ],
+    "widgets": [
+      {
+        "icon": "server",
+        "id": "usage",
+        "title": "ErvisioRepo"
+      }
+    ]
+  },
+  "description": "Install and manage ErvisioRepo on this machine: settings, storage and runners, and publish the Git server on its own web address (git.<domain>) through Caddy.",
+  "entry": "index.js",
+  "icon": "server",
+  "id": "repo",
+  "minCore": "0.6.1",
+  "name": "ErvisioRepo",
+  "platforms": [
+    "linux"
+  ],
+  "version": "0.1.0",
+  "visibleTo": {
+    "groups": [
+      "wheel",
+      "sudo",
+      "docker"
+    ]
+  }
+}

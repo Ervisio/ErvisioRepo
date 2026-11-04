@@ -1,0 +1,62 @@
+{
+  "id": "repo",
+  "name": "ErvisioRepo",
+  "version": "0.1.0",
+  "description": "Install and manage ErvisioRepo on this machine: settings, storage and runners, and publish the Git server on its own web address (git.<domain>) through Caddy.",
+  "author": "Riccardo Reccia",
+  "icon": "server",
+  "color": "term",
+  "minCore": "0.6.1",
+  "platforms": [
+    "linux"
+  ],
+  "visibleTo": {
+    "groups": [
+      "wheel",
+      "sudo",
+      "docker"
+    ]
+  },
+  "category": "Development",
+  "trust": "team",
+  "repo": "Ervisio/ErvisioRepo",
+  "path": "plugin",
+  "license": "MIT",
+  "permissions": {
+    "commands": [
+      "service-show",
+      "validate",
+      "reload",
+      "has-docker",
+      "user",
+      "groups",
+      "install-docker",
+      "install-native",
+      "install-state",
+      "install-log"
+    ],
+    "files": {
+      "read": [
+        "/etc/caddy"
+      ],
+      "write": [
+        {
+          "admin": true,
+          "path": "/etc/caddy"
+        },
+        {
+          "create": true,
+          "path": "~/.config/ervisio/plugins/repo"
+        }
+      ]
+    },
+    "http": [
+      "repo",
+      "docker"
+    ],
+    "sockets": [
+      "/run/ervisio-repo/api.sock",
+      "/var/run/docker.sock"
+    ]
+  }
+}

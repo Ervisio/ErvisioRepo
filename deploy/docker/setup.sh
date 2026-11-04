@@ -76,6 +76,9 @@ if [[ -f .env ]]; then
   pg_password=$(sed -n 's/^POSTGRES_PASSWORD=//p' .env | head -n1)
 fi
 pg_password="${pg_password:-$(rand_hex 24)}"
+# With the Ervisio plugin the socket must sit where the plugin looks for it.
+socket_dir=./run
+[[ "$ervisio" == yes ]] && socket_dir=/run/ervisio-repo
 docker_gid=0
 if [[ -S /var/run/docker.sock ]]; then
   docker_gid=$(stat -c %g /var/run/docker.sock 2>/dev/null || stat -f %g /var/run/docker.sock 2>/dev/null || echo 0)
@@ -85,7 +88,7 @@ POSTGRES_PASSWORD=$pg_password
 ERVISIO_UID=$uid
 ERVISIO_GID=$gid
 ERVISIO_DATA_DIR=./data
-ERVISIO_SOCKET_DIR=./run
+ERVISIO_SOCKET_DIR=$socket_dir
 BIND_ADDRESS=127.0.0.1
 APP_PORT=3400
 SSH_PORT=2222
@@ -94,7 +97,7 @@ ENV
 )
 
 plugin_socket=""
-[[ "$ervisio" == yes ]] && plugin_socket="/run/ervisio-repo/plugin.sock"
+[[ "$ervisio" == yes ]] && plugin_socket="/run/ervisio-repo/api.sock"
 
 # The first account you register becomes the instance administrator, so
 # invite-only registration is safe to enable from the start.

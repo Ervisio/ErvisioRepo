@@ -7,7 +7,7 @@ public_url = "http://localhost:3400"
 listen = "127.0.0.1:3400"
 ssh_listen = "0.0.0.0:2222"
 # Admin socket for the Caddy plugin. Empty disables it.
-plugin_socket = "/run/ervisio-repo/plugin.sock"
+plugin_socket = "/run/ervisio-repo/api.sock"
 
 [database]
 # Created by the package when a local PostgreSQL is running (peer auth over

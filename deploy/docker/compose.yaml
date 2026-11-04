@@ -49,11 +49,15 @@ services:
         condition: service_healthy
     environment:
       EREPO_DATABASE_URL: postgres://ervisio_repo:${POSTGRES_PASSWORD:?run setup.sh first}@postgres:5432/ervisio_repo?sslmode=disable
+      ERVISIO_UPSTREAM_HOST: ${BIND_ADDRESS:-127.0.0.1}
+      ERVISIO_UPSTREAM_PORT: ${APP_PORT:-3400}
+      ERVISIO_UPSTREAM_CONTAINER: ervisiorepo-app
+      ERVISIO_UPSTREAM_NETWORK: ervisiorepo_edge
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-3400}:3400"
       - "${BIND_ADDRESS:-127.0.0.1}:${SSH_PORT:-2222}:2222"
     volumes:
-      - ./config:/etc/ervisio-repo:ro
+      - ./config:/etc/ervisio-repo
       - ${ERVISIO_DATA_DIR:-./data}/repo:/var/lib/ervisio-repo
       - ${ERVISIO_SOCKET_DIR:-./run}:/run/ervisio-repo
     networks:

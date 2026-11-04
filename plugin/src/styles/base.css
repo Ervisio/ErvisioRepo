@@ -1,0 +1,115 @@
+/* Based on Ervisio/plugin-caddy (src/styles/base.css), MIT License, Copyright (c) 2026 Fonlogen.
+   Class prefix renamed from cd- to rp-. See LICENSE-plugin-caddy. */
+/* ErvisioRepo plugin (from the Caddy plugin). Theme tokens only (--bg --surface --sunk --ink --ink2 --ink3, --h-*, --ok --warn --err --info).
+   Accent = the term hue (green). No grey divider lines: spacing and tinted rows instead. Small grey text uses --ink2. */
+.rp-root { --acc: var(--h-term); --acc-s: var(--h-term-s); --rp-mono: var(--mono, "JetBrains Mono", ui-monospace, monospace);
+  font-variant-numeric: tabular-nums; color: var(--ink); min-height: 100%; box-sizing: border-box; padding: 20px 22px 28px;
+  display: flex; flex-direction: column; gap: 12px; }
+.rp-root *, .rp-root *::before, .rp-root *::after { box-sizing: border-box; }
+@media (max-width: 900px) { .rp-root { padding: 12px 12px 24px; } }
+.rp-root :where(button:not([class*="ui-"])) { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+.rp-root button:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.rp-mono { font-family: var(--rp-mono); font-size: 12.5px; }
+.rp-muted { color: var(--ink2); font-size: 12.5px; }
+.rp-pad { padding: 6px 12px; margin: 0; }
+.rp-sp { flex: 1; }
+.rp-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.rp-block { display: block; margin-top: 6px; }
+.rp-pre { white-space: pre-wrap; word-break: break-word; }
+.rp-loading { color: var(--ink2); padding: 40px 0; text-align: center; }
+.rp-linkbtn { color: var(--acc) !important; font-weight: 700 !important; padding: 0 !important; }
+.rp-linkbtn:hover { text-decoration: underline; }
+.rp-danger { color: var(--err) !important; }
+
+/* header */
+.rp-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rp-head h1 { margin: 0 4px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+.rp-status { color: var(--ink2); font-size: 13px; }
+.rp-tabs { align-self: flex-start; }
+.rp-view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* instance pill + menu (040 a) */
+.rp-instw { position: relative; z-index: 5; }
+.rp-inst { display: inline-flex; align-items: center; gap: 9px; height: 40px; padding: 0 12px 0 8px !important; border-radius: 12px; background: var(--sunk) !important; font-weight: 700; }
+.rp-inst small { color: var(--ink2); font-weight: 600; font-size: 12.5px; }
+.rp-inst.is-open { box-shadow: inset 0 0 0 2px var(--acc); }
+.rp-inst > .ui-icon { color: var(--ink2); }
+.rp-ib { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; flex: none; background: var(--acc-s); color: var(--acc); }
+.rp-ib .ui-icon { width: 15px; height: 15px; }
+.rp-ib--dk { background: var(--h-file-s); color: var(--h-file); }
+.rp-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink3); }
+.rp-dot.is-ok { background: var(--ok); }
+.rp-menu { position: absolute; top: 46px; left: 0; width: min(540px, calc(100vw - 32px)); background: var(--menu-bg, var(--surface)); border-radius: 16px; padding: 8px;
+  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; gap: 3px; }
+.rp-menu-h { display: flex; justify-content: space-between; padding: 6px 10px 8px; font-weight: 800; font-size: 13px; }
+.rp-menu-h span { color: var(--ink2); font-weight: 700; font-size: 12px; }
+.rp-mi { display: flex; align-items: flex-start; gap: 12px; padding: 10px !important; border-radius: 12px; text-align: left; width: 100%; }
+.rp-mi:hover { background: var(--sunk) !important; }
+.rp-menu { border: 0; }
+.rp-mi.is-on { background: var(--acc-s) !important; }
+.rp-mi-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 12.5px; color: var(--ink2); }
+.rp-mi-tx b { color: var(--ink); font-size: 14px; }
+.rp-mi-tx b small { font-weight: 600; color: var(--ink2); font-size: 12px; }
+.rp-mi-tx .rp-mono { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-mi-rt { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 12px; color: var(--ink2); white-space: nowrap; }
+.rp-st { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink2); }
+.rp-st i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.rp-st.is-off i { background: var(--ink3); }
+.rp-menu-f { display: flex; align-items: center; gap: 10px; padding: 8px 6px 4px; font-size: 12px; color: var(--ink2); }
+.rp-menu-f .ui-btn { flex: none; white-space: nowrap; }
+
+/* notes */
+.rp-note { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: var(--surface); font-size: 13px; }
+.rp-note > .ui-icon { flex: none; margin-top: 1px; color: var(--ink2); }
+.rp-note.is-warn { background: var(--warn-s); } .rp-note.is-warn > .ui-icon { color: var(--warn); }
+.rp-note.is-err { background: var(--err-s); } .rp-note.is-err > .ui-icon { color: var(--err); }
+.rp-note.is-info { background: var(--info-s); } .rp-note.is-info > .ui-icon { color: var(--info); }
+.rp-note--bar { margin: 0 8px 6px; }
+
+/* shared bits */
+.rp-ki { border-radius: 11px; display: grid; place-items: center; flex: none; background: var(--s); color: var(--h); }
+.rp-ki .ui-icon { width: 17px; height: 17px; }
+.rp-tls { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--ink2); white-space: nowrap; }
+.rp-tls .ui-icon { color: var(--ok); }
+.rp-tls.is-warn, .rp-tls.is-warn .ui-icon, .rp-tls.is-renew .ui-icon { color: var(--warn); }
+.rp-tls.is-expired, .rp-tls.is-expired .ui-icon { color: var(--err); }
+.rp-tls.is-int .ui-icon { color: var(--info); }
+.rp-tls.is-off .ui-icon, .rp-tls.is-none .ui-icon { color: var(--ink3); }
+.rp-tgt { display: inline-flex; align-items: center; gap: 6px; font: 500 12.5px var(--rp-mono); color: var(--ink2); min-width: 0; }
+.rp-tgt span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-tgt .ui-icon { color: var(--ink2); flex: none; }
+.rp-up { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink2); }
+.rp-up i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.rp-up.is-down { color: var(--err); } .rp-up.is-down i { background: var(--err); }
+.rp-wire { display: flex; align-items: center; height: 100%; min-width: 24px; }
+.rp-wire svg { width: 100%; height: 10px; display: block; }
+.rp-wire path { stroke: var(--acc); stroke-width: 2; fill: none; vector-effect: non-scaling-stroke; stroke-dasharray: 4 5; animation: rp-flow 1.2s linear infinite; }
+.rp-wire.is-down path { stroke: var(--err); animation: none; stroke-dasharray: 2 7; }
+@keyframes rp-flow { to { stroke-dashoffset: -18; } }
+@media (prefers-reduced-motion: reduce) { .rp-wire path { animation: none; } }
+
+/* Panels sit on the app's content panel (--surface): they use --sunk, and what is inside them --surface. */
+.rp-ed .ui-in, .rp-det .ui-in, .rp-card .ui-in { background: var(--surface); }
+
+/* layout with a right panel */
+.rp-split { flex: 1; display: flex; gap: 12px; min-height: 0; align-items: flex-start; }
+.rp-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.rp-search { flex: 1; min-width: 180px; }
+.rp-card { background: var(--sunk); border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.rp-card h3 { margin: 0; font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.rp-card h3 .ui-icon { color: var(--acc); }
+.rp-count { margin-left: auto; font-size: 12px; color: var(--ink2); font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+.rp-kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 13.5px; margin: 0; }
+.rp-kv dt { color: var(--ink2); }
+.rp-kv dd { margin: 0; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.rp-edh { display: flex; align-items: center; gap: 12px; }
+.rp-edh > div { flex: 1; min-width: 0; }
+.rp-edh b { display: block; font-size: 17px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-edh > div > span { font-size: 12.5px; color: var(--ink2); }
+.rp-lk2 { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; flex: none; background: var(--acc-s); color: var(--acc); }
+.rp-lk2 .ui-icon { width: 20px; height: 20px; }
+.rp-lk2.is-warn, .rp-lk2.is-needs { background: var(--warn-s); color: var(--warn); }
+.rp-lk2.is-expired { background: var(--err-s); color: var(--err); }
+.rp-lk2.is-local { background: var(--info-s); color: var(--info); }
+.rp-dact { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.rp-dact .ui-btn--primary { margin-left: auto; }

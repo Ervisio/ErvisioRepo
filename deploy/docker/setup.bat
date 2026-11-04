@@ -70,7 +70,7 @@ if not exist .env (
 )
 
 set "SOCK="
-if /i "%ERVISIO%"=="yes" set "SOCK=/run/ervisio-repo/plugin.sock"
+if /i "%ERVISIO%"=="yes" set "SOCK=/run/ervisio-repo/api.sock"
 
 if not exist config\config.toml (
   (
