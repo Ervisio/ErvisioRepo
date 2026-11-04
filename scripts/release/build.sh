@@ -37,11 +37,13 @@ for arch in $ARCHES; do
   done
 
   tar -C "$bin" -czf "$DIST/ervisio-repo_${VERSION}_linux_${arch}.tar.gz" .
+  # nfpm does not expand env vars in contents, so render the config first.
+  sed -e "s#\${VERSION}#$VERSION#g" -e "s#\${ARCH}#$arch#g" -e "s#\${BIN_DIR}#$bin#g" \
+    packaging/nfpm.yaml > "$DIST/build/nfpm-$arch.yaml"
   for fmt in deb rpm; do
     # Stable file names so deploy/install.sh can build the download URL.
-    VERSION="$VERSION" ARCH="$arch" BIN_DIR="$bin" \
-      go run "github.com/goreleaser/nfpm/v2/cmd/nfpm@$NFPM_VERSION" package \
-      --config packaging/nfpm.yaml --packager "$fmt" \
+    go run "github.com/goreleaser/nfpm/v2/cmd/nfpm@$NFPM_VERSION" package \
+      --config "$DIST/build/nfpm-$arch.yaml" --packager "$fmt" \
       --target "$DIST/ervisio-repo_${VERSION}_linux_${arch}.${fmt}"
   done
 done
