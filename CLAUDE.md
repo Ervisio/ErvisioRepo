@@ -20,3 +20,10 @@ Il piano completo è in `docs/PLAN.md`. Queste regole vengono dal §10.5.
 - Modulo Go: `github.com/Ervisio/ErvisioRepo`. Comandi in `cmd/`, tutto il resto in `internal/`.
 - CLI con la sola libreria standard (`flag`), sottocomandi in `cmd/<bin>/`.
 - Codice generato (oapi-codegen, sqlc, openapi-typescript) è versionato e rigenerato con `make generate`; la CI verifica che non ci siano differenze.
+
+<!-- lean-craft -->
+## Working memory (lean-craft)
+Project memory lives in `.context/`. At session start, after compact or clear, read `.context/INDEX.md` and `.context/now.md` unless they are already in context.
+Read map/ and decisions.md only when the task touches them; never import them here.
+Follow the lean-craft skill for token use, checkpoints, replies, subagents and code style.
+<!-- /lean-craft -->

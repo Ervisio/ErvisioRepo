@@ -15,3 +15,5 @@ __pycache__/
 /ervisio-repo
 *.tsbuildinfo
 .variant-studio/
+.context/now.md
+.context/.last-nudge
