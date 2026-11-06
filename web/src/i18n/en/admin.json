@@ -64,5 +64,11 @@
   "audit.filter.apply": "Filter",
   "audit.newer": "Newer",
   "audit.older": "Older",
-  "overview.title": "Overview"
+  "overview.title": "Overview",
+  "invite.title": "Invite someone",
+  "invite.hint": "Creates a single-use sign-up link. With an email address, only that address can use it.",
+  "invite.email": "Email (optional)",
+  "invite.create": "Create invitation",
+  "invite.link": "Share this link; it is shown only once.",
+  "invite.expires": "Expires {date}"
 }

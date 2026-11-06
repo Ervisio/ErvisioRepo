@@ -13,6 +13,8 @@ Flow:
 - Home (/) is a dashboard. /admin is AdminOverview (instance metadata), /admin/storage, /admin/runners, /admin/audit are its siblings.
 - Org settings are one tab ("settings") with its own sub-navigation: hooks, secrets, variables, runners are reached through it. isOrgSettingsTab maps them back to "settings" for the active highlight.
 - Repo settings page (RepoSettings) and RepoAccess share the settings frame.
+- Repo pages (RepoFrame in pages/code/common.tsx) show their own tab bar only outside the console layout; in console the sidebar Repository group (repoGroups) lists Code, Issues, PRs, Commits, Branches, Tags, Releases, Search. Keep the two lists in step.
+- Repo settings "storage" section is instance-admin only (pin/unpin/evict via useTiering).
 Invariants:
 - Every UI string goes in web/src/i18n/{en,it}/<ns>.json with the same keys. `make check-i18n` (npm run check-i18n in web/) enforces it. Namespaces in use include shell, home, admin, account, org, repos, ui.
 - Colors, radii and fonts come from tokens only (web/src/styles/tokens.css, copied from design/tokens.css; kit styles in web/src/ui/ui.css). No new hex values in pages.

@@ -1,8 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useSession } from "../../api/identity.ts";
+import { useTiering } from "../../api/useStorage.ts";
 import { useDeleteRepo, useRepo, useTransferRepo, useUpdateRepo, type Repo, type Visibility } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import {
+  Badge,
   Button,
   ConfirmDialog,
   DangerRow,
@@ -21,6 +24,7 @@ import {
   type SettingsNavItem,
 } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
+import { formatBytes } from "../code/common.tsx";
 import { repoHooks } from "../../api/settings.ts";
 import { Entries, Environments, Runners } from "../actions/Settings.tsx";
 import { Webhooks } from "../settings/Webhooks.tsx";
@@ -29,7 +33,7 @@ import { GitHubSettings } from "./GitHubSettings.tsx";
 import { visibilities } from "./RepoList.tsx";
 import { BranchProtections, TagRules } from "./RulesSettings.tsx";
 
-export const repoSettingsSections = ["collaborators", "labels", "milestones", "protection", "tags", "hooks", "github", "secrets", "variables", "environments", "runners"] as const;
+export const repoSettingsSections = ["collaborators", "labels", "milestones", "protection", "tags", "hooks", "github", "secrets", "variables", "environments", "runners", "storage"] as const;
 export type RepoSettingsSection = (typeof repoSettingsSections)[number];
 
 function General({ repo }: { repo: Repo }) {
@@ -138,11 +142,43 @@ function Danger({ repo }: { repo: Repo }) {
   );
 }
 
-function useGroups(): SettingsNavGroup[] {
+/** Hot-tier controls for instance admins: pin keeps the repository local, evict moves it to the remote tier now. */
+function Storage({ repo }: { repo: Repo }) {
+  const t = useT("repos");
+  const notify = useNotify();
+  const tiering = useTiering();
+  const state = tiering.data?.state ?? repo.storageState;
+  const run = (op: "pin" | "unpin" | "evict") =>
+    tiering.mutate({ owner: repo.owner, name: repo.name, op }, { onSuccess: () => notify.ok(t(`storage.${op}Done`)), onError: notify.fail });
+
+  return (
+    <SettingsSection title={t("settings.section.storage")} description={t("storage.hint")}>
+      <SettingsCard>
+        <SettingRow label={t("storage.state")} description={tiering.data && (tiering.data.pinned ? t("storage.pinned") : t("storage.unpinned"))}>
+          <Badge tone={state === "hot" ? "ok" : state === "degraded" ? "err" : "neutral"}>{t(`storage.stateValue.${state}`)}</Badge>
+        </SettingRow>
+        <SettingRow label={t("storage.size")}>
+          <span className="ui-mono">{formatBytes(tiering.data?.sizeBytes ?? repo.sizeBytes)}</span>
+        </SettingRow>
+        <SettingRow label={t("storage.pin")} description={t("storage.pinHint")}>
+          <span className="ui-inline">
+            <Button disabled={tiering.isPending} onClick={() => run("pin")}>{t("storage.pinButton")}</Button>
+            <Button variant="ghost" disabled={tiering.isPending} onClick={() => run("unpin")}>{t("storage.unpinButton")}</Button>
+          </span>
+        </SettingRow>
+        <SettingRow label={t("storage.evict")} description={t("storage.evictHint")}>
+          <Button disabled={tiering.isPending || state !== "hot"} onClick={() => run("evict")}>{t("storage.evictButton")}</Button>
+        </SettingRow>
+      </SettingsCard>
+    </SettingsSection>
+  );
+}
+
+function useGroups(instanceAdmin: boolean): SettingsNavGroup[] {
   const t = useT("repos");
   const item = (id: RepoSettingsSection | "general", icon: SettingsNavItem["icon"]): SettingsNavItem => ({ id, icon, label: t(`settings.section.${id}`) });
   return [
-    { title: t("settings.group.repo"), items: [item("general", "gear"), item("collaborators", "users")] },
+    { title: t("settings.group.repo"), items: [item("general", "gear"), item("collaborators", "users"), ...(instanceAdmin ? [item("storage", "db")] : [])] },
     { title: t("settings.group.issues"), items: [item("labels", "layers"), item("milestones", "clock")] },
     { title: t("settings.group.code"), items: [item("protection", "shield"), item("tags", "tag"), item("hooks", "bell"), item("github", "branch")] },
     { title: t("settings.group.actions"), items: [item("secrets", "lock"), item("variables", "code"), item("environments", "grid"), item("runners", "cpu")] },
@@ -153,7 +189,8 @@ export function RepoSettings({ owner, name, section }: { owner: string; name: st
   const t = useT("repos");
   const tc = useT("common");
   const repo = useRepo(owner, name);
-  const groups = useGroups();
+  const instanceAdmin = useSession().data?.role === "admin";
+  const groups = useGroups(instanceAdmin);
   const title = `${owner}/${name}`;
 
   if (repo.isPending) {
@@ -202,6 +239,7 @@ export function RepoSettings({ owner, name, section }: { owner: string; name: st
           {section === "variables" && <Entries scope={scope} kind="variables" />}
           {section === "environments" && <Environments owner={r.owner} name={r.name} />}
           {section === "runners" && <Runners scope={scope} />}
+          {section === "storage" && instanceAdmin && <Storage repo={r} />}
         </SettingsLayout>
       ) : (
         <EmptyState icon="lock" title={t("settings.forbidden")} />

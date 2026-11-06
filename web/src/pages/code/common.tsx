@@ -6,8 +6,10 @@ import { ApiError } from "../../api/http.ts";
 import { useRepo, type Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Badge, Button, EmptyState, Icon, Menu, MenuItem, MenuLabel, MenuSeparator, Page } from "../../ui/index.ts";
+import { useLayout } from "../../ui/shell/layout.ts";
 import type { Section } from "../../ui/shell/nav.tsx";
 import { useProblemText } from "../auth/useProblemText.ts";
+import { ForkDialog } from "../repos/RepoList.tsx";
 
 export type RepoTab = "code" | "issues" | "pulls" | "commits" | "branches" | "tags" | "releases" | "actions" | "search";
 
@@ -25,6 +27,7 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
   const t = useT("code");
   const tr = useT("repos");
   const repo = useRepo(owner, name);
+  const layout = useLayout();
   const title = `${owner}/${name}`;
   if (repo.isPending || repo.isError) {
     return (
@@ -54,6 +57,7 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
         <>
           <Badge tone={r.visibility === "public" ? "ok" : "neutral"}>{tr(`visibility.${r.visibility}`)}</Badge>
           {actions}
+          <ForkDialog repo={r} />
           {r.permission === "admin" && (
             <Link to="/$owner/$name/settings" params={{ owner: r.owner, name: r.name }}>
               <Button icon="gear">{tr("settings.link")}</Button>
@@ -62,21 +66,24 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
         </>
       }
     >
-      <nav className="ui-tablist rp-nav" aria-label={t("nav.label")}>
-        {tabs.map((x) => (
-          <Link
-            key={x.id}
-            to={x.to}
-            params={{ owner: r.owner, name: r.name }}
-            className="ui-tab"
-            data-state={x.id === tab ? "active" : "inactive"}
-            aria-current={x.id === tab ? "page" : undefined}
-          >
-            <Icon name={x.icon} />
-            {t(`nav.${x.id}`)}
-          </Link>
-        ))}
-      </nav>
+      {/* The console sidebar already lists these pages. */}
+      {layout !== "console" && (
+        <nav className="ui-tablist rp-nav" aria-label={t("nav.label")}>
+          {tabs.map((x) => (
+            <Link
+              key={x.id}
+              to={x.to}
+              params={{ owner: r.owner, name: r.name }}
+              className="ui-tab"
+              data-state={x.id === tab ? "active" : "inactive"}
+              aria-current={x.id === tab ? "page" : undefined}
+            >
+              <Icon name={x.icon} />
+              {t(`nav.${x.id}`)}
+            </Link>
+          ))}
+        </nav>
+      )}
       {children(r)}
     </Page>
   );

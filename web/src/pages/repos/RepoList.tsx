@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { useCreateRepo, type Repo, type Visibility } from "../../api/repos.ts";
+import { useMyOrgs, useSession } from "../../api/identity.ts";
+import { useCreateRepo, useForkRepo, type Repo, type Visibility } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Badge, Button, Card, Dialog, Input, Select } from "../../ui/index.ts";
 import { Async, useNotify } from "../account/common.tsx";
@@ -86,5 +87,47 @@ export function MyRepos({ repos }: { repos: UseQueryResult<Repo[]> }) {
     <Card title={t("list.title")} actions={<CreateRepoDialog />}>
       <RepoRows query={repos} />
     </Card>
+  );
+}
+
+/** Fork dialog: the copy goes to the signed-in user or to an organization they manage. */
+export function ForkDialog({ repo }: { repo: Repo }) {
+  const t = useT("repos");
+  const notify = useNotify();
+  const navigate = useNavigate();
+  const fork = useForkRepo(repo.owner, repo.name);
+  const user = useSession().data;
+  const orgs = useMyOrgs().data ?? [];
+  const [open, setOpen] = useState(false);
+  const [owner, setOwner] = useState(user?.username ?? "");
+  const [name, setName] = useState(repo.name);
+  // The server checks the permission; this only narrows the choice.
+  const owners = [user?.username ?? "", ...orgs.filter((o) => o.role === "owner" || o.role === "admin").map((o) => o.name)].filter(Boolean);
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    fork.mutate(
+      { owner, name: name.trim() },
+      {
+        onSuccess: (r) => {
+          setOpen(false);
+          notify.ok(t("fork.done"));
+          void navigate({ to: "/$owner/$name", params: { owner: r.owner, name: r.name } });
+        },
+        onError: notify.fail,
+      },
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen} title={t("fork.title", { name: repo.fullName })} description={t("fork.description")} trigger={<Button icon="branch">{t("fork.button")}</Button>}>
+      <form className="acc-form" onSubmit={submit}>
+        <Select label={t("fork.owner")} value={owner} onValueChange={setOwner} options={owners.map((o) => ({ value: o, label: o }))} />
+        <Input label={t("create.name")} required maxLength={100} autoComplete="off" mono value={name} onChange={(e) => setName(e.target.value)} />
+        <div className="acc-actions">
+          <Button variant="primary" type="submit" disabled={fork.isPending || owner === "" || name.trim() === ""}>{t("fork.submit")}</Button>
+        </div>
+      </form>
+    </Dialog>
   );
 }

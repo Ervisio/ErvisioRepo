@@ -1,6 +1,7 @@
 import { useMeta } from "../api/useMeta.ts";
 import { useT } from "../i18n/useT.ts";
 import { Button, Card, EmptyState, Page } from "../ui/index.ts";
+import { InstanceInvite } from "./AdminInvite.tsx";
 
 /** Instance metadata for administrators (the table that used to be the home page). */
 export function AdminOverview() {
@@ -55,6 +56,7 @@ export function AdminOverview() {
           ))}
         </dl>
       </Card>
+      <InstanceInvite />
     </Page>
   );
 }

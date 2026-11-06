@@ -35,7 +35,17 @@ export function useNavItems(): readonly NavItem[] {
 }
 
 /* Repository context. `sub` is the first path segment after /owner/name that makes the item active. */
-type RepoTo = "/$owner/$name" | "/$owner/$name/issues" | "/$owner/$name/pulls" | "/$owner/$name/releases" | "/$owner/$name/actions" | "/$owner/$name/settings";
+type RepoTo =
+  | "/$owner/$name"
+  | "/$owner/$name/issues"
+  | "/$owner/$name/pulls"
+  | "/$owner/$name/commits"
+  | "/$owner/$name/branches"
+  | "/$owner/$name/tags"
+  | "/$owner/$name/releases"
+  | "/$owner/$name/search"
+  | "/$owner/$name/actions"
+  | "/$owner/$name/settings";
 export type RepoNavItem = { to: RepoTo; sub: string; icon: IconName; labelKey: string; section: Section };
 export type NavGroup<T> = { titleKey: string; items: T[] };
 
@@ -47,7 +57,11 @@ export function repoGroups(canAdmin: boolean): NavGroup<RepoNavItem>[] {
         { to: "/$owner/$name", sub: "", icon: "code", labelKey: "repo.code", section: "code" },
         { to: "/$owner/$name/issues", sub: "issues", icon: "issue", labelKey: "repo.issues", section: "issue" },
         { to: "/$owner/$name/pulls", sub: "pulls", icon: "pr", labelKey: "repo.pulls", section: "pr" },
-        { to: "/$owner/$name/releases", sub: "releases", icon: "tag", labelKey: "repo.releases", section: "pkg" },
+        { to: "/$owner/$name/commits", sub: "commits", icon: "commit", labelKey: "repo.commits", section: "code" },
+        { to: "/$owner/$name/branches", sub: "branches", icon: "branch", labelKey: "repo.branches", section: "code" },
+        { to: "/$owner/$name/tags", sub: "tags", icon: "tag", labelKey: "repo.tags", section: "code" },
+        { to: "/$owner/$name/releases", sub: "releases", icon: "pkg", labelKey: "repo.releases", section: "pkg" },
+        { to: "/$owner/$name/search", sub: "search", icon: "search", labelKey: "repo.search", section: "code" },
       ],
     },
     { titleKey: "group.automation", items: [{ to: "/$owner/$name/actions", sub: "actions", icon: "play", labelKey: "repo.actions", section: "act" }] },
@@ -59,7 +73,7 @@ export function repoGroups(canAdmin: boolean): NavGroup<RepoNavItem>[] {
 /** Sub-page key of a repository path: "" for code pages. */
 export function repoSub(pathname: string): string {
   const seg = pathname.split("/").filter(Boolean)[2] ?? "";
-  return ["issues", "pulls", "releases", "actions", "settings"].includes(seg) ? seg : "";
+  return ["issues", "pulls", "commits", "branches", "tags", "releases", "search", "actions", "settings"].includes(seg) ? seg : "";
 }
 
 /* Organization context: the org page tabs, opened with ?tab=. */

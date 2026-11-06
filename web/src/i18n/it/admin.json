@@ -64,5 +64,11 @@
   "audit.filter.apply": "Filtra",
   "audit.newer": "Più recenti",
   "audit.older": "Meno recenti",
-  "overview.title": "Panoramica"
+  "overview.title": "Panoramica",
+  "invite.title": "Invita qualcuno",
+  "invite.hint": "Crea un link di registrazione monouso. Con un indirizzo email, solo quell'indirizzo potrà usarlo.",
+  "invite.email": "Email (facoltativa)",
+  "invite.create": "Crea invito",
+  "invite.link": "Condividi questo link: viene mostrato una volta sola.",
+  "invite.expires": "Scade il {date}"
 }

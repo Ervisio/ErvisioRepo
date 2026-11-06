@@ -10,6 +10,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 - Web: the Console shell now has a 264 px sidebar with an owner / repository switcher, grouped navigation (global, repository or organization), recent repositories and an admin-only Administration block. A top bar adds a search field (repository scope, `/` shortcut), a New menu (repository, organization), the notifications count and a user menu, which now holds Sign out. Below 900 px the sidebar opens as a drawer.
 - Web: Home is a dashboard (needs your attention, activity, recent repositories, instance health for admins). The instance details moved to the new `/admin` overview. New `/orgs` page; `/_ui` is no longer linked from the navigation.
+- Web: account, repository and organization settings share one layout: grouped sub-navigation with search, two-column rows with a changed marker, a sticky save bar that warns before leaving with unsaved changes, and a danger zone. Organization webhooks, secrets, variables and runners moved under Settings.
+- Web: in the Console layout the repository pages no longer repeat their tab bar; Commits, Branches, Tags and Search joined the Repository group in the sidebar.
+
+### Added
+
+- Web: repository Collaborators page, label and milestone editing and deletion, team editing and team members, organization deletion, a Fork button on repository pages, single-use sign-up invitations on the admin overview, and a Storage page (state, size, pin, unpin, evict) for instance admins in repository settings.
 
 ### Fixed
 

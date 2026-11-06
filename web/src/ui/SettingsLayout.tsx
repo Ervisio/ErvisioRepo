@@ -158,8 +158,8 @@ export type Draft<T extends Record<string, unknown>> = {
 /** Form state with a saved copy: the save bar and the dirty markers read from it. */
 export function useDraft<T extends Record<string, unknown>>(start: T): Draft<T> {
   const [state, setState] = useState({ initial: start, value: start });
+  // Every change goes through update(), so the ref stays in step without writing it during render.
   const ref = useRef(state);
-  ref.current = state;
   const update = (next: { initial: T; value: T }) => {
     ref.current = next;
     setState(next);
