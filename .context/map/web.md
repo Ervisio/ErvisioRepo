@@ -5,12 +5,12 @@ Entry points:
 - web/src/ui/shell/AppShell.tsx: picks the shell from the active layout (data-layout on <html>): console (default), foglio, corsie.
 - web/src/ui/shell/ConsoleShell.tsx: the default shell. Sidebar with context switcher, top bar (search, New, notifications, user menu), drawer below 900 px.
 - web/src/ui/shell/nav.tsx: single source of nav data for all three shells (global items, admin block, repo groups, org tabs, shell context). Add nav entries here, not in the shells.
-- web/src/ui/shell/layout.ts: layout store. Choice is in localStorage (ervisio.layout) until instance and user settings exist (TODO in file).
+- web/src/ui/shell/layout.ts + useAppearance.ts: effective layout = user preference (/user/preferences) || /meta defaultLayout || console; theme from the same preference (data-theme). localStorage only caches for first paint. Appearance section in account settings.
 - web/src/ui/SettingsLayout.tsx: shared settings frame for account, repo, org and instance settings.
 Flow:
 - Route guard: pages are wrapped by Protected (admin flag for /admin/*). Nav hiding is cosmetic; the guard is the real check.
 - Shell context comes from route params: owner+name = repo, org = org, otherwise global. repoSub() and the org ?tab= search decide the active item.
-- Home (/) is a dashboard. /admin is AdminOverview (instance metadata), /admin/storage, /admin/runners, /admin/audit are its siblings.
+- Home (/) is a dashboard. Admin routes: /admin (AdminOverview), /admin/users (+ /$login), /admin/invites, /admin/settings/$section (auth|registration|email|git|actions|webhooks|appearance|server; /admin/settings redirects to auth), /admin/storage, /admin/runners, /admin/audit. All sit under the pathless layout route id "admin" (guard + AdminFrame = SettingsLayout sub-nav, AdminPane for each pane); code in web/src/pages/admin/, hooks in api/admin.ts, key-to-section map in settingsCatalog.ts. Edits only send changed keys; 422 field errors come from ApiError.errors.
 - Org settings are one tab ("settings") with its own sub-navigation: hooks, secrets, variables, runners are reached through it. isOrgSettingsTab maps them back to "settings" for the active highlight.
 - Repo settings page (RepoSettings) and RepoAccess share the settings frame.
 - Repo pages (RepoFrame in pages/code/common.tsx) show their own tab bar only outside the console layout; in console the sidebar Repository group (repoGroups) lists Code, Issues, PRs, Commits, Branches, Tags, Releases, Search. Keep the two lists in step.

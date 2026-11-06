@@ -6,14 +6,17 @@ export class ApiError extends Error {
   readonly title: string;
   readonly detail?: string;
   readonly retryAfter?: number;
+  /** Per-field problems of a 422 answer. */
+  readonly errors?: { path: string; msg: string }[];
 
-  constructor(status: number, title: string, detail?: string, retryAfter?: number) {
+  constructor(status: number, title: string, detail?: string, retryAfter?: number, errors?: { path: string; msg: string }[]) {
     super(detail ?? title);
     this.name = "ApiError";
     this.status = status;
     this.title = title;
     this.detail = detail;
     this.retryAfter = retryAfter;
+    this.errors = errors;
   }
 }
 
@@ -49,14 +52,16 @@ async function toError(res: Response): Promise<ApiError> {
   const retry = Number(res.headers.get("Retry-After"));
   let title = `HTTP ${res.status}`;
   let detail: string | undefined;
+  let errors: { path: string; msg: string }[] | undefined;
   try {
-    const p = (await res.json()) as { title?: string; detail?: string };
+    const p = (await res.json()) as { title?: string; detail?: string; errors?: { path: string; msg: string }[] };
     if (p.title) title = p.title;
     detail = p.detail;
+    if (Array.isArray(p.errors)) errors = p.errors;
   } catch {
     // not a JSON problem document
   }
-  return new ApiError(res.status, title, detail, Number.isFinite(retry) && retry > 0 ? retry : undefined);
+  return new ApiError(res.status, title, detail, Number.isFinite(retry) && retry > 0 ? retry : undefined, errors);
 }
 
 export function errorMessage(e: unknown): string {

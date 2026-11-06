@@ -1,6 +1,7 @@
 import { useStorageStatus, useStorageTest, type StorageCheckResult, type StorageStatus } from "../api/useStorage.ts";
 import { useT } from "../i18n/useT.ts";
-import { Badge, Button, Card, EmptyState, Page, Table, TableBody, TableHead, Td, Th, Tr } from "../ui/index.ts";
+import { AdminPane } from "./admin/AdminFrame.tsx";
+import { Badge, Button, Card, EmptyState, Table, TableBody, TableHead, Td, Th, Tr } from "../ui/index.ts";
 
 type Target = StorageStatus["targets"][number];
 
@@ -103,14 +104,14 @@ export function AdminStorage() {
 
   if (status.isPending) {
     return (
-      <Page title={title}>
+      <AdminPane title={title}>
         <p role="status">{tc("state.loading")}</p>
-      </Page>
+      </AdminPane>
     );
   }
   if (status.isError) {
     return (
-      <Page title={title}>
+      <AdminPane title={title}>
         <div role="alert">
           <EmptyState
             icon="alert"
@@ -119,13 +120,13 @@ export function AdminStorage() {
             action={<Button onClick={() => void status.refetch()}>{tc("action.retry")}</Button>}
           />
         </div>
-      </Page>
+      </AdminPane>
     );
   }
 
   const s = status.data;
   return (
-    <Page title={title} subtitle={t("storage.subtitle")}>
+    <AdminPane title={title} subtitle={t("storage.subtitle")}>
       {s.warnings.map((w) => (
         <Card key={w.code + (w.policy ?? "")} role="alert">
           <p className="ui-inline">
@@ -202,6 +203,6 @@ export function AdminStorage() {
       {s.targets.map((target) => (
         <TargetCard key={target.name} target={target} />
       ))}
-    </Page>
+    </AdminPane>
   );
 }

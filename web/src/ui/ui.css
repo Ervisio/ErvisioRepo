@@ -231,3 +231,25 @@
   .st-c { justify-content: flex-start; }
   .st-bar { bottom: 0; border-radius: 18px 18px 0 0; margin: 0 -4px; flex-wrap: wrap; }
 }
+
+/* Instance administration: restart notice, setting metadata, users table and detail. */
+.adm-notice { display: flex; gap: 10px; align-items: flex-start; background: var(--warn-s); color: var(--ink); border-radius: var(--r-card); padding: 12px 14px; }
+.adm-notice b { display: block; color: var(--warn); }
+.adm-notice p { margin: 2px 0 0; }
+.adm-err { color: var(--err); margin: 4px 0 0; }
+.adm-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 6px; }
+.adm-lock { display: inline-flex; align-items: center; gap: 4px; color: var(--ink2); }
+.adm-why { color: var(--ink3); font-size: 12px; }
+.adm-list { width: 100%; min-height: 84px; resize: vertical; font-family: var(--mono); background: var(--sunk); color: var(--ink); border: 0; border-radius: var(--r-ctl); padding: 8px 10px; }
+.adm-list:disabled { color: var(--ink3); }
+.adm-ctl { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.adm-row { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px; }
+.adm-user { display: flex; flex-direction: column; color: var(--ink); text-decoration: none; }
+.adm-user:hover b { text-decoration: underline; }
+.adm-badges { display: flex; gap: 6px; margin: 0 0 8px; }
+.adm-back { display: inline-flex; align-items: center; gap: 4px; color: var(--ink2); text-decoration: none; }
+.adm-pager { justify-content: flex-end; padding: 10px 12px; }
+.adm-kv { margin: 0; padding: 4px 12px; }
+.adm-kv > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; }
+.adm-kv dt { color: var(--ink2); }
+.adm-kv dd { margin: 0; color: var(--ink); text-align: right; }

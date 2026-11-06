@@ -4,6 +4,7 @@ import { useMyOrgs, useSession } from "../../api/identity.ts";
 import { useCreateRepo, useForkRepo, type Repo, type Visibility } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Badge, Button, Card, Dialog, Input, Select } from "../../ui/index.ts";
+import { PinButton } from "./PinButton.tsx";
 import { Async, useNotify } from "../account/common.tsx";
 import type { UseQueryResult } from "@tanstack/react-query";
 
@@ -26,6 +27,7 @@ export function RepoRows({ query }: { query: UseQueryResult<Repo[]> }) {
               </div>
               {r.description && <div className="ui-note">{r.description}</div>}
             </div>
+            <PinButton owner={r.owner} name={r.name} compact />
           </div>
         ))
       }

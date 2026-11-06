@@ -149,5 +149,19 @@
   "storage.stateValue.cold": "Freddo",
   "storage.stateValue.hydrating": "In ripristino",
   "storage.stateValue.evicting": "In spostamento",
-  "storage.stateValue.degraded": "Degradato"
+  "storage.stateValue.degraded": "Degradato",
+  "pin.add": "Fissa",
+  "pin.remove": "Rimuovi",
+  "pin.limit": "Puoi fissare al massimo {count} repository. Rimuovine prima uno.",
+  "pin.error": "Impossibile modificare il repository fissato",
+  "explore.title": "Esplora",
+  "explore.subtitle": "Repository pubblici di questa istanza",
+  "explore.search": "Cerca repository",
+  "explore.searchHint": "Nome o descrizione",
+  "explore.sort": "Ordina",
+  "explore.sort.updated": "Aggiornati di recente",
+  "explore.sort.name": "Nome",
+  "explore.empty": "Ancora nessun repository pubblico.",
+  "explore.noMatch": "Nessun repository corrisponde alla ricerca.",
+  "explore.count": "{count} repository"
 }

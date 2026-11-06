@@ -153,5 +153,20 @@
   "tab.emails": "Emails",
   "tab.sessions": "Sessions",
   "group.personal": "Personal",
-  "group.access": "Access and security"
+  "group.access": "Access and security",
+  "tab.appearance": "Appearance",
+  "appearance.title": "Appearance",
+  "appearance.hint": "Theme and layout follow you on every device you sign in from.",
+  "appearance.theme": "Theme",
+  "appearance.themeHint": "System follows the setting of your device.",
+  "appearance.layout": "Layout",
+  "appearance.layoutHint": "How the navigation is arranged.",
+  "theme.system": "System",
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "layout.default": "Instance default",
+  "layout.console": "Console",
+  "layout.foglio": "Sheet",
+  "layout.corsie": "Lanes",
+  "appearance.saved": "Appearance saved"
 }

@@ -30,6 +30,8 @@
   "nav.runners": "Runners",
   "nav.home": "Home",
   "nav.orgs": "Organizations",
+  "nav.adminUsers": "Users",
+  "nav.adminSettings": "Instance settings",
   "nav.overview": "Overview",
   "nav.backHome": "Back to home",
   "group.navigate": "Navigate",
@@ -77,5 +79,6 @@
   "search.field": "Search repositories",
   "search.fieldRepo": "Search code or repositories",
   "search.openIn": "Search in {repo}",
-  "search.inRepo": "Search code for “{query}” in {repo}"
+  "search.inRepo": "Search code for “{query}” in {repo}",
+  "nav.explore": "Explore"
 }

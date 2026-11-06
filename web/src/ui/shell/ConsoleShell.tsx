@@ -5,13 +5,14 @@ import { useState, type ComponentType, type ReactNode } from "react";
 import { request } from "../../api/http.ts";
 import { useMyOrgs, useOrg, useSession, type User } from "../../api/identity.ts";
 import { useUnreadCount } from "../../api/notifications.ts";
+import { useUserPins } from "../../api/personal.ts";
 import { useMyRepos, useOwnerRepos, useRepo, type Repo } from "../../api/repos.ts";
 import { useStorageStatus } from "../../api/useStorage.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Icon } from "../Icon.tsx";
 import { Menu, MenuItem, MenuLabel } from "../Menu.tsx";
 import {
-  adminItems, homeItem, inboxItem, isOrgSettingsTab, NavLink, orgsItem, orgTabs, repoGroups, reposItem, repoSub,
+  adminItems, exploreItem, homeItem, inboxItem, isOrgSettingsTab, NavLink, orgsItem, orgTabs, repoGroups, reposItem, repoSub,
   usePathname, useShellContext, type NavItem,
 } from "./nav.tsx";
 import { SearchField, SearchTrigger } from "./SearchPalette.tsx";
@@ -95,6 +96,7 @@ function Sidebar() {
         <>
           <span className="sb-gt">{t("group.navigate")}</span>
           <Item item={homeItem} />
+          <Item item={exploreItem} />
           <Item item={{ to: "/login", icon: "lock", labelKey: "nav.signIn" }} />
         </>
       )}
@@ -195,13 +197,17 @@ function GlobalNav({ user }: { user: User }) {
   const tRepo = useT("repos");
   const repos = useMyRepos();
   const orgs = useMyOrgs();
-  const pinned = [...(repos.data ?? [])].sort(byUpdated).slice(0, 5);
+  const pins = useUserPins().data ?? [];
+  const pinNames = new Set(pins.map((r) => r.fullName));
+  const recent = [...(repos.data ?? [])].filter((r) => !pinNames.has(r.fullName)).sort(byUpdated);
+  const pinned = [...pins, ...recent].slice(0, Math.max(5, pins.length));
   return (
     <>
       <span className="sb-gt">{t("group.navigate")}</span>
       <Item item={homeItem} />
       <Item item={reposItem} count={repos.data?.length} />
       <Item item={orgsItem} count={orgs.data?.length} />
+      <Item item={exploreItem} />
       <Item item={inboxItem} />
       {pinned.length > 0 && (
         <>

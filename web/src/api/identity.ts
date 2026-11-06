@@ -189,10 +189,6 @@ export const useSetTeamMember = (org: string, team: string) =>
 export const useRemoveTeamMember = (org: string, team: string) =>
   useInvalidating<string, void>([["orgs", org, "teams"]], (u) => request("DELETE", `/orgs/${enc(org)}/teams/${enc(team)}/members/${enc(u)}`));
 export const useDeleteOrg = (org: string) => useInvalidating<void, void>([["orgs"]], () => request("DELETE", `/orgs/${enc(org)}`));
-/** Instance invitation (admins only). The token comes back once; there is no list or revoke endpoint. */
-export const useCreateInstanceInvite = () =>
-  useMutation({ mutationFn: (b: S["InviteRequest"]) => request<Invite>("POST", "/admin/invites", b) });
-
 export function useAudit(filter: { action: string; actor: string }, before: string | undefined) {
   const q = new URLSearchParams({ limit: "50" });
   if (filter.action) q.set("action", filter.action);

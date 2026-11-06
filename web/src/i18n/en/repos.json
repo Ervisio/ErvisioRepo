@@ -149,5 +149,19 @@
   "storage.stateValue.cold": "Cold",
   "storage.stateValue.hydrating": "Restoring",
   "storage.stateValue.evicting": "Evicting",
-  "storage.stateValue.degraded": "Degraded"
+  "storage.stateValue.degraded": "Degraded",
+  "pin.add": "Pin",
+  "pin.remove": "Unpin",
+  "pin.limit": "You can pin up to {count} repositories. Unpin one first.",
+  "pin.error": "Could not change the pin",
+  "explore.title": "Explore",
+  "explore.subtitle": "Public repositories on this instance",
+  "explore.search": "Search repositories",
+  "explore.searchHint": "Name or description",
+  "explore.sort": "Sort",
+  "explore.sort.updated": "Recently updated",
+  "explore.sort.name": "Name",
+  "explore.empty": "No public repositories yet.",
+  "explore.noMatch": "No repositories match your search.",
+  "explore.count": "{count} repositories"
 }

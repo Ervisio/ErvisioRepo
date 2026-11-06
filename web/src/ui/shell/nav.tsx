@@ -7,21 +7,26 @@ import type { IconName } from "../Icon.tsx";
 
 export type Section = "code" | "pr" | "issue" | "act" | "pkg";
 
-type GlobalTo = "/" | "/repos" | "/orgs" | "/notifications" | "/settings" | "/login";
-type AdminTo = "/admin" | "/admin/storage" | "/admin/runners" | "/admin/audit";
+type GlobalTo = "/" | "/explore" | "/repos" | "/orgs" | "/notifications" | "/settings" | "/login";
+type AdminTo = "/admin" | "/admin/users" | "/admin/settings" | "/admin/storage" | "/admin/runners" | "/admin/audit";
 
 export type NavItem = { to: GlobalTo | AdminTo; icon: IconName; labelKey: string; section?: Section };
 
 export const homeItem: NavItem = { to: "/", icon: "home", labelKey: "nav.home" };
+export const exploreItem: NavItem = { to: "/explore", icon: "search", labelKey: "nav.explore", section: "code" };
 export const reposItem: NavItem = { to: "/repos", icon: "book", labelKey: "nav.repos", section: "code" };
 export const orgsItem: NavItem = { to: "/orgs", icon: "users", labelKey: "nav.orgs", section: "pr" };
 export const inboxItem: NavItem = { to: "/notifications", icon: "bell", labelKey: "nav.notifications", section: "issue" };
 const accountItem: NavItem = { to: "/settings", icon: "gear", labelKey: "nav.account", section: "issue" };
 const signInItem: NavItem = { to: "/login", icon: "lock", labelKey: "nav.signIn", section: "issue" };
+// The flat shells have no room for the whole admin block: one entry, the admin frame has its own sub-navigation.
+const adminItem: NavItem = { to: "/admin", icon: "shield", labelKey: "group.admin", section: "act" };
 
-/** Administration block, shown to instance admins only. Users and instance settings come in a later phase. */
+/** Administration block of the Console sidebar, shown to instance admins only. */
 export const adminItems: readonly NavItem[] = [
   { to: "/admin", icon: "info", labelKey: "nav.overview" },
+  { to: "/admin/users", icon: "users", labelKey: "nav.adminUsers" },
+  { to: "/admin/settings", icon: "gear", labelKey: "nav.adminSettings" },
   { to: "/admin/storage", icon: "db", labelKey: "nav.storage" },
   { to: "/admin/runners", icon: "cpu", labelKey: "nav.runners" },
   { to: "/admin/audit", icon: "clock", labelKey: "nav.audit" },
@@ -30,8 +35,8 @@ export const adminItems: readonly NavItem[] = [
 /** Flat navigation for the Foglio and Corsie shells. */
 export function useNavItems(): readonly NavItem[] {
   const user = useSession().data;
-  if (!user) return [homeItem, signInItem];
-  return [homeItem, reposItem, orgsItem, inboxItem, ...(user.role === "admin" ? adminItems.slice(1) : []), accountItem];
+  if (!user) return [homeItem, exploreItem, signInItem];
+  return [homeItem, reposItem, exploreItem, orgsItem, inboxItem, ...(user.role === "admin" ? [adminItem] : []), accountItem];
 }
 
 /* Repository context. `sub` is the first path segment after /owner/name that makes the item active. */
@@ -124,7 +129,7 @@ export function NavLink({ item, label, className, iconOnly, children }: {
       aria-label={iconOnly ? label : undefined}
       title={iconOnly ? label : undefined}
       activeProps={{ "aria-current": "page" }}
-      activeOptions={{ exact: item.to === "/" || item.to === "/admin" }}
+      activeOptions={{ exact: item.to === "/" || item === adminItems[0] }}
     >
       {children}
     </Link>

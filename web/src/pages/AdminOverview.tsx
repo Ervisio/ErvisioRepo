@@ -1,7 +1,7 @@
 import { useMeta } from "../api/useMeta.ts";
 import { useT } from "../i18n/useT.ts";
-import { Button, Card, EmptyState, Page } from "../ui/index.ts";
-import { InstanceInvite } from "./AdminInvite.tsx";
+import { Button, Card, EmptyState } from "../ui/index.ts";
+import { AdminPane } from "./admin/AdminFrame.tsx";
 
 /** Instance metadata for administrators (the table that used to be the home page). */
 export function AdminOverview() {
@@ -12,15 +12,15 @@ export function AdminOverview() {
 
   if (meta.isPending) {
     return (
-      <Page section="act" title={ta("overview.title")}>
+      <AdminPane title={ta("overview.title")}>
         <p role="status">{tc("state.loading")}</p>
-      </Page>
+      </AdminPane>
     );
   }
 
   if (meta.isError) {
     return (
-      <Page section="act" title={ta("overview.title")}>
+      <AdminPane title={ta("overview.title")}>
         <div role="alert">
           <EmptyState
             icon="alert"
@@ -29,7 +29,7 @@ export function AdminOverview() {
             action={<Button onClick={() => void meta.refetch()}>{tc("action.retry")}</Button>}
           />
         </div>
-      </Page>
+      </AdminPane>
     );
   }
 
@@ -45,7 +45,7 @@ export function AdminOverview() {
   ];
 
   return (
-    <Page section="act" title={ta("overview.title")}>
+    <AdminPane title={ta("overview.title")}>
       <Card title={t("title")}>
         <dl className="ui-kv">
           {rows.map(([label, value]) => (
@@ -56,7 +56,6 @@ export function AdminOverview() {
           ))}
         </dl>
       </Card>
-      <InstanceInvite />
-    </Page>
+    </AdminPane>
   );
 }

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useSession } from "../../api/identity.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Page, SettingsLayout, type SettingsNavGroup, type SettingsNavItem } from "../../ui/index.ts";
+import { Appearance } from "./Appearance.tsx";
 import { Emails } from "./Emails.tsx";
 import { Keys } from "./Keys.tsx";
 import { Linked } from "./Linked.tsx";
@@ -12,7 +13,7 @@ import { Security } from "./Security.tsx";
 import { Sessions } from "./Sessions.tsx";
 import { Tokens } from "./Tokens.tsx";
 
-export const accountSections = ["emails", "notifications", "security", "sessions", "tokens", "keys", "linked"] as const;
+export const accountSections = ["emails", "notifications", "appearance", "security", "sessions", "tokens", "keys", "linked"] as const;
 export type AccountSection = (typeof accountSections)[number];
 
 /** Account settings. Rendered inside <Protected>, so the session is already loaded. */
@@ -23,7 +24,7 @@ export function Account({ section, oidcError }: { section?: AccountSection; oidc
   const active = section ?? (oidcError ? "linked" : undefined);
   const item = (id: AccountSection | "profile", icon: SettingsNavItem["icon"]): SettingsNavItem => ({ id, icon, label: t(`tab.${id}`) });
   const groups: SettingsNavGroup[] = [
-    { title: t("group.personal"), items: [item("profile", "user"), item("emails", "info"), item("notifications", "bell")] },
+    { title: t("group.personal"), items: [item("profile", "user"), item("emails", "info"), item("notifications", "bell"), item("appearance", "layers")] },
     { title: t("group.access"), items: [item("security", "shield"), item("sessions", "clock"), item("tokens", "lock"), item("keys", "code"), item("linked", "users")] },
   ];
   return (
@@ -37,6 +38,7 @@ export function Account({ section, oidcError }: { section?: AccountSection; oidc
         {active === undefined && <Profile user={user} />}
         {active === "emails" && <Emails />}
         {active === "notifications" && <NotificationPrefs />}
+        {active === "appearance" && <Appearance />}
         {active === "security" && <><Password /><Security /></>}
         {active === "sessions" && <Sessions />}
         {active === "tokens" && <Tokens />}

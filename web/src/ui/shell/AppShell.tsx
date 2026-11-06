@@ -5,9 +5,11 @@ import { CorsieShell } from "./CorsieShell.tsx";
 import { FoglioShell } from "./FoglioShell.tsx";
 import { useLayout } from "./layout.ts";
 import { SearchPaletteProvider } from "./SearchPalette.tsx";
+import { useAppearance } from "./useAppearance.ts";
 
 /** Picks the shell for the active layout (data-layout on <html>). */
 export function AppShell({ children, dialogs }: { children: ReactNode; dialogs?: ShellDialogs }) {
+  useAppearance();
   const layout = useLayout();
   return (
     <ToastProvider>

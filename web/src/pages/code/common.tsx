@@ -9,6 +9,7 @@ import { Badge, Button, EmptyState, Icon, Menu, MenuItem, MenuLabel, MenuSeparat
 import { useLayout } from "../../ui/shell/layout.ts";
 import type { Section } from "../../ui/shell/nav.tsx";
 import { useProblemText } from "../auth/useProblemText.ts";
+import { PinButton } from "../repos/PinButton.tsx";
 import { ForkDialog } from "../repos/RepoList.tsx";
 
 export type RepoTab = "code" | "issues" | "pulls" | "commits" | "branches" | "tags" | "releases" | "actions" | "search";
@@ -57,6 +58,7 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
         <>
           <Badge tone={r.visibility === "public" ? "ok" : "neutral"}>{tr(`visibility.${r.visibility}`)}</Badge>
           {actions}
+          <PinButton owner={r.owner} name={r.name} />
           <ForkDialog repo={r} />
           {r.permission === "admin" && (
             <Link to="/$owner/$name/settings" params={{ owner: r.owner, name: r.name }}>

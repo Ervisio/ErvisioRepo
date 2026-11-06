@@ -12,7 +12,8 @@ import { Input } from "./Input.tsx";
 
 export type SettingsNavItem = { id: string; label: string; icon: IconName; keywords?: string; danger?: boolean };
 export type SettingsNavGroup = { title: string; items: SettingsNavItem[] };
-export type SettingsLinkProps = { className: string; "aria-current"?: "page"; children: ReactNode };
+// The router marks a link active on its own (by path prefix and search subset) and overrides aria-current, so links must match exactly.
+export type SettingsLinkProps = { className: string; "aria-current"?: "page"; activeOptions: { exact: true }; children: ReactNode };
 
 /**
  * Sub-navigation plus content. Sections are routes: `renderLink` returns the router link for an
@@ -46,6 +47,7 @@ export function SettingsLayout({ label, groups, active, renderLink, children }: 
                 {renderLink(it, {
                   className: it.danger ? "st-li dz" : "st-li",
                   "aria-current": it.id === active ? "page" : undefined,
+                  activeOptions: { exact: true },
                   children: (
                     <>
                       <Icon name={it.icon} />

@@ -1,4 +1,4 @@
-import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
+import { createRootRoute, createRoute, createRouter, Outlet, redirect } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Protected } from "./auth/Protected.tsx";
 import { AdminAudit } from "./pages/AdminAudit.tsx";
@@ -23,6 +23,7 @@ import { BranchesPage, CommitPage, CommitsPage, TagsPage } from "./pages/code/Hi
 import { SearchPage, type CodeSearchParams } from "./pages/code/SearchPage.tsx";
 import { TreePage } from "./pages/code/TreePage.tsx";
 import { ReleaseFormPage, ReleasePage, ReleasesPage } from "./pages/releases/ReleasesPages.tsx";
+import { ExplorePage } from "./pages/repos/ExplorePage.tsx";
 import { MyReposPage } from "./pages/repos/MyReposPage.tsx";
 import { RepoSettings, repoSettingsSections, type RepoSettingsSection } from "./pages/repos/RepoSettings.tsx";
 import { IssuePage, IssuesPage, NewIssuePage, type IssueSearch } from "./pages/issues/IssuesPages.tsx";
@@ -32,6 +33,13 @@ import { AppShell, ToastProvider, type ShellDialogs } from "./ui/index.ts";
 import { CreateRepoDialog } from "./pages/repos/RepoList.tsx";
 import { CreateOrgDialog } from "./pages/account/CreateOrgDialog.tsx";
 import { AdminOverview } from "./pages/AdminOverview.tsx";
+import { AdminFrame } from "./pages/admin/AdminFrame.tsx";
+import { AdminInvites } from "./pages/admin/AdminInvites.tsx";
+import { AdminSettings } from "./pages/admin/AdminSettings.tsx";
+import { AdminUserDetail } from "./pages/admin/AdminUserDetail.tsx";
+import { AdminUsers, type UsersSearch } from "./pages/admin/AdminUsers.tsx";
+import { isSettingSection } from "./pages/admin/settingsCatalog.ts";
+import { USER_ROLES } from "./api/admin.ts";
 import { OrgsPage } from "./pages/OrgsPage.tsx";
 import type { OrgTab } from "./ui/shell/nav.tsx";
 
@@ -87,9 +95,52 @@ const shellRoute = createRoute({
 });
 const guard = (node: ReactNode, admin = false) => <Protected admin={admin}>{node}</Protected>;
 const homeRoute = createRoute({ getParentRoute: () => shellRoute, path: "/", component: () => guard(<Home />) });
-const adminRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin", component: () => guard(<AdminOverview />, true) });
-const storageRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin/storage", component: () => guard(<AdminStorage />, true) });
-const auditRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin/audit", component: () => guard(<AdminAudit />, true) });
+// Admin pages share one frame (sub-nav) and one guard; the child routes keep their full /admin paths.
+const adminLayoutRoute = createRoute({ getParentRoute: () => shellRoute, id: "admin", component: () => guard(<AdminFrame />, true) });
+const adminRoute = createRoute({ getParentRoute: () => adminLayoutRoute, path: "/admin", component: AdminOverview });
+const storageRoute = createRoute({ getParentRoute: () => adminLayoutRoute, path: "/admin/storage", component: AdminStorage });
+const auditRoute = createRoute({ getParentRoute: () => adminLayoutRoute, path: "/admin/audit", component: AdminAudit });
+const adminUsersRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/admin/users",
+  validateSearch: (s: Record<string, unknown>): UsersSearch => ({ q: str(s.q), role: USER_ROLES.find((r) => r === s.role), suspended: bool(s.suspended), page: num(s.page) }),
+  component: function UsersRoute() {
+    const navigate = adminUsersRoute.useNavigate();
+    return <AdminUsers search={adminUsersRoute.useSearch()} onSearch={(search) => void navigate({ search })} />;
+  },
+});
+const adminUserRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/admin/users/$login",
+  component: () => <AdminUserDetail login={adminUserRoute.useParams().login} />,
+});
+const adminInvitesRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/admin/invites",
+  validateSearch: (s: Record<string, unknown>): { page?: number } => ({ page: num(s.page) }),
+  component: function InvitesRoute() {
+    const navigate = adminInvitesRoute.useNavigate();
+    return <AdminInvites page={adminInvitesRoute.useSearch().page ?? 1} onPage={(p) => void navigate({ search: { page: p > 1 ? p : undefined } })} />;
+  },
+});
+const adminSettingsIndexRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/admin/settings",
+  beforeLoad: () => {
+    throw redirect({ to: "/admin/settings/$section", params: { section: "auth" }, replace: true });
+  },
+});
+const adminSettingsRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/admin/settings/$section",
+  beforeLoad: ({ params }) => {
+    if (!isSettingSection(params.section)) throw redirect({ to: "/admin/settings/$section", params: { section: "auth" }, replace: true });
+  },
+  component: function SettingsSectionRoute() {
+    const section = adminSettingsRoute.useParams().section;
+    return isSettingSection(section) ? <AdminSettings section={section} /> : null;
+  },
+});
 const settingsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/settings",
@@ -112,6 +163,12 @@ const orgRoute = createRoute({
   },
 });
 const orgsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/orgs", component: () => guard(<OrgsPage />) });
+const exploreRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/explore",
+  validateSearch: (s: Record<string, unknown>): { q?: string; sort?: "name"; page?: number } => ({ q: str(s.q), sort: s.sort === "name" ? "name" : undefined, ...pageSearch(s) }),
+  component: () => <ExplorePage search={exploreRoute.useSearch()} />,
+});
 const reposRoute = createRoute({ getParentRoute: () => shellRoute, path: "/repos", component: () => guard(<MyReposPage />) });
 type RefPath = { ref?: string; path?: string };
 const refPathSearch = (s: Record<string, unknown>): RefPath => ({ ref: str(s.ref), path: str(s.path) });
@@ -336,7 +393,7 @@ const repoSettingsRoute = createRoute({
     return guard(<RepoSettings owner={p.owner} name={p.name} section={repoSettingsRoute.useSearch().section} />);
   },
 });
-const runnersRoute = createRoute({ getParentRoute: () => shellRoute, path: "/admin/runners", component: () => guard(<AdminRunners />, true) });
+const runnersRoute = createRoute({ getParentRoute: () => adminLayoutRoute, path: "/admin/runners", component: AdminRunners });
 const actionsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/$owner/$name/actions",
@@ -361,7 +418,7 @@ const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
     bareRoute.addChildren([loginRoute, twoFactorRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
-    shellRoute.addChildren([homeRoute, adminRoute, orgsRoute, storageRoute, auditRoute, runnersRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute,
+    shellRoute.addChildren([homeRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute, exploreRoute,
       repoRoute,
       issuesRoute,
       issueNewRoute,

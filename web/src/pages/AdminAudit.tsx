@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useAudit } from "../api/identity.ts";
 import { useT } from "../i18n/useT.ts";
-import { Badge, Button, Card, EmptyState, Input, Page, Table, TableBody, TableHead, Td, Th, Tr } from "./../ui/index.ts";
+import { AdminPane } from "./admin/AdminFrame.tsx";
+import { Badge, Button, Card, EmptyState, Input, Table, TableBody, TableHead, Td, Th, Tr } from "./../ui/index.ts";
 import { formatDate } from "./account/common.tsx";
 
 function tone(action: string) {
@@ -22,7 +23,7 @@ export function AdminAudit() {
   const audit = useAudit(applied, cursor);
 
   return (
-    <Page section="act" title={t("audit.title")} subtitle={t("audit.subtitle")}>
+    <AdminPane title={t("audit.title")} subtitle={t("audit.subtitle")}>
       <Card>
         <form
           className="acc-inline acc-filter"
@@ -79,6 +80,6 @@ export function AdminAudit() {
           </>
         )}
       </Card>
-    </Page>
+    </AdminPane>
   );
 }
