@@ -78,6 +78,7 @@ export const strings: Record<'en' | 'it', Record<string, string>> = {
     'card.cache': 'Cache and artifacts',
     'card.serverLog': 'Server log',
     'card.publicUrl': 'Public address',
+    'card.web': 'Web interface',
 
     'f.server.public_url': 'Public URL',
     'f.server.public_url.h': 'The address in links, emails and clone URLs, with http:// or https://.',
@@ -179,6 +180,8 @@ export const strings: Record<'en' | 'it', Record<string, string>> = {
     'f.log.level.h': 'Messages below this level are not written.',
     'f.log.format': 'Format',
     'f.log.format.h': 'JSON for log collectors, text for people.',
+    'f.ui.default_layout': 'Default layout',
+    'f.ui.default_layout.h': 'Shown to people who have not chosen one.',
 
     'opt.security.registration.open': 'Open',
     'opt.security.registration.invite': 'By invitation',
@@ -197,6 +200,9 @@ export const strings: Record<'en' | 'it', Record<string, string>> = {
     'opt.log.level.info': 'Info',
     'opt.log.level.warn': 'Warning',
     'opt.log.level.error': 'Error',
+    'opt.ui.default_layout.console': 'Console',
+    'opt.ui.default_layout.foglio': 'Foglio',
+    'opt.ui.default_layout.corsie': 'Corsie',
     'opt.log.format.json': 'JSON',
     'opt.log.format.text': 'Text',
 
@@ -520,6 +526,7 @@ export const strings: Record<'en' | 'it', Record<string, string>> = {
     'card.cache': 'Cache e artifact',
     'card.serverLog': 'Log del server',
     'card.publicUrl': 'Indirizzo pubblico',
+    'card.web': 'Interfaccia web',
 
     'f.server.public_url': 'URL pubblico',
     'f.server.public_url.h': "L'indirizzo nei link, nelle email e negli URL di clone, con http:// o https://.",
@@ -621,6 +628,8 @@ export const strings: Record<'en' | 'it', Record<string, string>> = {
     'f.log.level.h': 'I messaggi sotto questo livello non vengono scritti.',
     'f.log.format': 'Formato',
     'f.log.format.h': 'JSON per i raccoglitori di log, testo per le persone.',
+    'f.ui.default_layout': 'Layout predefinito',
+    'f.ui.default_layout.h': 'Mostrato a chi non ne ha scelto uno.',
 
     'opt.security.registration.open': 'Aperta',
     'opt.security.registration.invite': 'Su invito',
@@ -639,6 +648,9 @@ export const strings: Record<'en' | 'it', Record<string, string>> = {
     'opt.log.level.info': 'Info',
     'opt.log.level.warn': 'Avviso',
     'opt.log.level.error': 'Errore',
+    'opt.ui.default_layout.console': 'Console',
+    'opt.ui.default_layout.foglio': 'Foglio',
+    'opt.ui.default_layout.corsie': 'Corsie',
     'opt.log.format.json': 'JSON',
     'opt.log.format.text': 'Testo',
 

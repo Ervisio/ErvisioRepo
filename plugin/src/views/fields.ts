@@ -35,6 +35,7 @@ export const FIELDS: Record<string, Field & { page: PageId }> = {
   'auth.verify_token_ttl': { page: 'access', kind: 'dur' },
   'auth.reset_token_ttl': { page: 'access', kind: 'dur' },
   'auth.password_min_length': { page: 'access', kind: 'int', min: 8, max: 128 },
+  'ui.default_layout': { page: 'access', kind: 'enum', options: ['console', 'foglio', 'corsie'] },
   'auth.require_2fa': { page: 'access', kind: 'enum', options: ['off', 'admins', 'all'] },
   'auth.session_idle_timeout': { page: 'access', kind: 'dur' },
   'auth.session_max_age': { page: 'access', kind: 'dur' },

@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-06
+
 ### Changed
 
 - Web: the Console shell now has a 264 px sidebar with an owner / repository switcher, grouped navigation (global, repository or organization), recent repositories and an admin-only Administration block. A top bar adds a search field (repository scope, `/` shortcut), a New menu (repository, organization), the notifications count and a user menu, which now holds Sign out. Below 900 px the sidebar opens as a drawer.
@@ -22,6 +24,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - API: `GET` and `PUT /admin/settings`. Instance settings edited from the web are stored in the database (migration 00220, `instance_settings`) and override `config.toml` at the next start; each key reports its value, the file value, the source, whether it is locked and whether a restart is pending. Keys listed in `[settings] locked` or set by an `EREPO_` variable cannot be overridden. An invalid stored override is skipped with a warning and never blocks the start.
 - Config: `ui.default_layout` (`console`, `foglio` or `corsie`), exposed as `defaultLayout` in `GET /meta`.
 - Plugin API: settings now show the effective values with the web overrides applied; saving a key from the plugin writes `config.toml` and removes its web override.
+- Plugin: the Access page gains a Web interface card with the default layout (`ui.default_layout`).
 - Web: repository Collaborators page, label and milestone editing and deletion, team editing and team members, organization deletion, a Fork button on repository pages, single-use sign-up invitations on the admin overview, and a Storage page (state, size, pin, unpin, evict) for instance admins in repository settings.
 
 ### Fixed

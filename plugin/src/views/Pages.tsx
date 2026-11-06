@@ -29,6 +29,7 @@ export const AccessPage = () => (
     ['card.signup', ['security.registration', 'security.user_directory', 'auth.require_verified_email', 'auth.invite_ttl', 'auth.verify_token_ttl', 'auth.reset_token_ttl']],
     ['card.sessions', ['auth.password_min_length', 'auth.require_2fa', 'auth.session_idle_timeout', 'auth.session_max_age', 'auth.token_max_ttl']],
     ['card.limits', ['auth.login_free_failures_account', 'auth.login_free_failures_ip', 'auth.login_backoff_base', 'auth.login_backoff_max', 'auth.actions_per_ip_per_hour']],
+    ['card.web', ['ui.default_layout']],
   ]} />
 );
 
