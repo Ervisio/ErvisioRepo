@@ -49,7 +49,8 @@ for arch in $ARCHES; do
 done
 rm -rf "$DIST/build"
 
-(cd "$DIST" && { sha256sum ./* 2>/dev/null || shasum -a 256 ./*; } | sed 's# \./# #; s#\*\./#*#' > SHA256SUMS)
+# Name the artifacts: a ./* glob races with the redirect and lists SHA256SUMS itself.
+(cd "$DIST" && { sha256sum ./*.deb ./*.rpm ./*.tar.gz 2>/dev/null || shasum -a 256 ./*.deb ./*.rpm ./*.tar.gz; } | sed 's# \./# #; s#\*\./#*#' > SHA256SUMS)
 
 if [ -n "${RELEASE_SIGNING_KEY:-}" ]; then
   go run ./scripts/release/sign sign "$RELEASE_SIGNING_KEY" "$DIST/SHA256SUMS" "$DIST/SHA256SUMS.sig"
