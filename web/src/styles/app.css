@@ -40,7 +40,7 @@ h1, h2, h3 { letter-spacing: -.01em; }
 }
 .sb, .sb-drawer { --hue: var(--accent); --hue-s: var(--sel); --onh: var(--on-accent); }
 .sb { display: grid; grid-template-columns: auto 248px minmax(0, 1fr); gap: 10px; padding: 10px; height: 100vh; }
-.sb > :not(.sb-fx) { position: relative; z-index: 1; min-height: 0; }
+.sb > :not(.sb-fx, .sb-mbar) { position: relative; z-index: 1; min-height: 0; }
 
 .sb-fx { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
 .sb-fx i { position: absolute; border-radius: 50%; filter: blur(34px); opacity: .55; animation: sb-fx-a var(--speed) ease-in-out infinite alternate; }
@@ -165,6 +165,7 @@ h1, h2, h3 { letter-spacing: -.01em; }
   .sb-search { min-width: 0; flex: 1; }
   .sb-search .sb-kbd, .sb-hide-m { display: none; }
   .sb-main { padding: 4px 14px 24px; }
+  .page-actions { flex-wrap: wrap; margin-left: 0; }
   .sb-mbar { display: flex; justify-content: space-around; align-items: center; position: fixed; z-index: 3; left: 10px; right: 10px; bottom: 10px; height: 58px; border-radius: 20px; }
   .sb-mbar > * { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; color: var(--ink3); }
   .sb-mbar .ui-icon { width: 20px; height: 20px; }
