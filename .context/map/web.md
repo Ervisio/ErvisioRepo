@@ -3,7 +3,9 @@ Purpose: React + Vite SPA served by the core. Kit in web/src/ui, pages in web/sr
 Entry points:
 - web/src/router.tsx: TanStack Router tree. Signed-out routes sit under "bare" (no shell); everything else under "shell", which wraps AppShell and passes the shell dialogs (NewRepo, NewOrg) so the kit never imports pages.
 - web/src/ui/shell/AppShell.tsx: picks the shell from the active layout (data-layout on <html>): console (default), foglio, corsie.
-- web/src/ui/shell/ConsoleShell.tsx: the default shell (round 009a acrylic). Rail of squircles (useRailArea picks the lit one), 248 px channel column (GlobalNav/RepoNav/OrgNav/AdminNav + account card), glass column with top bar; below 720 px bottom bar + drawer. CSS in styles/app.css (.sb-*), acrylic tokens scoped to :root[data-layout="console"] in styles/tokens.css (remap --bg/--surface/--sunk/--raise).
+- web/src/ui/shell/ConsoleShell.tsx: the default shell (round 009a acrylic). Parts: Rail (56 px squircles: owners, create, explore, bell, admin, account), Side (248 px channel column: RepoNav, OrgNav, AdminNav when area is admin, else GlobalNav, plus account card), glass column with TopBar, MobileBar. Rail and Side share useRailArea, which lights the squircle for the current global page (null inside a repo or org). Drifting accent shapes (.sb-fx) sit behind everything.
+- web/src/styles/app.css: .sb is the grid (auto 248px minmax(0,1fr)); .sb-glass is the shared acrylic surface; .sb-mbar is hidden by default and becomes a fixed bottom bar inside @media (max-width: 720px), where .sb-rail and .sb-side are also hidden.
+- web/src/styles/tokens.css: acrylic tokens are scoped to :root[data-layout="console"] (and its [data-theme="light"] variant), remapping --bg/--surface/--sunk/--raise/--card/--ink so kit components sit on the glass without own rules. Foglio and Corsie are not affected.
 - web/src/ui/shell/nav.tsx: single source of nav data for all three shells (global items, admin block, repo groups, org tabs, shell context). Add nav entries here, not in the shells.
 - web/src/ui/shell/layout.ts + useAppearance.ts: effective layout = user preference (/user/preferences) || /meta defaultLayout || console; theme from the same preference (data-theme). localStorage only caches for first paint. Appearance section in account settings.
 - web/src/ui/SettingsLayout.tsx: shared settings frame for account, repo, org and instance settings.
@@ -23,7 +25,7 @@ Invariants:
 - Icons in nav and rail need aria-label; the active item carries aria-current.
 - Verification for this area: npm run build (tsc + vite), npm run lint, npm run typecheck, check-i18n. No new tests.
 Gotchas:
-- design/DESIGN.md section "A Console: regole" describes the first Console; rounds 006 and 009a superseded it. Code follows 009a.
+- design/DESIGN.md section "A Console: regole" describes the first Console (round 006); the acrylic decision (round 009a) supersedes it. Code follows 009a.
 - Flat nav for Foglio and Corsie (useNavItems) uses adminItems.slice(1) to drop the Overview entry. Reordering adminItems changes what these layouts show.
 - NavLink uses exact matching only for "/" and "/admin"; other admin and repo links match by prefix, so a new route that shares a prefix will highlight two items.
 - Search params are JSON-decoded by the router: numbers arrive as numbers, so use str/num/bool helpers in router.tsx rather than raw values.

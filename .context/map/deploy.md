@@ -23,6 +23,7 @@ Gotchas:
 - build.sh renders packaging/nfpm.yaml with sed (only ${VERSION}, ${ARCH}, ${BIN_DIR}) into dist/build/nfpm-<arch>.yaml, because nfpm does not expand env vars; a new placeholder must be added to that sed line.
 - compose app image is ghcr.io/ervisio/ervisio-repo:${ERVISIO_VERSION}; `up --build` builds from the checkout under that same name, so a later `up` without pull reuses the local build.
 Related: map/plugin.md (drives setup.sh/install.sh, uses the Caddy flow in TS), map/runner.md, map/repo-core.md
+- Catalog sync cron in Ervisio/plugins can stall: after a release check the catalog and run `gh workflow run sync.yml --repo Ervisio/plugins -f id=repo` if needed.
 - Catalog auto-merge happens only when the release's manifest permissions are unchanged; a release adding commands or http rules needs a manual merge of the sync PR.
 - Release bump: compose default ERVISIO_VERSION + plugin version (package.json, lock, manifest, catalog-entry) must equal the tag. Image: built by .github/workflows/release-image.yml on a pushed v* tag (QEMU multi-arch, push to ghcr.io/ervisio/ervisio-repo:<ver>,latest with GITHUB_TOKEN); the workflow file must exist in the tagged commit. Local arm64 QEMU builds overload the iMac, avoid them. Packages and signing stay local (key never in GitHub). Plugin pack needs GNU tar: run `npx ervisio-plugin-pack pack` in node:24-bookworm with TAG=v<ver> after `npm run build`.
 - Dockerfile web stage must COPY web/.npmrc (legacy-peer-deps for openapi-typescript vs TS 6).

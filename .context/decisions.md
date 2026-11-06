@@ -10,3 +10,4 @@
 2026-11-04 · Home dashboard solo da API esistenti (notifiche, repo, runner, storage); metadati istanza spostati in /admin · niente endpoint nuovi prima della fase 3 contract-first.
 2026-11-06 · Instance settings: DB overrides over config.toml, applied at start (restart required); keys locked via [settings] locked or EREPO_ env; a plugin write to the TOML drops the key's DB override; an override equal to the file value is deleted · web admin edits without touching the file, the file stays the operator's source of truth.
 2026-11-06 · v1.1.0 chiusa (non pubblicata); nuovo rework UI "Discord + GitHub, minimale" va in 1.2, partendo da una galleria Variant Studio · scelta dell'utente; sostituirà la direzione Console di design/DESIGN.md quando approvata.
+2026-11-06 · Docker image built by GitHub Actions (release-image.yml on v* tags); packages, signing and plugin pack stay local · local QEMU multi-arch builds overload the iMac; the signing key must never reach GitHub.
