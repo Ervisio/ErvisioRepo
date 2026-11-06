@@ -225,6 +225,17 @@ type ActionsVariable struct {
 	ScopeID     uuid.NullUUID
 }
 
+type ActivityEvent struct {
+	ID        uuid.UUID
+	RepoID    uuid.UUID
+	ActorID   uuid.NullUUID
+	Kind      string
+	Action    string
+	Number    int64
+	Title     string
+	CreatedAt pgtype.Timestamptz
+}
+
 type AuditLog struct {
 	ID         uuid.UUID
 	At         pgtype.Timestamptz
@@ -435,6 +446,13 @@ type GpgKey struct {
 	Armored     string
 	ExpiresAt   pgtype.Timestamptz
 	CreatedAt   pgtype.Timestamptz
+}
+
+type InstanceSetting struct {
+	Key       string
+	Value     []byte
+	UpdatedBy uuid.NullUUID
+	UpdatedAt pgtype.Timestamptz
 }
 
 type Invite struct {
@@ -1026,6 +1044,20 @@ type User struct {
 	UpdatedAt          pgtype.Timestamptz
 	AvatarUrl          string
 	EmailNotifications bool
+}
+
+type UserPinnedRepo struct {
+	UserID    uuid.UUID
+	RepoID    uuid.UUID
+	Position  int32
+	CreatedAt pgtype.Timestamptz
+}
+
+type UserPreference struct {
+	UserID    uuid.UUID
+	Theme     string
+	Layout    string
+	UpdatedAt pgtype.Timestamptz
 }
 
 type WebauthnCredential struct {

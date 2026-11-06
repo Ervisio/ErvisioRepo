@@ -15,6 +15,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- API: dashboard endpoints. `GET /user/issues` (assigned, created, mentioned or review-requested issues and pull requests), `GET /user/actions/runs` (recent runs, filter by status or conclusion), `GET /user/activity` (pushes, issues and pull requests opened, closed or merged, releases and comments), `GET /explore/repos` (public repositories, anonymous allowed, sort by updated or name, search), `GET /user/pins`, `PUT` and `DELETE /user/pins/{owner}/{name}` (at most 12 ordered pins) and `GET` and `PATCH /user/preferences` (theme and layout). All of them only cover repositories the caller can read. Migration 00230 adds `activity_events`, `user_pinned_repos`, `user_preferences` and the `repo_readable` SQL function.
+- API: instance admin endpoints. `GET /admin/users` (search, role and suspended filters, paginated), `GET` and `PATCH /admin/users/{login}` (role, suspend; suspending signs the user out everywhere and revokes their tokens; an admin cannot demote or suspend themselves or the last active admin, 409), `DELETE /admin/users/{login}/2fa` (audited), `GET /admin/invites` (without tokens) and `DELETE /admin/invites/{id}`.
+- API: `GET` and `PUT /admin/settings`. Instance settings edited from the web are stored in the database (migration 00220, `instance_settings`) and override `config.toml` at the next start; each key reports its value, the file value, the source, whether it is locked and whether a restart is pending. Keys listed in `[settings] locked` or set by an `EREPO_` variable cannot be overridden. An invalid stored override is skipped with a warning and never blocks the start.
+- Config: `ui.default_layout` (`console`, `foglio` or `corsie`), exposed as `defaultLayout` in `GET /meta`.
+- Plugin API: settings now show the effective values with the web overrides applied; saving a key from the plugin writes `config.toml` and removes its web override.
 - Web: repository Collaborators page, label and milestone editing and deletion, team editing and team members, organization deletion, a Fork button on repository pages, single-use sign-up invitations on the admin overview, and a Storage page (state, size, pin, unpin, evict) for instance admins in repository settings.
 
 ### Fixed

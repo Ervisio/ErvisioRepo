@@ -122,13 +122,134 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Instance invitations, newest first
+         * @description Instance admins only. Tokens are never returned.
+         */
+        get: operations["listAdminInvites"];
         put?: never;
         /**
          * Create an instance invitation
          * @description Instance admins only. The token is returned once and only its hash is stored.
          */
         post: operations["createInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Users of the instance, newest first
+         * @description Instance admins only.
+         */
+        get: operations["listAdminUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{login}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                login: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * One user of the instance
+         * @description Instance admins only.
+         */
+        get: operations["getAdminUser"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change the role or suspension of a user
+         * @description Instance admins only. Suspending revokes every session and token of
+         *     the user. An admin cannot demote or suspend itself, and the last
+         *     active admin cannot be demoted or suspended (409).
+         */
+        patch: operations["updateAdminUser"];
+        trace?: never;
+    };
+    "/admin/users/{login}/2fa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove the second factors of a user
+         * @description Instance admins only. Deletes the TOTP, recovery codes and passkeys.
+         */
+        delete: operations["resetAdminUser2fa"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/invites/{inviteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke an unused instance invitation
+         * @description Instance admins only.
+         */
+        delete: operations["revokeInvite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Editable instance settings
+         * @description Instance admins only. config.toml (or the defaults) is the base; the
+         *     web admin stores overrides in the database. A key is locked when
+         *     listed in [settings] locked or set by an EREPO_ variable. Changes
+         *     apply at the next start.
+         */
+        get: operations["getInstanceSettings"];
+        /**
+         * Change instance settings
+         * @description Instance admins only. The whole resulting configuration is validated.
+         *     A value equal to the one of config.toml removes the override. The
+         *     change applies after a restart.
+         */
+        put: operations["updateInstanceSettings"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1301,6 +1422,146 @@ export interface paths {
          * @description Restricted users cannot create repositories (403). The quota of the owner applies (409).
          */
         post: operations["createUserRepo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Issues and pull requests of the signed-in user across the readable repositories
+         * @description Newest activity first. Only repositories the caller can read are searched.
+         */
+        get: operations["listUserIssues"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/actions/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recent workflow runs across the repositories the signed-in user can read */
+        get: operations["listUserActionsRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Activity feed of the repositories the signed-in user can read
+         * @description Pushes, issues and pull requests opened, closed or merged, releases and comments, newest first.
+         */
+        get: operations["listUserActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/pins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Repositories pinned by the signed-in user
+         * @description In pin order. Pins of repositories the user can no longer read are left out.
+         */
+        get: operations["listUserPins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/pins/{owner}/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Pin a repository (appended last; no change when already pinned)
+         * @description At most 12 pins per user (409 beyond that).
+         */
+        put: operations["pinRepo"];
+        post?: never;
+        /** Remove a pin */
+        delete: operations["unpinRepo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** UI preferences of the signed-in user */
+        get: operations["getUserPreferences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change UI preferences */
+        patch: operations["updateUserPreferences"];
+        trace?: never;
+    };
+    "/explore/repos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public repositories
+         * @description Public to anonymous callers too. q matches the name and the description.
+         */
+        get: operations["exploreRepos"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4842,6 +5103,108 @@ export interface components {
             totalCount: number;
             runs: components["schemas"]["ActionsRun"][];
         };
+        LabelRef: {
+            name: string;
+            /** @description Six lowercase hex digits */
+            color: string;
+        };
+        UserIssue: {
+            owner: string;
+            repo: string;
+            /** @description owner/repo */
+            fullName: string;
+            /** Format: int64 */
+            number: number;
+            title: string;
+            /** @enum {string} */
+            kind: "issue" | "pull";
+            /** @enum {string} */
+            state: "open" | "closed" | "merged";
+            /** @description Username; empty when the account is gone */
+            author: string;
+            labels: components["schemas"]["LabelRef"][];
+            commentCount: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        UserIssueList: {
+            /** Format: int64 */
+            totalCount: number;
+            items: components["schemas"]["UserIssue"][];
+        };
+        UserActionsRun: {
+            owner: string;
+            repo: string;
+            fullName: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: int64 */
+            runNumber: number;
+            workflowName: string;
+            title: string;
+            /** @description Short ref name (the full ref for tags and pull requests) */
+            branch: string;
+            event: string;
+            /** @enum {string} */
+            status: "waiting" | "pending" | "queued" | "in_progress" | "completed";
+            /** @description Empty unless completed */
+            conclusion: string;
+            /** @description Web page of the run */
+            url: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        UserActionsRunList: {
+            /** Format: int64 */
+            totalCount: number;
+            runs: components["schemas"]["UserActionsRun"][];
+        };
+        ActivityItem: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "push" | "issue" | "pull_request" | "release" | "comment";
+            /** @description pushed, opened, closed, reopened, merged, published or created */
+            action: string;
+            /** @description Username; empty when the account is gone */
+            actor: string;
+            owner: string;
+            repo: string;
+            fullName: string;
+            /**
+             * Format: int64
+             * @description Issue or pull request number; 0 for pushes and releases
+             */
+            number: number;
+            /** @description Issue or pull request title */
+            title: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ExploreRepoList: {
+            /** Format: int64 */
+            totalCount: number;
+            items: components["schemas"]["Repo"][];
+        };
+        UserPreferences: {
+            /** @enum {string} */
+            theme: "system" | "light" | "dark";
+            /**
+             * @description Empty = the instance default
+             * @enum {string}
+             */
+            layout: "" | "console" | "foglio" | "corsie";
+        };
+        UserPreferencesUpdate: {
+            /** @enum {string} */
+            theme?: "system" | "light" | "dark";
+            /** @enum {string} */
+            layout?: "" | "console" | "foglio" | "corsie";
+        };
         ActionsJob: {
             /** Format: uuid */
             id: string;
@@ -5413,6 +5776,92 @@ export interface components {
             /** @description When set, only this address can use the invitation */
             email?: string;
         };
+        AdminUser: {
+            /** Format: uuid */
+            id: string;
+            username: string;
+            displayName: string;
+            /** @description Primary address */
+            email?: string;
+            /** @enum {string} */
+            role: "admin" | "user" | "restricted";
+            /** Format: date-time */
+            suspendedAt?: string;
+            has2fa: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description Last use of a session
+             */
+            lastActivity?: string;
+        };
+        AdminUserPage: {
+            items: components["schemas"]["AdminUser"][];
+            /** Format: int64 */
+            total: number;
+        };
+        AdminUserUpdate: {
+            /** @enum {string} */
+            role?: "admin" | "user" | "restricted";
+            suspended?: boolean;
+        };
+        AdminInvite: {
+            /** Format: uuid */
+            id: string;
+            email?: string;
+            /** @enum {string} */
+            status: "pending" | "used" | "expired";
+            /** @description Username of the creator */
+            createdBy?: string;
+            /** @description Username of the account created with it */
+            usedBy?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: date-time */
+            usedAt?: string;
+        };
+        AdminInvitePage: {
+            items: components["schemas"]["AdminInvite"][];
+            /** Format: int64 */
+            total: number;
+        };
+        InstanceSetting: {
+            /** @example auth.require_2fa */
+            key: string;
+            /** @description Value the next start runs with (string, boolean, integer or string list) */
+            value: unknown;
+            /** @description Value from config.toml, the environment or the default, without the override */
+            fileValue: unknown;
+            /** @enum {string} */
+            source: "default" | "file" | "db" | "env";
+            /** @description Listed in [settings] locked or set by an EREPO_ variable */
+            locked: boolean;
+            /** @description The running process uses another value */
+            restartPending: boolean;
+        };
+        InstanceSettings: {
+            settings: components["schemas"]["InstanceSetting"][];
+            restartRequired: boolean;
+        };
+        InstanceSettingsUpdate: {
+            values: {
+                [key: string]: unknown;
+            };
+        };
+        FieldProblem: {
+            path: string;
+            msg: string;
+        };
+        ValidationProblem: {
+            type: string;
+            title: string;
+            status: number;
+            detail?: string;
+            errors: components["schemas"]["FieldProblem"][];
+        };
         Invite: {
             /** Format: uuid */
             id: string;
@@ -5588,6 +6037,11 @@ export interface components {
             publicUrl: string;
             /** @enum {string} */
             registration: "open" | "invite" | "closed";
+            /**
+             * @description Shell shown to users without a layout preference
+             * @enum {string}
+             */
+            defaultLayout?: "console" | "foglio" | "corsie";
         };
         /**
          * @description A login waiting for its second factor. The pending state lives in
@@ -7201,6 +7655,30 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    listAdminInvites: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of invitations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminInvitePage"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
     createInvite: {
         parameters: {
             query?: never;
@@ -7224,6 +7702,188 @@ export interface operations {
                 };
             };
             400: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listAdminUsers: {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive substring of the username, display name or an email address */
+                q?: string;
+                role?: "admin" | "user" | "restricted";
+                suspended?: boolean;
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of users */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserPage"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getAdminUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                login: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateAdminUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                login: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUserUpdate"];
+            };
+        };
+        responses: {
+            /** @description The updated user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUser"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    resetAdminUser2fa: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                login: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Second factors removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    revokeInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                inviteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Invitation revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getInstanceSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstanceSettings"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateInstanceSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstanceSettingsUpdate"];
+            };
+        };
+        responses: {
+            /** @description The settings after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstanceSettings"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            /** @description Invalid or locked settings */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ValidationProblem"];
+                };
+            };
             default: components["responses"]["Problem"];
         };
     };
@@ -9124,6 +9784,239 @@ export interface operations {
             400: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listUserIssues: {
+        parameters: {
+            query?: {
+                /** @description Default assigned */
+                filter?: "assigned" | "created" | "mentioned" | "review_requested";
+                /** @description Default all */
+                type?: "issue" | "pr" | "all";
+                /** @description Default open */
+                state?: "open" | "closed" | "all";
+                page?: components["parameters"]["ActionsPage"];
+                perPage?: components["parameters"]["ActionsPerPage"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Issues and pull requests */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserIssueList"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listUserActionsRuns: {
+        parameters: {
+            query?: {
+                /** @description A status (queued, in_progress, completed, ...) or a conclusion (success, failure, ...) */
+                status?: components["parameters"]["ActionsStatusFilter"];
+                page?: components["parameters"]["ActionsPage"];
+                perPage?: components["parameters"]["ActionsPerPage"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Runs, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserActionsRunList"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listUserActivity: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Events */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityItem"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listUserPins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pinned repositories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    pinRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pinned */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    unpinRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unpinned (also when it was not pinned) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getUserPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Preferences (defaults when never set) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserPreferences"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateUserPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPreferencesUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated preferences */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserPreferences"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    exploreRepos: {
+        parameters: {
+            query?: {
+                /** @description Default updated */
+                sort?: "updated" | "name";
+                q?: string;
+                page?: components["parameters"]["ActionsPage"];
+                perPage?: components["parameters"]["ActionsPerPage"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Repositories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExploreRepoList"];
+                };
+            };
+            400: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

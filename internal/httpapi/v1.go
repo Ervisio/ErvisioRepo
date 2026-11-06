@@ -7,6 +7,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
+	"github.com/Ervisio/ErvisioRepo/internal/dashboard"
 	"github.com/Ervisio/ErvisioRepo/internal/ghsync"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
@@ -47,6 +48,10 @@ type v1Server struct {
 	statuses Statuses
 	// actions serves the Actions endpoints; nil answers 503.
 	actions Actions
+	// dashboard serves the home feeds and preferences; nil answers 503.
+	dashboard *dashboard.Service
+	// settings serves /admin/settings; nil answers 503.
+	settings InstanceSettings
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)
@@ -61,6 +66,10 @@ func (s *v1Server) GetMeta(context.Context, v1gen.GetMetaRequestObject) (v1gen.G
 	}
 	if s.meta.Commit != "" {
 		m.Commit = &s.meta.Commit
+	}
+	if s.meta.DefaultLayout != "" {
+		l := v1gen.MetaDefaultLayout(s.meta.DefaultLayout)
+		m.DefaultLayout = &l
 	}
 	return m, nil
 }

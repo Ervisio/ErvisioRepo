@@ -3,7 +3,6 @@ package pluginapi
 import (
 	"strconv"
 	"strings"
-	"unicode"
 )
 
 // tomlString renders s as a TOML basic string. Control characters are
@@ -57,10 +56,6 @@ func valueSpan(lines []string, i int) int {
 		n++
 	}
 	return n
-}
-
-func hasControl(s string) bool {
-	return strings.IndexFunc(s, unicode.IsControl) >= 0
 }
 
 // tableName returns the name of a "[name]" line and whether it is an array

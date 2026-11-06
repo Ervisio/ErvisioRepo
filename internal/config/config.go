@@ -29,6 +29,28 @@ type Config struct {
 	Git      Git      `toml:"git"`
 	SSH      SSH      `toml:"ssh"`
 	Webhooks Webhooks `toml:"webhooks"`
+	UI       UI       `toml:"ui"`
+	Settings Settings `toml:"settings"`
+}
+
+// Values of ui.default_layout.
+const (
+	LayoutConsole = "console"
+	LayoutFoglio  = "foglio"
+	LayoutCorsie  = "corsie"
+)
+
+// UI holds the instance-wide defaults of the web interface.
+type UI struct {
+	// DefaultLayout is the shell shown to users without a preference.
+	DefaultLayout string `toml:"default_layout"`
+}
+
+// Settings controls the instance settings editable from the web admin.
+type Settings struct {
+	// Locked lists editable keys ("section.key") that the web admin may
+	// not change: they keep the value of this file.
+	Locked []string `toml:"locked"`
 }
 
 type Server struct {
@@ -284,6 +306,7 @@ func Default() Config {
 		Git:      defaultGit(),
 		SSH:      defaultSSH(),
 		Webhooks: Webhooks{Timeout: Duration(10 * time.Second), MaxAttempts: 8},
+		UI:       UI{DefaultLayout: LayoutConsole},
 	}
 }
 
@@ -324,6 +347,9 @@ func Parse(data []byte, lookupEnv func(string) (string, bool)) (*Config, error) 
 	}
 	return &cfg, nil
 }
+
+// Validate checks the whole configuration, as Parse does after decoding.
+func (c *Config) Validate() error { return errors.Join(c.validate()...) }
 
 // FieldError is a problem with a single configuration key.
 type FieldError struct {

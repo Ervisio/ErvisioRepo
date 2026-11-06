@@ -84,7 +84,16 @@ type Options struct {
 	Counts      CountSource
 	// Upstream overrides DefaultUpstream.
 	Upstream *Upstream
-	Logger   *slog.Logger
+	// Overrides are the instance settings stored by the web admin; the
+	// settings view shows them applied and a save drops them.
+	Overrides Overrides
+	Logger    *slog.Logger
+}
+
+// Overrides is the part of instancesettings.Service the plugin uses.
+type Overrides interface {
+	Overlay(ctx context.Context, base *config.Config) (*config.Config, error)
+	Delete(ctx context.Context, keys []string) error
 }
 
 // Server is the plugin API.

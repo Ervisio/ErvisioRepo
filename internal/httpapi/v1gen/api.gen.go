@@ -113,6 +113,96 @@ func (e ActionsRunStatus) Valid() bool {
 	}
 }
 
+// Defines values for ActivityItemKind.
+const (
+	ActivityItemKindComment     ActivityItemKind = "comment"
+	ActivityItemKindIssue       ActivityItemKind = "issue"
+	ActivityItemKindPullRequest ActivityItemKind = "pull_request"
+	ActivityItemKindPush        ActivityItemKind = "push"
+	ActivityItemKindRelease     ActivityItemKind = "release"
+)
+
+// Valid indicates whether the value is a known member of the ActivityItemKind enum.
+func (e ActivityItemKind) Valid() bool {
+	switch e {
+	case ActivityItemKindComment:
+		return true
+	case ActivityItemKindIssue:
+		return true
+	case ActivityItemKindPullRequest:
+		return true
+	case ActivityItemKindPush:
+		return true
+	case ActivityItemKindRelease:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminInviteStatus.
+const (
+	AdminInviteStatusExpired AdminInviteStatus = "expired"
+	AdminInviteStatusPending AdminInviteStatus = "pending"
+	AdminInviteStatusUsed    AdminInviteStatus = "used"
+)
+
+// Valid indicates whether the value is a known member of the AdminInviteStatus enum.
+func (e AdminInviteStatus) Valid() bool {
+	switch e {
+	case AdminInviteStatusExpired:
+		return true
+	case AdminInviteStatusPending:
+		return true
+	case AdminInviteStatusUsed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminUserRole.
+const (
+	AdminUserRoleAdmin      AdminUserRole = "admin"
+	AdminUserRoleRestricted AdminUserRole = "restricted"
+	AdminUserRoleUser       AdminUserRole = "user"
+)
+
+// Valid indicates whether the value is a known member of the AdminUserRole enum.
+func (e AdminUserRole) Valid() bool {
+	switch e {
+	case AdminUserRoleAdmin:
+		return true
+	case AdminUserRoleRestricted:
+		return true
+	case AdminUserRoleUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminUserUpdateRole.
+const (
+	AdminUserUpdateRoleAdmin      AdminUserUpdateRole = "admin"
+	AdminUserUpdateRoleRestricted AdminUserUpdateRole = "restricted"
+	AdminUserUpdateRoleUser       AdminUserUpdateRole = "user"
+)
+
+// Valid indicates whether the value is a known member of the AdminUserUpdateRole enum.
+func (e AdminUserUpdateRole) Valid() bool {
+	switch e {
+	case AdminUserUpdateRoleAdmin:
+		return true
+	case AdminUserUpdateRoleRestricted:
+		return true
+	case AdminUserUpdateRoleUser:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CheckAnnotationLevel.
 const (
 	CheckAnnotationLevelFailure CheckAnnotationLevel = "failure"
@@ -665,6 +755,30 @@ func (e GitHubSyncResolveResolution) Valid() bool {
 	}
 }
 
+// Defines values for InstanceSettingSource.
+const (
+	Db      InstanceSettingSource = "db"
+	Default InstanceSettingSource = "default"
+	Env     InstanceSettingSource = "env"
+	File    InstanceSettingSource = "file"
+)
+
+// Valid indicates whether the value is a known member of the InstanceSettingSource enum.
+func (e InstanceSettingSource) Valid() bool {
+	switch e {
+	case Db:
+		return true
+	case Default:
+		return true
+	case Env:
+		return true
+	case File:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IssueState.
 const (
 	IssueStateClosed IssueState = "closed"
@@ -734,6 +848,27 @@ func (e LinkedPullState) Valid() bool {
 	case LinkedPullStateMerged:
 		return true
 	case LinkedPullStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MetaDefaultLayout.
+const (
+	MetaDefaultLayoutConsole MetaDefaultLayout = "console"
+	MetaDefaultLayoutCorsie  MetaDefaultLayout = "corsie"
+	MetaDefaultLayoutFoglio  MetaDefaultLayout = "foglio"
+)
+
+// Valid indicates whether the value is a known member of the MetaDefaultLayout enum.
+func (e MetaDefaultLayout) Valid() bool {
+	switch e {
+	case MetaDefaultLayoutConsole:
+		return true
+	case MetaDefaultLayoutCorsie:
+		return true
+	case MetaDefaultLayoutFoglio:
 		return true
 	default:
 		return false
@@ -1682,6 +1817,162 @@ func (e UserRole) Valid() bool {
 	}
 }
 
+// Defines values for UserActionsRunStatus.
+const (
+	UserActionsRunStatusCompleted  UserActionsRunStatus = "completed"
+	UserActionsRunStatusInProgress UserActionsRunStatus = "in_progress"
+	UserActionsRunStatusPending    UserActionsRunStatus = "pending"
+	UserActionsRunStatusQueued     UserActionsRunStatus = "queued"
+	UserActionsRunStatusWaiting    UserActionsRunStatus = "waiting"
+)
+
+// Valid indicates whether the value is a known member of the UserActionsRunStatus enum.
+func (e UserActionsRunStatus) Valid() bool {
+	switch e {
+	case UserActionsRunStatusCompleted:
+		return true
+	case UserActionsRunStatusInProgress:
+		return true
+	case UserActionsRunStatusPending:
+		return true
+	case UserActionsRunStatusQueued:
+		return true
+	case UserActionsRunStatusWaiting:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserIssueKind.
+const (
+	UserIssueKindIssue UserIssueKind = "issue"
+	UserIssueKindPull  UserIssueKind = "pull"
+)
+
+// Valid indicates whether the value is a known member of the UserIssueKind enum.
+func (e UserIssueKind) Valid() bool {
+	switch e {
+	case UserIssueKindIssue:
+		return true
+	case UserIssueKindPull:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserIssueState.
+const (
+	UserIssueStateClosed UserIssueState = "closed"
+	UserIssueStateMerged UserIssueState = "merged"
+	UserIssueStateOpen   UserIssueState = "open"
+)
+
+// Valid indicates whether the value is a known member of the UserIssueState enum.
+func (e UserIssueState) Valid() bool {
+	switch e {
+	case UserIssueStateClosed:
+		return true
+	case UserIssueStateMerged:
+		return true
+	case UserIssueStateOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserPreferencesLayout.
+const (
+	UserPreferencesLayoutConsole UserPreferencesLayout = "console"
+	UserPreferencesLayoutCorsie  UserPreferencesLayout = "corsie"
+	UserPreferencesLayoutEmpty   UserPreferencesLayout = ""
+	UserPreferencesLayoutFoglio  UserPreferencesLayout = "foglio"
+)
+
+// Valid indicates whether the value is a known member of the UserPreferencesLayout enum.
+func (e UserPreferencesLayout) Valid() bool {
+	switch e {
+	case UserPreferencesLayoutConsole:
+		return true
+	case UserPreferencesLayoutCorsie:
+		return true
+	case UserPreferencesLayoutEmpty:
+		return true
+	case UserPreferencesLayoutFoglio:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserPreferencesTheme.
+const (
+	UserPreferencesThemeDark   UserPreferencesTheme = "dark"
+	UserPreferencesThemeLight  UserPreferencesTheme = "light"
+	UserPreferencesThemeSystem UserPreferencesTheme = "system"
+)
+
+// Valid indicates whether the value is a known member of the UserPreferencesTheme enum.
+func (e UserPreferencesTheme) Valid() bool {
+	switch e {
+	case UserPreferencesThemeDark:
+		return true
+	case UserPreferencesThemeLight:
+		return true
+	case UserPreferencesThemeSystem:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserPreferencesUpdateLayout.
+const (
+	UserPreferencesUpdateLayoutConsole UserPreferencesUpdateLayout = "console"
+	UserPreferencesUpdateLayoutCorsie  UserPreferencesUpdateLayout = "corsie"
+	UserPreferencesUpdateLayoutEmpty   UserPreferencesUpdateLayout = ""
+	UserPreferencesUpdateLayoutFoglio  UserPreferencesUpdateLayout = "foglio"
+)
+
+// Valid indicates whether the value is a known member of the UserPreferencesUpdateLayout enum.
+func (e UserPreferencesUpdateLayout) Valid() bool {
+	switch e {
+	case UserPreferencesUpdateLayoutConsole:
+		return true
+	case UserPreferencesUpdateLayoutCorsie:
+		return true
+	case UserPreferencesUpdateLayoutEmpty:
+		return true
+	case UserPreferencesUpdateLayoutFoglio:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UserPreferencesUpdateTheme.
+const (
+	UserPreferencesUpdateThemeDark   UserPreferencesUpdateTheme = "dark"
+	UserPreferencesUpdateThemeLight  UserPreferencesUpdateTheme = "light"
+	UserPreferencesUpdateThemeSystem UserPreferencesUpdateTheme = "system"
+)
+
+// Valid indicates whether the value is a known member of the UserPreferencesUpdateTheme enum.
+func (e UserPreferencesUpdateTheme) Valid() bool {
+	switch e {
+	case UserPreferencesUpdateThemeDark:
+		return true
+	case UserPreferencesUpdateThemeLight:
+		return true
+	case UserPreferencesUpdateThemeSystem:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Visibility.
 const (
 	Internal Visibility = "internal"
@@ -1793,6 +2084,45 @@ func (e CheckStatusFilter) Valid() bool {
 	case CheckStatusFilterInProgress:
 		return true
 	case CheckStatusFilterQueued:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListAdminUsersParamsRole.
+const (
+	ListAdminUsersParamsRoleAdmin      ListAdminUsersParamsRole = "admin"
+	ListAdminUsersParamsRoleRestricted ListAdminUsersParamsRole = "restricted"
+	ListAdminUsersParamsRoleUser       ListAdminUsersParamsRole = "user"
+)
+
+// Valid indicates whether the value is a known member of the ListAdminUsersParamsRole enum.
+func (e ListAdminUsersParamsRole) Valid() bool {
+	switch e {
+	case ListAdminUsersParamsRoleAdmin:
+		return true
+	case ListAdminUsersParamsRoleRestricted:
+		return true
+	case ListAdminUsersParamsRoleUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExploreReposParamsSort.
+const (
+	ExploreReposParamsSortName    ExploreReposParamsSort = "name"
+	ExploreReposParamsSortUpdated ExploreReposParamsSort = "updated"
+)
+
+// Valid indicates whether the value is a known member of the ExploreReposParamsSort enum.
+func (e ExploreReposParamsSort) Valid() bool {
+	switch e {
+	case ExploreReposParamsSortName:
+		return true
+	case ExploreReposParamsSortUpdated:
 		return true
 	default:
 		return false
@@ -1997,6 +2327,72 @@ func (e ListPullsParamsSort) Valid() bool {
 	case ListPullsParamsSortCreated:
 		return true
 	case ListPullsParamsSortUpdated:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListUserIssuesParamsFilter.
+const (
+	ListUserIssuesParamsFilterAssigned        ListUserIssuesParamsFilter = "assigned"
+	ListUserIssuesParamsFilterCreated         ListUserIssuesParamsFilter = "created"
+	ListUserIssuesParamsFilterMentioned       ListUserIssuesParamsFilter = "mentioned"
+	ListUserIssuesParamsFilterReviewRequested ListUserIssuesParamsFilter = "review_requested"
+)
+
+// Valid indicates whether the value is a known member of the ListUserIssuesParamsFilter enum.
+func (e ListUserIssuesParamsFilter) Valid() bool {
+	switch e {
+	case ListUserIssuesParamsFilterAssigned:
+		return true
+	case ListUserIssuesParamsFilterCreated:
+		return true
+	case ListUserIssuesParamsFilterMentioned:
+		return true
+	case ListUserIssuesParamsFilterReviewRequested:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListUserIssuesParamsType.
+const (
+	ListUserIssuesParamsTypeAll   ListUserIssuesParamsType = "all"
+	ListUserIssuesParamsTypeIssue ListUserIssuesParamsType = "issue"
+	ListUserIssuesParamsTypePr    ListUserIssuesParamsType = "pr"
+)
+
+// Valid indicates whether the value is a known member of the ListUserIssuesParamsType enum.
+func (e ListUserIssuesParamsType) Valid() bool {
+	switch e {
+	case ListUserIssuesParamsTypeAll:
+		return true
+	case ListUserIssuesParamsTypeIssue:
+		return true
+	case ListUserIssuesParamsTypePr:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListUserIssuesParamsState.
+const (
+	ListUserIssuesParamsStateAll    ListUserIssuesParamsState = "all"
+	ListUserIssuesParamsStateClosed ListUserIssuesParamsState = "closed"
+	ListUserIssuesParamsStateOpen   ListUserIssuesParamsState = "open"
+)
+
+// Valid indicates whether the value is a known member of the ListUserIssuesParamsState enum.
+func (e ListUserIssuesParamsState) Valid() bool {
+	switch e {
+	case ListUserIssuesParamsStateAll:
+		return true
+	case ListUserIssuesParamsStateClosed:
+		return true
+	case ListUserIssuesParamsStateOpen:
 		return true
 	default:
 		return false
@@ -2229,6 +2625,90 @@ type ActionsWorkflow struct {
 	Name      string    `json:"name"`
 	Path      string    `json:"path"`
 }
+
+// ActivityItem defines model for ActivityItem.
+type ActivityItem struct {
+	// Action pushed, opened, closed, reopened, merged, published or created
+	Action string `json:"action"`
+
+	// Actor Username; empty when the account is gone
+	Actor     string             `json:"actor"`
+	CreatedAt time.Time          `json:"createdAt"`
+	FullName  string             `json:"fullName"`
+	Id        openapi_types.UUID `json:"id"`
+	Kind      ActivityItemKind   `json:"kind"`
+
+	// Number Issue or pull request number; 0 for pushes and releases
+	Number int64  `json:"number"`
+	Owner  string `json:"owner"`
+	Repo   string `json:"repo"`
+
+	// Title Issue or pull request title
+	Title string `json:"title"`
+}
+
+// ActivityItemKind defines model for ActivityItem.Kind.
+type ActivityItemKind string
+
+// AdminInvite defines model for AdminInvite.
+type AdminInvite struct {
+	CreatedAt time.Time `json:"createdAt"`
+
+	// CreatedBy Username of the creator
+	CreatedBy *string            `json:"createdBy,omitempty"`
+	Email     *string            `json:"email,omitempty"`
+	ExpiresAt time.Time          `json:"expiresAt"`
+	Id        openapi_types.UUID `json:"id"`
+	Status    AdminInviteStatus  `json:"status"`
+	UsedAt    *time.Time         `json:"usedAt,omitempty"`
+
+	// UsedBy Username of the account created with it
+	UsedBy *string `json:"usedBy,omitempty"`
+}
+
+// AdminInviteStatus defines model for AdminInvite.Status.
+type AdminInviteStatus string
+
+// AdminInvitePage defines model for AdminInvitePage.
+type AdminInvitePage struct {
+	Items []AdminInvite `json:"items"`
+	Total int64         `json:"total"`
+}
+
+// AdminUser defines model for AdminUser.
+type AdminUser struct {
+	CreatedAt   time.Time `json:"createdAt"`
+	DisplayName string    `json:"displayName"`
+
+	// Email Primary address
+	Email  *string            `json:"email,omitempty"`
+	Has2fa bool               `json:"has2fa"`
+	Id     openapi_types.UUID `json:"id"`
+
+	// LastActivity Last use of a session
+	LastActivity *time.Time    `json:"lastActivity,omitempty"`
+	Role         AdminUserRole `json:"role"`
+	SuspendedAt  *time.Time    `json:"suspendedAt,omitempty"`
+	Username     string        `json:"username"`
+}
+
+// AdminUserRole defines model for AdminUser.Role.
+type AdminUserRole string
+
+// AdminUserPage defines model for AdminUserPage.
+type AdminUserPage struct {
+	Items []AdminUser `json:"items"`
+	Total int64       `json:"total"`
+}
+
+// AdminUserUpdate defines model for AdminUserUpdate.
+type AdminUserUpdate struct {
+	Role      *AdminUserUpdateRole `json:"role,omitempty"`
+	Suspended *bool                `json:"suspended,omitempty"`
+}
+
+// AdminUserUpdateRole defines model for AdminUserUpdate.Role.
+type AdminUserUpdateRole string
 
 // AuditEntry defines model for AuditEntry.
 type AuditEntry struct {
@@ -2660,6 +3140,18 @@ type EmailRequest struct {
 	Email string `json:"email"`
 }
 
+// ExploreRepoList defines model for ExploreRepoList.
+type ExploreRepoList struct {
+	Items      []Repo `json:"items"`
+	TotalCount int64  `json:"totalCount"`
+}
+
+// FieldProblem defines model for FieldProblem.
+type FieldProblem struct {
+	Msg  string `json:"msg"`
+	Path string `json:"path"`
+}
+
 // FileDiff defines model for FileDiff.
 type FileDiff struct {
 	Additions  int            `json:"additions"`
@@ -2969,6 +3461,37 @@ type GpgKeyCreate struct {
 	ArmoredKey string `json:"armoredKey"`
 }
 
+// InstanceSetting defines model for InstanceSetting.
+type InstanceSetting struct {
+	// FileValue Value from config.toml, the environment or the default, without the override
+	FileValue interface{} `json:"fileValue"`
+	Key       string      `json:"key"`
+
+	// Locked Listed in [settings] locked or set by an EREPO_ variable
+	Locked bool `json:"locked"`
+
+	// RestartPending The running process uses another value
+	RestartPending bool                  `json:"restartPending"`
+	Source         InstanceSettingSource `json:"source"`
+
+	// Value Value the next start runs with (string, boolean, integer or string list)
+	Value interface{} `json:"value"`
+}
+
+// InstanceSettingSource defines model for InstanceSetting.Source.
+type InstanceSettingSource string
+
+// InstanceSettings defines model for InstanceSettings.
+type InstanceSettings struct {
+	RestartRequired bool              `json:"restartRequired"`
+	Settings        []InstanceSetting `json:"settings"`
+}
+
+// InstanceSettingsUpdate defines model for InstanceSettingsUpdate.
+type InstanceSettingsUpdate struct {
+	Values map[string]interface{} `json:"values"`
+}
+
 // Invite defines model for Invite.
 type Invite struct {
 	Email     *string            `json:"email,omitempty"`
@@ -3129,6 +3652,13 @@ type LabelCreate struct {
 	Name        string  `json:"name"`
 }
 
+// LabelRef defines model for LabelRef.
+type LabelRef struct {
+	// Color Six lowercase hex digits
+	Color string `json:"color"`
+	Name  string `json:"name"`
+}
+
 // LabelUpdate defines model for LabelUpdate.
 type LabelUpdate struct {
 	Color       *string `json:"color,omitempty"`
@@ -3171,6 +3701,9 @@ type Meta struct {
 	// Commit VCS revision the binary was built from, if known
 	Commit *string `json:"commit,omitempty"`
 
+	// DefaultLayout Shell shown to users without a layout preference
+	DefaultLayout *MetaDefaultLayout `json:"defaultLayout,omitempty"`
+
 	// InstanceId Stable UUID v7 generated on first start and stored in the settings table
 	InstanceId   openapi_types.UUID `json:"instanceId"`
 	Name         string             `json:"name"`
@@ -3178,6 +3711,9 @@ type Meta struct {
 	Registration MetaRegistration   `json:"registration"`
 	Version      string             `json:"version"`
 }
+
+// MetaDefaultLayout Shell shown to users without a layout preference
+type MetaDefaultLayout string
 
 // MetaRegistration defines model for Meta.Registration.
 type MetaRegistration string
@@ -4428,12 +4964,109 @@ type UserLocale string
 // UserRole defines model for User.Role.
 type UserRole string
 
+// UserActionsRun defines model for UserActionsRun.
+type UserActionsRun struct {
+	// Branch Short ref name (the full ref for tags and pull requests)
+	Branch string `json:"branch"`
+
+	// Conclusion Empty unless completed
+	Conclusion string               `json:"conclusion"`
+	CreatedAt  time.Time            `json:"createdAt"`
+	Event      string               `json:"event"`
+	FullName   string               `json:"fullName"`
+	Id         openapi_types.UUID   `json:"id"`
+	Owner      string               `json:"owner"`
+	Repo       string               `json:"repo"`
+	RunNumber  int64                `json:"runNumber"`
+	Status     UserActionsRunStatus `json:"status"`
+	Title      string               `json:"title"`
+	UpdatedAt  time.Time            `json:"updatedAt"`
+
+	// Url Web page of the run
+	Url          string `json:"url"`
+	WorkflowName string `json:"workflowName"`
+}
+
+// UserActionsRunStatus defines model for UserActionsRun.Status.
+type UserActionsRunStatus string
+
+// UserActionsRunList defines model for UserActionsRunList.
+type UserActionsRunList struct {
+	Runs       []UserActionsRun `json:"runs"`
+	TotalCount int64            `json:"totalCount"`
+}
+
+// UserIssue defines model for UserIssue.
+type UserIssue struct {
+	// Author Username; empty when the account is gone
+	Author       string    `json:"author"`
+	CommentCount int       `json:"commentCount"`
+	CreatedAt    time.Time `json:"createdAt"`
+
+	// FullName owner/repo
+	FullName  string         `json:"fullName"`
+	Kind      UserIssueKind  `json:"kind"`
+	Labels    []LabelRef     `json:"labels"`
+	Number    int64          `json:"number"`
+	Owner     string         `json:"owner"`
+	Repo      string         `json:"repo"`
+	State     UserIssueState `json:"state"`
+	Title     string         `json:"title"`
+	UpdatedAt time.Time      `json:"updatedAt"`
+}
+
+// UserIssueKind defines model for UserIssue.Kind.
+type UserIssueKind string
+
+// UserIssueState defines model for UserIssue.State.
+type UserIssueState string
+
+// UserIssueList defines model for UserIssueList.
+type UserIssueList struct {
+	Items      []UserIssue `json:"items"`
+	TotalCount int64       `json:"totalCount"`
+}
+
+// UserPreferences defines model for UserPreferences.
+type UserPreferences struct {
+	// Layout Empty = the instance default
+	Layout UserPreferencesLayout `json:"layout"`
+	Theme  UserPreferencesTheme  `json:"theme"`
+}
+
+// UserPreferencesLayout Empty = the instance default
+type UserPreferencesLayout string
+
+// UserPreferencesTheme defines model for UserPreferences.Theme.
+type UserPreferencesTheme string
+
+// UserPreferencesUpdate defines model for UserPreferencesUpdate.
+type UserPreferencesUpdate struct {
+	Layout *UserPreferencesUpdateLayout `json:"layout,omitempty"`
+	Theme  *UserPreferencesUpdateTheme  `json:"theme,omitempty"`
+}
+
+// UserPreferencesUpdateLayout defines model for UserPreferencesUpdate.Layout.
+type UserPreferencesUpdateLayout string
+
+// UserPreferencesUpdateTheme defines model for UserPreferencesUpdate.Theme.
+type UserPreferencesUpdateTheme string
+
 // UserSummary defines model for UserSummary.
 type UserSummary struct {
 	// AvatarUrl Absolute https URL of the avatar; empty when unset
 	AvatarUrl   string `json:"avatarUrl"`
 	DisplayName string `json:"displayName"`
 	Username    string `json:"username"`
+}
+
+// ValidationProblem defines model for ValidationProblem.
+type ValidationProblem struct {
+	Detail *string        `json:"detail,omitempty"`
+	Errors []FieldProblem `json:"errors"`
+	Status int            `json:"status"`
+	Title  string         `json:"title"`
+	Type   string         `json:"type"`
 }
 
 // Visibility defines model for Visibility.
@@ -4716,6 +5349,37 @@ type ListAdminAuditParams struct {
 	// Org Only entries of this organization
 	Org *openapi_types.UUID `form:"org,omitempty" json:"org,omitempty"`
 }
+
+// ListAdminInvitesParams defines parameters for ListAdminInvites.
+type ListAdminInvitesParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListAdminUsersParams defines parameters for ListAdminUsers.
+type ListAdminUsersParams struct {
+	// Q Case-insensitive substring of the username, display name or an email address
+	Q         *string                   `form:"q,omitempty" json:"q,omitempty"`
+	Role      *ListAdminUsersParamsRole `form:"role,omitempty" json:"role,omitempty"`
+	Suspended *bool                     `form:"suspended,omitempty" json:"suspended,omitempty"`
+	Offset    *PageOffset               `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit     *PageLimit                `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListAdminUsersParamsRole defines parameters for ListAdminUsers.
+type ListAdminUsersParamsRole string
+
+// ExploreReposParams defines parameters for ExploreRepos.
+type ExploreReposParams struct {
+	// Sort Default updated
+	Sort    *ExploreReposParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+	Q       *string                 `form:"q,omitempty" json:"q,omitempty"`
+	Page    *ActionsPage            `form:"page,omitempty" json:"page,omitempty"`
+	PerPage *ActionsPerPage         `form:"perPage,omitempty" json:"perPage,omitempty"`
+}
+
+// ExploreReposParamsSort defines parameters for ExploreRepos.
+type ExploreReposParamsSort string
 
 // ListGitHubConnectionsParams defines parameters for ListGitHubConnections.
 type ListGitHubConnectionsParams struct {
@@ -5232,6 +5896,43 @@ type SearchUsersParams struct {
 	Limit *int    `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListUserActionsRunsParams defines parameters for ListUserActionsRuns.
+type ListUserActionsRunsParams struct {
+	// Status A status (queued, in_progress, completed, ...) or a conclusion (success, failure, ...)
+	Status  *ActionsStatusFilter `form:"status,omitempty" json:"status,omitempty"`
+	Page    *ActionsPage         `form:"page,omitempty" json:"page,omitempty"`
+	PerPage *ActionsPerPage      `form:"perPage,omitempty" json:"perPage,omitempty"`
+}
+
+// ListUserActivityParams defines parameters for ListUserActivity.
+type ListUserActivityParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListUserIssuesParams defines parameters for ListUserIssues.
+type ListUserIssuesParams struct {
+	// Filter Default assigned
+	Filter *ListUserIssuesParamsFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// Type Default all
+	Type *ListUserIssuesParamsType `form:"type,omitempty" json:"type,omitempty"`
+
+	// State Default open
+	State   *ListUserIssuesParamsState `form:"state,omitempty" json:"state,omitempty"`
+	Page    *ActionsPage               `form:"page,omitempty" json:"page,omitempty"`
+	PerPage *ActionsPerPage            `form:"perPage,omitempty" json:"perPage,omitempty"`
+}
+
+// ListUserIssuesParamsFilter defines parameters for ListUserIssues.
+type ListUserIssuesParamsFilter string
+
+// ListUserIssuesParamsType defines parameters for ListUserIssues.
+type ListUserIssuesParamsType string
+
+// ListUserIssuesParamsState defines parameters for ListUserIssues.
+type ListUserIssuesParamsState string
+
 // ListMyReposParams defines parameters for ListMyRepos.
 type ListMyReposParams struct {
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
@@ -5246,6 +5947,12 @@ type ListUserReposParams struct {
 
 // CreateInviteJSONRequestBody defines body for CreateInvite for application/json ContentType.
 type CreateInviteJSONRequestBody = InviteRequest
+
+// UpdateInstanceSettingsJSONRequestBody defines body for UpdateInstanceSettings for application/json ContentType.
+type UpdateInstanceSettingsJSONRequestBody = InstanceSettingsUpdate
+
+// UpdateAdminUserJSONRequestBody defines body for UpdateAdminUser for application/json ContentType.
+type UpdateAdminUserJSONRequestBody = AdminUserUpdate
 
 // ResendVerificationJSONRequestBody defines body for ResendVerification for application/json ContentType.
 type ResendVerificationJSONRequestBody = EmailRequest
@@ -5502,6 +6209,9 @@ type BeginOidcLinkJSONRequestBody = OidcLinkRequest
 // ChangePasswordJSONRequestBody defines body for ChangePassword for application/json ContentType.
 type ChangePasswordJSONRequestBody = PasswordChange
 
+// UpdateUserPreferencesJSONRequestBody defines body for UpdateUserPreferences for application/json ContentType.
+type UpdateUserPreferencesJSONRequestBody = UserPreferencesUpdate
+
 // UpdateProfileJSONRequestBody defines body for UpdateProfile for application/json ContentType.
 type UpdateProfileJSONRequestBody = ProfileUpdate
 
@@ -5546,9 +6256,15 @@ type ServerInterface interface {
 	// ListAdminAudit Instance audit log, newest first
 	// (GET /admin/audit)
 	ListAdminAudit(w http.ResponseWriter, r *http.Request, params ListAdminAuditParams)
+	// ListAdminInvites Instance invitations, newest first
+	// (GET /admin/invites)
+	ListAdminInvites(w http.ResponseWriter, r *http.Request, params ListAdminInvitesParams)
 	// CreateInvite Create an instance invitation
 	// (POST /admin/invites)
 	CreateInvite(w http.ResponseWriter, r *http.Request)
+	// RevokeInvite Revoke an unused instance invitation
+	// (DELETE /admin/invites/{inviteId})
+	RevokeInvite(w http.ResponseWriter, r *http.Request, inviteId openapi_types.UUID)
 	// EvictAdminRepo Evict a hot repository to the remote tier now
 	// (POST /admin/repos/{owner}/{name}/evict)
 	EvictAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
@@ -5558,12 +6274,30 @@ type ServerInterface interface {
 	// PinAdminRepo Pin a repository on the hot tier
 	// (PUT /admin/repos/{owner}/{name}/pin)
 	PinAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// GetInstanceSettings Editable instance settings
+	// (GET /admin/settings)
+	GetInstanceSettings(w http.ResponseWriter, r *http.Request)
+	// UpdateInstanceSettings Change instance settings
+	// (PUT /admin/settings)
+	UpdateInstanceSettings(w http.ResponseWriter, r *http.Request)
 	// GetAdminStorage Storage targets, policies, cache usage and permanent warnings
 	// (GET /admin/storage)
 	GetAdminStorage(w http.ResponseWriter, r *http.Request)
 	// TestAdminStorageTarget Run a write/read/list/delete round trip on a storage target
 	// (POST /admin/storage/{target}/test)
 	TestAdminStorageTarget(w http.ResponseWriter, r *http.Request, target string)
+	// ListAdminUsers Users of the instance, newest first
+	// (GET /admin/users)
+	ListAdminUsers(w http.ResponseWriter, r *http.Request, params ListAdminUsersParams)
+	// GetAdminUser One user of the instance
+	// (GET /admin/users/{login})
+	GetAdminUser(w http.ResponseWriter, r *http.Request, login string)
+	// UpdateAdminUser Change the role or suspension of a user
+	// (PATCH /admin/users/{login})
+	UpdateAdminUser(w http.ResponseWriter, r *http.Request, login string)
+	// ResetAdminUser2fa Remove the second factors of a user
+	// (DELETE /admin/users/{login}/2fa)
+	ResetAdminUser2fa(w http.ResponseWriter, r *http.Request, login string)
 	// ResendVerification Send the verification mail again
 	// (POST /auth/email/resend)
 	ResendVerification(w http.ResponseWriter, r *http.Request)
@@ -5615,6 +6349,9 @@ type ServerInterface interface {
 	// Register Create an account
 	// (POST /auth/register)
 	Register(w http.ResponseWriter, r *http.Request)
+	// ExploreRepos Public repositories
+	// (GET /explore/repos)
+	ExploreRepos(w http.ResponseWriter, r *http.Request, params ExploreReposParams)
 	// ListGitHubConnections GitHub connections of a user or organization
 	// (GET /github/connections)
 	ListGitHubConnections(w http.ResponseWriter, r *http.Request, params ListGitHubConnectionsParams)
@@ -6284,6 +7021,12 @@ type ServerInterface interface {
 	// GetCurrentUser The signed-in user
 	// (GET /user)
 	GetCurrentUser(w http.ResponseWriter, r *http.Request)
+	// ListUserActionsRuns Recent workflow runs across the repositories the signed-in user can read
+	// (GET /user/actions/runs)
+	ListUserActionsRuns(w http.ResponseWriter, r *http.Request, params ListUserActionsRunsParams)
+	// ListUserActivity Activity feed of the repositories the signed-in user can read
+	// (GET /user/activity)
+	ListUserActivity(w http.ResponseWriter, r *http.Request, params ListUserActivityParams)
 	// ListEmails Email addresses of the signed-in user
 	// (GET /user/emails)
 	ListEmails(w http.ResponseWriter, r *http.Request)
@@ -6299,6 +7042,9 @@ type ServerInterface interface {
 	// ResendEmailVerification Send the verification link again
 	// (POST /user/emails/{id}/verify)
 	ResendEmailVerification(w http.ResponseWriter, r *http.Request, id CredentialID)
+	// ListUserIssues Issues and pull requests of the signed-in user across the readable repositories
+	// (GET /user/issues)
+	ListUserIssues(w http.ResponseWriter, r *http.Request, params ListUserIssuesParams)
 	// ListGpgKeys GPG public keys of the account
 	// (GET /user/keys/gpg)
 	ListGpgKeys(w http.ResponseWriter, r *http.Request)
@@ -6329,6 +7075,21 @@ type ServerInterface interface {
 	// ChangePassword Change the password
 	// (PUT /user/password)
 	ChangePassword(w http.ResponseWriter, r *http.Request)
+	// ListUserPins Repositories pinned by the signed-in user
+	// (GET /user/pins)
+	ListUserPins(w http.ResponseWriter, r *http.Request)
+	// UnpinRepo Remove a pin
+	// (DELETE /user/pins/{owner}/{name})
+	UnpinRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// PinRepo Pin a repository (appended last; no change when already pinned)
+	// (PUT /user/pins/{owner}/{name})
+	PinRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// GetUserPreferences UI preferences of the signed-in user
+	// (GET /user/preferences)
+	GetUserPreferences(w http.ResponseWriter, r *http.Request)
+	// UpdateUserPreferences Change UI preferences
+	// (PATCH /user/preferences)
+	UpdateUserPreferences(w http.ResponseWriter, r *http.Request)
 	// UpdateProfile Change display name, avatar and language
 	// (PATCH /user/profile)
 	UpdateProfile(w http.ResponseWriter, r *http.Request)
@@ -6416,9 +7177,21 @@ func (_ Unimplemented) ListAdminAudit(w http.ResponseWriter, r *http.Request, pa
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListAdminInvites Instance invitations, newest first
+// (GET /admin/invites)
+func (_ Unimplemented) ListAdminInvites(w http.ResponseWriter, r *http.Request, params ListAdminInvitesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // CreateInvite Create an instance invitation
 // (POST /admin/invites)
 func (_ Unimplemented) CreateInvite(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RevokeInvite Revoke an unused instance invitation
+// (DELETE /admin/invites/{inviteId})
+func (_ Unimplemented) RevokeInvite(w http.ResponseWriter, r *http.Request, inviteId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6440,6 +7213,18 @@ func (_ Unimplemented) PinAdminRepo(w http.ResponseWriter, r *http.Request, owne
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetInstanceSettings Editable instance settings
+// (GET /admin/settings)
+func (_ Unimplemented) GetInstanceSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateInstanceSettings Change instance settings
+// (PUT /admin/settings)
+func (_ Unimplemented) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetAdminStorage Storage targets, policies, cache usage and permanent warnings
 // (GET /admin/storage)
 func (_ Unimplemented) GetAdminStorage(w http.ResponseWriter, r *http.Request) {
@@ -6449,6 +7234,30 @@ func (_ Unimplemented) GetAdminStorage(w http.ResponseWriter, r *http.Request) {
 // TestAdminStorageTarget Run a write/read/list/delete round trip on a storage target
 // (POST /admin/storage/{target}/test)
 func (_ Unimplemented) TestAdminStorageTarget(w http.ResponseWriter, r *http.Request, target string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListAdminUsers Users of the instance, newest first
+// (GET /admin/users)
+func (_ Unimplemented) ListAdminUsers(w http.ResponseWriter, r *http.Request, params ListAdminUsersParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetAdminUser One user of the instance
+// (GET /admin/users/{login})
+func (_ Unimplemented) GetAdminUser(w http.ResponseWriter, r *http.Request, login string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateAdminUser Change the role or suspension of a user
+// (PATCH /admin/users/{login})
+func (_ Unimplemented) UpdateAdminUser(w http.ResponseWriter, r *http.Request, login string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ResetAdminUser2fa Remove the second factors of a user
+// (DELETE /admin/users/{login}/2fa)
+func (_ Unimplemented) ResetAdminUser2fa(w http.ResponseWriter, r *http.Request, login string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6551,6 +7360,12 @@ func (_ Unimplemented) ResetPassword(w http.ResponseWriter, r *http.Request) {
 // Register Create an account
 // (POST /auth/register)
 func (_ Unimplemented) Register(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ExploreRepos Public repositories
+// (GET /explore/repos)
+func (_ Unimplemented) ExploreRepos(w http.ResponseWriter, r *http.Request, params ExploreReposParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7892,6 +8707,18 @@ func (_ Unimplemented) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListUserActionsRuns Recent workflow runs across the repositories the signed-in user can read
+// (GET /user/actions/runs)
+func (_ Unimplemented) ListUserActionsRuns(w http.ResponseWriter, r *http.Request, params ListUserActionsRunsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListUserActivity Activity feed of the repositories the signed-in user can read
+// (GET /user/activity)
+func (_ Unimplemented) ListUserActivity(w http.ResponseWriter, r *http.Request, params ListUserActivityParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListEmails Email addresses of the signed-in user
 // (GET /user/emails)
 func (_ Unimplemented) ListEmails(w http.ResponseWriter, r *http.Request) {
@@ -7919,6 +8746,12 @@ func (_ Unimplemented) SetPrimaryEmail(w http.ResponseWriter, r *http.Request, i
 // ResendEmailVerification Send the verification link again
 // (POST /user/emails/{id}/verify)
 func (_ Unimplemented) ResendEmailVerification(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListUserIssues Issues and pull requests of the signed-in user across the readable repositories
+// (GET /user/issues)
+func (_ Unimplemented) ListUserIssues(w http.ResponseWriter, r *http.Request, params ListUserIssuesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7979,6 +8812,36 @@ func (_ Unimplemented) BeginOidcLink(w http.ResponseWriter, r *http.Request, pro
 // ChangePassword Change the password
 // (PUT /user/password)
 func (_ Unimplemented) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListUserPins Repositories pinned by the signed-in user
+// (GET /user/pins)
+func (_ Unimplemented) ListUserPins(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UnpinRepo Remove a pin
+// (DELETE /user/pins/{owner}/{name})
+func (_ Unimplemented) UnpinRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PinRepo Pin a repository (appended last; no change when already pinned)
+// (PUT /user/pins/{owner}/{name})
+func (_ Unimplemented) PinRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetUserPreferences UI preferences of the signed-in user
+// (GET /user/preferences)
+func (_ Unimplemented) GetUserPreferences(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateUserPreferences Change UI preferences
+// (PATCH /user/preferences)
+func (_ Unimplemented) UpdateUserPreferences(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -8274,6 +9137,58 @@ func (siw *ServerInterfaceWrapper) ListAdminAudit(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// ListAdminInvites operation middleware
+func (siw *ServerInterfaceWrapper) ListAdminInvites(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAdminInvitesParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAdminInvites(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateInvite operation middleware
 func (siw *ServerInterfaceWrapper) CreateInvite(w http.ResponseWriter, r *http.Request) {
 
@@ -8285,6 +9200,38 @@ func (siw *ServerInterfaceWrapper) CreateInvite(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateInvite(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeInvite operation middleware
+func (siw *ServerInterfaceWrapper) RevokeInvite(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "inviteId" -------------
+	var inviteId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "inviteId", chi.URLParam(r, "inviteId"), &inviteId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "inviteId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeInvite(w, r, inviteId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8417,6 +9364,46 @@ func (siw *ServerInterfaceWrapper) PinAdminRepo(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// GetInstanceSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetInstanceSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetInstanceSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateInstanceSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateInstanceSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetAdminStorage operation middleware
 func (siw *ServerInterfaceWrapper) GetAdminStorage(w http.ResponseWriter, r *http.Request) {
 
@@ -8460,6 +9447,193 @@ func (siw *ServerInterfaceWrapper) TestAdminStorageTarget(w http.ResponseWriter,
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestAdminStorageTarget(w, r, target)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAdminUsers operation middleware
+func (siw *ServerInterfaceWrapper) ListAdminUsers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAdminUsersParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "role" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "role", r.URL.Query(), &params.Role, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "role"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "role", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "suspended" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "suspended", r.URL.Query(), &params.Suspended, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "suspended"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "suspended", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAdminUsers(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAdminUser operation middleware
+func (siw *ServerInterfaceWrapper) GetAdminUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "login" -------------
+	var login string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "login", chi.URLParam(r, "login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "login", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAdminUser(w, r, login)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateAdminUser operation middleware
+func (siw *ServerInterfaceWrapper) UpdateAdminUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "login" -------------
+	var login string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "login", chi.URLParam(r, "login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "login", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateAdminUser(w, r, login)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResetAdminUser2fa operation middleware
+func (siw *ServerInterfaceWrapper) ResetAdminUser2fa(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "login" -------------
+	var login string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "login", chi.URLParam(r, "login"), &login, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "login", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResetAdminUser2fa(w, r, login)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8698,6 +9872,86 @@ func (siw *ServerInterfaceWrapper) Register(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Register(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExploreRepos operation middleware
+func (siw *ServerInterfaceWrapper) ExploreRepos(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ExploreReposParams
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "perPage" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "perPage", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "perPage"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "perPage", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExploreRepos(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -20734,6 +21988,127 @@ func (siw *ServerInterfaceWrapper) GetCurrentUser(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// ListUserActionsRuns operation middleware
+func (siw *ServerInterfaceWrapper) ListUserActionsRuns(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListUserActionsRunsParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "perPage" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "perPage", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "perPage"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "perPage", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUserActionsRuns(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListUserActivity operation middleware
+func (siw *ServerInterfaceWrapper) ListUserActivity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListUserActivityParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUserActivity(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListEmails operation middleware
 func (siw *ServerInterfaceWrapper) ListEmails(w http.ResponseWriter, r *http.Request) {
 
@@ -20861,6 +22236,99 @@ func (siw *ServerInterfaceWrapper) ResendEmailVerification(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ResendEmailVerification(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListUserIssues operation middleware
+func (siw *ServerInterfaceWrapper) ListUserIssues(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListUserIssuesParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "type", r.URL.Query(), &params.Type, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "state" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "state", r.URL.Query(), &params.State, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "state"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "state", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "perPage" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "perPage", r.URL.Query(), &params.PerPage, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "perPage"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "perPage", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUserIssues(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -21121,6 +22589,158 @@ func (siw *ServerInterfaceWrapper) ChangePassword(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ChangePassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListUserPins operation middleware
+func (siw *ServerInterfaceWrapper) ListUserPins(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUserPins(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnpinRepo operation middleware
+func (siw *ServerInterfaceWrapper) UnpinRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnpinRepo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PinRepo operation middleware
+func (siw *ServerInterfaceWrapper) PinRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PinRepo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetUserPreferences operation middleware
+func (siw *ServerInterfaceWrapper) GetUserPreferences(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserPreferences(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateUserPreferences operation middleware
+func (siw *ServerInterfaceWrapper) UpdateUserPreferences(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateUserPreferences(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -21759,7 +23379,31 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/admin/repos/{owner}/{name}/evict", wrapper.EvictAdminRepo)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/invites", wrapper.ListAdminInvites)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/admin/invites", wrapper.CreateInvite)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/users", wrapper.ListAdminUsers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/users/{login}", wrapper.GetAdminUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/admin/users/{login}", wrapper.UpdateAdminUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/admin/users/{login}/2fa", wrapper.ResetAdminUser2fa)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/admin/invites/{inviteId}", wrapper.RevokeInvite)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/settings", wrapper.GetInstanceSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/admin/settings", wrapper.UpdateInstanceSettings)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/auth/register", wrapper.Register)
@@ -21979,6 +23623,33 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/user/repos", wrapper.CreateUserRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/issues", wrapper.ListUserIssues)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/actions/runs", wrapper.ListUserActionsRuns)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/activity", wrapper.ListUserActivity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/pins", wrapper.ListUserPins)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/pins/{owner}/{name}", wrapper.UnpinRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/user/pins/{owner}/{name}", wrapper.PinRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/preferences", wrapper.GetUserPreferences)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/user/preferences", wrapper.UpdateUserPreferences)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/explore/repos", wrapper.ExploreRepos)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/users/{username}/repos", wrapper.ListUserRepos)
@@ -22920,6 +24591,45 @@ func (response ListAdminAuditdefaultApplicationProblemPlusJSONResponse) VisitLis
 	return err
 }
 
+type ListAdminInvitesRequestObject struct {
+	Params ListAdminInvitesParams
+}
+
+type ListAdminInvitesResponseObject interface {
+	VisitListAdminInvitesResponse(w http.ResponseWriter) error
+}
+
+type ListAdminInvites200JSONResponse AdminInvitePage
+
+func (response ListAdminInvites200JSONResponse) VisitListAdminInvitesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAdminInvitesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListAdminInvitesdefaultApplicationProblemPlusJSONResponse) VisitListAdminInvitesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type CreateInviteRequestObject struct {
 	Body *CreateInviteJSONRequestBody
 }
@@ -22964,6 +24674,55 @@ type CreateInvitedefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response CreateInvitedefaultApplicationProblemPlusJSONResponse) VisitCreateInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeInviteRequestObject struct {
+	InviteId openapi_types.UUID `json:"inviteId"`
+}
+
+type RevokeInviteResponseObject interface {
+	VisitRevokeInviteResponse(w http.ResponseWriter) error
+}
+
+type RevokeInvite204Response struct {
+}
+
+func (response RevokeInvite204Response) VisitRevokeInviteResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeInvite404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeInvite404ApplicationProblemPlusJSONResponse) VisitRevokeInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeInvitedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RevokeInvitedefaultApplicationProblemPlusJSONResponse) VisitRevokeInviteResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -23157,6 +24916,113 @@ func (response PinAdminRepodefaultApplicationProblemPlusJSONResponse) VisitPinAd
 	return err
 }
 
+type GetInstanceSettingsRequestObject struct {
+}
+
+type GetInstanceSettingsResponseObject interface {
+	VisitGetInstanceSettingsResponse(w http.ResponseWriter) error
+}
+
+type GetInstanceSettings200JSONResponse InstanceSettings
+
+func (response GetInstanceSettings200JSONResponse) VisitGetInstanceSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetInstanceSettingsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetInstanceSettingsdefaultApplicationProblemPlusJSONResponse) VisitGetInstanceSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceSettingsRequestObject struct {
+	Body *UpdateInstanceSettingsJSONRequestBody
+}
+
+type UpdateInstanceSettingsResponseObject interface {
+	VisitUpdateInstanceSettingsResponse(w http.ResponseWriter) error
+}
+
+type UpdateInstanceSettings200JSONResponse InstanceSettings
+
+func (response UpdateInstanceSettings200JSONResponse) VisitUpdateInstanceSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceSettings400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateInstanceSettings400ApplicationProblemPlusJSONResponse) VisitUpdateInstanceSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceSettings422ApplicationProblemPlusJSONResponse ValidationProblem
+
+func (response UpdateInstanceSettings422ApplicationProblemPlusJSONResponse) VisitUpdateInstanceSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceSettingsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateInstanceSettingsdefaultApplicationProblemPlusJSONResponse) VisitUpdateInstanceSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetAdminStorageRequestObject struct {
 }
 
@@ -23239,6 +25105,233 @@ type TestAdminStorageTargetdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response TestAdminStorageTargetdefaultApplicationProblemPlusJSONResponse) VisitTestAdminStorageTargetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAdminUsersRequestObject struct {
+	Params ListAdminUsersParams
+}
+
+type ListAdminUsersResponseObject interface {
+	VisitListAdminUsersResponse(w http.ResponseWriter) error
+}
+
+type ListAdminUsers200JSONResponse AdminUserPage
+
+func (response ListAdminUsers200JSONResponse) VisitListAdminUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAdminUsersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListAdminUsersdefaultApplicationProblemPlusJSONResponse) VisitListAdminUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAdminUserRequestObject struct {
+	Login string `json:"login"`
+}
+
+type GetAdminUserResponseObject interface {
+	VisitGetAdminUserResponse(w http.ResponseWriter) error
+}
+
+type GetAdminUser200JSONResponse AdminUser
+
+func (response GetAdminUser200JSONResponse) VisitGetAdminUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAdminUser404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetAdminUser404ApplicationProblemPlusJSONResponse) VisitGetAdminUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAdminUserdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetAdminUserdefaultApplicationProblemPlusJSONResponse) VisitGetAdminUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAdminUserRequestObject struct {
+	Login string `json:"login"`
+	Body  *UpdateAdminUserJSONRequestBody
+}
+
+type UpdateAdminUserResponseObject interface {
+	VisitUpdateAdminUserResponse(w http.ResponseWriter) error
+}
+
+type UpdateAdminUser200JSONResponse AdminUser
+
+func (response UpdateAdminUser200JSONResponse) VisitUpdateAdminUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAdminUser400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateAdminUser400ApplicationProblemPlusJSONResponse) VisitUpdateAdminUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAdminUser404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateAdminUser404ApplicationProblemPlusJSONResponse) VisitUpdateAdminUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAdminUser409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateAdminUser409ApplicationProblemPlusJSONResponse) VisitUpdateAdminUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAdminUserdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateAdminUserdefaultApplicationProblemPlusJSONResponse) VisitUpdateAdminUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResetAdminUser2faRequestObject struct {
+	Login string `json:"login"`
+}
+
+type ResetAdminUser2faResponseObject interface {
+	VisitResetAdminUser2faResponse(w http.ResponseWriter) error
+}
+
+type ResetAdminUser2fa204Response struct {
+}
+
+func (response ResetAdminUser2fa204Response) VisitResetAdminUser2faResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ResetAdminUser2fa404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ResetAdminUser2fa404ApplicationProblemPlusJSONResponse) VisitResetAdminUser2faResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResetAdminUser2fadefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ResetAdminUser2fadefaultApplicationProblemPlusJSONResponse) VisitResetAdminUser2faResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -24531,6 +26624,61 @@ type RegisterdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response RegisterdefaultApplicationProblemPlusJSONResponse) VisitRegisterResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExploreReposRequestObject struct {
+	Params ExploreReposParams
+}
+
+type ExploreReposResponseObject interface {
+	VisitExploreReposResponse(w http.ResponseWriter) error
+}
+
+type ExploreRepos200JSONResponse ExploreRepoList
+
+func (response ExploreRepos200JSONResponse) VisitExploreReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExploreRepos400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ExploreRepos400ApplicationProblemPlusJSONResponse) VisitExploreReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExploreReposdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ExploreReposdefaultApplicationProblemPlusJSONResponse) VisitExploreReposResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -45389,6 +47537,116 @@ func (response GetCurrentUserdefaultApplicationProblemPlusJSONResponse) VisitGet
 	return err
 }
 
+type ListUserActionsRunsRequestObject struct {
+	Params ListUserActionsRunsParams
+}
+
+type ListUserActionsRunsResponseObject interface {
+	VisitListUserActionsRunsResponse(w http.ResponseWriter) error
+}
+
+type ListUserActionsRuns200JSONResponse UserActionsRunList
+
+func (response ListUserActionsRuns200JSONResponse) VisitListUserActionsRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserActionsRuns401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListUserActionsRuns401ApplicationProblemPlusJSONResponse) VisitListUserActionsRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserActionsRunsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListUserActionsRunsdefaultApplicationProblemPlusJSONResponse) VisitListUserActionsRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserActivityRequestObject struct {
+	Params ListUserActivityParams
+}
+
+type ListUserActivityResponseObject interface {
+	VisitListUserActivityResponse(w http.ResponseWriter) error
+}
+
+type ListUserActivity200JSONResponse []ActivityItem
+
+func (response ListUserActivity200JSONResponse) VisitListUserActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserActivity401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListUserActivity401ApplicationProblemPlusJSONResponse) VisitListUserActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserActivitydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListUserActivitydefaultApplicationProblemPlusJSONResponse) VisitListUserActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListEmailsRequestObject struct {
 }
 
@@ -45766,6 +48024,75 @@ type ResendEmailVerificationdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response ResendEmailVerificationdefaultApplicationProblemPlusJSONResponse) VisitResendEmailVerificationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserIssuesRequestObject struct {
+	Params ListUserIssuesParams
+}
+
+type ListUserIssuesResponseObject interface {
+	VisitListUserIssuesResponse(w http.ResponseWriter) error
+}
+
+type ListUserIssues200JSONResponse UserIssueList
+
+func (response ListUserIssues200JSONResponse) VisitListUserIssuesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserIssues400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListUserIssues400ApplicationProblemPlusJSONResponse) VisitListUserIssuesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserIssues401ApplicationProblemPlusJSONResponse Problem
+
+func (response ListUserIssues401ApplicationProblemPlusJSONResponse) VisitListUserIssuesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserIssuesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListUserIssuesdefaultApplicationProblemPlusJSONResponse) VisitListUserIssuesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -46478,6 +48805,311 @@ type ChangePassworddefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response ChangePassworddefaultApplicationProblemPlusJSONResponse) VisitChangePasswordResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserPinsRequestObject struct {
+}
+
+type ListUserPinsResponseObject interface {
+	VisitListUserPinsResponse(w http.ResponseWriter) error
+}
+
+type ListUserPins200JSONResponse []Repo
+
+func (response ListUserPins200JSONResponse) VisitListUserPinsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserPins401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListUserPins401ApplicationProblemPlusJSONResponse) VisitListUserPinsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserPinsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListUserPinsdefaultApplicationProblemPlusJSONResponse) VisitListUserPinsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnpinRepoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type UnpinRepoResponseObject interface {
+	VisitUnpinRepoResponse(w http.ResponseWriter) error
+}
+
+type UnpinRepo204Response struct {
+}
+
+func (response UnpinRepo204Response) VisitUnpinRepoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnpinRepo401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UnpinRepo401ApplicationProblemPlusJSONResponse) VisitUnpinRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnpinRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UnpinRepodefaultApplicationProblemPlusJSONResponse) VisitUnpinRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PinRepoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type PinRepoResponseObject interface {
+	VisitPinRepoResponse(w http.ResponseWriter) error
+}
+
+type PinRepo204Response struct {
+}
+
+func (response PinRepo204Response) VisitPinRepoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type PinRepo401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PinRepo401ApplicationProblemPlusJSONResponse) VisitPinRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PinRepo404ApplicationProblemPlusJSONResponse Problem
+
+func (response PinRepo404ApplicationProblemPlusJSONResponse) VisitPinRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PinRepo409ApplicationProblemPlusJSONResponse Problem
+
+func (response PinRepo409ApplicationProblemPlusJSONResponse) VisitPinRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PinRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PinRepodefaultApplicationProblemPlusJSONResponse) VisitPinRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUserPreferencesRequestObject struct {
+}
+
+type GetUserPreferencesResponseObject interface {
+	VisitGetUserPreferencesResponse(w http.ResponseWriter) error
+}
+
+type GetUserPreferences200JSONResponse UserPreferences
+
+func (response GetUserPreferences200JSONResponse) VisitGetUserPreferencesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUserPreferences401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserPreferences401ApplicationProblemPlusJSONResponse) VisitGetUserPreferencesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUserPreferencesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetUserPreferencesdefaultApplicationProblemPlusJSONResponse) VisitGetUserPreferencesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateUserPreferencesRequestObject struct {
+	Body *UpdateUserPreferencesJSONRequestBody
+}
+
+type UpdateUserPreferencesResponseObject interface {
+	VisitUpdateUserPreferencesResponse(w http.ResponseWriter) error
+}
+
+type UpdateUserPreferences200JSONResponse UserPreferences
+
+func (response UpdateUserPreferences200JSONResponse) VisitUpdateUserPreferencesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateUserPreferences400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateUserPreferences400ApplicationProblemPlusJSONResponse) VisitUpdateUserPreferencesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateUserPreferences401ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateUserPreferences401ApplicationProblemPlusJSONResponse) VisitUpdateUserPreferencesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateUserPreferencesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateUserPreferencesdefaultApplicationProblemPlusJSONResponse) VisitUpdateUserPreferencesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -47977,9 +50609,15 @@ type StrictServerInterface interface {
 	// ListAdminAudit Instance audit log, newest first
 	// (GET /admin/audit)
 	ListAdminAudit(ctx context.Context, request ListAdminAuditRequestObject) (ListAdminAuditResponseObject, error)
+	// ListAdminInvites Instance invitations, newest first
+	// (GET /admin/invites)
+	ListAdminInvites(ctx context.Context, request ListAdminInvitesRequestObject) (ListAdminInvitesResponseObject, error)
 	// CreateInvite Create an instance invitation
 	// (POST /admin/invites)
 	CreateInvite(ctx context.Context, request CreateInviteRequestObject) (CreateInviteResponseObject, error)
+	// RevokeInvite Revoke an unused instance invitation
+	// (DELETE /admin/invites/{inviteId})
+	RevokeInvite(ctx context.Context, request RevokeInviteRequestObject) (RevokeInviteResponseObject, error)
 	// EvictAdminRepo Evict a hot repository to the remote tier now
 	// (POST /admin/repos/{owner}/{name}/evict)
 	EvictAdminRepo(ctx context.Context, request EvictAdminRepoRequestObject) (EvictAdminRepoResponseObject, error)
@@ -47989,12 +50627,30 @@ type StrictServerInterface interface {
 	// PinAdminRepo Pin a repository on the hot tier
 	// (PUT /admin/repos/{owner}/{name}/pin)
 	PinAdminRepo(ctx context.Context, request PinAdminRepoRequestObject) (PinAdminRepoResponseObject, error)
+	// GetInstanceSettings Editable instance settings
+	// (GET /admin/settings)
+	GetInstanceSettings(ctx context.Context, request GetInstanceSettingsRequestObject) (GetInstanceSettingsResponseObject, error)
+	// UpdateInstanceSettings Change instance settings
+	// (PUT /admin/settings)
+	UpdateInstanceSettings(ctx context.Context, request UpdateInstanceSettingsRequestObject) (UpdateInstanceSettingsResponseObject, error)
 	// GetAdminStorage Storage targets, policies, cache usage and permanent warnings
 	// (GET /admin/storage)
 	GetAdminStorage(ctx context.Context, request GetAdminStorageRequestObject) (GetAdminStorageResponseObject, error)
 	// TestAdminStorageTarget Run a write/read/list/delete round trip on a storage target
 	// (POST /admin/storage/{target}/test)
 	TestAdminStorageTarget(ctx context.Context, request TestAdminStorageTargetRequestObject) (TestAdminStorageTargetResponseObject, error)
+	// ListAdminUsers Users of the instance, newest first
+	// (GET /admin/users)
+	ListAdminUsers(ctx context.Context, request ListAdminUsersRequestObject) (ListAdminUsersResponseObject, error)
+	// GetAdminUser One user of the instance
+	// (GET /admin/users/{login})
+	GetAdminUser(ctx context.Context, request GetAdminUserRequestObject) (GetAdminUserResponseObject, error)
+	// UpdateAdminUser Change the role or suspension of a user
+	// (PATCH /admin/users/{login})
+	UpdateAdminUser(ctx context.Context, request UpdateAdminUserRequestObject) (UpdateAdminUserResponseObject, error)
+	// ResetAdminUser2fa Remove the second factors of a user
+	// (DELETE /admin/users/{login}/2fa)
+	ResetAdminUser2fa(ctx context.Context, request ResetAdminUser2faRequestObject) (ResetAdminUser2faResponseObject, error)
 	// ResendVerification Send the verification mail again
 	// (POST /auth/email/resend)
 	ResendVerification(ctx context.Context, request ResendVerificationRequestObject) (ResendVerificationResponseObject, error)
@@ -48046,6 +50702,9 @@ type StrictServerInterface interface {
 	// Register Create an account
 	// (POST /auth/register)
 	Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error)
+	// ExploreRepos Public repositories
+	// (GET /explore/repos)
+	ExploreRepos(ctx context.Context, request ExploreReposRequestObject) (ExploreReposResponseObject, error)
 	// ListGitHubConnections GitHub connections of a user or organization
 	// (GET /github/connections)
 	ListGitHubConnections(ctx context.Context, request ListGitHubConnectionsRequestObject) (ListGitHubConnectionsResponseObject, error)
@@ -48715,6 +51374,12 @@ type StrictServerInterface interface {
 	// GetCurrentUser The signed-in user
 	// (GET /user)
 	GetCurrentUser(ctx context.Context, request GetCurrentUserRequestObject) (GetCurrentUserResponseObject, error)
+	// ListUserActionsRuns Recent workflow runs across the repositories the signed-in user can read
+	// (GET /user/actions/runs)
+	ListUserActionsRuns(ctx context.Context, request ListUserActionsRunsRequestObject) (ListUserActionsRunsResponseObject, error)
+	// ListUserActivity Activity feed of the repositories the signed-in user can read
+	// (GET /user/activity)
+	ListUserActivity(ctx context.Context, request ListUserActivityRequestObject) (ListUserActivityResponseObject, error)
 	// ListEmails Email addresses of the signed-in user
 	// (GET /user/emails)
 	ListEmails(ctx context.Context, request ListEmailsRequestObject) (ListEmailsResponseObject, error)
@@ -48730,6 +51395,9 @@ type StrictServerInterface interface {
 	// ResendEmailVerification Send the verification link again
 	// (POST /user/emails/{id}/verify)
 	ResendEmailVerification(ctx context.Context, request ResendEmailVerificationRequestObject) (ResendEmailVerificationResponseObject, error)
+	// ListUserIssues Issues and pull requests of the signed-in user across the readable repositories
+	// (GET /user/issues)
+	ListUserIssues(ctx context.Context, request ListUserIssuesRequestObject) (ListUserIssuesResponseObject, error)
 	// ListGpgKeys GPG public keys of the account
 	// (GET /user/keys/gpg)
 	ListGpgKeys(ctx context.Context, request ListGpgKeysRequestObject) (ListGpgKeysResponseObject, error)
@@ -48760,6 +51428,21 @@ type StrictServerInterface interface {
 	// ChangePassword Change the password
 	// (PUT /user/password)
 	ChangePassword(ctx context.Context, request ChangePasswordRequestObject) (ChangePasswordResponseObject, error)
+	// ListUserPins Repositories pinned by the signed-in user
+	// (GET /user/pins)
+	ListUserPins(ctx context.Context, request ListUserPinsRequestObject) (ListUserPinsResponseObject, error)
+	// UnpinRepo Remove a pin
+	// (DELETE /user/pins/{owner}/{name})
+	UnpinRepo(ctx context.Context, request UnpinRepoRequestObject) (UnpinRepoResponseObject, error)
+	// PinRepo Pin a repository (appended last; no change when already pinned)
+	// (PUT /user/pins/{owner}/{name})
+	PinRepo(ctx context.Context, request PinRepoRequestObject) (PinRepoResponseObject, error)
+	// GetUserPreferences UI preferences of the signed-in user
+	// (GET /user/preferences)
+	GetUserPreferences(ctx context.Context, request GetUserPreferencesRequestObject) (GetUserPreferencesResponseObject, error)
+	// UpdateUserPreferences Change UI preferences
+	// (PATCH /user/preferences)
+	UpdateUserPreferences(ctx context.Context, request UpdateUserPreferencesRequestObject) (UpdateUserPreferencesResponseObject, error)
 	// UpdateProfile Change display name, avatar and language
 	// (PATCH /user/profile)
 	UpdateProfile(ctx context.Context, request UpdateProfileRequestObject) (UpdateProfileResponseObject, error)
@@ -48958,6 +51641,32 @@ func (sh *strictHandler) ListAdminAudit(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
+// ListAdminInvites operation middleware
+func (sh *strictHandler) ListAdminInvites(w http.ResponseWriter, r *http.Request, params ListAdminInvitesParams) {
+	var request ListAdminInvitesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAdminInvites(ctx, request.(ListAdminInvitesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAdminInvites")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAdminInvitesResponseObject); ok {
+		if err := validResponse.VisitListAdminInvitesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // CreateInvite operation middleware
 func (sh *strictHandler) CreateInvite(w http.ResponseWriter, r *http.Request) {
 	var request CreateInviteRequestObject
@@ -48982,6 +51691,32 @@ func (sh *strictHandler) CreateInvite(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateInviteResponseObject); ok {
 		if err := validResponse.VisitCreateInviteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeInvite operation middleware
+func (sh *strictHandler) RevokeInvite(w http.ResponseWriter, r *http.Request, inviteId openapi_types.UUID) {
+	var request RevokeInviteRequestObject
+
+	request.InviteId = inviteId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeInvite(ctx, request.(RevokeInviteRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeInvite")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeInviteResponseObject); ok {
+		if err := validResponse.VisitRevokeInviteResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -49070,6 +51805,61 @@ func (sh *strictHandler) PinAdminRepo(w http.ResponseWriter, r *http.Request, ow
 	}
 }
 
+// GetInstanceSettings operation middleware
+func (sh *strictHandler) GetInstanceSettings(w http.ResponseWriter, r *http.Request) {
+	var request GetInstanceSettingsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetInstanceSettings(ctx, request.(GetInstanceSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetInstanceSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetInstanceSettingsResponseObject); ok {
+		if err := validResponse.VisitGetInstanceSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateInstanceSettings operation middleware
+func (sh *strictHandler) UpdateInstanceSettings(w http.ResponseWriter, r *http.Request) {
+	var request UpdateInstanceSettingsRequestObject
+
+	var body UpdateInstanceSettingsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateInstanceSettings(ctx, request.(UpdateInstanceSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateInstanceSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateInstanceSettingsResponseObject); ok {
+		if err := validResponse.VisitUpdateInstanceSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetAdminStorage operation middleware
 func (sh *strictHandler) GetAdminStorage(w http.ResponseWriter, r *http.Request) {
 	var request GetAdminStorageRequestObject
@@ -49113,6 +51903,117 @@ func (sh *strictHandler) TestAdminStorageTarget(w http.ResponseWriter, r *http.R
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(TestAdminStorageTargetResponseObject); ok {
 		if err := validResponse.VisitTestAdminStorageTargetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAdminUsers operation middleware
+func (sh *strictHandler) ListAdminUsers(w http.ResponseWriter, r *http.Request, params ListAdminUsersParams) {
+	var request ListAdminUsersRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAdminUsers(ctx, request.(ListAdminUsersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAdminUsers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAdminUsersResponseObject); ok {
+		if err := validResponse.VisitListAdminUsersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAdminUser operation middleware
+func (sh *strictHandler) GetAdminUser(w http.ResponseWriter, r *http.Request, login string) {
+	var request GetAdminUserRequestObject
+
+	request.Login = login
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAdminUser(ctx, request.(GetAdminUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAdminUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAdminUserResponseObject); ok {
+		if err := validResponse.VisitGetAdminUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateAdminUser operation middleware
+func (sh *strictHandler) UpdateAdminUser(w http.ResponseWriter, r *http.Request, login string) {
+	var request UpdateAdminUserRequestObject
+
+	request.Login = login
+
+	var body UpdateAdminUserJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateAdminUser(ctx, request.(UpdateAdminUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateAdminUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateAdminUserResponseObject); ok {
+		if err := validResponse.VisitUpdateAdminUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ResetAdminUser2fa operation middleware
+func (sh *strictHandler) ResetAdminUser2fa(w http.ResponseWriter, r *http.Request, login string) {
+	var request ResetAdminUser2faRequestObject
+
+	request.Login = login
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResetAdminUser2fa(ctx, request.(ResetAdminUser2faRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResetAdminUser2fa")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResetAdminUser2faResponseObject); ok {
+		if err := validResponse.VisitResetAdminUser2faResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -49598,6 +52499,32 @@ func (sh *strictHandler) Register(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RegisterResponseObject); ok {
 		if err := validResponse.VisitRegisterResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ExploreRepos operation middleware
+func (sh *strictHandler) ExploreRepos(w http.ResponseWriter, r *http.Request, params ExploreReposParams) {
+	var request ExploreReposRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ExploreRepos(ctx, request.(ExploreReposRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ExploreRepos")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ExploreReposResponseObject); ok {
+		if err := validResponse.VisitExploreReposResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -56204,6 +59131,58 @@ func (sh *strictHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// ListUserActionsRuns operation middleware
+func (sh *strictHandler) ListUserActionsRuns(w http.ResponseWriter, r *http.Request, params ListUserActionsRunsParams) {
+	var request ListUserActionsRunsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListUserActionsRuns(ctx, request.(ListUserActionsRunsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListUserActionsRuns")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListUserActionsRunsResponseObject); ok {
+		if err := validResponse.VisitListUserActionsRunsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListUserActivity operation middleware
+func (sh *strictHandler) ListUserActivity(w http.ResponseWriter, r *http.Request, params ListUserActivityParams) {
+	var request ListUserActivityRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListUserActivity(ctx, request.(ListUserActivityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListUserActivity")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListUserActivityResponseObject); ok {
+		if err := validResponse.VisitListUserActivityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListEmails operation middleware
 func (sh *strictHandler) ListEmails(w http.ResponseWriter, r *http.Request) {
 	var request ListEmailsRequestObject
@@ -56330,6 +59309,32 @@ func (sh *strictHandler) ResendEmailVerification(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ResendEmailVerificationResponseObject); ok {
 		if err := validResponse.VisitResendEmailVerificationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListUserIssues operation middleware
+func (sh *strictHandler) ListUserIssues(w http.ResponseWriter, r *http.Request, params ListUserIssuesParams) {
+	var request ListUserIssuesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListUserIssues(ctx, request.(ListUserIssuesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListUserIssues")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListUserIssuesResponseObject); ok {
+		if err := validResponse.VisitListUserIssuesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -56609,6 +59614,139 @@ func (sh *strictHandler) ChangePassword(w http.ResponseWriter, r *http.Request) 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ChangePasswordResponseObject); ok {
 		if err := validResponse.VisitChangePasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListUserPins operation middleware
+func (sh *strictHandler) ListUserPins(w http.ResponseWriter, r *http.Request) {
+	var request ListUserPinsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListUserPins(ctx, request.(ListUserPinsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListUserPins")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListUserPinsResponseObject); ok {
+		if err := validResponse.VisitListUserPinsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnpinRepo operation middleware
+func (sh *strictHandler) UnpinRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request UnpinRepoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnpinRepo(ctx, request.(UnpinRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnpinRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnpinRepoResponseObject); ok {
+		if err := validResponse.VisitUnpinRepoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PinRepo operation middleware
+func (sh *strictHandler) PinRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request PinRepoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PinRepo(ctx, request.(PinRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PinRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PinRepoResponseObject); ok {
+		if err := validResponse.VisitPinRepoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUserPreferences operation middleware
+func (sh *strictHandler) GetUserPreferences(w http.ResponseWriter, r *http.Request) {
+	var request GetUserPreferencesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserPreferences(ctx, request.(GetUserPreferencesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserPreferences")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUserPreferencesResponseObject); ok {
+		if err := validResponse.VisitGetUserPreferencesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateUserPreferences operation middleware
+func (sh *strictHandler) UpdateUserPreferences(w http.ResponseWriter, r *http.Request) {
+	var request UpdateUserPreferencesRequestObject
+
+	var body UpdateUserPreferencesJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateUserPreferences(ctx, request.(UpdateUserPreferencesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateUserPreferences")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateUserPreferencesResponseObject); ok {
+		if err := validResponse.VisitUpdateUserPreferencesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -42,7 +42,7 @@ type statusResponse struct {
 
 func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 	c := s.opt.Config
-	f := s.readFile()
+	f := s.effective(r.Context(), s.readFile())
 	var n counts
 	if s.opt.Counts != nil {
 		if row, err := s.opt.Counts.InstanceCounts(r.Context()); err != nil {
@@ -89,7 +89,7 @@ func (s *Server) putPublicURL(w http.ResponseWriter, r *http.Request) {
 		writeProblem(w, http.StatusBadRequest, "use an http:// or https:// address without a path")
 		return
 	}
-	if _, ok := s.apply(w, []edit{{"server", "public_url", tomlString(origin)}}); !ok {
+	if _, ok := s.apply(r.Context(), w, []edit{{"server", "public_url", tomlString(origin)}}); !ok {
 		return
 	}
 	writeJSON(w, map[string]any{"publicUrl": origin, "restartRequired": true})
@@ -263,10 +263,10 @@ func (s *Server) mailTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := netmail.ParseAddress(body.To); err != nil {
-		writeValidation(w, "invalid recipient", []fieldError{{"to", "must be an email address"}})
+		writeValidation(w, "invalid recipient", []fieldError{{Path: "to", Msg: "must be an email address"}})
 		return
 	}
-	f := s.readFile()
+	f := s.effective(r.Context(), s.readFile())
 	cfg := s.opt.Config
 	switch {
 	case f.err != nil:
@@ -276,17 +276,17 @@ func (s *Server) mailTest(w http.ResponseWriter, r *http.Request) {
 		cfg = f.cfg
 	}
 	if !cfg.Mail.Enabled {
-		writeValidation(w, "mail is disabled", []fieldError{{"mail.enabled", "mail is disabled"}})
+		writeValidation(w, "mail is disabled", []fieldError{{Path: "mail.enabled", Msg: "mail is disabled"}})
 		return
 	}
 	password, err := readSecret(cfg.Mail.PasswordFile)
 	if err != nil {
-		writeValidation(w, "cannot read the mail password", []fieldError{{"mail.password_file", err.Error()}})
+		writeValidation(w, "cannot read the mail password", []fieldError{{Path: "mail.password_file", Msg: err.Error()}})
 		return
 	}
 	sender, err := mail.NewSMTP(cfg.Mail, password)
 	if err != nil {
-		writeValidation(w, "invalid mail settings", []fieldError{{"mail.from", err.Error()}})
+		writeValidation(w, "invalid mail settings", []fieldError{{Path: "mail.from", Msg: err.Error()}})
 		return
 	}
 	msg := mail.Message{To: body.To, Subject: "ErvisioRepo test message",

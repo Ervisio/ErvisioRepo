@@ -25,6 +25,15 @@ const (
 	ActionPasswordReset        = "auth.password_reset"
 	ActionPasswordRehash       = "auth.password_rehashed"
 	ActionInviteCreated        = "auth.invite_created"
+	ActionInviteRevoked        = "auth.invite_revoked"
+)
+
+// Actions recorded by the instance admin.
+const (
+	ActionAdminUserRole        = "admin.user_role_changed"
+	ActionAdminUserSuspended   = "admin.user_suspended"
+	ActionAdminUserUnsuspended = "admin.user_unsuspended"
+	ActionAdminUser2FAReset    = "admin.user_2fa_reset"
 )
 
 // Actions recorded by organization management; their events carry OrgID.

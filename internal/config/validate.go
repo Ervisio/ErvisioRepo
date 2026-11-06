@@ -105,6 +105,12 @@ func (c *Config) validate() []error {
 	v.git(&c.Git)
 	v.ssh(&c.SSH)
 	v.webhooks(&c.Webhooks)
+	v.oneOf("ui.default_layout", c.UI.DefaultLayout, LayoutConsole, LayoutFoglio, LayoutCorsie)
+	for i, k := range c.Settings.Locked {
+		if !slices.Contains(Editable, k) {
+			v.add(fmt.Sprintf("settings.locked[%d]", i), "%q is not an editable setting", k)
+		}
+	}
 	return v.errs
 }
 

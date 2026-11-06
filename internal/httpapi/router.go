@@ -22,6 +22,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
+	"github.com/Ervisio/ErvisioRepo/internal/dashboard"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/ghapi"
 	"github.com/Ervisio/ErvisioRepo/internal/ghsync"
@@ -52,6 +53,8 @@ type Meta struct {
 	InstanceID   uuid.UUID
 	PublicURL    string
 	Registration string
+	// DefaultLayout is the layout new users start with (ui.default_layout).
+	DefaultLayout string
 }
 
 // Deps are the collaborators of the router.
@@ -106,6 +109,10 @@ type Deps struct {
 	Webhooks *webhooks.Service
 	// Notify serves the notification endpoints; nil answers 503.
 	Notify *notify.Service
+	// Dashboard serves the home feeds and the user preferences; nil answers 503.
+	Dashboard *dashboard.Service
+	// Settings serves /admin/settings; nil answers 503.
+	Settings InstanceSettings
 
 	// Pulls serves the pull request, review and fork endpoints; nil answers 503.
 	Pulls Pulls
@@ -296,6 +303,8 @@ func mountV1(r chi.Router, d Deps) {
 	srv.pulls = d.Pulls
 	srv.statuses = d.Statuses
 	srv.actions = d.Actions
+	srv.dashboard = d.Dashboard
+	srv.settings = d.Settings
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())

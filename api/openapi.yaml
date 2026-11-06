@@ -154,6 +154,25 @@ paths:
         default:
           $ref: "#/components/responses/Problem"
   /admin/invites:
+    get:
+      operationId: listAdminInvites
+      tags: [admin]
+      summary: Instance invitations, newest first
+      description: Instance admins only. Tokens are never returned.
+      security:
+        - session: [admin]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: A page of invitations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminInvitePage"
+        default:
+          $ref: "#/components/responses/Problem"
     post:
       operationId: createInvite
       tags: [admin]
@@ -176,6 +195,194 @@ paths:
                 $ref: "#/components/schemas/Invite"
         "400":
           $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: Users of the instance, newest first
+      description: Instance admins only.
+      security:
+        - session: [admin]
+      parameters:
+        - name: q
+          in: query
+          description: Case-insensitive substring of the username, display name or an email address
+          schema:
+            type: string
+            maxLength: 200
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [admin, user, restricted]
+        - name: suspended
+          in: query
+          schema:
+            type: boolean
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: A page of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserPage"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/users/{login}:
+    parameters:
+      - name: login
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getAdminUser
+      tags: [admin]
+      summary: One user of the instance
+      description: Instance admins only.
+      security:
+        - session: [admin]
+      responses:
+        "200":
+          description: The user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateAdminUser
+      tags: [admin]
+      summary: Change the role or suspension of a user
+      description: |
+        Instance admins only. Suspending revokes every session and token of
+        the user. An admin cannot demote or suspend itself, and the last
+        active admin cannot be demoted or suspended (409).
+      security:
+        - session: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserUpdate"
+      responses:
+        "200":
+          description: The updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/users/{login}/2fa:
+    delete:
+      operationId: resetAdminUser2fa
+      tags: [admin]
+      summary: Remove the second factors of a user
+      description: Instance admins only. Deletes the TOTP, recovery codes and passkeys.
+      security:
+        - session: [admin]
+      parameters:
+        - name: login
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Second factors removed
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/invites/{inviteId}:
+    delete:
+      operationId: revokeInvite
+      tags: [admin]
+      summary: Revoke an unused instance invitation
+      description: Instance admins only.
+      security:
+        - session: [admin]
+      parameters:
+        - name: inviteId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Invitation revoked
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/settings:
+    get:
+      operationId: getInstanceSettings
+      tags: [admin]
+      summary: Editable instance settings
+      description: |
+        Instance admins only. config.toml (or the defaults) is the base; the
+        web admin stores overrides in the database. A key is locked when
+        listed in [settings] locked or set by an EREPO_ variable. Changes
+        apply at the next start.
+      security:
+        - session: [admin]
+      responses:
+        "200":
+          description: The settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstanceSettings"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: updateInstanceSettings
+      tags: [admin]
+      summary: Change instance settings
+      description: |
+        Instance admins only. The whole resulting configuration is validated.
+        A value equal to the one of config.toml removes the override. The
+        change applies after a restart.
+      security:
+        - session: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstanceSettingsUpdate"
+      responses:
+        "200":
+          description: The settings after the change
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstanceSettings"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "422":
+          description: Invalid or locked settings
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ValidationProblem"
         default:
           $ref: "#/components/responses/Problem"
   /auth/register:
@@ -1903,6 +2110,235 @@ paths:
         "403":
           $ref: "#/components/responses/Problem"
         "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/issues:
+    get:
+      operationId: listUserIssues
+      tags: [users]
+      summary: Issues and pull requests of the signed-in user across the readable repositories
+      description: Newest activity first. Only repositories the caller can read are searched.
+      security:
+        - session: []
+        - token: [repo:read]
+      parameters:
+        - name: filter
+          in: query
+          description: "Default assigned"
+          schema:
+            type: string
+            enum: [assigned, created, mentioned, review_requested]
+        - name: type
+          in: query
+          description: "Default all"
+          schema:
+            type: string
+            enum: [issue, pr, all]
+        - name: state
+          in: query
+          description: "Default open"
+          schema:
+            type: string
+            enum: [open, closed, all]
+        - $ref: "#/components/parameters/ActionsPage"
+        - $ref: "#/components/parameters/ActionsPerPage"
+      responses:
+        "200":
+          description: Issues and pull requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserIssueList"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/actions/runs:
+    get:
+      operationId: listUserActionsRuns
+      tags: [users]
+      summary: Recent workflow runs across the repositories the signed-in user can read
+      security:
+        - session: []
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/ActionsStatusFilter"
+        - $ref: "#/components/parameters/ActionsPage"
+        - $ref: "#/components/parameters/ActionsPerPage"
+      responses:
+        "200":
+          description: Runs, newest first
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserActionsRunList"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/activity:
+    get:
+      operationId: listUserActivity
+      tags: [users]
+      summary: Activity feed of the repositories the signed-in user can read
+      description: Pushes, issues and pull requests opened, closed or merged, releases and comments, newest first.
+      security:
+        - session: []
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/pins:
+    get:
+      operationId: listUserPins
+      tags: [users]
+      summary: Repositories pinned by the signed-in user
+      description: In pin order. Pins of repositories the user can no longer read are left out.
+      security:
+        - session: []
+        - token: [user:read]
+      responses:
+        "200":
+          description: Pinned repositories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repo"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/pins/{owner}/{name}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    put:
+      operationId: pinRepo
+      tags: [users]
+      summary: Pin a repository (appended last; no change when already pinned)
+      description: At most 12 pins per user (409 beyond that).
+      security:
+        - session: []
+        - token: [user:write]
+      responses:
+        "204":
+          description: Pinned
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: unpinRepo
+      tags: [users]
+      summary: Remove a pin
+      security:
+        - session: []
+        - token: [user:write]
+      responses:
+        "204":
+          description: Unpinned (also when it was not pinned)
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/preferences:
+    get:
+      operationId: getUserPreferences
+      tags: [users]
+      summary: UI preferences of the signed-in user
+      security:
+        - session: []
+        - token: [user:read]
+      responses:
+        "200":
+          description: Preferences (defaults when never set)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreferences"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateUserPreferences
+      tags: [users]
+      summary: Change UI preferences
+      security:
+        - session: []
+        - token: [user:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserPreferencesUpdate"
+      responses:
+        "200":
+          description: Updated preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreferences"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /explore/repos:
+    get:
+      operationId: exploreRepos
+      tags: [repos]
+      summary: Public repositories
+      description: Public to anonymous callers too. q matches the name and the description.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: sort
+          in: query
+          description: "Default updated"
+          schema:
+            type: string
+            enum: [updated, name]
+        - name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+        - $ref: "#/components/parameters/ActionsPage"
+        - $ref: "#/components/parameters/ActionsPerPage"
+      responses:
+        "200":
+          description: Repositories
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExploreRepoList"
+        "400":
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
@@ -8851,6 +9287,100 @@ components:
         runs:
           type: array
           items: {$ref: "#/components/schemas/ActionsRun"}
+    LabelRef:
+      type: object
+      required: [name, color]
+      properties:
+        name: {type: string}
+        color: {type: string, description: Six lowercase hex digits, without "#"}
+    UserIssue:
+      type: object
+      required: [owner, repo, fullName, number, title, kind, state, author, labels, commentCount, createdAt, updatedAt]
+      properties:
+        owner: {type: string}
+        repo: {type: string}
+        fullName: {type: string, description: owner/repo}
+        number: {type: integer, format: int64}
+        title: {type: string}
+        kind: {type: string, enum: [issue, pull]}
+        state: {type: string, enum: [open, closed, merged]}
+        author: {type: string, description: Username; empty when the account is gone}
+        labels:
+          type: array
+          items: {$ref: "#/components/schemas/LabelRef"}
+        commentCount: {type: integer}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    UserIssueList:
+      type: object
+      required: [totalCount, items]
+      properties:
+        totalCount: {type: integer, format: int64}
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/UserIssue"}
+    UserActionsRun:
+      type: object
+      required: [owner, repo, fullName, id, runNumber, workflowName, title, branch, event, status, conclusion, url,
+        createdAt, updatedAt]
+      properties:
+        owner: {type: string}
+        repo: {type: string}
+        fullName: {type: string}
+        id: {type: string, format: uuid}
+        runNumber: {type: integer, format: int64}
+        workflowName: {type: string}
+        title: {type: string}
+        branch: {type: string, description: Short ref name (the full ref for tags and pull requests)}
+        event: {type: string}
+        status: {type: string, enum: [waiting, pending, queued, in_progress, completed]}
+        conclusion: {type: string, description: Empty unless completed}
+        url: {type: string, description: Web page of the run}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    UserActionsRunList:
+      type: object
+      required: [totalCount, runs]
+      properties:
+        totalCount: {type: integer, format: int64}
+        runs:
+          type: array
+          items: {$ref: "#/components/schemas/UserActionsRun"}
+    ActivityItem:
+      type: object
+      required: [id, kind, action, actor, owner, repo, fullName, number, title, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        kind: {type: string, enum: [push, issue, pull_request, release, comment]}
+        action:
+          type: string
+          description: "pushed, opened, closed, reopened, merged, published or created"
+        actor: {type: string, description: Username; empty when the account is gone}
+        owner: {type: string}
+        repo: {type: string}
+        fullName: {type: string}
+        number: {type: integer, format: int64, description: Issue or pull request number; 0 for pushes and releases}
+        title: {type: string, description: Issue or pull request title, release tag, or pushed ref}
+        createdAt: {type: string, format: date-time}
+    ExploreRepoList:
+      type: object
+      required: [totalCount, items]
+      properties:
+        totalCount: {type: integer, format: int64}
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/Repo"}
+    UserPreferences:
+      type: object
+      required: [theme, layout]
+      properties:
+        theme: {type: string, enum: [system, light, dark]}
+        layout: {type: string, enum: ["", console, foglio, corsie], description: Empty = the instance default}
+    UserPreferencesUpdate:
+      type: object
+      properties:
+        theme: {type: string, enum: [system, light, dark]}
+        layout: {type: string, enum: ["", console, foglio, corsie]}
     ActionsJob:
       type: object
       required: [id, runId, key, name, needs, status, conclusion, environment, cancelRequested, approved, runsOn,
@@ -9546,6 +10076,154 @@ components:
           type: string
           maxLength: 254
           description: When set, only this address can use the invitation
+    AdminUser:
+      type: object
+      required: [id, username, displayName, role, has2fa, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+          description: Primary address
+        role:
+          type: string
+          enum: [admin, user, restricted]
+        suspendedAt:
+          type: string
+          format: date-time
+        has2fa:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        lastActivity:
+          type: string
+          format: date-time
+          description: Last use of a session
+    AdminUserPage:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+        total:
+          type: integer
+          format: int64
+    AdminUserUpdate:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [admin, user, restricted]
+        suspended:
+          type: boolean
+    AdminInvite:
+      type: object
+      required: [id, status, createdAt, expiresAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        status:
+          type: string
+          enum: [pending, used, expired]
+        createdBy:
+          type: string
+          description: Username of the creator
+        usedBy:
+          type: string
+          description: Username of the account created with it
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        usedAt:
+          type: string
+          format: date-time
+    AdminInvitePage:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminInvite"
+        total:
+          type: integer
+          format: int64
+    InstanceSetting:
+      type: object
+      required: [key, value, fileValue, source, locked, restartPending]
+      properties:
+        key:
+          type: string
+          example: auth.require_2fa
+        value:
+          description: Value the next start runs with (string, boolean, integer or string list)
+        fileValue:
+          description: Value from config.toml, the environment or the default, without the override
+        source:
+          type: string
+          enum: [default, file, db, env]
+        locked:
+          type: boolean
+          description: Listed in [settings] locked or set by an EREPO_ variable
+        restartPending:
+          type: boolean
+          description: The running process uses another value
+    InstanceSettings:
+      type: object
+      required: [settings, restartRequired]
+      properties:
+        settings:
+          type: array
+          items:
+            $ref: "#/components/schemas/InstanceSetting"
+        restartRequired:
+          type: boolean
+    InstanceSettingsUpdate:
+      type: object
+      required: [values]
+      properties:
+        values:
+          type: object
+          minProperties: 1
+          additionalProperties: true
+    FieldProblem:
+      type: object
+      required: [path, msg]
+      properties:
+        path:
+          type: string
+        msg:
+          type: string
+    ValidationProblem:
+      type: object
+      required: [type, title, status, errors]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldProblem"
     Invite:
       type: object
       required: [id, token, expiresAt]
@@ -9850,6 +10528,10 @@ components:
         registration:
           type: string
           enum: [open, invite, closed]
+        defaultLayout:
+          type: string
+          enum: [console, foglio, corsie]
+          description: Shell shown to users without a layout preference
     MfaChallenge:
       type: object
       required: [methods, enrollmentRequired, expiresAt]

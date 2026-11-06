@@ -2,6 +2,7 @@ package pluginapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,184 +13,32 @@ import (
 	"strings"
 
 	"github.com/Ervisio/ErvisioRepo/internal/config"
+	"github.com/Ervisio/ErvisioRepo/internal/instancesettings"
 )
-
-// editable lists the settings the plugin may change, as "section.key".
-var editable = []string{
-	"server.public_url", "server.ssh_listen", "server.trusted_proxies",
-	"log.level", "log.format",
-	"security.registration", "security.user_directory",
-	"auth.password_min_length", "auth.session_idle_timeout", "auth.session_max_age",
-	"auth.require_verified_email", "auth.login_free_failures_account", "auth.login_free_failures_ip",
-	"auth.login_backoff_base", "auth.login_backoff_max", "auth.actions_per_ip_per_hour", "auth.require_2fa",
-	"auth.token_max_ttl", "auth.invite_ttl", "auth.verify_token_ttl", "auth.reset_token_ttl",
-	"mail.enabled", "mail.host", "mail.port", "mail.tls", "mail.username", "mail.password_file",
-	"mail.from", "mail.helo_name", "mail.timeout",
-	"git.max_push_size", "git.idle_timeout", "git.max_duration", "git.requests_per_hour",
-	"ssh.enabled", "ssh.max_connections", "ssh.login_grace_time",
-	"actions.enabled", "actions.default_actions_url", "actions.max_job_timeout",
-	"actions.runner_offline_after", "actions.registration_token_ttl", "actions.max_jobs_per_run",
-	"actions.cache_max_repo_size", "actions.cache_ttl", "actions.artifact_retention",
-	"webhooks.allow_private", "webhooks.allowed_cidrs", "webhooks.timeout", "webhooks.max_attempts",
-}
-
-var (
-	sizeType     = reflect.TypeFor[config.Size]()
-	durationType = reflect.TypeFor[config.Duration]()
-)
-
-// field returns the config field of a "section.key" path, found by toml tag.
-func field(c *config.Config, path string) (reflect.Value, bool) {
-	v := reflect.ValueOf(c).Elem()
-	for part := range strings.SplitSeq(path, ".") {
-		found := false
-		for i := range v.NumField() {
-			tag, _, _ := strings.Cut(v.Type().Field(i).Tag.Get("toml"), ",")
-			if tag == part {
-				v, found = v.Field(i), true
-				break
-			}
-		}
-		if !found {
-			return reflect.Value{}, false
-		}
-	}
-	return v, true
-}
-
-// valuesOf returns the editable settings of c in their JSON form: sizes and
-// durations as canonical strings, lists as string arrays.
-func valuesOf(c *config.Config) map[string]any {
-	out := make(map[string]any, len(editable))
-	for _, path := range editable {
-		f, ok := field(c, path)
-		if !ok {
-			continue
-		}
-		switch {
-		case f.Type() == sizeType:
-			out[path] = config.Size(f.Int()).String()
-		case f.Type() == durationType:
-			out[path] = config.Duration(f.Int()).String()
-		case f.Kind() == reflect.String:
-			out[path] = f.String()
-		case f.Kind() == reflect.Bool:
-			out[path] = f.Bool()
-		case f.Kind() == reflect.Int:
-			out[path] = f.Int()
-		case f.Kind() == reflect.Slice:
-			out[path] = append([]string{}, f.Interface().([]string)...)
-		}
-	}
-	return out
-}
 
 // fieldError is one entry of a 422 "errors" list.
-type fieldError struct {
-	Path string `json:"path"`
-	Msg  string `json:"msg"`
-}
+type fieldError = instancesettings.FieldError
 
-// fieldErrors flattens the errors of config.Parse into per-key entries.
-// An error that names no key (a TOML syntax error) gets an empty path.
-func fieldErrors(err error) []fieldError {
-	var out []fieldError
-	var walk func(error)
-	walk = func(e error) {
-		if e == nil {
-			return
-		}
-		var fe *config.FieldError
-		switch j, joined := e.(interface{ Unwrap() []error }); {
-		case !errors.As(e, &fe):
-			out = append(out, fieldError{"", e.Error()})
-		case e == error(fe):
-			out = append(out, fieldError{fe.Path, fe.Msg})
-		case joined:
-			for _, x := range j.Unwrap() {
-				walk(x)
-			}
-		default:
-			walk(errors.Unwrap(e))
-		}
-	}
-	walk(err)
-	if len(out) == 0 {
-		out = append(out, fieldError{"", err.Error()})
-	}
-	return out
-}
+func fieldErrors(err error) []fieldError { return instancesettings.FieldErrors(err) }
+
+func valuesOf(c *config.Config) map[string]any { return instancesettings.Values(c) }
 
 // encodeSetting checks a JSON value against the type of the setting and
 // returns it TOML encoded. The message of an error is shown to the user.
 func encodeSetting(path string, raw json.RawMessage) (string, error) {
-	var tmpl config.Config
-	f, ok := field(&tmpl, path)
-	if !ok || !slices.Contains(editable, path) {
-		return "", errors.New("not an editable setting")
+	v, err := instancesettings.Normalize(path, raw)
+	if err != nil {
+		return "", err
 	}
-	if bytes.Equal(bytes.TrimSpace(raw), []byte("null")) {
-		return "", errors.New("a value is required")
-	}
-	str := func() (string, error) {
-		var s string
-		if err := json.Unmarshal(raw, &s); err != nil {
-			return "", errors.New("must be a string")
-		}
-		if hasControl(s) {
-			return "", errors.New("control characters are not allowed")
-		}
-		return strings.TrimSpace(s), nil
-	}
-	switch {
-	case f.Type() == sizeType:
-		s, err := str()
-		if err != nil {
-			return "", err
-		}
-		if _, err := config.ParseSize(s); err != nil {
-			return "", err
-		}
-		return tomlString(s), nil
-	case f.Type() == durationType:
-		s, err := str()
-		if err != nil {
-			return "", err
-		}
-		if _, err := config.ParseDuration(s); err != nil {
-			return "", err
-		}
-		return tomlString(s), nil
-	case f.Kind() == reflect.String:
-		s, err := str()
-		if err != nil {
-			return "", err
-		}
-		return tomlString(s), nil
-	case f.Kind() == reflect.Bool:
-		var b bool
-		if err := json.Unmarshal(raw, &b); err != nil {
-			return "", errors.New("must be true or false")
-		}
-		return strconv.FormatBool(b), nil
-	case f.Kind() == reflect.Int:
-		var n int64
-		if err := json.Unmarshal(raw, &n); err != nil {
-			return "", errors.New("must be an integer")
-		}
-		return strconv.FormatInt(n, 10), nil
-	case f.Kind() == reflect.Slice:
-		var items []string
-		if err := json.Unmarshal(raw, &items); err != nil {
-			return "", errors.New("must be a list of strings")
-		}
-		for i, it := range items {
-			if hasControl(it) {
-				return "", errors.New("control characters are not allowed")
-			}
-			items[i] = strings.TrimSpace(it)
-		}
-		return tomlList(items), nil
+	switch x := v.(type) {
+	case string:
+		return tomlString(x), nil
+	case bool:
+		return strconv.FormatBool(x), nil
+	case int64:
+		return strconv.FormatInt(x, 10), nil
+	case []string:
+		return tomlList(x), nil
 	}
 	return "", errors.New("not an editable setting")
 }
@@ -261,8 +110,22 @@ func (s *Server) restartRequired(f fileState) bool {
 	return !reflect.DeepEqual(valuesOf(f.cfg), valuesOf(s.opt.Config))
 }
 
-func (s *Server) settingsDoc() settingsDoc {
-	f := s.readFile()
+// effective applies the overrides of the web admin, when wired, to the
+// configuration read from the file.
+func (s *Server) effective(ctx context.Context, f fileState) fileState {
+	if f.cfg == nil || s.opt.Overrides == nil {
+		return f
+	}
+	cfg, err := s.opt.Overrides.Overlay(ctx, f.cfg)
+	if err != nil {
+		s.log.Warn("plugin API: read instance settings", "err", err)
+		return f
+	}
+	return fileState{cfg: cfg}
+}
+
+func (s *Server) settingsDoc(ctx context.Context) settingsDoc {
+	f := s.effective(ctx, s.readFile())
 	values := valuesOf(s.opt.Config)
 	if f.cfg != nil {
 		values = valuesOf(f.cfg)
@@ -275,8 +138,8 @@ func (s *Server) settingsDoc() settingsDoc {
 	}
 }
 
-func (s *Server) getSettings(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, s.settingsDoc())
+func (s *Server) getSettings(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, s.settingsDoc(r.Context()))
 }
 
 type edit struct{ section, key, value string }
@@ -303,7 +166,7 @@ func (s *Server) putSettings(w http.ResponseWriter, r *http.Request) {
 	for _, k := range keys {
 		v, err := encodeSetting(k, body.Values[k])
 		if err != nil {
-			bad = append(bad, fieldError{k, err.Error()})
+			bad = append(bad, fieldError{Path: k, Msg: err.Error()})
 			continue
 		}
 		section, key, _ := strings.Cut(k, ".")
@@ -313,15 +176,16 @@ func (s *Server) putSettings(w http.ResponseWriter, r *http.Request) {
 		writeValidation(w, "invalid settings", bad)
 		return
 	}
-	if _, ok := s.apply(w, edits); !ok {
+	if _, ok := s.apply(r.Context(), w, edits); !ok {
 		return
 	}
-	writeJSON(w, s.settingsDoc())
+	writeJSON(w, s.settingsDoc(r.Context()))
 }
 
 // apply patches the file, validates the result as a whole and writes it.
-// Concurrent calls are serialized so that no write is lost.
-func (s *Server) apply(w http.ResponseWriter, edits []edit) (*config.Config, bool) {
+// Concurrent calls are serialized so that no write is lost. The overrides of
+// the web admin for the written keys are removed, so that the file wins.
+func (s *Server) apply(ctx context.Context, w http.ResponseWriter, edits []edit) (*config.Config, bool) {
 	if s.opt.File == nil {
 		writeProblem(w, http.StatusNotImplemented, "the configuration file is not available")
 		return nil, false
@@ -342,6 +206,17 @@ func (s *Server) apply(w http.ResponseWriter, edits []edit) (*config.Config, boo
 	if err != nil {
 		writeValidation(w, "the configuration would not be valid", fieldErrors(err))
 		return nil, false
+	}
+	if s.opt.Overrides != nil {
+		keys := make([]string, 0, len(edits))
+		for _, e := range edits {
+			keys = append(keys, e.section+"."+e.key)
+		}
+		if err := s.opt.Overrides.Delete(ctx, keys); err != nil {
+			s.log.Error("plugin API: drop instance settings", "err", err)
+			writeProblem(w, http.StatusInternalServerError, "cannot update the instance settings")
+			return nil, false
+		}
 	}
 	if bytes.Equal(next, data) {
 		return cfg, true

@@ -23,6 +23,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/buildinfo"
 	"github.com/Ervisio/ErvisioRepo/internal/config"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
+	"github.com/Ervisio/ErvisioRepo/internal/dashboard"
 	"github.com/Ervisio/ErvisioRepo/internal/db"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/events"
@@ -31,6 +32,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/gitstore"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
+	"github.com/Ervisio/ErvisioRepo/internal/instancesettings"
 	"github.com/Ervisio/ErvisioRepo/internal/issues"
 	"github.com/Ervisio/ErvisioRepo/internal/jobs"
 	"github.com/Ervisio/ErvisioRepo/internal/mail"
@@ -68,6 +70,21 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	instanceID, err := db.EnsureInstanceID(ctx, dbgen.New(pool))
 	if err != nil {
 		return err
+	}
+
+	// Instance settings saved from the web admin override config.toml; a
+	// bad override is skipped and a database error leaves the file values.
+	settingsOpt := instancesettings.Options{Pool: pool, LookupEnv: os.LookupEnv, Log: log}
+	if cfg.File != "" {
+		settingsOpt.ReadFile = pluginapi.FileConfig(cfg.File).Read
+	}
+	settingsSvc := instancesettings.New(settingsOpt)
+	fileLog := cfg.Log
+	if cfg, err = settingsSvc.Apply(ctx, cfg); err != nil {
+		log.Warn("instance settings not applied", "err", err)
+	}
+	if cfg.Log != fileLog {
+		log = newLogger(cfg.Log, os.Stderr)
 	}
 
 	registry := prometheus.NewRegistry()
@@ -212,12 +229,14 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		DB:   pool,
 		Jobs: runner,
 		Meta: httpapi.Meta{
-			Version:      info.Version,
-			Commit:       info.Commit,
-			InstanceID:   instanceID,
-			PublicURL:    cfg.Server.PublicURL,
-			Registration: cfg.Security.Registration,
+			Version:       info.Version,
+			Commit:        info.Commit,
+			InstanceID:    instanceID,
+			PublicURL:     cfg.Server.PublicURL,
+			Registration:  cfg.Security.Registration,
+			DefaultLayout: cfg.UI.DefaultLayout,
 		},
+		Settings:    settingsSvc,
 		Web:         web.FS(),
 		HasIndex:    web.HasIndex(),
 		Registry:    registry,
@@ -290,6 +309,9 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		bus.Register("webhooks.deliver", hooks.EventHandler(), webhooks.EventKinds...)
 		bus.Register("notify", notifier.EventHandler(), notify.EventKinds...)
 		deps.Webhooks, deps.Notify = hooks, notifier
+		dash := dashboard.New(pool)
+		bus.Register("activity.record", dash.EventHandler(), dashboard.EventKinds...)
+		deps.Dashboard = dash
 		if journal != nil {
 			journal.Protection.SetRepos(repoSvc)
 			deps.Protection = journal.Protection
@@ -306,7 +328,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 
 	if cfg.Server.PluginSocket != "" {
 		popt := pluginapi.Options{Config: cfg, Version: info.Version, Commit: info.Commit, StartedAt: startedAt,
-			Storage: storage, Runners: dbgen.New(pool), Counts: dbgen.New(pool), Logger: log}
+			Storage: storage, Runners: dbgen.New(pool), Counts: dbgen.New(pool), Overrides: settingsSvc, Logger: log}
 		if actionsSvc != nil {
 			popt.RunnerAdmin = pluginRunners{actionsSvc}
 		}
