@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Web: the Console layout has a new acrylic look. A rail of rounded tiles (home, you and your organizations, New, Explore; notifications, Administration, account) sits next to a 248 px channel column that follows the context: global navigation with pinned and recent repositories, repository sections grouped as Code, Collaboration, Automation and Manage, organization tabs or the administration pages, with the account card at the bottom. The page sits on a glass panel over slowly moving accent shapes (still with reduced motion); text weights are lighter. Below 720 px a bottom bar (Home, Explore, Notifications, Menu) replaces rail and column, which opens as a drawer. Foglio and Corsie are unchanged.
+
 ## [1.1.0] - 2026-11-06
 
 ### Changed

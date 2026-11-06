@@ -12,22 +12,34 @@ import { useT } from "../../i18n/useT.ts";
 import { Icon } from "../Icon.tsx";
 import { Menu, MenuItem, MenuLabel } from "../Menu.tsx";
 import {
-  adminItems, exploreItem, homeItem, inboxItem, isOrgSettingsTab, NavLink, orgsItem, orgTabs, repoGroups, reposItem, repoSub,
+  accountItem, adminItems, exploreItem, homeItem, inboxItem, isOrgSettingsTab, NavLink, orgsItem, orgTabs, repoGroups, reposItem, repoSub,
   usePathname, useShellContext, type NavItem,
 } from "./nav.tsx";
-import { SearchField, SearchTrigger } from "./SearchPalette.tsx";
+import { SearchField } from "./SearchPalette.tsx";
 
 type DialogComponent = ComponentType<{ open: boolean; onOpenChange: (open: boolean) => void }>;
 /** Create dialogs for the New menu, injected by the app so the kit does not import pages. */
 export type ShellDialogs = { NewRepo: DialogComponent; NewOrg: DialogComponent };
+type Create = (what: "repo" | "org") => void;
 
 const byUpdated = (a: Repo, b: Repo) => b.updatedAt.localeCompare(a.updatedAt);
-const initial = (s: string) => s.slice(0, 1).toUpperCase();
+const initials = (s: string) => s.slice(0, 2).toUpperCase();
+const sq = (on: boolean, extra = "") => `sb-sq${extra}${on ? " on" : ""}`;
+const crumbItems = [reposItem, orgsItem, exploreItem, inboxItem, accountItem, ...adminItems];
+const areas = [["/admin", "admin"], ["/settings", "account"], ["/notifications", "inbox"], ["/explore", "explore"], ["/repos", "you"]] as const;
+
+/** Which rail squircle the current global page belongs to; null inside a repository or organization. */
+function useRailArea() {
+  const pathname = usePathname();
+  if (useShellContext().kind !== "global") return null;
+  return areas.find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`))?.[1] ?? "home";
+}
 
 /**
- * Console shell (round 006, variant B): a 264 px sidebar with a context switcher and grouped
- * navigation, a top bar (search, New, notifications, user menu) and content on a --surface panel.
- * Below 900 px the sidebar becomes a drawer opened from the top bar.
+ * Console shell (round 009, variant A): a rail of squircles (home, owners, create, explore |
+ * notifications, admin, account), a 248 px channel column for the current context and the page on
+ * a glass panel, over slowly drifting accent shapes. Below 720 px rail and column give way to a
+ * bottom bar whose menu button opens the column as a drawer.
  */
 export function ConsoleShell({ children, dialogs }: { children: ReactNode; dialogs?: ShellDialogs }) {
   const t = useT("shell");
@@ -36,27 +48,29 @@ export function ConsoleShell({ children, dialogs }: { children: ReactNode; dialo
   const [drawerAt, setDrawerAt] = useState<string | null>(null);
   const drawer = drawerAt === pathname;
   const [creating, setCreating] = useState<"repo" | "org" | null>(null);
+  const onCreate = dialogs ? setCreating : undefined;
 
   return (
     <div className="sb">
-      <nav className="sb-side" aria-label={t("nav.main")}>
-        <Sidebar />
+      <div className="sb-fx" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div>
+      <Rail onCreate={onCreate} />
+      <nav className="sb-side sb-glass" aria-label={t("nav.main")}>
+        <Side />
       </nav>
       <RDialog.Root open={drawer} onOpenChange={(o) => setDrawerAt(o ? pathname : null)}>
         <RDialog.Portal>
           <RDialog.Overlay className="ui-overlay" />
-          <RDialog.Content className="sb-drawer" aria-describedby={undefined} onClickCapture={(e) => { if ((e.target as Element).closest("a")) setDrawerAt(null); }}>
+          <RDialog.Content className="sb-drawer sb-side sb-glass" aria-describedby={undefined} onClickCapture={(e) => { if ((e.target as Element).closest("a")) setDrawerAt(null); }}>
             <RDialog.Title className="sr-only">{t("nav.main")}</RDialog.Title>
-            <nav className="sb-side" aria-label={t("nav.main")}>
-              <Sidebar />
-            </nav>
+            <Side />
           </RDialog.Content>
         </RDialog.Portal>
       </RDialog.Root>
-      <div className="sb-col">
-        <TopBar onMenu={() => setDrawerAt(pathname)} onCreate={dialogs ? setCreating : undefined} />
+      <div className="sb-col sb-glass">
+        <TopBar onCreate={onCreate} />
         <main className="sb-main">{children}</main>
       </div>
+      <MobileBar onMenu={() => setDrawerAt(pathname)} />
       {dialogs && (
         <>
           <dialogs.NewRepo open={creating === "repo"} onOpenChange={(o) => setCreating(o ? "repo" : null)} />
@@ -67,105 +81,216 @@ export function ConsoleShell({ children, dialogs }: { children: ReactNode; dialo
   );
 }
 
-/* ---------- Sidebar ---------- */
+/* ---------- Rail ---------- */
 
-function Sidebar() {
+function Rail({ onCreate }: { onCreate?: Create }) {
+  const t = useT("shell");
+  const user = useSession().data;
+  const area = useRailArea();
+  return (
+    <nav className="sb-rail" aria-label={t("nav.rail")}>
+      <Link to="/" className={sq(area === "home", " logo")} title={t("brand.home")} aria-label={t("brand.home")}>
+        <span className="sb-logo" aria-hidden="true">E</span>
+      </Link>
+      <span className="sb-sep" aria-hidden="true" />
+      {user && <Owners user={user} you={area === "you"} />}
+      {user && onCreate && (
+        <NewMenu onCreate={onCreate} trigger={<button type="button" className="sb-sq" title={t("new.menu")} aria-label={t("new.menu")}><Icon name="plus" /></button>} />
+      )}
+      <Link to={exploreItem.to} className={sq(area === "explore")} title={t(exploreItem.labelKey)} aria-label={t(exploreItem.labelKey)}>
+        <Icon name={exploreItem.icon} />
+      </Link>
+      <span className="sb-grow" />
+      {user ? (
+        <>
+          <Bell on={area === "inbox"} />
+          {user.role === "admin" && (
+            <Link to="/admin" className={sq(area === "admin")} title={t("group.admin")} aria-label={t("group.admin")}>
+              <Icon name="shield" />
+            </Link>
+          )}
+          <UserMenu
+            user={user}
+            trigger={<button type="button" className={sq(area === "account", " sb-me-av")} title={t("user.menu")} aria-label={t("user.menu")}><Avatar user={user} /></button>}
+          />
+        </>
+      ) : (
+        <Link to="/login" className="sb-sq" title={t("nav.signIn")} aria-label={t("nav.signIn")}>
+          <Icon name="lock" />
+        </Link>
+      )}
+    </nav>
+  );
+}
+
+/** You and your organizations; the owner of the current repository or organization is lit. */
+function Owners({ user, you }: { user: User; you: boolean }) {
+  const t = useT("shell");
+  const ctx = useShellContext();
+  const orgs = useMyOrgs();
+  const owner = ctx.kind === "repo" ? ctx.owner : ctx.kind === "org" ? ctx.org : undefined;
+  return (
+    <>
+      <Link to="/repos" className={sq(you || owner === user.username)} title={t("user.repos")} aria-label={t("user.repos")}>
+        {initials(user.username)}
+      </Link>
+      {orgs.data?.map((o) => (
+        <Link key={o.name} to="/orgs/$org" params={{ org: o.name }} className={sq(owner === o.name)} title={o.displayName || o.name} aria-label={o.displayName || o.name}>
+          {initials(o.name)}
+        </Link>
+      ))}
+    </>
+  );
+}
+
+function Bell({ on }: { on: boolean }) {
+  const t = useT("shell");
+  const unread = useUnreadCount().data?.unread ?? 0;
+  return (
+    <Link to="/notifications" className={sq(on)} title={t("nav.notifications")} aria-label={unread ? t("bell.unread", { count: unread }) : t("nav.notifications")}>
+      <Icon name="bell" />
+      {unread > 0 && <span className="sb-dot" aria-hidden="true" />}
+    </Link>
+  );
+}
+
+/* ---------- Channel column ---------- */
+
+function Side() {
   const t = useT("shell");
   const user = useSession().data;
   const ctx = useShellContext();
+  const area = useRailArea();
+  if (!user) {
+    return (
+      <>
+        <Title name={t("brand.name")} />
+        <Item item={homeItem} />
+        <Item item={exploreItem} />
+        <Item item={{ to: "/login", icon: "lock", labelKey: "nav.signIn" }} />
+      </>
+    );
+  }
   return (
     <>
-      <Link to="/" className="sb-brand" aria-label={t("brand.home")}>
-        <span className="sb-logo" aria-hidden="true">E</span>
-        <span>{t("brand.name")}</span>
-      </Link>
-      {user ? (
-        <>
-          {ctx.kind === "repo" ? <RepoSwitcher user={user} owner={ctx.owner} name={ctx.name} /> : <Switcher user={user} owner={ctx.kind === "org" ? ctx.org : user.username} kind={ctx.kind === "org" ? "org" : "user"} />}
-          {ctx.kind === "repo" ? (
-            <RepoNav owner={ctx.owner} name={ctx.name} admin={user.role === "admin"} />
-          ) : ctx.kind === "org" ? (
-            <OrgNav org={ctx.org} admin={user.role === "admin"} />
-          ) : (
-            <GlobalNav user={user} />
-          )}
-          <span className="sb-sp" />
-          {user.role === "admin" && <AdminBlock />}
-        </>
+      {ctx.kind === "repo" ? (
+        <RepoNav owner={ctx.owner} name={ctx.name} admin={user.role === "admin"} />
+      ) : ctx.kind === "org" ? (
+        <OrgNav org={ctx.org} admin={user.role === "admin"} />
+      ) : area === "admin" && user.role === "admin" ? (
+        <AdminNav />
       ) : (
+        <GlobalNav user={user} />
+      )}
+      <span className="sb-grow" />
+      <UserMenu
+        user={user}
+        trigger={
+          <button type="button" className="sb-mecard" aria-label={t("user.menu")}>
+            <Avatar user={user} size="lg" />
+            <span className="sb-mecard-t">
+              <b>{user.displayName || user.username}</b>
+              <small>{t("user.online")}</small>
+            </span>
+            <Icon name="gear" />
+          </button>
+        }
+      />
+    </>
+  );
+}
+
+function Title({ name, sub }: { name: string; sub?: string }) {
+  return (
+    <div className="sb-title">
+      <b>{name}</b>
+      {sub && <small>{sub}</small>}
+    </div>
+  );
+}
+
+function Item({ item, count, hot, extra }: { item: NavItem; count?: number; hot?: boolean; extra?: ReactNode }) {
+  const t = useT("shell");
+  const label = t(item.labelKey);
+  return (
+    <NavLink item={item} label={label} className="sb-nv">
+      <Icon name={item.icon} />
+      <span className="sb-lbl">{label}</span>
+      {!!count && <span className={hot ? "sb-cnt hot" : "sb-cnt"}>{count > 99 ? "99+" : count}</span>}
+      {extra}
+    </NavLink>
+  );
+}
+
+function GlobalNav({ user }: { user: User }) {
+  const t = useT("shell");
+  const tRepo = useT("repos");
+  const repos = useMyRepos();
+  const orgs = useMyOrgs();
+  const unread = useUnreadCount().data?.unread;
+  const pins = useUserPins().data ?? [];
+  const pinNames = new Set(pins.map((r) => r.fullName));
+  const recent = [...(repos.data ?? [])].filter((r) => !pinNames.has(r.fullName)).sort(byUpdated);
+  const pinned = [...pins, ...recent].slice(0, Math.max(5, pins.length));
+  return (
+    <>
+      <Title name={t("brand.name")} sub={`@${user.username}`} />
+      <Item item={homeItem} />
+      <Item item={reposItem} count={repos.data?.length} />
+      <Item item={exploreItem} />
+      <Item item={orgsItem} count={orgs.data?.length} />
+      <Item item={inboxItem} count={unread} hot />
+      {pinned.length > 0 && (
         <>
-          <span className="sb-gt">{t("group.navigate")}</span>
-          <Item item={homeItem} />
-          <Item item={exploreItem} />
-          <Item item={{ to: "/login", icon: "lock", labelKey: "nav.signIn" }} />
+          <span className="sb-nvh">{t("group.pinned")}</span>
+          {pinned.map((r) => (
+            <Link key={r.fullName} to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="sb-nv">
+              <Icon name={r.visibility === "public" ? "book" : "lock"} aria-label={r.visibility === "public" ? undefined : tRepo(`visibility.${r.visibility}`)} />
+              <span className="sb-lbl">{r.owner !== user.username && <small>{r.owner} / </small>}{r.name}</span>
+            </Link>
+          ))}
         </>
       )}
     </>
   );
 }
 
-function Item({ item, count, extra }: { item: NavItem; count?: number; extra?: ReactNode }) {
+function RepoNav({ owner, name, admin }: { owner: string; name: string; admin: boolean }) {
   const t = useT("shell");
-  const label = t(item.labelKey);
+  const tRepo = useT("repos");
+  const repo = useRepo(owner, name).data;
+  const sub = repoSub(usePathname());
+  const groups = repoGroups(admin || repo?.permission === "admin");
   return (
-    <NavLink item={item} label={label} className="sb-li">
-      <span className="sb-kt"><Icon name={item.icon} /></span>
-      <span className="sb-lbl">{label}</span>
-      {count !== undefined && <em>{count}</em>}
-      {extra}
-    </NavLink>
-  );
-}
-
-function RepoSwitcher({ user, owner, name }: { user: User; owner: string; name: string }) {
-  const kind = useRepo(owner, name).data?.ownerKind ?? "user";
-  return <Switcher user={user} owner={owner} kind={kind} repoName={name} />;
-}
-
-/** owner ▾ / repo ▾: the owner menu lists you and your organizations, the repo menu that owner's recent repositories. */
-function Switcher({ user, owner, kind, repoName }: { user: User; owner: string; kind: "user" | "org"; repoName?: string }) {
-  const t = useT("shell");
-  const orgs = useMyOrgs();
-  return (
-    <div className="sb-sw">
-      <Menu
-        label={t("switch.owner")}
-        trigger={
-          <button type="button" className="sb-own" aria-label={t("switch.ownerLabel", { owner })}>
-            <span className={kind === "org" ? "sb-ot sec-pr" : "sb-ot sec-issue"}>{initial(owner)}</span>
-            <span className="sb-sw-t">{owner}</span>
-            <Icon name="down" />
-          </button>
-        }
-      >
-        <MenuLabel>{t("switch.you")}</MenuLabel>
-        <MenuItem asChild>
-          <Link to="/repos"><span className="sb-ot sm sec-issue">{initial(user.username)}</span>{user.username}</Link>
-        </MenuItem>
-        {(orgs.data?.length ?? 0) > 0 && <MenuLabel>{t("switch.orgs")}</MenuLabel>}
-        {orgs.data?.map((o) => (
-          <MenuItem key={o.name} asChild>
-            <Link to="/orgs/$org" params={{ org: o.name }}><span className="sb-ot sm sec-pr">{initial(o.name)}</span>{o.displayName || o.name}</Link>
-          </MenuItem>
-        ))}
-      </Menu>
-      <span className="sb-sl" aria-hidden="true">/</span>
+    <>
       <Menu
         label={t("switch.repo")}
         trigger={
-          <button type="button" className={repoName ? "sb-rp" : "sb-rp none"} aria-label={repoName ? t("switch.repoLabel", { repo: repoName }) : t("switch.pick")}>
-            <span className="sb-sw-t">{repoName ?? t("switch.pick")}</span>
+          <button type="button" className="sb-title sb-title-btn" aria-label={t("switch.repoLabel", { repo: name })}>
+            <b>{name}</b>
+            <small>{repo ? `${owner} · ${tRepo(`visibility.${repo.visibility}`)}` : owner}</small>
             <Icon name="down" />
           </button>
         }
       >
-        <OwnerRepos owner={owner} kind={kind} />
+        <OwnerRepos owner={owner} kind={repo?.ownerKind ?? "user"} />
       </Menu>
-    </div>
+      {groups.map((g) => (
+        <div key={g.titleKey} className="sb-grp" role="group" aria-label={t(g.titleKey)}>
+          <span className="sb-nvh" aria-hidden="true">{t(g.titleKey)}</span>
+          {g.items.map((it) => (
+            <Link key={it.to} to={it.to} params={{ owner, name }} className="sb-nv" aria-current={sub === it.sub ? "page" : undefined}>
+              <Icon name={it.icon} />
+              <span className="sb-lbl">{t(it.labelKey)}</span>
+            </Link>
+          ))}
+        </div>
+      ))}
+    </>
   );
 }
 
-/** Repositories of the switcher's owner: fetched only while the menu is open. */
+/** Repositories of the current owner: fetched only while the menu is open. */
 function OwnerRepos({ owner, kind }: { owner: string; kind: "user" | "org" }) {
   const t = useT("shell");
   const repos = useOwnerRepos(owner, kind);
@@ -192,62 +317,6 @@ function OwnerRepos({ owner, kind }: { owner: string; kind: "user" | "org" }) {
   );
 }
 
-function GlobalNav({ user }: { user: User }) {
-  const t = useT("shell");
-  const tRepo = useT("repos");
-  const repos = useMyRepos();
-  const orgs = useMyOrgs();
-  const pins = useUserPins().data ?? [];
-  const pinNames = new Set(pins.map((r) => r.fullName));
-  const recent = [...(repos.data ?? [])].filter((r) => !pinNames.has(r.fullName)).sort(byUpdated);
-  const pinned = [...pins, ...recent].slice(0, Math.max(5, pins.length));
-  return (
-    <>
-      <span className="sb-gt">{t("group.navigate")}</span>
-      <Item item={homeItem} />
-      <Item item={reposItem} count={repos.data?.length} />
-      <Item item={orgsItem} count={orgs.data?.length} />
-      <Item item={exploreItem} />
-      <Item item={inboxItem} />
-      {pinned.length > 0 && (
-        <>
-          <span className="sb-gt">{t("group.recent")}</span>
-          {pinned.map((r, i) => (
-            <Link key={r.fullName} to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="sb-li">
-              <span className={`sb-ot sec-${(["code", "pkg", "pr", "act", "issue"] as const)[i % 5]}`} aria-hidden="true">{initial(r.name)}</span>
-              <span className="sb-lbl">{r.owner !== user.username && <small>{r.owner} / </small>}{r.name}</span>
-              {r.visibility !== "public" && <Icon name="lock" aria-label={tRepo(`visibility.${r.visibility}`)} />}
-            </Link>
-          ))}
-        </>
-      )}
-    </>
-  );
-}
-
-function RepoNav({ owner, name, admin }: { owner: string; name: string; admin: boolean }) {
-  const t = useT("shell");
-  const repo = useRepo(owner, name);
-  const sub = repoSub(usePathname());
-  const groups = repoGroups(admin || repo.data?.permission === "admin");
-  return (
-    <>
-      {groups.map((g, gi) => (
-        <div key={g.titleKey} className="sb-grp">
-          <span className="sb-gt">{t(g.titleKey)}</span>
-          {g.items.map((it) => (
-            <Link key={it.to} to={it.to} params={{ owner, name }} className={`sb-li sec-${it.section}`} aria-current={sub === it.sub ? "page" : undefined}>
-              <span className="sb-kt"><Icon name={it.icon} /></span>
-              <span className="sb-lbl">{t(it.labelKey)}</span>
-            </Link>
-          ))}
-          {gi === groups.length - 1 && <BackHome />}
-        </div>
-      ))}
-    </>
-  );
-}
-
 function OrgNav({ org, admin }: { org: string; admin: boolean }) {
   const t = useT("shell");
   const tOrg = useT("org");
@@ -258,40 +327,24 @@ function OrgNav({ org, admin }: { org: string; admin: boolean }) {
   const active = search.tab === undefined ? "repos" : isOrgSettingsTab(search.tab) ? "settings" : search.tab;
   return (
     <>
-      <span className="sb-gt">{t("group.organization")}</span>
+      <Title name={o?.displayName || org} sub={t("group.organization")} />
       {orgTabs(canManage, isOwner).map((it) => (
-        <Link key={it.tab} to="/orgs/$org" params={{ org }} search={{ tab: it.tab }} className={`sb-li sec-${it.section}`} aria-current={active === it.tab ? "page" : undefined}>
-          <span className="sb-kt"><Icon name={it.icon} /></span>
+        <Link key={it.tab} to="/orgs/$org" params={{ org }} search={{ tab: it.tab }} className="sb-nv" aria-current={active === it.tab ? "page" : undefined}>
+          <Icon name={it.icon} />
           <span className="sb-lbl">{tOrg(`tab.${it.tab}`)}</span>
         </Link>
       ))}
-      <span className="sb-gt">{t("group.manage")}</span>
-      <BackHome />
     </>
   );
 }
 
-function BackHome() {
-  const t = useT("shell");
-  return (
-    <Link to="/" className="sb-li">
-      <span className="sb-kt sb-kt-q"><Icon name="back" /></span>
-      <span className="sb-lbl">{t("nav.backHome")}</span>
-    </Link>
-  );
-}
-
-function AdminBlock() {
+function AdminNav() {
   const t = useT("shell");
   const storage = useStorageStatus();
   const warnings = storage.data?.warnings.length ?? 0;
   return (
-    <div className="sb-adm" role="group" aria-labelledby="sb-adm-title">
-      <span className="sb-gt" id="sb-adm-title">
-        <Icon name="shield" />
-        {t("group.admin")}
-        <small>{t("group.adminOnly")}</small>
-      </span>
+    <>
+      <Title name={t("group.admin")} sub={t("nav.instance")} />
       {adminItems.map((it) => (
         <Item
           key={it.to}
@@ -299,88 +352,92 @@ function AdminBlock() {
           extra={it.to === "/admin/storage" && warnings > 0 ? <span className="sb-wd" role="img" aria-label={t("admin.storageWarnings", { count: warnings })} /> : undefined}
         />
       ))}
-    </div>
+    </>
   );
 }
 
 /* ---------- Top bar ---------- */
 
-function TopBar({ onMenu, onCreate }: { onMenu: () => void; onCreate?: (what: "repo" | "org") => void }) {
+function TopBar({ onCreate }: { onCreate?: Create }) {
   const t = useT("shell");
   const user = useSession().data;
   const ctx = useShellContext();
-  const home = usePathname() === "/";
+  const pathname = usePathname();
+  const item = crumbItems.filter((i) => pathname === i.to || pathname.startsWith(`${i.to}/`)).sort((a, b) => b.to.length - a.to.length)[0] ?? homeItem;
   return (
-    <header className="sb-bar">
-      <button type="button" className="sb-ib sb-menu" onClick={onMenu} aria-label={t("nav.menu")}>
-        <Icon name="menu" />
-      </button>
-      <span className="sb-ctxm">
+    <header className="sb-top">
+      <span className="sb-crumb">
         {ctx.kind === "repo" ? (
-          <><small>{ctx.owner} /</small>{ctx.name}</>
+          <><span className="m">{ctx.owner} /</span>{ctx.name}</>
         ) : ctx.kind === "org" ? (
-          ctx.org
+          <><Icon name="users" />{ctx.org}</>
         ) : (
-          t("brand.name")
+          <><Icon name={item.icon} />{t(item.labelKey)}</>
         )}
       </span>
-      <SearchField className="sb-find" />
       <span className="sb-grow" />
-      {user ? (
-        <>
-          {onCreate && (
-            <Menu
-              align="end"
-              label={t("new.menu")}
-              trigger={
-                <button type="button" className={home ? "sb-new" : "sb-new sb-new-q"} aria-label={t("new.menu")}>
-                  <Icon name="plus" />
-                  <span className="sb-new-t">{t("new.button")}</span>
-                  <Icon name="down" />
-                </button>
-              }
-            >
-              <MenuItem icon="book" onSelect={() => onCreate("repo")}>{t("new.repo")}</MenuItem>
-              <MenuItem icon="users" onSelect={() => onCreate("org")}>{t("new.org")}</MenuItem>
-              {ctx.kind === "repo" && (
-                <MenuItem asChild>
-                  <Link to="/$owner/$name/issues/new" params={{ owner: ctx.owner, name: ctx.name }}><Icon name="issue" />{t("new.issue")}</Link>
-                </MenuItem>
-              )}
-            </Menu>
-          )}
-          <SearchTrigger className="sb-ib sb-mob" iconOnly />
-          <Bell />
-          <UserMenu user={user} />
-        </>
-      ) : (
-        <Link to="/login" className="sb-me">
-          <Icon name="lock" />
-          <span>{t("nav.signIn")}</span>
-        </Link>
+      <SearchField className="sb-search" />
+      {user && onCreate && (
+        <NewMenu
+          onCreate={onCreate}
+          trigger={
+            <button type="button" className="sb-btn pri" aria-label={t("new.menu")}>
+              <Icon name="plus" />
+              <span className="sb-hide-m">{t("new.button")}</span>
+            </button>
+          }
+        />
       )}
     </header>
   );
 }
 
-function Bell() {
+function NewMenu({ onCreate, trigger }: { onCreate: Create; trigger: ReactNode }) {
   const t = useT("shell");
-  const unread = useUnreadCount().data?.unread ?? 0;
+  const ctx = useShellContext();
   return (
-    <Link to="/notifications" className="sb-ib" aria-label={unread ? t("bell.unread", { count: unread }) : t("nav.notifications")} activeProps={{ "aria-current": "page" }}>
-      <Icon name="bell" />
-      {unread > 0 && <span className="sb-cnt" aria-hidden="true">{unread > 99 ? "99+" : unread}</span>}
-    </Link>
+    <Menu align="end" label={t("new.menu")} trigger={trigger}>
+      <MenuItem icon="book" onSelect={() => onCreate("repo")}>{t("new.repo")}</MenuItem>
+      <MenuItem icon="users" onSelect={() => onCreate("org")}>{t("new.org")}</MenuItem>
+      {ctx.kind === "repo" && (
+        <MenuItem asChild>
+          <Link to="/$owner/$name/issues/new" params={{ owner: ctx.owner, name: ctx.name }}><Icon name="issue" />{t("new.issue")}</Link>
+        </MenuItem>
+      )}
+    </Menu>
   );
 }
+
+/* ---------- Mobile bar ---------- */
+
+function MobileBar({ onMenu }: { onMenu: () => void }) {
+  const t = useT("shell");
+  const user = useSession().data;
+  const unread = useUnreadCount().data?.unread ?? 0;
+  const area = useRailArea();
+  return (
+    <nav className="sb-mbar sb-glass" aria-label={t("nav.rail")}>
+      <Link to="/" className={area === "home" ? "on" : undefined}><Icon name="home" />{t("nav.home")}</Link>
+      <Link to="/explore" className={area === "explore" ? "on" : undefined}><Icon name="search" />{t("nav.explore")}</Link>
+      {user && (
+        <Link to="/notifications" className={area === "inbox" ? "on" : undefined} aria-label={unread ? t("bell.unread", { count: unread }) : undefined}>
+          <Icon name="bell" />{t("nav.notifications")}
+        </Link>
+      )}
+      <button type="button" onClick={onMenu}><Icon name="menu" />{t("nav.menu")}</button>
+    </nav>
+  );
+}
+
+/* ---------- Account ---------- */
 
 export function Avatar({ user, size }: { user: Pick<User, "username" | "avatarUrl">; size?: "lg" | "xl" }) {
   const cls = size ? `sb-av ${size}` : "sb-av";
   if (user.avatarUrl) return <img className={cls} src={user.avatarUrl} alt="" />;
-  return <span className={cls} aria-hidden="true">{user.username.slice(0, 2).toUpperCase()}</span>;
+  return <span className={cls} aria-hidden="true">{initials(user.username)}</span>;
 }
 
-function UserMenu({ user }: { user: User }) {
+function UserMenu({ user, trigger }: { user: User; trigger: ReactNode }) {
   const t = useT("shell");
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -393,18 +450,7 @@ function UserMenu({ user }: { user: User }) {
     }
   }
   return (
-    <Menu
-      align="end"
-      className="sb-pop"
-      label={t("user.menu")}
-      trigger={
-        <button type="button" className="sb-me" aria-label={t("user.menu")}>
-          <Avatar user={user} size="lg" />
-          <span className="sb-me-n">{user.username}</span>
-          <Icon name="down" />
-        </button>
-      }
-    >
+    <Menu align="end" className="sb-pop" label={t("user.menu")} trigger={trigger}>
       <div className="sb-ph">
         <Avatar user={user} size="xl" />
         <span className="sb-ph-t">

@@ -80,6 +80,9 @@ Gli stati usano i colori di stato e mai la hue: verde passato o aggiunto, rosso 
 
 ### A Console: regole
 
+Le regole qui sotto descrivono la prima Console; shell e tema attuali sono quelli della decisione "Console acrylic (2026-11-06)".
+
+
 - Shell desktop:
   - Rail Ervisio da 72 px: logo, dashboard, repository, revisioni, notifiche e tile dei repo recenti. Le icone sono tonde a 44 px e diventano quadrate (14 px) quando sono attive.
   - Colonna repo da 248 px: owner/nome, chip di visibilità, voci di sezione e card Storage.
@@ -120,6 +123,13 @@ Riferimento visivo: `design/mock/direzione-a.html` e lo screenshot approvato in 
   - Zona pericolosa separata.
   - I valori impostati nel file di config sono bloccati e lo dicono.
   - In tema chiaro le etichette piccole usano `--ink2`, perché `--ink3` su `--surface` fa 4,46:1.
+
+- **Console acrylic (2026-11-06).** Round `009-shell-acrylic-a-type`, variante A "Morbido". Sostituisce la sidebar unica del round 006 e, solo per la Console, le regole "niente vetro, gradienti, glow" e i pesi 800. Foglio e Corsie restano invariati.
+  - Struttura: rail di squircle da 44 px (logo, tu e le tue org, +, esplora | notifiche, admin, avatar con pallino di stato), colonna canali da 248 px e pannello principale in vetro. La colonna mostra il contesto: home (nav globale + fissati e recenti), repo (Codice, Collaborazione, Automazione, Gestione), org, amministrazione; in fondo la card utente.
+  - Tema: token `--accent` (#7c8cff), `--acc-fill`, `--acc-text`, `--sel`, `--glass`, `--edge`, `--line`, `--card`, `--hover` sotto `:root[data-layout="console"]` in `web/src/styles/tokens.css`; le superfici del core (`--bg`, `--surface`, `--sunk`, `--raise`) sono rimappate lì. Sei forme accent sfocate si muovono sullo sfondo (ferme con `prefers-reduced-motion`); vetro `blur(28px) saturate(150%)`. In chiaro fondo tinto accent, vetro bianco con ombra, `--acc-fill` scurito per il contrasto.
+  - Tipografia: corpo 400, voci attive e pulsanti 500, titoli 600; h1 a 22 px. Voci della colonna alte 38 px con gap 4.
+  - Sotto i 720 px rail e colonna spariscono: barra inferiore in vetro (Home, Esplora, Notifiche, Menu) e la colonna si apre come drawer.
+  - Accent fisso per ora: nessuna preferenza API per accent o movimento.
 
 ## Implementazione (web/src/ui)
 

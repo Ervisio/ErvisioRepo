@@ -17,12 +17,12 @@ export const exploreItem: NavItem = { to: "/explore", icon: "search", labelKey: 
 export const reposItem: NavItem = { to: "/repos", icon: "book", labelKey: "nav.repos", section: "code" };
 export const orgsItem: NavItem = { to: "/orgs", icon: "users", labelKey: "nav.orgs", section: "pr" };
 export const inboxItem: NavItem = { to: "/notifications", icon: "bell", labelKey: "nav.notifications", section: "issue" };
-const accountItem: NavItem = { to: "/settings", icon: "gear", labelKey: "nav.account", section: "issue" };
+export const accountItem: NavItem = { to: "/settings", icon: "gear", labelKey: "nav.account", section: "issue" };
 const signInItem: NavItem = { to: "/login", icon: "lock", labelKey: "nav.signIn", section: "issue" };
 // The flat shells have no room for the whole admin block: one entry, the admin frame has its own sub-navigation.
 const adminItem: NavItem = { to: "/admin", icon: "shield", labelKey: "group.admin", section: "act" };
 
-/** Administration block of the Console sidebar, shown to instance admins only. */
+/** Administration channels of the Console, shown to instance admins only. */
 export const adminItems: readonly NavItem[] = [
   { to: "/admin", icon: "info", labelKey: "nav.overview" },
   { to: "/admin/users", icon: "users", labelKey: "nav.adminUsers" },
@@ -57,11 +57,9 @@ export type NavGroup<T> = { titleKey: string; items: T[] };
 export function repoGroups(canAdmin: boolean): NavGroup<RepoNavItem>[] {
   return [
     {
-      titleKey: "group.repository",
+      titleKey: "group.code",
       items: [
         { to: "/$owner/$name", sub: "", icon: "code", labelKey: "repo.code", section: "code" },
-        { to: "/$owner/$name/issues", sub: "issues", icon: "issue", labelKey: "repo.issues", section: "issue" },
-        { to: "/$owner/$name/pulls", sub: "pulls", icon: "pr", labelKey: "repo.pulls", section: "pr" },
         { to: "/$owner/$name/commits", sub: "commits", icon: "commit", labelKey: "repo.commits", section: "code" },
         { to: "/$owner/$name/branches", sub: "branches", icon: "branch", labelKey: "repo.branches", section: "code" },
         { to: "/$owner/$name/tags", sub: "tags", icon: "tag", labelKey: "repo.tags", section: "code" },
@@ -69,9 +67,15 @@ export function repoGroups(canAdmin: boolean): NavGroup<RepoNavItem>[] {
         { to: "/$owner/$name/search", sub: "search", icon: "search", labelKey: "repo.search", section: "code" },
       ],
     },
+    {
+      titleKey: "group.collab",
+      items: [
+        { to: "/$owner/$name/issues", sub: "issues", icon: "issue", labelKey: "repo.issues", section: "issue" },
+        { to: "/$owner/$name/pulls", sub: "pulls", icon: "pr", labelKey: "repo.pulls", section: "pr" },
+      ],
+    },
     { titleKey: "group.automation", items: [{ to: "/$owner/$name/actions", sub: "actions", icon: "play", labelKey: "repo.actions", section: "act" }] },
-    // The shell appends "Back to home" to this group, so it is there even without settings.
-    { titleKey: "group.manage", items: canAdmin ? [{ to: "/$owner/$name/settings", sub: "settings", icon: "gear", labelKey: "repo.settings", section: "issue" }] : [] },
+    ...(canAdmin ? [{ titleKey: "group.manage", items: [{ to: "/$owner/$name/settings", sub: "settings", icon: "gear", labelKey: "repo.settings", section: "issue" }] }] as NavGroup<RepoNavItem>[] : []),
   ];
 }
 
