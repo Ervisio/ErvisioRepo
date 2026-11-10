@@ -79,6 +79,17 @@ export function repoGroups(canAdmin: boolean): NavGroup<RepoNavItem>[] {
   ];
 }
 
+const repoPrimary = ["", "issues", "pulls", "actions"];
+
+/** Repository pages split for the Console top bar: the main tabs and the rest under "More". */
+export function repoTabs(canAdmin: boolean): { main: RepoNavItem[]; more: RepoNavItem[] } {
+  const all = repoGroups(canAdmin).flatMap((g) => g.items);
+  return {
+    main: repoPrimary.map((sub) => all.find((i) => i.sub === sub)).filter((i): i is RepoNavItem => !!i),
+    more: all.filter((i) => !repoPrimary.includes(i.sub)),
+  };
+}
+
 /** Sub-page key of a repository path: "" for code pages. */
 export function repoSub(pathname: string): string {
   const seg = pathname.split("/").filter(Boolean)[2] ?? "";

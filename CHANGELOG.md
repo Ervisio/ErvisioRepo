@@ -6,6 +6,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Web: the Console layout drops the acrylic rail and channel column for a single top bar. The first row holds the logo, the owner / repository switcher, search, notifications, New and the account menu; the second row holds the tabs of the current context. In a repository you see Code, Issues, Pull requests and Actions, and More opens Commits, Branches, Tags, Releases, Search and Settings. Pages sit in a centred 920 px column on a flat background, body text is set at 1.65 line height and code keeps its own tighter spacing.
+- Web: in the Console layout the repository home shows only the repository name and description. The bar under it has the branch switcher, Clone and a ⋯ menu with History, Add file, the source archives, Pin, Fork and Settings. Files sit in a borderless list and the README reads as a page of its own. Foglio and Corsie are unchanged.
+
 ## [1.2.0] - 2026-11-06
 
 ### Changed

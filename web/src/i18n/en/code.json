@@ -137,5 +137,6 @@
   "edit.staleDelete": "The file changed after you opened it. Reload the page and try again.",
   "edit.notAllowed": "This file cannot be edited here",
   "edit.notAllowedHint": "Editing needs write access and a branch (not a tag or commit); binary and very large files are not editable.",
-  "nav.actions": "Actions"
+  "nav.actions": "Actions",
+  "more.actions": "More actions"
 }

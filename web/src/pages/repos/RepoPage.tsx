@@ -49,11 +49,11 @@ export function EmptyRepoCard({ repo: r }: { repo: Repo }) {
 }
 
 /** "Clone" button with the HTTP and SSH URLs. */
-export function CloneDialog({ repo: r }: { repo: Repo }) {
+export function CloneDialog({ repo: r, primary }: { repo: Repo; primary?: boolean }) {
   const t = useT("repos");
   const urls = useCloneUrls(r);
   return (
-    <Dialog trigger={<Button icon="copy">{t("clone.button")}</Button>} title={t("clone.title")} description={t("empty.auth")}>
+    <Dialog trigger={<Button icon="copy" variant={primary ? "primary" : undefined}>{t("clone.button")}</Button>} title={t("clone.title")} description={t("empty.auth")}>
       <Secret label={t("empty.http")} value={urls.http} />
       {urls.ssh && <Secret label={t("empty.ssh")} value={urls.ssh} />}
     </Dialog>

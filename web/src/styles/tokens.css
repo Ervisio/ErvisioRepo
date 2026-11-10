@@ -132,21 +132,18 @@
   --syn-num: #a85f00; --syn-type: #0b7d6b; --syn-com: #6b6b76;
 }
 
-/* Console acrylic (design round 009a): glass panels over drifting accent shapes. The core
-   surfaces are remapped so the kit (cards, inputs, menus) sits on the glass without its own rules. */
+/* Console (Variant Studio round 001, variant B): flat page under one top bar. The core surfaces are
+   remapped so the kit (cards, inputs, menus) follows the Console palette without its own rules. */
 :root[data-layout="console"] {
   --accent: #7c8cff;
   --acc-fill: var(--accent);
   --acc-text: color-mix(in srgb, var(--accent) 80%, #fff);
   --sel: color-mix(in srgb, var(--accent) 18%, transparent);
   --on-accent: #0b0c14;
-  --glass: 72%;
-  --speed: 16s;
   --page: #0a0b10;
-  --surf: #15161d;
+  --surf: #111218;
   --card: rgba(255, 255, 255, .035);
   --hover: rgba(255, 255, 255, .06);
-  --edge: rgba(255, 255, 255, .09);
   --line: rgba(255, 255, 255, .07);
   --bg: var(--page);
   --surface: var(--surf);
@@ -161,12 +158,11 @@
   --acc-text: color-mix(in srgb, var(--accent) 62%, #000);
   --sel: color-mix(in srgb, var(--accent) 14%, transparent);
   --on-accent: #fff;
-  --page: #e8ebf3;
+  --page: #f3f4f8;
   --surf: #fff;
   --card: rgba(20, 24, 40, .035);
   --hover: rgba(20, 24, 40, .06);
-  --edge: rgba(20, 24, 40, .1);
-  --line: rgba(20, 24, 40, .08);
+  --line: rgba(20, 24, 40, .09);
   --sunk: rgba(20, 24, 40, .04);
   --ink: #14161d;
   --ink2: #474b59;

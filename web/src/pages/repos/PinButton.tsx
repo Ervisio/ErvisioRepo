@@ -4,8 +4,8 @@ import { ApiError } from "../../api/http.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Button, useToast } from "../../ui/index.ts";
 
-/** Pin/unpin toggle for the signed-in user; a 409 means the pin limit is reached. */
-export function PinButton({ owner, name, compact }: { owner: string; name: string; compact?: boolean }) {
+/** Pin state and toggle for the signed-in user; null while signed out or loading. A 409 means the pin limit is reached. */
+export function usePinToggle(owner: string, name: string) {
   const t = useT("repos");
   const toast = useToast();
   const signedIn = !!useSession().data;
@@ -24,8 +24,16 @@ export function PinButton({ owner, name, compact }: { owner: string; name: strin
             : { title: t("pin.error"), description: e.message, tone: "err" }),
       },
     );
+  return { pinned, label, toggle, pending: setPin.isPending };
+}
+
+/** Pin/unpin button. */
+export function PinButton({ owner, name, compact }: { owner: string; name: string; compact?: boolean }) {
+  const pin = usePinToggle(owner, name);
+  if (!pin) return null;
+  const { pinned, label, toggle } = pin;
   return (
-    <Button size={compact ? "sm" : "md"} icon="star" aria-pressed={pinned} aria-label={compact ? label : undefined} title={label} disabled={setPin.isPending} onClick={toggle}>
+    <Button size={compact ? "sm" : "md"} icon="star" aria-pressed={pinned} aria-label={compact ? label : undefined} title={label} disabled={pin.pending} onClick={toggle}>
       {compact ? null : label}
     </Button>
   );

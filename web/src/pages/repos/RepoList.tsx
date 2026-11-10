@@ -93,14 +93,18 @@ export function MyRepos({ repos }: { repos: UseQueryResult<Repo[]> }) {
 }
 
 /** Fork dialog: the copy goes to the signed-in user or to an organization they manage. */
-export function ForkDialog({ repo }: { repo: Repo }) {
+export function ForkDialog({ repo, open: openProp, onOpenChange }: { repo: Repo; open?: boolean; onOpenChange?: (open: boolean) => void }) {
   const t = useT("repos");
   const notify = useNotify();
   const navigate = useNavigate();
   const fork = useForkRepo(repo.owner, repo.name);
   const user = useSession().data;
   const orgs = useMyOrgs().data ?? [];
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  // Controlled when the caller opens it from a menu; it then renders no trigger.
+  const controlled = openProp !== undefined;
+  const open = controlled ? openProp : openState;
+  const setOpen = (v: boolean) => (controlled ? onOpenChange?.(v) : setOpenState(v));
   const [owner, setOwner] = useState(user?.username ?? "");
   const [name, setName] = useState(repo.name);
   // The server checks the permission; this only narrows the choice.
@@ -122,7 +126,7 @@ export function ForkDialog({ repo }: { repo: Repo }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen} title={t("fork.title", { name: repo.fullName })} description={t("fork.description")} trigger={<Button icon="branch">{t("fork.button")}</Button>}>
+    <Dialog open={open} onOpenChange={setOpen} title={t("fork.title", { name: repo.fullName })} description={t("fork.description")} trigger={controlled ? undefined : <Button icon="branch">{t("fork.button")}</Button>}>
       <form className="acc-form" onSubmit={submit}>
         <Select label={t("fork.owner")} value={owner} onValueChange={setOwner} options={owners.map((o) => ({ value: o, label: o }))} />
         <Input label={t("create.name")} required maxLength={100} autoComplete="off" mono value={name} onChange={(e) => setName(e.target.value)} />

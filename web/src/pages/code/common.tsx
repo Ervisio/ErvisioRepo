@@ -49,6 +49,26 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
     { id: "releases", to: "/$owner/$name/releases", icon: "pkg" },
     { id: "search", to: "/$owner/$name/search", icon: "search" },
   ] as const;
+  // Console: the top bar carries owner, sections and repo menus, so the page keeps only the name.
+  if (layout === "console") {
+    return (
+      <Page
+        section={section}
+        title={r.name}
+        subtitle={r.description || undefined}
+        actions={
+          (r.visibility !== "public" || actions) && (
+            <>
+              {r.visibility !== "public" && <Badge tone="neutral">{tr(`visibility.${r.visibility}`)}</Badge>}
+              {actions}
+            </>
+          )
+        }
+      >
+        {children(r)}
+      </Page>
+    );
+  }
   return (
     <Page
       section={section}
@@ -68,24 +88,21 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
         </>
       }
     >
-      {/* The console sidebar already lists these pages. */}
-      {layout !== "console" && (
-        <nav className="ui-tablist rp-nav" aria-label={t("nav.label")}>
-          {tabs.map((x) => (
-            <Link
-              key={x.id}
-              to={x.to}
-              params={{ owner: r.owner, name: r.name }}
-              className="ui-tab"
-              data-state={x.id === tab ? "active" : "inactive"}
-              aria-current={x.id === tab ? "page" : undefined}
-            >
-              <Icon name={x.icon} />
-              {t(`nav.${x.id}`)}
-            </Link>
-          ))}
-        </nav>
-      )}
+      <nav className="ui-tablist rp-nav" aria-label={t("nav.label")}>
+        {tabs.map((x) => (
+          <Link
+            key={x.id}
+            to={x.to}
+            params={{ owner: r.owner, name: r.name }}
+            className="ui-tab"
+            data-state={x.id === tab ? "active" : "inactive"}
+            aria-current={x.id === tab ? "page" : undefined}
+          >
+            <Icon name={x.icon} />
+            {t(`nav.${x.id}`)}
+          </Link>
+        ))}
+      </nav>
       {children(r)}
     </Page>
   );

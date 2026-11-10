@@ -80,7 +80,7 @@ Gli stati usano i colori di stato e mai la hue: verde passato o aggiunto, rosso 
 
 ### A Console: regole
 
-Le regole qui sotto descrivono la prima Console; shell e tema attuali sono quelli della decisione "Console acrylic (2026-11-06)".
+Le regole qui sotto descrivono la prima Console; shell e tema attuali sono quelli della decisione "Console a barra unica (2026-11-10)".
 
 
 - Shell desktop:
@@ -130,6 +130,12 @@ Riferimento visivo: `design/mock/direzione-a.html` e lo screenshot approvato in 
   - Tipografia: corpo 400, voci attive e pulsanti 500, titoli 600; h1 a 22 px. Voci della colonna alte 38 px con gap 4.
   - Sotto i 720 px rail e colonna spariscono: barra inferiore in vetro (Home, Esplora, Notifiche, Menu) e la colonna si apre come drawer.
   - Accent fisso per ora: nessuna preferenza API per accent o movimento.
+
+- **Console a barra unica (2026-11-10).** Round `001-repo-home-minimal`, variante B "Solo barra in alto". Sostituisce la Console acrylic del round 009: niente rail, colonna, vetro e forme sullo sfondo.
+  - Struttura: barra in alto sticky su due righe. Riga 1 (60 px): logo, selettore owner / repo, ricerca, notifiche, Nuovo, avatar. Riga 2 (46 px): tab del contesto. Nel repo Codice, Issue, Pull request, Actions e "Altro" con il resto. Pagina centrata a 920 px (1160 px con colonna laterale o impostazioni).
+  - Home del repo: titolo con il solo nome, descrizione sotto. Barra con branch, Clona (primario) e menu ⋯ (cronologia, aggiungi file, archivi, fissa, fork, impostazioni). Lista file senza card, righe da 48 px; README a 68ch, 72 px sotto la lista.
+  - Testo: corpo 14,5 px con interlinea 1,65; codice e controlli a 1,5. Titoli 600, h1 a 30 px.
+  - Contrasto: logo, avatar, Clona e sottolineatura dei tab usano `--acc-fill` con `--on-accent` (in chiaro il fill è scurito).
 
 ## Implementazione (web/src/ui)
 

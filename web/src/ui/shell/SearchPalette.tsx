@@ -57,22 +57,6 @@ export function SearchTrigger({ className, iconOnly }: { className?: string; ico
   );
 }
 
-/** Field-shaped trigger for the Console top bar: placeholder, repository scope chip and the "/" hint. */
-export function SearchField({ className }: { className?: string }) {
-  const t = useT("shell");
-  const open = useContext(OpenContext);
-  const scope = useScopeFromRoute();
-  if (!open) return null;
-  return (
-    <button type="button" className={className} onClick={() => open(scope)} aria-label={scope ? t("search.openIn", { repo: `${scope.owner}/${scope.name}` }) : t("search.open")} aria-keyshortcuts="/ Control+K Meta+K">
-      <Icon name="search" />
-      {scope && <span className="sb-scope sec-code">{scope.name}</span>}
-      <span className="sb-q">{scope ? t("search.fieldRepo") : t("search.field")}</span>
-      <kbd className="sb-kbd">/</kbd>
-    </button>
-  );
-}
-
 function useDebounced(v: string, ms: number) {
   const [d, setD] = useState(v);
   useEffect(() => {
