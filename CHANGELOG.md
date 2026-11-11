@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-11
+
 ### Changed
 
 - Web: the Console layout drops the acrylic rail and channel column for a single top bar. The first row holds the logo, the owner / repository switcher, search, notifications, New and the account menu; the second row holds the tabs of the current context. In a repository you see Code, Issues, Pull requests and Actions, and More opens Commits, Branches, Tags, Releases, Search and Settings. Pages sit in a centred 920 px column on a flat background, body text is set at 1.65 line height and code keeps its own tighter spacing.
