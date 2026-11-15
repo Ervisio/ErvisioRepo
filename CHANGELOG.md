@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-15
+
 ### Added
 
 - Web: in the Console layout the repository home has a sidebar on the right with About (description, visibility, default branch, link to the README), Releases (the latest one and a link to the others) and Contributors (avatars and count). The description moves there, and the repository home uses a wider 1216 px column. Below 1000 px the sidebar sits under the README.
