@@ -274,7 +274,7 @@
 :root:not([data-palette="classic"]) .rs-segi[aria-current] { background: var(--acc-fill); color: var(--on-accent); }
 :root:not([data-palette="classic"]) .rs-segi[aria-current] .ui-icon { color: var(--on-accent); }
 :root:not([data-palette="classic"]) .rs-logo { color: var(--bg); }
-:root:not([data-palette="classic"]) :is(.ui-iconbtn, .ui-item, .ui-tab, .st-li, .st-row, .st-item, .tb-where, .tb-ib, .tb-signin, .rp-files .rp-row, .wk-hunk, .wk-dl-row, .tb-logo) { border-radius: var(--r-ctl); }
+:root:not([data-palette="classic"]) :is(.ui-iconbtn, .ui-item, .ui-tab, .st-li, .st-row, .st-item, .tb-where, .tb-ib, .tb-signin, .wk-hunk, .wk-dl-row, .tb-logo) { border-radius: var(--r-ctl); }
 :root:not([data-palette="classic"]) :is(.ui-pop, .st-bar, .st-dz) { border-radius: var(--r-card); }
 @media (max-width: 900px) {
   :root:not([data-palette="classic"]) .st-bar { border-radius: var(--r-card) var(--r-card) 0 0; }

@@ -3,7 +3,8 @@ import type { MouseEvent } from "react";
 import { rawUrl, useReadme } from "../../api/code.ts";
 import { useT } from "../../i18n/useT.ts";
 import { joinPath, Markdown, type MarkdownContext } from "../../lib/markdown.tsx";
-import { Card } from "../../ui/index.ts";
+import { Card, Icon } from "../../ui/index.ts";
+import { useLayout } from "../../ui/shell/layout.ts";
 import { dirOf, Gate } from "./common.tsx";
 
 export const isMarkdown = (path: string) => /\.(md|markdown|mdown|mkd)$/i.test(path);
@@ -60,27 +61,43 @@ export function useInAppLinks() {
   };
 }
 
-/** README card under the tree. */
+/** README under the tree: a bordered box in the Console, a card elsewhere. */
 export function Readme({ owner, name, refName, path }: { owner: string; name: string; refName: string; path: string }) {
   const t = useT("code");
   const blob = useReadme(owner, name, refName, path, true);
   const ctx = useMarkdownContext(owner, name, refName, path);
   const onClick = useInAppLinks();
+  const console_ = useLayout() === "console";
+  const file = path.split("/").pop();
+  const body = (
+    <Gate query={blob}>
+      {(b) =>
+        b.binary || b.content === undefined ? (
+          <p className="ui-note acc-pad">{t("blob.binary")}</p>
+        ) : isMarkdown(path) ? (
+          <div onClick={onClick}>
+            <Markdown source={b.content} ctx={ctx} className="rp-md" />
+          </div>
+        ) : (
+          <pre className="rp-pre">{b.content}</pre>
+        )
+      }
+    </Gate>
+  );
+  if (!console_) {
+    return (
+      <Card title={file} className="rp-readme">
+        {body}
+      </Card>
+    );
+  }
   return (
-    <Card title={path.split("/").pop()} className="rp-readme">
-      <Gate query={blob}>
-        {(b) =>
-          b.binary || b.content === undefined ? (
-            <p className="ui-note acc-pad">{t("blob.binary")}</p>
-          ) : isMarkdown(path) ? (
-            <div onClick={onClick}>
-              <Markdown source={b.content} ctx={ctx} className="rp-md" />
-            </div>
-          ) : (
-            <pre className="rp-pre">{b.content}</pre>
-          )
-        }
-      </Gate>
-    </Card>
+    <section className="rp-box rp-readme" aria-label={file}>
+      <div className="rp-head">
+        <Icon name="book" />
+        <h2>{file}</h2>
+      </div>
+      <div className="rp-rb">{body}</div>
+    </section>
   );
 }

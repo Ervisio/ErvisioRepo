@@ -44,6 +44,7 @@ function TreeBody({ repo, refName, path }: { repo: Repo; refName: string; path: 
     );
   return (
     <>
+      {console_ && isRoot && repo.description && <p className="rp-desc">{repo.description}</p>}
       {console_ ? (
         <div className="rp-bar">
           {switcher}
@@ -68,9 +69,7 @@ function TreeBody({ repo, refName, path }: { repo: Repo; refName: string; path: 
         {(data) => (
           <>
             {console_ ? (
-              <section className="rp-files">
-                <TreeList repo={repo} tree={data} refName={refName} path={path} />
-              </section>
+              <FileBox repo={repo} tree={data} refName={refName} path={path} />
             ) : (
               <TreeCard repo={repo} tree={data} refName={refName} path={path} />
             )}
@@ -151,6 +150,84 @@ function RepoMore({ repo, refName, path }: { repo: Repo; refName: string; path: 
   );
 }
 
+/** Console file browser: the latest commit as a header strip over a fixed-column table. */
+function FileBox({ repo, tree, refName, path }: { repo: Repo; tree: Tree; refName: string; path: string }) {
+  const t = useT("code");
+  const { owner, name } = repo;
+  const last = latest(tree.entries);
+  return (
+    <div className="rp-box">
+      {last && (
+        <div className="rp-head">
+          <span className="rp-who">
+            <span className="rp-av" aria-hidden="true">
+              {last.author.slice(0, 1).toUpperCase()}
+            </span>
+            <b>{last.author}</b>
+          </span>
+          <Link className="rp-hmsg" to="/$owner/$name/commit/$sha" params={{ owner, name, sha: last.sha }}>
+            {last.summary}
+          </Link>
+          <span className="rp-hm">
+            <code className="rp-hash">{shortSha(last.sha)}</code>
+            <When iso={last.date} />
+            <Link className="rp-hist" to="/$owner/$name/commits" params={{ owner, name }} search={{ ref: refName, path: path || undefined }}>
+              <Icon name="clock" />
+              {t("tree.history")}
+            </Link>
+          </span>
+        </div>
+      )}
+      <table className="rp-tbl">
+        <caption className="sr-only">{t("tree.files")}</caption>
+        <colgroup>
+          <col className="rp-c1" />
+          <col className="rp-c2" />
+          <col className="rp-c3" />
+        </colgroup>
+        <thead className="sr-only">
+          <tr>
+            <th scope="col">{t("tree.colName")}</th>
+            <th scope="col">{t("tree.colMessage")}</th>
+            <th scope="col">{t("tree.colDate")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {path !== "" && (
+            <tr className="k-folder">
+              <td className="rp-n">
+                <Link to="/$owner/$name" params={{ owner, name }} search={{ ref: refName, path: dirOf(path) || undefined }} className="rp-nm">
+                  <Icon name="folder" className="ui-icon rp-i" />
+                  <span>..</span>
+                </Link>
+              </td>
+              <td className="rp-cm" />
+              <td className="rp-tm" />
+            </tr>
+          )}
+          {tree.entries.map((e) => (
+            <tr key={e.path} className={e.type === "tree" ? "k-folder" : undefined}>
+              <td className="rp-n">
+                <EntryLink owner={owner} name={name} refName={refName} entry={e} lead={<Icon name={e.type === "tree" || e.type === "submodule" ? "folder" : "file"} className="ui-icon rp-i" />} />
+              </td>
+              <td className="rp-cm">
+                {e.lastCommit && (
+                  <Link to="/$owner/$name/commit/$sha" params={{ owner, name, sha: e.lastCommit.sha }}>
+                    {e.lastCommit.summary}
+                  </Link>
+                )}
+              </td>
+              <td className="rp-tm">{e.lastCommit && <When iso={e.lastCommit.date} />}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {tree.entries.length === 0 && <p className="ui-note acc-pad">{t("tree.empty")}</p>}
+      {tree.truncated && <p className="ui-note acc-pad">{t("tree.truncated")}</p>}
+    </div>
+  );
+}
+
 function TreeCard({ repo, tree, refName, path }: { repo: Repo; tree: Tree; refName: string; path: string }) {
   const t = useT("code");
   const { owner, name } = repo;
@@ -220,25 +297,30 @@ function TreeList({ repo, tree, refName, path }: { repo: Repo; tree: Tree; refNa
   );
 }
 
-function EntryLink({ owner, name, refName, entry: e }: { owner: string; name: string; refName: string; entry: TreeEntry }) {
+function EntryLink({ owner, name, refName, entry: e, lead }: { owner: string; name: string; refName: string; entry: TreeEntry; lead?: ReactNode }) {
   const t = useT("code");
   if (e.type === "tree") {
     return (
       <Link to="/$owner/$name" params={{ owner, name }} search={{ ref: refName, path: e.path }} className="rp-nm">
-        {e.name}
+        {lead}
+        <span>{e.name}</span>
       </Link>
     );
   }
   if (e.type === "submodule") {
     return (
       <span className="rp-nm" title={t("tree.submodule")}>
-        {e.name} <code className="ui-mono">@{shortSha(e.oid)}</code>
+        {lead}
+        <span>
+          {e.name} <code className="ui-mono">@{shortSha(e.oid)}</code>
+        </span>
       </span>
     );
   }
   return (
     <Link to="/$owner/$name/blob" params={{ owner, name }} search={{ ref: refName, path: e.path }} className="rp-nm">
-      {e.name}
+      {lead}
+      <span>{e.name}</span>
     </Link>
   );
 }

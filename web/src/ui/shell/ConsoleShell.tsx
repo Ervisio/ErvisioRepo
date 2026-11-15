@@ -95,8 +95,18 @@ function Where() {
 }
 
 function RepoSwitch({ owner, name }: { owner: string; name: string }) {
-  const t = useT("shell");
+  const tr = useT("repos");
   const repo = useRepo(owner, name).data;
+  return (
+    <>
+      <RepoMenu owner={owner} name={name} kind={repo?.ownerKind ?? "user"} />
+      {repo && <span className="tb-pill">{tr(`visibility.${repo.visibility}`)}</span>}
+    </>
+  );
+}
+
+function RepoMenu({ owner, name, kind }: { owner: string; name: string; kind: "user" | "org" }) {
+  const t = useT("shell");
   return (
     <Menu
       label={t("switch.repo")}
@@ -108,7 +118,7 @@ function RepoSwitch({ owner, name }: { owner: string; name: string }) {
         </button>
       }
     >
-      <OwnerRepos owner={owner} kind={repo?.ownerKind ?? "user"} />
+      <OwnerRepos owner={owner} kind={kind} />
     </Menu>
   );
 }

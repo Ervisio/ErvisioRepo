@@ -45,3 +45,8 @@ Related:
 - Kit tokens `--bd` (1px ring: `--line` in GitHub, transparent in classic), `--edge`, `--field`. The GitHub-only overrides sit at the end of ui.css under `:root:not([data-palette=classic])`; filled controls use `--acc-fill` + `--on-accent`.
 - Trap: those overrides have specificity 0,3,0. Page CSS that must undo the ring needs `:root:root` (see `.hm-tabs`, `.hm-find` in app.css).
 - Home (pages/Home.tsx, `.hm-*` in app.css): aside `Repos` (max 7, pinned first, 4 on mobile) + `AdminWarning`, `Attention` (kit Tabs), `Activity` by day.
+
+## Repository code pages (2026-11-15)
+- `Page` has a `quiet` prop (sr-only h1, no header); `RepoFrame` sets it in the Console layout. Visibility pill = `.tb-pill` in ConsoleShell. Repo pages use a 1060px column (`.tb-main`), settings follow it.
+- TreePage: one box = latest-commit strip + fixed-column table (stretched name link makes the row clickable). Readme: box with header strip, 75ch body. BlobPage: toolbar strip with segmented view, Raw/History icon buttons, ⋯ menu (Edit, Download, Delete).
+- Not shown for lack of data: commits count (strip links to History) and the last commit of a single file (blob response has none).

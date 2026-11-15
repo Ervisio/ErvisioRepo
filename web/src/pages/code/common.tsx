@@ -32,7 +32,7 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
   const title = `${owner}/${name}`;
   if (repo.isPending || repo.isError) {
     return (
-      <Page section={section} title={title}>
+      <Page section={section} title={title} quiet={layout === "console"}>
         <Gate query={repo}>{() => null}</Gate>
       </Page>
     );
@@ -49,22 +49,10 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
     { id: "releases", to: "/$owner/$name/releases", icon: "pkg" },
     { id: "search", to: "/$owner/$name/search", icon: "search" },
   ] as const;
-  // Console: the top bar carries owner, sections and repo menus, so the page keeps only the name.
+  // Console: the top bar carries owner, name, visibility and sections, so the page has no header of its own.
   if (layout === "console") {
     return (
-      <Page
-        section={section}
-        title={r.name}
-        subtitle={r.description || undefined}
-        actions={
-          (r.visibility !== "public" || actions) && (
-            <>
-              {r.visibility !== "public" && <Badge tone="neutral">{tr(`visibility.${r.visibility}`)}</Badge>}
-              {actions}
-            </>
-          )
-        }
-      >
+      <Page section={section} title={r.fullName} actions={actions} quiet>
         {children(r)}
       </Page>
     );

@@ -47,9 +47,10 @@ h1, h2, h3 { letter-spacing: -.01em; }
 .tb-logo { flex: none; width: 28px; height: 28px; margin-right: 10px; border-radius: 8px; display: grid; place-items: center; background: var(--acc-fill); color: var(--on-accent); font-size: 13px; font-weight: 700; }
 .tb-where { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px; border-radius: 10px; min-width: 0; white-space: nowrap; }
 .tb-where b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
-.tb-where .ui-icon { width: 15px; height: 15px; color: var(--ink3); flex: none; }
+.tb-where .ui-icon { width: 15px; height: 15px; color: var(--ink2); flex: none; }
 :is(a, button).tb-where:hover { background: var(--hover); }
-.tb-owner { color: var(--ink3); }
+.tb-owner { color: var(--ink2); }
+.tb-pill { flex: none; display: inline-flex; align-items: center; height: 22px; padding: 0 8px; margin-left: 4px; border: 1px solid var(--line); border-radius: 11px; color: var(--ink2); font-size: 12px; font-weight: 500; }
 .tb-ib { position: relative; flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--ink2); }
 .tb-ib:hover, .tb-ib[aria-current] { background: var(--hover); color: var(--ink); }
 .tb-ib .ui-icon { width: 18px; height: 18px; }
@@ -64,9 +65,10 @@ h1, h2, h3 { letter-spacing: -.01em; }
 .tb-warn { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
 
 .tb-main { max-width: 920px; margin: 0 auto; padding: 56px 24px 96px; min-width: 0; }
+.tb-main:has(.page-flush) { max-width: 1060px; padding-top: 24px; }
 .tb-main:has(.page-body-aside, .st) { max-width: 1160px; }
 /* GitHub palette: settings pages keep the column of the other repo pages so the left edge does not jump. */
-:root:not([data-palette="classic"]) .tb-main:has(.st):not(:has(.page-body-aside)) { max-width: 920px; }
+:root:not([data-palette="classic"]) .tb-main:has(.st):not(:has(.page-body-aside)) { max-width: 1060px; }
 
 .tb-av { width: 28px; height: 28px; border-radius: 50%; background: var(--acc-fill); color: var(--on-accent); display: grid; place-items: center; font-weight: 600; font-size: 11px; flex: none; object-fit: cover; overflow: hidden; }
 .tb-av.lg { width: 30px; height: 30px; font-size: 12px; }
@@ -89,36 +91,25 @@ h1, h2, h3 { letter-spacing: -.01em; }
 [data-layout="console"] .ui-item { min-height: 40px; }
 [data-layout="console"] .ui-item[aria-current] { color: var(--ink); background: var(--sel); }
 
-/* Console repo home: one action bar, borderless file list, airy README. */
-[data-layout="console"] .rp-bar { gap: 10px; margin-bottom: 14px; }
-[data-layout="console"] .rp-ib { width: 38px; padding: 0; justify-content: center; }
-.rp-files .rp-last { margin: 0 0 6px; padding: 0 14px; color: var(--ink3); font-size: 13.5px; }
-.rp-files .rp-last .ui-icon { display: none; }
-.rp-files .rp-last b { color: var(--ink2); font-weight: 500; }
-.rp-files .rp-last-msg { color: var(--ink3); }
-.rp-files .rp-row { min-height: 48px; padding: 0 14px; border-radius: 10px; font-size: 14px; }
-.rp-files .rp-row:hover { background: var(--hover); }
-.rp-files .rp-nm { font-weight: 500; }
-.rp-files .rp-msg { color: var(--ink3); }
-.rp-files .rp-when { color: var(--ink3); text-align: right; }
-[data-layout="console"] .rp-readme { margin-top: 72px; background: none; padding: 0; }
-[data-layout="console"] .rp-readme > .ui-card-head { padding: 0 0 18px; border-bottom: 1px solid var(--line); margin-bottom: 28px; }
-[data-layout="console"] .rp-readme > .ui-card-head h3 { font: 500 13.5px var(--mono); color: var(--ink3); }
-[data-layout="console"] .rp-readme .rp-md { padding: 0; max-width: 68ch; font-size: 15px; line-height: 1.75; }
+/* Console repository pages: one-line description, action row, then bordered boxes (see .rp-box in code.css). */
+[data-layout="console"] .rp-desc { margin: 0 0 16px; font-size: 16px; }
+[data-layout="console"] .rp-bar { gap: 8px 12px; margin-bottom: 16px; }
+[data-layout="console"] .rp-bar .ui-btn { height: 32px; }
+[data-layout="console"] .rp-crumb { gap: 4px 8px; font: 400 16px var(--font); }
+[data-layout="console"] .rp-crumb a { display: inline-flex; align-items: center; min-height: 32px; color: var(--accent); }
+[data-layout="console"] .rp-crumb [aria-current] { font-weight: 600; }
 [data-layout="console"] .rp-md p, [data-layout="console"] .rp-md ul, [data-layout="console"] .rp-md ol { margin: 0 0 1.1em; }
 [data-layout="console"] .rp-md li + li { margin-top: .35em; }
 [data-layout="console"] .rp-md h1, [data-layout="console"] .rp-md h2, [data-layout="console"] .rp-md h3 { font-weight: 600; letter-spacing: -.015em; margin: 2em 0 .7em; }
 [data-layout="console"] .rp-md pre { padding: 14px 18px; margin: 0 0 1.3em; font: 400 13px/1.5 var(--mono); }
 [data-layout="console"] .rp-md pre code { font: inherit; color: var(--ink); }
-[data-layout="console"] .rp-readme .rp-pre { padding: 14px 18px; font-size: 13px; line-height: 1.5; }
 
 @media (max-width: 720px) {
   .tb-row { padding: 0 12px; gap: 2px; }
   .tb-owner, .tb-hide-m { display: none; }
   .tb-tabs { gap: 22px; padding: 0 16px; }
   .tb-main { padding: 32px 16px 64px; }
-  .rp-files .rp-last { display: none; }
-  [data-layout="console"] .rp-readme { margin-top: 48px; }
+  .tb-main:has(.page-flush) { padding-top: 16px; }
   [data-layout="console"] .page-head { grid-template-columns: minmax(0, 1fr); margin-bottom: 32px; }
   [data-layout="console"] .page-head h1 { font-size: 26px; }
   [data-layout="console"] .page-actions { grid-column: 1; grid-row: 3; margin-top: 16px; flex-wrap: wrap; }

@@ -5,7 +5,7 @@ import { ApiError } from "../../api/http.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Markdown } from "../../lib/markdown.tsx";
-import { Button, Card, Dialog, DialogClose } from "../../ui/index.ts";
+import { Button, Dialog, DialogClose, Icon, Menu, MenuItem, MenuSeparator } from "../../ui/index.ts";
 import { CodeView } from "../../ui/code/CodeView.tsx";
 import { highlight, type Token } from "../../ui/code/highlight.ts";
 import { useNotify } from "../account/common.tsx";
@@ -54,7 +54,6 @@ function lineFromHash(): number | undefined {
 }
 
 function BlobBody({ repo, refName, path, view }: { repo: Repo; refName: string; path: string; view: BlobMode }) {
-  const t = useT("code");
   const { owner, name } = repo;
   const blob = useBlob(owner, name, refName, path);
   const navigate = useNavigate();
@@ -70,55 +69,69 @@ function BlobBody({ repo, refName, path, view }: { repo: Repo; refName: string; 
         />
         <Crumb owner={owner} name={name} refName={refName} path={path} />
       </div>
-      <Gate query={blob}>
-        {(b) => (
-          <Card
-            className="rp-file"
-            title={undefined}
-            actions={undefined}
-          >
-            <div className="rp-fh">
-              <span className="ui-mono">{formatBytes(b.size)}</span>
-              {b.content !== undefined && !b.binary && <span className="ui-note">{t("blob.lines", { count: splitLines(b.content).length })}</span>}
-              <span className="acc-grow" />
-              {!b.binary && b.content !== undefined && (
-                <div className="ui-tablist" role="group" aria-label={t("blob.viewLabel")}>
-                  {(isMarkdown(path) ? (["preview", "code", "blame"] as const) : (["code", "blame"] as const)).map((m) => (
-                    <button key={m} type="button" className="ui-tab" data-state={view === m ? "active" : "inactive"} aria-pressed={view === m} onClick={() => go(m)}>
-                      {t(`blob.view.${m}`)}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <Link to="/$owner/$name/commits" params={{ owner, name }} search={{ ref: refName, path }}>
-                <Button size="sm" icon="clock">
-                  {t("tree.history")}
-                </Button>
-              </Link>
-              <a className="ui-btn ui-btn-secondary ui-btn-sm" href={rawUrl(owner, name, refName, path)} target="_blank" rel="noopener">
-                {t("blob.raw")}
-              </a>
-              <a className="ui-btn ui-btn-secondary ui-btn-sm" href={rawUrl(owner, name, refName, path)} download={path.split("/").pop()} aria-label={t("blob.download")}>
+      <Gate query={blob}>{(b) => <BlobBox repo={repo} blob={b} refName={refName} path={path} view={view} onView={go} />}</Gate>
+    </>
+  );
+}
+
+/** One bordered box: a toolbar (meta, view switch, Raw, History, more actions) over the content. */
+function BlobBox({ repo, blob: b, refName, path, view, onView }: { repo: Repo; blob: BlobFile; refName: string; path: string; view: BlobMode; onView: (v: BlobMode) => void }) {
+  const t = useT("code");
+  const { owner, name } = repo;
+  const [deleting, setDeleting] = useState(false);
+  const text = b.content !== undefined && !b.binary;
+  const writable = canWrite(repo.permission) && b.ref.kind === "branch";
+  const raw = rawUrl(owner, name, refName, path);
+  const meta = [text ? t("blob.lines", { count: splitLines(b.content ?? "").length }) : "", formatBytes(b.size)].filter(Boolean).join(" · ");
+  return (
+    <div className="rp-box">
+      <div className="rp-tool">
+        <span className="rp-meta">{meta}</span>
+        <div className="rp-ctl">
+          {text && (
+            <div className="ui-tablist rp-seg" role="group" aria-label={t("blob.viewLabel")}>
+              {(isMarkdown(path) ? (["preview", "code", "blame"] as const) : (["code", "blame"] as const)).map((m) => (
+                <button key={m} type="button" className="ui-tab" data-state={view === m ? "active" : "inactive"} aria-pressed={view === m} onClick={() => onView(m)}>
+                  {t(`blob.view.${m}`)}
+                </button>
+              ))}
+            </div>
+          )}
+          <a className="ui-btn ui-btn-secondary rp-ib" href={raw} target="_blank" rel="noopener" aria-label={t("blob.raw")} title={t("blob.raw")}>
+            <Icon name="file" />
+          </a>
+          <Link className="ui-btn ui-btn-secondary rp-ib" to="/$owner/$name/commits" params={{ owner, name }} search={{ ref: refName, path }} aria-label={t("tree.history")} title={t("tree.history")}>
+            <Icon name="clock" />
+          </Link>
+          <Menu align="end" label={t("blob.more")} trigger={<Button icon="dots" className="rp-ib" aria-label={t("blob.more")} title={t("blob.more")} />}>
+            {writable && !b.binary && !b.truncated && !b.lfs && (
+              <MenuItem asChild>
+                <Link to="/$owner/$name/edit" params={{ owner, name }} search={{ ref: refName, path }}>
+                  <Icon name="edit" />
+                  {t("blob.edit")}
+                </Link>
+              </MenuItem>
+            )}
+            <MenuItem asChild>
+              <a href={raw} download={path.split("/").pop()}>
+                <Icon name="download" />
                 {t("blob.download")}
               </a>
-              {canWrite(repo.permission) && b.ref.kind === "branch" && (
-                <>
-                  {!b.binary && !b.truncated && !b.lfs && (
-                    <Link to="/$owner/$name/edit" params={{ owner, name }} search={{ ref: refName, path }}>
-                      <Button size="sm" icon="edit">
-                        {t("blob.edit")}
-                      </Button>
-                    </Link>
-                  )}
-                  <DeleteFile repo={repo} blob={b} branch={b.ref.name} />
-                </>
-              )}
-            </div>
-            <BlobContent repo={repo} blob={b} refName={refName} view={view} />
-          </Card>
-        )}
-      </Gate>
-    </>
+            </MenuItem>
+            {writable && (
+              <>
+                <MenuSeparator />
+                <MenuItem danger icon="trash" onSelect={() => setDeleting(true)}>
+                  {t("blob.delete")}
+                </MenuItem>
+              </>
+            )}
+          </Menu>
+        </div>
+      </div>
+      <BlobContent repo={repo} blob={b} refName={refName} view={view} />
+      {writable && <DeleteFile repo={repo} blob={b} branch={b.ref.name} open={deleting} onOpenChange={setDeleting} />}
+    </div>
   );
 }
 
@@ -194,7 +207,7 @@ function Preview({ repo, refName, path, content }: { repo: Repo; refName: string
   const ctx = useMarkdownContext(repo.owner, repo.name, refName, path);
   const onClick = useInAppLinks();
   return (
-    <div onClick={onClick}>
+    <div className="rp-rb" onClick={onClick}>
       <Markdown source={content} ctx={ctx} className="rp-md" />
     </div>
   );
@@ -239,12 +252,11 @@ function BlameLines({ repo, blame, path, label }: { repo: Repo; blame: Blame; pa
   );
 }
 
-function DeleteFile({ repo, blob, branch }: { repo: Repo; blob: BlobFile; branch: string }) {
+function DeleteFile({ repo, blob, branch, open, onOpenChange }: { repo: Repo; blob: BlobFile; branch: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const t = useT("code");
   const notify = useNotify();
   const edit = useEditFile(repo.owner, repo.name);
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
   const [target, setTarget] = useState(emptyTarget);
   const fallback = t("edit.deleteDefault", { path: blob.path });
   const submit = () =>
@@ -252,7 +264,7 @@ function DeleteFile({ repo, blob, branch }: { repo: Repo; blob: BlobFile; branch
       { op: "delete", path: blob.path, sha: blob.oid, encoding: "utf-8", ...targetBody(target, branch, fallback) },
       {
         onSuccess: (res) => {
-          setOpen(false);
+          onOpenChange(false);
           notify.ok(t("edit.deleted"));
           const dir = dirOf(blob.path);
           void navigate({ to: "/$owner/$name", params: { owner: repo.owner, name: repo.name }, search: { ref: res.branch, path: dir || undefined } });
@@ -263,12 +275,7 @@ function DeleteFile({ repo, blob, branch }: { repo: Repo; blob: BlobFile; branch
   return (
     <Dialog
       open={open}
-      onOpenChange={setOpen}
-      trigger={
-        <Button size="sm" variant="danger" icon="trash">
-          {t("blob.delete")}
-        </Button>
-      }
+      onOpenChange={onOpenChange}
       title={t("edit.deleteTitle", { path: blob.path })}
       description={t("edit.deleteHint")}
       footer={
