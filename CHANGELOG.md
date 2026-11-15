@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-16
+
 ### Added
 
 - External storage from the web admin: Admin > Storage can add, edit and delete S3-compatible and SFTP targets and change replicas, cache and (while a policy is empty) the primary of each policy. Credentials are typed in the form, sealed in the database with the master key and never returned by the API (only `hasSecretKey`-style flags). A connection test works on an unsaved form. Changes apply after a restart; targets of `config.toml` stay read-only. New endpoints: `GET /admin/storage/config`, `PUT` and `DELETE /admin/storage/targets/{name}`, `PUT /admin/storage/policies/{policy}`, `POST /admin/storage/test`. Safeguards: the primary of a policy with objects cannot change; a target that holds objects cannot be deleted and keeps its location locked (credentials can still be rotated); changing an address requires typing the credentials again; the server refuses link-local, cloud metadata, unspecified and multicast addresses; saves are one transaction with an advisory lock; at start objects are counted and a stored configuration that would hide them is not applied (the page shows the cause). CLI: `ervisio-repo storage overlay show` and `clear [--force]` for recovery.
