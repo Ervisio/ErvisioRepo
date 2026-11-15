@@ -279,3 +279,4 @@
 @media (max-width: 900px) {
   :root:not([data-palette="classic"]) .st-bar { border-radius: var(--r-card) var(--r-card) 0 0; }
 }
+:root:not([data-palette="classic"]) .st-li[aria-current] { background: var(--sel); }

@@ -106,7 +106,7 @@ export function PullFiles({ repo, pr }: { repo: Repo; pr: PullRequest }) {
                       </a>
                     )}
                     {canComment && (
-                      <Button size="sm" variant="ghost" icon="book" onClick={() => startComment(p)}>
+                      <Button size="sm" variant="ghost" icon="comment" onClick={() => startComment(p)}>
                         {t("files.comment")}
                       </Button>
                     )}

@@ -14,7 +14,6 @@ import { useT } from "../../i18n/useT.ts";
 import { Badge, Button, EmptyState } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { Gate, RepoFrame, shortSha, When } from "../code/common.tsx";
-import { ListLayoutSwitch } from "../work/common.tsx";
 import { useListLayout } from "../work/layout.ts";
 import { branchOf, duration, isActive, runState, StatusIcon, StatusPill } from "./common.tsx";
 import { JobLog } from "./JobLog.tsx";
@@ -71,7 +70,7 @@ function RunDetail({ repo, runId, job }: { repo: Repo; runId: string; job?: stri
   return (
     <Gate query={run} notFound={notFound}>
       {(r) => (
-        <>
+        <div className="ax-main">
           <RunHeader repo={repo} run={r} />
           <Gate query={jobs}>
             {(list) => {
@@ -103,7 +102,7 @@ function RunDetail({ repo, runId, job }: { repo: Repo; runId: string; job?: stri
               );
             }}
           </Gate>
-        </>
+        </div>
       )}
     </Gate>
   );
@@ -126,7 +125,6 @@ function RunHeader({ repo, run: r }: { repo: Repo; run: ActionsRun }) {
         <h2 className="ax-h2">{r.title || r.workflowName}</h2>
         <span className="ax-count">#{r.runNumber}</span>
         <span className="acc-grow" />
-        <ListLayoutSwitch />
         {writer && r.needsApproval && <Button variant="primary" icon="check" disabled={approve.isPending} onClick={() => act(approve, t("run.approved"))}>{t("run.approve")}</Button>}
         {writer && isActive(r.status) && !r.needsApproval && <Button variant="danger" icon="x" disabled={cancel.isPending} onClick={() => act(cancel, t("run.cancelled"))}>{t("run.cancel")}</Button>}
         {writer && !isActive(r.status) && <Button icon="play" disabled={rerun.isPending} onClick={() => act(rerun, t("run.rerunDone"))}>{t("run.rerun")}</Button>}
@@ -173,10 +171,12 @@ function JobActions({ repo, job }: { repo: Repo; job?: ActionsJob }) {
   );
 }
 
+const failed = (j: ActionsJob) => ["failure", "timed_out"].includes(runState(j.status, j.conclusion));
+
 function JobCard({ job, selected, onSelect }: { job: ActionsJob; selected: boolean; onSelect: (id: string) => void }) {
   const t = useT("actions");
   return (
-    <button type="button" className="ax-job" aria-current={selected ? "true" : undefined} onClick={() => onSelect(job.id)}>
+    <button type="button" className={failed(job) ? "ax-job ax-job-fail" : "ax-job"} aria-current={selected ? "true" : undefined} onClick={() => onSelect(job.id)}>
       <StatusIcon status={job.status} conclusion={job.conclusion} />
       <span className="ax-job-main">
         <b>{job.name}</b>

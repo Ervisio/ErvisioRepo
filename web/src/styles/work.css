@@ -314,3 +314,6 @@ a.wk-title:hover { color: var(--hue); }
   .wk-cm > .wk-avatar { display: none; }
   .wk-fsel { min-width: 0; flex: 1 1 140px; }
 }
+
+/* GitHub palette: neutral comment headers with a 1px divider; the "author" badge marks the author. */
+:root:not([data-palette="classic"]) :is(.wk-cm-head, .wk-cm-own .wk-cm-head) { background: var(--surface); border-bottom: 1px solid var(--line); }

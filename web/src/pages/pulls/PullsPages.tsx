@@ -214,7 +214,7 @@ function PullRow({ repo, pr, layout }: { repo: Repo; pr: PullRequest; layout: Li
     <span className="wk-cnt" aria-label={t("row.comments", { count: i.commentCount })}>
       {i.commentCount > 0 && (
         <>
-          <Icon name="book" />
+          <Icon name="comment" />
           {i.commentCount}
         </>
       )}

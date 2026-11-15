@@ -65,6 +65,8 @@ h1, h2, h3 { letter-spacing: -.01em; }
 
 .tb-main { max-width: 920px; margin: 0 auto; padding: 56px 24px 96px; min-width: 0; }
 .tb-main:has(.page-body-aside, .st) { max-width: 1160px; }
+/* GitHub palette: settings pages keep the column of the other repo pages so the left edge does not jump. */
+:root:not([data-palette="classic"]) .tb-main:has(.st):not(:has(.page-body-aside)) { max-width: 920px; }
 
 .tb-av { width: 28px; height: 28px; border-radius: 50%; background: var(--acc-fill); color: var(--on-accent); display: grid; place-items: center; font-weight: 600; font-size: 11px; flex: none; object-fit: cover; overflow: hidden; }
 .tb-av.lg { width: 30px; height: 30px; font-size: 12px; }
@@ -247,3 +249,6 @@ h1, h2, h3 { letter-spacing: -.01em; }
 .catalog-pad { padding: 4px 10px 12px; display: flex; flex-direction: column; gap: 10px; }
 .catalog-wrap { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; }
 .catalog-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+
+/* GitHub palette: pages tint selection and links with the accent; section colours only mark status icons. */
+:root:not([data-palette="classic"]) :is(.page, .auth) { --hue: var(--accent); --hue-s: var(--sel); }

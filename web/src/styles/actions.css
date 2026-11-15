@@ -101,3 +101,11 @@
   .ax-log { max-height: 60vh; }
 }
 @media (prefers-reduced-motion: reduce) { .ax-run svg { animation: none; } }
+
+/* GitHub palette: selection uses the accent, --err marks a failed job, section colours stay on status icons. */
+:root:not([data-palette="classic"]) .ax-side-i[aria-current="page"] { background: var(--sel); box-shadow: inset 2px 0 0 var(--accent); }
+:root:not([data-palette="classic"]) :is(.ax-side-i, .ax-job, .ax-grow):focus-visible { outline-color: var(--accent); }
+:root:not([data-palette="classic"]) :is(.ax-job, .ax-grow)[aria-current="true"] { border-color: var(--accent); background: var(--sel); }
+:root:not([data-palette="classic"]) .ax-job-fail { border-color: var(--err); }
+:root:not([data-palette="classic"]) .ax-job-fail[aria-current="true"] { border-color: var(--err); background: var(--err-s); }
+.ax-graph { margin: -4px; padding: 4px; }

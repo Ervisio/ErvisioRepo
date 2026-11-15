@@ -237,7 +237,7 @@ function IssueRow({ repo, issue: i, layout, stateLabel }: { repo: Repo; issue: I
     <span className="wk-cnt" aria-label={t("row.comments", { count: i.commentCount })}>
       {i.commentCount > 0 && (
         <>
-          <Icon name="book" />
+          <Icon name="comment" />
           {i.commentCount}
         </>
       )}
