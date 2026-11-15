@@ -32,19 +32,19 @@ const icons: Record<RunState, IconName> = {
   waiting: "lock",
   blocked: "lock",
   cancelled: "x",
-  skipped: "right",
+  skipped: "skip",
   queued: "clock",
   pending: "clock",
 };
 
 export const isActive = (status: string) => status !== "completed";
 
-/** Icon only, with an accessible name. */
-export function StatusIcon({ status, conclusion }: { status: string; conclusion: string }) {
+/** Icon only, with an accessible name; `bare` drops the round tinted background. */
+export function StatusIcon({ status, conclusion, bare }: { status: string; conclusion: string; bare?: boolean }) {
   const t = useT("actions");
   const s = runState(status, conclusion);
   return (
-    <span className={`ax-si ax-${tones[s]}`} role="img" aria-label={t(`state.${s}`)} title={t(`state.${s}`)}>
+    <span className={`ax-si ax-${tones[s]}${bare ? " ax-bare" : ""}`} role="img" aria-label={t(`state.${s}`)} title={t(`state.${s}`)}>
       <Icon name={icons[s]} />
     </span>
   );

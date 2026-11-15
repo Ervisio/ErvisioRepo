@@ -20,7 +20,7 @@
 .ax-side-i { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border: 0; border-radius: var(--r-ctl); background: none; color: var(--ink2); font: inherit; font-size: 14px; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ax-side-i:hover { background: var(--sunk); color: var(--ink); }
 .ax-side-i[aria-current="page"] { background: var(--sec-act-s); color: var(--ink); font-weight: 600; }
-.ax-side-i:focus-visible, .ax-job:focus-visible, .ax-grow:focus-visible { outline: 2px solid var(--sec-act); outline-offset: 2px; }
+.ax-side-i:focus-visible { outline: 2px solid var(--sec-act); outline-offset: 2px; }
 .ax-side-note { padding: 0 10px; }
 .ax-main { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
 .ax-h2 { margin: 0; font-size: 18px; font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
@@ -36,76 +36,127 @@
 .ax-row-time { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 13px; color: var(--ink2); flex: none; }
 .ax-tag { padding: 1px 8px; border-radius: 999px; background: var(--sunk); color: var(--ink2); font-family: var(--mono); font-size: 12px; }
 
-/* Run page header */
-.ax-head { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border: 1px solid var(--edge); border-radius: var(--r-card); background: var(--surface); }
-.ax-head-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.ax-kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 16px; margin: 0; }
-.ax-kv dt { font-size: 12px; font-weight: 600; color: var(--ink2); }
-.ax-kv dd { margin: 2px 0 0; font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
-.ax-jobact { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--r-ctl); background: var(--warn-s); color: var(--ink); font-size: 14px; }
+/* Run page: title block, jobs beside the steps of the selected job */
+.ax-head { display: flex; flex-direction: column; gap: 12px; }
+.ax-bc { display: flex; align-items: center; gap: 6px; color: var(--ink2); font-size: 14px; }
+.ax-bc a { color: var(--ink2); text-decoration: none; }
+.ax-bc a:hover { color: var(--accent); }
+.ax-bc span { color: var(--ink3); }
+.ax-tr { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.ax-h1 { margin: 0; font-size: 28px; line-height: 1.25; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.ax-num { margin-left: 8px; color: var(--ink2); font-weight: 400; }
+.ax-acts { display: flex; gap: 8px; flex: none; }
+.ax-acts .ui-btn { height: 32px; }
+:root:root .ui-btn.ax-cancel { color: var(--err); }
+.ax-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 0; color: var(--ink2); font-size: 14px; }
+.ax-meta .rp-when { font-size: inherit; color: inherit; }
+.ax-sha { padding: 2px 6px; border-radius: 4px; background: var(--hover); color: var(--ink); font: 12px var(--mono); text-decoration: none; }
+.ax-sha:hover { color: var(--accent); }
+.ax-grid { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 24px; align-items: start; margin-top: 10px; }
+.ax-aside { position: sticky; top: 16px; display: grid; gap: 16px; min-width: 0; }
+:root[data-layout="console"] .ax-aside { top: 112px; }
 
-/* Job graph (layouts A and B) */
-.ax-graph { display: flex; gap: 28px; overflow-x: auto; padding: 4px 2px 8px; }
-.ax-col { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; min-width: 220px; }
-.ax-job { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: 1px solid var(--edge); border-radius: var(--r-ctl); background: var(--surface); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
-.ax-job:hover { background: var(--raise); }
-.ax-job[aria-current="true"] { border-color: var(--sec-act); background: var(--sec-act-s); }
-.ax-job-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.ax-job-main b { font-size: 14px; overflow-wrap: anywhere; }
-.ax-job-sub { font-size: 12px; color: var(--ink2); overflow-wrap: anywhere; }
-.ax-job-dur { font-size: 12px; font-family: var(--mono); color: var(--ink2); flex: none; }
-.ax-graph-compact { flex-direction: column; gap: 12px; overflow: visible; }
-.ax-graph-compact .ax-col { min-width: 0; }
+.ax-box { min-width: 0; border: 1px solid var(--bd); border-radius: var(--r-card); background: var(--field); overflow: hidden; }
+.ax-bh { display: flex; align-items: center; gap: 8px; min-height: 40px; margin: 0; padding: 8px 16px; box-sizing: border-box; background: var(--surface); border-bottom: 1px solid var(--edge); font-size: 14px; font-weight: 600; }
+.ax-box :focus-visible { outline: 2px solid var(--sec-act); outline-offset: -2px; }
+.ax-bare { width: 16px; height: 16px; border-radius: 0; background: none; }
+.ax-bare svg { width: 16px; height: 16px; }
+.ax-bare.ax-idle { --tone: var(--ink3); }
 
-/* Layouts B and C: job column next to the log */
-.ax-split-b { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 16px; align-items: start; }
-.ax-split-c { display: grid; grid-template-columns: minmax(280px, 420px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.ax-jl { list-style: none; margin: 0; padding: 0; }
+.ax-jl li + li { border-top: 1px solid var(--edge); }
+.ax-job { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 0 12px; align-items: start; width: 100%; padding: 10px 16px 10px 14px; border: 0; border-left: 2px solid transparent; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.ax-job:hover { background: var(--hover); }
+.ax-job[aria-current] { background: var(--sel); border-left-color: var(--accent); }
+.ax-job .ax-si { margin-top: 2px; }
+.ax-jn { font-weight: 600; line-height: 20px; overflow-wrap: anywhere; }
+.ax-jd { color: var(--ink2); font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; }
+.ax-js { grid-column: 2 / 4; color: var(--ink2); font-size: 12px; line-height: 18px; }
+.ax-dl { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 6px 12px; margin: 0; padding: 12px 16px; font-size: 13px; }
+.ax-dl dt { color: var(--ink2); }
+.ax-dl dd { margin: 0; overflow-wrap: anywhere; }
+.ax-dl a { text-decoration: none; }
+.ax-dl code { padding: 1px 6px; border-radius: 4px; background: var(--hover); color: var(--ink); font: 12px var(--mono); }
 
-/* Gantt (layout C) */
-.ax-gantt { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.ax-grow { display: grid; grid-template-columns: 22px minmax(70px, 1fr) minmax(60px, 1.4fr) auto; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 1px solid var(--edge); border-radius: var(--r-ctl); background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
-.ax-grow:hover { background: var(--raise); }
-.ax-grow[aria-current="true"] { border-color: var(--sec-act); background: var(--sec-act-s); }
-.ax-grow-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ax-bar-track { position: relative; height: 8px; border-radius: 4px; background: var(--sunk); }
-.ax-bar { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: var(--ink2); }
-.ax-b-success { background: var(--ok); }
-.ax-b-failure, .ax-b-timed_out { background: var(--err); }
-.ax-b-in_progress, .ax-b-queued { background: var(--info); }
+.ax-jh { min-height: 48px; padding: 8px 8px 8px 16px; }
+.ax-jh .ui-btn { height: 32px; }
+.ax-jt { margin: 0; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.ax-jm { color: var(--ink2); font-size: 13px; font-weight: 400; }
+.ax-grow { flex: 1; }
+.ax-jobact { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 16px; border-bottom: 1px solid var(--edge); background: var(--warn-s); color: var(--ink); font-size: 14px; }
 
-/* Job log */
-.ax-logbox { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--edge); border-radius: var(--r-card); background: var(--sunk); overflow: hidden; }
-.ax-logbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface); font-size: 14px; }
-.ax-steps { list-style: none; margin: 0; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 6px; background: var(--surface); border-top: 1px solid var(--edge); }
-.ax-step-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border-radius: 999px; background: var(--sunk); color: var(--ink); font-size: 13px; text-decoration: none; }
-.ax-step-chip:hover { background: var(--raise); }
-.ax-step-dur { font-family: var(--mono); font-size: 12px; color: var(--ink2); }
-.ax-log { max-height: 70vh; overflow: auto; padding: 8px 0; font-family: var(--mono); font-size: 13px; line-height: 1.5; color: var(--ink); }
-.ax-step-h { position: sticky; top: 0; padding: 4px 12px; background: var(--raise); color: var(--ink); font-weight: 600; }
-.ax-line { display: flex; gap: 12px; padding: 0 12px; content-visibility: auto; contain-intrinsic-size: auto 20px; }
-.ax-line:hover { background: var(--surface); }
-.ax-ln { flex: none; min-width: 4ch; text-align: right; color: var(--ink2); user-select: none; }
-.ax-lt { white-space: pre-wrap; overflow-wrap: anywhere; min-width: 0; }
-.ax-logmsg { margin: 0; padding: 12px; font-family: var(--font); font-size: 14px; color: var(--ink2); }
+/* Steps */
+.ax-steps { list-style: none; margin: 0; padding: 0; }
+.ax-step + .ax-step { border-top: 1px solid var(--edge); }
+.ax-sum { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 16px; box-sizing: border-box; border: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.ax-sum:hover { background: var(--hover); }
+.ax-sn { flex: 1; min-width: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ax-sum[aria-expanded="true"] .ax-sn { font-weight: 600; }
+.ax-sw { flex: none; color: var(--ink2); font-size: 13px; }
+.ax-sw-err { color: var(--err); font-weight: 500; }
+.ax-sw-run { color: var(--accent); font-weight: 500; }
+.ax-sd { flex: none; width: 52px; text-align: right; color: var(--ink2); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ax-chv { display: inline-flex; flex: none; color: var(--ink3); }
+.ax-sum[aria-expanded="true"] .ax-chv { transform: rotate(180deg); }
+.ax-sp { padding: 4px 16px 16px; }
+.ax-note { margin: 0; padding: 4px 0 4px 28px; color: var(--ink2); font-size: 14px; }
+
+/* Log */
+.ax-lg { border: 1px solid var(--edge); border-radius: var(--r-ctl); background: var(--surface); overflow: hidden; }
+.ax-lgh { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--edge); }
+.ax-lgh .ui-btn { height: 32px; }
+.ax-lgh .ui-btn[aria-pressed="true"] { background: var(--sel); }
+.ax-search { display: flex; align-items: center; gap: 8px; flex: 0 1 220px; min-width: 0; height: 32px; padding: 0 10px; box-sizing: border-box; border: 1px solid var(--edge); border-radius: var(--r-ctl); background: var(--field); }
+.ax-search svg { color: var(--ink3); flex: none; }
+.ax-search:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; }
+.ax-search input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: none; color: var(--ink); font: 13px var(--font); }
+.ax-search input::placeholder { color: var(--ink2); opacity: 1; }
+.ax-lgb { max-height: 420px; overflow: auto; padding: 6px 0; font: 12.5px/20px var(--mono); color: var(--ink); }
+.ax-l { display: flex; box-sizing: border-box; border-left: 2px solid transparent; padding-right: 16px; content-visibility: auto; contain-intrinsic-size: auto 20px; }
+.ax-n { flex: none; width: 40px; padding-right: 12px; box-sizing: border-box; text-align: right; color: var(--ink2); user-select: none; }
+.ax-t { flex: none; padding-right: 12px; color: var(--ink2); }
+.ax-tx { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ax-e { background: var(--err-s); border-left-color: var(--err); }
+.ax-cur { display: inline-block; width: 7px; height: 14px; margin: 0 0 0 52px; vertical-align: -2px; background: var(--ink2); animation: ax-blink 1s steps(1) infinite; }
+@keyframes ax-blink { 50% { opacity: 0; } }
+.ax-logmsg { margin: 0; padding: 12px 16px; font-family: var(--font); font-size: 14px; color: var(--ink2); }
 .ax-logmsg.ax-err { color: var(--err); }
 .ax-logmore { display: flex; justify-content: center; padding: 10px; }
 
+@media (max-width: 900px) {
+  .ax-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .ax-aside { display: contents; }
+  .ax-jobs { order: 1; border: 0; background: none; overflow: visible; }
+  .ax-box:not(.ax-jobs, .ax-details) { order: 2; }
+  .ax-details { order: 3; }
+  .ax-jobs .ax-bh { display: none; }
+  .ax-jl { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .ax-jl::-webkit-scrollbar { display: none; }
+  .ax-jl li { flex: none; min-width: 210px; }
+  .ax-jl li + li { border-top: 0; }
+  .ax-jl .ax-job { height: 100%; min-height: 56px; box-sizing: border-box; padding: 8px 12px; border: 1px solid var(--bd); border-radius: var(--r-card); background: var(--field); }
+  .ax-jl .ax-job[aria-current] { background: var(--sel); border-color: var(--accent); }
+}
 @media (max-width: 760px) {
-  .ax-layout, .ax-split-b, .ax-split-c { grid-template-columns: minmax(0, 1fr); }
+  .ax-layout { grid-template-columns: minmax(0, 1fr); }
   .ax-side { position: static; flex-direction: row; flex-wrap: wrap; }
   .ax-side-i { width: auto; max-width: 100%; }
   .ax-row { flex-wrap: wrap; }
   .ax-row-time { flex-direction: row; gap: 10px; align-items: center; }
-  .ax-grow { grid-template-columns: 22px minmax(0, 1fr) auto; }
-  .ax-bar-track { display: none; }
-  .ax-log { max-height: 60vh; }
+  .ax-h1 { font-size: 22px; }
+  .ax-tr { flex-direction: column; gap: 12px; }
+  .ax-acts .ui-btn, .ax-jh .ui-btn, .ax-lgh .ui-btn { min-height: 36px; }
+  .ax-jh { padding-left: 12px; }
+  .ax-sum { padding: 0 12px; gap: 8px; }
+  .ax-sd { width: 44px; }
+  .ax-sp { padding: 4px 12px 12px; }
+  .ax-search { flex: 1 1 100%; height: 36px; }
+  .ax-lgh { padding: 8px; }
+  .ax-lgb { max-height: 60vh; }
 }
-@media (prefers-reduced-motion: reduce) { .ax-run svg { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .ax-run svg, .ax-cur { animation: none; } }
 
-/* GitHub palette: selection uses the accent, --err marks a failed job, section colours stay on status icons. */
+/* GitHub palette: selection uses the accent; section colours stay on status icons. */
 :root:not([data-palette="classic"]) .ax-side-i[aria-current="page"] { background: var(--sel); box-shadow: inset 2px 0 0 var(--accent); }
-:root:not([data-palette="classic"]) :is(.ax-side-i, .ax-job, .ax-grow):focus-visible { outline-color: var(--accent); }
-:root:not([data-palette="classic"]) :is(.ax-job, .ax-grow)[aria-current="true"] { border-color: var(--accent); background: var(--sel); }
-:root:not([data-palette="classic"]) .ax-job-fail { border-color: var(--err); }
-:root:not([data-palette="classic"]) .ax-job-fail[aria-current="true"] { border-color: var(--err); background: var(--err-s); }
-.ax-graph { margin: -4px; padding: 4px; }
+:root:not([data-palette="classic"]) .ax-side-i:focus-visible { outline-color: var(--accent); }
+:root:not([data-palette="classic"]) .ax-box :focus-visible { outline-color: var(--accent); }
