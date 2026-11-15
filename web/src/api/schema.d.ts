@@ -1991,6 +1991,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repos/{owner}/{name}/languages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Languages of a ref by bytes of source
+         * @description Sizes the files of the tree of a ref by language, from the file name
+         *     only. Programming and markup languages are counted; prose, data,
+         *     images, vendored and generated files are not. Languages below 0.1% are
+         *     folded into one trailing "Other" item. An empty repository, or a tree
+         *     without recognised source files, returns no items.
+         */
+        get: operations["listLanguages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/repos/{owner}/{name}/commits/{sha}": {
         parameters: {
             query?: never;
@@ -6524,6 +6552,27 @@ export interface components {
             total: number;
             items: components["schemas"]["Contributor"][];
         };
+        Language: {
+            name: string;
+            /** Format: int64 */
+            bytes: number;
+            /**
+             * Format: double
+             * @description Share of the counted bytes
+             */
+            percent: number;
+            /** @description Colour as #rrggbb */
+            color: string;
+        };
+        LanguageList: {
+            /**
+             * Format: int64
+             * @description Bytes counted across all languages
+             */
+            totalBytes: number;
+            /** @description Most bytes first; the folded Other item is last */
+            items: components["schemas"]["Language"][];
+        };
         DiffLine: {
             /** @enum {string} */
             type: "context" | "add" | "delete" | "no-newline";
@@ -10828,6 +10877,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContributorList"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listLanguages: {
+        parameters: {
+            query?: {
+                /** @description Branch, tag or commit id; empty means the default branch */
+                ref?: components["parameters"]["CodeRef"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Languages */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LanguageList"];
                 };
             };
             301: components["responses"]["Moved"];

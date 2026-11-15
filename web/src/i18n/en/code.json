@@ -154,5 +154,8 @@
   "side.moreReleases.other": "+ {count} releases",
   "side.contributors": "Contributors",
   "side.moreContributors.one": "+ {count} contributor",
-  "side.moreContributors.other": "+ {count} contributors"
+  "side.moreContributors.other": "+ {count} contributors",
+  "side.languages": "Languages",
+  "side.languagesList": "Languages: {list}",
+  "side.languagesOther": "Other"
 }

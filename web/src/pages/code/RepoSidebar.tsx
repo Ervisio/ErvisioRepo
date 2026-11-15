@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { canWrite, PAGE_SIZE, useContributors } from "../../api/code.ts";
+import { canWrite, PAGE_SIZE, useContributors, useLanguages } from "../../api/code.ts";
 import { useReleases } from "../../api/releases.ts";
 import type { Repo } from "../../api/repos.ts";
+import { currentLocale } from "../../i18n/locale.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Badge, Icon, type IconName } from "../../ui/index.ts";
 import { Avatar } from "../../ui/shell/ConsoleShell.tsx";
@@ -11,13 +12,14 @@ import { When } from "./common.tsx";
 const SHOWN_CONTRIBUTORS = 12;
 const visibilityIcon: Record<Repo["visibility"], IconName> = { private: "lock", internal: "shield", public: "users" };
 
-/** Right column of the repository home: About, Releases and Contributors. */
+/** Right column of the repository home: About, Releases, Contributors and Languages. */
 export function RepoSidebar({ repo, refName, hasReadme }: { repo: Repo; refName: string; hasReadme: boolean }) {
   return (
     <aside className="rp-side">
       <About repo={repo} hasReadme={hasReadme} />
       <Releases repo={repo} />
       <Contributors repo={repo} refName={refName} />
+      <Languages repo={repo} refName={refName} />
     </aside>
   );
 }
@@ -134,6 +136,36 @@ function Contributors({ repo, refName }: { repo: Repo; refName: string }) {
         })}
       </ul>
       {rest > 0 && <p className="rp-sd rp-none">{t(rest === 1 ? "side.moreContributors.one" : "side.moreContributors.other", { count: rest })}</p>}
+    </Group>
+  );
+}
+
+function Languages({ repo, refName }: { repo: Repo; refName: string }) {
+  const t = useT("code");
+  const q = useLanguages(repo.owner, repo.name, refName);
+  if (!q.data || q.data.items.length === 0) return null;
+  const nf = new Intl.NumberFormat(currentLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  // The server folds the small languages into an entry named "Other".
+  const items = q.data.items.map((l) => {
+    const name = l.name === "Other" ? t("side.languagesOther") : l.name;
+    return { ...l, name, label: `${name} ${nf.format(l.percent)}%` };
+  });
+  return (
+    <Group title={t("side.languages")}>
+      <div className="rp-lang-bar" role="img" aria-label={t("side.languagesList", { list: items.map((l) => l.label).join(", ") })}>
+        {items.map((l) => (
+          <span key={l.name} title={l.label} style={{ flexGrow: l.bytes, background: l.color }} />
+        ))}
+      </div>
+      <ul className="rp-lang-key">
+        {items.map((l) => (
+          <li key={l.name}>
+            <i style={{ background: l.color }} />
+            <b>{l.name}</b>
+            <span>{nf.format(l.percent)}%</span>
+          </li>
+        ))}
+      </ul>
     </Group>
   );
 }

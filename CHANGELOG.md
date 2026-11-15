@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Repository home sidebar: language breakdown of the current ref, computed from
+  file sizes (`GET /repos/{owner}/{name}/languages`). Vendored, generated and
+  documentation files are left out.
+
 ## [1.5.0] - 2026-11-15
 
 ### Added

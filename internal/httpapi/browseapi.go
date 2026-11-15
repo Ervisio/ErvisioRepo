@@ -69,6 +69,7 @@ type browseResponse interface {
 	v1gen.GetBlameResponseObject
 	v1gen.ListCommitsResponseObject
 	v1gen.ListContributorsResponseObject
+	v1gen.ListLanguagesResponseObject
 	v1gen.GetCommitResponseObject
 	v1gen.ListBranchesResponseObject
 	v1gen.ListTagsResponseObject
@@ -239,6 +240,23 @@ func (s *v1Server) ListContributors(ctx context.Context, req v1gen.ListContribut
 		out.Items = append(out.Items, item)
 	}
 	return v1gen.ListContributors200JSONResponse(out), nil
+}
+
+func (s *v1Server) ListLanguages(ctx context.Context, req v1gen.ListLanguagesRequestObject) (v1gen.ListLanguagesResponseObject, error) {
+	suffix := withQuery("/languages", refQuery(req.Params.Ref, nil))
+	repo, fail, err := s.browseRepo(ctx, req.Owner, req.Name, http.MethodGet, suffix)
+	if fail != nil || err != nil {
+		return fail, err
+	}
+	res, err := s.browse.Languages(ctx, gitRepo(repo), deref(req.Params.Ref))
+	if err != nil {
+		return browseFail(err, http.MethodGet, suffix)
+	}
+	out := v1gen.LanguageList{TotalBytes: res.TotalBytes, Items: make([]v1gen.Language, 0, len(res.Items))}
+	for _, l := range res.Items {
+		out.Items = append(out.Items, v1gen.Language{Name: l.Name, Bytes: l.Bytes, Percent: l.Percent, Color: l.Color})
+	}
+	return v1gen.ListLanguages200JSONResponse(out), nil
 }
 
 func (s *v1Server) GetCommit(ctx context.Context, req v1gen.GetCommitRequestObject) (v1gen.GetCommitResponseObject, error) {
@@ -597,5 +615,13 @@ func (p problemResponse) VisitListContributorsResponse(w http.ResponseWriter) er
 }
 
 func (m movedResponse) VisitListContributorsResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+
+func (p problemResponse) VisitListLanguagesResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+
+func (m movedResponse) VisitListLanguagesResponse(w http.ResponseWriter) error {
 	return m.write(w)
 }

@@ -3110,6 +3110,42 @@ paths:
           $ref: "#/components/responses/Unavailable"
         default:
           $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/languages:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listLanguages
+      tags: [code]
+      summary: Languages of a ref by bytes of source
+      description: |
+        Sizes the files of the tree of a ref by language, from the file name
+        only. Programming and markup languages are counted; prose, data,
+        images, vendored and generated files are not. Languages below 0.1% are
+        folded into one trailing "Other" item. An empty repository, or a tree
+        without recognised source files, returns no items.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/CodeRef"
+      responses:
+        "200":
+          description: Languages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LanguageList"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
   /repos/{owner}/{name}/commits/{sha}:
     parameters:
       - $ref: "#/components/parameters/RepoOwner"
@@ -11260,6 +11296,23 @@ components:
         items:
           type: array
           items: {$ref: "#/components/schemas/Contributor"}
+    Language:
+      type: object
+      required: [name, bytes, percent, color]
+      properties:
+        name: {type: string}
+        bytes: {type: integer, format: int64}
+        percent: {type: number, format: double, description: Share of the counted bytes, 0 to 100 with one decimal}
+        color: {type: string, description: "Colour as #rrggbb"}
+    LanguageList:
+      type: object
+      required: [totalBytes, items]
+      properties:
+        totalBytes: {type: integer, format: int64, description: Bytes counted across all languages}
+        items:
+          type: array
+          description: Most bytes first; the folded Other item is last
+          items: {$ref: "#/components/schemas/Language"}
     DiffLine:
       type: object
       required: [type, oldLine, newLine, text]

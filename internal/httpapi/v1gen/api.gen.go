@@ -3699,6 +3699,27 @@ type LabelUpdate struct {
 	Name        *string `json:"name,omitempty"`
 }
 
+// Language defines model for Language.
+type Language struct {
+	Bytes int64 `json:"bytes"`
+
+	// Color Colour as #rrggbb
+	Color string `json:"color"`
+	Name  string `json:"name"`
+
+	// Percent Share of the counted bytes
+	Percent float64 `json:"percent"`
+}
+
+// LanguageList defines model for LanguageList.
+type LanguageList struct {
+	// Items Most bytes first; the folded Other item is last
+	Items []Language `json:"items"`
+
+	// TotalBytes Bytes counted across all languages
+	TotalBytes int64 `json:"totalBytes"`
+}
+
 // LfsPointer defines model for LfsPointer.
 type LfsPointer struct {
 	// Oid SHA-256 of the content
@@ -5780,6 +5801,12 @@ type ListLabelsParams struct {
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListLanguagesParams defines parameters for ListLanguages.
+type ListLanguagesParams struct {
+	// Ref Branch, tag or commit id; empty means the default branch
+	Ref *CodeRef `form:"ref,omitempty" json:"ref,omitempty"`
+}
+
 // ListMilestonesParams defines parameters for ListMilestones.
 type ListMilestonesParams struct {
 	// State Default open
@@ -6887,6 +6914,9 @@ type ServerInterface interface {
 	// UpdateLabel Edit a label
 	// (PATCH /repos/{owner}/{name}/labels/{label})
 	UpdateLabel(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, label string)
+	// ListLanguages Languages of a ref by bytes of source
+	// (GET /repos/{owner}/{name}/languages)
+	ListLanguages(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListLanguagesParams)
 	// ListMilestones Milestones of the repository
 	// (GET /repos/{owner}/{name}/milestones)
 	ListMilestones(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListMilestonesParams)
@@ -8399,6 +8429,12 @@ func (_ Unimplemented) DeleteLabel(w http.ResponseWriter, r *http.Request, owner
 // UpdateLabel Edit a label
 // (PATCH /repos/{owner}/{name}/labels/{label})
 func (_ Unimplemented) UpdateLabel(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, label string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListLanguages Languages of a ref by bytes of source
+// (GET /repos/{owner}/{name}/languages)
+func (_ Unimplemented) ListLanguages(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListLanguagesParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -18553,6 +18589,65 @@ func (siw *ServerInterfaceWrapper) UpdateLabel(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// ListLanguages operation middleware
+func (siw *ServerInterfaceWrapper) ListLanguages(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListLanguagesParams
+
+	// ------------- Optional query parameter "ref" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "ref", r.URL.Query(), &params.Ref, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "ref"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ref", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLanguages(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListMilestones operation middleware
 func (siw *ServerInterfaceWrapper) ListMilestones(w http.ResponseWriter, r *http.Request) {
 
@@ -23846,6 +23941,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/contributors", wrapper.ListContributors)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/languages", wrapper.ListLanguages)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/commits/{sha}", wrapper.GetCommit)
@@ -41769,6 +41867,113 @@ func (response UpdateLabeldefaultApplicationProblemPlusJSONResponse) VisitUpdate
 	return err
 }
 
+type ListLanguagesRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params ListLanguagesParams
+}
+
+type ListLanguagesResponseObject interface {
+	VisitListLanguagesResponse(w http.ResponseWriter) error
+}
+
+type ListLanguages200JSONResponse LanguageList
+
+func (response ListLanguages200JSONResponse) VisitListLanguagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLanguages301ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListLanguages301ApplicationProblemPlusJSONResponse) VisitListLanguagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(301)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLanguages400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListLanguages400ApplicationProblemPlusJSONResponse) VisitListLanguagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLanguages404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListLanguages404ApplicationProblemPlusJSONResponse) VisitListLanguagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLanguages503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListLanguages503ApplicationProblemPlusJSONResponse) VisitListLanguagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListLanguagesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListLanguagesdefaultApplicationProblemPlusJSONResponse) VisitListLanguagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListMilestonesRequestObject struct {
 	Owner  RepoOwner `json:"owner"`
 	Name   RepoName  `json:"name"`
@@ -51431,6 +51636,9 @@ type StrictServerInterface interface {
 	// UpdateLabel Edit a label
 	// (PATCH /repos/{owner}/{name}/labels/{label})
 	UpdateLabel(ctx context.Context, request UpdateLabelRequestObject) (UpdateLabelResponseObject, error)
+	// ListLanguages Languages of a ref by bytes of source
+	// (GET /repos/{owner}/{name}/languages)
+	ListLanguages(ctx context.Context, request ListLanguagesRequestObject) (ListLanguagesResponseObject, error)
 	// ListMilestones Milestones of the repository
 	// (GET /repos/{owner}/{name}/milestones)
 	ListMilestones(ctx context.Context, request ListMilestonesRequestObject) (ListMilestonesResponseObject, error)
@@ -57583,6 +57791,34 @@ func (sh *strictHandler) UpdateLabel(w http.ResponseWriter, r *http.Request, own
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateLabelResponseObject); ok {
 		if err := validResponse.VisitUpdateLabelResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListLanguages operation middleware
+func (sh *strictHandler) ListLanguages(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListLanguagesParams) {
+	var request ListLanguagesRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListLanguages(ctx, request.(ListLanguagesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListLanguages")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListLanguagesResponseObject); ok {
+		if err := validResponse.VisitListLanguagesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

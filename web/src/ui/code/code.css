@@ -244,6 +244,13 @@ button.cs-ri { border: 0; cursor: pointer; padding: 0; font: inherit; }
 .rp-sg > .rp-none + .rp-more { margin-top: 0; color: var(--accent); }
 .rp-avs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .rp-avs + .rp-sd { margin-top: 12px; }
+.rp-lang-bar { display: flex; gap: 1px; height: 8px; margin-bottom: 8px; border-radius: 999px; overflow: hidden; }
+.rp-lang-bar > span { flex-basis: 0; flex-shrink: 0; min-width: 2px; }
+.rp-lang-key { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; list-style: none; font-size: 12px; line-height: 20px; }
+.rp-lang-key li { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.rp-lang-key i { flex: none; width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line); }
+.rp-lang-key b { font-weight: 600; color: var(--ink); }
+.rp-lang-key span { color: var(--ink2); }
 #readme { scroll-margin-top: 72px; }
 @media (max-width: 1000px) {
   .rp-home { grid-template-columns: minmax(0, 1fr); gap: 0; }
