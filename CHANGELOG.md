@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-15
+
 ### Changed
 
 - Web: the default theme now uses GitHub colours, light and dark, with visible borders on inputs, cards and menus and tighter corners (6, 8 and 12 px). System, Light and Dark use this palette. The previous palettes stay available under Settings, Appearance as OLED (dark) and Soft (light). Accounts keep the theme they had saved: Light and Dark switch to the new colours, and you pick OLED or Soft to get the old ones back.
