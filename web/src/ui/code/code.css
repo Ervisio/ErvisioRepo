@@ -215,6 +215,42 @@ a.rp-msg:hover { color: var(--ink); text-decoration: underline; }
 button.cs-ri { border: 0; cursor: pointer; padding: 0; font: inherit; }
 .cs-search { margin-left: auto; }
 
+/* Repository home: files and README beside a quiet sidebar (About, Releases, Contributors). */
+.rp-home { display: grid; grid-template-columns: minmax(0, 1fr) 296px; gap: 32px; align-items: start; }
+.rp-main { min-width: 0; }
+.rp-side { min-width: 0; }
+.rp-sg { padding: 16px 0; border-top: 1px solid var(--line); }
+.rp-sg:first-child { padding-top: 6px; border-top: 0; }
+.rp-sg h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font: 600 14px/20px var(--font); }
+.rp-sg h2 a:hover { color: var(--accent); text-decoration: underline; }
+.rp-cnt { min-width: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: var(--hover); color: var(--ink2); font-size: 12px; font-weight: 500; line-height: 20px; text-align: center; }
+.rp-sd { margin: 0 0 12px; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.rp-sg > .rp-sd:last-child { margin-bottom: 0; }
+.rp-none { color: var(--ink2); }
+.rp-sf { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.rp-sf li { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--ink2); }
+.rp-sf .ui-icon { vertical-align: 0; }
+.rp-sf a { color: var(--ink2); }
+.rp-sf a:hover, .rp-more:hover { color: var(--accent); text-decoration: underline; }
+.rp-sf b { color: var(--ink); font-weight: 600; }
+.rp-rel { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+.rp-rel > .ui-icon { margin-top: 2px; color: var(--ok); }
+.rp-rel-t { display: grid; gap: 2px; min-width: 0; }
+.rp-rel-n { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 14px; }
+.rp-rel-n b { min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.rp-rel:hover .rp-rel-n b { color: var(--accent); }
+.rp-rel-n .ui-badge { height: 20px; padding: 0 8px; font-weight: 500; }
+.rp-more { display: inline-block; margin-top: 12px; font-size: 14px; color: var(--ink2); }
+.rp-sg > .rp-none + .rp-more { margin-top: 0; color: var(--accent); }
+.rp-avs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.rp-avs + .rp-sd { margin-top: 12px; }
+#readme { scroll-margin-top: 72px; }
+@media (max-width: 1000px) {
+  .rp-home { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .rp-side { margin-top: 24px; }
+  .rp-sg:first-child { padding-top: 16px; border-top: 1px solid var(--line); }
+}
+
 /* ---------- narrow screens ---------- */
 @media (max-width: 640px) {
   .rp-tbl col.rp-c2, .rp-tbl td.rp-cm { display: none; }

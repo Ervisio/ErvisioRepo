@@ -269,7 +269,7 @@ function OrgTabs({ org, admin }: { org: string; admin: boolean }) {
 
 /* ---------- Account ---------- */
 
-export function Avatar({ user, size }: { user: Pick<User, "username" | "avatarUrl">; size?: "lg" | "xl" }) {
+export function Avatar({ user, size }: { user: Pick<User, "username" | "avatarUrl">; size?: "md" | "lg" | "xl" }) {
   const cls = size ? `tb-av ${size}` : "tb-av";
   if (user.avatarUrl) return <img className={cls} src={user.avatarUrl} alt="" />;
   return <span className={cls} aria-hidden="true">{initials(user.username)}</span>;

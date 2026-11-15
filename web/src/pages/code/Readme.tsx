@@ -92,7 +92,7 @@ export function Readme({ owner, name, refName, path }: { owner: string; name: st
     );
   }
   return (
-    <section className="rp-box rp-readme" aria-label={file}>
+    <section id="readme" className="rp-box rp-readme" aria-label={file}>
       <div className="rp-head">
         <Icon name="book" />
         <h2>{file}</h2>

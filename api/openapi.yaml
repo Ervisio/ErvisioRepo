@@ -3074,6 +3074,42 @@ paths:
           $ref: "#/components/responses/Unavailable"
         default:
           $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/contributors:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listContributors
+      tags: [code]
+      summary: Authors of a ref, most commits first
+      description: |
+        Authors are grouped by e-mail address (case-insensitive) over a bounded
+        number of the newest commits. E-mail addresses are never returned;
+        username and avatarUrl are set when a verified address of a user
+        matches.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/CodeRef"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Contributors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContributorList"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
   /repos/{owner}/{name}/commits/{sha}:
     parameters:
       - $ref: "#/components/parameters/RepoOwner"
@@ -11208,6 +11244,22 @@ components:
           type: array
           items: {$ref: "#/components/schemas/GitCommit"}
         hasMore: {type: boolean}
+    Contributor:
+      type: object
+      required: [name, commits]
+      properties:
+        name: {type: string, description: Most recent author name}
+        commits: {type: integer}
+        username: {type: string, description: Set when a verified address of a user matches}
+        avatarUrl: {type: string, description: Absolute https URL of the avatar of that user}
+    ContributorList:
+      type: object
+      required: [total, items]
+      properties:
+        total: {type: integer, description: Distinct contributors found, which can exceed the items returned}
+        items:
+          type: array
+          items: {$ref: "#/components/schemas/Contributor"}
     DiffLine:
       type: object
       required: [type, oldLine, newLine, text]

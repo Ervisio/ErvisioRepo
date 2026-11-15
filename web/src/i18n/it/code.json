@@ -142,5 +142,17 @@
   "edit.notAllowed": "Questo file non si può modificare qui",
   "edit.notAllowedHint": "Per modificare servono permessi di scrittura e un branch (non un tag o un commit); i file binari o molto grandi non sono modificabili.",
   "nav.actions": "Actions",
-  "more.actions": "Altre azioni"
+  "more.actions": "Altre azioni",
+  "side.about": "Informazioni",
+  "side.noDescription": "Nessuna descrizione",
+  "side.readme": "Readme",
+  "side.defaultBranch": "Ramo predefinito",
+  "side.releases": "Release",
+  "side.noReleases": "Ancora nessuna release",
+  "side.createRelease": "Crea una release",
+  "side.moreReleases.one": "+ {count} release",
+  "side.moreReleases.other": "+ {count} release",
+  "side.contributors": "Contributori",
+  "side.moreContributors.one": "+ {count} contributore",
+  "side.moreContributors.other": "+ {count} contributori"
 }

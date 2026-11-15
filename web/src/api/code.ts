@@ -24,6 +24,7 @@ export type Comparison = S["Comparison"];
 export type CodeSearchResult = S["CodeSearchResult"];
 export type FileEdit = S["FileEdit"];
 export type FileEditResult = S["FileEditResult"];
+export type ContributorList = S["ContributorList"];
 
 export const PAGE_SIZE = 30;
 
@@ -110,6 +111,9 @@ export const useTags = (owner: string, name: string, page: number, limit = PAGE_
     placeholderData: keepPreviousData,
     ...hydrationRetry,
   });
+
+export const useContributors = (owner: string, name: string, ref: string, limit: number) =>
+  useCode<ContributorList>(owner, name, ["contributors", ref, limit], `/contributors${qs({ ref, limit })}`);
 
 export const useCompare = (owner: string, name: string, base: string, head: string) =>
   useCode<Comparison>(owner, name, ["compare", base, head], `/compare${qs({ base, head })}`, base !== "" && head !== "");

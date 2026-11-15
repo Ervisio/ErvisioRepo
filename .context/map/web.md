@@ -56,3 +56,4 @@ Related:
 - Actions run (pages/actions/RunPage.tsx, JobLog.tsx; `.ax-*`): job list left (selection via the `job` search param), steps as expandable rows, log split per step; `##[error]` lines highlighted. Graph and gantt views removed.
 - Settings frame (ui/SettingsLayout.tsx, `.st-*` in ui.css): `Page compact` title, search only with 13+ items, sections as boxes, danger zone = error border. Admin has no top-bar tabs any more (AdminFrame left menu only).
 - Console widths: `.tb-main` 1060px for repository, detail and settings pages; home 1160px.
+- Repository home sidebar (pages/code/RepoSidebar.tsx, Console only, root view only): About, Releases (first page of useReleases, shows 30+ when full), Contributors (useContributors -> GET /repos/{owner}/{name}/contributors, internal/gitbrowse/contributors.go). Home column 1216px; no public user profile route exists, so avatars are not links.

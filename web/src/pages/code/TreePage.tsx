@@ -11,6 +11,7 @@ import { ForkDialog } from "../repos/RepoList.tsx";
 import { CloneDialog, EmptyRepoCard } from "../repos/RepoPage.tsx";
 import { ArchiveMenu, Crumb, dirOf, Gate, RefSwitcher, RepoFrame, shortSha, When } from "./common.tsx";
 import { Readme } from "./Readme.tsx";
+import { RepoSidebar } from "./RepoSidebar.tsx";
 
 /** Repository home and directory browsing: tree, last commit, README. */
 export function TreePage({ owner, name, refName, path = "" }: { owner: string; name: string; refName?: string; path?: string }) {
@@ -42,9 +43,9 @@ function TreeBody({ repo, refName, path }: { repo: Repo; refName: string; path: 
     ) : (
       <EmptyState icon="folder" title={t("tree.notFound")} description={t("tree.notFoundHint", { ref: refName })} />
     );
-  return (
+  const home = console_ && isRoot;
+  const content = (
     <>
-      {console_ && isRoot && repo.description && <p className="rp-desc">{repo.description}</p>}
       {console_ ? (
         <div className="rp-bar">
           {switcher}
@@ -78,6 +79,13 @@ function TreeBody({ repo, refName, path }: { repo: Repo; refName: string; path: 
         )}
       </Gate>
     </>
+  );
+  if (!home) return content;
+  return (
+    <div className="rp-home">
+      <div className="rp-main">{content}</div>
+      <RepoSidebar repo={repo} refName={refName} hasReadme={!!tree.data?.readme} />
+    </div>
   );
 }
 

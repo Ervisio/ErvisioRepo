@@ -69,9 +69,12 @@ h1, h2, h3 { letter-spacing: -.01em; }
 .tb-main:has(.wk-dgrid, .wk-detail) { max-width: 1060px; }
 /* Settings share the column of the repository pages so the left edge does not jump. */
 .tb-main:has(.st) { max-width: 1060px; }
+/* The repository home adds a 296px sidebar: 1216px of content. */
+.tb-main:has(.rp-home) { max-width: 1264px; }
 
 .tb-av { width: 28px; height: 28px; border-radius: 50%; background: var(--acc-fill); color: var(--on-accent); display: grid; place-items: center; font-weight: 600; font-size: 11px; flex: none; object-fit: cover; overflow: hidden; }
 .tb-av.lg { width: 30px; height: 30px; font-size: 12px; }
+.tb-av.md { width: 32px; height: 32px; font-size: 12px; }
 .tb-av.xl { width: 40px; height: 40px; font-size: 14px; }
 .tb-pop { width: 280px; }
 .tb-ph { display: flex; align-items: center; gap: 12px; padding: 10px 12px 14px; }
@@ -91,8 +94,7 @@ h1, h2, h3 { letter-spacing: -.01em; }
 [data-layout="console"] .ui-item { min-height: 40px; }
 [data-layout="console"] .ui-item[aria-current] { color: var(--ink); background: var(--sel); }
 
-/* Console repository pages: one-line description, action row, then bordered boxes (see .rp-box in code.css). */
-[data-layout="console"] .rp-desc { margin: 0 0 16px; font-size: 16px; }
+/* Console repository pages: action row, then bordered boxes (see .rp-box in code.css). */
 [data-layout="console"] .rp-bar { gap: 8px 12px; margin-bottom: 16px; }
 [data-layout="console"] .rp-bar .ui-btn { height: 32px; }
 [data-layout="console"] .rp-crumb { gap: 4px 8px; font: 400 16px var(--font); }

@@ -142,5 +142,17 @@
   "edit.notAllowed": "This file cannot be edited here",
   "edit.notAllowedHint": "Editing needs write access and a branch (not a tag or commit); binary and very large files are not editable.",
   "nav.actions": "Actions",
-  "more.actions": "More actions"
+  "more.actions": "More actions",
+  "side.about": "About",
+  "side.noDescription": "No description",
+  "side.readme": "Readme",
+  "side.defaultBranch": "Default branch",
+  "side.releases": "Releases",
+  "side.noReleases": "No releases yet",
+  "side.createRelease": "Create a release",
+  "side.moreReleases.one": "+ {count} release",
+  "side.moreReleases.other": "+ {count} releases",
+  "side.contributors": "Contributors",
+  "side.moreContributors.one": "+ {count} contributor",
+  "side.moreContributors.other": "+ {count} contributors"
 }

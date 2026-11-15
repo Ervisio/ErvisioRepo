@@ -1964,6 +1964,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repos/{owner}/{name}/contributors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Authors of a ref, most commits first
+         * @description Authors are grouped by e-mail address (case-insensitive) over a bounded
+         *     number of the newest commits. E-mail addresses are never returned;
+         *     username and avatarUrl are set when a verified address of a user
+         *     matches.
+         */
+        get: operations["listContributors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/repos/{owner}/{name}/commits/{sha}": {
         parameters: {
             query?: never;
@@ -6483,6 +6510,20 @@ export interface components {
             commits: components["schemas"]["GitCommit"][];
             hasMore: boolean;
         };
+        Contributor: {
+            /** @description Most recent author name */
+            name: string;
+            commits: number;
+            /** @description Set when a verified address of a user matches */
+            username?: string;
+            /** @description Absolute https URL of the avatar of that user */
+            avatarUrl?: string;
+        };
+        ContributorList: {
+            /** @description Distinct contributors found */
+            total: number;
+            items: components["schemas"]["Contributor"][];
+        };
         DiffLine: {
             /** @enum {string} */
             type: "context" | "add" | "delete" | "no-newline";
@@ -10754,6 +10795,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CommitPage"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listContributors: {
+        parameters: {
+            query?: {
+                /** @description Branch, tag or commit id; empty means the default branch */
+                ref?: components["parameters"]["CodeRef"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Contributors */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContributorList"];
                 };
             };
             301: components["responses"]["Moved"];

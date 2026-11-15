@@ -3097,6 +3097,27 @@ type Comparison struct {
 	MergeBase        string      `json:"mergeBase"`
 }
 
+// Contributor defines model for Contributor.
+type Contributor struct {
+	// AvatarUrl Absolute https URL of the avatar of that user
+	AvatarUrl *string `json:"avatarUrl,omitempty"`
+	Commits   int     `json:"commits"`
+
+	// Name Most recent author name
+	Name string `json:"name"`
+
+	// Username Set when a verified address of a user matches
+	Username *string `json:"username,omitempty"`
+}
+
+// ContributorList defines model for ContributorList.
+type ContributorList struct {
+	Items []Contributor `json:"items"`
+
+	// Total Distinct contributors found
+	Total int `json:"total"`
+}
+
 // CreatedAccessToken defines model for CreatedAccessToken.
 type CreatedAccessToken struct {
 	// Secret The token (erp_...), shown only once; send it as "Authorization Bearer"
@@ -5653,6 +5674,13 @@ type CompareRefsParams struct {
 	Head string `form:"head" json:"head"`
 }
 
+// ListContributorsParams defines parameters for ListContributors.
+type ListContributorsParams struct {
+	// Ref Branch, tag or commit id; empty means the default branch
+	Ref   *CodeRef   `form:"ref,omitempty" json:"ref,omitempty"`
+	Limit *PageLimit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListForksParams defines parameters for ListForks.
 type ListForksParams struct {
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
@@ -6721,6 +6749,9 @@ type ServerInterface interface {
 	// EditContents Create, update or delete a file with a commit
 	// (POST /repos/{owner}/{name}/contents)
 	EditContents(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// ListContributors Authors of a ref, most commits first
+	// (GET /repos/{owner}/{name}/contributors)
+	ListContributors(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListContributorsParams)
 	// ListForks The forks of a repository
 	// (GET /repos/{owner}/{name}/forks)
 	ListForks(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListForksParams)
@@ -8092,6 +8123,12 @@ func (_ Unimplemented) CompareRefs(w http.ResponseWriter, r *http.Request, owner
 // EditContents Create, update or delete a file with a commit
 // (POST /repos/{owner}/{name}/contents)
 func (_ Unimplemented) EditContents(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListContributors Authors of a ref, most commits first
+// (GET /repos/{owner}/{name}/contributors)
+func (_ Unimplemented) ListContributors(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListContributorsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -15770,6 +15807,78 @@ func (siw *ServerInterfaceWrapper) EditContents(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.EditContents(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListContributors operation middleware
+func (siw *ServerInterfaceWrapper) ListContributors(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListContributorsParams
+
+	// ------------- Optional query parameter "ref" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "ref", r.URL.Query(), &params.Ref, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "ref"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ref", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListContributors(w, r, owner, name, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -23734,6 +23843,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/commits", wrapper.ListCommits)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/contributors", wrapper.ListContributors)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/commits/{sha}", wrapper.GetCommit)
@@ -37346,6 +37458,113 @@ type EditContentsdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response EditContentsdefaultApplicationProblemPlusJSONResponse) VisitEditContentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListContributorsRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params ListContributorsParams
+}
+
+type ListContributorsResponseObject interface {
+	VisitListContributorsResponse(w http.ResponseWriter) error
+}
+
+type ListContributors200JSONResponse ContributorList
+
+func (response ListContributors200JSONResponse) VisitListContributorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListContributors301ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListContributors301ApplicationProblemPlusJSONResponse) VisitListContributorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(301)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListContributors400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListContributors400ApplicationProblemPlusJSONResponse) VisitListContributorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListContributors404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListContributors404ApplicationProblemPlusJSONResponse) VisitListContributorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListContributors503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ListContributors503ApplicationProblemPlusJSONResponse) VisitListContributorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListContributorsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListContributorsdefaultApplicationProblemPlusJSONResponse) VisitListContributorsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -51074,6 +51293,9 @@ type StrictServerInterface interface {
 	// EditContents Create, update or delete a file with a commit
 	// (POST /repos/{owner}/{name}/contents)
 	EditContents(ctx context.Context, request EditContentsRequestObject) (EditContentsResponseObject, error)
+	// ListContributors Authors of a ref, most commits first
+	// (GET /repos/{owner}/{name}/contributors)
+	ListContributors(ctx context.Context, request ListContributorsRequestObject) (ListContributorsResponseObject, error)
 	// ListForks The forks of a repository
 	// (GET /repos/{owner}/{name}/forks)
 	ListForks(ctx context.Context, request ListForksRequestObject) (ListForksResponseObject, error)
@@ -55977,6 +56199,34 @@ func (sh *strictHandler) EditContents(w http.ResponseWriter, r *http.Request, ow
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(EditContentsResponseObject); ok {
 		if err := validResponse.VisitEditContentsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListContributors operation middleware
+func (sh *strictHandler) ListContributors(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListContributorsParams) {
+	var request ListContributorsRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListContributors(ctx, request.(ListContributorsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListContributors")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListContributorsResponseObject); ok {
+		if err := validResponse.VisitListContributorsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

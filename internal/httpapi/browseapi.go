@@ -68,6 +68,7 @@ type browseResponse interface {
 	v1gen.GetReadmeResponseObject
 	v1gen.GetBlameResponseObject
 	v1gen.ListCommitsResponseObject
+	v1gen.ListContributorsResponseObject
 	v1gen.GetCommitResponseObject
 	v1gen.ListBranchesResponseObject
 	v1gen.ListTagsResponseObject
@@ -214,6 +215,30 @@ func (s *v1Server) ListCommits(ctx context.Context, req v1gen.ListCommitsRequest
 		return browseFail(err, http.MethodGet, suffix)
 	}
 	return v1gen.ListCommits200JSONResponse(v1gen.CommitPage{Ref: resolvedDTO(p.Ref), Commits: commitsDTO(p.Commits), HasMore: p.HasMore}), nil
+}
+
+func (s *v1Server) ListContributors(ctx context.Context, req v1gen.ListContributorsRequestObject) (v1gen.ListContributorsResponseObject, error) {
+	suffix := withQuery("/contributors", refQuery(req.Params.Ref, nil))
+	repo, fail, err := s.browseRepo(ctx, req.Owner, req.Name, http.MethodGet, suffix)
+	if fail != nil || err != nil {
+		return fail, err
+	}
+	res, err := s.browse.Contributors(ctx, gitRepo(repo), deref(req.Params.Ref), deref(req.Params.Limit))
+	if err != nil {
+		return browseFail(err, http.MethodGet, suffix)
+	}
+	out := v1gen.ContributorList{Total: res.Total, Items: make([]v1gen.Contributor, 0, len(res.Items))}
+	for _, c := range res.Items {
+		item := v1gen.Contributor{Name: c.Name, Commits: c.Commits}
+		if c.Username != "" {
+			item.Username = &c.Username
+			if c.AvatarURL != "" {
+				item.AvatarUrl = &c.AvatarURL
+			}
+		}
+		out.Items = append(out.Items, item)
+	}
+	return v1gen.ListContributors200JSONResponse(out), nil
 }
 
 func (s *v1Server) GetCommit(ctx context.Context, req v1gen.GetCommitRequestObject) (v1gen.GetCommitResponseObject, error) {
@@ -566,3 +591,11 @@ func (m movedResponse) VisitCompareRefsResponse(w http.ResponseWriter) error  { 
 func (m movedResponse) VisitSearchCodeResponse(w http.ResponseWriter) error   { return m.write(w) }
 func (m movedResponse) VisitEditContentsResponse(w http.ResponseWriter) error { return m.write(w) }
 func (m movedResponse) VisitSearchReposResponse(w http.ResponseWriter) error  { return m.write(w) }
+
+func (p problemResponse) VisitListContributorsResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+
+func (m movedResponse) VisitListContributorsResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
