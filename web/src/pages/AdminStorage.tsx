@@ -21,7 +21,7 @@ function TestResult({ result }: { result: StorageCheckResult }) {
   return (
     <div role="status" aria-label={t("storage.test.result", { target: result.target })}>
       <p className="ui-inline">
-        <Badge tone={result.ok ? "ok" : "err"}>{result.ok ? t("storage.test.ok") : t("storage.test.failed")}</Badge>
+        <Badge tone={result.ok ? "ok" : "err"} icon={result.ok ? "check" : "alert"}>{result.ok ? t("storage.test.ok") : t("storage.test.failed")}</Badge>
         <span>{t("storage.test.duration", { ms: result.durationMs })}</span>
       </p>
       <Table>
@@ -37,7 +37,7 @@ function TestResult({ result }: { result: StorageCheckResult }) {
             <Tr key={s.name}>
               <Td className="ui-mono">{t(`storage.step.${s.name}`)}</Td>
               <Td>
-                <Badge tone={s.ok ? "ok" : "err"}>{s.ok ? t("storage.test.ok") : t("storage.test.failed")}</Badge>
+                <Badge tone={s.ok ? "ok" : "err"} icon={s.ok ? "check" : "alert"}>{s.ok ? t("storage.test.ok") : t("storage.test.failed")}</Badge>
                 {s.error && <span className="ui-mono"> {s.error}</span>}
               </Td>
               <Td className="ui-num">{t("storage.test.duration", { ms: s.durationMs })}</Td>
@@ -88,7 +88,7 @@ function TargetCard({ target }: { target: Target }) {
       </dl>
       {test.isError && (
         <div role="alert" className="ui-inline">
-          <Badge tone="err">{t("storage.test.failed")}</Badge> {test.error.message}
+          <Badge tone="err" icon="alert">{t("storage.test.failed")}</Badge> {test.error.message}
         </div>
       )}
       {test.data && <TestResult result={test.data} />}
@@ -130,7 +130,7 @@ export function AdminStorage() {
       {s.warnings.map((w) => (
         <Card key={w.code + (w.policy ?? "")} role="alert">
           <p className="ui-inline">
-            <Badge tone="warn">{t("storage.warning")}</Badge>
+            <Badge tone="warn" icon="alert">{t("storage.warning")}</Badge>
             <span>{t(`storage.warning.${w.code}`, { policy: w.policy ?? "" })}</span>
           </p>
         </Card>

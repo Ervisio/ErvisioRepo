@@ -515,6 +515,7 @@ export function OrgPage({ name, tab, onTab }: { name: string; tab: OrgTab; onTab
       section="pr"
       title={o.displayName || o.name}
       subtitle={`@${o.name}`}
+      compact={settingsTab !== undefined}
       actions={
         <>
           {o.verified && <Badge tone="ok">{t("verified")}</Badge>}

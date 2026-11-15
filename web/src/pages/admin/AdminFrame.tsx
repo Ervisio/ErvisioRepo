@@ -1,5 +1,6 @@
 import { Link, Outlet } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { useStorageStatus } from "../../api/useStorage.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Page, SettingsLayout, SettingsSection, type SettingsLinkProps, type SettingsNavGroup, type SettingsNavItem } from "../../ui/index.ts";
 import { usePathname } from "../../ui/shell/nav.tsx";
@@ -40,7 +41,9 @@ function renderAdminLink(it: SettingsNavItem, props: SettingsLinkProps): ReactNo
 /** Layout route of /admin/*: the settings frame with the administration sub-navigation. */
 export function AdminFrame() {
   const t = useT("admin");
+  const ts = useT("shell");
   const active = activeId(usePathname());
+  const warnings = useStorageStatus().data?.warnings.length ?? 0;
   const groups: SettingsNavGroup[] = [
     {
       title: t("group.instance"),
@@ -57,14 +60,14 @@ export function AdminFrame() {
     {
       title: t("group.operations"),
       items: [
-        { id: "storage", icon: "db", label: t("storage.title") },
+        { id: "storage", icon: "db", label: t("storage.title"), warn: warnings > 0 ? ts("admin.storageWarnings", { count: warnings }) : undefined },
         { id: "runners", icon: "cpu", label: t("nav.runners") },
         { id: "audit", icon: "clock", label: t("audit.title") },
       ],
     },
   ];
   return (
-    <Page section="act" title={t("frame.title")} subtitle={t("frame.subtitle")}>
+    <Page section="act" title={t("frame.title")} subtitle={t("frame.subtitle")} compact>
       <SettingsLayout label={t("frame.nav")} groups={groups} active={active} renderLink={renderAdminLink}>
         <Outlet />
       </SettingsLayout>

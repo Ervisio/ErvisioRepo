@@ -28,7 +28,7 @@ export function Account({ section, oidcError }: { section?: AccountSection; oidc
     { title: t("group.access"), items: [item("security", "shield"), item("sessions", "clock"), item("tokens", "lock"), item("keys", "code"), item("linked", "users")] },
   ];
   return (
-    <Page section="issue" title={t("title")} subtitle={`@${user.username}`}>
+    <Page section="issue" title={t("title")} subtitle={`@${user.username}`} compact>
       <SettingsLayout
         label={t("tabs")}
         groups={groups}

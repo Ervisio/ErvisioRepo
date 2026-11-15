@@ -5,12 +5,11 @@ import { request } from "../../api/http.ts";
 import { useOrg, useSession, type User } from "../../api/identity.ts";
 import { useUnreadCount } from "../../api/notifications.ts";
 import { useOwnerRepos, useRepo, type Repo } from "../../api/repos.ts";
-import { useStorageStatus } from "../../api/useStorage.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Icon } from "../Icon.tsx";
 import { Menu, MenuItem, MenuLabel, MenuSeparator } from "../Menu.tsx";
 import {
-  adminItems, exploreItem, homeItem, isOrgSettingsTab, NavLink, orgsItem, orgTabs, reposItem, repoSub, repoTabs,
+  exploreItem, homeItem, isOrgSettingsTab, NavLink, orgsItem, orgTabs, reposItem, repoSub, repoTabs,
   usePathname, useShellContext, type NavItem,
 } from "./nav.tsx";
 import { SearchTrigger } from "./SearchPalette.tsx";
@@ -189,12 +188,10 @@ function Tabs() {
   const t = useT("shell");
   const user = useSession().data;
   const ctx = useShellContext();
-  const pathname = usePathname();
   const admin = user?.role === "admin";
   let body: ReactNode;
   if (ctx.kind === "repo") body = <RepoTabs owner={ctx.owner} name={ctx.name} admin={admin} />;
   else if (ctx.kind === "org") body = <OrgTabs org={ctx.org} admin={admin} />;
-  else if (admin && inAdmin(pathname)) body = <AdminTabs />;
   else body = (user ? [homeItem, reposItem, exploreItem, orgsItem] : [homeItem, exploreItem]).map((it) => <Tab key={it.to} item={it} />);
   return (
     <nav className="tb-tabs" aria-label={t("nav.main")}>
@@ -265,22 +262,6 @@ function OrgTabs({ org, admin }: { org: string; admin: boolean }) {
         <Link key={it.tab} to="/orgs/$org" params={{ org }} search={{ tab: it.tab }} className="tb-tab" aria-current={active === it.tab ? "page" : undefined}>
           {tOrg(`tab.${it.tab}`)}
         </Link>
-      ))}
-    </>
-  );
-}
-
-function AdminTabs() {
-  const t = useT("shell");
-  const warnings = useStorageStatus().data?.warnings.length ?? 0;
-  return (
-    <>
-      {adminItems.map((it) => (
-        <Tab
-          key={it.to}
-          item={it}
-          extra={it.to === "/admin/storage" && warnings > 0 ? <span className="tb-warn" role="img" aria-label={t("admin.storageWarnings", { count: warnings })} /> : undefined}
-        />
       ))}
     </>
   );

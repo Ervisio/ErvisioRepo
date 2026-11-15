@@ -14,7 +14,7 @@ export const roleTone = (role: UserRole) => (role === "admin" ? ("section" as co
 
 export function UserStatus({ user }: { user: AdminUser }) {
   const t = useT("admin");
-  return user.suspendedAt ? <Badge tone="err">{t("users.status.suspended")}</Badge> : <Badge tone="ok">{t("users.status.active")}</Badge>;
+  return user.suspendedAt ? <Badge tone="err" icon="alert">{t("users.status.suspended")}</Badge> : <Badge tone="ok" icon="check">{t("users.status.active")}</Badge>;
 }
 
 /** Admin: searchable, filterable list of users. Filters live in the URL so a view can be shared. */

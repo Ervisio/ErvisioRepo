@@ -50,3 +50,9 @@ Related:
 - `Page` has a `quiet` prop (sr-only h1, no header); `RepoFrame` sets it in the Console layout. Visibility pill = `.tb-pill` in ConsoleShell. Repo pages use a 1060px column (`.tb-main`), settings follow it.
 - TreePage: one box = latest-commit strip + fixed-column table (stretched name link makes the row clickable). Readme: box with header strip, 75ch body. BlobPage: toolbar strip with segmented view, Raw/History icon buttons, ⋯ menu (Edit, Download, Delete).
 - Not shown for lack of data: commits count (strip links to History) and the last commit of a single file (blob response has none).
+
+## Work, Actions, settings pages (2026-11-15)
+- Issue/PR detail (pages/work/Conversation.tsx, common.tsx; `.wk-*` in work.css): grid `.wk-dgrid` = timeline + 300px sticky side column. Side = Status box (issue state, or merge readiness + merge button; the old timeline merge box is gone) then metadata groups with one pencil each. Under ~900px the side goes on top and metadata fold into `<details>`.
+- Actions run (pages/actions/RunPage.tsx, JobLog.tsx; `.ax-*`): job list left (selection via the `job` search param), steps as expandable rows, log split per step; `##[error]` lines highlighted. Graph and gantt views removed.
+- Settings frame (ui/SettingsLayout.tsx, `.st-*` in ui.css): `Page compact` title, search only with 13+ items, sections as boxes, danger zone = error border. Admin has no top-bar tabs any more (AdminFrame left menu only).
+- Console widths: `.tb-main` 1060px for repository, detail and settings pages; home 1160px.

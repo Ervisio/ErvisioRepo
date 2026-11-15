@@ -5,20 +5,22 @@ import type { Section } from "./nav.tsx";
  * A page declares its zones (title, actions, content, aside); the active shell and the
  * data-layout CSS arrange them. `section` sets --hue / --hue-s for the whole page.
  * `quiet` keeps the title for assistive tech only (the shell already shows it); the header
- * is then drawn only when there are actions or a subtitle.
+ * is then drawn only when there are actions or a subtitle. `compact` is the one-line title of
+ * settings and administration pages, with the subtitle beside it.
  */
-export function Page({ section = "code", title, subtitle, actions, aside, quiet, children }: {
+export function Page({ section = "code", title, subtitle, actions, aside, quiet, compact, children }: {
   section?: Section;
   title: string;
   subtitle?: string;
   actions?: ReactNode;
   aside?: ReactNode;
   quiet?: boolean;
+  compact?: boolean;
   children: ReactNode;
 }) {
   const heading = <h1 className={quiet ? "sr-only" : undefined}>{title}</h1>;
   return (
-    <div className={quiet ? `page page-flush sec-${section}` : `page sec-${section}`}>
+    <div className={`page sec-${section}${quiet ? " page-flush" : ""}${compact ? " page-compact" : ""}`}>
       {quiet && !actions && !subtitle ? (
         heading
       ) : (

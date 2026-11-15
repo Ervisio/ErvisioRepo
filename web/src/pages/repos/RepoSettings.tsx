@@ -195,14 +195,14 @@ export function RepoSettings({ owner, name, section }: { owner: string; name: st
 
   if (repo.isPending) {
     return (
-      <Page title={title}>
+      <Page title={title} compact>
         <p role="status">{tc("state.loading")}</p>
       </Page>
     );
   }
   if (repo.isError) {
     return (
-      <Page title={title}>
+      <Page title={title} compact>
         <div role="alert">
           <EmptyState icon="alert" title={t("error")} description={repo.error.message} action={<Button onClick={() => void repo.refetch()}>{tc("action.retry")}</Button>} />
         </div>
@@ -212,7 +212,7 @@ export function RepoSettings({ owner, name, section }: { owner: string; name: st
   const r = repo.data;
   const scope = { kind: "repo" as const, owner: r.owner, name: r.name };
   return (
-    <Page section="code" title={t("settings.title")} subtitle={r.fullName}>
+    <Page section="code" title={t("settings.title")} subtitle={r.fullName} compact>
       {r.permission === "admin" ? (
         <SettingsLayout
           label={t("settings.sections")}

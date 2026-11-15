@@ -6,11 +6,13 @@ import { Dialog, DialogClose } from "./Dialog.tsx";
 import { Icon, type IconName } from "./Icon.tsx";
 import { Input } from "./Input.tsx";
 
-// Settings layout (round 005, variant A): one sub-navigation of grouped sections, two-column rows
-// with a dirty marker, a sticky save bar while there are pending changes, and a danger zone.
+// Settings layout: one sub-navigation of grouped sections (with a search box only when it is long),
+// sections as bordered boxes with a header strip, two-column rows with a dirty marker, a sticky save
+// bar while there are pending changes, and a danger zone.
 // Used by account, repository and organization settings.
 
-export type SettingsNavItem = { id: string; label: string; icon: IconName; keywords?: string; danger?: boolean };
+/** `warn` is an accessible label for a small warning dot next to the item. */
+export type SettingsNavItem = { id: string; label: string; icon: IconName; keywords?: string; danger?: boolean; warn?: string };
 export type SettingsNavGroup = { title: string; items: SettingsNavItem[] };
 // The router marks a link active on its own (by path prefix and search subset) and overrides aria-current, so links must match exactly.
 export type SettingsLinkProps = { className: string; "aria-current"?: "page"; activeOptions: { exact: true }; children: ReactNode };
@@ -19,6 +21,9 @@ export type SettingsLinkProps = { className: string; "aria-current"?: "page"; ac
  * Sub-navigation plus content. Sections are routes: `renderLink` returns the router link for an
  * item with the given props, so the kit does not need to know the URLs.
  */
+/** The search box only pays off on long menus. */
+const SEARCH_MIN_ITEMS = 13;
+
 export function SettingsLayout({ label, groups, active, renderLink, children }: {
   label: string;
   groups: SettingsNavGroup[];
@@ -32,13 +37,16 @@ export function SettingsLayout({ label, groups, active, renderLink, children }: 
   const shown = groups
     .map((g) => ({ ...g, items: g.items.filter((it) => !q || `${it.label} ${it.keywords ?? ""}`.toLowerCase().includes(q)) }))
     .filter((g) => g.items.length > 0);
+  const searchable = groups.reduce((n, g) => n + g.items.length, 0) >= SEARCH_MIN_ITEMS;
   return (
     <div className="st">
       <nav className="st-sub" aria-label={label}>
-        <div className="st-q">
-          <Icon name="search" />
-          <Input label={t("settings.search")} className="st-q-f" hideLabel type="search" placeholder={t("settings.search")} value={query} onChange={(e) => setQuery(e.target.value)} />
-        </div>
+        {searchable && (
+          <div className="st-q">
+            <Icon name="search" />
+            <Input label={t("settings.search")} className="st-q-f" hideLabel type="search" placeholder={t("settings.search")} value={query} onChange={(e) => setQuery(e.target.value)} />
+          </div>
+        )}
         {shown.map((g) => (
           <div key={g.title} className="st-grp" role="group" aria-label={g.title}>
             <span className="st-gt" aria-hidden="true">{g.title}</span>
@@ -52,6 +60,7 @@ export function SettingsLayout({ label, groups, active, renderLink, children }: 
                     <>
                       <Icon name={it.icon} />
                       <span>{it.label}</span>
+                      {it.warn && <span className="st-warn" role="img" aria-label={it.warn} />}
                     </>
                   ),
                 })}
@@ -66,7 +75,7 @@ export function SettingsLayout({ label, groups, active, renderLink, children }: 
   );
 }
 
-/** One settings section: a heading, an optional hint and its rows or cards. */
+/** One settings section: a bordered box with a header strip (title, optional hint) over its rows or cards. */
 export function SettingsSection({ title, description, actions, children }: {
   title: string;
   description?: ReactNode;
@@ -82,12 +91,12 @@ export function SettingsSection({ title, description, actions, children }: {
         </div>
         {actions && <div className="st-sh-a">{actions}</div>}
       </header>
-      {children}
+      <div className="st-body">{children}</div>
     </section>
   );
 }
 
-/** Groups setting rows on a --sunk card. */
+/** Groups setting rows inside a section. */
 export function SettingsCard({ children }: { children: ReactNode }) {
   return <div className="st-card">{children}</div>;
 }
@@ -230,9 +239,9 @@ export function SaveBar<T extends Record<string, unknown>>({ draft, labels, onSa
 /** Destructive actions, kept apart at the bottom of a page. */
 export function DangerZone({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="st-sec">
+    <section className="st-sec st-dz">
       <header className="st-sh"><h2 className="st-dz-h">{title}</h2></header>
-      <div className="st-dz">{children}</div>
+      <div className="st-body">{children}</div>
     </section>
   );
 }
