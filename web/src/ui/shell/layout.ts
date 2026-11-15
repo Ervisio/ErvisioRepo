@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 
 export const layouts = ["console", "foglio", "corsie"] as const;
 export type Layout = (typeof layouts)[number];
-export const themes = ["system", "light", "dark"] as const;
+export const themes = ["system", "light", "dark", "oled", "soft"] as const;
 export type Theme = (typeof themes)[number];
 
 export const defaultLayout: Layout = "console";
@@ -43,7 +43,11 @@ const dark = typeof matchMedia === "function" ? matchMedia("(prefers-color-schem
 function paint() {
   const root = document.documentElement;
   root.dataset.layout = current;
-  root.dataset.theme = currentTheme === "system" ? (dark?.matches === false ? "light" : "dark") : currentTheme;
+  // oled and soft are the classic palettes (dark and light scheme); the others use the GitHub palette.
+  const scheme = currentTheme === "system" ? (dark?.matches === false ? "light" : "dark") : currentTheme === "oled" ? "dark" : currentTheme === "soft" ? "light" : currentTheme;
+  root.dataset.theme = scheme;
+  if (currentTheme === "oled" || currentTheme === "soft") root.dataset.palette = "classic";
+  else delete root.dataset.palette;
   for (const l of listeners) l();
 }
 

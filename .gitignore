@@ -18,3 +18,4 @@ __pycache__/
 .context/now.md
 .context/archive/
 .context/.last-nudge
+.playwright-mcp/

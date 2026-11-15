@@ -38,3 +38,10 @@ Related:
 - docs/PLAN.md §11 (UI phase), §10.5 (agent rules).
 - web/src/api/ (identity, repos, issues, notifications, useStorage): the data the shell and home read.
 - map/plugin.md: plugin SDK styling contract uses the same token names.
+
+## Palettes (2026-11-15)
+- tokens.css: `:root` = GitHub dark, `[data-theme=light]` = GitHub light; classic values live under `:root[data-palette=classic]` (oled = dark, soft = light). design/tokens.css mirrors it.
+- ui/shell/layout.ts `paint()` maps the preference (system, light, dark, oled, soft) to data-theme + data-palette. Enum also in api/openapi.yaml, internal/dashboard, migration 00240.
+- Kit tokens `--bd` (1px ring: `--line` in GitHub, transparent in classic), `--edge`, `--field`. The GitHub-only overrides sit at the end of ui.css under `:root:not([data-palette=classic])`; filled controls use `--acc-fill` + `--on-accent`.
+- Trap: those overrides have specificity 0,3,0. Page CSS that must undo the ring needs `:root:root` (see `.hm-tabs`, `.hm-find` in app.css).
+- Home (pages/Home.tsx, `.hm-*` in app.css): aside `Repos` (max 7, pinned first, 4 on mobile) + `AdminWarning`, `Attention` (kit Tabs), `Activity` by day.

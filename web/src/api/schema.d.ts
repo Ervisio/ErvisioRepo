@@ -5192,7 +5192,7 @@ export interface components {
         };
         UserPreferences: {
             /** @enum {string} */
-            theme: "system" | "light" | "dark";
+            theme: "system" | "light" | "dark" | "oled" | "soft";
             /**
              * @description Empty = the instance default
              * @enum {string}
@@ -5201,7 +5201,7 @@ export interface components {
         };
         UserPreferencesUpdate: {
             /** @enum {string} */
-            theme?: "system" | "light" | "dark";
+            theme?: "system" | "light" | "dark" | "oled" | "soft";
             /** @enum {string} */
             layout?: "" | "console" | "foglio" | "corsie";
         };

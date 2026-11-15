@@ -9374,12 +9374,12 @@ components:
       type: object
       required: [theme, layout]
       properties:
-        theme: {type: string, enum: [system, light, dark]}
+        theme: {type: string, enum: [system, light, dark, oled, soft]}
         layout: {type: string, enum: ["", console, foglio, corsie], description: Empty = the instance default}
     UserPreferencesUpdate:
       type: object
       properties:
-        theme: {type: string, enum: [system, light, dark]}
+        theme: {type: string, enum: [system, light, dark, oled, soft]}
         layout: {type: string, enum: ["", console, foglio, corsie]}
     ActionsJob:
       type: object

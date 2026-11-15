@@ -4,12 +4,11 @@ import { useRunners } from "../api/actions.ts";
 import { useSession } from "../api/identity.ts";
 import { useUserActivity, useUserIssues, useUserPins, useUserRuns, type ActivityItem, type UserIssue, type UserIssueFilter } from "../api/personal.ts";
 import { useMyRepos } from "../api/repos.ts";
-import { useMeta } from "../api/useMeta.ts";
 import { useStorageStatus } from "../api/useStorage.ts";
 import { useT } from "../i18n/useT.ts";
-import { Card, Icon, Page, Tabs, TabsList, TabsTrigger, type IconName } from "../ui/index.ts";
-import type { Section } from "../ui/shell/nav.tsx";
+import { Button, Icon, Input, Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/index.ts";
 import { When } from "./code/common.tsx";
+import { CreateRepoDialog } from "./repos/RepoList.tsx";
 
 // Dashboard built from existing endpoints only. Each block hides itself or shows an empty note
 // when its data is missing, so a failing endpoint never breaks the page.
@@ -17,21 +16,97 @@ import { When } from "./code/common.tsx";
 export function Home() {
   const t = useT("home");
   const admin = useSession().data?.role === "admin";
-  const today = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+  // page-body-aside is what widens .tb-main in the console shell; hm-grid reshapes it.
   return (
-    <Page
-      title={t("dash.title")}
-      subtitle={today}
-      aside={
+    <div className="page sec-code hm">
+      <h1 className="sr-only">{t("dash.title")}</h1>
+      <div className="page-body page-body-aside hm-grid">
+        <aside className="hm-side" aria-label={t("dash.repos")}>
+          <Repos />
+        </aside>
+        <div className="hm-main">
+          {admin && <AdminWarning />}
+          <Attention />
+          <Activity />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const maxRepos = 7;
+
+function Repos() {
+  const t = useT("home");
+  const repos = useMyRepos();
+  const pins = useUserPins();
+  const [creating, setCreating] = useState(false);
+  const [query, setQuery] = useState("");
+  if (repos.isError) return null;
+  const all = repos.data ?? [];
+  const pinned = pins.data ?? [];
+  const pinnedNames = new Set(pinned.map((r) => r.fullName));
+  const recent = all.filter((r) => !pinnedNames.has(r.fullName)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const q = query.trim().toLowerCase();
+  const matches = [...pinned, ...recent].filter((r) => r.fullName.toLowerCase().includes(q));
+  const rows = matches.slice(0, maxRepos);
+  return (
+    <>
+      <div className="hm-head">
+        <h2>{t("dash.repos")}</h2>
+        <Button variant="primary" size="sm" icon="plus" className="hm-new" onClick={() => setCreating(true)}>{t("dash.new")}</Button>
+        <CreateRepoDialog open={creating} onOpenChange={setCreating} />
+      </div>
+      {repos.isPending ? (
+        <p className="ui-note" role="status">{t("dash.loading")}</p>
+      ) : all.length === 0 ? (
+        <p className="hm-note">{t("dash.reposEmpty")}</p>
+      ) : (
         <>
-          <RecentRepos />
-          {admin && <InstanceHealth />}
+          <Input className="hm-find" type="search" label={t("dash.find")} hideLabel placeholder={t("dash.find")} autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} />
+          {rows.length === 0 ? (
+            <p className="hm-note">{t("dash.noMatch")}</p>
+          ) : (
+            <ul className="hm-repos" data-filtered={q ? "" : undefined}>
+              {rows.map((r) => (
+                <li key={r.fullName}>
+                  <Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="hm-repo">
+                    <Icon name={r.visibility === "public" ? "book" : "lock"} />
+                    <span>{r.owner}/<b>{r.name}</b></span>
+                    {pinnedNames.has(r.fullName) && (
+                      <>
+                        <Icon name="star" />
+                        <span className="sr-only">{t("dash.pinned")}</span>
+                      </>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {all.length > rows.length && <Link to="/repos" className="hm-all">{t("dash.allRepos", { count: all.length })}</Link>}
         </>
-      }
-    >
-      <Attention />
-      <Activity />
-    </Page>
+      )}
+    </>
+  );
+}
+
+function AdminWarning() {
+  const t = useT("home");
+  const runners = useRunners({ kind: "instance" });
+  const storage = useStorageStatus();
+  const warnings = storage.data?.warnings ?? [];
+  const problems = [
+    ...(warnings.length > 0 ? [t("dash.storageWarnings", { count: warnings.length })] : []),
+    ...(runners.data && !runners.data.some((r) => r.online) ? [t("dash.noRunner")] : []),
+  ];
+  if (problems.length === 0) return null;
+  return (
+    <Link to="/admin" className="hm-warn">
+      <Icon name="alert" />
+      <span>{problems.join(" · ")}</span>
+      <span className="hm-warn-go">{t("dash.details")}</span>
+    </Link>
   );
 }
 
@@ -64,45 +139,58 @@ function Attention() {
   const runs = active === "failed" ? failed.data?.runs : undefined;
   const empty = !(issues?.length || runs?.length);
   return (
-    <Card title={t("dash.attention")} actions={total > 0 ? <span className="hm-n">{total}</span> : undefined}>
-      <Tabs className="hm-pad" value={active} onValueChange={(v) => setPicked(attentionTabs.find((k) => k === v) ?? null)}>
-        <TabsList aria-label={t("dash.attention")}>
+    <Tabs className="hm-wait" value={active} onValueChange={(v) => setPicked(attentionTabs.find((k) => k === v) ?? null)}>
+      <div className="hm-top">
+        <h2>{t("dash.attention")}</h2>
+        <TabsList className="hm-tabs" aria-label={t("dash.attention")}>
           {attentionTabs.map((k) => (
-            <TabsTrigger key={k} value={k}>{t(`dash.tab.${k}`)}{counts[k] ? ` ${counts[k]}` : ""}</TabsTrigger>
+            <TabsTrigger key={k} className="hm-tab" value={k}>
+              {t(`dash.tab.${k}`)}
+              {counts[k] ? <i>{counts[k]}</i> : null}
+            </TabsTrigger>
           ))}
         </TabsList>
-      </Tabs>
-      {query.isPending ? (
-        <p className="ui-note hm-pad" role="status">{t("dash.loading")}</p>
-      ) : query.isError ? (
-        <p className="ui-note hm-pad" role="alert">{t("dash.loadError")}</p>
-      ) : empty ? (
-        <p className="ui-note hm-pad">{t(`dash.empty.${active}`)}</p>
-      ) : (
-        <>
-          {issues?.map((i) => (
-            <Link key={`${i.fullName}#${i.number}`} {...issueLink(i)} className={`hm-row sec-${i.kind === "pull" ? "pr" : "issue"}`}>
-              <span className="sb-kt"><Icon name={i.kind === "pull" ? "pr" : "issue"} /></span>
-              <span className="hm-txt">
-                <b>{i.title}</b>
-                <small>{i.fullName} #{i.number}</small>
-              </span>
-              <When iso={i.updatedAt} />
-            </Link>
-          ))}
-          {runs?.map((r) => (
-            <a key={r.id} href={r.url} className="hm-row sec-act">
-              <span className="sb-kt"><Icon name="play" /></span>
-              <span className="hm-txt">
-                <b>{r.title || r.workflowName}</b>
-                <small>{r.fullName} · {r.workflowName} · {r.branch}</small>
-              </span>
-              <When iso={r.updatedAt} />
-            </a>
-          ))}
-        </>
-      )}
-    </Card>
+      </div>
+      <TabsContent value={active} className="hm-box">
+        {query.isPending ? (
+          <p className="hm-empty" role="status">{t("dash.loading")}</p>
+        ) : query.isError ? (
+          <p className="hm-empty" role="alert">{t("dash.loadError")}</p>
+        ) : empty ? (
+          total === 0 ? (
+            <div className="hm-empty">
+              <p>{t("dash.waitingEmpty")}</p>
+              <p>{t("dash.waitingHint")}</p>
+            </div>
+          ) : (
+            <p className="hm-empty">{t(`dash.empty.${active}`)}</p>
+          )
+        ) : (
+          <>
+            {issues?.map((i) => (
+              <Link key={`${i.fullName}#${i.number}`} {...issueLink(i)} className={`hm-row sec-${i.kind === "pull" ? "pr" : "issue"}`}>
+                <Icon name={i.kind === "pull" ? "pr" : "issue"} />
+                <span className="hm-body">
+                  <b>{i.title}</b>
+                  <small>{i.fullName} #{i.number}</small>
+                </span>
+                <When iso={i.updatedAt} />
+              </Link>
+            ))}
+            {runs?.map((r) => (
+              <a key={r.id} href={r.url} className="hm-row hm-fail">
+                <Icon name="x" />
+                <span className="hm-body">
+                  <b>{r.title || r.workflowName}</b>
+                  <small>{r.fullName} · {r.workflowName} · {r.branch}</small>
+                </span>
+                <When iso={r.updatedAt} />
+              </a>
+            ))}
+          </>
+        )}
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -110,9 +198,6 @@ function dayKey(iso: string): string {
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? "" : d.toDateString();
 }
-
-const activityIcon: Record<ActivityItem["kind"], IconName> = { push: "commit", issue: "issue", pull_request: "pr", release: "tag", comment: "issue" };
-const activitySection: Record<ActivityItem["kind"], Section> = { push: "code", issue: "issue", pull_request: "pr", release: "pkg", comment: "issue" };
 
 function activityLink(a: ActivityItem) {
   const params = { owner: a.owner, name: a.repo };
@@ -146,96 +231,27 @@ function Activity() {
     else groups.push({ key, label: label(key, a.createdAt), rows: [a] });
   }
   return (
-    <Card title={t("dash.activity")}>
+    <section className="hm-act" aria-labelledby="hm-act-h">
+      <h2 id="hm-act-h">{t("dash.activity")}</h2>
       {feed.isPending ? (
-        <p className="ui-note hm-pad" role="status">{t("dash.loading")}</p>
+        <p className="hm-note" role="status">{t("dash.loading")}</p>
       ) : items.length === 0 ? (
-        <p className="ui-note hm-pad">{t("dash.activityEmpty")}</p>
+        <p className="hm-note">{t("dash.activityEmpty")}</p>
       ) : (
         groups.map((g) => (
           <section key={g.key} aria-label={g.label}>
-            <h4 className="hm-day">{g.label}</h4>
+            <h3 className="hm-day">{g.label}</h3>
             {g.rows.map((a) => (
-              <Link key={a.id} {...activityLink(a)} className={`hm-act sec-${activitySection[a.kind]}`}>
-                <Icon name={activityIcon[a.kind]} />
-                <p>
+              <Link key={a.id} {...activityLink(a)} className="hm-line">
+                <span>
                   <b>{a.actor || t("dash.act.someone")}</b> {actionText(a)} <b>{a.fullName}</b>
-                  {a.title && <small>{a.number > 0 ? `#${a.number} ` : ""}{a.title}</small>}
-                </p>
+                </span>
                 <When iso={a.createdAt} />
               </Link>
             ))}
           </section>
         ))
       )}
-    </Card>
-  );
-}
-
-function RecentRepos() {
-  const t = useT("home");
-  const repos = useMyRepos();
-  const pins = useUserPins();
-  if (repos.isError) return null;
-  const all = repos.data ?? [];
-  const pinned = pins.data ?? [];
-  const pinnedNames = new Set(pinned.map((r) => r.fullName));
-  const recent = [...all].filter((r) => !pinnedNames.has(r.fullName)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  const rows = [...pinned, ...recent].slice(0, Math.max(5, pinned.length));
-  return (
-    <Card title={t("dash.repos")} actions={all.length > rows.length ? <Link to="/repos" className="hm-link">{t("dash.allRepos", { count: all.length })}</Link> : undefined}>
-      {repos.isPending ? (
-        <p className="ui-note hm-pad" role="status">{t("dash.loading")}</p>
-      ) : rows.length === 0 ? (
-        <p className="ui-note hm-pad">{t("dash.reposEmpty")}</p>
-      ) : (
-        rows.map((r) => (
-          <Link key={r.fullName} to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="hm-row hm-row-sm sec-code">
-            <span className="sb-kt"><Icon name={pinnedNames.has(r.fullName) ? "star" : r.visibility === "public" ? "book" : "lock"} /></span>
-            <span className="hm-txt">
-              <b>{r.fullName}</b>
-              <small><When iso={r.updatedAt} /></small>
-            </span>
-          </Link>
-        ))
-      )}
-    </Card>
-  );
-}
-
-function InstanceHealth() {
-  const t = useT("home");
-  const runners = useRunners({ kind: "instance" });
-  const storage = useStorageStatus();
-  const meta = useMeta();
-  const online = runners.data?.filter((r) => r.online).length ?? 0;
-  const warnings = storage.data?.warnings ?? [];
-  return (
-    <Card title={t("dash.health")} className="hm-health" actions={<Link to="/admin" className="hm-link">{t("dash.details")}</Link>}>
-      <div className="hm-stat">
-        {runners.data && (
-          <Link to="/admin/runners">
-            <b>{online}/{runners.data.length}</b>
-            <small>{t("dash.runnersOnline")}</small>
-          </Link>
-        )}
-        {meta.data && (
-          <Link to="/admin">
-            <b>{meta.data.version}</b>
-            <small>{t("version")}</small>
-          </Link>
-        )}
-      </div>
-      {warnings.length > 0 && (
-        <Link to="/admin/storage" className="hm-warn">
-          <Icon name="alert" />
-          <span>
-            <b>{t("dash.storageWarnings", { count: warnings.length })}</b>
-            {warnings[0]?.message}
-          </span>
-        </Link>
-      )}
-      {!runners.data && !meta.data && warnings.length === 0 && <p className="ui-note hm-pad">{t("dash.healthEmpty")}</p>}
-    </Card>
+    </section>
   );
 }

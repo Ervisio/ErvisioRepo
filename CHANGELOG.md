@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Web: the default theme now uses GitHub colours, light and dark, with visible borders on inputs, cards and menus and tighter corners (6, 8 and 12 px). System, Light and Dark use this palette. The previous palettes stay available under Settings, Appearance as OLED (dark) and Soft (light). Accounts keep the theme they had saved: Light and Dark switch to the new colours, and you pick OLED or Soft to get the old ones back.
+- Web: Home has two columns. Your repositories sit on the left with a filter, pinned ones first and a New button. On the right, Waiting for you groups assigned issues, review requests and failed runs in tabs, and recent activity is listed by day. The instance health card is gone: administrators see one warning line, linked to Administration, only when storage reports warnings or no runner is online.
+- API: `theme` in the user preferences accepts `oled` and `soft` (migration 00240).
+
 ## [1.3.0] - 2026-11-11
 
 ### Changed

@@ -164,6 +164,8 @@
   "theme.system": "System",
   "theme.light": "Light",
   "theme.dark": "Dark",
+  "theme.oled": "OLED black",
+  "theme.soft": "Soft light",
   "layout.default": "Instance default",
   "layout.console": "Console",
   "layout.foglio": "Sheet",

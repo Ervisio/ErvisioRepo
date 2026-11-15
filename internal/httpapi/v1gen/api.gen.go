@@ -1911,6 +1911,8 @@ func (e UserPreferencesLayout) Valid() bool {
 const (
 	UserPreferencesThemeDark   UserPreferencesTheme = "dark"
 	UserPreferencesThemeLight  UserPreferencesTheme = "light"
+	UserPreferencesThemeOled   UserPreferencesTheme = "oled"
+	UserPreferencesThemeSoft   UserPreferencesTheme = "soft"
 	UserPreferencesThemeSystem UserPreferencesTheme = "system"
 )
 
@@ -1920,6 +1922,10 @@ func (e UserPreferencesTheme) Valid() bool {
 	case UserPreferencesThemeDark:
 		return true
 	case UserPreferencesThemeLight:
+		return true
+	case UserPreferencesThemeOled:
+		return true
+	case UserPreferencesThemeSoft:
 		return true
 	case UserPreferencesThemeSystem:
 		return true
@@ -1956,6 +1962,8 @@ func (e UserPreferencesUpdateLayout) Valid() bool {
 const (
 	UserPreferencesUpdateThemeDark   UserPreferencesUpdateTheme = "dark"
 	UserPreferencesUpdateThemeLight  UserPreferencesUpdateTheme = "light"
+	UserPreferencesUpdateThemeOled   UserPreferencesUpdateTheme = "oled"
+	UserPreferencesUpdateThemeSoft   UserPreferencesUpdateTheme = "soft"
 	UserPreferencesUpdateThemeSystem UserPreferencesUpdateTheme = "system"
 )
 
@@ -1965,6 +1973,10 @@ func (e UserPreferencesUpdateTheme) Valid() bool {
 	case UserPreferencesUpdateThemeDark:
 		return true
 	case UserPreferencesUpdateThemeLight:
+		return true
+	case UserPreferencesUpdateThemeOled:
+		return true
+	case UserPreferencesUpdateThemeSoft:
 		return true
 	case UserPreferencesUpdateThemeSystem:
 		return true

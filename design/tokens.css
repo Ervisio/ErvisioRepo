@@ -1,11 +1,114 @@
-/* ErvisioRepo: token del core Ervisio.
-   Nomi: contratto del plugin SDK 0.3 (docs/sdk.md, sezione Styling).
-   Valori VERIFICATI (da ErvisioLogs/web/src/index.css, che segue le DESIGN-RULES del core):
-     --bg --surface --sunk --ink --ink2 --ink3 --ok --err --h-log, tema chiaro idem.
-   Valori RICOSTRUITI (il tokens.css del core non e' nel workspace): --warn --info, le altre --h-*
-   e tutte le tinte -s. Da sostituire con tokens.css del core appena disponibile; i nomi restano. */
+/* ErvisioRepo: design tokens.
+   Names: plugin SDK 0.3 contract (docs/sdk.md, Styling section).
+   Default palette = GitHub dark / GitHub light (data-theme). The two opt-in palettes oled and soft are the
+   classic palette, switched on with data-palette="classic" on <html> (see ui/shell/layout.ts).
+   Classic values: verified against ErvisioLogs/web/src/index.css for --bg --surface --sunk --ink --ink2 --ink3
+   --ok --err --h-log; --warn --info, the other --h-* and all -s tints are reconstructed.
+   --bd, --edge and --field are kit tokens: classic keeps today's borderless look, GitHub draws 1px --line. */
 
+/* Not colours: global to every palette. */
 :root {
+  --font: "Figtree", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* ErvisioRepo sections mapped onto the section hues */
+  --sec-code: var(--h-file);   --sec-code-s: var(--h-file-s);
+  --sec-pr: var(--h-svc);      --sec-pr-s: var(--h-svc-s);
+  --sec-issue: var(--h-usr);   --sec-issue-s: var(--h-usr-s);
+  --sec-act: var(--h-term);    --sec-act-s: var(--h-term-s);
+  --sec-pkg: var(--h-sw);      --sec-pkg-s: var(--h-sw-s);
+}
+
+/* GitHub dark (default), all layouts. */
+:root {
+  color-scheme: dark;
+  --bg: #0d1117;  --page: #0d1117;
+  --surface: #151b23;  --surf: #151b23;
+  --sunk: #151b23;
+  --raise: #212830;  --hover: #212830;
+  --card: #151b23;
+  --line: #3d444d;
+  --ink: #f0f6fc;
+  --ink2: #9198a1;
+  --ink3: #7d8590;
+
+  --accent: #4493f8;
+  --acc-fill: #1f6feb;
+  --acc-text: #4493f8;
+  --on-accent: #ffffff;
+  --sel: rgba(56, 139, 253, .15);
+
+  /* kit: 1px ring on cards/inputs/menus, border of grouped rows, field fill (inputs sit on --bg) */
+  --bd: var(--line);
+  --edge: var(--line);
+  --field: var(--bg);
+
+  --h-ov: #4493f8;   --h-ov-s: rgba(68, 147, 248, .15);
+  --h-term: #f0883e; --h-term-s: rgba(240, 136, 62, .15);
+  --h-file: #4493f8; --h-file-s: rgba(68, 147, 248, .15);
+  --h-log: #d29922;  --h-log-s: rgba(210, 153, 34, .15);
+  --h-svc: #ab7df8;  --h-svc-s: rgba(171, 125, 248, .15);
+  --h-sw: #d29922;   --h-sw-s: rgba(210, 153, 34, .15);
+  --h-usr: #3fb950;  --h-usr-s: rgba(63, 185, 80, .15);
+  --h-plg: #3fb950;  --h-plg-s: rgba(63, 185, 80, .15);
+
+  --ok: #3fb950;   --ok-s: rgba(63, 185, 80, .15);
+  --warn: #d29922; --warn-s: rgba(210, 153, 34, .15);
+  --err: #f85149;  --err-s: rgba(248, 81, 73, .15);
+  --info: #4493f8; --info-s: rgba(68, 147, 248, .15);
+
+  --r-ctl: 6px;
+  --r-card: 8px;
+  --r-sheet: 12px;
+
+  /* syntax (Shiki and CodeMirror read these) */
+  --syn-kw: #ff7b72;
+  --syn-fn: #d2a8ff;
+  --syn-str: #a5d6ff;
+  --syn-num: #79c0ff;
+  --syn-type: #ffa657;
+  --syn-com: #9198a1;
+}
+
+/* GitHub light. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;  --page: #ffffff;
+  --surface: #f6f8fa;  --surf: #f6f8fa;
+  --sunk: #f6f8fa;
+  --raise: #eff2f5;  --hover: #eff2f5;
+  --card: #f6f8fa;
+  --line: #d1d9e0;
+  --ink: #1f2328;
+  --ink2: #59636e;
+  --ink3: #6e7781;
+
+  --accent: #0969da;
+  --acc-fill: #0969da;
+  --acc-text: #0969da;
+  --on-accent: #ffffff;
+  --sel: #ddf4ff;
+
+  --h-ov: #0969da;   --h-ov-s: rgba(9, 105, 218, .10);
+  --h-term: #bc4c00; --h-term-s: rgba(188, 76, 0, .10);
+  --h-file: #0969da; --h-file-s: rgba(9, 105, 218, .10);
+  --h-log: #9a6700;  --h-log-s: rgba(154, 103, 0, .10);
+  --h-svc: #8250df;  --h-svc-s: rgba(130, 80, 223, .10);
+  --h-sw: #9a6700;   --h-sw-s: rgba(154, 103, 0, .10);
+  --h-usr: #1a7f37;  --h-usr-s: rgba(26, 127, 55, .10);
+  --h-plg: #1a7f37;  --h-plg-s: rgba(26, 127, 55, .10);
+
+  --ok: #1a7f37;   --ok-s: rgba(26, 127, 55, .10);
+  --warn: #9a6700; --warn-s: rgba(154, 103, 0, .10);
+  --err: #d1242f;  --err-s: rgba(209, 36, 47, .10);
+  --info: #0969da; --info-s: rgba(9, 105, 218, .10);
+
+  --syn-kw: #cf222e; --syn-fn: #8250df; --syn-str: #0a3069;
+  --syn-num: #0550ae; --syn-type: #953800; --syn-com: #59636e;
+}
+
+/* Classic dark = OLED (unchanged values). Also resets the GitHub-only kit tokens. */
+:root[data-palette="classic"] {
   color-scheme: dark;
   /* superfici OLED */
   --bg: #000000;
@@ -15,6 +118,10 @@
   --ink: #f4f4f6;
   --ink2: #b0b0ba;
   --ink3: #8f8f9a;
+
+  --bd: transparent;
+  --edge: var(--sunk);
+  --field: var(--sunk);
 
   /* hue di sezione del core */
   --h-ov: #9db4ff;   --h-ov-s: rgba(157, 180, 255, .14);
@@ -37,16 +144,6 @@
   --r-card: 18px;  /* card, blocchi codice */
   --r-sheet: 20px; /* pannello contenuti, dialog */
 
-  --font: "Figtree", system-ui, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, monospace;
-
-  /* sezioni di ErvisioRepo mappate sulle hue del core */
-  --sec-code: var(--h-file);   --sec-code-s: var(--h-file-s);
-  --sec-pr: var(--h-svc);      --sec-pr-s: var(--h-svc-s);
-  --sec-issue: var(--h-usr);   --sec-issue-s: var(--h-usr-s);
-  --sec-act: var(--h-term);    --sec-act-s: var(--h-term-s);
-  --sec-pkg: var(--h-sw);      --sec-pkg-s: var(--h-sw-s);
-
   /* sintassi (Shiki genera il tema da questi) */
   --syn-kw: #ff8ac4;
   --syn-fn: #64b5ff;
@@ -56,7 +153,8 @@
   --syn-com: #8f8f9a;
 }
 
-:root[data-theme="light"] {
+/* Classic light = soft. */
+:root[data-palette="classic"][data-theme="light"] {
   color-scheme: light;
   --bg: #ececef;
   --surface: #f7f7f9;
@@ -79,4 +177,41 @@
   --info: #1468c2; --info-s: rgba(20, 104, 194, .10);
   --syn-kw: #b8327a; --syn-fn: #1468c2; --syn-str: #5c7a00;
   --syn-num: #a85f00; --syn-type: #0b7d6b; --syn-com: #6b6b76;
+}
+
+/* Console (Variant Studio round 001, variant B), classic palette only: flat page under one top bar. The core
+   surfaces are remapped so the kit (cards, inputs, menus) follows the Console palette without its own rules. */
+:root[data-palette="classic"][data-layout="console"] {
+  --accent: #7c8cff;
+  --acc-fill: var(--accent);
+  --acc-text: color-mix(in srgb, var(--accent) 80%, #fff);
+  --sel: color-mix(in srgb, var(--accent) 18%, transparent);
+  --on-accent: #0b0c14;
+  --page: #0a0b10;
+  --surf: #111218;
+  --card: rgba(255, 255, 255, .035);
+  --hover: rgba(255, 255, 255, .06);
+  --line: rgba(255, 255, 255, .07);
+  --bg: var(--page);
+  --surface: var(--surf);
+  --sunk: rgba(255, 255, 255, .045);
+  --raise: var(--hover);
+  --ink: #eef0f6;
+  --ink2: #b6b9c6;
+  --ink3: #8d91a2;
+}
+:root[data-palette="classic"][data-layout="console"][data-theme="light"] {
+  --acc-fill: color-mix(in srgb, var(--accent) 64%, #000);
+  --acc-text: color-mix(in srgb, var(--accent) 62%, #000);
+  --sel: color-mix(in srgb, var(--accent) 14%, transparent);
+  --on-accent: #fff;
+  --page: #f3f4f8;
+  --surf: #fff;
+  --card: rgba(20, 24, 40, .035);
+  --hover: rgba(20, 24, 40, .06);
+  --line: rgba(20, 24, 40, .09);
+  --sunk: rgba(20, 24, 40, .04);
+  --ink: #14161d;
+  --ink2: #474b59;
+  --ink3: #5b5f6e;
 }

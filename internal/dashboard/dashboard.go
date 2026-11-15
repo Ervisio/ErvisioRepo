@@ -270,7 +270,7 @@ type Preferences struct {
 }
 
 var (
-	themes  = map[string]bool{"system": true, "light": true, "dark": true}
+	themes  = map[string]bool{"system": true, "light": true, "dark": true, "oled": true, "soft": true}
 	layouts = map[string]bool{"": true, "console": true, "foglio": true, "corsie": true}
 )
 
@@ -297,7 +297,7 @@ func (s *Service) UpdatePreferences(ctx context.Context, who auth.Principal, the
 	}
 	if theme != nil {
 		if !themes[*theme] {
-			return Preferences{}, invalid("theme must be system, light or dark")
+			return Preferences{}, invalid("theme must be system, light, dark, oled or soft")
 		}
 		cur.Theme = *theme
 	}

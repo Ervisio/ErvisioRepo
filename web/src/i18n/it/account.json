@@ -164,6 +164,8 @@
   "theme.system": "Sistema",
   "theme.light": "Chiaro",
   "theme.dark": "Scuro",
+  "theme.oled": "Nero OLED",
+  "theme.soft": "Chiaro tenue",
   "layout.default": "Predefinito dell'istanza",
   "layout.console": "Console",
   "layout.foglio": "Foglio",
