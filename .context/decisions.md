@@ -17,3 +17,4 @@
 2026-11-15 · Pagine codice del repo = Variant Studio 003 A (tabella): niente intestazione alta, visibilità nella barra in alto, file in tabella, README in scheda, vista file con menu ⋯ · scelta dell'utente in galleria. Le altre aree seguono in modalità mista: galleria solo dove serve ristrutturare.
 2026-11-15 · Dettaglio issue/PR = Variant Studio 004 A (due colonne, riquadro Stato con il merge a destra); run di Actions = 005 A (job a lato, passi apribili sul log) · scelte dell'utente in galleria: ha preso ogni volta la variante più vicina a GitHub.
 2026-11-15 · Impostazioni e admin riordinate senza galleria nella stessa direzione (menu a sinistra unico, titolo compatto, sezioni in riquadri) · decisione dell'agente comunicata all'utente, da rivedere se chiede varianti.
+2026-11-15 · Build solo amd64 per ora (immagine e pacchetti), niente QEMU · richiesta dell’utente: la build arm64 emulata teneva la release ferma oltre 30 minuti.

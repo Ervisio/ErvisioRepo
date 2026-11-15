@@ -13,7 +13,7 @@ curl -fsSL https://raw.githubusercontent.com/Ervisio/ErvisioRepo/main/deploy/ins
 # una release specifica:  ... | sudo sh -s -- --version 1.2.3
 ```
 
-Lo script riconosce distribuzione e architettura (amd64, arm64), scarica il `.deb` o `.rpm`, verifica `SHA256SUMS` e la sua firma ed25519 (serve openssl 3) e installa. Puoi anche installare a mano un pacchetto dalla pagina delle release.
+Lo script riconosce distribuzione e architettura (per ora solo amd64), scarica il `.deb` o `.rpm`, verifica `SHA256SUMS` e la sua firma ed25519 (serve openssl 3) e installa. Puoi anche installare a mano un pacchetto dalla pagina delle release.
 
 Cosa configura il pacchetto:
 

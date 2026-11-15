@@ -34,7 +34,7 @@ done
 
 case "$(uname -m)" in
   x86_64|amd64) ARCH=amd64 ;;
-  aarch64|arm64) ARCH=arm64 ;;
+  aarch64|arm64) die "arm64 packages are not published for now; only amd64 is supported" ;;
   *) die "unsupported architecture: $(uname -m)" ;;
 esac
 

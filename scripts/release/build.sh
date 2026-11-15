@@ -15,7 +15,7 @@ COMMIT="${COMMIT:-$(git rev-parse --short HEAD 2>/dev/null || echo unknown)}"
 NFPM_VERSION="${NFPM_VERSION:-v2.41.1}"
 MODULE=github.com/Ervisio/ErvisioRepo
 LDFLAGS="-s -w -X $MODULE/internal/buildinfo.version=$VERSION -X $MODULE/internal/buildinfo.commit=$COMMIT"
-ARCHES="${ARCHES:-amd64 arm64}"
+ARCHES="${ARCHES:-amd64}"
 DIST=dist
 
 rm -rf "$DIST"

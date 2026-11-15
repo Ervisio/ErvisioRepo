@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Release: the Docker image and the native packages are built for amd64 only for now, which removes the emulated arm64 build from the release. `install.sh` stops with a clear message on arm64. The image workflow can also be started by hand for an existing tag.
+
 ## [1.4.0] - 2026-11-15
 
 ### Changed
