@@ -22,6 +22,7 @@ import {
   type CommitStatus,
   type MergeMethod,
   type PullFilter,
+  type PullMergeability,
   type PullRequest,
   type PullReview,
 } from "../../api/pulls.ts";
@@ -31,9 +32,9 @@ import { Button, Dialog, DialogClose, EmptyState, Icon, Input, Menu, MenuItem, M
 import { useNotify } from "../account/common.tsx";
 import { CommitRow } from "../code/HistoryPages.tsx";
 import { Gate, Pager, RepoFrame, shortSha, When } from "../code/common.tsx";
-import { DetailLayout, StepNav, StripState, WorkHeader } from "../issues/IssuesPages.tsx";
-import { Avatar, Body, CommentBox, Composer, EventRow, FilterGroup, FilterItem, LabelChip, ListLayoutSwitch, SideBlock, StateIcon, StatePill, WorkList, type WorkState } from "../work/common.tsx";
-import { AssigneesBlock, canTriage, Conversation, LabelsBlock, MilestoneBlock, NotifyBlock, ParticipantsBlock, type TimelineExtra } from "../work/Conversation.tsx";
+import { DetailLayout, StepNav, WorkHeader } from "../issues/IssuesPages.tsx";
+import { Avatar, Body, CommentBox, Composer, EventRow, FilterGroup, FilterItem, IconTrigger, LabelChip, ListLayoutSwitch, SideBlock, StateIcon, StatePill, StatusBox, WorkList, type WorkState } from "../work/common.tsx";
+import { canTriage, Conversation, IssueMeta, type TimelineExtra } from "../work/Conversation.tsx";
 import { saveListOrder, useListLayout, type ListLayout } from "../work/layout.ts";
 import { PullFiles } from "./PullFiles.tsx";
 
@@ -407,53 +408,53 @@ function PullDetail({ repo, pr, tab, page }: { repo: Repo; pr: PullRequest; tab?
   const i = pr.issue;
   const state = pullState(pr);
   const canEdit = (me !== undefined && me === i.author) || canWrite(repo.permission);
+  const canDraft = canEdit && pr.state === "open";
+  const toggleDraft = () => update.mutate({ draft: !pr.draft }, { onError: notify.fail });
   const params = { owner: repo.owner, name: repo.name, number: String(i.number) };
+  const merged = pr.state === "merged";
+
+  const tabs = (
+    <nav className="wk-subtabs" aria-label={t("detail.tabs")}>
+      <Link className="wk-subtab" activeOptions={{ exact: true, includeSearch: true }} to="/$owner/$name/pulls/$number" params={params} search={{}} aria-current={tab === undefined ? "page" : undefined}>
+        {t("tab.conversation")}
+        <span className="wk-count">{i.commentCount}</span>
+      </Link>
+      <Link className="wk-subtab" activeOptions={{ exact: true, includeSearch: true }} to="/$owner/$name/pulls/$number" params={params} search={{ tab: "commits" }} aria-current={tab === "commits" ? "page" : undefined}>
+        {t("tab.commits")}
+      </Link>
+      <Link className="wk-subtab" activeOptions={{ exact: true, includeSearch: true }} to="/$owner/$name/pulls/$number" params={params} search={{ tab: "files" }} aria-current={tab === "files" ? "page" : undefined}>
+        {t("tab.files")}
+      </Link>
+    </nav>
+  );
 
   const header = (
     <WorkHeader
       title={i.title}
       number={i.number}
-      canEdit={canEdit && pr.state !== "merged"}
+      canEdit={canEdit && !merged}
       saving={update.isPending}
       onRename={(title) => update.mutate({ title }, { onError: notify.fail })}
-      pill={<StatePill state={state} label={t(`state.${state}`)} />}
+      pill={<StatePill kind="pull" state={state} label={t(`state.${state}`)} />}
       meta={
         <span className="wk-meta">
-          <span>
-            {pr.state === "merged"
-              ? t("detail.merged", { user: pr.mergedBy, head: pr.head.ref, base: pr.base.ref })
-              : t("detail.wants", { user: i.author, head: pr.head.ref, base: pr.base.ref })}
-          </span>
-          <When iso={pr.state === "merged" && pr.mergedAt ? pr.mergedAt : i.createdAt} />
+          <b>{merged ? pr.mergedBy : i.author}</b>
+          <span>{t(merged ? "detail.merged" : "detail.wants")}</span>
+          <code className="wk-br">{pr.head.ref}</code>
+          <span>{t("detail.into")}</span>
+          <code className="wk-br">{pr.base.ref}</code>
+          <When iso={merged && pr.mergedAt ? pr.mergedAt : i.createdAt} />
         </span>
       }
-      actions={
-        canEdit &&
-        pr.state === "open" && (
-          <Button size="sm" disabled={update.isPending} onClick={() => update.mutate({ draft: !pr.draft }, { onError: notify.fail })}>
+      menu={
+        canDraft && (
+          <MenuItem icon="edit" onSelect={toggleDraft}>
             {pr.draft ? t("detail.ready") : t("detail.toDraft")}
-          </Button>
+          </MenuItem>
         )
       }
+      tabs={tabs}
     />
-  );
-
-  const tabs = (
-    <nav className="ui-tablist wk-tabs" aria-label={t("detail.tabs")}>
-      <Link className="ui-tab" to="/$owner/$name/pulls/$number" params={params} search={{}} data-state={tab === undefined ? "active" : "inactive"}>
-        <Icon name="book" />
-        {t("tab.conversation")}
-        <span className="wk-count">{i.commentCount}</span>
-      </Link>
-      <Link className="ui-tab" to="/$owner/$name/pulls/$number" params={params} search={{ tab: "commits" }} data-state={tab === "commits" ? "active" : "inactive"}>
-        <Icon name="commit" />
-        {t("tab.commits")}
-      </Link>
-      <Link className="ui-tab" to="/$owner/$name/pulls/$number" params={params} search={{ tab: "files" }} data-state={tab === "files" ? "active" : "inactive"}>
-        <Icon name="file" />
-        {t("tab.files")}
-      </Link>
-    </nav>
   );
 
   if (tab !== undefined) {
@@ -461,35 +462,21 @@ function PullDetail({ repo, pr, tab, page }: { repo: Repo; pr: PullRequest; tab?
       <div className="wk-detail">
         {layout === "c" && <StepNav kind="pulls" repo={repo} number={i.number} />}
         {header}
-        {tabs}
         {tab === "commits" ? <PullCommits repo={repo} pr={pr} page={page} /> : <PullFiles repo={repo} pr={pr} />}
       </div>
     );
   }
 
-  const blocks = [
-    <ReviewersBlock key="r" repo={repo} pr={pr} />,
-    <AssigneesBlock key="a" repo={repo} issue={i} />,
-    <LabelsBlock key="l" repo={repo} issue={i} />,
-    <MilestoneBlock key="m" repo={repo} issue={i} />,
-    <NotifyBlock key="n" repo={repo} />,
-  ];
   return (
     <DetailLayout
       kind="pulls"
       repo={repo}
       number={i.number}
-      header={
-        <>
-          {header}
-          {tabs}
-        </>
-      }
-      strip={[<StripState key="s" label={t("strip.state")} value={<StatePill state={state} label={t(`state.${state}`)} />} />, ...blocks]}
+      header={header}
       sidebar={
         <>
-          {blocks}
-          <ParticipantsBlock repo={repo} issue={i} />
+          <MergeStatus repo={repo} pr={pr} onReady={canDraft ? toggleDraft : undefined} />
+          <IssueMeta repo={repo} issue={i} reviewers={pr.requestedReviewers.length} before={<ReviewersBlock repo={repo} pr={pr} />} />
         </>
       }
     >
@@ -527,7 +514,6 @@ function PullConversation({ repo, pr, canEdit }: { repo: Repo; pr: PullRequest; 
       stateBusy={update.isPending}
       onState={(s) => update.mutate({ state: s }, { onError: notify.fail })}
       closeLabels={{ close: t("detail.close"), reopen: t("detail.reopen"), withComment: t("detail.closeWithComment") }}
-      beforeComposer={<MergeBox repo={repo} pr={pr} />}
       primarySubmit={!canMerge}
     />
   );
@@ -618,7 +604,7 @@ function ReviewersBlock({ repo, pr }: { repo: Repo; pr: PullRequest }) {
       action={
         triage &&
         pr.state === "open" && (
-          <Menu align="end" trigger={<Button size="sm" variant="ghost" icon="gear" aria-label={t("side.editReviewers")} />}>
+          <Menu align="end" trigger={<IconTrigger icon="edit" label={t("side.editReviewers")} />}>
             <MenuLabel>{t("side.requestFrom")}</MenuLabel>
             {candidates.map((u) => {
               const on = pr.requestedReviewers.includes(u);
@@ -643,17 +629,10 @@ function ReviewersBlock({ repo, pr }: { repo: Repo; pr: PullRequest }) {
                 <Avatar user={u} size={20} />
                 {u}
                 <span className="acc-grow" />
-                {r ? (
-                  <span className={`wk-verdict wk-verdict-${r.state}`} title={t(`review.${r.state}`)}>
-                    <Icon name={reviewIcon[r.state].icon} />
-                    <span className="wk-sr">{t(`review.${r.state}`)}</span>
-                  </span>
-                ) : (
-                  <span className="wk-verdict" title={t("side.awaiting")}>
-                    <Icon name="clock" />
-                    <span className="wk-sr">{t("side.awaiting")}</span>
-                  </span>
-                )}
+                <span className={`wk-verdict wk-verdict-${r?.state ?? "pending"}`}>
+                  <Icon name={r ? reviewIcon[r.state].icon : "clock"} />
+                  {r ? t(`review.${r.state}`) : t("side.awaiting")}
+                </span>
               </li>
             );
           })}
@@ -663,7 +642,7 @@ function ReviewersBlock({ repo, pr }: { repo: Repo; pr: PullRequest }) {
   );
 }
 
-/* Merge box. */
+/* Status box: merge readiness and the merge controls. */
 
 const methods: MergeMethod[] = ["merge", "squash", "rebase"];
 
@@ -680,14 +659,13 @@ const statusTone = (s: string): "ok" | "warn" | "err" => (s === "success" ? "ok"
 const runTone = (r: CheckRun): "ok" | "warn" | "err" =>
   r.status !== "completed" ? "warn" : r.conclusion === "success" || r.conclusion === "neutral" || r.conclusion === "skipped" ? "ok" : "err";
 
-/** Commit statuses and latest check runs of the head commit. */
+/** Commit statuses and latest check runs of the head commit, as rows of the readiness list. */
 function HeadChecks({ repo, sha }: { repo: Repo; sha: string }) {
   const t = useT("pulls");
   const status = useHeadStatus(repo.owner, repo.name, sha);
   const checks = useHeadChecks(repo.owner, repo.name, sha);
   const statuses: CommitStatus[] = status.data?.statuses ?? [];
   const runs = checks.data?.checkRuns ?? [];
-  if (statuses.length === 0 && runs.length === 0) return null;
   const row = (key: string, tone: "ok" | "warn" | "err", name: string, detail: string, url: string) => (
     <Check key={key} ok={tone === "ok"} tone={tone === "warn" ? "warn" : undefined}>
       <b>{name}</b>
@@ -701,19 +679,28 @@ function HeadChecks({ repo, sha }: { repo: Repo; sha: string }) {
     </Check>
   );
   return (
-    <div className="wk-merge-checks">
-      <h4>{t("checks.title", { sha: shortSha(sha) })}</h4>
-      <ul className="wk-checks" aria-label={t("checks.title", { sha: shortSha(sha) })}>
-        {statuses.map((s) => row(`s:${s.context}`, statusTone(s.state), s.context, s.description || t(`checks.state.${s.state}`), s.targetUrl))}
-        {runs.map((r) =>
-          row(`r:${r.id}`, runTone(r), r.name, r.title || (r.status === "completed" ? t("checks.conclusion", { conclusion: r.conclusion }) : t(`checks.run.${r.status}`)), r.detailsUrl),
-        )}
-      </ul>
-    </div>
+    <>
+      {statuses.map((s) => row(`s:${s.context}`, statusTone(s.state), s.context, s.description || t(`checks.state.${s.state}`), s.targetUrl))}
+      {runs.map((r) =>
+        row(`r:${r.id}`, runTone(r), r.name, r.title || (r.status === "completed" ? t("checks.conclusion", { conclusion: r.conclusion }) : t(`checks.run.${r.status}`)), r.detailsUrl),
+      )}
+    </>
   );
 }
 
-function MergeBox({ repo, pr }: { repo: Repo; pr: PullRequest }) {
+/** The one thing that stops the merge, most actionable first. */
+function blockedBy(t: ReturnType<typeof useT>, data: PullMergeability): string {
+  if (data.mergeable === "conflict") return t("merge.conflicts", { count: data.conflictFiles.length });
+  if (data.mergeable === "unknown") return t("merge.unknown");
+  if (data.mergeable === "error") return t("merge.error");
+  if (data.missingChecks.length > 0) return t("merge.missingChecks", { checks: data.missingChecks.join(", ") });
+  if (data.approvals < data.requiredApprovals) return t("merge.approvals", { approvals: data.approvals, required: data.requiredApprovals });
+  const owners = data.codeOwners.find((c) => !c.approved);
+  if (owners) return t("merge.ownersWait", { owners: owners.owners.join(", "), pattern: owners.pattern });
+  return data.violations[0]?.message ?? t("merge.blocked");
+}
+
+function MergeStatus({ repo, pr, onReady }: { repo: Repo; pr: PullRequest; onReady?: () => void }) {
   const t = useT("pulls");
   const notify = useNotify();
   const writer = canWrite(repo.permission);
@@ -731,7 +718,7 @@ function MergeBox({ repo, pr }: { repo: Repo; pr: PullRequest }) {
 
   if (pr.state === "merged") {
     return (
-      <section className="wk-merge wk-merge-merged" aria-label={t("merge.label")}>
+      <StatusBox>
         <div className="wk-merge-head">
           <StateIcon kind="pull" state="merged" label={t("state.merged")} />
           <div>
@@ -746,12 +733,12 @@ function MergeBox({ repo, pr }: { repo: Repo; pr: PullRequest }) {
             </p>
           </div>
         </div>
-      </section>
+      </StatusBox>
     );
   }
   if (!open) {
     return (
-      <section className="wk-merge" aria-label={t("merge.label")}>
+      <StatusBox>
         <div className="wk-merge-head">
           <StateIcon kind="pull" state="closed" label={t("state.closed")} />
           <div>
@@ -759,25 +746,28 @@ function MergeBox({ repo, pr }: { repo: Repo; pr: PullRequest }) {
             <p className="ui-note">{t("merge.closedHint")}</p>
           </div>
         </div>
-      </section>
+      </StatusBox>
     );
   }
 
   const data = m.data;
   const ready = data?.canMerge === true && !pr.draft;
-  const headLine = pr.draft ? t("merge.draft") : !data ? t("merge.checking") : data.canMerge ? t("merge.ready") : t("merge.blocked");
+  const why = pr.draft ? undefined : !data ? t("merge.checking") : data.canMerge ? undefined : blockedBy(t, data);
   return (
-    <section className={`wk-merge ${ready ? "wk-merge-ok" : ""}`} aria-label={t("merge.label")}>
-      <div className="wk-merge-head">
-        <StateIcon kind="pull" state={ready ? "open" : "draft"} label={headLine} />
-        <div className="acc-grow">
-          <b>{headLine}</b>
-          {data?.rule && <p className="ui-note">{t("merge.rule", { rule: data.rule })}</p>}
-        </div>
-      </div>
-      {data && (
-        <ul className="wk-checks">
-          {data.mergeable === "conflict" ? (
+    <StatusBox>
+      <ul className="wk-checks">
+        {pr.draft && (
+          <Check ok={false} tone="warn">
+            {t("merge.draft")}
+            {onReady && (
+              <Button size="sm" onClick={onReady}>
+                {t("detail.ready")}
+              </Button>
+            )}
+          </Check>
+        )}
+        {data &&
+          (data.mergeable === "conflict" ? (
             <Check ok={false}>
               {t("merge.conflicts", { count: data.conflictFiles.length })}
               {data.conflictFiles.length > 0 && (
@@ -798,50 +788,48 @@ function MergeBox({ repo, pr }: { repo: Repo; pr: PullRequest }) {
             <Check ok={false}>{t("merge.error")}</Check>
           ) : (
             <Check ok>{t("merge.noConflicts")}</Check>
-          )}
-          {data.requiredApprovals > 0 && (
-            <Check ok={data.approvals >= data.requiredApprovals}>{t("merge.approvals", { approvals: data.approvals, required: data.requiredApprovals })}</Check>
-          )}
-          {data.missingChecks.length > 0 && <Check ok={false}>{t("merge.missingChecks", { checks: data.missingChecks.join(", ") })}</Check>}
-          {data.behind && (
-            <Check ok={false} tone="warn">
-              {t("merge.behind", { base: pr.base.ref })}
-              {canUpdate && (
-                <Button
-                  size="sm"
-                  disabled={update.isPending}
-                  onClick={() =>
-                    update.mutate({ method: "merge", expectedHeadSha: pr.head.sha }, { onSuccess: () => notify.ok(t("merge.updated")), onError: notify.fail })
-                  }
-                >
-                  {t("merge.updateBranch")}
-                </Button>
-              )}
-            </Check>
-          )}
-          {data.codeOwners.map((c) => (
-            <Check key={c.pattern} ok={c.approved}>
-              {t(c.approved ? "merge.ownersOk" : "merge.ownersWait", { owners: c.owners.join(", "), pattern: c.pattern })}
-            </Check>
           ))}
-          {data.codeOwnersErrors.map((e) => (
-            <Check key={e} ok={false} tone="warn">
-              {t("merge.ownersError", { error: e })}
-            </Check>
-          ))}
-          {data.violations.map((v) => (
-            <Check key={v.code + (v.commit ?? "")} ok={false}>
-              {v.message}
-              {v.commit && <code className="ui-mono"> {shortSha(v.commit)}</code>}
-            </Check>
-          ))}
-        </ul>
-      )}
-      <HeadChecks repo={repo} sha={pr.head.sha} />
+        {data && data.requiredApprovals > 0 && (
+          <Check ok={data.approvals >= data.requiredApprovals}>{t("merge.approvals", { approvals: data.approvals, required: data.requiredApprovals })}</Check>
+        )}
+        {data && data.missingChecks.length > 0 && <Check ok={false}>{t("merge.missingChecks", { checks: data.missingChecks.join(", ") })}</Check>}
+        {data?.behind && (
+          <Check ok={false} tone="warn">
+            {t("merge.behind", { base: pr.base.ref })}
+            {canUpdate && (
+              <Button
+                size="sm"
+                disabled={update.isPending}
+                onClick={() => update.mutate({ method: "merge", expectedHeadSha: pr.head.sha }, { onSuccess: () => notify.ok(t("merge.updated")), onError: notify.fail })}
+              >
+                {t("merge.updateBranch")}
+              </Button>
+            )}
+          </Check>
+        )}
+        {data?.codeOwners.map((c) => (
+          <Check key={c.pattern} ok={c.approved}>
+            {t(c.approved ? "merge.ownersOk" : "merge.ownersWait", { owners: c.owners.join(", "), pattern: c.pattern })}
+          </Check>
+        ))}
+        {data?.codeOwnersErrors.map((e) => (
+          <Check key={e} ok={false} tone="warn">
+            {t("merge.ownersError", { error: e })}
+          </Check>
+        ))}
+        {data?.violations.map((v) => (
+          <Check key={v.code + (v.commit ?? "")} ok={false}>
+            {v.message}
+            {v.commit && <code className="ui-mono"> {shortSha(v.commit)}</code>}
+          </Check>
+        ))}
+        <HeadChecks repo={repo} sha={pr.head.sha} />
+      </ul>
+      {data?.rule && <p className="ui-note">{t("merge.rule", { rule: data.rule })}</p>}
       {pr.autoMerge && (
         <div className="ui-note wk-merge-auto">
           <Icon name="clock" />
-          <span className="acc-grow">{t("merge.autoOn", { user: pr.autoMerge.enabledBy, method: t(`method.${pr.autoMerge.method}`) })}</span>
+          <span className="wk-grow">{t("merge.autoOn", { user: pr.autoMerge.enabledBy, method: t(`method.${pr.autoMerge.method}`) })}</span>
           {writer && (
             <Button size="sm" disabled={auto.isPending} onClick={() => auto.mutate(null, { onError: notify.fail })}>
               {t("merge.autoOff")}
@@ -849,27 +837,12 @@ function MergeBox({ repo, pr }: { repo: Repo; pr: PullRequest }) {
           )}
         </div>
       )}
-      {writer && (
-        <div className="wk-merge-form">
-          <Select label={t("merge.method")} value={method} onValueChange={(v) => setMethod(v as MergeMethod)} options={methods.map((x) => ({ value: x, label: t(`method.${x}`) }))} />
-          {method !== "rebase" && (
-            <Input label={t("merge.commitTitle")} placeholder={method === "squash" ? `${pr.issue.title} (#${pr.issue.number})` : t("merge.commitTitleHint")} value={title} onChange={(e) => setTitle(e.target.value)} />
-          )}
-          <label className="acc-check">
-            <input type="checkbox" checked={deleteBranch} onChange={(e) => setDeleteBranch(e.target.checked)} />
-            {t("merge.deleteBranch", { head: pr.head.ref })}
-          </label>
-          <div className="acc-actions">
-            {!pr.autoMerge && !ready && (
-              <Button
-                disabled={auto.isPending || pr.draft}
-                onClick={() => auto.mutate({ method, deleteBranch, title: title.trim() || undefined }, { onSuccess: () => notify.ok(t("merge.autoEnabled")), onError: notify.fail })}
-              >
-                {t("merge.autoEnable")}
-              </Button>
-            )}
+      {writer ? (
+        <>
+          <div className="wk-split">
             <Button
               variant="primary"
+              className="wk-split-main"
               disabled={!ready || merge.isPending}
               onClick={() =>
                 merge.mutate(
@@ -880,11 +853,46 @@ function MergeBox({ repo, pr }: { repo: Repo; pr: PullRequest }) {
             >
               {t(`merge.do.${method}`)}
             </Button>
+            <Menu align="end" label={t("merge.method")} trigger={<Button variant="primary" className="wk-split-more" icon="down" aria-label={t("merge.method")} title={t("merge.method")} />}>
+              <MenuLabel>{t("merge.method")}</MenuLabel>
+              {methods.map((x) => (
+                <MenuItem key={x} icon={x === method ? "check" : undefined} onSelect={() => setMethod(x)}>
+                  {t(`method.${x}`)}
+                </MenuItem>
+              ))}
+            </Menu>
           </div>
-        </div>
+          {why && (
+            <p className="wk-why">
+              <Icon name="clock" />
+              {why}
+            </p>
+          )}
+          {!pr.autoMerge && !ready && (
+            <Button
+              disabled={auto.isPending || pr.draft}
+              onClick={() => auto.mutate({ method, deleteBranch, title: title.trim() || undefined }, { onSuccess: () => notify.ok(t("merge.autoEnabled")), onError: notify.fail })}
+            >
+              {t("merge.autoEnable")}
+            </Button>
+          )}
+          <details className="wk-opts">
+            <summary>{t("merge.options")}</summary>
+            <div className="wk-opts-b">
+              {method !== "rebase" && (
+                <Input label={t("merge.commitTitle")} placeholder={method === "squash" ? `${pr.issue.title} (#${pr.issue.number})` : t("merge.commitTitleHint")} value={title} onChange={(e) => setTitle(e.target.value)} />
+              )}
+              <label className="acc-check">
+                <input type="checkbox" checked={deleteBranch} onChange={(e) => setDeleteBranch(e.target.checked)} />
+                {t("merge.deleteBranch", { head: pr.head.ref })}
+              </label>
+            </div>
+          </details>
+        </>
+      ) : (
+        <p className="ui-note">{t("merge.noPermission")}</p>
       )}
-      {!writer && <p className="ui-note">{t("merge.noPermission")}</p>}
-    </section>
+    </StatusBox>
   );
 }
 

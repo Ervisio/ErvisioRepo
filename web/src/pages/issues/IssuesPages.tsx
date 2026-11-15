@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
-  useCollaborators,
   useCreateIssue,
   useIssue,
   useIssues,
@@ -18,11 +17,11 @@ import { useSession } from "../../api/identity.ts";
 import { useLinkedPulls } from "../../api/pulls.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, Card, EmptyState, Icon, Input, Select } from "../../ui/index.ts";
+import { Button, Card, EmptyState, Icon, Input, Menu, Select } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { Gate, Pager, RepoFrame, When } from "../code/common.tsx";
-import { Avatar, Body, Composer, FilterGroup, FilterItem, LabelChip, ListLayoutSwitch, Meter, StateIcon, StatePill, WorkList, type WorkState } from "../work/common.tsx";
-import { AssigneesBlock, canTriage, Conversation, LabelsBlock, LockButton, MilestoneBlock, NotifyBlock, ParticipantsBlock } from "../work/Conversation.tsx";
+import { Avatar, Body, Composer, FilterGroup, FilterItem, IconTrigger, LabelChip, ListLayoutSwitch, Meter, SideBlock, SideDetails, StateIcon, StatePill, StatusBox, WorkList, type WorkState } from "../work/common.tsx";
+import { AssigneesGroup, canTriage, Conversation, detailsSummary, IssueMeta, LabelsGroup, LockMenuItems, MilestoneGroup } from "../work/Conversation.tsx";
 import { loadListOrder, saveListOrder, useListLayout, type ListLayout } from "../work/layout.ts";
 
 export type IssueSearch = {
@@ -354,8 +353,8 @@ function IssueLoader({ repo, number }: { repo: Repo; number: number }) {
   );
 }
 
-/** Title editing and state line shared by issue and pull request headers. */
-export function WorkHeader({ title, number, canEdit, onRename, saving, pill, meta, actions }: {
+/** Title block shared by issue and pull request pages: title, status pill, one meta line, optional sub-tabs. */
+export function WorkHeader({ title, number, canEdit, onRename, saving, pill, meta, menu, tabs }: {
   title: string;
   number: number;
   canEdit: boolean;
@@ -363,7 +362,9 @@ export function WorkHeader({ title, number, canEdit, onRename, saving, pill, met
   saving: boolean;
   pill: ReactNode;
   meta: ReactNode;
-  actions?: ReactNode;
+  /** Entries of the ⋯ menu; the menu is not drawn without them. */
+  menu?: ReactNode;
+  tabs?: ReactNode;
 }) {
   const t = useT("issues");
   const [draft, setDraft] = useState<string | undefined>(undefined);
@@ -374,12 +375,11 @@ export function WorkHeader({ title, number, canEdit, onRename, saving, pill, met
           <h2>
             {title} <span className="wk-num">#{number}</span>
           </h2>
-          <span className="acc-grow" />
-          {actions}
-          {canEdit && (
-            <Button size="sm" icon="edit" onClick={() => setDraft(title)}>
-              {t("detail.editTitle")}
-            </Button>
+          {canEdit && <IconTrigger icon="edit" label={t("detail.editTitle")} onClick={() => setDraft(title)} />}
+          {menu && (
+            <Menu align="end" label={t("detail.more")} trigger={<IconTrigger icon="dots" label={t("detail.more")} />}>
+              {menu}
+            </Menu>
           )}
         </div>
       ) : (
@@ -404,6 +404,7 @@ export function WorkHeader({ title, number, canEdit, onRename, saving, pill, met
         {pill}
         {meta}
       </div>
+      {tabs}
     </header>
   );
 }
@@ -447,33 +448,26 @@ export function StepNav({ kind, repo, number }: { kind: "issues" | "pulls"; repo
   );
 }
 
-/** Detail frame: sidebar (A), symmetric strip (B), or step navigation plus sidebar (C). */
-export function DetailLayout({ kind, repo, number, header, strip, sidebar, children }: {
+/** Detail frame: title block over the timeline (left) and the status and metadata column (right). */
+export function DetailLayout({ kind, repo, number, header, sidebar, children }: {
   kind: "issues" | "pulls";
   repo: Repo;
   number: number;
   header: ReactNode;
-  strip: ReactNode;
   sidebar: ReactNode;
   children: ReactNode;
 }) {
+  const t = useT("issues");
   const layout = useListLayout();
-  if (layout === "b") {
-    return (
-      <div className="wk-detail wk-detail-b">
-        {header}
-        <div className="wk-strip">{strip}</div>
-        {children}
-      </div>
-    );
-  }
   return (
     <div className="wk-detail">
       {layout === "c" && <StepNav kind={kind} repo={repo} number={number} />}
       {header}
       <div className="wk-dgrid">
         <div className="wk-dmain">{children}</div>
-        <aside className="wk-side">{sidebar}</aside>
+        <aside className="wk-side" aria-label={t("detail.side")}>
+          {sidebar}
+        </aside>
       </div>
     </div>
   );
@@ -487,12 +481,7 @@ function IssueDetail({ repo, issue }: { repo: Repo; issue: Issue }) {
   const lock = useLockIssue(repo.owner, repo.name, issue.number);
   const state = issueState(issue);
   const canEdit = (me !== undefined && me === issue.author) || canTriage(repo.permission);
-  const blocks = [
-    <AssigneesBlock key="a" repo={repo} issue={issue} />,
-    <LabelsBlock key="l" repo={repo} issue={issue} />,
-    <MilestoneBlock key="m" repo={repo} issue={issue} />,
-    <NotifyBlock key="n" repo={repo} />,
-  ];
+  const setState = (s: "open" | "closed", reason?: string) => update.mutate({ state: s, stateReason: reason }, { onError: notify.fail });
   return (
     <DetailLayout
       kind="issues"
@@ -505,27 +494,36 @@ function IssueDetail({ repo, issue }: { repo: Repo; issue: Issue }) {
           canEdit={canEdit}
           saving={update.isPending}
           onRename={(title) => update.mutate({ title }, { onError: notify.fail })}
-          pill={<StatePill state={state} label={t(`state.${state}`)} />}
+          pill={<StatePill kind="issue" state={state} label={t(`state.${state}`)} />}
           meta={
             <span className="wk-meta">
-              <span>{t("detail.opened", { user: issue.author })}</span>
+              <b>{issue.author}</b>
+              <span>{t("detail.opened")}</span>
               <When iso={issue.createdAt} />
-              <span>{t("row.comments", { count: issue.commentCount })}</span>
+              <span className="wk-dot">{t("row.comments", { count: issue.commentCount })}</span>
             </span>
           }
-          actions={<LockButton repo={repo} issue={issue} busy={lock.isPending} onLock={(l, reason) => lock.mutate({ lock: l, reason }, { onError: notify.fail })} />}
+          menu={canTriage(repo.permission) ? <LockMenuItems repo={repo} issue={issue} onLock={(l, reason) => lock.mutate({ lock: l, reason }, { onError: notify.fail })} /> : undefined}
         />
       }
-      strip={[
-        <StripState key="s" label={t("strip.state")} value={<StatePill state={state} label={t(`state.${state}`)} />} />,
-        ...blocks.slice(0, 3),
-        <LinkedPullsBlock key="p" repo={repo} issue={issue} />,
-        blocks[3],
-      ]}
       sidebar={
         <>
-          {blocks}
-          <ParticipantsBlock repo={repo} issue={issue} />
+          <StatusBox>
+            <p className="wk-status-line">
+              <StateIcon kind="issue" state={state} label={t(`state.${state}`)} />
+              <b>{t(`state.${state}`)}</b>
+            </p>
+            <p className="ui-note">
+              {issue.state === "open" ? t("detail.openedBy", { user: issue.author }) : t("detail.closedBy", { user: issue.closedBy || issue.author })}{" "}
+              <When iso={issue.state === "open" ? issue.createdAt : (issue.closedAt ?? issue.updatedAt)} />
+            </p>
+            {canEdit && (
+              <Button disabled={update.isPending} onClick={() => (issue.state === "open" ? setState("closed", "completed") : setState("open"))}>
+                {issue.state === "open" ? t("detail.close") : t("detail.reopen")}
+              </Button>
+            )}
+          </StatusBox>
+          <IssueMeta repo={repo} issue={issue} linked={<LinkedPullsBlock repo={repo} issue={issue} />} />
         </>
       }
     >
@@ -534,54 +532,37 @@ function IssueDetail({ repo, issue }: { repo: Repo; issue: Issue }) {
         issue={issue}
         canClose={canEdit}
         stateBusy={update.isPending}
-        onState={(s, reason) => update.mutate({ state: s, stateReason: reason }, { onError: notify.fail })}
+        onState={setState}
         closeLabels={{ close: t("detail.close"), reopen: t("detail.reopen"), withComment: t("detail.closeWithComment") }}
       />
     </DetailLayout>
   );
 }
 
-/** Pull requests whose body or comments reference the issue. */
+/** Pull requests whose body or comments reference the issue; the group is left out when there are none. */
 function LinkedPullsBlock({ repo, issue }: { repo: Repo; issue: Issue }) {
   const t = useT("issues");
   const linked = useLinkedPulls(repo.owner, repo.name, issue.number);
   const items = linked.data ?? [];
+  if (items.length === 0) return null;
   return (
-    <div className="wk-side-b">
-      <div className="wk-side-h">
-        <h4>{t("strip.linked")}</h4>
-      </div>
-      {items.length === 0 ? (
-        <p className="ui-note">{linked.isPending ? t("strip.linkedLoading") : t("strip.linkedNone")}</p>
-      ) : (
-        <ul className="wk-linked">
-          {items.map((p) => {
-            const [owner = repo.owner, name = repo.name] = p.repo.split("/");
-            const state: WorkState = p.state === "open" && p.draft ? "draft" : p.state;
-            const local = owner === repo.owner && name === repo.name;
-            return (
-              <li key={`${p.repo}#${p.number}`}>
-                <StateIcon kind="pull" state={state} label={t(`strip.linkedState.${state}`)} />
-                <Link to="/$owner/$name/pulls/$number" params={{ owner, name, number: String(p.number) }} title={p.title}>
-                  {local ? `#${p.number}` : `${p.repo}#${p.number}`} {p.title}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-export function StripState({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="wk-side-b">
-      <div className="wk-side-h">
-        <h4>{label}</h4>
-      </div>
-      <div className="wk-side-c">{value}</div>
-    </div>
+    <SideBlock title={t("side.linked")}>
+      <ul className="wk-linked">
+        {items.map((p) => {
+          const [owner = repo.owner, name = repo.name] = p.repo.split("/");
+          const state: WorkState = p.state === "open" && p.draft ? "draft" : p.state;
+          const local = owner === repo.owner && name === repo.name;
+          return (
+            <li key={`${p.repo}#${p.number}`}>
+              <StateIcon kind="pull" state={state} label={t(`side.linkedState.${state}`)} />
+              <Link to="/$owner/$name/pulls/$number" params={{ owner, name, number: String(p.number) }} title={p.title}>
+                {local ? `#${p.number}` : `${p.repo}#${p.number}`} {p.title}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </SideBlock>
   );
 }
 
@@ -655,18 +636,18 @@ function formBody(tpl: IssueTemplate): string {
 
 function IssueForm({ repo, template }: { repo: Repo; template?: IssueTemplate }) {
   const t = useT("issues");
+  const tw = useT("work");
   const notify = useNotify();
   const navigate = useNavigate();
   const create = useCreateIssue(repo.owner, repo.name);
   const triage = canTriage(repo.permission);
   const labels = useLabels(repo.owner, repo.name);
   const milestones = useMilestones(repo.owner, repo.name);
-  const people = useCollaborators(repo.owner, repo.name, triage);
   const [title, setTitle] = useState(template?.title ?? "");
   const [body, setBody] = useState(template ? (template.kind === "form" ? formBody(template) : template.body) : "");
   const [picked, setPicked] = useState<string[]>(template?.labels ?? []);
   const [assignees, setAssignees] = useState<string[]>(template?.assignees ?? []);
-  const [milestone, setMilestone] = useState("-");
+  const [milestone, setMilestone] = useState("");
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -676,7 +657,7 @@ function IssueForm({ repo, template }: { repo: Repo; template?: IssueTemplate })
         body,
         labels: triage ? picked : undefined,
         assignees: triage ? assignees : undefined,
-        milestoneId: triage && milestone !== "-" ? milestone : undefined,
+        milestoneId: triage && milestone ? milestone : undefined,
       },
       {
         onSuccess: (i) => void navigate({ to: "/$owner/$name/issues/$number", params: { owner: repo.owner, name: repo.name, number: String(i.number) } }),
@@ -685,58 +666,40 @@ function IssueForm({ repo, template }: { repo: Repo; template?: IssueTemplate })
     );
   }
 
-  const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
+  const chosen = (labels.data ?? []).filter((l) => picked.includes(l.name));
+  const chosenMilestone = (milestones.data ?? []).find((m) => m.id === milestone);
 
   return (
-    <form className="wk-dgrid" onSubmit={submit}>
-      <div className="wk-dmain wk-new">
-        <Input label={t("new.title")} required autoFocus maxLength={256} value={title} onChange={(e) => setTitle(e.target.value)} />
-        <Composer owner={repo.owner} name={repo.name} refName={repo.defaultBranch} value={body} onChange={setBody} label={t("new.body")} rows={12}>
-          <Link to="/$owner/$name/issues" params={{ owner: repo.owner, name: repo.name }}>
-            <Button variant="ghost">{t("new.cancel")}</Button>
-          </Link>
-          <Button variant="primary" type="submit" disabled={create.isPending || !title.trim()}>
-            {t("new.submit")}
-          </Button>
-        </Composer>
+    <form className="wk-detail" onSubmit={submit}>
+      <header className="wk-dh">
+        <div className="wk-dh-title">
+          <h2>{t("list.new")}</h2>
+        </div>
+      </header>
+      <div className="wk-dgrid">
+        <div className="wk-dmain wk-new">
+          <Input label={t("new.title")} required autoFocus maxLength={256} value={title} onChange={(e) => setTitle(e.target.value)} />
+          <div className="wk-cm wk-cm-new">
+            <Composer owner={repo.owner} name={repo.name} refName={repo.defaultBranch} value={body} onChange={setBody} label={t("new.body")} rows={12}>
+              <Link to="/$owner/$name/issues" params={{ owner: repo.owner, name: repo.name }}>
+                <Button variant="ghost">{t("new.cancel")}</Button>
+              </Link>
+              <Button variant="primary" type="submit" disabled={create.isPending || !title.trim()}>
+                {t("new.submit")}
+              </Button>
+            </Composer>
+          </div>
+        </div>
+        {triage && (
+          <aside className="wk-side">
+            <SideDetails summary={detailsSummary(tw, { assignees: assignees.length, labels: chosen.length, milestone: chosenMilestone?.title })}>
+              <AssigneesGroup repo={repo} assignees={assignees} busy={false} onChange={setAssignees} />
+              <LabelsGroup repo={repo} selected={chosen} onChange={setPicked} />
+              <MilestoneGroup repo={repo} milestone={chosenMilestone} onChange={setMilestone} />
+            </SideDetails>
+          </aside>
+        )}
       </div>
-      {triage && (
-        <aside className="wk-side">
-          <div className="wk-side-b">
-            <div className="wk-side-h">
-              <h4>{t("new.labels")}</h4>
-            </div>
-            {(labels.data ?? []).length === 0 && <p className="ui-note">{t("new.noLabels")}</p>}
-            {(labels.data ?? []).map((l) => (
-              <label key={l.id} className="acc-check wk-fcheck">
-                <input type="checkbox" checked={picked.includes(l.name)} onChange={() => setPicked(toggle(picked, l.name))} />
-                <LabelChip label={l} />
-              </label>
-            ))}
-          </div>
-          <div className="wk-side-b">
-            <div className="wk-side-h">
-              <h4>{t("new.assignees")}</h4>
-            </div>
-            {(people.data ?? []).length === 0 && <p className="ui-note">{t("new.noPeople")}</p>}
-            {(people.data ?? []).map((p) => (
-              <label key={p.username} className="acc-check wk-fcheck">
-                <input type="checkbox" checked={assignees.includes(p.username)} onChange={() => setAssignees(toggle(assignees, p.username))} />
-                <Avatar user={p.username} size={20} />
-                {p.username}
-              </label>
-            ))}
-          </div>
-          <div className="wk-side-b">
-            <Select
-              label={t("new.milestone")}
-              value={milestone}
-              onValueChange={setMilestone}
-              options={[{ value: "-", label: t("new.noMilestone") }, ...(milestones.data ?? []).map((m) => ({ value: m.id, label: m.title }))]}
-            />
-          </div>
-        </aside>
-      )}
     </form>
   );
 }

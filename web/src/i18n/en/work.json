@@ -60,7 +60,6 @@
   "ev.other": "{event}",
   "lock.lock": "Lock conversation",
   "lock.unlock": "Unlock conversation",
-  "lock.reasonLabel": "Reason",
   "lock.noReason": "Without a reason",
   "lock.off-topic": "off topic",
   "lock.too heated": "too heated",
@@ -88,9 +87,6 @@
   "watch.watching": "All activity",
   "watch.participating": "Participating and mentions",
   "watch.ignoring": "Ignore",
-  "watch.watching.hint": "You get a notification for every issue, pull request and release.",
-  "watch.participating.hint": "You get notified only when you take part or someone mentions you.",
-  "watch.ignoring.hint": "You get no notifications from this repository.",
   "side.searchPeople": "Search people…",
   "side.searchLabel": "Find a person",
   "side.searchNone": "No one found.",
@@ -103,5 +99,13 @@
   "subject.unsubscribedHint": "You get no notifications for this conversation.",
   "subject.subscribedOk": "Subscribed to this conversation",
   "subject.unsubscribedOk": "Unsubscribed from this conversation",
-  "subject.reset": "Use the repository setting"
+  "subject.reset": "Use the repository setting",
+  "comment.menu": "Comment actions",
+  "side.status": "Status",
+  "side.details": "Details",
+  "side.sumReviewers": "Reviewers: {count}",
+  "side.sumAssignees": "Assignees: {count}",
+  "side.sumLabels": "Labels: {count}",
+  "side.sumNone": "Nothing set yet",
+  "side.editNotifications": "Edit notifications"
 }

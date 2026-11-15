@@ -60,7 +60,6 @@
   "ev.other": "{event}",
   "lock.lock": "Blocca conversazione",
   "lock.unlock": "Sblocca conversazione",
-  "lock.reasonLabel": "Motivo",
   "lock.noReason": "Senza motivo",
   "lock.off-topic": "fuori tema",
   "lock.too heated": "toni troppo accesi",
@@ -88,9 +87,6 @@
   "watch.watching": "Tutta l'attività",
   "watch.participating": "Partecipazioni e menzioni",
   "watch.ignoring": "Ignora",
-  "watch.watching.hint": "Ricevi una notifica per ogni issue, pull request e release.",
-  "watch.participating.hint": "Ricevi notifiche solo quando partecipi o qualcuno ti menziona.",
-  "watch.ignoring.hint": "Non ricevi notifiche da questo repository.",
   "side.searchPeople": "Cerca persone…",
   "side.searchLabel": "Trova una persona",
   "side.searchNone": "Nessuno trovato.",
@@ -103,5 +99,13 @@
   "subject.unsubscribedHint": "Non ricevi notifiche di questa conversazione.",
   "subject.subscribedOk": "Iscrizione alla conversazione attivata",
   "subject.unsubscribedOk": "Iscrizione alla conversazione annullata",
-  "subject.reset": "Usa l'impostazione del repository"
+  "subject.reset": "Usa l'impostazione del repository",
+  "comment.menu": "Azioni del commento",
+  "side.status": "Stato",
+  "side.details": "Dettagli",
+  "side.sumReviewers": "Revisori: {count}",
+  "side.sumAssignees": "Assegnatari: {count}",
+  "side.sumLabels": "Etichette: {count}",
+  "side.sumNone": "Ancora nulla di impostato",
+  "side.editNotifications": "Modifica notifiche"
 }

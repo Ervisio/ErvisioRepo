@@ -62,13 +62,13 @@ h1, h2, h3 { letter-spacing: -.01em; }
 .tb-tab:hover { color: var(--ink); }
 .tb-tab[aria-current] { color: var(--ink); border-bottom-color: var(--acc-fill); }
 .tb-tab .ui-icon { width: 15px; height: 15px; }
-.tb-warn { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
 
 .tb-main { max-width: 920px; margin: 0 auto; padding: 56px 24px 96px; min-width: 0; }
-.tb-main:has(.page-flush) { max-width: 1060px; padding-top: 24px; }
-.tb-main:has(.page-body-aside, .st) { max-width: 1160px; }
-/* GitHub palette: settings pages keep the column of the other repo pages so the left edge does not jump. */
-:root:not([data-palette="classic"]) .tb-main:has(.st):not(:has(.page-body-aside)) { max-width: 1060px; }
+.tb-main:has(.page-flush, .page-compact) { max-width: 1060px; padding-top: 24px; }
+.tb-main:has(.page-body-aside) { max-width: 1160px; }
+.tb-main:has(.wk-dgrid, .wk-detail) { max-width: 1060px; }
+/* Settings share the column of the repository pages so the left edge does not jump. */
+.tb-main:has(.st) { max-width: 1060px; }
 
 .tb-av { width: 28px; height: 28px; border-radius: 50%; background: var(--acc-fill); color: var(--on-accent); display: grid; place-items: center; font-weight: 600; font-size: 11px; flex: none; object-fit: cover; overflow: hidden; }
 .tb-av.lg { width: 30px; height: 30px; font-size: 12px; }
@@ -109,13 +109,18 @@ h1, h2, h3 { letter-spacing: -.01em; }
   .tb-owner, .tb-hide-m { display: none; }
   .tb-tabs { gap: 22px; padding: 0 16px; }
   .tb-main { padding: 32px 16px 64px; }
-  .tb-main:has(.page-flush) { padding-top: 16px; }
+  .tb-main:has(.page-flush, .page-compact) { padding-top: 16px; }
   [data-layout="console"] .page-head { grid-template-columns: minmax(0, 1fr); margin-bottom: 32px; }
   [data-layout="console"] .page-head h1 { font-size: 26px; }
   [data-layout="console"] .page-actions { grid-column: 1; grid-row: 3; margin-top: 16px; flex-wrap: wrap; }
   .page-actions { flex-wrap: wrap; margin-left: 0; }
 }
 @media (max-width: 900px) { .page-head h1 { font-size: 22px; } }
+
+/* Compact title of settings and administration pages: one line, context beside it, in every layout. */
+.page.page-compact .page-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 20px; padding: 0; background: none; border-radius: 0; }
+.page.page-compact .page-head h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.01em; line-height: 1.3; }
+.page.page-compact .page-sub { margin: 0; max-width: none; font-size: 13px; }
 
 /* Home dashboard: repositories on the left, what needs you and the activity feed on the right. */
 .hm-pad { padding: 6px 10px 10px; }

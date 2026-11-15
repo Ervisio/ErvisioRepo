@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode 
 import { REACTION_EMOJI, REACTIONS, uploadAttachment, type Label, type ReactionGroup } from "../../api/issues.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Markdown } from "../../lib/markdown.tsx";
-import { Button, Icon, Menu, MenuItem, type IconName } from "../../ui/index.ts";
+import { Button, Icon, Menu, MenuItem, type ButtonProps, type IconName } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { useInAppLinks, useMarkdownContext } from "../code/Readme.tsx";
 import { listLayouts, setListLayout, useListLayout, type ListLayout } from "./layout.ts";
@@ -71,17 +71,24 @@ export function Avatar({ user, size = 28 }: { user: string; size?: number }) {
 export type WorkState = "open" | "closed" | "merged" | "draft";
 
 /** State icon in the state colour: open green, closed red, merged violet, draft grey. */
+const stateIconName = (kind: "issue" | "pull", state: WorkState): IconName => (kind === "pull" ? "pr" : state === "closed" ? "check" : "issue");
+
 export function StateIcon({ kind, state, label }: { kind: "issue" | "pull"; state: WorkState; label: string }) {
-  const icon: IconName = kind === "pull" ? "pr" : state === "closed" ? "check" : "issue";
   return (
     <span className={`wk-state wk-state-${state}`} role="img" aria-label={label} title={label}>
-      <Icon name={icon} />
+      <Icon name={stateIconName(kind, state)} />
     </span>
   );
 }
 
-export function StatePill({ state, label }: { state: WorkState; label: string }) {
-  return <span className={`wk-pill wk-state-${state}`}>{label}</span>;
+/** Filled state pill; `kind` adds the state icon (detail headers). */
+export function StatePill({ state, label, kind }: { state: WorkState; label: string; kind?: "issue" | "pull" }) {
+  return (
+    <span className={`wk-pill wk-state-${state}`}>
+      {kind && <Icon name={stateIconName(kind, state)} />}
+      {label}
+    </span>
+  );
 }
 
 /* Layout switch shown in the list headers. */
@@ -312,7 +319,7 @@ export function Composer({ owner, name, refName, value, onChange, label, placeho
             </button>
           ))}
         </div>
-        <span className="acc-grow" />
+        <span className="wk-grow" />
         <input ref={fileRef} type="file" multiple hidden onChange={(e) => void attach(e.target.files)} />
         <Button size="sm" variant="ghost" icon="upload" disabled={busy} onClick={() => fileRef.current?.click()}>
           {busy ? t("composer.uploading") : t("composer.attach")}
@@ -338,14 +345,16 @@ export function Composer({ owner, name, refName, value, onChange, label, placeho
               void attach(e.dataTransfer.files);
             }}
           />
-          <p className="ui-note">{t("composer.hint")}</p>
         </>
       ) : (
         <div className="wk-preview">
           <Body owner={owner} name={name} refName={refName} source={value} />
         </div>
       )}
-      {children && <div className="acc-actions wk-composer-actions">{children}</div>}
+      <div className="wk-composer-foot">
+        <p className="ui-note wk-composer-hint">{tab === "write" ? t("composer.hint") : ""}</p>
+        {children && <div className="acc-actions wk-composer-actions">{children}</div>}
+      </div>
     </div>
   );
 }
@@ -392,16 +401,16 @@ export function Reactions({ groups, disabled, onToggle }: { groups: ReactionGrou
   );
 }
 
-/** Comment box (avatar + bubble) used by issue and pull request conversations. */
-export function CommentBox({ author, head, children, footer, tone }: { author: string; head: ReactNode; children: ReactNode; footer?: ReactNode; tone?: "author" }) {
+/** Comment card: quiet header (avatar, then whatever `head` holds), body and optional footer. */
+export function CommentBox({ author, head, children, footer }: { author: string; head: ReactNode; children: ReactNode; footer?: ReactNode }) {
   return (
     <div className="wk-cm">
-      <Avatar user={author} />
-      <div className={tone === "author" ? "wk-cm-box wk-cm-own" : "wk-cm-box"}>
-        <div className="wk-cm-head">{head}</div>
-        <div className="wk-cm-body">{children}</div>
-        {footer}
+      <div className="wk-cm-head">
+        <Avatar user={author} size={20} />
+        {head}
       </div>
+      <div className="wk-cm-body">{children}</div>
+      {footer}
     </div>
   );
 }
@@ -418,15 +427,55 @@ export function EventRow({ icon, children, tone }: { icon: IconName; children: R
   );
 }
 
-/** Sidebar block (layout A) or strip box (layout B). */
+/** Square icon button used as a menu trigger: the pencil of a metadata group, or the ⋯ of a card. */
+export function IconTrigger({ icon, label, ...rest }: { icon: IconName; label: string } & Omit<ButtonProps, "icon" | "variant" | "size" | "aria-label">) {
+  return <Button {...rest} variant="ghost" size="sm" icon={icon} className="wk-ib" aria-label={label} title={label} />;
+}
+
+/** Metadata group of the right column: title, one edit affordance, content. */
 export function SideBlock({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <div className="wk-side-b">
+    <section className="wk-g">
       <div className="wk-side-h">
-        <h4>{title}</h4>
+        <h3>{title}</h3>
         {action}
       </div>
       <div className="wk-side-c">{children}</div>
-    </div>
+    </section>
+  );
+}
+
+/** First box of the right column. */
+export function StatusBox({ children }: { children: ReactNode }) {
+  const t = useT("work");
+  return (
+    <section className="wk-box wk-status" aria-label={t("side.status")}>
+      <div className="wk-box-h">{t("side.status")}</div>
+      <div className="wk-box-b">{children}</div>
+    </section>
+  );
+}
+
+const WIDE = "(min-width: 901px)";
+
+/** The metadata groups: always open next to the timeline, one collapsible "Details" row on narrow screens. */
+export function SideDetails({ summary, children }: { summary: string; children: ReactNode }) {
+  const t = useT("work");
+  const [open, setOpen] = useState(() => window.matchMedia(WIDE).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(WIDE);
+    const sync = () => setOpen(mq.matches);
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return (
+    <details className="wk-det" open={open}>
+      <summary>
+        <span className="wk-det-t">{t("side.details")}</span>
+        <span className="wk-det-s ui-note">{summary}</span>
+        <Icon name="down" />
+      </summary>
+      <div className="wk-gs">{children}</div>
+    </details>
   );
 }
