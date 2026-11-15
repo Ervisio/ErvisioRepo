@@ -7,7 +7,9 @@ import (
 	"io"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
+	"syscall"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
@@ -59,7 +61,15 @@ func openS3(_ context.Context, t config.Target, _ BuildOptions) (blob.Store, err
 		Prefix:    t.Prefix,
 		PathStyle: t.PathStyle,
 	}
-	if t.CredentialsFile != "" {
+	if t.Guarded {
+		o.HTTPClient = guardedClient()
+	}
+	if t.AccessKey != "" || t.SecretKey != "" {
+		if t.AccessKey == "" || t.SecretKey == "" {
+			return nil, errors.New("inline credentials need both an access key and a secret key")
+		}
+		o.AccessKeyID, o.SecretAccessKey = t.AccessKey, t.SecretKey
+	} else if t.CredentialsFile != "" {
 		data, err := readSecretFile(t.CredentialsFile)
 		if err != nil {
 			return nil, err
@@ -78,25 +88,43 @@ func openS3(_ context.Context, t config.Target, _ BuildOptions) (blob.Store, err
 	return s3.New(o)
 }
 
-// openSFTP builds an SFTP store authenticated with key_file. The server key
-// is always verified against known_hosts_file.
+// openSFTP builds an SFTP store authenticated with a private key, inline
+// (key_pem) or from key_file. The server key is always verified against the
+// inline known_hosts content or known_hosts_file.
 func openSFTP(_ context.Context, t config.Target, _ BuildOptions) (blob.Store, error) {
-	pem, err := readSecretFile(t.KeyFile)
-	if err != nil {
-		return nil, err
+	var pem []byte
+	keyName := "key_file " + t.KeyFile
+	if t.KeyPEM != "" {
+		pem, keyName = []byte(t.KeyPEM), "private key"
+	} else {
+		var err error
+		if pem, err = readSecretFile(t.KeyFile); err != nil {
+			return nil, err
+		}
 	}
-	signer, err := ssh.ParsePrivateKey(pem)
+	signer, err := ParsePrivateKey(pem, []byte(t.KeyPassphrase))
 	if err != nil {
-		return nil, fmt.Errorf("key_file %s: %w", t.KeyFile, err)
+		return nil, fmt.Errorf("%s: %w", keyName, err)
 	}
-	if t.KnownHostsFile == "" {
+	var hostKeys ssh.HostKeyCallback
+	switch {
+	case t.KnownHostsData != "":
+		if hostKeys, err = HostKeyCallback([]byte(t.KnownHostsData)); err != nil {
+			return nil, fmt.Errorf("known hosts: %w", err)
+		}
+	case t.KnownHostsFile != "":
+		if hostKeys, err = knownhosts.New(t.KnownHostsFile); err != nil {
+			return nil, fmt.Errorf("known_hosts_file: %w", err)
+		}
+	default:
 		return nil, errors.New("known_hosts_file is required")
 	}
-	hostKeys, err := knownhosts.New(t.KnownHostsFile)
-	if err != nil {
-		return nil, fmt.Errorf("known_hosts_file: %w", err)
+	var control func(network, address string, c syscall.RawConn) error
+	if t.Guarded {
+		control = guardControl
 	}
 	return sftp.New(sftp.Options{
+		DialControl:     control,
 		Name:            t.Name,
 		Addr:            net.JoinHostPort(t.Host, strconv.Itoa(t.Port)),
 		User:            t.User,
@@ -105,6 +133,35 @@ func openSFTP(_ context.Context, t config.Target, _ BuildOptions) (blob.Store, e
 		Root:            t.Root,
 		MaxConns:        t.MaxConns,
 	})
+}
+
+// ParsePrivateKey parses an SSH private key, using passphrase when it is not
+// empty. The error never contains key material.
+func ParsePrivateKey(pem, passphrase []byte) (ssh.Signer, error) {
+	if len(passphrase) > 0 {
+		return ssh.ParsePrivateKeyWithPassphrase(pem, passphrase)
+	}
+	return ssh.ParsePrivateKey(pem)
+}
+
+// HostKeyCallback builds a server key check from known_hosts content. The
+// knownhosts package only reads files, so the content goes through a private
+// temporary file that is removed right away; it holds public keys only.
+func HostKeyCallback(data []byte) (ssh.HostKeyCallback, error) {
+	dir, err := os.MkdirTemp("", "erepo-known-hosts-")
+	if err != nil {
+		return nil, fmt.Errorf("known hosts: %w", err)
+	}
+	defer func() { _ = os.RemoveAll(dir) }()
+	path := filepath.Join(dir, "known_hosts")
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		return nil, fmt.Errorf("known hosts: %w", err)
+	}
+	cb, err := knownhosts.New(path)
+	if err != nil {
+		return nil, fmt.Errorf("known hosts: %w", err)
+	}
+	return cb, nil
 }
 
 // readSecretFile reads a credential file that must not be accessible by

@@ -38,12 +38,13 @@ func openOffline(ctx context.Context, cfg *config.Config, stderr io.Writer) (*of
 		pool.Close()
 		return nil, err
 	}
-	storage, stores, err := openStorage(ctx, cfg, dbgen.New(pool), prometheus.NewRegistry(), log, nil)
+	storage, stores, boot, err := openStorage(ctx, cfg, dbgen.New(pool), prometheus.NewRegistry(), log, nil)
 	if err != nil {
 		pool.Close()
 		return nil, err
 	}
-	return &offline{cfg: cfg, log: log, pool: pool, storage: storage, close: func() {
+	// cfg now carries the storage overlay of the web admin.
+	return &offline{cfg: boot.cfg, log: log, pool: pool, storage: storage, close: func() {
 		tier.CloseStores(stores)
 		pool.Close()
 	}}, nil

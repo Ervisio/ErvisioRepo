@@ -22,6 +22,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/pkg/sftp"
@@ -65,6 +66,9 @@ type Options struct {
 	Dial DialFunc
 	// DialTimeout bounds the TCP+SSH handshake (default 30s).
 	DialTimeout time.Duration
+	// DialControl, when set, runs on every outgoing connection with the
+	// resolved address (net.Dialer.Control) and can refuse it.
+	DialControl func(network, address string, c syscall.RawConn) error
 }
 
 type conn struct {
@@ -121,7 +125,7 @@ func (s *Store) dialSSH(ctx context.Context) (*sftp.Client, func() error, error)
 		HostKeyCallback: s.opts.HostKeyCallback,
 		Timeout:         s.opts.DialTimeout,
 	}
-	d := net.Dialer{Timeout: s.opts.DialTimeout}
+	d := net.Dialer{Timeout: s.opts.DialTimeout, Control: s.opts.DialControl}
 	nc, err := d.DialContext(ctx, "tcp", s.opts.Addr)
 	if err != nil {
 		return nil, nil, err

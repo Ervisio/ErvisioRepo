@@ -86,6 +86,178 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/storage/config:
+    get:
+      operationId: getAdminStorageConfig
+      tags: [admin]
+      summary: Storage targets and policies as the next start will run with them
+      description: |
+        Instance admins only. Targets of config.toml are read-only (source
+        "file"); targets created in the web admin have source "database".
+        Credentials are never returned, only whether each one is stored.
+        Changes apply after a restart.
+      security:
+        - session: [admin]
+      responses:
+        "200":
+          description: The storage configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageConfig"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/storage/test:
+    post:
+      operationId: testAdminStorageDraft
+      tags: [admin]
+      summary: Run the connection test on a target definition that is not saved
+      description: |
+        Instance admins only. Writes a random probe object under
+        erepo-storage-test/ and always deletes it. A credential left out
+        falls back to the stored one of the database target with the same name.
+      security:
+        - session: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StorageTargetInput"
+      responses:
+        "200":
+          description: Test outcome; ok is false when a step failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageCheckResult"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          description: Invalid target definition
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ValidationProblem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/storage/targets/{name}:
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: "^[a-z0-9][a-z0-9_-]{0,62}$"
+    put:
+      operationId: putAdminStorageTarget
+      tags: [admin]
+      summary: Create or update an S3 or SFTP storage target
+      description: |
+        Instance admins only. Credentials are sealed with the master key; a
+        credential left empty keeps the stored one. The name, kind and
+        encrypt flag cannot change after creation, and the name cannot be one
+        of config.toml. The change applies after a restart.
+      security:
+        - session: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StorageTargetInput"
+      responses:
+        "200":
+          description: The storage configuration after the change
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageConfig"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          description: Invalid target definition
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ValidationProblem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteAdminStorageTarget
+      tags: [admin]
+      summary: Delete a storage target created in the web admin
+      description: |
+        Instance admins only. Refused while a policy uses the target. The
+        change applies after a restart.
+      security:
+        - session: [admin]
+      responses:
+        "200":
+          description: The storage configuration after the change
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageConfig"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          description: The target is read-only or still used by a policy
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ValidationProblem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/storage/policies/{policy}:
+    parameters:
+      - name: policy
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: "^[a-z]{1,32}$"
+    put:
+      operationId: putAdminStoragePolicy
+      tags: [admin]
+      summary: Change where a data type is stored
+      description: |
+        Instance admins only. Sets the primary, replicas and cache of a
+        policy declared in config.toml. The primary can only change while the
+        policy holds no stored objects (422 otherwise), because objects are
+        not migrated. Values equal to config.toml remove the override. The
+        change applies after a restart.
+      security:
+        - session: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoragePolicyInput"
+      responses:
+        "200":
+          description: The storage configuration after the change
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageConfig"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          description: Invalid placement, or a primary change on a policy with objects
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ValidationProblem"
+        default:
+          $ref: "#/components/responses/Problem"
   /admin/repos/{owner}/{name}/pin:
     parameters:
       - $ref: "#/components/parameters/RepoOwner"
@@ -10532,6 +10704,214 @@ components:
           type: string
         message:
           type: string
+    StorageConfig:
+      type: object
+      required: [targets, policies, secretsAvailable, restartRequired, fallback]
+      properties:
+        fallback:
+          type: boolean
+          description: The stored configuration could not be applied at start and the server runs with config.toml only
+        fallbackCause:
+          type: string
+          description: Why the stored configuration was not applied. Never contains credentials.
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorageTargetConfig"
+        policies:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoragePolicyConfig"
+        secretsAvailable:
+          type: boolean
+          description: False when no master key is available, so credentials cannot be saved
+        restartRequired:
+          type: boolean
+          description: Saved changes apply the next time the server starts
+    StorageTargetConfig:
+      type: object
+      description: A storage target. Credentials are never returned, only whether each one is stored.
+      required: [name, kind, source, encrypt, pathStyle, usedBy, restartPending, removedAfterRestart, objects, locked, hasAccessKey, hasSecretKey, hasPrivateKey, hasPassphrase, hasKnownHosts]
+      properties:
+        name:
+          type: string
+        kind:
+          type: string
+          enum: [local, s3, sftp, webdav]
+        source:
+          type: string
+          enum: [file, database]
+          description: file targets come from config.toml and are read-only
+        encrypt:
+          type: boolean
+        path:
+          type: string
+          description: Directory of a local target
+        endpoint:
+          type: string
+        bucket:
+          type: string
+        region:
+          type: string
+        prefix:
+          type: string
+        pathStyle:
+          type: boolean
+        host:
+          type: string
+        port:
+          type: integer
+        user:
+          type: string
+        root:
+          type: string
+        maxConns:
+          type: integer
+        hasAccessKey:
+          type: boolean
+        hasSecretKey:
+          type: boolean
+        hasPrivateKey:
+          type: boolean
+        hasPassphrase:
+          type: boolean
+        hasKnownHosts:
+          type: boolean
+        usedBy:
+          type: array
+          description: Uses of this target, as primary:<policy>, replica:<policy> or cache:<policy>
+          items:
+            type: string
+        restartPending:
+          type: boolean
+          description: The saved definition differs from the one the server runs with
+        removedAfterRestart:
+          type: boolean
+          description: The target was deleted and stops being used after the next restart
+        objects:
+          type: integer
+          format: int64
+          description: Stored objects that live on this target, as primary or as a confirmed replica
+        locked:
+          type: boolean
+          description: The target holds objects, so its location and account fields cannot change (credentials can still be replaced)
+    StoragePolicyConfig:
+      type: object
+      required: [name, source, primary, runningPrimary, replicas, filePrimary, fileReplicas, objects, primaryLocked, restartPending]
+      properties:
+        name:
+          type: string
+        source:
+          type: string
+          enum: [file, database]
+        primary:
+          type: string
+        runningPrimary:
+          type: string
+          description: The primary the server runs with now. Objects are stored under it, so it is the only one allowed while the policy holds objects.
+        replicas:
+          type: array
+          items:
+            type: string
+        cache:
+          type: string
+        filePrimary:
+          type: string
+        fileReplicas:
+          type: array
+          items:
+            type: string
+        fileCache:
+          type: string
+        objects:
+          type: integer
+          format: int64
+        primaryLocked:
+          type: boolean
+          description: The policy holds objects, so its primary cannot change
+        restartPending:
+          type: boolean
+    StorageTargetInput:
+      type: object
+      description: |
+        Definition of an S3-compatible or SFTP target. Fields of the other
+        kind must be left out. Credentials are optional on update: an empty
+        one keeps the stored value.
+      required: [name, kind]
+      properties:
+        name:
+          type: string
+          maxLength: 63
+          pattern: "^[a-z0-9][a-z0-9_-]{0,62}$"
+        kind:
+          type: string
+          enum: [s3, sftp]
+        encrypt:
+          type: boolean
+        endpoint:
+          type: string
+          maxLength: 512
+        bucket:
+          type: string
+          maxLength: 63
+        region:
+          type: string
+          maxLength: 63
+        prefix:
+          type: string
+          maxLength: 256
+        pathStyle:
+          type: boolean
+        host:
+          type: string
+          maxLength: 253
+        port:
+          type: integer
+        user:
+          type: string
+          maxLength: 64
+        root:
+          type: string
+          maxLength: 255
+        maxConns:
+          type: integer
+        secrets:
+          $ref: "#/components/schemas/StorageSecretsInput"
+    StorageSecretsInput:
+      type: object
+      description: Write-only credentials, sealed with the master key. Never returned.
+      properties:
+        accessKey:
+          type: string
+          maxLength: 512
+        secretKey:
+          type: string
+          maxLength: 512
+        privateKey:
+          type: string
+          maxLength: 16384
+        passphrase:
+          type: string
+          maxLength: 512
+        knownHosts:
+          type: string
+          maxLength: 65536
+    StoragePolicyInput:
+      type: object
+      required: [primary, replicas]
+      properties:
+        primary:
+          type: string
+          maxLength: 63
+        replicas:
+          type: array
+          maxItems: 32
+          items:
+            type: string
+            maxLength: 63
+        cache:
+          type: string
+          maxLength: 63
     RepoTiering:
       type: object
       required: [state, pinned, sizeBytes, manifestSeq]

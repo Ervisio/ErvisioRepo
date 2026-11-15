@@ -67,6 +67,9 @@ type Deps struct {
 	HasIndex bool
 	Registry *prometheus.Registry // nil creates one with Go and process collectors
 	Storage  Storage              // nil makes the storage admin endpoints answer 503
+	// StorageCfg serves /admin/storage/config, targets, policies and the
+	// draft test; nil answers 503.
+	StorageCfg StorageConfig
 	// Identity serves the account endpoints; nil makes them answer 503.
 	Identity Identity
 	// MFA runs the two-step login and /user/security; nil disables it.
@@ -295,7 +298,7 @@ func directLoopback(r *http.Request) bool {
 // requirement (public, signed-in user or instance admin). The admin prefix
 // is also guarded as a whole, so that a misdeclared operation cannot leak.
 func mountV1(r chi.Router, d Deps) {
-	r.Use(d.Auth.LoadSession, d.Auth.CSRF, adminOnly(d.Auth), mfaCookie(d.Auth.Cookies))
+	r.Use(d.Auth.LoadSession, d.Auth.CSRF, adminOnly(d.Auth), storageBodyLimit, mfaCookie(d.Auth.Cookies))
 	srv := &v1Server{meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies, mfa: d.MFA, orgs: d.Orgs, repos: d.Repos, audit: d.Audit,
 		creds: d.Credentials, sso: d.SSO, tiering: d.Tiering, releases: d.Releases, browse: d.Browse,
 		protection: d.Protection, github: d.GitHub, issues: d.Issues}
@@ -305,6 +308,7 @@ func mountV1(r chi.Router, d Deps) {
 	srv.actions = d.Actions
 	srv.dashboard = d.Dashboard
 	srv.settings = d.Settings
+	srv.storageCfg = d.StorageCfg
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())

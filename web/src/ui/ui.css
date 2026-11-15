@@ -79,6 +79,7 @@
 .ui-dialog-head h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.015em; }
 .ui-dialog-desc { margin: 6px 0 0; color: var(--ink2); font-size: 14px; }
 .ui-dialog-body { margin-top: 16px; display: flex; flex-direction: column; gap: 14px; }
+.ui-dialog .acc-form { padding: 0; max-width: none; }
 .ui-dialog-foot { margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 @keyframes ui-fade { from { opacity: 0; } to { opacity: 1; } }
 
@@ -269,6 +270,8 @@
 .adm-badges { display: flex; gap: 6px; margin: 0 0 8px; }
 .adm-back { display: inline-flex; align-items: center; gap: 4px; color: var(--ink2); text-decoration: none; }
 .adm-pager { justify-content: flex-end; padding: 10px 12px; }
+.adm-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 480px) { .adm-pair { grid-template-columns: 1fr; } }
 .adm-kv { margin: 0; padding: 4px 12px; }
 .adm-kv > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; }
 .adm-kv dt { color: var(--ink2); }

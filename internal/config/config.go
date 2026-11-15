@@ -250,6 +250,20 @@ type Target struct {
 	Root         string `toml:"root"`
 	URL          string `toml:"url"`
 	PasswordFile string `toml:"password_file"`
+
+	// Inline credentials. They are never read from the TOML file: targets
+	// created in the web admin keep them sealed in the database, and the
+	// storage overlay fills these fields at start. The drivers prefer them
+	// over the file paths above. Never log a Target value with %+v.
+	AccessKey      string `toml:"-"` // s3
+	SecretKey      string `toml:"-"` // s3
+	KeyPEM         string `toml:"-"` // sftp private key
+	KeyPassphrase  string `toml:"-"` // sftp, optional
+	KnownHostsData string `toml:"-"` // sftp known_hosts content
+	// Guarded makes the drivers refuse link-local, cloud metadata, unspecified
+	// and multicast addresses when they connect. Set for targets that come
+	// from the web admin.
+	Guarded bool `toml:"-"`
 }
 
 // Policy says where one data type lives.

@@ -17,13 +17,17 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/config"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/blob"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/crypt"
+	"github.com/Ervisio/ErvisioRepo/internal/storage/storagecfg"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
 )
 
 // storageCmd runs `storage test <target> [--config <path>]`.
 func storageCmd(ctx context.Context, args []string, stdout, stderr io.Writer) error {
+	if len(args) > 0 && args[0] == "overlay" {
+		return overlayCmd(ctx, args[1:], stdout, stderr)
+	}
 	if len(args) == 0 || args[0] != "test" {
-		return fmt.Errorf("%w: storage needs \"test <target>\"", errUsage)
+		return fmt.Errorf("%w: storage needs \"test <target>\" or \"overlay show|clear\"", errUsage)
 	}
 	args = args[1:]
 	// Accept the target before or after the flags.
@@ -137,9 +141,63 @@ func loadMasterKey(cfg *config.Config) ([]byte, error) {
 
 func parseMasterKey(raw []byte) ([]byte, error) { return crypt.ParseMasterKey(raw) }
 
-// openStorage builds the stores and the tier for serve. The caller closes
-// the stores after the tier is no longer used.
-func openStorage(ctx context.Context, cfg *config.Config, q tier.Queries, reg prometheus.Registerer,
+// storageDB is what openStorage reads and writes: the tier's object rows and
+// the settings table that holds the storage overlay of the web admin.
+type storageDB interface {
+	tier.Queries
+	storagecfg.Getter
+}
+
+// storageBoot describes the storage configuration the tier was built with.
+type storageBoot struct {
+	cfg  *config.Config // the configuration with the storage overlay applied
+	file config.Storage // the storage section of config.toml, without the overlay
+	doc  storagecfg.Doc // the overlay that is part of cfg (empty when none applies)
+	// stored is the overlay found in the database, applied or not; fallback
+	// and cause say that it was not applied, and why.
+	stored   storagecfg.Doc
+	fallback bool
+	cause    string
+	key  []byte         // the master key, nil when there is no key file
+}
+
+// openStorage merges the storage overlay of the web admin over the file
+// configuration, then builds the stores and the tier for serve and for the
+// offline commands. The caller closes the stores after the tier is no longer
+// used. If the overlay cannot be used and moves no primary, the file
+// configuration is used with a warning; otherwise it fails (see storagecfg.Apply).
+func openStorage(ctx context.Context, cfg *config.Config, q storageDB, reg prometheus.Registerer,
+	log *slog.Logger, onStored func(context.Context, tier.ObjectRef) error,
+) (*tier.Tier, map[string]blob.Store, *storageBoot, error) {
+	key, err := optionalMasterKey(cfg.Security.MasterKeyFile)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	file := cfg.Storage
+	res, err := storagecfg.Apply(ctx, q, key, file, log)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	eff := *cfg
+	eff.Storage = res.Storage
+	t, stores, err := buildTier(ctx, &eff, q, reg, log, onStored)
+	if err != nil && !res.Fallback && len(res.Doc.Targets)+len(res.Doc.Policies) > 0 {
+		// The merged configuration did not open: same rule as for a merge error.
+		fres, ferr := storagecfg.Fallback(res, file, err, log)
+		if ferr != nil {
+			return nil, nil, nil, ferr
+		}
+		res, eff.Storage = fres, file
+		t, stores, err = buildTier(ctx, &eff, q, reg, log, onStored)
+	}
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return t, stores, &storageBoot{cfg: &eff, file: file, doc: res.Doc, stored: res.Stored, fallback: res.Fallback, cause: res.Cause, key: key}, nil
+}
+
+// buildTier opens the stores of cfg.Storage and the tier on them.
+func buildTier(ctx context.Context, cfg *config.Config, q tier.Queries, reg prometheus.Registerer,
 	log *slog.Logger, onStored func(context.Context, tier.ObjectRef) error,
 ) (*tier.Tier, map[string]blob.Store, error) {
 	key, err := loadMasterKey(cfg)

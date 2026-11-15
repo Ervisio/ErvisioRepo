@@ -135,6 +135,17 @@ func (q *Queries) ListStorageObjectsPendingReplicas(ctx context.Context, arg Lis
 	return items, nil
 }
 
+const lockStorageOverlay = `-- name: LockStorageOverlay :exec
+SELECT pg_advisory_xact_lock(hashtext('storage.overlay'))
+`
+
+// Serialises read-modify-write of the storage overlay across server instances
+// until the end of the transaction.
+func (q *Queries) LockStorageOverlay(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, lockStorageOverlay)
+	return err
+}
+
 const markStorageObjectReplicated = `-- name: MarkStorageObjectReplicated :exec
 UPDATE storage_objects
 SET replicas_ok = true, last_error = NULL, updated_at = now()
@@ -246,6 +257,48 @@ type SetStorageObjectReplicasPendingParams struct {
 func (q *Queries) SetStorageObjectReplicasPending(ctx context.Context, arg SetStorageObjectReplicasPendingParams) error {
 	_, err := q.db.Exec(ctx, setStorageObjectReplicasPending, arg.LastError, arg.Target, arg.Key)
 	return err
+}
+
+const storageObjectCountsByTarget = `-- name: StorageObjectCountsByTarget :many
+SELECT policy, target,
+       count(*)::bigint                              AS objects,
+       count(*) FILTER (WHERE replicas_ok)::bigint   AS replicated
+FROM storage_objects
+GROUP BY policy, target
+ORDER BY policy, target
+`
+
+type StorageObjectCountsByTargetRow struct {
+	Policy     string
+	Target     string
+	Objects    int64
+	Replicated int64
+}
+
+// Rows per policy and primary target, with how many are fully replicated.
+func (q *Queries) StorageObjectCountsByTarget(ctx context.Context) ([]StorageObjectCountsByTargetRow, error) {
+	rows, err := q.db.Query(ctx, storageObjectCountsByTarget)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []StorageObjectCountsByTargetRow{}
+	for rows.Next() {
+		var i StorageObjectCountsByTargetRow
+		if err := rows.Scan(
+			&i.Policy,
+			&i.Target,
+			&i.Objects,
+			&i.Replicated,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const storageObjectStats = `-- name: StorageObjectStats :many

@@ -33,6 +33,7 @@ const usage = `Usage:
   ervisio-repo serve   [--config <path>]   run the server
   ervisio-repo migrate up|status [--config <path>]
   ervisio-repo storage test <target> [--config <path>] [--timeout <dur>]
+  ervisio-repo storage overlay show|clear [--config <path>] [--force]
                                            write/read/list/delete round trip
   ervisio-repo prewarm --all | <owner>/<repo> [--config <path>]
                                            hydrate cold repositories

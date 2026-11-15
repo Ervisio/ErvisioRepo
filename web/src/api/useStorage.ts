@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "./http.ts";
 import { api } from "./client.ts";
 import type { components } from "./schema";
@@ -29,6 +29,58 @@ export function useStorageTest() {
       if (data) return data;
       throw new Error(error?.detail ?? error?.title ?? `HTTP ${response.status}`);
     },
+  });
+}
+
+export type StorageConfig = components["schemas"]["StorageConfig"];
+export type StorageTargetConfig = components["schemas"]["StorageTargetConfig"];
+export type StoragePolicyConfig = components["schemas"]["StoragePolicyConfig"];
+export type StorageTargetInput = components["schemas"]["StorageTargetInput"];
+export type StoragePolicyInput = components["schemas"]["StoragePolicyInput"];
+
+const STORAGE_KEY = ["admin", "storage"] as const;
+
+/** Targets and policies as the next start will run with them (GET /admin/storage/config). */
+export function useStorageConfig() {
+  return useQuery({
+    queryKey: [...STORAGE_KEY, "config"],
+    queryFn: () => request<StorageConfig>("GET", "/admin/storage/config"),
+  });
+}
+
+/** Creates or updates an S3 or SFTP target (PUT /admin/storage/targets/{name}). Throws ApiError with field errors on 422. */
+export function usePutStorageTarget() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ name, input }: { name: string; input: StorageTargetInput }) =>
+      request<StorageConfig>("PUT", `/admin/storage/targets/${encodeURIComponent(name)}`, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: STORAGE_KEY }),
+  });
+}
+
+/** Deletes a target created in the web admin (DELETE /admin/storage/targets/{name}). */
+export function useDeleteStorageTarget() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => request<StorageConfig>("DELETE", `/admin/storage/targets/${encodeURIComponent(name)}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: STORAGE_KEY }),
+  });
+}
+
+/** Changes primary, replicas and cache of a data type (PUT /admin/storage/policies/{policy}). */
+export function usePutStoragePolicy() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ policy, input }: { policy: string; input: StoragePolicyInput }) =>
+      request<StorageConfig>("PUT", `/admin/storage/policies/${encodeURIComponent(policy)}`, input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: STORAGE_KEY }),
+  });
+}
+
+/** Connection test of a target definition that is not saved (POST /admin/storage/test). */
+export function useStorageDraftTest() {
+  return useMutation({
+    mutationFn: (input: StorageTargetInput) => request<StorageCheckResult>("POST", "/admin/storage/test", input),
   });
 }
 

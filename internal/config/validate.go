@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"maps"
 	"net"
@@ -114,6 +115,14 @@ func (c *Config) validate() []error {
 	return v.errs
 }
 
+// Validate checks the storage section on its own: targets, policies and the
+// hot path. It is what the whole-configuration check runs for storage.
+func (s *Storage) Validate() error {
+	v := &validator{}
+	v.storage(s)
+	return errors.Join(v.errs...)
+}
+
 func (v *validator) storage(s *Storage) {
 	kinds := map[string]string{} // target name -> kind
 	for i, t := range s.Targets {
@@ -219,8 +228,12 @@ func (v *validator) target(p string, t *Target) {
 	case "sftp":
 		v.required(p+".host", t.Host)
 		v.required(p+".user", t.User)
-		v.absPath(p+".key_file", t.KeyFile)
-		v.absPath(p+".known_hosts_file", t.KnownHostsFile)
+		if t.KeyPEM == "" {
+			v.absPath(p+".key_file", t.KeyFile)
+		}
+		if t.KnownHostsData == "" {
+			v.absPath(p+".known_hosts_file", t.KnownHostsFile)
+		}
 		if t.Port < 1 || t.Port > 65535 {
 			v.add(p+".port", "must be between 1 and 65535, got %d", t.Port)
 		}

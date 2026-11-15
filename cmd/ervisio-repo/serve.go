@@ -44,6 +44,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
 	"github.com/Ervisio/ErvisioRepo/internal/statuses"
+	"github.com/Ervisio/ErvisioRepo/internal/storage/storagecfg"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
 	"github.com/Ervisio/ErvisioRepo/internal/webhooks"
 	"github.com/Ervisio/ErvisioRepo/web"
@@ -93,12 +94,20 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	// The tier enqueues replication on the runner, which runs the tier's
 	// jobs: the runner is assigned right after the tier is built.
 	var runner *jobs.Runner
-	storage, stores, err := openStorage(ctx, cfg, dbgen.New(pool), registry, log,
+	storage, stores, storageState, err := openStorage(ctx, cfg, dbgen.New(pool), registry, log,
 		func(ctx context.Context, ref tier.ObjectRef) error { return runner.EnqueueReplication(ctx, ref) })
 	if err != nil {
 		return err
 	}
 	defer tier.CloseStores(stores)
+	// From here on cfg carries the storage overlay of the web admin.
+	cfg = storageState.cfg
+	storageCfg, err := storagecfg.NewService(storagecfg.Options{Pool: pool, File: storageState.file,
+		Running: cfg.Storage, RunningDoc: storageState.doc, StoredAtStart: storageState.stored,
+		Fallback: storageState.fallback, FallbackCause: storageState.cause, MasterKey: storageState.key, Log: log})
+	if err != nil {
+		return err
+	}
 
 	mailPassword, err := readSecretFile(cfg.Mail.PasswordFile)
 	if err != nil {
@@ -241,6 +250,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		HasIndex:    web.HasIndex(),
 		Registry:    registry,
 		Storage:     storage,
+		StorageCfg:  storageCfg,
 		Identity:    ids.Service,
 		MFA:         mfaSvc,
 		Orgs:        orgs.New(orgs.Options{Pool: pool, Jobs: runner, Log: log, Config: cfg}),

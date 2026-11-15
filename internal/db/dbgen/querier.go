@@ -675,6 +675,9 @@ type Querier interface {
 	// gitstore.Tier.Acquire (same key): use it for metadata changes that must
 	// not interleave with a git write.
 	LockRepoWrite(ctx context.Context, repoID uuid.UUID) error
+	// Serialises read-modify-write of the storage overlay across server instances
+	// until the end of the transaction.
+	LockStorageOverlay(ctx context.Context) error
 	// Serializes credential changes of one account.
 	LockUserForUpdate(ctx context.Context, id uuid.UUID) (uuid.UUID, error)
 	// Serializes the pin limit check of one user within a transaction.
@@ -850,6 +853,8 @@ type Querier interface {
 	SetUserSuspended(ctx context.Context, arg SetUserSuspendedParams) error
 	// A re-run: the run goes back to queued under a new attempt.
 	StartActionsRunAttempt(ctx context.Context, arg StartActionsRunAttemptParams) error
+	// Rows per policy and primary target, with how many are fully replicated.
+	StorageObjectCountsByTarget(ctx context.Context) ([]StorageObjectCountsByTargetRow, error)
 	StorageObjectStats(ctx context.Context) ([]StorageObjectStatsRow, error)
 	SubmitPullReview(ctx context.Context, arg SubmitPullReviewParams) (PullReview, error)
 	// Status and conclusion of the latest run of each name in a suite.

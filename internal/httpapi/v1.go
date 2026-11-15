@@ -52,6 +52,8 @@ type v1Server struct {
 	dashboard *dashboard.Service
 	// settings serves /admin/settings; nil answers 503.
 	settings InstanceSettings
+	// storageCfg serves the storage configuration endpoints; nil answers 503.
+	storageCfg StorageConfig
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

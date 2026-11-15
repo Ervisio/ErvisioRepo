@@ -67,3 +67,17 @@ SELECT policy,
 FROM storage_objects
 GROUP BY policy
 ORDER BY policy;
+
+-- name: StorageObjectCountsByTarget :many
+-- Rows per policy and primary target, with how many are fully replicated.
+SELECT policy, target,
+       count(*)::bigint                              AS objects,
+       count(*) FILTER (WHERE replicas_ok)::bigint   AS replicated
+FROM storage_objects
+GROUP BY policy, target
+ORDER BY policy, target;
+
+-- name: LockStorageOverlay :exec
+-- Serialises read-modify-write of the storage overlay across server instances
+-- until the end of the transaction.
+SELECT pg_advisory_xact_lock(hashtext('storage.overlay'));

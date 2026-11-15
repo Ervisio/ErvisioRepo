@@ -61,6 +61,107 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/storage/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Storage targets and policies as the next start will run with them
+         * @description Instance admins only. Targets of config.toml are read-only (source
+         *     "file"); targets created in the web admin have source "database".
+         *     Credentials are never returned, only whether each one is stored.
+         *     Changes apply after a restart.
+         */
+        get: operations["getAdminStorageConfig"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/storage/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run the connection test on a target definition that is not saved
+         * @description Instance admins only. Writes a random probe object under
+         *     erepo-storage-test/ and always deletes it. A credential left out
+         *     falls back to the stored one of the database target with the same name.
+         */
+        post: operations["testAdminStorageDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/storage/targets/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Create or update an S3 or SFTP storage target
+         * @description Instance admins only. Credentials are sealed with the master key; a
+         *     credential left empty keeps the stored one. The name, kind and
+         *     encrypt flag cannot change after creation, and the name cannot be one
+         *     of config.toml. The change applies after a restart.
+         */
+        put: operations["putAdminStorageTarget"];
+        post?: never;
+        /**
+         * Delete a storage target created in the web admin
+         * @description Instance admins only. Refused while a policy uses the target. The
+         *     change applies after a restart.
+         */
+        delete: operations["deleteAdminStorageTarget"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/storage/policies/{policy}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Change where a data type is stored
+         * @description Instance admins only. Sets the primary, replicas and cache of a
+         *     policy declared in config.toml. The primary can only change while the
+         *     policy holds no stored objects (422 otherwise), because objects are
+         *     not migrated. Values equal to config.toml remove the override. The
+         *     change applies after a restart.
+         */
+        put: operations["putAdminStoragePolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/repos/{owner}/{name}/pin": {
         parameters: {
             query?: never;
@@ -6049,6 +6150,113 @@ export interface components {
             policy?: string;
             message: string;
         };
+        StorageConfig: {
+            /** @description The stored configuration could not be applied at start and the server runs with config.toml only */
+            fallback: boolean;
+            /** @description Why the stored configuration was not applied. Never contains credentials. */
+            fallbackCause?: string;
+            targets: components["schemas"]["StorageTargetConfig"][];
+            policies: components["schemas"]["StoragePolicyConfig"][];
+            /** @description False when no master key is available, so credentials cannot be saved */
+            secretsAvailable: boolean;
+            /** @description Saved changes apply the next time the server starts */
+            restartRequired: boolean;
+        };
+        /** @description A storage target. Credentials are never returned, only whether each one is stored. */
+        StorageTargetConfig: {
+            name: string;
+            /** @enum {string} */
+            kind: "local" | "s3" | "sftp" | "webdav";
+            /**
+             * @description file targets come from config.toml and are read-only
+             * @enum {string}
+             */
+            source: "file" | "database";
+            encrypt: boolean;
+            /** @description Directory of a local target */
+            path?: string;
+            endpoint?: string;
+            bucket?: string;
+            region?: string;
+            prefix?: string;
+            pathStyle: boolean;
+            host?: string;
+            port?: number;
+            user?: string;
+            root?: string;
+            maxConns?: number;
+            hasAccessKey: boolean;
+            hasSecretKey: boolean;
+            hasPrivateKey: boolean;
+            hasPassphrase: boolean;
+            hasKnownHosts: boolean;
+            /** @description Uses of this target, as primary:<policy>, replica:<policy> or cache:<policy> */
+            usedBy: string[];
+            /** @description The saved definition differs from the one the server runs with */
+            restartPending: boolean;
+            /** @description The target was deleted and stops being used after the next restart */
+            removedAfterRestart: boolean;
+            /**
+             * Format: int64
+             * @description Stored objects that live on this target, as primary or as a confirmed replica
+             */
+            objects: number;
+            /** @description The target holds objects, so its location and account fields cannot change (credentials can still be replaced) */
+            locked: boolean;
+        };
+        StoragePolicyConfig: {
+            name: string;
+            /** @enum {string} */
+            source: "file" | "database";
+            primary: string;
+            /** @description The primary the server runs with now. Objects are stored under it, so it is the only one allowed while the policy holds objects. */
+            runningPrimary: string;
+            replicas: string[];
+            cache?: string;
+            filePrimary: string;
+            fileReplicas: string[];
+            fileCache?: string;
+            /** Format: int64 */
+            objects: number;
+            /** @description The policy holds objects, so its primary cannot change */
+            primaryLocked: boolean;
+            restartPending: boolean;
+        };
+        /**
+         * @description Definition of an S3-compatible or SFTP target. Fields of the other
+         *     kind must be left out. Credentials are optional on update: an empty
+         *     one keeps the stored value.
+         */
+        StorageTargetInput: {
+            name: string;
+            /** @enum {string} */
+            kind: "s3" | "sftp";
+            encrypt?: boolean;
+            endpoint?: string;
+            bucket?: string;
+            region?: string;
+            prefix?: string;
+            pathStyle?: boolean;
+            host?: string;
+            port?: number;
+            user?: string;
+            root?: string;
+            maxConns?: number;
+            secrets?: components["schemas"]["StorageSecretsInput"];
+        };
+        /** @description Write-only credentials, sealed with the master key. Never returned. */
+        StorageSecretsInput: {
+            accessKey?: string;
+            secretKey?: string;
+            privateKey?: string;
+            passphrase?: string;
+            knownHosts?: string;
+        };
+        StoragePolicyInput: {
+            primary: string;
+            replicas: string[];
+            cache?: string;
+        };
         RepoTiering: {
             /** @enum {string} */
             state: "hot" | "cold" | "hydrating" | "evicting" | "degraded";
@@ -7663,6 +7871,172 @@ export interface operations {
                 };
             };
             404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getAdminStorageConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The storage configuration */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageConfig"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    testAdminStorageDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorageTargetInput"];
+            };
+        };
+        responses: {
+            /** @description Test outcome; ok is false when a step failed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageCheckResult"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            /** @description Invalid target definition */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ValidationProblem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    putAdminStorageTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorageTargetInput"];
+            };
+        };
+        responses: {
+            /** @description The storage configuration after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageConfig"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            /** @description Invalid target definition */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ValidationProblem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteAdminStorageTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The storage configuration after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageConfig"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            /** @description The target is read-only or still used by a policy */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ValidationProblem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    putAdminStoragePolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoragePolicyInput"];
+            };
+        };
+        responses: {
+            /** @description The storage configuration after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageConfig"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            /** @description Invalid placement, or a primary change on a policy with objects */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ValidationProblem"];
+                };
+            };
             default: components["responses"]["Problem"];
         };
     };

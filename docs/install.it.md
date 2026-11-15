@@ -70,3 +70,23 @@ ervisio-repo caddy remove
 - `--upstream` (predefinito `127.0.0.1:3400`), `--container-upstream` (predefinito `ervisiorepo-app:3400`), `--network` (predefinito `ervisiorepo_edge`): come Caddy raggiunge il server. Un Caddy in container viene collegato da solo alla rete edge.
 
 Se non trova un Caddy utilizzabile, il comando stampa lo snippet da incollare a mano. Poi imposta `server.public_url` sul nuovo indirizzo `https://` e riavvia il servizio.
+
+## Storage esterno dall'admin web
+
+Oltre a `[[storage.target]]` in `config.toml`, un amministratore dell'istanza può aggiungere destinazioni S3 compatibili e SFTP in **Admin > Storage** e cambiare dove viene salvato ogni tipo di dati (`git`, `lfs`, `actions`, ...).
+
+- **Credenziali.** Chiave di accesso e chiave segreta S3, chiave privata SFTP (con passphrase facoltativa) e righe degli host noti si scrivono nel modulo e vengono cifrate nel database con la chiave master (`security.master_key_file`). Non vengono mai mostrate di nuovo: la pagina dice solo se ognuna è salvata, e un campo vuoto mantiene il valore salvato. Senza chiave master le credenziali non si possono salvare. Non perdere la chiave: senza di essa le credenziali salvate non sono leggibili.
+- **Prova connessione** funziona sul modulo prima di salvare, con lo stesso giro di scrittura, lettura, elenco e cancellazione di `ervisio-repo storage test`.
+- **Policy.** Repliche e cache si possono cambiare in qualsiasi momento. La primaria si può cambiare solo finché la policy non contiene oggetti, perché gli oggetti non vengono spostati tra le destinazioni. Una cache deve essere una destinazione locale.
+- **Riavvio.** Le modifiche si applicano al prossimo avvio del server; la pagina lo ricorda fino ad allora.
+- **Limiti.** Le destinazioni di `config.toml` sono in sola lettura qui e i loro nomi non si possono riusare. Nome, tipo e cifratura di una destinazione non si cambiano dopo la creazione. Una destinazione non si elimina finché una policy la usa o ci sono oggetti salvati su di essa. Finché ci sono oggetti, la posizione (endpoint, regione, bucket, prefisso, host, porta, utente, radice) è bloccata; si possono sostituire solo le credenziali. Se cambiano endpoint o host, credenziali e host noti vanno inseriti di nuovo. Qui non si possono creare destinazioni `local` né WebDAV. Le connessioni dal server alle destinazioni rifiutano indirizzi link-local, metadati cloud (`169.254.0.0/16`, `fd00:ec2::/32`), non specificati e multicast; gli indirizzi privati sono permessi. `ervisio-repo storage test` conosce solo le destinazioni del file.
+- **Repliche aggiunte dopo.** Una nuova replica riceve i nuovi oggetti. Quelli salvati prima vengono copiati solo quando la verifica periodica li trova mancanti, quindi la copia completa dei dati vecchi è lenta. Una destinazione tolta da una policy viene semplicemente ignorata; i suoi oggetti restano dove sono.
+- **Se all'avvio la configurazione salvata non si può applicare** (per esempio è cambiata la chiave master), il server scrive un avviso e parte con il solo `config.toml`, a meno che sposti una primaria: in quel caso rifiuta di partire, perché gli oggetti diventerebbero introvabili.
+- **Stato.** Se la configurazione salvata non è stata applicata, Admin > Storage ne mostra il motivo. Una destinazione eliminata mentre è in uso resta in elenco come "Rimossa dopo il riavvio".
+
+### Recupero
+
+- `ervisio-repo storage overlay show [--config PERCORSO]` elenca la configurazione salvata (senza credenziali) e gli oggetti di ogni policy. `ervisio-repo storage overlay clear [--config PERCORSO] [--force]` la azzera, così il prossimo avvio usa solo `config.toml`. `clear` rifiuta se sposterebbe la primaria di una policy che contiene oggetti; `--force` lo supera, solo se quegli oggetti si trovano anche sotto la primaria del file.
+- **Configurazione salvata corrotta.** Il server rifiuta di partire e indica la chiave `storage.overlay`. Non cancellare la riga a mano: contiene la primaria delle tue policy. Usa `storage overlay clear --force` dopo aver controllato le primarie in `config.toml`.
+- **Chiave master persa o cambiata.** Le credenziali salvate non si possono decifrare. Il server parte con il solo `config.toml` (rifiuta solo se così sposterebbe una primaria). Ripristina la vecchia chiave, oppure esegui `storage overlay clear` e inserisci di nuovo le credenziali.
+- **Oggetti fuori posto.** All'avvio il server conta gli oggetti per policy e destinazione. Se una policy ha oggetti sotto una destinazione che la configurazione salvata non rende più primaria, quella configurazione non viene applicata.

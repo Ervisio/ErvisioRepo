@@ -70,3 +70,23 @@ ervisio-repo caddy remove
 - `--upstream` (default `127.0.0.1:3400`), `--container-upstream` (default `ervisiorepo-app:3400`), `--network` (default `ervisiorepo_edge`): how Caddy reaches the server. A Caddy container is joined to the edge network automatically.
 
 When no usable Caddy is found, the command prints the snippet to paste yourself. Afterwards set `server.public_url` to the new `https://` address and restart the service.
+
+## External storage from the web admin
+
+Besides `[[storage.target]]` in `config.toml`, an instance admin can add S3-compatible and SFTP targets in **Admin > Storage** and change where each data type (`git`, `lfs`, `actions`, ...) is stored.
+
+- **Credentials.** The S3 access and secret keys, the SFTP private key (with its optional passphrase) and the known hosts lines are typed in the form and sealed in the database with the master key (`security.master_key_file`). They are never shown again: the page only says whether each one is stored, and a blank field keeps the stored value. Without a master key credentials cannot be saved. Do not lose the key: stored credentials cannot be read without it.
+- **Test connection** works on the form before saving, with the same write, read, list and delete round trip as `ervisio-repo storage test`.
+- **Policies.** Replicas and cache can be changed at any time. The primary can change only while the policy holds no objects, because objects are not moved between targets. A cache must be a local target.
+- **Restart.** Changes apply the next time the server starts; the page says so until then.
+- **Limits.** Targets from `config.toml` are read-only here and their names cannot be reused. Name, type and encryption of a target cannot change after creation. A target cannot be deleted while a policy uses it or while objects are stored on it. While objects are stored on a target, its location (endpoint, region, bucket, prefix, host, port, user, root) is locked; only the credentials can be replaced. When the endpoint or host changes, the credentials (and known hosts) must be typed again. `local` and WebDAV targets cannot be created here. Connections made from the server to the targets refuse link-local, cloud metadata (`169.254.0.0/16`, `fd00:ec2::/32`), unspecified and multicast addresses; private addresses are allowed. `ervisio-repo storage test` only knows the targets of the file.
+- **Replicas added later.** A new replica receives new objects. Objects stored before are copied only when the periodic verification finds them missing there, so a full copy of old data is slow. A target removed from a policy is simply ignored; its objects stay where they are.
+- **If the stored configuration cannot be applied at start** (for example the master key changed), the server logs a warning and starts with `config.toml` alone, unless it moves a primary: then it refuses to start, because objects would become unfindable.
+- **Status.** When the stored configuration was not applied, Admin > Storage shows why. A target deleted while running stays listed as "Removed after restart".
+
+### Recovery
+
+- `ervisio-repo storage overlay show [--config PATH]` lists the stored configuration (no credentials) and the objects each policy holds. `ervisio-repo storage overlay clear [--config PATH] [--force]` resets it, so the next start uses `config.toml` only. `clear` refuses when it would move the primary of a policy that holds objects; `--force` overrides that, only if those objects are also found under the primary of the file.
+- **Corrupt stored configuration.** The server refuses to start and names the settings key `storage.overlay`. Do not delete the row by hand: it holds the primary of your policies. Use `storage overlay clear --force` after checking the primaries in `config.toml`.
+- **Lost or rotated master key.** The stored credentials cannot be unsealed. The server starts with `config.toml` alone (it refuses only when that would move a primary). Restore the old key, or run `storage overlay clear` and enter the credentials again.
+- **Stray objects.** At start the server counts objects per policy and target. If a policy has objects under a target that the stored configuration no longer makes its primary, the stored configuration is not applied.
