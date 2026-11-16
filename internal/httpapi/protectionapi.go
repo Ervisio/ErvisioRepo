@@ -163,6 +163,9 @@ func branchRuleInput(b *v1gen.BranchProtectionInput) protection.BranchRuleInput 
 	if b.RequiredApprovals != nil {
 		in.RequiredApprovals = *b.RequiredApprovals
 	}
+	if b.RequiredCheckApps != nil {
+		in.RequiredCheckApps = *b.RequiredCheckApps
+	}
 	return in
 }
 
@@ -171,8 +174,13 @@ func branchRuleDTO(r protection.BranchRule) v1gen.BranchProtection {
 	if checks == nil {
 		checks = []string{}
 	}
+	var pinned *map[string]int64
+	if m := protection.DecodeCheckApps(r.RequiredCheckApps); len(m) > 0 {
+		pinned = &m
+	}
 	return v1gen.BranchProtection{
-		Id: r.ID, Pattern: r.Pattern, RequiredApprovals: int(r.RequiredApprovals),
+		RequiredCheckApps: pinned,
+		Id:                r.ID, Pattern: r.Pattern, RequiredApprovals: int(r.RequiredApprovals),
 		RequireCodeOwnerReviews: r.RequireCodeOwnerReviews, DismissStaleReviews: r.DismissStaleReviews,
 		RequiredStatusChecks: checks, StrictStatusChecks: r.StrictStatusChecks,
 		RequireLinearHistory: r.RequireLinearHistory, AllowForcePushes: r.AllowForcePushes,

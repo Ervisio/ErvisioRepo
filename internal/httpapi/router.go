@@ -4,6 +4,7 @@ package httpapi
 
 import (
 	"context"
+	"github.com/Ervisio/ErvisioRepo/internal/apps"
 	"io/fs"
 	"log/slog"
 	"net"
@@ -30,6 +31,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 	"github.com/Ervisio/ErvisioRepo/internal/notify"
+	"github.com/Ervisio/ErvisioRepo/internal/runnerinstall"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
 	"github.com/Ervisio/ErvisioRepo/internal/webhooks"
 )
@@ -113,6 +115,8 @@ type Deps struct {
 	GitHub *ghsync.Service
 	// Webhooks serves the outgoing webhook endpoints; nil answers 503.
 	Webhooks *webhooks.Service
+	// Apps serves the Apps (registration, installations, App auth); nil answers 503.
+	Apps *apps.Service
 	// Notify serves the notification endpoints; nil answers 503.
 	Notify *notify.Service
 	// Dashboard serves the home feeds and the user preferences; nil answers 503.
@@ -183,6 +187,8 @@ func NewRouter(d Deps) http.Handler {
 	mountGitHubAPI(r, d)
 	mountActions(r, d)
 	mountAvatars(r, d)
+	r.Get(runnerinstall.ShellPath, runnerinstall.Shell(d.Meta.Version, d.Meta.PublicURL))
+	r.Get(runnerinstall.PowerShellPath, runnerinstall.PowerShell(d.Meta.Version, d.Meta.PublicURL))
 	if d.ActionsRunner != nil {
 		r.Handle("/api/actions/runner/*", d.ActionsRunner)
 	}
@@ -241,6 +247,7 @@ func mountGitHubAPI(r chi.Router, d Deps) {
 	if d.Credentials != nil {
 		g.OAuthApps = d.Credentials
 	}
+	g.Apps = d.Apps
 	ghapi.Mount(r, g)
 }
 
@@ -328,6 +335,7 @@ func mountV1(r chi.Router, d Deps) {
 	srv.settings = d.Settings
 	srv.storageCfg = d.StorageCfg
 	srv.avatars = d.Avatars
+	srv.apps = d.Apps
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())

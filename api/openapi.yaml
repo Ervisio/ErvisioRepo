@@ -23,6 +23,7 @@ tags:
   - name: checks
   - name: actions
   - name: oauth
+  - name: apps
 # Every operation needs a session unless it declares `security: []`. The
 # "admin" scope means an instance admin. Unsafe methods also need the
 # X-CSRF-Token header (see components.securitySchemes.session).
@@ -2054,6 +2055,512 @@ paths:
               schema: {$ref: "#/components/schemas/OAuthRedirect"}
         "400":
           $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /app-catalog:
+    get:
+      operationId: getAppCatalog
+      tags: [apps]
+      summary: Permissions and webhook events an App can ask for
+      responses:
+        "200":
+          description: The catalog
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AppCatalog"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/apps:
+    get:
+      operationId: listMyApps
+      tags: [apps]
+      summary: Apps registered by the account
+      description: Session only. Apps owned by the caller's user account.
+      responses:
+        "200":
+          description: Apps, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/App"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createMyApp
+      tags: [apps]
+      summary: Register an App owned by the account
+      description: |
+        Session only, subject to security.app_registration. Creates the bot
+        account slug[bot] and the App's OAuth client.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AppCreate"}
+      responses:
+        "201":
+          description: Registered (no private key yet)
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/App"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/apps:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgApps
+      tags: [apps]
+      summary: Apps owned by the organization
+      description: Session only, organization owners.
+      responses:
+        "200":
+          description: Apps, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/App"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createOrgApp
+      tags: [apps]
+      summary: Register an App owned by the organization
+      description: Session only, organization owners; subject to security.app_registration.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AppCreate"}
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/App"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /apps/{slug}:
+    parameters:
+      - $ref: "#/components/parameters/AppSlug"
+    get:
+      operationId: getApp
+      tags: [apps]
+      summary: An App
+      description: |
+        Public Apps for every signed-in user; private ones for their managers
+        only. Managers also get the keys, the webhook and the client secrets.
+      responses:
+        "200":
+          description: The App
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/App"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateApp
+      tags: [apps]
+      summary: Edit an App
+      description: |
+        Permissions the App drops leave its installations at once; new ones
+        wait until each installation's owner accepts them.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AppUpdate"}
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/App"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteApp
+      tags: [apps]
+      summary: Delete an App with its installations, keys and tokens
+      description: The bot account stays, so its slug cannot be registered again.
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /apps/{slug}/keys:
+    parameters:
+      - $ref: "#/components/parameters/AppSlug"
+    post:
+      operationId: createAppKey
+      tags: [apps]
+      summary: Generate a private key
+      description: An RSA 2048 key; the PEM is returned only once and only the public key is kept. At most 10 per App.
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CreatedAppKey"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /apps/{slug}/keys/{id}:
+    parameters:
+      - $ref: "#/components/parameters/AppSlug"
+      - $ref: "#/components/parameters/CredentialID"
+    delete:
+      operationId: deleteAppKey
+      tags: [apps]
+      summary: Revoke a private key
+      responses:
+        "204":
+          description: Revoked
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /apps/{slug}/installations:
+    parameters:
+      - $ref: "#/components/parameters/AppSlug"
+    get:
+      operationId: listAppInstallations
+      tags: [apps]
+      summary: Installations of an App (its managers)
+      responses:
+        "200":
+          description: Installations
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/AppInstallation"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: installApp
+      tags: [apps]
+      summary: Install an App on the caller's account or an organization it owns
+      description: |
+        Accepts the App's current permissions. A private App installs only on
+        the account that owns it. When the App has a setup URL, redirectUrl
+        carries installation_id and setup_action=install.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AppInstall"}
+      responses:
+        "201":
+          description: Installed
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AppInstallResult"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /apps/{slug}/install-targets:
+    parameters:
+      - $ref: "#/components/parameters/AppSlug"
+    get:
+      operationId: listAppInstallTargets
+      tags: [apps]
+      summary: Accounts the caller may install the App on
+      responses:
+        "200":
+          description: The caller's account and the organizations it owns
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/AppInstallTarget"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /apps/{slug}/deliveries:
+    parameters:
+      - $ref: "#/components/parameters/AppSlug"
+    get:
+      operationId: listAppDeliveries
+      tags: [apps]
+      summary: Recent deliveries of the App's webhook, newest first
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Deliveries
+          headers:
+            X-Has-More:
+              $ref: "#/components/headers/HasMore"
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/WebhookDelivery"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /apps/{slug}/deliveries/{deliveryId}:
+    parameters:
+      - $ref: "#/components/parameters/AppSlug"
+      - name: deliveryId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getAppDelivery
+      tags: [apps]
+      summary: A delivery of the App's webhook with its request and response
+      responses:
+        "200":
+          description: Delivery
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WebhookDeliveryDetail"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /apps/{slug}/deliveries/{deliveryId}/attempts:
+    parameters:
+      - $ref: "#/components/parameters/AppSlug"
+      - name: deliveryId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: redeliverAppDelivery
+      tags: [apps]
+      summary: Deliver the payload of a delivery again
+      responses:
+        "202":
+          description: Redelivery queued
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WebhookDelivery"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/app-installations:
+    get:
+      operationId: listMyAppInstallations
+      tags: [apps]
+      summary: Apps installed on the caller's account
+      responses:
+        "200":
+          description: Installations, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/AppInstallation"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/app-installations:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgAppInstallations
+      tags: [apps]
+      summary: Apps installed on the organization (owners)
+      responses:
+        "200":
+          description: Installations, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/AppInstallation"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /app-installations/{installationId}:
+    parameters:
+      - $ref: "#/components/parameters/InstallationID"
+    get:
+      operationId: getAppInstallation
+      tags: [apps]
+      summary: An installation with its repositories
+      description: The installed account (the user, or an owner of the organization).
+      responses:
+        "200":
+          description: The installation
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AppInstallation"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateAppInstallation
+      tags: [apps]
+      summary: Change the repositories of an installation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/AppInstallationUpdate"}
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AppInstallation"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteAppInstallation
+      tags: [apps]
+      summary: Uninstall an App
+      responses:
+        "204":
+          description: Uninstalled
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /app-installations/{installationId}/suspended:
+    parameters:
+      - $ref: "#/components/parameters/InstallationID"
+    put:
+      operationId: suspendAppInstallation
+      tags: [apps]
+      summary: Suspend an installation (no tokens, no events)
+      responses:
+        "200":
+          description: Suspended
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AppInstallation"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: unsuspendAppInstallation
+      tags: [apps]
+      summary: Resume a suspended installation
+      responses:
+        "200":
+          description: Resumed
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AppInstallation"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /app-installations/{installationId}/permissions:
+    parameters:
+      - $ref: "#/components/parameters/InstallationID"
+    put:
+      operationId: acceptAppInstallationPermissions
+      tags: [apps]
+      summary: Accept the permissions and events the App asks for now
+      responses:
+        "200":
+          description: Accepted
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/AppInstallation"}
         "401":
           $ref: "#/components/responses/Problem"
         "404":
@@ -10085,6 +10592,20 @@ components:
       schema:
         type: string
         format: uuid
+    AppSlug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 100
+    InstallationID:
+      name: installationId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
     OAuthClientID:
       name: clientId
       in: path
@@ -11101,6 +11622,233 @@ components:
         clientSecret:
           type: string
           description: The secret itself, shown only once
+    AppPermissions:
+      type: object
+      description: GitHub permission names (contents, issues, pull_requests…) with level read or write
+      additionalProperties:
+        type: string
+        enum: [read, write]
+    AppCatalog:
+      type: object
+      required: [repository, organization, user, writeOnly, events]
+      properties:
+        repository:
+          type: array
+          items: {type: string}
+        organization:
+          type: array
+          items: {type: string}
+        user:
+          type: array
+          items: {type: string}
+        writeOnly:
+          type: array
+          description: Permissions offered at the write level only
+          items: {type: string}
+        events:
+          type: array
+          items: {$ref: "#/components/schemas/AppCatalogEvent"}
+    AppCatalogEvent:
+      type: object
+      required: [name, permission]
+      properties:
+        name:
+          type: string
+        permission:
+          type: string
+          description: Permission the event needs (read); empty for none
+        alternative:
+          type: string
+          description: Another permission that also allows the event
+    AppKey:
+      type: object
+      required: [id, fingerprint, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        fingerprint: {type: string, description: "SHA256:… of the public key"}
+        createdBy: {type: string}
+        createdAt: {type: string, format: date-time}
+        lastUsedAt: {type: string, format: date-time}
+    CreatedAppKey:
+      type: object
+      required: [key, privateKey]
+      properties:
+        key: {$ref: "#/components/schemas/AppKey"}
+        privateKey:
+          type: string
+          description: The PEM (PKCS#1) of the private key, shown only once
+    AppWebhookConfig:
+      type: object
+      required: [url, active, hasSecret]
+      properties:
+        url: {type: string}
+        active: {type: boolean}
+        hasSecret: {type: boolean}
+        lastDelivery: {$ref: "#/components/schemas/WebhookLastDelivery"}
+    App:
+      type: object
+      required: [id, slug, name, description, homepageUrl, logoUrl, public, owner, botLogin, clientId, permissions,
+        events, installations, manageable, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Numeric App id (the iss of the App JWT)
+        slug: {type: string}
+        name: {type: string}
+        description: {type: string}
+        homepageUrl: {type: string}
+        logoUrl: {type: string}
+        public: {type: boolean}
+        owner: {$ref: "#/components/schemas/OAuthAppOwner"}
+        botLogin: {type: string, description: "slug[bot]"}
+        clientId: {type: string}
+        permissions: {$ref: "#/components/schemas/AppPermissions"}
+        events:
+          type: array
+          items: {type: string}
+        installations: {type: integer}
+        manageable:
+          type: boolean
+          description: The caller manages the App; the fields below are then set
+        setupUrl: {type: string}
+        callbackUrls:
+          type: array
+          items: {type: string}
+        webhook: {$ref: "#/components/schemas/AppWebhookConfig"}
+        keys:
+          type: array
+          items: {$ref: "#/components/schemas/AppKey"}
+        clientSecrets:
+          type: array
+          items: {$ref: "#/components/schemas/OAuthAppSecret"}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    AppCreate:
+      type: object
+      required: [name, homepageUrl]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 100}
+        slug: {type: string, maxLength: 34, description: Derived from the name when empty}
+        description: {type: string, maxLength: 1000}
+        homepageUrl: {type: string, maxLength: 2000}
+        logoUrl: {type: string, maxLength: 2000}
+        public: {type: boolean}
+        permissions: {$ref: "#/components/schemas/AppPermissions"}
+        events:
+          type: array
+          maxItems: 32
+          items: {type: string}
+        setupUrl: {type: string, maxLength: 2000}
+        callbackUrls:
+          type: array
+          maxItems: 10
+          items: {type: string, maxLength: 2000}
+        webhookUrl: {type: string, maxLength: 2048, description: Empty for no webhook}
+        webhookSecret: {type: string, maxLength: 256}
+        webhookActive: {type: boolean}
+    AppUpdate:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 100}
+        description: {type: string, maxLength: 1000}
+        homepageUrl: {type: string, maxLength: 2000}
+        logoUrl: {type: string, maxLength: 2000}
+        public: {type: boolean}
+        permissions: {$ref: "#/components/schemas/AppPermissions"}
+        events:
+          type: array
+          maxItems: 32
+          items: {type: string}
+        setupUrl: {type: string, maxLength: 2000}
+        callbackUrls:
+          type: array
+          maxItems: 10
+          items: {type: string, maxLength: 2000}
+        webhookUrl: {type: string, maxLength: 2048, description: Empty removes the webhook}
+        webhookSecret: {type: string, maxLength: 256, description: Empty removes the secret; absent keeps it}
+        webhookActive: {type: boolean}
+    AppInstallTarget:
+      type: object
+      required: [kind, name]
+      properties:
+        kind: {type: string, enum: [user, org]}
+        name: {type: string}
+        installationId:
+          type: integer
+          format: int64
+          description: Set when the App is installed on this account already
+    AppInstall:
+      type: object
+      required: [account, repositorySelection]
+      properties:
+        account: {type: string, description: Login of the user or organization}
+        repositorySelection: {type: string, enum: [all, selected]}
+        repositories:
+          type: array
+          maxItems: 500
+          items: {type: string, maxLength: 200}
+    AppInstallResult:
+      type: object
+      required: [installation]
+      properties:
+        installation: {$ref: "#/components/schemas/AppInstallation"}
+        redirectUrl: {type: string, description: The App's setup URL with installation_id and setup_action}
+    AppInstallationUpdate:
+      type: object
+      required: [repositorySelection]
+      properties:
+        repositorySelection: {type: string, enum: [all, selected]}
+        repositories:
+          type: array
+          maxItems: 500
+          items: {type: string, maxLength: 200}
+    AppInstallationRepo:
+      type: object
+      required: [owner, name, visibility]
+      properties:
+        owner: {type: string}
+        name: {type: string}
+        visibility: {type: string}
+    AppInstallation:
+      type: object
+      required: [id, app, account, repositorySelection, permissions, events, pending, createdAt, updatedAt]
+      properties:
+        id: {type: integer, format: int64}
+        app: {$ref: "#/components/schemas/AppInstallationApp"}
+        account:
+          type: object
+          required: [kind, name]
+          properties:
+            kind: {type: string, enum: [user, org]}
+            name: {type: string}
+        repositorySelection: {type: string, enum: [all, selected]}
+        repositories:
+          type: array
+          description: Covered repositories (getAppInstallation only)
+          items: {$ref: "#/components/schemas/AppInstallationRepo"}
+        permissions: {$ref: "#/components/schemas/AppPermissions"}
+        events:
+          type: array
+          items: {type: string}
+        pending:
+          type: boolean
+          description: The App asks for permissions or events not accepted yet
+        requestedPermissions: {$ref: "#/components/schemas/AppPermissions"}
+        requestedEvents:
+          type: array
+          items: {type: string}
+        suspendedAt: {type: string, format: date-time}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+    AppInstallationApp:
+      type: object
+      required: [id, slug, name, botLogin]
+      properties:
+        id: {type: integer, format: int64}
+        slug: {type: string}
+        name: {type: string}
+        botLogin: {type: string}
     OAuthAppSummary:
       type: object
       required: [clientId, name, description, homepageUrl, owner]
@@ -13527,6 +14275,12 @@ components:
           maxItems: 50
           items: {type: string, minLength: 1, maxLength: 255}
           description: Status check contexts that must succeed on the head commit
+        requiredCheckApps:
+          type: object
+          additionalProperties: {type: integer, format: int64, minimum: 1}
+          description: >-
+            App id (the GitHub-style numeric id) that must report a required context with its check runs;
+            contexts not listed accept any reporter
         strictStatusChecks: {type: boolean, description: The branch must be up to date with the base before merging}
         requireLinearHistory: {type: boolean, description: Reject merge commits}
         allowForcePushes: {type: boolean, description: Allow non fast-forward updates (default false)}
@@ -13558,6 +14312,10 @@ components:
         requiredStatusChecks:
           type: array
           items: {type: string}
+        requiredCheckApps:
+          type: object
+          additionalProperties: {type: integer, format: int64}
+          description: App id that must report each listed required context
         strictStatusChecks: {type: boolean}
         requireLinearHistory: {type: boolean}
         allowForcePushes: {type: boolean}

@@ -29,6 +29,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 
+	"github.com/Ervisio/ErvisioRepo/internal/apps"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/ghapi/graphql"
@@ -76,6 +77,9 @@ type Deps struct {
 	// OAuthApps serves /applications/{client_id}/token and /grant; nil
 	// answers 404 there.
 	OAuthApps OAuthApps
+	// Apps serves the GitHub App endpoints and authenticates App JWTs and
+	// installation tokens; nil answers 404 there.
+	Apps *apps.Service
 	// Timeout bounds the non-streaming requests (0 = none).
 	Timeout time.Duration
 }
@@ -110,7 +114,7 @@ func Mount(r chi.Router, d Deps) {
 	}
 	base := strings.TrimRight(d.PublicURL, "/")
 	s := &Server{d: d, base: base, api: base + Prefix, q: dbgen.New(d.DB)}
-	gql := s.graphql()
+	gql := noApps(s.graphql())
 	r.Route(Prefix, func(v3 chi.Router) {
 		v3.Use(s.authenticate)
 		v3.NotFound(func(w http.ResponseWriter, _ *http.Request) { writeError(w, http.StatusNotFound, "Not Found") })
@@ -178,6 +182,7 @@ func (s *Server) graphql() http.Handler {
 
 func (s *Server) routes(r chi.Router) {
 	s.applicationRoutes(r)
+	s.appRoutes(r)
 	r.Get("/", s.h((*call).root))
 	r.Get("/meta", s.h((*call).meta))
 	r.Get("/rate_limit", s.h((*call).rateLimit))
@@ -206,6 +211,7 @@ func (s *Server) routes(r chi.Router) {
 
 	r.Route("/repos/{owner}/{repo}", func(r chi.Router) {
 		r.Get("/", s.h((*call).getRepo))
+		r.Get("/installation", s.h((*call).repoInstallation))
 		r.Get("/stargazers", s.h((*call).listStargazers))
 		r.Patch("/", s.h((*call).updateRepo))
 		r.Delete("/", s.h((*call).deleteRepo))
@@ -358,7 +364,17 @@ func (s *Server) authenticate(next http.Handler) http.Handler {
 				writeError(w, http.StatusUnauthorized, "Bad credentials")
 				return
 			}
-			p, err := s.d.Auth.Tokens.Lookup(ctx, tok)
+			var p auth.Principal
+			var err error
+			if s.d.Apps != nil && apps.LooksLikeJWT(tok) {
+				p, err = s.d.Apps.AuthenticateJWT(ctx, tok)
+				if errors.Is(err, apps.ErrBadJWT) {
+					writeError(w, http.StatusUnauthorized, "A JSON web token could not be decoded")
+					return
+				}
+			} else {
+				p, err = s.d.Auth.Tokens.Lookup(ctx, tok)
+			}
 			switch {
 			case errors.Is(err, auth.ErrNoToken):
 				writeError(w, http.StatusUnauthorized, "Bad credentials")
@@ -447,6 +463,7 @@ type call struct {
 	owner, repo string
 	repos       map[uuid.UUID]*ghRepo
 	forks       map[uuid.UUID]forkFact
+	apps        map[uuid.UUID]ghApp
 }
 
 func (s *Server) h(fn func(c *call) error) http.HandlerFunc {
@@ -455,6 +472,10 @@ func (s *Server) h(fn func(c *call) error) http.HandlerFunc {
 		c := &call{s: s, w: w, r: r, ctx: r.Context(), who: who, owner: chi.URLParam(r, "owner"),
 			repo: chi.URLParam(r, "repo"), repos: map[uuid.UUID]*ghRepo{}}
 		c.ids = newIDs(r.Context(), s.q)
+		if err := c.appGate(); err != nil {
+			c.fail(err)
+			return
+		}
 		if err := fn(c); err != nil {
 			c.fail(err)
 		}
@@ -473,13 +494,17 @@ func (c *call) read() error { return c.scope(auth.ScopeReadRepo) }
 // (acting as ervisio-actions[bot] on its own repository only: the services
 // see it as anonymous elsewhere), with the repo:write scope.
 func (c *call) write() error {
-	if c.who.UserID == uuid.Nil && c.who.Grant == nil {
+	if c.who.UserID == uuid.Nil && !c.who.Automated() {
 		return errAuth
 	}
 	return c.scope(auth.ScopeWriteRepo)
 }
 
 func (c *call) scope(s string) error {
+	if c.who.Installation != nil {
+		// Bounded by its permissions in appGate instead.
+		return nil
+	}
 	if c.who.Method == auth.MethodToken && !c.who.HasScope(s) {
 		return errf(http.StatusForbidden, "Resource not accessible by personal access token (the %s scope is required)", s)
 	}

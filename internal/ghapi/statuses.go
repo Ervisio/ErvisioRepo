@@ -121,7 +121,7 @@ func (c *call) checkRunObj(r statuses.CheckRun) ghCheckRun {
 		Conclusion: strp(r.Conclusion), StartedAt: tsp(r.StartedAt), CompletedAt: tsp(r.CompletedAt),
 		Output: ghCheckOutput{Title: strp(r.Title), Summary: strp(r.Summary), Text: strp(r.Text),
 			AnnotationsCount: r.Annotations, AnnotationsURL: self + "/annotations"},
-		Name: r.Name, CheckSuite: ghSuiteRef{ID: c.ids.of(r.SuiteID)}, App: c.appObj(r.App), PullRequests: []any{}}
+		Name: r.Name, CheckSuite: ghSuiteRef{ID: c.ids.of(r.SuiteID)}, App: c.reporterApp(r.App, r.AppID), PullRequests: []any{}}
 }
 
 type ghCheckSuite struct {
@@ -150,7 +150,7 @@ func (c *call) checkSuiteObj(s statuses.CheckSuite, repo *ghRepo) ghCheckSuite {
 	self := c.repoAPI() + "/check-suites/" + strconv.FormatInt(id, 10)
 	return ghCheckSuite{ID: id, NodeID: nodeID("CheckSuite", s.ID), HeadBranch: strp(s.HeadBranch), HeadSHA: s.HeadSHA,
 		Status: s.Status, Conclusion: strp(s.Conclusion), URL: self, After: s.HeadSHA, PullRequests: []any{},
-		App: c.appObj(s.App), Repository: repo, CreatedAt: ts(s.CreatedAt), UpdatedAt: ts(s.UpdatedAt),
+		App: c.reporterApp(s.App, s.AppID), Repository: repo, CreatedAt: ts(s.CreatedAt), UpdatedAt: ts(s.UpdatedAt),
 		LatestCheckRunsCount: s.Runs, CheckRunsURL: self + "/check-runs"}
 }
 

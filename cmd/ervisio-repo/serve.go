@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Ervisio/ErvisioRepo/internal/apps"
 	"log/slog"
 	"net"
 	"net/http"
@@ -219,6 +220,8 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		}
 	}()
 
+	appsSvc := apps.New(apps.Options{Pool: pool, Webhooks: hooks, AppRegistration: cfg.Security.AppRegistration,
+		Log: log.With("component", "apps")})
 	creds := credentials.New(credentials.Options{Pool: pool, Log: log,
 		TokenMaxTTL: time.Duration(cfg.Auth.TokenMaxTTL), PublicURL: cfg.Server.PublicURL,
 		AppRegistration: cfg.Security.AppRegistration})
@@ -227,7 +230,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	if gitTier != nil {
 		repoSvc = repos.New(repos.Options{Pool: pool, Tier: gitTier, Jobs: runner, Log: log})
 		if git, err = setupGitTransports(cfg, pool, gitTier, repoSvc, journal.TransportHooks(gitTier), ids, creds, proxies, lfsSrv,
-			actionsJobTokens(actionsSvc), log); err != nil {
+			actionsJobTokens(actionsSvc), appsSvc, log); err != nil {
 			return err
 		}
 	}
@@ -260,9 +263,10 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		Orgs:        orgs.New(orgs.Options{Pool: pool, Jobs: runner, Log: log, Config: cfg}),
 		Audit:       dbgen.New(pool),
 		Credentials: creds,
+		Apps:        appsSvc,
 		SSO:         ssoMgr,
 		Auth: &auth.Middleware{
-			Sessions: ids.Sessions, Tokens: &auth.Tokens{Store: dbgen.New(pool), Jobs: actionsJobTokens(actionsSvc)},
+			Sessions: ids.Sessions, Tokens: &auth.Tokens{Store: dbgen.New(pool), Jobs: actionsJobTokens(actionsSvc), Apps: appsSvc},
 			Cookies: auth.CookiesFor(cfg.Server.PublicURL), TrustedProxies: proxies, Log: log,
 		},
 	}

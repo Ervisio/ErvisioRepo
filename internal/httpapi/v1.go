@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"github.com/Ervisio/ErvisioRepo/internal/apps"
 	"log/slog"
 
 	"github.com/Ervisio/ErvisioRepo/internal/audit"
@@ -59,6 +60,8 @@ type v1Server struct {
 	storageCfg StorageConfig
 	// avatars serves /user/avatar and /admin/storage/avatars; nil answers 503.
 	avatars *avatars.Service
+	// apps serves the App registration and installation endpoints; nil answers 503.
+	apps *apps.Service
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

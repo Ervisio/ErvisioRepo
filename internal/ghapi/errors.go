@@ -2,6 +2,7 @@ package ghapi
 
 import (
 	"errors"
+	"github.com/Ervisio/ErvisioRepo/internal/apps"
 	"net/http"
 
 	"github.com/Ervisio/ErvisioRepo/internal/actions"
@@ -31,8 +32,19 @@ func classify(err error) *apiError {
 		ov  *orgs.ValidationError
 		nm  *pulls.NotMergeableError
 		mbe *http.MaxBytesError
+		apv *apps.InputError
 	)
 	switch {
+	case errors.As(err, &apv):
+		return e(http.StatusUnprocessableEntity, apv.Msg)
+	case errors.Is(err, apps.ErrNotFound):
+		return e(http.StatusNotFound, "Not Found")
+	case errors.Is(err, apps.ErrForbidden):
+		return e(http.StatusForbidden, "Resource not accessible by integration")
+	case errors.Is(err, apps.ErrSuspended):
+		return e(http.StatusForbidden, "This installation has been suspended")
+	case errors.Is(err, apps.ErrConflict), errors.Is(err, apps.ErrTooMany):
+		return e(http.StatusConflict, "Conflict: "+err.Error())
 	case errors.As(err, &av):
 		return e(http.StatusUnprocessableEntity, av.Msg)
 	case actions.IsNotFound(err), errors.Is(err, artifacts.ErrNotFound):

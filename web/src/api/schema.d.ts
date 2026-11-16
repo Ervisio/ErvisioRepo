@@ -1404,6 +1404,350 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/app-catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Permissions and webhook events an App can ask for */
+        get: operations["getAppCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Apps registered by the account
+         * @description Session only. Apps owned by the caller's user account.
+         */
+        get: operations["listMyApps"];
+        put?: never;
+        /**
+         * Register an App owned by the account
+         * @description Session only, subject to security.app_registration. Creates the bot
+         *     account slug[bot] and the App's OAuth client.
+         */
+        post: operations["createMyApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org}/apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Apps owned by the organization
+         * @description Session only, organization owners.
+         */
+        get: operations["listOrgApps"];
+        put?: never;
+        /**
+         * Register an App owned by the organization
+         * @description Session only, organization owners; subject to security.app_registration.
+         */
+        post: operations["createOrgApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/apps/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        /**
+         * An App
+         * @description Public Apps for every signed-in user; private ones for their managers
+         *     only. Managers also get the keys, the webhook and the client secrets.
+         */
+        get: operations["getApp"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete an App with its installations, keys and tokens
+         * @description The bot account stays, so its slug cannot be registered again.
+         */
+        delete: operations["deleteApp"];
+        options?: never;
+        head?: never;
+        /**
+         * Edit an App
+         * @description Permissions the App drops leave its installations at once; new ones
+         *     wait until each installation's owner accepts them.
+         */
+        patch: operations["updateApp"];
+        trace?: never;
+    };
+    "/apps/{slug}/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate a private key
+         * @description An RSA 2048 key; the PEM is returned only once and only the public key is kept. At most 10 per App.
+         */
+        post: operations["createAppKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/apps/{slug}/keys/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+                id: components["parameters"]["CredentialID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke a private key */
+        delete: operations["deleteAppKey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/apps/{slug}/installations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        /** Installations of an App (its managers) */
+        get: operations["listAppInstallations"];
+        put?: never;
+        /**
+         * Install an App on the caller's account or an organization it owns
+         * @description Accepts the App's current permissions. A private App installs only on
+         *     the account that owns it. When the App has a setup URL, redirectUrl
+         *     carries installation_id and setup_action=install.
+         */
+        post: operations["installApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/apps/{slug}/install-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        /** Accounts the caller may install the App on */
+        get: operations["listAppInstallTargets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/apps/{slug}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        /** Recent deliveries of the App's webhook, newest first */
+        get: operations["listAppDeliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/apps/{slug}/deliveries/{deliveryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+                deliveryId: string;
+            };
+            cookie?: never;
+        };
+        /** A delivery of the App's webhook with its request and response */
+        get: operations["getAppDelivery"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/apps/{slug}/deliveries/{deliveryId}/attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+                deliveryId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deliver the payload of a delivery again */
+        post: operations["redeliverAppDelivery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/app-installations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Apps installed on the caller's account */
+        get: operations["listMyAppInstallations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org}/app-installations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        /** Apps installed on the organization (owners) */
+        get: operations["listOrgAppInstallations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/app-installations/{installationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installationId: components["parameters"]["InstallationID"];
+            };
+            cookie?: never;
+        };
+        /**
+         * An installation with its repositories
+         * @description The installed account (the user, or an owner of the organization).
+         */
+        get: operations["getAppInstallation"];
+        put?: never;
+        post?: never;
+        /** Uninstall an App */
+        delete: operations["deleteAppInstallation"];
+        options?: never;
+        head?: never;
+        /** Change the repositories of an installation */
+        patch: operations["updateAppInstallation"];
+        trace?: never;
+    };
+    "/app-installations/{installationId}/suspended": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installationId: components["parameters"]["InstallationID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Suspend an installation (no tokens, no events) */
+        put: operations["suspendAppInstallation"];
+        post?: never;
+        /** Resume a suspended installation */
+        delete: operations["unsuspendAppInstallation"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/app-installations/{installationId}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installationId: components["parameters"]["InstallationID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Accept the permissions and events the App asks for now */
+        put: operations["acceptAppInstallationPermissions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/user/keys/ssh": {
         parameters: {
             query?: never;
@@ -6463,6 +6807,176 @@ export interface components {
             /** @description The secret itself, shown only once */
             clientSecret: string;
         };
+        /** @description GitHub permission names (contents, issues, pull_requests…) with level read or write */
+        AppPermissions: {
+            [key: string]: "read" | "write";
+        };
+        AppCatalog: {
+            repository: string[];
+            organization: string[];
+            user: string[];
+            /** @description Permissions offered at the write level only */
+            writeOnly: string[];
+            events: components["schemas"]["AppCatalogEvent"][];
+        };
+        AppCatalogEvent: {
+            name: string;
+            /** @description Permission the event needs (read); empty for none */
+            permission: string;
+            /** @description Another permission that also allows the event */
+            alternative?: string;
+        };
+        AppKey: {
+            /** Format: uuid */
+            id: string;
+            /** @description SHA256:… of the public key */
+            fingerprint: string;
+            createdBy?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastUsedAt?: string;
+        };
+        CreatedAppKey: {
+            key: components["schemas"]["AppKey"];
+            /** @description The PEM (PKCS#1) of the private key, shown only once */
+            privateKey: string;
+        };
+        AppWebhookConfig: {
+            url: string;
+            active: boolean;
+            hasSecret: boolean;
+            lastDelivery?: components["schemas"]["WebhookLastDelivery"];
+        };
+        App: {
+            /**
+             * Format: int64
+             * @description Numeric App id (the iss of the App JWT)
+             */
+            id: number;
+            slug: string;
+            name: string;
+            description: string;
+            homepageUrl: string;
+            logoUrl: string;
+            public: boolean;
+            owner: components["schemas"]["OAuthAppOwner"];
+            /** @description slug[bot] */
+            botLogin: string;
+            clientId: string;
+            permissions: components["schemas"]["AppPermissions"];
+            events: string[];
+            installations: number;
+            /** @description The caller manages the App; the fields below are then set */
+            manageable: boolean;
+            setupUrl?: string;
+            callbackUrls?: string[];
+            webhook?: components["schemas"]["AppWebhookConfig"];
+            keys?: components["schemas"]["AppKey"][];
+            clientSecrets?: components["schemas"]["OAuthAppSecret"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        AppCreate: {
+            name: string;
+            /** @description Derived from the name when empty */
+            slug?: string;
+            description?: string;
+            homepageUrl: string;
+            logoUrl?: string;
+            public?: boolean;
+            permissions?: components["schemas"]["AppPermissions"];
+            events?: string[];
+            setupUrl?: string;
+            callbackUrls?: string[];
+            /** @description Empty for no webhook */
+            webhookUrl?: string;
+            webhookSecret?: string;
+            webhookActive?: boolean;
+        };
+        AppUpdate: {
+            name?: string;
+            description?: string;
+            homepageUrl?: string;
+            logoUrl?: string;
+            public?: boolean;
+            permissions?: components["schemas"]["AppPermissions"];
+            events?: string[];
+            setupUrl?: string;
+            callbackUrls?: string[];
+            /** @description Empty removes the webhook */
+            webhookUrl?: string;
+            /** @description Empty removes the secret; absent keeps it */
+            webhookSecret?: string;
+            webhookActive?: boolean;
+        };
+        AppInstallTarget: {
+            /** @enum {string} */
+            kind: "user" | "org";
+            name: string;
+            /**
+             * Format: int64
+             * @description Set when the App is installed on this account already
+             */
+            installationId?: number;
+        };
+        AppInstall: {
+            /** @description Login of the user or organization */
+            account: string;
+            /** @enum {string} */
+            repositorySelection: "all" | "selected";
+            repositories?: string[];
+        };
+        AppInstallResult: {
+            installation: components["schemas"]["AppInstallation"];
+            /** @description The App's setup URL with installation_id and setup_action */
+            redirectUrl?: string;
+        };
+        AppInstallationUpdate: {
+            /** @enum {string} */
+            repositorySelection: "all" | "selected";
+            repositories?: string[];
+        };
+        AppInstallationRepo: {
+            owner: string;
+            name: string;
+            visibility: string;
+        };
+        AppInstallation: {
+            /** Format: int64 */
+            id: number;
+            app: components["schemas"]["AppInstallationApp"];
+            account: {
+                /** @enum {string} */
+                kind: "user" | "org";
+                name: string;
+            };
+            /** @enum {string} */
+            repositorySelection: "all" | "selected";
+            /** @description Covered repositories (getAppInstallation only) */
+            repositories?: components["schemas"]["AppInstallationRepo"][];
+            permissions: components["schemas"]["AppPermissions"];
+            events: string[];
+            /** @description The App asks for permissions or events not accepted yet */
+            pending: boolean;
+            requestedPermissions?: components["schemas"]["AppPermissions"];
+            requestedEvents?: string[];
+            /** Format: date-time */
+            suspendedAt?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        AppInstallationApp: {
+            /** Format: int64 */
+            id: number;
+            slug: string;
+            name: string;
+            botLogin: string;
+        };
         OAuthAppSummary: {
             clientId: string;
             name: string;
@@ -8156,6 +8670,10 @@ export interface components {
             dismissStaleReviews?: boolean;
             /** @description Status check contexts that must succeed on the head commit */
             requiredStatusChecks?: string[];
+            /** @description App id (the GitHub-style numeric id) that must report a required context with its check runs; contexts not listed accept any reporter */
+            requiredCheckApps?: {
+                [key: string]: number;
+            };
             /** @description The branch must be up to date with the base before merging */
             strictStatusChecks?: boolean;
             /** @description Reject merge commits */
@@ -8183,6 +8701,10 @@ export interface components {
             requireCodeOwnerReviews: boolean;
             dismissStaleReviews: boolean;
             requiredStatusChecks: string[];
+            /** @description App id that must report each listed required context */
+            requiredCheckApps?: {
+                [key: string]: number;
+            };
             strictStatusChecks: boolean;
             requireLinearHistory: boolean;
             allowForcePushes: boolean;
@@ -8527,6 +9049,8 @@ export interface components {
         PageOffset: number;
         PageLimit: number;
         CredentialID: string;
+        AppSlug: string;
+        InstallationID: number;
         OAuthClientID: string;
         OrgName: string;
         TeamName: string;
@@ -10720,6 +11244,627 @@ export interface operations {
                 };
             };
             400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getAppCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The catalog */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppCatalog"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listMyApps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Apps, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["App"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createMyApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppCreate"];
+            };
+        };
+        responses: {
+            /** @description Registered (no private key yet) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["App"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listOrgApps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Apps, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["App"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createOrgApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppCreate"];
+            };
+        };
+        responses: {
+            /** @description Registered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["App"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The App */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["App"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["App"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createAppKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedAppKey"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteAppKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+                id: components["parameters"]["CredentialID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listAppInstallations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Installations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppInstallation"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    installApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppInstall"];
+            };
+        };
+        responses: {
+            /** @description Installed */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppInstallResult"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listAppInstallTargets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's account and the organizations it owns */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppInstallTarget"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listAppDeliveries: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deliveries */
+            200: {
+                headers: {
+                    "X-Has-More": components["headers"]["HasMore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookDelivery"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getAppDelivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+                deliveryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Delivery */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookDeliveryDetail"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    redeliverAppDelivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: components["parameters"]["AppSlug"];
+                deliveryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redelivery queued */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookDelivery"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listMyAppInstallations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Installations, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppInstallation"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listOrgAppInstallations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Installations, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppInstallation"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getAppInstallation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installationId: components["parameters"]["InstallationID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The installation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppInstallation"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteAppInstallation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installationId: components["parameters"]["InstallationID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Uninstalled */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateAppInstallation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installationId: components["parameters"]["InstallationID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppInstallationUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppInstallation"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    suspendAppInstallation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installationId: components["parameters"]["InstallationID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Suspended */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppInstallation"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    unsuspendAppInstallation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installationId: components["parameters"]["InstallationID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resumed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppInstallation"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    acceptAppInstallationPermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                installationId: components["parameters"]["InstallationID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppInstallation"];
+                };
+            };
             401: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             default: components["responses"]["Problem"];

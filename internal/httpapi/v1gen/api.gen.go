@@ -203,6 +203,96 @@ func (e AdminUserUpdateRole) Valid() bool {
 	}
 }
 
+// Defines values for AppInstallRepositorySelection.
+const (
+	AppInstallRepositorySelectionAll      AppInstallRepositorySelection = "all"
+	AppInstallRepositorySelectionSelected AppInstallRepositorySelection = "selected"
+)
+
+// Valid indicates whether the value is a known member of the AppInstallRepositorySelection enum.
+func (e AppInstallRepositorySelection) Valid() bool {
+	switch e {
+	case AppInstallRepositorySelectionAll:
+		return true
+	case AppInstallRepositorySelectionSelected:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AppInstallTargetKind.
+const (
+	AppInstallTargetKindOrg  AppInstallTargetKind = "org"
+	AppInstallTargetKindUser AppInstallTargetKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the AppInstallTargetKind enum.
+func (e AppInstallTargetKind) Valid() bool {
+	switch e {
+	case AppInstallTargetKindOrg:
+		return true
+	case AppInstallTargetKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AppInstallationAccountKind.
+const (
+	AppInstallationAccountKindOrg  AppInstallationAccountKind = "org"
+	AppInstallationAccountKindUser AppInstallationAccountKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the AppInstallationAccountKind enum.
+func (e AppInstallationAccountKind) Valid() bool {
+	switch e {
+	case AppInstallationAccountKindOrg:
+		return true
+	case AppInstallationAccountKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AppInstallationRepositorySelection.
+const (
+	AppInstallationRepositorySelectionAll      AppInstallationRepositorySelection = "all"
+	AppInstallationRepositorySelectionSelected AppInstallationRepositorySelection = "selected"
+)
+
+// Valid indicates whether the value is a known member of the AppInstallationRepositorySelection enum.
+func (e AppInstallationRepositorySelection) Valid() bool {
+	switch e {
+	case AppInstallationRepositorySelectionAll:
+		return true
+	case AppInstallationRepositorySelectionSelected:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AppInstallationUpdateRepositorySelection.
+const (
+	AppInstallationUpdateRepositorySelectionAll      AppInstallationUpdateRepositorySelection = "all"
+	AppInstallationUpdateRepositorySelectionSelected AppInstallationUpdateRepositorySelection = "selected"
+)
+
+// Valid indicates whether the value is a known member of the AppInstallationUpdateRepositorySelection enum.
+func (e AppInstallationUpdateRepositorySelection) Valid() bool {
+	switch e {
+	case AppInstallationUpdateRepositorySelectionAll:
+		return true
+	case AppInstallationUpdateRepositorySelectionSelected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CheckAnnotationLevel.
 const (
 	CheckAnnotationLevelFailure CheckAnnotationLevel = "failure"
@@ -2932,6 +3022,214 @@ type AdminUserUpdate struct {
 // AdminUserUpdateRole defines model for AdminUserUpdate.Role.
 type AdminUserUpdateRole string
 
+// App defines model for App.
+type App struct {
+	// BotLogin slug[bot]
+	BotLogin      string            `json:"botLogin"`
+	CallbackUrls  *[]string         `json:"callbackUrls,omitempty"`
+	ClientId      string            `json:"clientId"`
+	ClientSecrets *[]OAuthAppSecret `json:"clientSecrets,omitempty"`
+	CreatedAt     time.Time         `json:"createdAt"`
+	Description   string            `json:"description"`
+	Events        []string          `json:"events"`
+	HomepageUrl   string            `json:"homepageUrl"`
+
+	// Id Numeric App id (the iss of the App JWT)
+	Id            int64     `json:"id"`
+	Installations int       `json:"installations"`
+	Keys          *[]AppKey `json:"keys,omitempty"`
+	LogoUrl       string    `json:"logoUrl"`
+
+	// Manageable The caller manages the App; the fields below are then set
+	Manageable bool          `json:"manageable"`
+	Name       string        `json:"name"`
+	Owner      OAuthAppOwner `json:"owner"`
+
+	// Permissions GitHub permission names (contents, issues, pull_requests…) with level read or write
+	Permissions AppPermissions    `json:"permissions"`
+	Public      bool              `json:"public"`
+	SetupUrl    *string           `json:"setupUrl,omitempty"`
+	Slug        string            `json:"slug"`
+	UpdatedAt   time.Time         `json:"updatedAt"`
+	Webhook     *AppWebhookConfig `json:"webhook,omitempty"`
+}
+
+// AppCatalog defines model for AppCatalog.
+type AppCatalog struct {
+	Events       []AppCatalogEvent `json:"events"`
+	Organization []string          `json:"organization"`
+	Repository   []string          `json:"repository"`
+	User         []string          `json:"user"`
+
+	// WriteOnly Permissions offered at the write level only
+	WriteOnly []string `json:"writeOnly"`
+}
+
+// AppCatalogEvent defines model for AppCatalogEvent.
+type AppCatalogEvent struct {
+	// Alternative Another permission that also allows the event
+	Alternative *string `json:"alternative,omitempty"`
+	Name        string  `json:"name"`
+
+	// Permission Permission the event needs (read); empty for none
+	Permission string `json:"permission"`
+}
+
+// AppCreate defines model for AppCreate.
+type AppCreate struct {
+	CallbackUrls *[]string `json:"callbackUrls,omitempty"`
+	Description  *string   `json:"description,omitempty"`
+	Events       *[]string `json:"events,omitempty"`
+	HomepageUrl  string    `json:"homepageUrl"`
+	LogoUrl      *string   `json:"logoUrl,omitempty"`
+	Name         string    `json:"name"`
+
+	// Permissions GitHub permission names (contents, issues, pull_requests…) with level read or write
+	Permissions *AppPermissions `json:"permissions,omitempty"`
+	Public      *bool           `json:"public,omitempty"`
+	SetupUrl    *string         `json:"setupUrl,omitempty"`
+
+	// Slug Derived from the name when empty
+	Slug          *string `json:"slug,omitempty"`
+	WebhookActive *bool   `json:"webhookActive,omitempty"`
+	WebhookSecret *string `json:"webhookSecret,omitempty"`
+
+	// WebhookUrl Empty for no webhook
+	WebhookUrl *string `json:"webhookUrl,omitempty"`
+}
+
+// AppInstall defines model for AppInstall.
+type AppInstall struct {
+	// Account Login of the user or organization
+	Account             string                        `json:"account"`
+	Repositories        *[]string                     `json:"repositories,omitempty"`
+	RepositorySelection AppInstallRepositorySelection `json:"repositorySelection"`
+}
+
+// AppInstallRepositorySelection defines model for AppInstall.RepositorySelection.
+type AppInstallRepositorySelection string
+
+// AppInstallResult defines model for AppInstallResult.
+type AppInstallResult struct {
+	Installation AppInstallation `json:"installation"`
+
+	// RedirectUrl The App's setup URL with installation_id and setup_action
+	RedirectUrl *string `json:"redirectUrl,omitempty"`
+}
+
+// AppInstallTarget defines model for AppInstallTarget.
+type AppInstallTarget struct {
+	// InstallationId Set when the App is installed on this account already
+	InstallationId *int64               `json:"installationId,omitempty"`
+	Kind           AppInstallTargetKind `json:"kind"`
+	Name           string               `json:"name"`
+}
+
+// AppInstallTargetKind defines model for AppInstallTarget.Kind.
+type AppInstallTargetKind string
+
+// AppInstallation defines model for AppInstallation.
+type AppInstallation struct {
+	Account struct {
+		Kind AppInstallationAccountKind `json:"kind"`
+		Name string                     `json:"name"`
+	} `json:"account"`
+	App       AppInstallationApp `json:"app"`
+	CreatedAt time.Time          `json:"createdAt"`
+	Events    []string           `json:"events"`
+	Id        int64              `json:"id"`
+
+	// Pending The App asks for permissions or events not accepted yet
+	Pending bool `json:"pending"`
+
+	// Permissions GitHub permission names (contents, issues, pull_requests…) with level read or write
+	Permissions AppPermissions `json:"permissions"`
+
+	// Repositories Covered repositories (getAppInstallation only)
+	Repositories        *[]AppInstallationRepo             `json:"repositories,omitempty"`
+	RepositorySelection AppInstallationRepositorySelection `json:"repositorySelection"`
+	RequestedEvents     *[]string                          `json:"requestedEvents,omitempty"`
+
+	// RequestedPermissions GitHub permission names (contents, issues, pull_requests…) with level read or write
+	RequestedPermissions *AppPermissions `json:"requestedPermissions,omitempty"`
+	SuspendedAt          *time.Time      `json:"suspendedAt,omitempty"`
+	UpdatedAt            time.Time       `json:"updatedAt"`
+}
+
+// AppInstallationAccountKind defines model for AppInstallation.Account.Kind.
+type AppInstallationAccountKind string
+
+// AppInstallationRepositorySelection defines model for AppInstallation.RepositorySelection.
+type AppInstallationRepositorySelection string
+
+// AppInstallationApp defines model for AppInstallationApp.
+type AppInstallationApp struct {
+	BotLogin string `json:"botLogin"`
+	Id       int64  `json:"id"`
+	Name     string `json:"name"`
+	Slug     string `json:"slug"`
+}
+
+// AppInstallationRepo defines model for AppInstallationRepo.
+type AppInstallationRepo struct {
+	Name       string `json:"name"`
+	Owner      string `json:"owner"`
+	Visibility string `json:"visibility"`
+}
+
+// AppInstallationUpdate defines model for AppInstallationUpdate.
+type AppInstallationUpdate struct {
+	Repositories        *[]string                                `json:"repositories,omitempty"`
+	RepositorySelection AppInstallationUpdateRepositorySelection `json:"repositorySelection"`
+}
+
+// AppInstallationUpdateRepositorySelection defines model for AppInstallationUpdate.RepositorySelection.
+type AppInstallationUpdateRepositorySelection string
+
+// AppKey defines model for AppKey.
+type AppKey struct {
+	CreatedAt time.Time `json:"createdAt"`
+	CreatedBy *string   `json:"createdBy,omitempty"`
+
+	// Fingerprint SHA256:… of the public key
+	Fingerprint string             `json:"fingerprint"`
+	Id          openapi_types.UUID `json:"id"`
+	LastUsedAt  *time.Time         `json:"lastUsedAt,omitempty"`
+}
+
+// AppPermissions GitHub permission names (contents, issues, pull_requests…) with level read or write
+type AppPermissions map[string]string
+
+// AppUpdate defines model for AppUpdate.
+type AppUpdate struct {
+	CallbackUrls *[]string `json:"callbackUrls,omitempty"`
+	Description  *string   `json:"description,omitempty"`
+	Events       *[]string `json:"events,omitempty"`
+	HomepageUrl  *string   `json:"homepageUrl,omitempty"`
+	LogoUrl      *string   `json:"logoUrl,omitempty"`
+	Name         *string   `json:"name,omitempty"`
+
+	// Permissions GitHub permission names (contents, issues, pull_requests…) with level read or write
+	Permissions   *AppPermissions `json:"permissions,omitempty"`
+	Public        *bool           `json:"public,omitempty"`
+	SetupUrl      *string         `json:"setupUrl,omitempty"`
+	WebhookActive *bool           `json:"webhookActive,omitempty"`
+
+	// WebhookSecret Empty removes the secret; absent keeps it
+	WebhookSecret *string `json:"webhookSecret,omitempty"`
+
+	// WebhookUrl Empty removes the webhook
+	WebhookUrl *string `json:"webhookUrl,omitempty"`
+}
+
+// AppWebhookConfig defines model for AppWebhookConfig.
+type AppWebhookConfig struct {
+	Active       bool                 `json:"active"`
+	HasSecret    bool                 `json:"hasSecret"`
+	LastDelivery *WebhookLastDelivery `json:"lastDelivery,omitempty"`
+	Url          string               `json:"url"`
+}
+
 // AuditEntry defines model for AuditEntry.
 type AuditEntry struct {
 	Action string `json:"action"`
@@ -3066,10 +3364,13 @@ type BranchProtection struct {
 	RequireLinearHistory    bool               `json:"requireLinearHistory"`
 	RequireSignedCommits    bool               `json:"requireSignedCommits"`
 	RequiredApprovals       int                `json:"requiredApprovals"`
-	RequiredStatusChecks    []string           `json:"requiredStatusChecks"`
-	RestrictPushes          bool               `json:"restrictPushes"`
-	StrictStatusChecks      bool               `json:"strictStatusChecks"`
-	UpdatedAt               time.Time          `json:"updatedAt"`
+
+	// RequiredCheckApps App id that must report each listed required context
+	RequiredCheckApps    *map[string]int64 `json:"requiredCheckApps,omitempty"`
+	RequiredStatusChecks []string          `json:"requiredStatusChecks"`
+	RestrictPushes       bool              `json:"restrictPushes"`
+	StrictStatusChecks   bool              `json:"strictStatusChecks"`
+	UpdatedAt            time.Time         `json:"updatedAt"`
 }
 
 // BranchProtectionInput defines model for BranchProtectionInput.
@@ -3106,6 +3407,9 @@ type BranchProtectionInput struct {
 
 	// RequiredApprovals Approving reviews a pull request needs before merging
 	RequiredApprovals *int `json:"requiredApprovals,omitempty"`
+
+	// RequiredCheckApps App id (the GitHub-style numeric id) that must report a required context with its check runs; contexts not listed accept any reporter
+	RequiredCheckApps *map[string]int64 `json:"requiredCheckApps,omitempty"`
 
 	// RequiredStatusChecks Status check contexts that must succeed on the head commit
 	RequiredStatusChecks *[]string `json:"requiredStatusChecks,omitempty"`
@@ -3362,6 +3666,14 @@ type CreatedAccessToken struct {
 	// Secret The token (erp_...), shown only once; send it as "Authorization Bearer"
 	Secret string      `json:"secret"`
 	Token  AccessToken `json:"token"`
+}
+
+// CreatedAppKey defines model for CreatedAppKey.
+type CreatedAppKey struct {
+	Key AppKey `json:"key"`
+
+	// PrivateKey The PEM (PKCS#1) of the private key, shown only once
+	PrivateKey string `json:"privateKey"`
 }
 
 // CreatedOAuthAppSecret defines model for CreatedOAuthAppSecret.
@@ -5918,6 +6230,9 @@ type ActionsWorkflowFilter = string
 // ActionsWorkflowParam defines model for ActionsWorkflowParam.
 type ActionsWorkflowParam = string
 
+// AppSlug defines model for AppSlug.
+type AppSlug = string
+
 // AuditAction defines model for AuditAction.
 type AuditAction = string
 
@@ -5959,6 +6274,9 @@ type CommitRef = string
 
 // CredentialID defines model for CredentialID.
 type CredentialID = openapi_types.UUID
+
+// InstallationID defines model for InstallationID.
+type InstallationID = int64
 
 // NotificationRepo defines model for NotificationRepo.
 type NotificationRepo = string
@@ -6057,6 +6375,12 @@ type ListAdminUsersParams struct {
 
 // ListAdminUsersParamsRole defines parameters for ListAdminUsers.
 type ListAdminUsersParamsRole string
+
+// ListAppDeliveriesParams defines parameters for ListAppDeliveries.
+type ListAppDeliveriesParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
 
 // ExploreReposParams defines parameters for ExploreRepos.
 type ExploreReposParams struct {
@@ -6692,6 +7016,15 @@ type TestAdminStorageDraftJSONRequestBody = StorageTargetInput
 // UpdateAdminUserJSONRequestBody defines body for UpdateAdminUser for application/json ContentType.
 type UpdateAdminUserJSONRequestBody = AdminUserUpdate
 
+// UpdateAppInstallationJSONRequestBody defines body for UpdateAppInstallation for application/json ContentType.
+type UpdateAppInstallationJSONRequestBody = AppInstallationUpdate
+
+// UpdateAppJSONRequestBody defines body for UpdateApp for application/json ContentType.
+type UpdateAppJSONRequestBody = AppUpdate
+
+// InstallAppJSONRequestBody defines body for InstallApp for application/json ContentType.
+type InstallAppJSONRequestBody = AppInstall
+
 // ResendVerificationJSONRequestBody defines body for ResendVerification for application/json ContentType.
 type ResendVerificationJSONRequestBody = EmailRequest
 
@@ -6763,6 +7096,9 @@ type PutOrgActionsSecretJSONRequestBody = ActionsSecretPut
 
 // PutOrgActionsVariableJSONRequestBody defines body for PutOrgActionsVariable for application/json ContentType.
 type PutOrgActionsVariableJSONRequestBody = ActionsVariablePut
+
+// CreateOrgAppJSONRequestBody defines body for CreateOrgApp for application/json ContentType.
+type CreateOrgAppJSONRequestBody = AppCreate
 
 // CreateOrgWebhookJSONRequestBody defines body for CreateOrgWebhook for application/json ContentType.
 type CreateOrgWebhookJSONRequestBody = WebhookCreate
@@ -6944,6 +7280,9 @@ type UpdateTagRuleJSONRequestBody = TagRuleInput
 // TransferRepoJSONRequestBody defines body for TransferRepo for application/json ContentType.
 type TransferRepoJSONRequestBody = RepoTransfer
 
+// CreateMyAppJSONRequestBody defines body for CreateMyApp for application/json ContentType.
+type CreateMyAppJSONRequestBody = AppCreate
+
 // DecideDeviceAuthorizationJSONRequestBody defines body for DecideDeviceAuthorization for application/json ContentType.
 type DecideDeviceAuthorizationJSONRequestBody = DeviceAuthorizationDecision
 
@@ -7081,6 +7420,60 @@ type ServerInterface interface {
 	// ResetAdminUser2fa Remove the second factors of a user
 	// (DELETE /admin/users/{login}/2fa)
 	ResetAdminUser2fa(w http.ResponseWriter, r *http.Request, login string)
+	// GetAppCatalog Permissions and webhook events an App can ask for
+	// (GET /app-catalog)
+	GetAppCatalog(w http.ResponseWriter, r *http.Request)
+	// DeleteAppInstallation Uninstall an App
+	// (DELETE /app-installations/{installationId})
+	DeleteAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID)
+	// GetAppInstallation An installation with its repositories
+	// (GET /app-installations/{installationId})
+	GetAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID)
+	// UpdateAppInstallation Change the repositories of an installation
+	// (PATCH /app-installations/{installationId})
+	UpdateAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID)
+	// AcceptAppInstallationPermissions Accept the permissions and events the App asks for now
+	// (PUT /app-installations/{installationId}/permissions)
+	AcceptAppInstallationPermissions(w http.ResponseWriter, r *http.Request, installationId InstallationID)
+	// UnsuspendAppInstallation Resume a suspended installation
+	// (DELETE /app-installations/{installationId}/suspended)
+	UnsuspendAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID)
+	// SuspendAppInstallation Suspend an installation (no tokens, no events)
+	// (PUT /app-installations/{installationId}/suspended)
+	SuspendAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID)
+	// DeleteApp Delete an App with its installations, keys and tokens
+	// (DELETE /apps/{slug})
+	DeleteApp(w http.ResponseWriter, r *http.Request, slug AppSlug)
+	// GetApp An App
+	// (GET /apps/{slug})
+	GetApp(w http.ResponseWriter, r *http.Request, slug AppSlug)
+	// UpdateApp Edit an App
+	// (PATCH /apps/{slug})
+	UpdateApp(w http.ResponseWriter, r *http.Request, slug AppSlug)
+	// ListAppDeliveries Recent deliveries of the App's webhook, newest first
+	// (GET /apps/{slug}/deliveries)
+	ListAppDeliveries(w http.ResponseWriter, r *http.Request, slug AppSlug, params ListAppDeliveriesParams)
+	// GetAppDelivery A delivery of the App's webhook with its request and response
+	// (GET /apps/{slug}/deliveries/{deliveryId})
+	GetAppDelivery(w http.ResponseWriter, r *http.Request, slug AppSlug, deliveryId openapi_types.UUID)
+	// RedeliverAppDelivery Deliver the payload of a delivery again
+	// (POST /apps/{slug}/deliveries/{deliveryId}/attempts)
+	RedeliverAppDelivery(w http.ResponseWriter, r *http.Request, slug AppSlug, deliveryId openapi_types.UUID)
+	// ListAppInstallTargets Accounts the caller may install the App on
+	// (GET /apps/{slug}/install-targets)
+	ListAppInstallTargets(w http.ResponseWriter, r *http.Request, slug AppSlug)
+	// ListAppInstallations Installations of an App (its managers)
+	// (GET /apps/{slug}/installations)
+	ListAppInstallations(w http.ResponseWriter, r *http.Request, slug AppSlug)
+	// InstallApp Install an App on the caller's account or an organization it owns
+	// (POST /apps/{slug}/installations)
+	InstallApp(w http.ResponseWriter, r *http.Request, slug AppSlug)
+	// CreateAppKey Generate a private key
+	// (POST /apps/{slug}/keys)
+	CreateAppKey(w http.ResponseWriter, r *http.Request, slug AppSlug)
+	// DeleteAppKey Revoke a private key
+	// (DELETE /apps/{slug}/keys/{id})
+	DeleteAppKey(w http.ResponseWriter, r *http.Request, slug AppSlug, id CredentialID)
 	// ResendVerification Send the verification mail again
 	// (POST /auth/email/resend)
 	ResendVerification(w http.ResponseWriter, r *http.Request)
@@ -7267,6 +7660,15 @@ type ServerInterface interface {
 	// PutOrgActionsVariable Create or replace an Actions variable
 	// (PUT /orgs/{org}/actions/variables/{variableName})
 	PutOrgActionsVariable(w http.ResponseWriter, r *http.Request, org OrgName, variableName ActionsVariableName)
+	// ListOrgAppInstallations Apps installed on the organization (owners)
+	// (GET /orgs/{org}/app-installations)
+	ListOrgAppInstallations(w http.ResponseWriter, r *http.Request, org OrgName)
+	// ListOrgApps Apps owned by the organization
+	// (GET /orgs/{org}/apps)
+	ListOrgApps(w http.ResponseWriter, r *http.Request, org OrgName)
+	// CreateOrgApp Register an App owned by the organization
+	// (POST /orgs/{org}/apps)
+	CreateOrgApp(w http.ResponseWriter, r *http.Request, org OrgName)
 	// ListOrgAudit Audit log of an organization, newest first
 	// (GET /orgs/{org}/audit)
 	ListOrgAudit(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgAuditParams)
@@ -7858,6 +8260,15 @@ type ServerInterface interface {
 	// ListUserActivity Activity feed of the repositories the signed-in user can read
 	// (GET /user/activity)
 	ListUserActivity(w http.ResponseWriter, r *http.Request, params ListUserActivityParams)
+	// ListMyAppInstallations Apps installed on the caller's account
+	// (GET /user/app-installations)
+	ListMyAppInstallations(w http.ResponseWriter, r *http.Request)
+	// ListMyApps Apps registered by the account
+	// (GET /user/apps)
+	ListMyApps(w http.ResponseWriter, r *http.Request)
+	// CreateMyApp Register an App owned by the account
+	// (POST /user/apps)
+	CreateMyApp(w http.ResponseWriter, r *http.Request)
 	// DeleteAvatar Remove the avatar
 	// (DELETE /user/avatar)
 	DeleteAvatar(w http.ResponseWriter, r *http.Request)
@@ -8173,6 +8584,114 @@ func (_ Unimplemented) UpdateAdminUser(w http.ResponseWriter, r *http.Request, l
 // ResetAdminUser2fa Remove the second factors of a user
 // (DELETE /admin/users/{login}/2fa)
 func (_ Unimplemented) ResetAdminUser2fa(w http.ResponseWriter, r *http.Request, login string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetAppCatalog Permissions and webhook events an App can ask for
+// (GET /app-catalog)
+func (_ Unimplemented) GetAppCatalog(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteAppInstallation Uninstall an App
+// (DELETE /app-installations/{installationId})
+func (_ Unimplemented) DeleteAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetAppInstallation An installation with its repositories
+// (GET /app-installations/{installationId})
+func (_ Unimplemented) GetAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateAppInstallation Change the repositories of an installation
+// (PATCH /app-installations/{installationId})
+func (_ Unimplemented) UpdateAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AcceptAppInstallationPermissions Accept the permissions and events the App asks for now
+// (PUT /app-installations/{installationId}/permissions)
+func (_ Unimplemented) AcceptAppInstallationPermissions(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UnsuspendAppInstallation Resume a suspended installation
+// (DELETE /app-installations/{installationId}/suspended)
+func (_ Unimplemented) UnsuspendAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SuspendAppInstallation Suspend an installation (no tokens, no events)
+// (PUT /app-installations/{installationId}/suspended)
+func (_ Unimplemented) SuspendAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteApp Delete an App with its installations, keys and tokens
+// (DELETE /apps/{slug})
+func (_ Unimplemented) DeleteApp(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetApp An App
+// (GET /apps/{slug})
+func (_ Unimplemented) GetApp(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateApp Edit an App
+// (PATCH /apps/{slug})
+func (_ Unimplemented) UpdateApp(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListAppDeliveries Recent deliveries of the App's webhook, newest first
+// (GET /apps/{slug}/deliveries)
+func (_ Unimplemented) ListAppDeliveries(w http.ResponseWriter, r *http.Request, slug AppSlug, params ListAppDeliveriesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetAppDelivery A delivery of the App's webhook with its request and response
+// (GET /apps/{slug}/deliveries/{deliveryId})
+func (_ Unimplemented) GetAppDelivery(w http.ResponseWriter, r *http.Request, slug AppSlug, deliveryId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RedeliverAppDelivery Deliver the payload of a delivery again
+// (POST /apps/{slug}/deliveries/{deliveryId}/attempts)
+func (_ Unimplemented) RedeliverAppDelivery(w http.ResponseWriter, r *http.Request, slug AppSlug, deliveryId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListAppInstallTargets Accounts the caller may install the App on
+// (GET /apps/{slug}/install-targets)
+func (_ Unimplemented) ListAppInstallTargets(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListAppInstallations Installations of an App (its managers)
+// (GET /apps/{slug}/installations)
+func (_ Unimplemented) ListAppInstallations(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// InstallApp Install an App on the caller's account or an organization it owns
+// (POST /apps/{slug}/installations)
+func (_ Unimplemented) InstallApp(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAppKey Generate a private key
+// (POST /apps/{slug}/keys)
+func (_ Unimplemented) CreateAppKey(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteAppKey Revoke a private key
+// (DELETE /apps/{slug}/keys/{id})
+func (_ Unimplemented) DeleteAppKey(w http.ResponseWriter, r *http.Request, slug AppSlug, id CredentialID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -8545,6 +9064,24 @@ func (_ Unimplemented) DeleteOrgActionsVariable(w http.ResponseWriter, r *http.R
 // PutOrgActionsVariable Create or replace an Actions variable
 // (PUT /orgs/{org}/actions/variables/{variableName})
 func (_ Unimplemented) PutOrgActionsVariable(w http.ResponseWriter, r *http.Request, org OrgName, variableName ActionsVariableName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOrgAppInstallations Apps installed on the organization (owners)
+// (GET /orgs/{org}/app-installations)
+func (_ Unimplemented) ListOrgAppInstallations(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOrgApps Apps owned by the organization
+// (GET /orgs/{org}/apps)
+func (_ Unimplemented) ListOrgApps(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateOrgApp Register an App owned by the organization
+// (POST /orgs/{org}/apps)
+func (_ Unimplemented) CreateOrgApp(w http.ResponseWriter, r *http.Request, org OrgName) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9727,6 +10264,24 @@ func (_ Unimplemented) ListUserActionsRuns(w http.ResponseWriter, r *http.Reques
 // ListUserActivity Activity feed of the repositories the signed-in user can read
 // (GET /user/activity)
 func (_ Unimplemented) ListUserActivity(w http.ResponseWriter, r *http.Request, params ListUserActivityParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListMyAppInstallations Apps installed on the caller's account
+// (GET /user/app-installations)
+func (_ Unimplemented) ListMyAppInstallations(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListMyApps Apps registered by the account
+// (GET /user/apps)
+func (_ Unimplemented) ListMyApps(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateMyApp Register an App owned by the account
+// (POST /user/apps)
+func (_ Unimplemented) CreateMyApp(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -10913,6 +11468,626 @@ func (siw *ServerInterfaceWrapper) ResetAdminUser2fa(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ResetAdminUser2fa(w, r, login)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAppCatalog operation middleware
+func (siw *ServerInterfaceWrapper) GetAppCatalog(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAppCatalog(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAppInstallation operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAppInstallation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "installationId" -------------
+	var installationId InstallationID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "installationId", chi.URLParam(r, "installationId"), &installationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "installationId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAppInstallation(w, r, installationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAppInstallation operation middleware
+func (siw *ServerInterfaceWrapper) GetAppInstallation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "installationId" -------------
+	var installationId InstallationID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "installationId", chi.URLParam(r, "installationId"), &installationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "installationId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAppInstallation(w, r, installationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateAppInstallation operation middleware
+func (siw *ServerInterfaceWrapper) UpdateAppInstallation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "installationId" -------------
+	var installationId InstallationID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "installationId", chi.URLParam(r, "installationId"), &installationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "installationId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateAppInstallation(w, r, installationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AcceptAppInstallationPermissions operation middleware
+func (siw *ServerInterfaceWrapper) AcceptAppInstallationPermissions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "installationId" -------------
+	var installationId InstallationID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "installationId", chi.URLParam(r, "installationId"), &installationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "installationId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AcceptAppInstallationPermissions(w, r, installationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnsuspendAppInstallation operation middleware
+func (siw *ServerInterfaceWrapper) UnsuspendAppInstallation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "installationId" -------------
+	var installationId InstallationID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "installationId", chi.URLParam(r, "installationId"), &installationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "installationId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnsuspendAppInstallation(w, r, installationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SuspendAppInstallation operation middleware
+func (siw *ServerInterfaceWrapper) SuspendAppInstallation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "installationId" -------------
+	var installationId InstallationID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "installationId", chi.URLParam(r, "installationId"), &installationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "installationId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SuspendAppInstallation(w, r, installationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteApp operation middleware
+func (siw *ServerInterfaceWrapper) DeleteApp(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug AppSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", chi.URLParam(r, "slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteApp(w, r, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetApp operation middleware
+func (siw *ServerInterfaceWrapper) GetApp(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug AppSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", chi.URLParam(r, "slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetApp(w, r, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateApp operation middleware
+func (siw *ServerInterfaceWrapper) UpdateApp(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug AppSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", chi.URLParam(r, "slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateApp(w, r, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAppDeliveries operation middleware
+func (siw *ServerInterfaceWrapper) ListAppDeliveries(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug AppSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", chi.URLParam(r, "slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAppDeliveriesParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAppDeliveries(w, r, slug, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAppDelivery operation middleware
+func (siw *ServerInterfaceWrapper) GetAppDelivery(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug AppSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", chi.URLParam(r, "slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "deliveryId" -------------
+	var deliveryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "deliveryId", chi.URLParam(r, "deliveryId"), &deliveryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "deliveryId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAppDelivery(w, r, slug, deliveryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RedeliverAppDelivery operation middleware
+func (siw *ServerInterfaceWrapper) RedeliverAppDelivery(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug AppSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", chi.URLParam(r, "slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "deliveryId" -------------
+	var deliveryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "deliveryId", chi.URLParam(r, "deliveryId"), &deliveryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "deliveryId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RedeliverAppDelivery(w, r, slug, deliveryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAppInstallTargets operation middleware
+func (siw *ServerInterfaceWrapper) ListAppInstallTargets(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug AppSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", chi.URLParam(r, "slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAppInstallTargets(w, r, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAppInstallations operation middleware
+func (siw *ServerInterfaceWrapper) ListAppInstallations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug AppSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", chi.URLParam(r, "slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAppInstallations(w, r, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// InstallApp operation middleware
+func (siw *ServerInterfaceWrapper) InstallApp(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug AppSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", chi.URLParam(r, "slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.InstallApp(w, r, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAppKey operation middleware
+func (siw *ServerInterfaceWrapper) CreateAppKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug AppSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", chi.URLParam(r, "slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAppKey(w, r, slug)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAppKey operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAppKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "slug" -------------
+	var slug AppSlug
+
+	err = runtime.BindStyledParameterWithOptions("simple", "slug", chi.URLParam(r, "slug"), &slug, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "slug", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "id" -------------
+	var id CredentialID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAppKey(w, r, slug, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12849,6 +14024,102 @@ func (siw *ServerInterfaceWrapper) PutOrgActionsVariable(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PutOrgActionsVariable(w, r, org, variableName)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrgAppInstallations operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgAppInstallations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgAppInstallations(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrgApps operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgApps(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgApps(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateOrgApp operation middleware
+func (siw *ServerInterfaceWrapper) CreateOrgApp(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateOrgApp(w, r, org)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -24091,6 +25362,66 @@ func (siw *ServerInterfaceWrapper) ListUserActivity(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// ListMyAppInstallations operation middleware
+func (siw *ServerInterfaceWrapper) ListMyAppInstallations(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMyAppInstallations(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMyApps operation middleware
+func (siw *ServerInterfaceWrapper) ListMyApps(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMyApps(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateMyApp operation middleware
+func (siw *ServerInterfaceWrapper) CreateMyApp(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateMyApp(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteAvatar operation middleware
 func (siw *ServerInterfaceWrapper) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
 
@@ -25995,6 +27326,78 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/user/oauth/authorize", wrapper.DecideOAuthConsent)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/app-catalog", wrapper.GetAppCatalog)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/apps", wrapper.ListMyApps)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/apps", wrapper.CreateMyApp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/apps", wrapper.ListOrgApps)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/orgs/{org}/apps", wrapper.CreateOrgApp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/apps/{slug}", wrapper.DeleteApp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/apps/{slug}", wrapper.GetApp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/apps/{slug}", wrapper.UpdateApp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/apps/{slug}/keys", wrapper.CreateAppKey)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/apps/{slug}/keys/{id}", wrapper.DeleteAppKey)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/apps/{slug}/installations", wrapper.ListAppInstallations)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/apps/{slug}/installations", wrapper.InstallApp)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/apps/{slug}/install-targets", wrapper.ListAppInstallTargets)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/apps/{slug}/deliveries", wrapper.ListAppDeliveries)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/apps/{slug}/deliveries/{deliveryId}", wrapper.GetAppDelivery)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/apps/{slug}/deliveries/{deliveryId}/attempts", wrapper.RedeliverAppDelivery)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/app-installations", wrapper.ListMyAppInstallations)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/app-installations", wrapper.ListOrgAppInstallations)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/app-installations/{installationId}", wrapper.DeleteAppInstallation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/app-installations/{installationId}", wrapper.GetAppInstallation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/app-installations/{installationId}", wrapper.UpdateAppInstallation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/app-installations/{installationId}/suspended", wrapper.UnsuspendAppInstallation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/app-installations/{installationId}/suspended", wrapper.SuspendAppInstallation)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/app-installations/{installationId}/permissions", wrapper.AcceptAppInstallationPermissions)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/user/keys/ssh", wrapper.ListSshKeys)
@@ -28378,6 +29781,1314 @@ type ResetAdminUser2fadefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response ResetAdminUser2fadefaultApplicationProblemPlusJSONResponse) VisitResetAdminUser2faResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppCatalogRequestObject struct {
+}
+
+type GetAppCatalogResponseObject interface {
+	VisitGetAppCatalogResponse(w http.ResponseWriter) error
+}
+
+type GetAppCatalog200JSONResponse AppCatalog
+
+func (response GetAppCatalog200JSONResponse) VisitGetAppCatalogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppCatalog401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetAppCatalog401ApplicationProblemPlusJSONResponse) VisitGetAppCatalogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppCatalogdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetAppCatalogdefaultApplicationProblemPlusJSONResponse) VisitGetAppCatalogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAppInstallationRequestObject struct {
+	InstallationId InstallationID `json:"installationId"`
+}
+
+type DeleteAppInstallationResponseObject interface {
+	VisitDeleteAppInstallationResponse(w http.ResponseWriter) error
+}
+
+type DeleteAppInstallation204Response struct {
+}
+
+func (response DeleteAppInstallation204Response) VisitDeleteAppInstallationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteAppInstallation401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteAppInstallation401ApplicationProblemPlusJSONResponse) VisitDeleteAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAppInstallation404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteAppInstallation404ApplicationProblemPlusJSONResponse) VisitDeleteAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAppInstallationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteAppInstallationdefaultApplicationProblemPlusJSONResponse) VisitDeleteAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppInstallationRequestObject struct {
+	InstallationId InstallationID `json:"installationId"`
+}
+
+type GetAppInstallationResponseObject interface {
+	VisitGetAppInstallationResponse(w http.ResponseWriter) error
+}
+
+type GetAppInstallation200JSONResponse AppInstallation
+
+func (response GetAppInstallation200JSONResponse) VisitGetAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppInstallation401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetAppInstallation401ApplicationProblemPlusJSONResponse) VisitGetAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppInstallation404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetAppInstallation404ApplicationProblemPlusJSONResponse) VisitGetAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppInstallationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetAppInstallationdefaultApplicationProblemPlusJSONResponse) VisitGetAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAppInstallationRequestObject struct {
+	InstallationId InstallationID `json:"installationId"`
+	Body           *UpdateAppInstallationJSONRequestBody
+}
+
+type UpdateAppInstallationResponseObject interface {
+	VisitUpdateAppInstallationResponse(w http.ResponseWriter) error
+}
+
+type UpdateAppInstallation200JSONResponse AppInstallation
+
+func (response UpdateAppInstallation200JSONResponse) VisitUpdateAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAppInstallation401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateAppInstallation401ApplicationProblemPlusJSONResponse) VisitUpdateAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAppInstallation404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateAppInstallation404ApplicationProblemPlusJSONResponse) VisitUpdateAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAppInstallation422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateAppInstallation422ApplicationProblemPlusJSONResponse) VisitUpdateAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAppInstallationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateAppInstallationdefaultApplicationProblemPlusJSONResponse) VisitUpdateAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptAppInstallationPermissionsRequestObject struct {
+	InstallationId InstallationID `json:"installationId"`
+}
+
+type AcceptAppInstallationPermissionsResponseObject interface {
+	VisitAcceptAppInstallationPermissionsResponse(w http.ResponseWriter) error
+}
+
+type AcceptAppInstallationPermissions200JSONResponse AppInstallation
+
+func (response AcceptAppInstallationPermissions200JSONResponse) VisitAcceptAppInstallationPermissionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptAppInstallationPermissions401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AcceptAppInstallationPermissions401ApplicationProblemPlusJSONResponse) VisitAcceptAppInstallationPermissionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptAppInstallationPermissions404ApplicationProblemPlusJSONResponse Problem
+
+func (response AcceptAppInstallationPermissions404ApplicationProblemPlusJSONResponse) VisitAcceptAppInstallationPermissionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptAppInstallationPermissionsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response AcceptAppInstallationPermissionsdefaultApplicationProblemPlusJSONResponse) VisitAcceptAppInstallationPermissionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnsuspendAppInstallationRequestObject struct {
+	InstallationId InstallationID `json:"installationId"`
+}
+
+type UnsuspendAppInstallationResponseObject interface {
+	VisitUnsuspendAppInstallationResponse(w http.ResponseWriter) error
+}
+
+type UnsuspendAppInstallation200JSONResponse AppInstallation
+
+func (response UnsuspendAppInstallation200JSONResponse) VisitUnsuspendAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnsuspendAppInstallation401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UnsuspendAppInstallation401ApplicationProblemPlusJSONResponse) VisitUnsuspendAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnsuspendAppInstallation404ApplicationProblemPlusJSONResponse Problem
+
+func (response UnsuspendAppInstallation404ApplicationProblemPlusJSONResponse) VisitUnsuspendAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnsuspendAppInstallationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UnsuspendAppInstallationdefaultApplicationProblemPlusJSONResponse) VisitUnsuspendAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SuspendAppInstallationRequestObject struct {
+	InstallationId InstallationID `json:"installationId"`
+}
+
+type SuspendAppInstallationResponseObject interface {
+	VisitSuspendAppInstallationResponse(w http.ResponseWriter) error
+}
+
+type SuspendAppInstallation200JSONResponse AppInstallation
+
+func (response SuspendAppInstallation200JSONResponse) VisitSuspendAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SuspendAppInstallation401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SuspendAppInstallation401ApplicationProblemPlusJSONResponse) VisitSuspendAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SuspendAppInstallation404ApplicationProblemPlusJSONResponse Problem
+
+func (response SuspendAppInstallation404ApplicationProblemPlusJSONResponse) VisitSuspendAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SuspendAppInstallationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SuspendAppInstallationdefaultApplicationProblemPlusJSONResponse) VisitSuspendAppInstallationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAppRequestObject struct {
+	Slug AppSlug `json:"slug"`
+}
+
+type DeleteAppResponseObject interface {
+	VisitDeleteAppResponse(w http.ResponseWriter) error
+}
+
+type DeleteApp204Response struct {
+}
+
+func (response DeleteApp204Response) VisitDeleteAppResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteApp401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteApp401ApplicationProblemPlusJSONResponse) VisitDeleteAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteApp404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteApp404ApplicationProblemPlusJSONResponse) VisitDeleteAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAppdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteAppdefaultApplicationProblemPlusJSONResponse) VisitDeleteAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppRequestObject struct {
+	Slug AppSlug `json:"slug"`
+}
+
+type GetAppResponseObject interface {
+	VisitGetAppResponse(w http.ResponseWriter) error
+}
+
+type GetApp200JSONResponse App
+
+func (response GetApp200JSONResponse) VisitGetAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetApp401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetApp401ApplicationProblemPlusJSONResponse) VisitGetAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetApp404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetApp404ApplicationProblemPlusJSONResponse) VisitGetAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetAppdefaultApplicationProblemPlusJSONResponse) VisitGetAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAppRequestObject struct {
+	Slug AppSlug `json:"slug"`
+	Body *UpdateAppJSONRequestBody
+}
+
+type UpdateAppResponseObject interface {
+	VisitUpdateAppResponse(w http.ResponseWriter) error
+}
+
+type UpdateApp200JSONResponse App
+
+func (response UpdateApp200JSONResponse) VisitUpdateAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateApp401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateApp401ApplicationProblemPlusJSONResponse) VisitUpdateAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateApp404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateApp404ApplicationProblemPlusJSONResponse) VisitUpdateAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateApp422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateApp422ApplicationProblemPlusJSONResponse) VisitUpdateAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAppdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateAppdefaultApplicationProblemPlusJSONResponse) VisitUpdateAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppDeliveriesRequestObject struct {
+	Slug   AppSlug `json:"slug"`
+	Params ListAppDeliveriesParams
+}
+
+type ListAppDeliveriesResponseObject interface {
+	VisitListAppDeliveriesResponse(w http.ResponseWriter) error
+}
+
+type ListAppDeliveries200ResponseHeaders struct {
+	XHasMore string
+}
+
+type ListAppDeliveries200JSONResponse struct {
+	Body    []WebhookDelivery
+	Headers ListAppDeliveries200ResponseHeaders
+}
+
+func (response ListAppDeliveries200JSONResponse) VisitListAppDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Has-More", fmt.Sprint(response.Headers.XHasMore))
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppDeliveries401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListAppDeliveries401ApplicationProblemPlusJSONResponse) VisitListAppDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppDeliveries404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListAppDeliveries404ApplicationProblemPlusJSONResponse) VisitListAppDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppDeliveriesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListAppDeliveriesdefaultApplicationProblemPlusJSONResponse) VisitListAppDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppDeliveryRequestObject struct {
+	Slug       AppSlug            `json:"slug"`
+	DeliveryId openapi_types.UUID `json:"deliveryId"`
+}
+
+type GetAppDeliveryResponseObject interface {
+	VisitGetAppDeliveryResponse(w http.ResponseWriter) error
+}
+
+type GetAppDelivery200JSONResponse WebhookDeliveryDetail
+
+func (response GetAppDelivery200JSONResponse) VisitGetAppDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppDelivery401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetAppDelivery401ApplicationProblemPlusJSONResponse) VisitGetAppDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppDelivery404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetAppDelivery404ApplicationProblemPlusJSONResponse) VisitGetAppDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAppDeliverydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetAppDeliverydefaultApplicationProblemPlusJSONResponse) VisitGetAppDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverAppDeliveryRequestObject struct {
+	Slug       AppSlug            `json:"slug"`
+	DeliveryId openapi_types.UUID `json:"deliveryId"`
+}
+
+type RedeliverAppDeliveryResponseObject interface {
+	VisitRedeliverAppDeliveryResponse(w http.ResponseWriter) error
+}
+
+type RedeliverAppDelivery202JSONResponse WebhookDelivery
+
+func (response RedeliverAppDelivery202JSONResponse) VisitRedeliverAppDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverAppDelivery401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RedeliverAppDelivery401ApplicationProblemPlusJSONResponse) VisitRedeliverAppDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverAppDelivery404ApplicationProblemPlusJSONResponse Problem
+
+func (response RedeliverAppDelivery404ApplicationProblemPlusJSONResponse) VisitRedeliverAppDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RedeliverAppDeliverydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RedeliverAppDeliverydefaultApplicationProblemPlusJSONResponse) VisitRedeliverAppDeliveryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppInstallTargetsRequestObject struct {
+	Slug AppSlug `json:"slug"`
+}
+
+type ListAppInstallTargetsResponseObject interface {
+	VisitListAppInstallTargetsResponse(w http.ResponseWriter) error
+}
+
+type ListAppInstallTargets200JSONResponse []AppInstallTarget
+
+func (response ListAppInstallTargets200JSONResponse) VisitListAppInstallTargetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppInstallTargets401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListAppInstallTargets401ApplicationProblemPlusJSONResponse) VisitListAppInstallTargetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppInstallTargets404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListAppInstallTargets404ApplicationProblemPlusJSONResponse) VisitListAppInstallTargetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppInstallTargetsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListAppInstallTargetsdefaultApplicationProblemPlusJSONResponse) VisitListAppInstallTargetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppInstallationsRequestObject struct {
+	Slug AppSlug `json:"slug"`
+}
+
+type ListAppInstallationsResponseObject interface {
+	VisitListAppInstallationsResponse(w http.ResponseWriter) error
+}
+
+type ListAppInstallations200JSONResponse []AppInstallation
+
+func (response ListAppInstallations200JSONResponse) VisitListAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppInstallations401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListAppInstallations401ApplicationProblemPlusJSONResponse) VisitListAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppInstallations404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListAppInstallations404ApplicationProblemPlusJSONResponse) VisitListAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAppInstallationsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListAppInstallationsdefaultApplicationProblemPlusJSONResponse) VisitListAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallAppRequestObject struct {
+	Slug AppSlug `json:"slug"`
+	Body *InstallAppJSONRequestBody
+}
+
+type InstallAppResponseObject interface {
+	VisitInstallAppResponse(w http.ResponseWriter) error
+}
+
+type InstallApp201JSONResponse AppInstallResult
+
+func (response InstallApp201JSONResponse) VisitInstallAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallApp401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response InstallApp401ApplicationProblemPlusJSONResponse) VisitInstallAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallApp403ApplicationProblemPlusJSONResponse Problem
+
+func (response InstallApp403ApplicationProblemPlusJSONResponse) VisitInstallAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallApp404ApplicationProblemPlusJSONResponse Problem
+
+func (response InstallApp404ApplicationProblemPlusJSONResponse) VisitInstallAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallApp409ApplicationProblemPlusJSONResponse Problem
+
+func (response InstallApp409ApplicationProblemPlusJSONResponse) VisitInstallAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallApp422ApplicationProblemPlusJSONResponse Problem
+
+func (response InstallApp422ApplicationProblemPlusJSONResponse) VisitInstallAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallAppdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response InstallAppdefaultApplicationProblemPlusJSONResponse) VisitInstallAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAppKeyRequestObject struct {
+	Slug AppSlug `json:"slug"`
+}
+
+type CreateAppKeyResponseObject interface {
+	VisitCreateAppKeyResponse(w http.ResponseWriter) error
+}
+
+type CreateAppKey201JSONResponse CreatedAppKey
+
+func (response CreateAppKey201JSONResponse) VisitCreateAppKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAppKey401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateAppKey401ApplicationProblemPlusJSONResponse) VisitCreateAppKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAppKey404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateAppKey404ApplicationProblemPlusJSONResponse) VisitCreateAppKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAppKey409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateAppKey409ApplicationProblemPlusJSONResponse) VisitCreateAppKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAppKeydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateAppKeydefaultApplicationProblemPlusJSONResponse) VisitCreateAppKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAppKeyRequestObject struct {
+	Slug AppSlug      `json:"slug"`
+	Id   CredentialID `json:"id"`
+}
+
+type DeleteAppKeyResponseObject interface {
+	VisitDeleteAppKeyResponse(w http.ResponseWriter) error
+}
+
+type DeleteAppKey204Response struct {
+}
+
+func (response DeleteAppKey204Response) VisitDeleteAppKeyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteAppKey401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteAppKey401ApplicationProblemPlusJSONResponse) VisitDeleteAppKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAppKey404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteAppKey404ApplicationProblemPlusJSONResponse) VisitDeleteAppKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAppKeydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteAppKeydefaultApplicationProblemPlusJSONResponse) VisitDeleteAppKeyResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -33055,6 +35766,270 @@ type PutOrgActionsVariabledefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response PutOrgActionsVariabledefaultApplicationProblemPlusJSONResponse) VisitPutOrgActionsVariableResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgAppInstallationsRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type ListOrgAppInstallationsResponseObject interface {
+	VisitListOrgAppInstallationsResponse(w http.ResponseWriter) error
+}
+
+type ListOrgAppInstallations200JSONResponse []AppInstallation
+
+func (response ListOrgAppInstallations200JSONResponse) VisitListOrgAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgAppInstallations401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgAppInstallations401ApplicationProblemPlusJSONResponse) VisitListOrgAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgAppInstallations403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgAppInstallations403ApplicationProblemPlusJSONResponse) VisitListOrgAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgAppInstallations404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgAppInstallations404ApplicationProblemPlusJSONResponse) VisitListOrgAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgAppInstallationsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgAppInstallationsdefaultApplicationProblemPlusJSONResponse) VisitListOrgAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgAppsRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type ListOrgAppsResponseObject interface {
+	VisitListOrgAppsResponse(w http.ResponseWriter) error
+}
+
+type ListOrgApps200JSONResponse []App
+
+func (response ListOrgApps200JSONResponse) VisitListOrgAppsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgApps401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgApps401ApplicationProblemPlusJSONResponse) VisitListOrgAppsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgApps403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgApps403ApplicationProblemPlusJSONResponse) VisitListOrgAppsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgApps404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListOrgApps404ApplicationProblemPlusJSONResponse) VisitListOrgAppsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgAppsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgAppsdefaultApplicationProblemPlusJSONResponse) VisitListOrgAppsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgAppRequestObject struct {
+	Org  OrgName `json:"org"`
+	Body *CreateOrgAppJSONRequestBody
+}
+
+type CreateOrgAppResponseObject interface {
+	VisitCreateOrgAppResponse(w http.ResponseWriter) error
+}
+
+type CreateOrgApp201JSONResponse App
+
+func (response CreateOrgApp201JSONResponse) VisitCreateOrgAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgApp401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateOrgApp401ApplicationProblemPlusJSONResponse) VisitCreateOrgAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgApp403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgApp403ApplicationProblemPlusJSONResponse) VisitCreateOrgAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgApp404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgApp404ApplicationProblemPlusJSONResponse) VisitCreateOrgAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgApp422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOrgApp422ApplicationProblemPlusJSONResponse) VisitCreateOrgAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrgAppdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateOrgAppdefaultApplicationProblemPlusJSONResponse) VisitCreateOrgAppResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -52114,6 +55089,197 @@ func (response ListUserActivitydefaultApplicationProblemPlusJSONResponse) VisitL
 	return err
 }
 
+type ListMyAppInstallationsRequestObject struct {
+}
+
+type ListMyAppInstallationsResponseObject interface {
+	VisitListMyAppInstallationsResponse(w http.ResponseWriter) error
+}
+
+type ListMyAppInstallations200JSONResponse []AppInstallation
+
+func (response ListMyAppInstallations200JSONResponse) VisitListMyAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMyAppInstallations401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListMyAppInstallations401ApplicationProblemPlusJSONResponse) VisitListMyAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMyAppInstallationsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListMyAppInstallationsdefaultApplicationProblemPlusJSONResponse) VisitListMyAppInstallationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMyAppsRequestObject struct {
+}
+
+type ListMyAppsResponseObject interface {
+	VisitListMyAppsResponse(w http.ResponseWriter) error
+}
+
+type ListMyApps200JSONResponse []App
+
+func (response ListMyApps200JSONResponse) VisitListMyAppsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMyApps401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListMyApps401ApplicationProblemPlusJSONResponse) VisitListMyAppsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMyAppsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListMyAppsdefaultApplicationProblemPlusJSONResponse) VisitListMyAppsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMyAppRequestObject struct {
+	Body *CreateMyAppJSONRequestBody
+}
+
+type CreateMyAppResponseObject interface {
+	VisitCreateMyAppResponse(w http.ResponseWriter) error
+}
+
+type CreateMyApp201JSONResponse App
+
+func (response CreateMyApp201JSONResponse) VisitCreateMyAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMyApp401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateMyApp401ApplicationProblemPlusJSONResponse) VisitCreateMyAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMyApp403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateMyApp403ApplicationProblemPlusJSONResponse) VisitCreateMyAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMyApp422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateMyApp422ApplicationProblemPlusJSONResponse) VisitCreateMyAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateMyAppdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateMyAppdefaultApplicationProblemPlusJSONResponse) VisitCreateMyAppResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type DeleteAvatarRequestObject struct {
 }
 
@@ -56000,6 +59166,60 @@ type StrictServerInterface interface {
 	// ResetAdminUser2fa Remove the second factors of a user
 	// (DELETE /admin/users/{login}/2fa)
 	ResetAdminUser2fa(ctx context.Context, request ResetAdminUser2faRequestObject) (ResetAdminUser2faResponseObject, error)
+	// GetAppCatalog Permissions and webhook events an App can ask for
+	// (GET /app-catalog)
+	GetAppCatalog(ctx context.Context, request GetAppCatalogRequestObject) (GetAppCatalogResponseObject, error)
+	// DeleteAppInstallation Uninstall an App
+	// (DELETE /app-installations/{installationId})
+	DeleteAppInstallation(ctx context.Context, request DeleteAppInstallationRequestObject) (DeleteAppInstallationResponseObject, error)
+	// GetAppInstallation An installation with its repositories
+	// (GET /app-installations/{installationId})
+	GetAppInstallation(ctx context.Context, request GetAppInstallationRequestObject) (GetAppInstallationResponseObject, error)
+	// UpdateAppInstallation Change the repositories of an installation
+	// (PATCH /app-installations/{installationId})
+	UpdateAppInstallation(ctx context.Context, request UpdateAppInstallationRequestObject) (UpdateAppInstallationResponseObject, error)
+	// AcceptAppInstallationPermissions Accept the permissions and events the App asks for now
+	// (PUT /app-installations/{installationId}/permissions)
+	AcceptAppInstallationPermissions(ctx context.Context, request AcceptAppInstallationPermissionsRequestObject) (AcceptAppInstallationPermissionsResponseObject, error)
+	// UnsuspendAppInstallation Resume a suspended installation
+	// (DELETE /app-installations/{installationId}/suspended)
+	UnsuspendAppInstallation(ctx context.Context, request UnsuspendAppInstallationRequestObject) (UnsuspendAppInstallationResponseObject, error)
+	// SuspendAppInstallation Suspend an installation (no tokens, no events)
+	// (PUT /app-installations/{installationId}/suspended)
+	SuspendAppInstallation(ctx context.Context, request SuspendAppInstallationRequestObject) (SuspendAppInstallationResponseObject, error)
+	// DeleteApp Delete an App with its installations, keys and tokens
+	// (DELETE /apps/{slug})
+	DeleteApp(ctx context.Context, request DeleteAppRequestObject) (DeleteAppResponseObject, error)
+	// GetApp An App
+	// (GET /apps/{slug})
+	GetApp(ctx context.Context, request GetAppRequestObject) (GetAppResponseObject, error)
+	// UpdateApp Edit an App
+	// (PATCH /apps/{slug})
+	UpdateApp(ctx context.Context, request UpdateAppRequestObject) (UpdateAppResponseObject, error)
+	// ListAppDeliveries Recent deliveries of the App's webhook, newest first
+	// (GET /apps/{slug}/deliveries)
+	ListAppDeliveries(ctx context.Context, request ListAppDeliveriesRequestObject) (ListAppDeliveriesResponseObject, error)
+	// GetAppDelivery A delivery of the App's webhook with its request and response
+	// (GET /apps/{slug}/deliveries/{deliveryId})
+	GetAppDelivery(ctx context.Context, request GetAppDeliveryRequestObject) (GetAppDeliveryResponseObject, error)
+	// RedeliverAppDelivery Deliver the payload of a delivery again
+	// (POST /apps/{slug}/deliveries/{deliveryId}/attempts)
+	RedeliverAppDelivery(ctx context.Context, request RedeliverAppDeliveryRequestObject) (RedeliverAppDeliveryResponseObject, error)
+	// ListAppInstallTargets Accounts the caller may install the App on
+	// (GET /apps/{slug}/install-targets)
+	ListAppInstallTargets(ctx context.Context, request ListAppInstallTargetsRequestObject) (ListAppInstallTargetsResponseObject, error)
+	// ListAppInstallations Installations of an App (its managers)
+	// (GET /apps/{slug}/installations)
+	ListAppInstallations(ctx context.Context, request ListAppInstallationsRequestObject) (ListAppInstallationsResponseObject, error)
+	// InstallApp Install an App on the caller's account or an organization it owns
+	// (POST /apps/{slug}/installations)
+	InstallApp(ctx context.Context, request InstallAppRequestObject) (InstallAppResponseObject, error)
+	// CreateAppKey Generate a private key
+	// (POST /apps/{slug}/keys)
+	CreateAppKey(ctx context.Context, request CreateAppKeyRequestObject) (CreateAppKeyResponseObject, error)
+	// DeleteAppKey Revoke a private key
+	// (DELETE /apps/{slug}/keys/{id})
+	DeleteAppKey(ctx context.Context, request DeleteAppKeyRequestObject) (DeleteAppKeyResponseObject, error)
 	// ResendVerification Send the verification mail again
 	// (POST /auth/email/resend)
 	ResendVerification(ctx context.Context, request ResendVerificationRequestObject) (ResendVerificationResponseObject, error)
@@ -56186,6 +59406,15 @@ type StrictServerInterface interface {
 	// PutOrgActionsVariable Create or replace an Actions variable
 	// (PUT /orgs/{org}/actions/variables/{variableName})
 	PutOrgActionsVariable(ctx context.Context, request PutOrgActionsVariableRequestObject) (PutOrgActionsVariableResponseObject, error)
+	// ListOrgAppInstallations Apps installed on the organization (owners)
+	// (GET /orgs/{org}/app-installations)
+	ListOrgAppInstallations(ctx context.Context, request ListOrgAppInstallationsRequestObject) (ListOrgAppInstallationsResponseObject, error)
+	// ListOrgApps Apps owned by the organization
+	// (GET /orgs/{org}/apps)
+	ListOrgApps(ctx context.Context, request ListOrgAppsRequestObject) (ListOrgAppsResponseObject, error)
+	// CreateOrgApp Register an App owned by the organization
+	// (POST /orgs/{org}/apps)
+	CreateOrgApp(ctx context.Context, request CreateOrgAppRequestObject) (CreateOrgAppResponseObject, error)
 	// ListOrgAudit Audit log of an organization, newest first
 	// (GET /orgs/{org}/audit)
 	ListOrgAudit(ctx context.Context, request ListOrgAuditRequestObject) (ListOrgAuditResponseObject, error)
@@ -56777,6 +60006,15 @@ type StrictServerInterface interface {
 	// ListUserActivity Activity feed of the repositories the signed-in user can read
 	// (GET /user/activity)
 	ListUserActivity(ctx context.Context, request ListUserActivityRequestObject) (ListUserActivityResponseObject, error)
+	// ListMyAppInstallations Apps installed on the caller's account
+	// (GET /user/app-installations)
+	ListMyAppInstallations(ctx context.Context, request ListMyAppInstallationsRequestObject) (ListMyAppInstallationsResponseObject, error)
+	// ListMyApps Apps registered by the account
+	// (GET /user/apps)
+	ListMyApps(ctx context.Context, request ListMyAppsRequestObject) (ListMyAppsResponseObject, error)
+	// CreateMyApp Register an App owned by the account
+	// (POST /user/apps)
+	CreateMyApp(ctx context.Context, request CreateMyAppRequestObject) (CreateMyAppResponseObject, error)
 	// DeleteAvatar Remove the avatar
 	// (DELETE /user/avatar)
 	DeleteAvatar(ctx context.Context, request DeleteAvatarRequestObject) (DeleteAvatarResponseObject, error)
@@ -57680,6 +60918,497 @@ func (sh *strictHandler) ResetAdminUser2fa(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ResetAdminUser2faResponseObject); ok {
 		if err := validResponse.VisitResetAdminUser2faResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAppCatalog operation middleware
+func (sh *strictHandler) GetAppCatalog(w http.ResponseWriter, r *http.Request) {
+	var request GetAppCatalogRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAppCatalog(ctx, request.(GetAppCatalogRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAppCatalog")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAppCatalogResponseObject); ok {
+		if err := validResponse.VisitGetAppCatalogResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteAppInstallation operation middleware
+func (sh *strictHandler) DeleteAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	var request DeleteAppInstallationRequestObject
+
+	request.InstallationId = installationId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteAppInstallation(ctx, request.(DeleteAppInstallationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteAppInstallation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteAppInstallationResponseObject); ok {
+		if err := validResponse.VisitDeleteAppInstallationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAppInstallation operation middleware
+func (sh *strictHandler) GetAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	var request GetAppInstallationRequestObject
+
+	request.InstallationId = installationId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAppInstallation(ctx, request.(GetAppInstallationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAppInstallation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAppInstallationResponseObject); ok {
+		if err := validResponse.VisitGetAppInstallationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateAppInstallation operation middleware
+func (sh *strictHandler) UpdateAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	var request UpdateAppInstallationRequestObject
+
+	request.InstallationId = installationId
+
+	var body UpdateAppInstallationJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateAppInstallation(ctx, request.(UpdateAppInstallationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateAppInstallation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateAppInstallationResponseObject); ok {
+		if err := validResponse.VisitUpdateAppInstallationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AcceptAppInstallationPermissions operation middleware
+func (sh *strictHandler) AcceptAppInstallationPermissions(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	var request AcceptAppInstallationPermissionsRequestObject
+
+	request.InstallationId = installationId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AcceptAppInstallationPermissions(ctx, request.(AcceptAppInstallationPermissionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AcceptAppInstallationPermissions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AcceptAppInstallationPermissionsResponseObject); ok {
+		if err := validResponse.VisitAcceptAppInstallationPermissionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnsuspendAppInstallation operation middleware
+func (sh *strictHandler) UnsuspendAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	var request UnsuspendAppInstallationRequestObject
+
+	request.InstallationId = installationId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnsuspendAppInstallation(ctx, request.(UnsuspendAppInstallationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnsuspendAppInstallation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnsuspendAppInstallationResponseObject); ok {
+		if err := validResponse.VisitUnsuspendAppInstallationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SuspendAppInstallation operation middleware
+func (sh *strictHandler) SuspendAppInstallation(w http.ResponseWriter, r *http.Request, installationId InstallationID) {
+	var request SuspendAppInstallationRequestObject
+
+	request.InstallationId = installationId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SuspendAppInstallation(ctx, request.(SuspendAppInstallationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SuspendAppInstallation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SuspendAppInstallationResponseObject); ok {
+		if err := validResponse.VisitSuspendAppInstallationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteApp operation middleware
+func (sh *strictHandler) DeleteApp(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	var request DeleteAppRequestObject
+
+	request.Slug = slug
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteApp(ctx, request.(DeleteAppRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteApp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteAppResponseObject); ok {
+		if err := validResponse.VisitDeleteAppResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetApp operation middleware
+func (sh *strictHandler) GetApp(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	var request GetAppRequestObject
+
+	request.Slug = slug
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetApp(ctx, request.(GetAppRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetApp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAppResponseObject); ok {
+		if err := validResponse.VisitGetAppResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateApp operation middleware
+func (sh *strictHandler) UpdateApp(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	var request UpdateAppRequestObject
+
+	request.Slug = slug
+
+	var body UpdateAppJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateApp(ctx, request.(UpdateAppRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateApp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateAppResponseObject); ok {
+		if err := validResponse.VisitUpdateAppResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAppDeliveries operation middleware
+func (sh *strictHandler) ListAppDeliveries(w http.ResponseWriter, r *http.Request, slug AppSlug, params ListAppDeliveriesParams) {
+	var request ListAppDeliveriesRequestObject
+
+	request.Slug = slug
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAppDeliveries(ctx, request.(ListAppDeliveriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAppDeliveries")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAppDeliveriesResponseObject); ok {
+		if err := validResponse.VisitListAppDeliveriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAppDelivery operation middleware
+func (sh *strictHandler) GetAppDelivery(w http.ResponseWriter, r *http.Request, slug AppSlug, deliveryId openapi_types.UUID) {
+	var request GetAppDeliveryRequestObject
+
+	request.Slug = slug
+	request.DeliveryId = deliveryId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAppDelivery(ctx, request.(GetAppDeliveryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAppDelivery")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAppDeliveryResponseObject); ok {
+		if err := validResponse.VisitGetAppDeliveryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RedeliverAppDelivery operation middleware
+func (sh *strictHandler) RedeliverAppDelivery(w http.ResponseWriter, r *http.Request, slug AppSlug, deliveryId openapi_types.UUID) {
+	var request RedeliverAppDeliveryRequestObject
+
+	request.Slug = slug
+	request.DeliveryId = deliveryId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RedeliverAppDelivery(ctx, request.(RedeliverAppDeliveryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RedeliverAppDelivery")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RedeliverAppDeliveryResponseObject); ok {
+		if err := validResponse.VisitRedeliverAppDeliveryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAppInstallTargets operation middleware
+func (sh *strictHandler) ListAppInstallTargets(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	var request ListAppInstallTargetsRequestObject
+
+	request.Slug = slug
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAppInstallTargets(ctx, request.(ListAppInstallTargetsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAppInstallTargets")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAppInstallTargetsResponseObject); ok {
+		if err := validResponse.VisitListAppInstallTargetsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAppInstallations operation middleware
+func (sh *strictHandler) ListAppInstallations(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	var request ListAppInstallationsRequestObject
+
+	request.Slug = slug
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAppInstallations(ctx, request.(ListAppInstallationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAppInstallations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAppInstallationsResponseObject); ok {
+		if err := validResponse.VisitListAppInstallationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// InstallApp operation middleware
+func (sh *strictHandler) InstallApp(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	var request InstallAppRequestObject
+
+	request.Slug = slug
+
+	var body InstallAppJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.InstallApp(ctx, request.(InstallAppRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "InstallApp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(InstallAppResponseObject); ok {
+		if err := validResponse.VisitInstallAppResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateAppKey operation middleware
+func (sh *strictHandler) CreateAppKey(w http.ResponseWriter, r *http.Request, slug AppSlug) {
+	var request CreateAppKeyRequestObject
+
+	request.Slug = slug
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateAppKey(ctx, request.(CreateAppKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateAppKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateAppKeyResponseObject); ok {
+		if err := validResponse.VisitCreateAppKeyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteAppKey operation middleware
+func (sh *strictHandler) DeleteAppKey(w http.ResponseWriter, r *http.Request, slug AppSlug, id CredentialID) {
+	var request DeleteAppKeyRequestObject
+
+	request.Slug = slug
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteAppKey(ctx, request.(DeleteAppKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteAppKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteAppKeyResponseObject); ok {
+		if err := validResponse.VisitDeleteAppKeyResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -59415,6 +63144,91 @@ func (sh *strictHandler) PutOrgActionsVariable(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(PutOrgActionsVariableResponseObject); ok {
 		if err := validResponse.VisitPutOrgActionsVariableResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrgAppInstallations operation middleware
+func (sh *strictHandler) ListOrgAppInstallations(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request ListOrgAppInstallationsRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgAppInstallations(ctx, request.(ListOrgAppInstallationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgAppInstallations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgAppInstallationsResponseObject); ok {
+		if err := validResponse.VisitListOrgAppInstallationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrgApps operation middleware
+func (sh *strictHandler) ListOrgApps(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request ListOrgAppsRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgApps(ctx, request.(ListOrgAppsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgApps")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgAppsResponseObject); ok {
+		if err := validResponse.VisitListOrgAppsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateOrgApp operation middleware
+func (sh *strictHandler) CreateOrgApp(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request CreateOrgAppRequestObject
+
+	request.Org = org
+
+	var body CreateOrgAppJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateOrgApp(ctx, request.(CreateOrgAppRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateOrgApp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateOrgAppResponseObject); ok {
+		if err := validResponse.VisitCreateOrgAppResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -65306,6 +69120,85 @@ func (sh *strictHandler) ListUserActivity(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListUserActivityResponseObject); ok {
 		if err := validResponse.VisitListUserActivityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListMyAppInstallations operation middleware
+func (sh *strictHandler) ListMyAppInstallations(w http.ResponseWriter, r *http.Request) {
+	var request ListMyAppInstallationsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListMyAppInstallations(ctx, request.(ListMyAppInstallationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListMyAppInstallations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListMyAppInstallationsResponseObject); ok {
+		if err := validResponse.VisitListMyAppInstallationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListMyApps operation middleware
+func (sh *strictHandler) ListMyApps(w http.ResponseWriter, r *http.Request) {
+	var request ListMyAppsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListMyApps(ctx, request.(ListMyAppsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListMyApps")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListMyAppsResponseObject); ok {
+		if err := validResponse.VisitListMyAppsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateMyApp operation middleware
+func (sh *strictHandler) CreateMyApp(w http.ResponseWriter, r *http.Request) {
+	var request CreateMyAppRequestObject
+
+	var body CreateMyAppJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateMyApp(ctx, request.(CreateMyAppRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateMyApp")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateMyAppResponseObject); ok {
+		if err := validResponse.VisitCreateMyAppResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
