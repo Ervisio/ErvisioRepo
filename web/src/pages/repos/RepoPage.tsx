@@ -1,7 +1,7 @@
 import { useMeta } from "../../api/useMeta.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, Card, Dialog } from "../../ui/index.ts";
+import { Card } from "../../ui/index.ts";
 import { Secret } from "../account/common.tsx";
 
 /** Clone URLs derived from the public URL; the SSH form is provisional until the server reports its SSH endpoint. */
@@ -45,17 +45,5 @@ export function EmptyRepoCard({ repo: r }: { repo: Repo }) {
       />
       <p className="ui-note acc-pad">{t("empty.auth")}</p>
     </Card>
-  );
-}
-
-/** "Clone" button with the HTTP and SSH URLs. */
-export function CloneDialog({ repo: r, primary }: { repo: Repo; primary?: boolean }) {
-  const t = useT("repos");
-  const urls = useCloneUrls(r);
-  return (
-    <Dialog trigger={<Button icon="copy" variant={primary ? "primary" : undefined}>{t("clone.button")}</Button>} title={t("clone.title")} description={t("empty.auth")}>
-      <Secret label={t("empty.http")} value={urls.http} />
-      {urls.ssh && <Secret label={t("empty.ssh")} value={urls.ssh} />}
-    </Dialog>
   );
 }

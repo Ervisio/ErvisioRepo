@@ -9,6 +9,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Repository stars: `PUT`/`DELETE /repos/{owner}/{name}/star`, `GET /repos/{owner}/{name}/stargazers` and `GET /users/{username}/starred` (only repositories the caller can read). Every `Repo` now carries `starsCount` and `starred` (false when signed out), and explore accepts `sort=stars`. The GitHub-compatible API fills `stargazers_count`/`watchers_count` and serves `PUT`/`DELETE`/`GET /user/starred/{owner}/{repo}`, `GET /user/starred`, `GET /users/{username}/starred` and `GET /repos/{owner}/{repo}/stargazers` (with `application/vnd.github.star+json` support).
+- Repository header on every repository page: owner avatar, owner / name, visibility, and Pin, Watch (notification level), Fork and Star (with the star count) buttons; signed out they lead to sign-in. On narrow screens the labels hide and icons and counts stay.
+- "Code" drop-down on the repository home: HTTPS / SSH / CLI clone URL with copy, Download ZIP and Download tar.gz. It replaces the Clone dialog and the archive entries of the ⋯ menu. The About sidebar shows the star count.
+- Profile README: the README of the public repository `username/username` appears above the repositories on the profile, with an edit pencil for the owner; owners without one get a card that creates the repository and its README.md.
 
 ### Fixed
 

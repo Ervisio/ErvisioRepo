@@ -73,8 +73,8 @@ function useCode<T>(owner: string, name: string, parts: unknown[], path: string,
   });
 }
 
-export const useTree = (owner: string, name: string, ref: string, path: string) =>
-  useCode<Tree>(owner, name, ["tree", ref, path], `/tree${qs({ ref, path, lastCommits: true })}`);
+export const useTree = (owner: string, name: string, ref: string, path: string, enabled = true) =>
+  useCode<Tree>(owner, name, ["tree", ref, path], `/tree${qs({ ref, path, lastCommits: true })}`, enabled);
 
 export const useBlob = (owner: string, name: string, ref: string, path: string) =>
   useCode<BlobFile>(owner, name, ["blob", ref, path], `/blob${qs({ ref, path })}`, path !== "");

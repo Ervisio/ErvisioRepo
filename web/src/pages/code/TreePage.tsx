@@ -1,17 +1,14 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { canWrite, useTree, type Tree, type TreeEntry } from "../../api/code.ts";
-import { useSession } from "../../api/identity.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { archiveUrl } from "../../api/code.ts";
 import { Button, Card, EmptyState, Icon, Menu, MenuItem, MenuSeparator } from "../../ui/index.ts";
 import { useLayout } from "../../ui/shell/layout.ts";
-import { usePinToggle } from "../repos/PinButton.tsx";
-import { ForkDialog } from "../repos/RepoList.tsx";
-import { CloneDialog, EmptyRepoCard } from "../repos/RepoPage.tsx";
-import { ArchiveMenu, Crumb, dirOf, Gate, RefSwitcher, RepoFrame, shortSha, When } from "./common.tsx";
+import { EmptyRepoCard } from "../repos/RepoPage.tsx";
+import { Crumb, dirOf, Gate, RefSwitcher, RepoFrame, shortSha, When } from "./common.tsx";
 import { Readme } from "./Readme.tsx";
+import { CloneMenu } from "./RepoHead.tsx";
 import { RepoSidebar } from "./RepoSidebar.tsx";
 
 /** Repository home and directory browsing: tree, last commit, README. */
@@ -52,7 +49,7 @@ function TreeBody({ repo, refName, path }: { repo: Repo; refName: string; path: 
           {switcher}
           {path !== "" && <Crumb owner={owner} name={name} refName={refName} path={path} />}
           <span className="acc-grow" />
-          <CloneDialog repo={repo} primary />
+          <CloneMenu repo={repo} refName={refName} />
           <RepoMore repo={repo} refName={refName} path={path} />
         </div>
       ) : (
@@ -63,8 +60,7 @@ function TreeBody({ repo, refName, path }: { repo: Repo; refName: string; path: 
           <Link to="/$owner/$name/commits" params={{ owner, name }} search={{ ref: refName, path: path || undefined }}>
             <Button icon="clock">{t("tree.history")}</Button>
           </Link>
-          <CloneDialog repo={repo} />
-          <ArchiveMenu owner={owner} name={name} refName={refName} />
+          <CloneMenu repo={repo} refName={refName} />
         </div>
       )}
       <Gate query={tree} notFound={notFound}>
@@ -96,69 +92,44 @@ function latest(entries: TreeEntry[]) {
   return best;
 }
 
-/** Repository actions behind one menu: history, archive, add file, pin, fork, settings. */
+/** Repository actions behind one menu: history, add file, settings. Pin, Watch, Fork and Star sit in the header. */
 function RepoMore({ repo, refName, path }: { repo: Repo; refName: string; path: string }) {
   const t = useT("code");
   const tr = useT("repos");
   const { owner, name } = repo;
-  const pin = usePinToggle(owner, name);
-  const [forking, setForking] = useState(false);
   const writable = canWrite(repo.permission);
-  const signedIn = useSession().data !== undefined;
   return (
-    <>
-      <Menu
-        align="end"
-        label={t("more.actions")}
-        trigger={<Button icon="dots" className="rp-ib" aria-label={t("more.actions")} title={t("more.actions")} />}
-      >
+    <Menu
+      align="end"
+      label={t("more.actions")}
+      trigger={<Button icon="dots" className="rp-ib" aria-label={t("more.actions")} title={t("more.actions")} />}
+    >
+      <MenuItem asChild>
+        <Link to="/$owner/$name/commits" params={{ owner, name }} search={{ ref: refName, path: path || undefined }}>
+          <Icon name="clock" />
+          {t("tree.history")}
+        </Link>
+      </MenuItem>
+      {writable && (
         <MenuItem asChild>
-          <Link to="/$owner/$name/commits" params={{ owner, name }} search={{ ref: refName, path: path || undefined }}>
-            <Icon name="clock" />
-            {t("tree.history")}
+          <Link to="/$owner/$name/new" params={{ owner, name }} search={{ ref: refName, path: path || undefined }}>
+            <Icon name="plus" />
+            {t("tree.addFile")}
           </Link>
         </MenuItem>
-        {writable && (
+      )}
+      {repo.permission === "admin" && (
+        <>
+          <MenuSeparator />
           <MenuItem asChild>
-            <Link to="/$owner/$name/new" params={{ owner, name }} search={{ ref: refName, path: path || undefined }}>
-              <Icon name="plus" />
-              {t("tree.addFile")}
+            <Link to="/$owner/$name/settings" params={{ owner, name }}>
+              <Icon name="gear" />
+              {tr("settings.link")}
             </Link>
           </MenuItem>
-        )}
-        {(["zip", "tar.gz"] as const).map((f) => (
-          <MenuItem key={f} asChild>
-            <a href={archiveUrl(owner, name, refName, f)} download>
-              <Icon name="download" />
-              {t(`archive.${f === "zip" ? "zip" : "tgz"}`)}
-            </a>
-          </MenuItem>
-        ))}
-        <MenuSeparator />
-        {pin && (
-          <MenuItem icon="star" onSelect={pin.toggle}>
-            {pin.label}
-          </MenuItem>
-        )}
-        {signedIn && (
-          <MenuItem icon="branch" onSelect={() => setForking(true)}>
-            {tr("fork.button")}
-          </MenuItem>
-        )}
-        {repo.permission === "admin" && (
-          <>
-            <MenuSeparator />
-            <MenuItem asChild>
-              <Link to="/$owner/$name/settings" params={{ owner, name }}>
-                <Icon name="gear" />
-                {tr("settings.link")}
-              </Link>
-            </MenuItem>
-          </>
-        )}
-      </Menu>
-      <ForkDialog repo={repo} open={forking} onOpenChange={setForking} />
-    </>
+        </>
+      )}
+    </Menu>
   );
 }
 

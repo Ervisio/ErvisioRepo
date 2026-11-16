@@ -59,6 +59,12 @@ function About({ repo, hasReadme }: { repo: Repo; hasReadme: boolean }) {
             {t("side.defaultBranch")} <b>{repo.defaultBranch}</b>
           </span>
         </li>
+        <li>
+          <Icon name="star" />
+          <span>
+            <b>{repo.starsCount}</b> {t(repo.starsCount === 1 ? "side.stars.one" : "side.stars.other")}
+          </span>
+        </li>
       </ul>
     </Group>
   );

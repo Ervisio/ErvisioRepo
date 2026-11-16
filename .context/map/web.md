@@ -15,7 +15,7 @@ Flow:
 - Home (/) is a dashboard. Admin routes: /admin (AdminOverview), /admin/users (+ /$login), /admin/invites, /admin/settings/$section (auth|registration|email|git|actions|webhooks|appearance|server; /admin/settings redirects to auth), /admin/storage, /admin/runners, /admin/audit. All sit under the pathless layout route id "admin" (guard + AdminFrame = SettingsLayout sub-nav, AdminPane for each pane); code in web/src/pages/admin/, hooks in api/admin.ts, key-to-section map in settingsCatalog.ts. Edits only send changed keys; 422 field errors come from ApiError.errors.
 - Org settings are one tab ("settings") with its own sub-navigation: hooks, secrets, variables, runners are reached through it. isOrgSettingsTab maps them back to "settings" for the active highlight.
 - Repo settings page (RepoSettings) and RepoAccess share the settings frame.
-- Repo pages (RepoFrame in pages/code/common.tsx): outside console they show their own tab bar; in console the top bar tabs come from repoTabs() in nav.tsx (Code, Issues, PRs, Actions + More) and RepoFrame shows only the repo name, a non-public badge and page actions. TreePage in console puts History, Add file, archives, Pin (usePinToggle), Fork (controlled ForkDialog) and Settings in RepoMore (⋯).
+- Repo pages (RepoFrame in pages/code/common.tsx): outside console they show their own tab bar; in console the top bar tabs come from repoTabs() in nav.tsx (Code, Issues, PRs, Actions + More) and RepoFrame shows only the repo name, a non-public badge and page actions. TreePage in console keeps History, Add file and Settings in RepoMore (⋯); Pin, Watch, Fork, Star and the Code drop-down live in pages/code/RepoHead.tsx.
 - Repo settings "storage" section is instance-admin only (pin/unpin/evict via useTiering).
 Invariants:
 - Every UI string goes in web/src/i18n/{en,it}/<ns>.json with the same keys. `make check-i18n` (npm run check-i18n in web/) enforces it. Namespaces in use include shell, home, admin, account, org, repos, ui.
@@ -64,3 +64,9 @@ Related:
 - Lists: `RepoRows` (client filter/type/sort) and `RepoRow` in pages/repos/RepoList.tsx, `.rl-*` in app.css; Explore uses RepoRow with server search.
 - Org page: `OrgHead` + `.oh-grid` with `OrgAside` (members, teams); settings tabs render their own compact Page.
 - Profile: `/$owner` -> pages/repos/ProfilePage.tsx (`useUserProfile`, GET /users/{username}), `.up-*`; avatars elsewhere are still not links.
+
+## Repository header (2026-11-16, round 012 A)
+- `RepoHead` (pages/code/RepoHead.tsx, `.rh-*` in app.css) is rendered by RepoFrame in the Console before every repo page: owner avatar, owner / name, visibility, Pin (usePinToggle), Watch (useRepoSubscription levels), Fork (ForkDialog), Star (`useStar` in api/repos.ts, optimistic on ["repos","one",owner,name]). Signed out: links to /login?next=.
+- `CloneMenu` replaces CloneDialog and ArchiveMenu: kit Menu with `MenuRadioGroup`/`MenuRadioItem` (new in ui/Menu.tsx) for HTTPS/SSH/CLI, copy item, archive links. SSH only when cloneUrls() derives a host.
+- No watcher or fork counts in the API: none shown.
+- Profile README: `ProfileReadme` in ProfilePage.tsx reads repo user/user (public only) and its tree readme, rendered with `Readme` (new label/action props). Owner without it gets a CTA: create repo (if missing) + POST /contents README.md, then the edit route.

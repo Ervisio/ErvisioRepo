@@ -1,7 +1,7 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { archiveUrl, isHydrating, useBranches, useTags } from "../../api/code.ts";
+import { isHydrating, useBranches, useTags } from "../../api/code.ts";
 import { ApiError } from "../../api/http.ts";
 import { isUnauthenticated, useSession } from "../../api/identity.ts";
 import { useRepo, type Repo } from "../../api/repos.ts";
@@ -12,6 +12,7 @@ import type { Section } from "../../ui/shell/nav.tsx";
 import { useProblemText } from "../auth/useProblemText.ts";
 import { PinButton } from "../repos/PinButton.tsx";
 import { ForkDialog } from "../repos/RepoList.tsx";
+import { RepoHead, StarButton } from "./RepoHead.tsx";
 
 export type RepoTab = "code" | "issues" | "pulls" | "commits" | "branches" | "tags" | "releases" | "actions" | "search";
 
@@ -50,10 +51,12 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
     { id: "releases", to: "/$owner/$name/releases", icon: "pkg" },
     { id: "search", to: "/$owner/$name/search", icon: "search" },
   ] as const;
-  // Console: the top bar carries owner, name, visibility and sections, so the page has no header of its own.
+  // Console: the top bar carries the sections; the page opens with the repository header (round 012 A).
   if (layout === "console") {
     return (
-      <Page section={section} title={r.fullName} actions={actions} quiet>
+      <Page section={section} title={r.fullName} quiet>
+        <RepoHead repo={r} />
+        {actions && <div className="page-actions rh-page-act">{actions}</div>}
         {children(r)}
       </Page>
     );
@@ -67,6 +70,7 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
         <>
           <Badge tone={r.visibility === "public" ? "ok" : "neutral"}>{tr(`visibility.${r.visibility}`)}</Badge>
           {actions}
+          <StarButton repo={r} />
           <PinButton owner={r.owner} name={r.name} />
           <ForkDialog repo={r} />
           {r.permission === "admin" && (
@@ -201,31 +205,6 @@ export function RefSwitcher({ owner, name, current, onPick }: { owner: string; n
           </Link>
         </MenuItem>
       )}
-    </Menu>
-  );
-}
-
-/** Source archive download (zip / tar.gz) of a ref. */
-export function ArchiveMenu({ owner, name, refName }: { owner: string; name: string; refName: string }) {
-  const t = useT("code");
-  return (
-    <Menu
-      align="end"
-      trigger={
-        <Button icon="download">
-          {t("archive.label")}
-          <Icon name="down" />
-        </Button>
-      }
-    >
-      {(["zip", "tar.gz"] as const).map((f) => (
-        <MenuItem key={f} asChild>
-          <a href={archiveUrl(owner, name, refName, f)} download>
-            <Icon name="download" />
-            {t(`archive.${f === "zip" ? "zip" : "tgz"}`)}
-          </a>
-        </MenuItem>
-      ))}
     </Menu>
   );
 }

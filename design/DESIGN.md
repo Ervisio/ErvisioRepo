@@ -149,6 +149,13 @@ Riferimento visivo: `design/mock/direzione-a.html` e lo screenshot approvato in 
   - Organizzazione: testata con avatar quadrato 96 px, nome e badge, descrizione, filetto sotto; nel tab Repository colonna laterale da 296 px con persone e team.
   - Profilo utente `/{username}`: avatar tondo 296 px, nome, login e "Modifica profilo" a sinistra, repository a destra. Pubblico anche senza login.
 
+- **Intestazione repository (2026-11-16).** Round `012-intestazione-repo`, variante A "GitHub fedele".
+  - Ogni pagina di repository (Console) apre con un'intestazione: avatar del proprietario 24 px (quadrato per le org, tondo per gli utenti), "proprietario / **nome**" a 20 px, pillola di visibilità; a destra Fissa, Segui (livello di notifica, menu), Fork e Stella con il conteggio. Filetto `--line` sotto. Senza login Segui, Fork e Stella portano al login.
+  - Controlli da 32 px, 44 px con puntatore coarse; sotto i 720 px le etichette diventano solo per screen reader e restano icone e conteggi.
+  - Pulsante primario "Codice" con card a tendina allineata a destra: titolo Clona, segmentato HTTPS / SSH / CLI, URL con copia, suggerimento, poi Scarica ZIP e Scarica tar.gz. Il menu ⋯ tiene solo Cronologia, Aggiungi file e Impostazioni.
+  - Barra laterale Informazioni: riga "N stelle". Persone che seguono e fork non hanno ancora un conteggio nell'API e non compaiono.
+  - Profilo: il README del repository pubblico `utente/utente` sta in un box sopra i repository, con "utente / README.md" e matita per il proprietario; se manca, solo il proprietario vede una card tratteggiata "Presentati con un README" che crea repository e README.md.
+
 ## Implementazione (web/src/ui)
 
 - Kit sopra primitive Radix: Button, Input, Select, Dialog, Menu, Tabs, Table, Badge, Toast, EmptyState, più Card e Icon. Lo stile è nostro, solo da token (`web/src/ui/ui.css`).

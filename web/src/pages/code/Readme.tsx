@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import type { MouseEvent } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import { rawUrl, useReadme } from "../../api/code.ts";
 import { useT } from "../../i18n/useT.ts";
 import { joinPath, Markdown, type MarkdownContext } from "../../lib/markdown.tsx";
@@ -61,8 +61,8 @@ export function useInAppLinks() {
   };
 }
 
-/** README under the tree: a bordered box in the Console, a card elsewhere. */
-export function Readme({ owner, name, refName, path }: { owner: string; name: string; refName: string; path: string }) {
+/** README under the tree: a bordered box in the Console, a card elsewhere. label and action replace the file name in the header (profile README). */
+export function Readme({ owner, name, refName, path, label, action }: { owner: string; name: string; refName: string; path: string; label?: string; action?: ReactNode }) {
   const t = useT("code");
   const blob = useReadme(owner, name, refName, path, true);
   const ctx = useMarkdownContext(owner, name, refName, path);
@@ -86,16 +86,17 @@ export function Readme({ owner, name, refName, path }: { owner: string; name: st
   );
   if (!console_) {
     return (
-      <Card title={file} className="rp-readme">
+      <Card title={label ?? file} actions={action} className="rp-readme">
         {body}
       </Card>
     );
   }
   return (
-    <section id="readme" className="rp-box rp-readme" aria-label={file}>
+    <section id="readme" className="rp-box rp-readme" aria-label={label ?? file}>
       <div className="rp-head">
         <Icon name="book" />
-        <h2>{file}</h2>
+        <h2>{label ?? file}</h2>
+        {action && <span className="rp-head-a">{action}</span>}
       </div>
       <div className="rp-rb">{body}</div>
     </section>

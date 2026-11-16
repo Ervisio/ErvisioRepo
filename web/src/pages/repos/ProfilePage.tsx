@@ -1,11 +1,13 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useEditFile, useTree } from "../../api/code.ts";
 import { useSession, useUserProfile } from "../../api/identity.ts";
 import { ApiError } from "../../api/http.ts";
-import { useOwnerRepos } from "../../api/repos.ts";
+import { useCreateRepo, useOwnerRepos, useRepo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, EmptyState, Page } from "../../ui/index.ts";
-import { formatDate } from "../account/common.tsx";
+import { Button, EmptyState, Icon, Page } from "../../ui/index.ts";
+import { formatDate, useNotify } from "../account/common.tsx";
+import { Readme } from "../code/Readme.tsx";
 import { RepoRows } from "./RepoList.tsx";
 
 /** Public profile of a user, GitHub style: avatar and name on the left, repositories on the right. Reachable signed out. */
@@ -54,10 +56,88 @@ export function ProfilePage({ username }: { username: string }) {
           <p className="up-meta">{t("profile.joined", { date: formatDate(u.createdAt) })}</p>
         </aside>
         <div>
+          <ProfileReadme username={u.username} displayName={u.displayName || u.username} own={me === u.username} />
           <h2 className="up-h2">{t("list.title")}</h2>
           <RepoRows query={repos} />
         </div>
       </div>
     </Page>
+  );
+}
+
+const PROFILE_README = "README.md";
+
+/**
+ * Profile README (GitHub special repository): the README of the public repository
+ * username/username, above the repositories. The owner gets an edit pencil, or a call to
+ * create it when it is missing; other visitors see nothing in that case.
+ */
+function ProfileReadme({ username, displayName, own }: { username: string; displayName: string; own: boolean }) {
+  const t = useT("repos");
+  const repo = useRepo(username, username);
+  const r = repo.data?.visibility === "public" ? repo.data : undefined;
+  const tree = useTree(username, username, r?.defaultBranch ?? "", "", r !== undefined);
+  if (repo.isPending || (r && tree.isPending && tree.fetchStatus !== "idle")) return null;
+  const missing = repo.isError && repo.error instanceof ApiError && repo.error.status === 404;
+  const readme = tree.data?.readme;
+  if (r && readme) {
+    return (
+      <div className="up-readme">
+        <Readme
+          owner={username}
+          name={username}
+          refName={r.defaultBranch}
+          path={readme}
+          label={`${username} / ${readme}`}
+          action={
+            own && (
+              <Link
+                to="/$owner/$name/edit"
+                params={{ owner: username, name: username }}
+                search={{ ref: r.defaultBranch, path: readme }}
+                className="ui-btn ui-btn-ghost ui-btn-sm rp-ib"
+                aria-label={t("profile.readmeEdit")}
+                title={t("profile.readmeEdit")}
+              >
+                <Icon name="edit" />
+              </Link>
+            )
+          }
+        />
+      </div>
+    );
+  }
+  // Only the owner is invited, and only when the special repository is missing or public without a README.
+  if (!own || !(missing || (r && !readme))) return null;
+  return <ReadmeInvite username={username} displayName={displayName} exists={!missing} branch={r?.defaultBranch} />;
+}
+
+function ReadmeInvite({ username, displayName, exists, branch }: { username: string; displayName: string; exists: boolean; branch?: string }) {
+  const t = useT("repos");
+  const notify = useNotify();
+  const navigate = useNavigate();
+  const create = useCreateRepo();
+  const edit = useEditFile(username, username);
+  const busy = create.isPending || edit.isPending;
+  async function start() {
+    try {
+      const ref = exists ? branch : (await create.mutateAsync({ name: username, visibility: "public" })).defaultBranch;
+      await edit.mutateAsync({ op: "create", path: PROFILE_README, content: t("profile.readmeSeed", { name: displayName }), encoding: "utf-8", branch: ref });
+      await navigate({ to: "/$owner/$name/edit", params: { owner: username, name: username }, search: { ref, path: PROFILE_README } });
+    } catch (e) {
+      notify.fail(e);
+    }
+  }
+  return (
+    <div className="up-invite">
+      <Icon name="book" />
+      <div>
+        <b>{t("profile.readmeTitle")}</b>
+        <p>{t("profile.readmeHint", { repo: `${username}/${username}` })}</p>
+        <Button variant="primary" size="sm" disabled={busy} onClick={() => void start()}>
+          {t("profile.readmeCreate")}
+        </Button>
+      </div>
+    </div>
   );
 }

@@ -58,8 +58,6 @@
   "delete.done": "Repository deleted",
   "confirm.type": "Type {name} to confirm",
   "cancel": "Cancel",
-  "clone.button": "Clone",
-  "clone.title": "Clone this repository",
   "settings.section.secrets": "Secrets",
   "settings.section.variables": "Variables",
   "settings.section.environments": "Environments",
@@ -171,5 +169,10 @@
   "profile.notFound": "No user with this name",
   "profile.tryOrg": "Open as organization",
   "profile.edit": "Edit profile",
-  "profile.joined": "Joined {date}"
+  "profile.joined": "Joined {date}",
+  "profile.readmeEdit": "Edit README",
+  "profile.readmeTitle": "Introduce yourself with a README",
+  "profile.readmeHint": "Create the public repository {repo}: its README.md will appear here, at the top of your profile.",
+  "profile.readmeCreate": "Create profile README",
+  "profile.readmeSeed": "# Hi, I'm {name}\n"
 }

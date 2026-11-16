@@ -5,7 +5,7 @@ export { Dialog, DialogClose } from "./Dialog.tsx";
 export { EmptyState } from "./EmptyState.tsx";
 export { Icon, type IconName } from "./Icon.tsx";
 export { Input } from "./Input.tsx";
-export { Menu, MenuItem, MenuLabel, MenuSeparator } from "./Menu.tsx";
+export { Menu, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuSeparator } from "./Menu.tsx";
 export { Select, type SelectOption } from "./Select.tsx";
 export {
   ConfirmDialog, DangerRow, DangerZone, SaveBar, SettingRow, SettingsCard, SettingsLayout, SettingsSection, Toggle, useDraft,

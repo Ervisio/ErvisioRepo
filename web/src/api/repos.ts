@@ -42,3 +42,22 @@ export const useForkRepo = (owner: string, name: string) =>
   useRepoMutation<S["ForkCreate"], Repo>((b) => request("POST", `${repoPath(owner, name)}/forks`, b));
 export const useDeleteRepo = (owner: string, name: string) =>
   useRepoMutation<void, void>(() => request("DELETE", repoPath(owner, name)));
+
+/** Stars or unstars a repository; the cached repository shows the change before the server answers. */
+export function useStar(owner: string, name: string) {
+  const qc = useQueryClient();
+  const key = ["repos", "one", owner, name];
+  return useMutation({
+    mutationFn: (star: boolean) => request<void>(star ? "PUT" : "DELETE", `${repoPath(owner, name)}/star`),
+    onMutate: async (star: boolean) => {
+      await qc.cancelQueries({ queryKey: key });
+      const prev = qc.getQueryData<Repo>(key);
+      if (prev && prev.starred !== star) qc.setQueryData<Repo>(key, { ...prev, starred: star, starsCount: Math.max(0, prev.starsCount + (star ? 1 : -1)) });
+      return { prev };
+    },
+    onError: (_e, _star, ctx) => {
+      if (ctx?.prev) qc.setQueryData(key, ctx.prev);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["repos"] }),
+  });
+}
