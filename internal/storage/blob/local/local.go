@@ -42,6 +42,7 @@ type Store struct {
 var (
 	_ blob.Store             = (*Store)(nil)
 	_ blob.ConditionalPutter = (*Store)(nil)
+	_ blob.Toucher           = (*Store)(nil)
 )
 
 // New opens (creating it if needed) the directory dir as the target name.
@@ -353,4 +354,19 @@ func (s *Store) wrap(op, key string, err error) error {
 // the platform does not support it.
 func ignorableDirSyncErr(err error) bool {
 	return errors.Is(err, syscall.EINVAL) || errors.Is(err, syscall.ENOTSUP) || errors.Is(err, syscall.EBADF)
+}
+
+// Touch implements blob.Toucher: it sets the access and modification time
+// of key to t. The ETag of the object changes.
+func (s *Store) Touch(ctx context.Context, key string, t time.Time) error {
+	if err := blob.ValidateKey(key); err != nil {
+		return err
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := s.root.Chtimes(key, t, t); err != nil {
+		return s.wrap("touch", key, err)
+	}
+	return nil
 }

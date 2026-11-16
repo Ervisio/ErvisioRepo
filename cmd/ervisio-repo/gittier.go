@@ -40,22 +40,31 @@ func setupGitTiering(cfg *config.Config, pool *pgxpool.Pool, storage *tier.Tier,
 }
 
 // hotBudget returns the space of the hot tier: the budget of the local
-// target holding it (the git cache, else the git primary), less the share
-// reserved to LFS, with that target's watermarks.
+// target holding it (the git cache, else the git primary, else the hot
+// cache target), less the shares of the object caches kept on that target,
+// with that target's watermarks.
 func hotBudget(cfg *config.Config) (int64, float64, float64) {
-	p := cfg.Storage.Policy[gitstore.Policy]
+	s := &cfg.Storage
+	p := s.Policy[gitstore.Policy]
+	var hot *config.Target
 	for _, name := range []string{p.Cache, p.Primary} {
-		for _, t := range cfg.Storage.Targets {
-			if name != "" && t.Name == name && t.Kind == "local" {
-				b := float64(t.Budget)
-				if p.CacheShare > 0 && p.CacheShare < 1 {
-					b *= 1 - p.CacheShare
-				}
-				return int64(b), t.HighWatermark, t.LowWatermark
+		for i := range s.Targets {
+			if hot == nil && name != "" && s.Targets[i].Name == name && s.Targets[i].Kind == "local" {
+				hot = &s.Targets[i]
 			}
 		}
 	}
-	return 0, 0, 0
+	if hot == nil {
+		hot = s.HotTarget()
+	}
+	if hot == nil {
+		return 0, 0, 0
+	}
+	b := float64(hot.Budget)
+	if shares := s.CacheShares(hot.Name); shares > 0 && shares < 1 {
+		b *= 1 - shares
+	}
+	return int64(b), hot.HighWatermark, hot.LowWatermark
 }
 
 // jobOptions registers the eviction pass.

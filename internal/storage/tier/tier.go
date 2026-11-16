@@ -157,7 +157,7 @@ func New(o Options) (*Tier, error) {
 			c.replicas = append(c.replicas, rt)
 		}
 		// A cache on the primary itself would only duplicate the data.
-		if p.Cache != "" && p.Cache != p.Primary {
+		if p.Cache != "" && p.Cache != config.CacheNone && p.Cache != p.Primary {
 			c.cache = t.cacheFor(p.Cache)
 			if c.cache == nil {
 				return nil, fmt.Errorf("storage tier: policy %s: unknown cache %q", name, p.Cache)
@@ -286,6 +286,9 @@ func (c *Class) Put(ctx context.Context, key string, r io.Reader, size int64, sh
 
 	if sha256 != nil {
 		if row, err := c.row(ctx, full); err == nil && row.Size == size && bytes.Equal(row.Sha256, sha256) {
+			if c.cache != nil {
+				c.cache.use(ctx, full, c.t.now()) // a write counts as a use
+			}
 			return objectFromRow(row), nil
 		} else if err != nil && !errors.Is(err, blob.ErrNotFound) {
 			return Object{}, err
@@ -355,7 +358,7 @@ func (c *Class) Get(ctx context.Context, key string, rng *blob.Range) (io.ReadCl
 	now := c.t.now()
 
 	if c.cache != nil {
-		if e, ok := c.cache.lookup(full, now); ok {
+		if e, ok := c.cache.use(ctx, full, now); ok {
 			rc, _, err := c.cache.store.Get(ctx, full, rng)
 			switch {
 			case err == nil:
@@ -525,7 +528,7 @@ func (t *Tier) LoadCaches(ctx context.Context) error {
 					}
 					continue
 				}
-				entries = append(entries, cacheEntry{key: b.Key, policy: name, size: b.Size, sha256: r.Sha256, lastAccess: b.ModTime})
+				entries = append(entries, cacheEntry{key: b.Key, policy: name, size: b.Size, sha256: r.Sha256, lastAccess: b.ModTime, persisted: b.ModTime})
 			}
 			c.cache.addLoaded(entries)
 			batch = batch[:0]

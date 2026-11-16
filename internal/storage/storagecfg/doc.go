@@ -17,6 +17,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -54,6 +55,28 @@ type Doc struct {
 	Version  int                       `json:"version"`
 	Targets  []StoredTarget            `json:"targets,omitempty"`
 	Policies map[string]PolicyOverride `json:"policies,omitempty"`
+	// HotCache replaces storage.hot_cache of config.toml when set.
+	HotCache *HotCacheOverride `json:"hotCache,omitempty"`
+}
+
+// HotCacheOverride is the instance-wide automatic cache setting.
+type HotCacheOverride struct {
+	Enabled bool `json:"enabled"`
+	// TTLSeconds is the idle time after which data moves back to the remote
+	// storage; 0 uses the per data type defaults.
+	TTLSeconds int64 `json:"ttlSeconds"`
+}
+
+func (h HotCacheOverride) config() config.HotCache {
+	return config.HotCache{Enabled: h.Enabled, TTL: config.Duration(time.Duration(h.TTLSeconds) * time.Second)}
+}
+
+// hotCache returns the hot cache setting of base with the overlay applied.
+func (d Doc) hotCache(base config.HotCache) config.HotCache {
+	if d.HotCache == nil {
+		return base
+	}
+	return d.HotCache.config()
 }
 
 // StoredTarget is a target created in the web admin. Secrets maps a field name
@@ -79,11 +102,13 @@ type StoredTarget struct {
 }
 
 // PolicyOverride replaces the primary, replicas and cache of a policy of
-// config.toml. The other policy settings stay as in the file.
+// config.toml, and its cache TTL when CacheTTLSeconds is set (0: the hot
+// cache default). The other policy settings stay as in the file.
 type PolicyOverride struct {
-	Primary  string   `json:"primary"`
-	Replicas []string `json:"replicas"`
-	Cache    string   `json:"cache,omitempty"`
+	Primary         string   `json:"primary"`
+	Replicas        []string `json:"replicas"`
+	Cache           string   `json:"cache,omitempty"`
+	CacheTTLSeconds *int64   `json:"cacheTtlSeconds,omitempty"`
 }
 
 func (d *Doc) target(name string) int {
@@ -91,7 +116,7 @@ func (d *Doc) target(name string) int {
 }
 
 // empty reports whether the document changes nothing.
-func (d Doc) empty() bool { return len(d.Targets) == 0 && len(d.Policies) == 0 }
+func (d Doc) empty() bool { return len(d.Targets) == 0 && len(d.Policies) == 0 && d.HotCache == nil }
 
 // sameAs compares two documents as stored.
 func (d Doc) sameAs(o Doc) bool {
@@ -155,6 +180,9 @@ func applyPolicies(policies map[string]config.Policy, doc Doc) (map[string]confi
 		}
 		ov := doc.Policies[name]
 		p.Primary, p.Replicas, p.Cache = ov.Primary, slices.Clone(ov.Replicas), ov.Cache
+		if ov.CacheTTLSeconds != nil {
+			p.CacheTTL = config.Duration(time.Duration(*ov.CacheTTLSeconds) * time.Second)
+		}
 		out[name] = p
 	}
 	return out, nil
@@ -223,6 +251,7 @@ func Merge(base config.Storage, doc Doc, masterKey []byte) (config.Storage, erro
 	if out.Policy, err = applyPolicies(out.Policy, doc); err != nil {
 		return config.Storage{}, err
 	}
+	out.HotCache = doc.hotCache(base.HotCache)
 	if err := out.Validate(); err != nil {
 		return config.Storage{}, fmt.Errorf("invalid storage configuration: %w", err)
 	}

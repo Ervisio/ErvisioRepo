@@ -29,6 +29,7 @@ const (
 	ActionTargetSaved   = "admin.storage_target_saved"
 	ActionTargetDeleted = "admin.storage_target_deleted"
 	ActionPolicySaved   = "admin.storage_policy_saved"
+	ActionHotCacheSaved = "admin.storage_hot_cache_saved"
 )
 
 // testTimeout bounds one connection test of a draft.
@@ -114,7 +115,17 @@ type PolicyView struct {
 	Primary        string
 	RunningPrimary string
 	Replicas       []string
-	Cache          string
+	// Cache is the configured cache: a local target, config.CacheNone, or
+	// empty for the automatic one.
+	Cache string
+	// EffectiveCache is the cache the next start uses (empty: none), with
+	// CacheAuto set when the hot cache chose it, and CacheTTL its idle TTL
+	// (0: none). CacheTTLOverride is the TTL set for this data type (0: the
+	// hot cache default).
+	EffectiveCache   string
+	CacheAuto        bool
+	CacheTTL         time.Duration
+	CacheTTLOverride time.Duration
 	// File* are the values of config.toml.
 	FilePrimary  string
 	FileReplicas []string
@@ -126,10 +137,20 @@ type PolicyView struct {
 	RestartPending bool
 }
 
+// HotCacheView is the automatic hot cache setting the next start uses.
+type HotCacheView struct {
+	Enabled bool
+	TTL     time.Duration // 0: per data type defaults
+	Source  string        // SourceFile or SourceDatabase
+	// Defaults are the per data type idle TTLs used when TTL is 0.
+	Defaults map[string]time.Duration
+}
+
 // View is the configuration as the next start will run with it.
 type View struct {
 	Targets  []TargetView
 	Policies []PolicyView
+	HotCache HotCacheView
 	// SecretsAvailable is false without a master key: credentials cannot be saved.
 	SecretsAvailable bool
 	RestartRequired  bool
@@ -200,15 +221,22 @@ func (s *Service) view(ctx context.Context, doc Doc) (View, error) {
 		v.Targets = append(v.Targets, tv)
 	}
 
+	hot := doc.hotCache(s.opt.File.HotCache)
+	v.HotCache = HotCacheView{Enabled: hot.Enabled, TTL: time.Duration(hot.TTL), Source: SourceFile, Defaults: config.DefaultCacheTTL}
+	if doc.HotCache != nil {
+		v.HotCache.Source = SourceDatabase
+	}
+	eff := s.effective(doc, next, hot).Policy
 	for _, name := range slices.Sorted(maps.Keys(s.opt.File.Policy)) {
-		file, cur, run := s.opt.File.Policy[name], next[name], s.opt.Running.Policy[name]
+		file, cur, run, e := s.opt.File.Policy[name], next[name], s.opt.Running.Policy[name], eff[name]
 		_, overridden := doc.Policies[name]
 		pv := PolicyView{
 			Name: name, Source: SourceFile, Primary: cur.Primary, RunningPrimary: run.Primary,
 			Replicas: nonNil(cur.Replicas), Cache: cur.Cache,
+			EffectiveCache: e.Cache, CacheAuto: e.CacheAuto, CacheTTL: time.Duration(e.CacheTTL), CacheTTLOverride: time.Duration(cur.CacheTTL),
 			FilePrimary: file.Primary, FileReplicas: nonNil(file.Replicas), FileCache: file.Cache,
 			Objects: perPolicy[name], PrimaryLocked: perPolicy[name] > 0,
-			RestartPending: !samePlacement(cur, run) && !hidePending,
+			RestartPending: !sameEffective(e, run) && !hidePending,
 		}
 		if overridden {
 			pv.Source = SourceDatabase
@@ -216,6 +244,22 @@ func (s *Service) view(ctx context.Context, doc Doc) (View, error) {
 		v.Policies = append(v.Policies, pv)
 	}
 	return v, nil
+}
+
+// effective is the storage configuration the next start runs with, hot cache
+// applied, as far as the policies are concerned (targets carry name and kind
+// only).
+func (s *Service) effective(doc Doc, policies map[string]config.Policy, hot config.HotCache) config.Storage {
+	st := config.Storage{Targets: slices.Clone(s.opt.File.Targets), Policy: policies, HotPath: s.opt.File.HotPath, HotCache: hot}
+	for _, t := range doc.Targets {
+		st.Targets = append(st.Targets, config.Target{Name: t.Name, Kind: t.Kind})
+	}
+	return st.WithHotCache()
+}
+
+// sameEffective compares two effective policies on what a restart changes.
+func sameEffective(a, b config.Policy) bool {
+	return samePlacement(a, b) && a.CacheTTL == b.CacheTTL && a.CacheShare == b.CacheShare
 }
 
 // rolesOf lists, per target, how the policies use it.
@@ -593,6 +637,15 @@ func (s *Service) PutPolicy(ctx context.Context, actor uuid.UUID, ip, policy str
 			ov.Replicas = append(ov.Replicas, r)
 		}
 	}
+	if in.CacheTTL != nil {
+		if err := checkTTL("cacheTtl", *in.CacheTTL); err != nil {
+			return View{}, err
+		}
+		if *in.CacheTTL != time.Duration(file.CacheTTL) {
+			sec := int64(in.CacheTTL.Seconds())
+			ov.CacheTTLSeconds = &sec
+		}
+	}
 	return s.mutate(ctx, func(q *dbgen.Queries, doc *Doc) (audit.Event, error) {
 		if running, ok := s.opt.Running.Policy[policy]; ok && running.Primary != ov.Primary {
 			rows, err := q.StorageObjectCountsByTarget(ctx)
@@ -613,7 +666,7 @@ func (s *Service) PutPolicy(ctx context.Context, actor uuid.UUID, ip, policy str
 		if doc.Policies == nil {
 			doc.Policies = map[string]PolicyOverride{}
 		}
-		if samePlacement(config.Policy{Primary: ov.Primary, Replicas: ov.Replicas, Cache: ov.Cache}, file) {
+		if samePlacement(config.Policy{Primary: ov.Primary, Replicas: ov.Replicas, Cache: ov.Cache}, file) && ov.CacheTTLSeconds == nil {
 			delete(doc.Policies, policy) // back to the file values
 		} else {
 			doc.Policies[policy] = ov
@@ -622,7 +675,41 @@ func (s *Service) PutPolicy(ctx context.Context, actor uuid.UUID, ip, policy str
 			doc.Policies = nil
 		}
 		return audit.Event{Actor: actor, Action: ActionPolicySaved, TargetType: "storage_policy", TargetID: policy, IP: ip,
-			Data: map[string]any{"policy": policy, "primary": ov.Primary, "replicas": ov.Replicas, "cache": ov.Cache}}, nil
+			Data: map[string]any{"policy": policy, "primary": ov.Primary, "replicas": ov.Replicas, "cache": ov.Cache, "cacheTtlSeconds": ov.CacheTTLSeconds}}, nil
+	})
+}
+
+// HotCacheInput is the instance-wide automatic cache setting.
+type HotCacheInput struct {
+	Enabled bool
+	// TTL is the idle time after which data moves back to the remote
+	// storage, for every data type without its own; 0 uses the defaults.
+	TTL time.Duration
+}
+
+// checkTTL accepts 0 (the default) or at least config.MinHotCacheTTL.
+func checkTTL(path string, ttl time.Duration) error {
+	if ttl < 0 || (ttl > 0 && ttl < time.Duration(config.MinHotCacheTTL)) {
+		return fieldErr(path, "must be 0 (default) or at least %s", time.Duration(config.MinHotCacheTTL))
+	}
+	return nil
+}
+
+// PutHotCache sets the automatic hot cache of the instance. Values equal to
+// config.toml remove the override. The change applies after a restart.
+func (s *Service) PutHotCache(ctx context.Context, actor uuid.UUID, ip string, in HotCacheInput) (View, error) {
+	if err := checkTTL("ttl", in.TTL); err != nil {
+		return View{}, err
+	}
+	ov := HotCacheOverride{Enabled: in.Enabled, TTLSeconds: int64(in.TTL.Seconds())}
+	return s.mutate(ctx, func(_ *dbgen.Queries, doc *Doc) (audit.Event, error) {
+		if ov.config() == s.opt.File.HotCache {
+			doc.HotCache = nil
+		} else {
+			doc.HotCache = &ov
+		}
+		return audit.Event{Actor: actor, Action: ActionHotCacheSaved, TargetType: "storage_hot_cache", TargetID: "hot_cache", IP: ip,
+			Data: map[string]any{"enabled": ov.Enabled, "ttlSeconds": ov.TTLSeconds}}, nil
 	})
 }
 

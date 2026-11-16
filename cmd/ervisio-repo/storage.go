@@ -196,10 +196,13 @@ func openStorage(ctx context.Context, cfg *config.Config, q storageDB, reg prome
 	return t, stores, &storageBoot{cfg: &eff, file: file, doc: res.Doc, stored: res.Stored, fallback: res.Fallback, cause: res.Cause, key: key}, nil
 }
 
-// buildTier opens the stores of cfg.Storage and the tier on them.
+// buildTier opens the stores of cfg.Storage and the tier on them. It first
+// applies the automatic hot cache to cfg.Storage, so that the caller runs
+// the eviction job with the same effective policies.
 func buildTier(ctx context.Context, cfg *config.Config, q tier.Queries, reg prometheus.Registerer,
 	log *slog.Logger, onStored func(context.Context, tier.ObjectRef) error,
 ) (*tier.Tier, map[string]blob.Store, error) {
+	cfg.Storage = cfg.Storage.WithHotCache()
 	key, err := loadMasterKey(cfg)
 	if err != nil {
 		return nil, nil, err

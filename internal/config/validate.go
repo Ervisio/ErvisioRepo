@@ -134,6 +134,8 @@ func (v *validator) storage(s *Storage) {
 			v.add(p+".name", "must match %s, got %q", targetName, t.Name)
 		case kinds[t.Name] != "":
 			v.add(p+".name", "duplicate target name %q", t.Name)
+		case t.Name == CacheNone:
+			v.add(p+".name", "%q is reserved (cache = %q disables the automatic cache)", CacheNone, CacheNone)
 		default:
 			kinds[t.Name] = t.Kind
 		}
@@ -160,13 +162,19 @@ func (v *validator) storage(s *Storage) {
 			seen[r] = true
 			v.targetRef(rp, r, kinds)
 		}
-		if pol.Cache != "" && v.targetRef(p+".cache", pol.Cache, kinds) && kinds[pol.Cache] != "local" {
+		if pol.Cache != "" && pol.Cache != CacheNone && v.targetRef(p+".cache", pol.Cache, kinds) && kinds[pol.Cache] != "local" {
 			v.add(p+".cache", "target %q must be of kind local", pol.Cache)
 		}
 		if pol.CacheShare < 0 || pol.CacheShare > 1 {
 			v.add(p+".cache_share", "must be between 0 and 1, got %g", pol.CacheShare)
 		}
+		if pol.CacheTTL < 0 {
+			v.add(p+".cache_ttl", "must not be negative")
+		}
 		v.oneOf(p+".durability", pol.Durability, "sync", "async")
+	}
+	if ttl := s.HotCache.TTL; ttl != 0 && ttl < MinHotCacheTTL {
+		v.add("storage.hot_cache.ttl", "must be 0 (per data type defaults) or at least %s", time.Duration(MinHotCacheTTL))
 	}
 	v.hotPath(s)
 }
@@ -177,7 +185,7 @@ func (v *validator) storage(s *Storage) {
 func (v *validator) hotPath(s *Storage) {
 	if s.HotPath == "" {
 		if _, ok := s.Policy["git"]; ok {
-			v.add("storage.hot_path", "is required when the git policy has no local cache or primary")
+			v.add("storage.hot_path", "is required when there is no local target")
 		}
 		return
 	}

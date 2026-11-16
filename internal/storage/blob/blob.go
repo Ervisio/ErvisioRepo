@@ -169,3 +169,27 @@ func ResolveRange(rng *Range, size int64) (start, end int64, err error) {
 	}
 	return rng.Offset, end, nil
 }
+
+// Toucher is implemented by stores that can set the modification time of an
+// object without rewriting it (local). The local cache uses it to remember
+// the last access of an entry across restarts.
+type Toucher interface {
+	Touch(ctx context.Context, key string, t time.Time) error
+}
+
+// Touch sets the modification time of key on s, or on the first store of its
+// wrapper chain implementing Toucher (wrappers keep keys unchanged). It
+// fails with errors.ErrUnsupported when none does.
+func Touch(ctx context.Context, s Store, key string, t time.Time) error {
+	for s != nil {
+		if x, ok := s.(Toucher); ok {
+			return x.Touch(ctx, key, t)
+		}
+		u, ok := s.(Unwrapper)
+		if !ok {
+			break
+		}
+		s = u.Unwrap()
+	}
+	return errors.ErrUnsupported
+}

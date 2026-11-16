@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 	"unicode"
 
 	"golang.org/x/crypto/ssh"
@@ -97,7 +98,12 @@ type TargetInput struct {
 type PolicyInput struct {
 	Primary  string
 	Replicas []string
-	Cache    string
+	// Cache is a local target, config.CacheNone, or empty for the automatic
+	// hot cache.
+	Cache string
+	// CacheTTL, when set, is the idle TTL of this data type (0: the hot
+	// cache default); nil keeps the one of config.toml.
+	CacheTTL *time.Duration
 }
 
 type problems []FieldError

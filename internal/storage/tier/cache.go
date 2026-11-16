@@ -45,7 +45,13 @@ type cacheEntry struct {
 	size       int64
 	sha256     []byte
 	lastAccess time.Time
+	// persisted is the last access recorded as the file time on the cache
+	// store, which LoadCaches reads back after a restart.
+	persisted time.Time
 }
+
+// touchInterval throttles the persisted access time of a cache entry.
+const touchInterval = time.Minute
 
 func newCache(name string, store blob.Store, budget int64, high, low float64, log *slog.Logger) *Cache {
 	return &Cache{
@@ -90,18 +96,47 @@ func (c *Cache) admits(policy string, size int64) bool {
 	return b == 0 || size <= int64(c.low*float64(b))
 }
 
-// lookup returns the entry for key and marks it used.
+// lookup returns the entry for key and marks it used in memory.
 func (c *Cache) lookup(key string, now time.Time) (cacheEntry, bool) {
+	e, ok, _ := c.mark(key, now)
+	return e, ok
+}
+
+// use is lookup that also records the access on the cache store when due.
+func (c *Cache) use(ctx context.Context, key string, now time.Time) (cacheEntry, bool) {
+	e, ok, persist := c.mark(key, now)
+	if persist {
+		c.persist(ctx, key, now)
+	}
+	return e, ok
+}
+
+// mark moves key to the front of the LRU and reports whether its persisted
+// access time is older than touchInterval (and now considered updated).
+func (c *Cache) mark(key string, now time.Time) (cacheEntry, bool, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	el, ok := c.entries[key]
 	if !ok {
-		return cacheEntry{}, false
+		return cacheEntry{}, false, false
 	}
 	e := el.Value.(*cacheEntry)
 	e.lastAccess = now
 	c.lru.MoveToFront(el)
-	return *e, true
+	persist := now.Sub(e.persisted) >= touchInterval
+	if persist {
+		e.persisted = now
+	}
+	return *e, true, persist
+}
+
+// persist records the access time on the cache store, so that the idle TTL
+// survives a restart. At most once per touchInterval per entry; a failure
+// only costs an earlier eviction.
+func (c *Cache) persist(ctx context.Context, key string, now time.Time) {
+	if err := blob.Touch(ctx, c.store, key, now); err != nil && !errors.Is(err, blob.ErrNotFound) && !errors.Is(err, errors.ErrUnsupported) {
+		c.log.DebugContext(ctx, "record cache access", "target", c.name, "key", key, "error", err)
+	}
 }
 
 // add registers an object written to the cache store.
@@ -322,7 +357,7 @@ func (f *filler) finish(ctx context.Context, ok bool, now time.Time) {
 	err := <-f.done
 	switch {
 	case ok && !f.failed && err == nil:
-		f.entry.lastAccess = now
+		f.entry.lastAccess, f.entry.persisted = now, now
 		f.c.add(f.entry)
 		if _, _, err := f.c.Evict(ctx, now); err != nil {
 			f.c.log.WarnContext(ctx, "cache eviction failed", "target", f.c.name, "error", err)

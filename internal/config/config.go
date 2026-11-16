@@ -227,6 +227,9 @@ type Storage struct {
 	HotPath string `toml:"hot_path"`
 	// Paranoid runs git fsck on every hydrated repository before serving it.
 	Paranoid bool `toml:"paranoid"`
+	// HotCache keeps recently used data of remote targets on the local disk
+	// (see WithHotCache).
+	HotCache HotCache `toml:"hot_cache"`
 }
 
 // HotDirName is the directory created inside a local target when
@@ -287,13 +290,19 @@ type Target struct {
 
 // Policy says where one data type lives.
 type Policy struct {
-	Primary    string   `toml:"primary"`
-	Replicas   []string `toml:"replicas"`
-	Cache      string   `toml:"cache"`
+	Primary  string   `toml:"primary"`
+	Replicas []string `toml:"replicas"`
+	// Cache is a local target, CacheNone, or empty for the automatic hot
+	// cache (see WithHotCache).
+	Cache string `toml:"cache"`
+	// CacheTTL evicts cached data idle for that long; 0 uses the hot cache
+	// default.
 	CacheTTL   Duration `toml:"cache_ttl"`
 	CacheShare float64  `toml:"cache_share"`
 	Durability string   `toml:"durability"` // sync | async
 	Retention  Duration `toml:"retention"`
+	// CacheAuto is set by WithHotCache on a cache it chose.
+	CacheAuto bool `toml:"-"`
 }
 
 // Default returns the configuration used for every key the file leaves out.
@@ -341,6 +350,7 @@ func Default() Config {
 		SSH:      defaultSSH(),
 		Webhooks: Webhooks{Timeout: Duration(10 * time.Second), MaxAttempts: 8},
 		UI:       UI{DefaultLayout: LayoutConsole},
+		Storage:  Storage{HotCache: HotCache{Enabled: true}},
 	}
 }
 
@@ -428,6 +438,11 @@ func applyStorageDefaults(s *Storage) {
 				s.HotPath = filepath.Join(t.Path, HotDirName)
 				break
 			}
+		}
+		// A remote git primary without a local cache: the hot repositories
+		// go on the first local target.
+		if t := s.HotTarget(); s.HotPath == "" && t != nil {
+			s.HotPath = filepath.Join(t.Path, HotDirName)
 		}
 	}
 	for name, p := range s.Policy {
