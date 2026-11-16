@@ -13,9 +13,10 @@ import (
 )
 
 const countUserTokens = `-- name: CountUserTokens :one
-SELECT count(*) FROM tokens WHERE user_id = $1
+SELECT count(*) FROM tokens WHERE user_id = $1 AND grant_id IS NULL
 `
 
+// Personal access tokens only: OAuth app tokens are bounded per grant.
 func (q *Queries) CountUserTokens(ctx context.Context, userID uuid.UUID) (int64, error) {
 	row := q.db.QueryRow(ctx, countUserTokens, userID)
 	var count int64
@@ -36,7 +37,7 @@ func (q *Queries) DeleteExpiredTokens(ctx context.Context, before pgtype.Timesta
 }
 
 const deleteUserToken = `-- name: DeleteUserToken :execrows
-DELETE FROM tokens WHERE user_id = $1 AND id = $2
+DELETE FROM tokens WHERE user_id = $1 AND id = $2 AND grant_id IS NULL
 `
 
 type DeleteUserTokenParams struct {
@@ -118,7 +119,7 @@ func (q *Queries) InsertToken(ctx context.Context, arg InsertTokenParams) error 
 
 const listUserTokens = `-- name: ListUserTokens :many
 SELECT id, name, hint, scopes, expires_at, last_used_at, created_at
-FROM tokens WHERE user_id = $1 ORDER BY created_at DESC
+FROM tokens WHERE user_id = $1 AND grant_id IS NULL ORDER BY created_at DESC
 `
 
 type ListUserTokensRow struct {

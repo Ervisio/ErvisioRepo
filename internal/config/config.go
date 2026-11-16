@@ -85,6 +85,19 @@ const (
 	UserDirectoryInstance = "instance"
 )
 
+// Values of security.app_registration: who may register OAuth apps and
+// Apps.
+const (
+	// AppRegistrationEveryone lets every user register apps for their
+	// account and for the organizations they own.
+	AppRegistrationEveryone = "everyone"
+	// AppRegistrationOrgOwners allows organization apps only, registered
+	// by the owners of the organization.
+	AppRegistrationOrgOwners = "org_owners"
+	// AppRegistrationAdmins limits registration to instance admins.
+	AppRegistrationAdmins = "admins"
+)
+
 // Values of auth.require_2fa.
 const (
 	Require2FAOff    = "off"
@@ -97,6 +110,9 @@ type Security struct {
 	Registration  string `toml:"registration"`
 	// UserDirectory is shared (default) or instance; see UserDirectory*.
 	UserDirectory string `toml:"user_directory"`
+	// AppRegistration is everyone (default), org_owners or admins; see
+	// AppRegistration*.
+	AppRegistration string `toml:"app_registration"`
 }
 
 type Actions struct {
@@ -290,9 +306,10 @@ func Default() Config {
 		},
 		Database: Database{MaxConns: 10},
 		Security: Security{
-			MasterKeyFile: "/etc/ervisio-repo/master.key",
-			Registration:  RegistrationInvite,
-			UserDirectory: UserDirectoryShared,
+			MasterKeyFile:   "/etc/ervisio-repo/master.key",
+			Registration:    RegistrationInvite,
+			UserDirectory:   UserDirectoryShared,
+			AppRegistration: AppRegistrationEveryone,
 		},
 		Actions: Actions{Enabled: true, DefaultActionsURL: "github", MaxJobTimeout: Duration(6 * time.Hour),
 			RunnerOfflineAfter: Duration(2 * time.Minute), RegistrationTokenTTL: Duration(time.Hour), MaxJobsPerRun: 512,

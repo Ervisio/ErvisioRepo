@@ -78,5 +78,9 @@ func (s *v1Server) GetMeta(context.Context, v1gen.GetMetaRequestObject) (v1gen.G
 		l := v1gen.MetaDefaultLayout(s.meta.DefaultLayout)
 		m.DefaultLayout = &l
 	}
+	if s.meta.AppRegistration != "" {
+		a := v1gen.MetaAppRegistration(s.meta.AppRegistration)
+		m.AppRegistration = &a
+	}
 	return m, nil
 }

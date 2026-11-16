@@ -17,16 +17,17 @@ WHERE id = $1 AND (last_used_at IS NULL OR last_used_at < now() - interval '1 mi
 
 -- name: ListUserTokens :many
 SELECT id, name, hint, scopes, expires_at, last_used_at, created_at
-FROM tokens WHERE user_id = $1 ORDER BY created_at DESC;
+FROM tokens WHERE user_id = $1 AND grant_id IS NULL ORDER BY created_at DESC;
 
 -- name: CountUserTokens :one
-SELECT count(*) FROM tokens WHERE user_id = $1;
+-- Personal access tokens only: OAuth app tokens are bounded per grant.
+SELECT count(*) FROM tokens WHERE user_id = $1 AND grant_id IS NULL;
 
 -- name: TokenNameTaken :one
 SELECT EXISTS (SELECT 1 FROM tokens WHERE user_id = $1 AND name = sqlc.arg(name));
 
 -- name: DeleteUserToken :execrows
-DELETE FROM tokens WHERE user_id = $1 AND id = sqlc.arg(token_id);
+DELETE FROM tokens WHERE user_id = $1 AND id = sqlc.arg(token_id) AND grant_id IS NULL;
 
 -- name: DeleteExpiredTokens :execrows
 DELETE FROM tokens WHERE expires_at < sqlc.arg(before);

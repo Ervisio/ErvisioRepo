@@ -49,6 +49,9 @@ const (
 	deviceStatusConsumed = "consumed"
 )
 
+// The built-in first-party clients are system rows of oauth_apps
+// (migration 00300) with the device flow enabled.
+
 // EgClientID is the client_id of eg, the first-party command line client.
 const EgClientID = "Ov23liErvisioEgCli01"
 
@@ -56,26 +59,14 @@ const EgClientID = "Ov23liErvisioEgCli01"
 // `gh auth login --hostname <this server>` use the device flow too.
 const GitHubCLIClientID = "178c6fc778ccc68e1d6a"
 
-// OAuthClient is an application allowed to use the device flow. Only
-// built-in first-party clients exist for now; registered OAuth apps will
-// be looked up by the same client ID.
-type OAuthClient struct {
-	ID   string
-	Name string
-	// Short names the tokens it receives ("<Short> on <host> (device)").
-	Short      string
-	FirstParty bool
-}
-
-var builtinClients = map[string]OAuthClient{
-	EgClientID:        {ID: EgClientID, Name: "eg (ErvisioRepo CLI)", Short: "eg", FirstParty: true},
-	GitHubCLIClientID: {ID: GitHubCLIClientID, Name: "GitHub CLI", Short: "gh", FirstParty: true},
-}
-
-// LookupClient returns the OAuth client with the given ID.
-func (s *Service) LookupClient(id string) (OAuthClient, bool) {
-	c, ok := builtinClients[id]
-	return c, ok
+// deviceApp returns the app clientID when it may use the device flow:
+// a built-in client or a registered app with the device flow enabled.
+func (s *Service) deviceApp(ctx context.Context, q *dbgen.Queries, clientID string) (OAuthApp, error) {
+	app, err := lookupApp(ctx, q, clientID)
+	if errors.Is(err, ErrNotFound) || (err == nil && !app.DeviceFlow) {
+		return OAuthApp{}, ErrIncorrectClient
+	}
+	return app, err
 }
 
 // DeviceError is an OAuth error code of the token endpoint.
@@ -119,8 +110,8 @@ type DeviceStart struct {
 // OAuth scope parameter (GitHub scopes); empty means DefaultGitHubScopes.
 // deviceName is an optional label of the device (non-standard).
 func (s *Service) StartDevice(ctx context.Context, clientID, scope, deviceName, ip string) (DeviceStart, error) {
-	if _, ok := s.LookupClient(clientID); !ok {
-		return DeviceStart{}, ErrIncorrectClient
+	if _, err := s.deviceApp(ctx, s.q, clientID); err != nil {
+		return DeviceStart{}, err
 	}
 	if ok, _ := s.device.AllowAction(auth.IPKey(ip)); !ok {
 		return DeviceStart{}, ErrDeviceRateLimited
@@ -222,8 +213,8 @@ type DeviceToken struct {
 // PollDevice answers a poll of the token endpoint. Errors are *DeviceError
 // values for the OAuth error codes, others are internal failures.
 func (s *Service) PollDevice(ctx context.Context, clientID, deviceCode, ip string) (DeviceToken, error) {
-	if _, ok := s.LookupClient(clientID); !ok {
-		return DeviceToken{}, ErrIncorrectClient
+	if _, err := s.deviceApp(ctx, s.q, clientID); err != nil {
+		return DeviceToken{}, err
 	}
 	if deviceCode == "" {
 		return DeviceToken{}, ErrIncorrectDeviceCode
@@ -298,7 +289,26 @@ func (s *Service) issueDeviceToken(ctx context.Context, q *dbgen.Queries, row db
 	if err := lockUser(ctx, q, userID); err != nil {
 		return DeviceToken{}, err
 	}
-	client, _ := s.LookupClient(row.ClientID)
+	client, err := s.deviceApp(ctx, q, row.ClientID)
+	if err != nil {
+		return DeviceToken{}, err
+	}
+	if !client.System() {
+		// A registered app: the token belongs to the user's grant and is
+		// listed among the authorized applications.
+		grantID, err := upsertGrant(ctx, q, client, userID, row.Scopes, ip)
+		if err != nil {
+			return DeviceToken{}, err
+		}
+		secret, err := s.issueGrantToken(ctx, q, client, userID, grantID, row.Scopes, ip, "device_code")
+		if err != nil {
+			return DeviceToken{}, err
+		}
+		if err := q.ConsumeDeviceCode(ctx, dbgen.ConsumeDeviceCodeParams{ID: row.ID}); err != nil {
+			return DeviceToken{}, fmt.Errorf("consume device code: %w", err)
+		}
+		return DeviceToken{AccessToken: secret, Scope: strings.Join(auth.GitHubScopes(auth.ScopesFromGitHub(row.Scopes)), ",")}, nil
+	}
 	base := s.deviceTokenName(client, row.DeviceName)
 	name := base
 	for i := 2; ; i++ {
@@ -338,8 +348,8 @@ func (s *Service) issueDeviceToken(ctx context.Context, q *dbgen.Queries, row db
 }
 
 // deviceTokenName is "<client> on <device or server host> (device)".
-func (s *Service) deviceTokenName(c OAuthClient, device string) string {
-	short := c.Short
+func (s *Service) deviceTokenName(c OAuthApp, device string) string {
+	short := c.short
 	if short == "" {
 		short = c.Name
 	}
@@ -378,11 +388,14 @@ func (s *Service) checkDeviceLimit(userID uuid.UUID, ip string) error {
 	return nil
 }
 
-func (s *Service) deviceRequest(row dbgen.OauthDeviceCode) DeviceRequest {
-	c, _ := s.LookupClient(row.ClientID)
+func (s *Service) deviceRequest(ctx context.Context, row dbgen.OauthDeviceCode) (DeviceRequest, error) {
+	c, err := lookupApp(ctx, s.q, row.ClientID)
+	if err != nil && !errors.Is(err, ErrNotFound) {
+		return DeviceRequest{}, err
+	}
 	return DeviceRequest{UserCode: FormatUserCode(row.UserCode), ClientID: row.ClientID, AppName: c.Name,
 		RequestedScopes: row.Scopes, Scopes: auth.ScopesFromGitHub(row.Scopes), DeviceName: row.DeviceName,
-		RequestIP: row.RequestIp, CreatedAt: row.CreatedAt.Time, ExpiresAt: row.ExpiresAt.Time}
+		RequestIP: row.RequestIp, CreatedAt: row.CreatedAt.Time, ExpiresAt: row.ExpiresAt.Time}, nil
 }
 
 // LookupDevice returns the pending request with userCode. Unknown codes
@@ -404,7 +417,7 @@ func (s *Service) LookupDevice(ctx context.Context, userID uuid.UUID, userCode, 
 	if err != nil {
 		return DeviceRequest{}, fmt.Errorf("get device code: %w", err)
 	}
-	return s.deviceRequest(row), nil
+	return s.deviceRequest(ctx, row)
 }
 
 // DecideDevice approves or denies the pending request with userCode on

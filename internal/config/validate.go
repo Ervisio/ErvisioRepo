@@ -86,6 +86,8 @@ func (c *Config) validate() []error {
 	v.oneOf("security.registration", c.Security.Registration,
 		RegistrationOpen, RegistrationInvite, RegistrationClosed)
 	v.oneOf("security.user_directory", c.Security.UserDirectory, UserDirectoryShared, UserDirectoryInstance)
+	v.oneOf("security.app_registration", c.Security.AppRegistration,
+		AppRegistrationEveryone, AppRegistrationOrgOwners, AppRegistrationAdmins)
 
 	v.oneOf("actions.default_actions_url", c.Actions.DefaultActionsURL, "github", "mirror-only")
 	if c.Actions.Enabled {

@@ -22,6 +22,7 @@ tags:
   - name: notifications
   - name: checks
   - name: actions
+  - name: oauth
 # Every operation needs a session unless it declares `security: []`. The
 # "admin" scope means an instance admin. Unsafe methods also need the
 # X-CSRF-Token header (see components.securitySchemes.session).
@@ -1775,6 +1776,287 @@ paths:
         "404":
           $ref: "#/components/responses/Problem"
         "429":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/oauth-apps:
+    get:
+      operationId: listMyOAuthApps
+      tags: [oauth]
+      summary: OAuth apps registered by the account
+      description: Session only. Apps owned by the caller's user account (not by its organizations).
+      responses:
+        "200":
+          description: Apps, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/OAuthApp"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createMyOAuthApp
+      tags: [oauth]
+      summary: Register an OAuth app owned by the account
+      description: |
+        Session only. Allowed by the instance setting security.app_registration
+        (everyone; org_owners refuses personal apps; admins needs an instance admin).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/OAuthAppCreate"}
+      responses:
+        "201":
+          description: Registered (no client secret yet)
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/OAuthApp"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /orgs/{org}/oauth-apps:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgOAuthApps
+      tags: [oauth]
+      summary: OAuth apps owned by the organization
+      description: Session only, organization owners.
+      responses:
+        "200":
+          description: Apps, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/OAuthApp"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createOrgOAuthApp
+      tags: [oauth]
+      summary: Register an OAuth app owned by the organization
+      description: Session only, organization owners; subject to security.app_registration (admins needs an instance admin).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/OAuthAppCreate"}
+      responses:
+        "201":
+          description: Registered (no client secret yet)
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/OAuthApp"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /oauth-apps/{clientId}:
+    parameters:
+      - $ref: "#/components/parameters/OAuthClientID"
+    get:
+      operationId: getOAuthApp
+      tags: [oauth]
+      summary: An OAuth app with its client secrets
+      description: Session only; the owner user or an owner of the owning organization.
+      responses:
+        "200":
+          description: The app
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/OAuthApp"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: updateOAuthApp
+      tags: [oauth]
+      summary: Edit an OAuth app
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/OAuthAppUpdate"}
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/OAuthApp"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteOAuthApp
+      tags: [oauth]
+      summary: Delete an OAuth app
+      description: Revokes every grant, token and secret of the app.
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /oauth-apps/{clientId}/secrets:
+    parameters:
+      - $ref: "#/components/parameters/OAuthClientID"
+    post:
+      operationId: createOAuthAppSecret
+      tags: [oauth]
+      summary: Generate a client secret
+      description: The secret is returned only once; at most 5 per app.
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/CreatedOAuthAppSecret"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /oauth-apps/{clientId}/secrets/{id}:
+    parameters:
+      - $ref: "#/components/parameters/OAuthClientID"
+      - $ref: "#/components/parameters/CredentialID"
+    delete:
+      operationId: deleteOAuthAppSecret
+      tags: [oauth]
+      summary: Revoke a client secret
+      responses:
+        "204":
+          description: Revoked
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/oauth-authorizations:
+    get:
+      operationId: listOAuthAuthorizations
+      tags: [oauth]
+      summary: OAuth apps the account has authorized
+      responses:
+        "200":
+          description: Authorizations, most recently used first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/OAuthAuthorization"}
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/oauth-authorizations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/CredentialID"
+    delete:
+      operationId: revokeOAuthAuthorization
+      tags: [oauth]
+      summary: Revoke an authorized OAuth app
+      description: Deletes the grant and every token the app received for the account.
+      responses:
+        "204":
+          description: Revoked
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/oauth/authorize:
+    get:
+      operationId: getOAuthConsent
+      tags: [oauth]
+      summary: Check an OAuth web flow request and describe it for the consent page
+      description: |
+        Session only. The SPA route /login/oauth/authorize passes the query of
+        GitHub's authorize URL. 404 for an unknown client_id, 400 for a
+        redirect_uri that does not match a registered callback URL (the
+        consent page then never redirects).
+      parameters:
+        - {name: client_id, in: query, required: true, schema: {type: string, maxLength: 100}}
+        - {name: redirect_uri, in: query, schema: {type: string, maxLength: 2000}}
+        - {name: scope, in: query, schema: {type: string, maxLength: 1000}}
+        - {name: code_challenge, in: query, schema: {type: string, maxLength: 200}}
+        - {name: code_challenge_method, in: query, schema: {type: string, maxLength: 20}}
+      responses:
+        "200":
+          description: The request
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/OAuthConsent"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: decideOAuthConsent
+      tags: [oauth]
+      summary: Authorize or deny an OAuth web flow request
+      description: |
+        Session only. Returns the URL to send the browser to: the app's
+        redirect_uri with code and state, or with error=access_denied.
+        The code is single use and expires after 10 minutes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/OAuthConsentDecision"}
+      responses:
+        "200":
+          description: Where to go next
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/OAuthRedirect"}
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
@@ -9803,6 +10085,13 @@ components:
       schema:
         type: string
         format: uuid
+    OAuthClientID:
+      name: clientId
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 100
     OrgName:
       name: org
       in: path
@@ -10694,6 +10983,213 @@ components:
       properties:
         approve:
           type: boolean
+    OAuthAppOwner:
+      type: object
+      required: [kind, name]
+      properties:
+        kind:
+          type: string
+          enum: [user, org, system]
+        name:
+          type: string
+          description: Login of the owner; empty for the built-in clients
+    OAuthApp:
+      type: object
+      required: [clientId, name, description, homepageUrl, callbackUrls, deviceFlow, owner, users, createdAt, updatedAt]
+      properties:
+        clientId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        homepageUrl:
+          type: string
+        logoUrl:
+          type: string
+          description: Optional https URL of the logo
+        callbackUrls:
+          type: array
+          items: {type: string}
+        deviceFlow:
+          type: boolean
+        owner: {$ref: "#/components/schemas/OAuthAppOwner"}
+        users:
+          type: integer
+          description: Accounts that have authorized the app
+        secrets:
+          type: array
+          description: Client secrets (getOAuthApp only)
+          items: {$ref: "#/components/schemas/OAuthAppSecret"}
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    OAuthAppCreate:
+      type: object
+      required: [name, homepageUrl, callbackUrls]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        homepageUrl:
+          type: string
+          maxLength: 2000
+        logoUrl:
+          type: string
+          maxLength: 2000
+        callbackUrls:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items: {type: string, maxLength: 2000}
+        deviceFlow:
+          type: boolean
+    OAuthAppUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        homepageUrl:
+          type: string
+          maxLength: 2000
+        logoUrl:
+          type: string
+          maxLength: 2000
+        callbackUrls:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items: {type: string, maxLength: 2000}
+        deviceFlow:
+          type: boolean
+    OAuthAppSecret:
+      type: object
+      required: [id, hint, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        hint:
+          type: string
+          description: Last eight characters of the secret
+        createdBy:
+          type: string
+          description: Login of the account that generated it
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+    CreatedOAuthAppSecret:
+      type: object
+      required: [secret, clientSecret]
+      properties:
+        secret: {$ref: "#/components/schemas/OAuthAppSecret"}
+        clientSecret:
+          type: string
+          description: The secret itself, shown only once
+    OAuthAppSummary:
+      type: object
+      required: [clientId, name, description, homepageUrl, owner]
+      properties:
+        clientId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        homepageUrl:
+          type: string
+        logoUrl:
+          type: string
+        owner: {$ref: "#/components/schemas/OAuthAppOwner"}
+    OAuthAuthorization:
+      type: object
+      required: [id, app, scopes, tokenScopes, tokens, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        app: {$ref: "#/components/schemas/OAuthAppSummary"}
+        scopes:
+          type: array
+          description: GitHub-style scopes granted (repo, read:org...)
+          items: {type: string}
+        tokenScopes:
+          type: array
+          description: Token scopes of this server they map to
+          items: {type: string}
+        tokens:
+          type: integer
+          description: Active tokens issued under the grant
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+    OAuthConsent:
+      type: object
+      required: [app, redirectUri, requestedScopes, scopes, granted]
+      properties:
+        app: {$ref: "#/components/schemas/OAuthAppSummary"}
+        redirectUri:
+          type: string
+          description: The callback the browser returns to (redirect_uri or the first registered one)
+        requestedScopes:
+          type: array
+          description: GitHub-style scopes asked for, unknown ones dropped
+          items: {type: string}
+        scopes:
+          type: array
+          description: Token scopes of this server the app will receive
+          items: {type: string}
+        granted:
+          type: boolean
+          description: The account already authorized these scopes; the page can skip the question
+    OAuthConsentDecision:
+      type: object
+      required: [clientId, approve]
+      properties:
+        clientId:
+          type: string
+          maxLength: 100
+        redirectUri:
+          type: string
+          maxLength: 2000
+        scope:
+          type: string
+          maxLength: 1000
+        state:
+          type: string
+          maxLength: 2000
+        codeChallenge:
+          type: string
+          maxLength: 200
+        codeChallengeMethod:
+          type: string
+          maxLength: 20
+        approve:
+          type: boolean
+    OAuthRedirect:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
     CreatedAccessToken:
       type: object
       required: [token, secret]
@@ -11598,6 +12094,10 @@ components:
           type: string
           enum: [console, foglio, corsie]
           description: Shell shown to users without a layout preference
+        appRegistration:
+          type: string
+          enum: [everyone, org_owners, admins]
+          description: Who may register OAuth apps and Apps (security.app_registration)
     MfaChallenge:
       type: object
       required: [methods, enrollmentRequired, expiresAt]

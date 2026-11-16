@@ -1216,6 +1216,194 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/user/oauth-apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * OAuth apps registered by the account
+         * @description Session only. Apps owned by the caller's user account (not by its organizations).
+         */
+        get: operations["listMyOAuthApps"];
+        put?: never;
+        /**
+         * Register an OAuth app owned by the account
+         * @description Session only. Allowed by the instance setting security.app_registration
+         *     (everyone; org_owners refuses personal apps; admins needs an instance admin).
+         */
+        post: operations["createMyOAuthApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/orgs/{org}/oauth-apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * OAuth apps owned by the organization
+         * @description Session only, organization owners.
+         */
+        get: operations["listOrgOAuthApps"];
+        put?: never;
+        /**
+         * Register an OAuth app owned by the organization
+         * @description Session only, organization owners; subject to security.app_registration (admins needs an instance admin).
+         */
+        post: operations["createOrgOAuthApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oauth-apps/{clientId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["OAuthClientID"];
+            };
+            cookie?: never;
+        };
+        /**
+         * An OAuth app with its client secrets
+         * @description Session only; the owner user or an owner of the owning organization.
+         */
+        get: operations["getOAuthApp"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete an OAuth app
+         * @description Revokes every grant, token and secret of the app.
+         */
+        delete: operations["deleteOAuthApp"];
+        options?: never;
+        head?: never;
+        /** Edit an OAuth app */
+        patch: operations["updateOAuthApp"];
+        trace?: never;
+    };
+    "/oauth-apps/{clientId}/secrets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["OAuthClientID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate a client secret
+         * @description The secret is returned only once; at most 5 per app.
+         */
+        post: operations["createOAuthAppSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oauth-apps/{clientId}/secrets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["OAuthClientID"];
+                id: components["parameters"]["CredentialID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke a client secret */
+        delete: operations["deleteOAuthAppSecret"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/oauth-authorizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** OAuth apps the account has authorized */
+        get: operations["listOAuthAuthorizations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/oauth-authorizations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["CredentialID"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke an authorized OAuth app
+         * @description Deletes the grant and every token the app received for the account.
+         */
+        delete: operations["revokeOAuthAuthorization"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/oauth/authorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Check an OAuth web flow request and describe it for the consent page
+         * @description Session only. The SPA route /login/oauth/authorize passes the query of
+         *     GitHub's authorize URL. 404 for an unknown client_id, 400 for a
+         *     redirect_uri that does not match a registered callback URL (the
+         *     consent page then never redirects).
+         */
+        get: operations["getOAuthConsent"];
+        put?: never;
+        /**
+         * Authorize or deny an OAuth web flow request
+         * @description Session only. Returns the URL to send the browser to: the app's
+         *     redirect_uri with code and state, or with error=access_denied.
+         *     The code is single use and expires after 10 minutes.
+         */
+        post: operations["decideOAuthConsent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/user/keys/ssh": {
         parameters: {
             query?: never;
@@ -6217,6 +6405,110 @@ export interface components {
         DeviceAuthorizationDecision: {
             approve: boolean;
         };
+        OAuthAppOwner: {
+            /** @enum {string} */
+            kind: "user" | "org" | "system";
+            /** @description Login of the owner; empty for the built-in clients */
+            name: string;
+        };
+        OAuthApp: {
+            clientId: string;
+            name: string;
+            description: string;
+            homepageUrl: string;
+            /** @description Optional https URL of the logo */
+            logoUrl?: string;
+            callbackUrls: string[];
+            deviceFlow: boolean;
+            owner: components["schemas"]["OAuthAppOwner"];
+            /** @description Accounts that have authorized the app */
+            users: number;
+            /** @description Client secrets (getOAuthApp only) */
+            secrets?: components["schemas"]["OAuthAppSecret"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        OAuthAppCreate: {
+            name: string;
+            description?: string;
+            homepageUrl: string;
+            logoUrl?: string;
+            callbackUrls: string[];
+            deviceFlow?: boolean;
+        };
+        OAuthAppUpdate: {
+            name?: string;
+            description?: string;
+            homepageUrl?: string;
+            logoUrl?: string;
+            callbackUrls?: string[];
+            deviceFlow?: boolean;
+        };
+        OAuthAppSecret: {
+            /** Format: uuid */
+            id: string;
+            /** @description Last eight characters of the secret */
+            hint: string;
+            /** @description Login of the account that generated it */
+            createdBy?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastUsedAt?: string;
+        };
+        CreatedOAuthAppSecret: {
+            secret: components["schemas"]["OAuthAppSecret"];
+            /** @description The secret itself, shown only once */
+            clientSecret: string;
+        };
+        OAuthAppSummary: {
+            clientId: string;
+            name: string;
+            description: string;
+            homepageUrl: string;
+            logoUrl?: string;
+            owner: components["schemas"]["OAuthAppOwner"];
+        };
+        OAuthAuthorization: {
+            /** Format: uuid */
+            id: string;
+            app: components["schemas"]["OAuthAppSummary"];
+            /** @description GitHub-style scopes granted (repo, read:org...) */
+            scopes: string[];
+            /** @description Token scopes of this server they map to */
+            tokenScopes: string[];
+            /** @description Active tokens issued under the grant */
+            tokens: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastUsedAt?: string;
+        };
+        OAuthConsent: {
+            app: components["schemas"]["OAuthAppSummary"];
+            /** @description The callback the browser returns to (redirect_uri or the first registered one) */
+            redirectUri: string;
+            /** @description GitHub-style scopes asked for, unknown ones dropped */
+            requestedScopes: string[];
+            /** @description Token scopes of this server the app will receive */
+            scopes: string[];
+            /** @description The account already authorized these scopes; the page can skip the question */
+            granted: boolean;
+        };
+        OAuthConsentDecision: {
+            clientId: string;
+            redirectUri?: string;
+            scope?: string;
+            state?: string;
+            codeChallenge?: string;
+            codeChallengeMethod?: string;
+            approve: boolean;
+        };
+        OAuthRedirect: {
+            url: string;
+        };
         CreatedAccessToken: {
             token: components["schemas"]["AccessToken"];
             /** @description The token (erp_...), shown only once; send it as "Authorization Bearer" */
@@ -6710,6 +7002,11 @@ export interface components {
              * @enum {string}
              */
             defaultLayout?: "console" | "foglio" | "corsie";
+            /**
+             * @description Who may register OAuth apps and Apps (security.app_registration)
+             * @enum {string}
+             */
+            appRegistration?: "everyone" | "org_owners" | "admins";
         };
         /**
          * @description A login waiting for its second factor. The pending state lives in
@@ -8230,6 +8527,7 @@ export interface components {
         PageOffset: number;
         PageLimit: number;
         CredentialID: string;
+        OAuthClientID: string;
         OrgName: string;
         TeamName: string;
         Username: string;
@@ -10086,6 +10384,344 @@ export interface operations {
             401: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             429: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listMyOAuthApps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Apps, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthApp"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createMyOAuthApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthAppCreate"];
+            };
+        };
+        responses: {
+            /** @description Registered (no client secret yet) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthApp"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listOrgOAuthApps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Apps, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthApp"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createOrgOAuthApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthAppCreate"];
+            };
+        };
+        responses: {
+            /** @description Registered (no client secret yet) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthApp"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getOAuthApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["OAuthClientID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The app */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthApp"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteOAuthApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["OAuthClientID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateOAuthApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["OAuthClientID"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthAppUpdate"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthApp"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createOAuthAppSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["OAuthClientID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedOAuthAppSecret"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteOAuthAppSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["OAuthClientID"];
+                id: components["parameters"]["CredentialID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listOAuthAuthorizations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Authorizations, most recently used first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthAuthorization"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    revokeOAuthAuthorization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["CredentialID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getOAuthConsent: {
+        parameters: {
+            query: {
+                client_id: string;
+                redirect_uri?: string;
+                scope?: string;
+                code_challenge?: string;
+                code_challenge_method?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The request */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthConsent"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    decideOAuthConsent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OAuthConsentDecision"];
+            };
+        };
+        responses: {
+            /** @description Where to go next */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthRedirect"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

@@ -63,6 +63,8 @@ type Service struct {
 	// device limits wrong user codes and device code requests.
 	device *auth.Limiter
 	host   string // public host, names device flow tokens
+	// appRegistration is security.app_registration.
+	appRegistration string
 }
 
 // Options configures a Service.
@@ -73,7 +75,10 @@ type Options struct {
 	TokenMaxTTL time.Duration
 	// PublicURL is the external base URL of the server.
 	PublicURL string
-	Now       func() time.Time
+	// AppRegistration is who may register OAuth apps
+	// (security.app_registration; empty means everyone).
+	AppRegistration string
+	Now             func() time.Time
 }
 
 // New returns a Service.
@@ -93,7 +98,7 @@ func New(o Options) *Service {
 	device := auth.NewLimiter(auth.LimiterConfig{FreeFailuresAccount: 5, FreeFailuresIP: 10,
 		BackoffBase: 2 * time.Second, BackoffMax: 5 * time.Minute, ActionsPerHour: 60}, now)
 	return &Service{pool: o.Pool, q: dbgen.New(o.Pool), log: log, maxTTL: o.TokenMaxTTL, now: now,
-		device: device, host: host}
+		device: device, host: host, appRegistration: o.AppRegistration}
 }
 
 // MaxTokenTTL is the longest lifetime of a new token.
@@ -136,6 +141,8 @@ func ts(t pgtype.Timestamptz) *time.Time {
 	v := t.Time
 	return &v
 }
+
+func pgTime(t time.Time) pgtype.Timestamptz { return pgtype.Timestamptz{Time: t, Valid: true} }
 
 func newID() (uuid.UUID, error) {
 	id, err := uuid.NewV7()

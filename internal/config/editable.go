@@ -7,7 +7,7 @@ import "strings"
 var Editable = []string{
 	"server.public_url", "server.ssh_listen", "server.trusted_proxies",
 	"log.level", "log.format",
-	"security.registration", "security.user_directory",
+	"security.registration", "security.user_directory", "security.app_registration",
 	"auth.password_min_length", "auth.session_idle_timeout", "auth.session_max_age",
 	"auth.require_verified_email", "auth.login_free_failures_account", "auth.login_free_failures_ip",
 	"auth.login_backoff_base", "auth.login_backoff_max", "auth.actions_per_ip_per_hour", "auth.require_2fa",

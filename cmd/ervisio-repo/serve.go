@@ -220,7 +220,8 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	}()
 
 	creds := credentials.New(credentials.Options{Pool: pool, Log: log,
-		TokenMaxTTL: time.Duration(cfg.Auth.TokenMaxTTL), PublicURL: cfg.Server.PublicURL})
+		TokenMaxTTL: time.Duration(cfg.Auth.TokenMaxTTL), PublicURL: cfg.Server.PublicURL,
+		AppRegistration: cfg.Security.AppRegistration})
 	var git *gitTransports
 	var repoSvc *repos.Service
 	if gitTier != nil {
@@ -239,12 +240,13 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		DB:   pool,
 		Jobs: runner,
 		Meta: httpapi.Meta{
-			Version:       info.Version,
-			Commit:        info.Commit,
-			InstanceID:    instanceID,
-			PublicURL:     cfg.Server.PublicURL,
-			Registration:  cfg.Security.Registration,
-			DefaultLayout: cfg.UI.DefaultLayout,
+			Version:         info.Version,
+			Commit:          info.Commit,
+			InstanceID:      instanceID,
+			PublicURL:       cfg.Server.PublicURL,
+			Registration:    cfg.Security.Registration,
+			DefaultLayout:   cfg.UI.DefaultLayout,
+			AppRegistration: cfg.Security.AppRegistration,
 		},
 		Settings:    settingsSvc,
 		Web:         web.FS(),

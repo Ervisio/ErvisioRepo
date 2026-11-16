@@ -56,6 +56,8 @@ type Meta struct {
 	Registration string
 	// DefaultLayout is the layout new users start with (ui.default_layout).
 	DefaultLayout string
+	// AppRegistration is who may register apps (security.app_registration).
+	AppRegistration string
 }
 
 // Deps are the collaborators of the router.
@@ -236,6 +238,9 @@ func mountGitHubAPI(r chi.Router, d Deps) {
 		g.Actions = d.Actions
 	}
 	g.Artifacts = d.ActionsArtifacts
+	if d.Credentials != nil {
+		g.OAuthApps = d.Credentials
+	}
 	ghapi.Mount(r, g)
 }
 

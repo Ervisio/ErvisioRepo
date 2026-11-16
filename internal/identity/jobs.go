@@ -287,8 +287,13 @@ func (w *cleanupWorker) Work(ctx context.Context, _ *river.Job[CleanupArgs]) err
 	if err != nil {
 		return fmt.Errorf("delete expired device codes: %w", err)
 	}
-	if sessions+tokens+devices > 0 {
-		w.m.Log.InfoContext(ctx, "identity cleanup", "sessions", sessions, "tokens", tokens, "device_codes", devices)
+	codes, err := w.m.Queries.DeleteExpiredOAuthCodes(ctx)
+	if err != nil {
+		return fmt.Errorf("delete expired oauth codes: %w", err)
+	}
+	if sessions+tokens+devices+codes > 0 {
+		w.m.Log.InfoContext(ctx, "identity cleanup", "sessions", sessions, "tokens", tokens, "device_codes", devices,
+			"oauth_codes", codes)
 	}
 	return nil
 }

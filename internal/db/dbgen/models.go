@@ -726,6 +726,46 @@ type NotificationThread struct {
 	UpdatedAt   pgtype.Timestamptz
 }
 
+type OauthApp struct {
+	ID           uuid.UUID
+	ClientID     string
+	OwnerID      uuid.NullUUID
+	IsSystem     bool
+	Name         string
+	ShortName    string
+	Description  string
+	HomepageUrl  string
+	LogoUrl      string
+	CallbackUrls []string
+	DeviceFlow   bool
+	CreatedBy    uuid.NullUUID
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+}
+
+type OauthAppSecret struct {
+	ID         uuid.UUID
+	AppID      uuid.UUID
+	SecretHash []byte
+	Hint       string
+	CreatedBy  uuid.NullUUID
+	CreatedAt  pgtype.Timestamptz
+	LastUsedAt pgtype.Timestamptz
+}
+
+type OauthCode struct {
+	CodeHash      []byte
+	AppID         uuid.UUID
+	UserID        uuid.UUID
+	RedirectUri   string
+	RedirectGiven bool
+	Scopes        []string
+	CodeChallenge string
+	CreatedAt     pgtype.Timestamptz
+	ExpiresAt     pgtype.Timestamptz
+	UsedAt        pgtype.Timestamptz
+}
+
 type OauthDeviceCode struct {
 	ID              uuid.UUID
 	DeviceCodeHash  []byte
@@ -741,6 +781,15 @@ type OauthDeviceCode struct {
 	LastPollAt      pgtype.Timestamptz
 	CreatedAt       pgtype.Timestamptz
 	ExpiresAt       pgtype.Timestamptz
+}
+
+type OauthGrant struct {
+	ID        uuid.UUID
+	AppID     uuid.UUID
+	UserID    uuid.UUID
+	Scopes    []string
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 }
 
 type OidcFlow struct {
@@ -1093,6 +1142,7 @@ type Token struct {
 	ExpiresAt  pgtype.Timestamptz
 	LastUsedAt pgtype.Timestamptz
 	CreatedAt  pgtype.Timestamptz
+	GrantID    uuid.NullUUID
 }
 
 type UsageCounter struct {

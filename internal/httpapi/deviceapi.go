@@ -23,8 +23,10 @@ const deviceGrantType = "urn:ietf:params:oauth:grant-type:device_code"
 // maxOAuthBody bounds the body of the OAuth endpoints.
 const maxOAuthBody = 16 << 10
 
-// mountDeviceFlow mounts the GitHub-compatible OAuth device flow endpoints
-// (RFC 8628). They take form-encoded or JSON bodies and answer JSON when
+// mountDeviceFlow mounts the GitHub-compatible OAuth endpoints: the device
+// flow (RFC 8628) and the token endpoint of the web application flow,
+// whose consent page /login/oauth/authorize is an SPA route backed by
+// /api/v1/user/oauth/authorize. They take form-encoded or JSON bodies and answer JSON when
 // the client accepts it, form-encoded otherwise, as GitHub does. They use
 // no cookies, so they need no CSRF protection. The approval page
 // /login/device is an SPA route backed by /api/v1/user/device/{userCode}.
@@ -57,12 +59,30 @@ func mountDeviceFlow(r chi.Router, d Deps) {
 		if !ok {
 			return
 		}
-		if f.Get("grant_type") != deviceGrantType {
+		ip := auth.ClientIP(r, d.Auth.TrustedProxies)
+		var tok credentials.DeviceToken
+		var err error
+		switch f.Get("grant_type") {
+		case deviceGrantType:
+			tok, err = creds.PollDevice(r.Context(), f.Get("client_id"), f.Get("device_code"), ip)
+		case "", "authorization_code":
+			// Web application flow; the client may authenticate with
+			// HTTP Basic instead of form fields, as on GitHub.
+			req := credentials.TokenRequest{ClientID: f.Get("client_id"), ClientSecret: f.Get("client_secret"),
+				Code: f.Get("code"), RedirectURI: f.Get("redirect_uri"), CodeVerifier: f.Get("code_verifier")}
+			if user, pass, ok := r.BasicAuth(); ok && req.ClientSecret == "" {
+				if req.ClientID == "" {
+					req.ClientID = user
+				}
+				if user == req.ClientID {
+					req.ClientSecret = pass
+				}
+			}
+			tok, err = creds.ExchangeCode(r.Context(), req, ip)
+		default:
 			writeDeviceError(w, r, d, credentials.ErrUnsupportedGrant, http.StatusOK)
 			return
 		}
-		ip := auth.ClientIP(r, d.Auth.TrustedProxies)
-		tok, err := creds.PollDevice(r.Context(), f.Get("client_id"), f.Get("device_code"), ip)
 		if err != nil {
 			// GitHub answers the OAuth errors of the token endpoint with 200.
 			writeDeviceError(w, r, d, err, http.StatusOK)

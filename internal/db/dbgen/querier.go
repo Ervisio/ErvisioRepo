@@ -88,6 +88,9 @@ type Querier interface {
 	CountGitHubConnectionLinks(ctx context.Context, connectionID uuid.UUID) (int64, error)
 	// Repositories (existing or not yet collected) that reference an object.
 	CountLFSObjectRefs(ctx context.Context, oid string) (int64, error)
+	CountOAuthAppSecrets(ctx context.Context, appID uuid.UUID) (int64, error)
+	CountOAuthAppUsers(ctx context.Context, appID uuid.UUID) (int64, error)
+	CountOAuthAppsByOwner(ctx context.Context, ownerID uuid.NullUUID) (int64, error)
 	CountOrgOwners(ctx context.Context, orgID uuid.UUID) (int64, error)
 	CountOrgWebhooks(ctx context.Context, orgID uuid.NullUUID) (int64, error)
 	CountOwnerRepos(ctx context.Context, ownerID uuid.UUID) (int64, error)
@@ -108,6 +111,7 @@ type Querier interface {
 	CountUserOIDCLinks(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserPins(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserSSHKeys(ctx context.Context, userID uuid.UUID) (int64, error)
+	// Personal access tokens only: OAuth app tokens are bounded per grant.
 	CountUserTokens(ctx context.Context, userID uuid.UUID) (int64, error)
 	// Human accounts: bots do not count (the first registered user still
 	// becomes the instance admin).
@@ -139,6 +143,7 @@ type Querier interface {
 	DeleteExpiredDeviceCodes(ctx context.Context) (int64, error)
 	DeleteExpiredLFSTokens(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	DeleteExpiredMFAChallenges(ctx context.Context) (int64, error)
+	DeleteExpiredOAuthCodes(ctx context.Context) (int64, error)
 	DeleteExpiredOIDCFlows(ctx context.Context) (int64, error)
 	DeleteExpiredOneTimeTokens(ctx context.Context) (int64, error)
 	// Forgets invitations expired for more than the given age.
@@ -160,6 +165,9 @@ type Querier interface {
 	DeleteLabel(ctx context.Context, arg DeleteLabelParams) (int64, error)
 	DeleteMFAChallenge(ctx context.Context, id uuid.UUID) error
 	DeleteMilestone(ctx context.Context, arg DeleteMilestoneParams) (int64, error)
+	DeleteOAuthApp(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteOAuthAppSecret(ctx context.Context, arg DeleteOAuthAppSecretParams) (int64, error)
+	DeleteOAuthGrant(ctx context.Context, arg DeleteOAuthGrantParams) (int64, error)
 	// Invalidates the outstanding tokens of one purpose for a user.
 	DeleteOneTimeTokens(ctx context.Context, arg DeleteOneTimeTokensParams) error
 	DeleteOrgInvite(ctx context.Context, arg DeleteOrgInviteParams) (int64, error)
@@ -190,6 +198,7 @@ type Querier interface {
 	DeleteTeamMember(ctx context.Context, arg DeleteTeamMemberParams) (int64, error)
 	DeleteTeamRepo(ctx context.Context, arg DeleteTeamRepoParams) (int64, error)
 	DeleteThreadSubscription(ctx context.Context, arg DeleteThreadSubscriptionParams) error
+	DeleteToken(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteUnusedInvite(ctx context.Context, id uuid.UUID) (DeleteUnusedInviteRow, error)
 	// Ephemeral runners whose single job ended and that went quiet.
 	DeleteUsedEphemeralActionsRunners(ctx context.Context, before pgtype.Timestamptz) (int64, error)
@@ -197,6 +206,7 @@ type Querier interface {
 	DeleteUserGPGKey(ctx context.Context, arg DeleteUserGPGKeyParams) (int64, error)
 	DeleteUserLFSTokens(ctx context.Context, userID uuid.UUID) error
 	DeleteUserMFAChallenges(ctx context.Context, userID uuid.UUID) error
+	DeleteUserOAuthGrant(ctx context.Context, arg DeleteUserOAuthGrantParams) (uuid.UUID, error)
 	DeleteUserOIDCLink(ctx context.Context, arg DeleteUserOIDCLinkParams) (int64, error)
 	DeleteUserOneTimeTokens(ctx context.Context, userID uuid.UUID) error
 	DeleteUserSSHKey(ctx context.Context, arg DeleteUserSSHKeyParams) (int64, error)
@@ -223,6 +233,7 @@ type Querier interface {
 	// The local user whose external identity is the GitHub account with the
 	// numeric id subject. Matched on the id only, never on the e-mail.
 	FindLinkedGitHubUser(ctx context.Context, arg FindLinkedGitHubUserParams) (uuid.UUID, error)
+	FindOAuthAppSecret(ctx context.Context, arg FindOAuthAppSecretParams) (uuid.UUID, error)
 	FinishGitHubSyncRun(ctx context.Context, arg FinishGitHubSyncRunParams) error
 	// Sets the state unconditionally (restore only, nothing else runs).
 	ForceRepoStorageState(ctx context.Context, arg ForceRepoStorageStateParams) error
@@ -246,6 +257,8 @@ type Querier interface {
 	GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRunner, error)
 	GetActionsRunnerByCredential(ctx context.Context, credentialHash []byte) (ActionsRunner, error)
 	GetActionsTasksVersion(ctx context.Context) (int64, error)
+	// A token issued to the app with client id app_id, with its owner.
+	GetAppTokenByHash(ctx context.Context, arg GetAppTokenByHashParams) (GetAppTokenByHashRow, error)
 	GetBranchProtection(ctx context.Context, arg GetBranchProtectionParams) (BranchProtection, error)
 	GetCheckRun(ctx context.Context, arg GetCheckRunParams) (GetCheckRunRow, error)
 	GetCheckRunForUpdate(ctx context.Context, arg GetCheckRunForUpdateParams) (CheckRun, error)
@@ -300,6 +313,11 @@ type Querier interface {
 	GetNotificationForMail(ctx context.Context, id uuid.UUID) (GetNotificationForMailRow, error)
 	GetNotificationThread(ctx context.Context, arg GetNotificationThreadParams) (GetNotificationThreadRow, error)
 	GetNotificationThreadBySubject(ctx context.Context, arg GetNotificationThreadBySubjectParams) (GetNotificationThreadBySubjectRow, error)
+	// OAuth apps, their client secrets, grants and authorization codes
+	// (APPS-PLAN A1). Device codes are in device_codes.sql.
+	GetOAuthAppByClientID(ctx context.Context, clientID string) (GetOAuthAppByClientIDRow, error)
+	GetOAuthCodeForUpdate(ctx context.Context, codeHash []byte) (OauthCode, error)
+	GetOAuthGrant(ctx context.Context, arg GetOAuthGrantParams) (OauthGrant, error)
 	GetOIDCLinkBySubject(ctx context.Context, arg GetOIDCLinkBySubjectParams) (GetOIDCLinkBySubjectRow, error)
 	GetOrgByName(ctx context.Context, name string) (GetOrgByNameRow, error)
 	// Organizations and their members (InsertOrg, GetOrgByName, UpsertOrgMember
@@ -408,6 +426,7 @@ type Querier interface {
 	InsertGitHubConnection(ctx context.Context, arg InsertGitHubConnectionParams) (GithubConnection, error)
 	InsertGitHubImport(ctx context.Context, arg InsertGitHubImportParams) (GithubImport, error)
 	InsertGitHubImportMap(ctx context.Context, arg InsertGitHubImportMapParams) error
+	InsertGrantToken(ctx context.Context, arg InsertGrantTokenParams) error
 	InsertInvite(ctx context.Context, arg InsertInviteParams) error
 	// ---- issues ----
 	InsertIssue(ctx context.Context, arg InsertIssueParams) (Issue, error)
@@ -429,6 +448,9 @@ type Querier interface {
 	InsertMFAChallenge(ctx context.Context, arg InsertMFAChallengeParams) error
 	InsertMilestone(ctx context.Context, arg InsertMilestoneParams) (Milestone, error)
 	InsertNamespace(ctx context.Context, arg InsertNamespaceParams) error
+	InsertOAuthApp(ctx context.Context, arg InsertOAuthAppParams) error
+	InsertOAuthAppSecret(ctx context.Context, arg InsertOAuthAppSecretParams) error
+	InsertOAuthCode(ctx context.Context, arg InsertOAuthCodeParams) error
 	InsertOIDCFlow(ctx context.Context, arg InsertOIDCFlowParams) error
 	InsertOIDCLink(ctx context.Context, arg InsertOIDCLinkParams) error
 	InsertOneTimeToken(ctx context.Context, arg InsertOneTimeTokenParams) error
@@ -568,6 +590,8 @@ type Querier interface {
 	// Links of a connection that follow one GitHub repository (webhooks).
 	ListGitHubSyncLinksByRemote(ctx context.Context, arg ListGitHubSyncLinksByRemoteParams) ([]GithubSyncLink, error)
 	ListGitHubSyncRefs(ctx context.Context, linkID uuid.UUID) ([]GithubSyncRef, error)
+	// Tokens of a grant, newest first.
+	ListGrantTokenIDs(ctx context.Context, grantID uuid.NullUUID) ([]uuid.UUID, error)
 	// Watermark eviction candidates; the caller weights age by size.
 	ListHotUnpinnedRepos(ctx context.Context, lim int32) ([]ListHotUnpinnedReposRow, error)
 	ListInstanceSettings(ctx context.Context) ([]InstanceSetting, error)
@@ -599,6 +623,8 @@ type Querier interface {
 	// ListNotificationThreads), with the unread ones among them.
 	ListNotificationRepoCounts(ctx context.Context, arg ListNotificationRepoCountsParams) ([]ListNotificationRepoCountsRow, error)
 	ListNotificationThreads(ctx context.Context, arg ListNotificationThreadsParams) ([]ListNotificationThreadsRow, error)
+	ListOAuthAppSecrets(ctx context.Context, appID uuid.UUID) ([]ListOAuthAppSecretsRow, error)
+	ListOAuthAppsByOwner(ctx context.Context, ownerID uuid.NullUUID) ([]ListOAuthAppsByOwnerRow, error)
 	// Pending invitations, expired ones included (the UI shows them as such).
 	ListOrgInvites(ctx context.Context, orgID uuid.UUID) ([]ListOrgInvitesRow, error)
 	ListOrgMembers(ctx context.Context, orgID uuid.UUID) ([]ListOrgMembersRow, error)
@@ -689,6 +715,7 @@ type Querier interface {
 	// assigned, created, mentioned or review_requested; kind '' (any), issue or
 	// pull; state '' (any), open or closed.
 	ListUserIssues(ctx context.Context, arg ListUserIssuesParams) ([]ListUserIssuesRow, error)
+	ListUserOAuthGrants(ctx context.Context, userID uuid.UUID) ([]ListUserOAuthGrantsRow, error)
 	ListUserOIDCLinks(ctx context.Context, userID uuid.UUID) ([]ListUserOIDCLinksRow, error)
 	ListUserOrgs(ctx context.Context, userID uuid.UUID) ([]ListUserOrgsRow, error)
 	// Pinned repositories the user can still read, in order.
@@ -716,6 +743,8 @@ type Querier interface {
 	// Serializes role and suspension changes, so that two admins cannot demote
 	// each other at the same time.
 	LockAdminChanges(ctx context.Context) error
+	// Serializes secret changes of one app inside a transaction.
+	LockOAuthApp(ctx context.Context, appID uuid.UUID) error
 	// Serializes membership changes of one organization inside a transaction,
 	// so that the last-owner check cannot race.
 	LockOrgMembers(ctx context.Context, orgID uuid.UUID) error
@@ -936,6 +965,7 @@ type Querier interface {
 	TouchActionsRunner(ctx context.Context, id uuid.UUID) error
 	TouchIssue(ctx context.Context, id uuid.UUID) error
 	TouchLFSObjects(ctx context.Context, arg TouchLFSObjectsParams) error
+	TouchOAuthAppSecret(ctx context.Context, id uuid.UUID) error
 	TouchOIDCLink(ctx context.Context, arg TouchOIDCLinkParams) error
 	// Records an access at time "at"; skipped when the last recorded access is
 	// newer than not_before, to keep writes off the read path.
@@ -957,6 +987,7 @@ type Querier interface {
 	UpdateIssueContent(ctx context.Context, arg UpdateIssueContentParams) (Issue, error)
 	UpdateLabel(ctx context.Context, arg UpdateLabelParams) (Label, error)
 	UpdateMilestone(ctx context.Context, arg UpdateMilestoneParams) (Milestone, error)
+	UpdateOAuthApp(ctx context.Context, arg UpdateOAuthAppParams) error
 	UpdateOrg(ctx context.Context, arg UpdateOrgParams) error
 	UpdatePullReviewCommentBody(ctx context.Context, arg UpdatePullReviewCommentBodyParams) (PullReviewComment, error)
 	UpdateRelease(ctx context.Context, arg UpdateReleaseParams) (Release, error)
@@ -986,6 +1017,8 @@ type Querier interface {
 	// Creates or refreshes the thread of a user for a subject. A repeated
 	// delivery of the same event changes nothing and returns no row.
 	UpsertNotificationThread(ctx context.Context, arg UpsertNotificationThreadParams) (uuid.UUID, error)
+	// Adds scopes to the grant of (app, user), creating it when missing.
+	UpsertOAuthGrant(ctx context.Context, arg UpsertOAuthGrantParams) (UpsertOAuthGrantRow, error)
 	UpsertOrgMember(ctx context.Context, arg UpsertOrgMemberParams) error
 	UpsertPassword(ctx context.Context, arg UpsertPasswordParams) error
 	// Starts (or restarts) a TOTP enrollment; a confirmed secret is kept.
@@ -1000,6 +1033,7 @@ type Querier interface {
 	UpsertTeamMember(ctx context.Context, arg UpsertTeamMemberParams) error
 	UpsertThreadSubscription(ctx context.Context, arg UpsertThreadSubscriptionParams) (ThreadSubscription, error)
 	UpsertUserPreferences(ctx context.Context, arg UpsertUserPreferencesParams) (UserPreference, error)
+	UseOAuthCode(ctx context.Context, codeHash []byte) error
 	UseRecoveryCode(ctx context.Context, arg UseRecoveryCodeParams) (int64, error)
 	// Whether the address belongs to the user, and whether it is verified.
 	UserHasEmail(ctx context.Context, arg UserHasEmailParams) (UserHasEmailRow, error)

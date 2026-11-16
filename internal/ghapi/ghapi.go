@@ -73,6 +73,9 @@ type Deps struct {
 	Actions Actions
 	// Artifacts serves the artifact endpoints; nil answers empty lists.
 	Artifacts Artifacts
+	// OAuthApps serves /applications/{client_id}/token and /grant; nil
+	// answers 404 there.
+	OAuthApps OAuthApps
 	// Timeout bounds the non-streaming requests (0 = none).
 	Timeout time.Duration
 }
@@ -174,6 +177,7 @@ func (s *Server) graphql() http.Handler {
 }
 
 func (s *Server) routes(r chi.Router) {
+	s.applicationRoutes(r)
 	r.Get("/", s.h((*call).root))
 	r.Get("/meta", s.h((*call).meta))
 	r.Get("/rate_limit", s.h((*call).rateLimit))
@@ -347,7 +351,9 @@ func (s *Server) authenticate(next http.Handler) http.Handler {
 		ctx := auth.WithRequestInfo(r.Context(), auth.RequestInfo{
 			IP: auth.ClientIP(r, s.d.Auth.TrustedProxies), UserAgent: r.UserAgent()})
 		w.Header().Set("X-GitHub-Media-Type", "github.v3; format=json")
-		if tok, ok := credential(r); ok {
+		// The OAuth app endpoints take the client credentials in Basic.
+		appCreds := strings.HasPrefix(r.URL.Path, applicationsPrefix)
+		if tok, ok := credential(r); ok && !appCreds {
 			if s.d.Auth.Tokens == nil {
 				writeError(w, http.StatusUnauthorized, "Bad credentials")
 				return
