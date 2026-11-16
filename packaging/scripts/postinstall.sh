@@ -58,5 +58,7 @@ Ervisio Repo is installed. Next steps:
   3. systemctl enable --now ervisio-repo
   4. Open the URL and register: the first account becomes the administrator.
   5. Optional: ervisio-repo caddy setup --host <your-domain>
+  6. Optional, built-in Actions runner (needs Docker):
+     ervisio-repo actions runner-setup --config $ETC/config.toml
 
 MSG

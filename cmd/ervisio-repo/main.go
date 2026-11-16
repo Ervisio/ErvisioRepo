@@ -7,6 +7,7 @@
 //	ervisio-repo restore [--dump <key>] [--skip-db] --config <path>
 //	ervisio-repo recovery-kit export|import ...
 //	ervisio-repo caddy setup|status|remove ...
+//	ervisio-repo actions runner-token|runner-setup ...
 //	ervisio-repo version
 package main
 
@@ -44,6 +45,11 @@ const usage = `Usage:
   ervisio-repo caddy setup --host <host> [--upstream <addr>] [--instance <name>] [--dry-run]
   ervisio-repo caddy status|remove [--instance <name>] [--dry-run]
                                            publish the server behind Caddy with TLS
+  ervisio-repo actions runner-token [--scope instance|org/<o>|repo/<o>/<n>] [--config <path>]
+                                           print a runner registration token
+  ervisio-repo actions runner-setup [--name <n>] [--labels <l,...>] [--capacity <n>] [--url <url>]
+                                    [--runner-config <path>] [--no-start]
+                                           register the built-in runner (native install, as root)
   ervisio-repo version
   ervisio-repo hook <name> [args]          internal: run by the managed git hooks
 `
@@ -116,6 +122,8 @@ func dispatch(ctx context.Context, args []string, stdout, stderr io.Writer) erro
 		return recoveryKitCmd(ctx, args, os.Stdin, stdout, stderr)
 	case "caddy":
 		return caddyCmd(ctx, args, stdout, stderr)
+	case "actions":
+		return actionsCmd(ctx, args, stdout, stderr)
 	case "help", "-h", "--help":
 		fmt.Fprint(stdout, usage)
 		return nil

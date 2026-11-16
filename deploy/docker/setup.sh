@@ -8,15 +8,18 @@ non_interactive=0
 admin_email=""
 url=""
 ervisio=""
+runner=""
 
 usage() {
   cat <<USAGE
-Usage: ./setup.sh [--non-interactive] [--admin-email EMAIL] [--url PUBLIC_URL] [--ervisio yes|no]
+Usage: ./setup.sh [--non-interactive] [--admin-email EMAIL] [--url PUBLIC_URL] [--ervisio yes|no] [--runner yes|no]
 
   --non-interactive   never prompt; use flags and defaults
   --admin-email       contact address, shown in the next steps
   --url               public URL of the instance (default http://localhost:3400)
   --ervisio yes|no    yes: enable the admin socket for the Caddy plugin
+  --runner yes|no     yes: start the built-in Actions runner (jobs in Docker
+                      containers through the host Docker socket; default yes)
 USAGE
 }
 
@@ -26,6 +29,7 @@ while [[ $# -gt 0 ]]; do
     --admin-email) admin_email="${2:?--admin-email needs a value}"; shift ;;
     --url) url="${2:?--url needs a value}"; shift ;;
     --ervisio) ervisio="${2:?--ervisio needs yes or no}"; shift ;;
+    --runner) runner="${2:?--runner needs yes or no}"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -33,6 +37,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$ervisio" in ""|yes|no) ;; *) echo "--ervisio must be yes or no" >&2; exit 2 ;; esac
+case "$runner" in ""|yes|no) ;; *) echo "--runner must be yes or no" >&2; exit 2 ;; esac
 
 command -v docker >/dev/null || { echo 'Install Docker Engine / Docker Desktop and try again.' >&2; exit 1; }
 docker compose version >/dev/null
@@ -56,6 +61,8 @@ rand_hex() { # rand_hex BYTES
 ask url "Public URL" "http://localhost:3400"
 ask ervisio "Enable the Caddy plugin socket (yes/no)" "no"
 case "$ervisio" in yes|no) ;; *) echo "--ervisio must be yes or no" >&2; exit 2 ;; esac
+ask runner "Start the built-in Actions runner (jobs run in Docker containers) (yes/no)" "yes"
+case "$runner" in yes|no) ;; *) echo "--runner must be yes or no" >&2; exit 2 ;; esac
 url="${url%/}"
 case "$url" in http://*|https://*) ;; *) echo "The URL must start with http:// or https://" >&2; exit 2 ;; esac
 
@@ -98,6 +105,8 @@ SSH_PORT=2222
 DOCKER_GID=$docker_gid
 ENV
 )
+# COMPOSE_PROFILES makes a plain `docker compose up` include the runner.
+[[ "$runner" == yes ]] && echo "COMPOSE_PROFILES=runner" >> .env
 
 plugin_socket=""
 [[ "$ervisio" == yes ]] && plugin_socket="/run/ervisio-repo/api.sock"
@@ -147,6 +156,20 @@ if ! docker compose pull --quiet app; then
   echo "Could not pull the published image, building it from this checkout."
   docker compose build app
 fi
+docker compose up -d --wait --wait-timeout 300 postgres app
+
+# Built-in runner: the server CLI mints an instance registration token (valid
+# for actions.registration_token_ttl, 1h by default) into a 0600 file the
+# runner reads on its first start and deletes after registering.
+if [[ "$runner" == yes ]]; then
+  if [[ -s data/runner/.runner ]]; then
+    echo 'The built-in runner is already registered (data/runner/.runner).'
+  else
+    (umask 077; docker compose exec -T app ervisio-repo actions runner-token --scope instance \
+      --config /etc/ervisio-repo/config.toml > data/runner/registration-token)
+    echo 'Created a registration token for the built-in runner.'
+  fi
+fi
 docker compose up -d --wait --wait-timeout 300
 
 echo
@@ -154,4 +177,10 @@ echo "Ervisio Repo is running at $url"
 echo "  1. Open the URL and register: the first account becomes the administrator."
 [[ -n "$admin_email" ]] && echo "     Use $admin_email for that account."
 echo "  2. Behind Caddy: ervisio-repo caddy setup --host <your-domain> (see docs/install.md)."
-echo "  3. Stop with: docker compose stop. Optional: --profile runner, --profile backup."
+if [[ "$runner" == yes ]]; then
+  echo "  3. The built-in runner 'builtin' runs jobs for every repository (Admin > Runners)."
+  echo "     Add more machines from Admin > Runners > New runner."
+else
+  echo "  3. Actions runner: re-run ./setup.sh --runner yes, or add one from Admin > Runners."
+fi
+echo "  4. Stop with: docker compose stop. Optional: --profile backup."

@@ -113,13 +113,9 @@ type Host struct {
 func Default() Config {
 	return Config{
 		Runner: Runner{
-			StateFile: DefaultStateFile,
-			Capacity:  1,
-			Labels: []string{
-				"ubuntu-latest=docker://ghcr.io/catthehacker/ubuntu:act-24.04",
-				"ubuntu-24.04=docker://ghcr.io/catthehacker/ubuntu:act-24.04",
-				"ubuntu-22.04=docker://ghcr.io/catthehacker/ubuntu:act-22.04",
-			},
+			StateFile:           DefaultStateFile,
+			Capacity:            DefaultCapacity(),
+			Labels:              DefaultLabels(),
 			FetchTimeout:        Duration(40 * time.Second),
 			FetchInterval:       Duration(2 * time.Second),
 			FetchIntervalMax:    Duration(30 * time.Second),

@@ -86,7 +86,11 @@ services:
     entrypoint: ["sh", "-c", "echo 'configure config/walg.env and a wal-g image before enabling this profile'; sleep infinity"]
     logging: *logging
 
-  # Optional CI runner that executes jobs in containers: --profile runner.
+  # Built-in Actions runner, jobs run in containers on the host Docker
+  # (--profile runner, or COMPOSE_PROFILES=runner written by setup.sh). On
+  # first start it registers itself with the token setup.sh writes to
+  # data/runner/registration-token (removed after use); the credential and
+  # the generated config.toml stay in data/runner.
   runner:
     <<: *app
     profiles: [runner]
@@ -95,14 +99,21 @@ services:
       app:
         condition: service_healthy
     entrypoint: ["ervisio-runner"]
-    command: ["daemon", "--config", "/etc/ervisio-runner/config.toml"]
+    command: ["daemon", "--config", "/var/lib/ervisio-runner/config.toml"]
+    healthcheck:
+      disable: true
     environment:
+      HOME: /var/lib/ervisio-runner
       ERVISIO_RUNNER_URL: http://app:3400
+      ERVISIO_RUNNER_NAME: ${RUNNER_NAME:-builtin}
+      ERVISIO_RUNNER_DATA_DIR: /var/lib/ervisio-runner
+      ERVISIO_RUNNER_LABELS: ${RUNNER_LABELS:-}
+      ERVISIO_RUNNER_CAPACITY: ${RUNNER_CAPACITY:-}
     volumes:
-      - ./config:/etc/ervisio-runner
       - ${ERVISIO_DATA_DIR:-./data}/runner:/var/lib/ervisio-runner
       - /var/run/docker.sock:/var/run/docker.sock
-    networks: [private]
+    # edge gives the runner Internet access (actions are cloned from GitHub).
+    networks: [private, edge]
 
 networks:
   private:

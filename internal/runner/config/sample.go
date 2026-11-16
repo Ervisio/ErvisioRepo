@@ -1,33 +1,37 @@
 package config
 
-// Sample is the commented configuration printed by "generate-config".
-// Every value equals the built-in default.
-const Sample = `# ervisio-runner configuration.
+import (
+	"fmt"
+	"path/filepath"
+	"strconv"
+	"strings"
+)
+
+// sampleTemplate is the commented configuration; Render fills the
+// @@…@@ placeholders.
+const sampleTemplate = `# ervisio-runner configuration.
 # Durations use Go syntax: "30s", "10m", "6h".
 
 [server]
 # Public URL of ErvisioRepo. Empty uses the URL saved by "register".
-url = ""
+url = "@@URL@@"
 # Skip TLS certificate verification. Only for self-signed test instances.
 insecure_tls = false
 
 [runner]
 # Credential written by "register" (mode 0600).
-state_file = "/var/lib/ervisio-runner/.runner"
+state_file = "@@DIR@@/.runner"
 # Jobs run at the same time.
-capacity = 1
+capacity = @@CAPACITY@@
 # runs-on labels: "name=docker://image" runs the job in a container,
 # "name=host" runs it directly on this machine (requires host.enabled).
 labels = [
-  "ubuntu-latest=docker://ghcr.io/catthehacker/ubuntu:act-24.04",
-  "ubuntu-24.04=docker://ghcr.io/catthehacker/ubuntu:act-24.04",
-  "ubuntu-22.04=docker://ghcr.io/catthehacker/ubuntu:act-22.04",
-]
+@@LABELS@@]
 # Extra environment of every job. env_file holds KEY=VALUE lines; keys in
 # [runner.env] win over the file.
 env_file = ""
 # Clones of remote actions, kept between jobs.
-cache_dir = "/var/lib/ervisio-runner/cache"
+cache_dir = "@@DIR@@/cache"
 # FetchTask long-poll timeout (the server answers within ~30s).
 fetch_timeout = "40s"
 # Pause between polls; doubles on errors up to fetch_interval_max.
@@ -80,6 +84,44 @@ force_rebuild = false
 
 [host]
 # Allow "name=host" labels. Jobs then run unisolated as the runner user.
-enabled = false
-workdir_parent = "/var/lib/ervisio-runner/host"
+enabled = @@HOST@@
+workdir_parent = "@@DIR@@/host"
 `
+
+// DefaultDataDir holds the state file, the action cache and host workspaces.
+const DefaultDataDir = "/var/lib/ervisio-runner"
+
+// RenderOptions are the values Render writes into the configuration.
+type RenderOptions struct {
+	URL      string   // server.url, may be empty
+	Labels   []string // runner.labels
+	Capacity int      // runner.capacity
+	Host     bool     // host.enabled
+	DataDir  string   // parent of state_file, cache_dir and host.workdir_parent
+}
+
+// Sample is the commented configuration printed by "generate-config".
+// Every value equals the built-in default.
+func Sample() string {
+	return Render(RenderOptions{Labels: DefaultLabels(), Capacity: DefaultCapacity(), DataDir: DefaultDataDir})
+}
+
+// Render returns the commented configuration with o applied; every other
+// value is the built-in default.
+func Render(o RenderOptions) string {
+	var b strings.Builder
+	for _, l := range o.Labels {
+		fmt.Fprintf(&b, "  %s,\n", strconv.Quote(l))
+	}
+	dir := strings.TrimRight(filepath.ToSlash(o.DataDir), "/")
+	if dir == "" {
+		dir = DefaultDataDir
+	}
+	return strings.NewReplacer(
+		"@@URL@@", strings.ReplaceAll(o.URL, `"`, ""),
+		"@@CAPACITY@@", strconv.Itoa(max(o.Capacity, 1)),
+		"@@LABELS@@", b.String(),
+		"@@HOST@@", strconv.FormatBool(o.Host),
+		"@@DIR@@", strings.ReplaceAll(dir, `"`, ""),
+	).Replace(sampleTemplate)
+}
