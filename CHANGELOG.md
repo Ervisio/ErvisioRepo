@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.14.2] - 2026-11-16
+
 ### Fixed
 
 - Actions runner: steps now get `GITHUB_API_URL=<server>/api/v3` and `GITHUB_GRAPHQL_URL=<server>/api/graphql` (the act library forced Gitea's `/api/v1` and an empty GraphQL URL), so octokit, `gh` and similar tools reach the GitHub-compatible API directly.
