@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-11-16
+
 ### Added
 
 - System bot accounts (apps plan A0): users whose namespace kind is `bot` and whose login ends in `[bot]` (a suffix normal names cannot have), with a `bots` table (`description`, nullable `app_id` for the App bots of phase A2). Migration 00290 creates `ervisio-sync[bot]` ("Ervisio Sync") and `ervisio-actions[bot]` ("Ervisio Actions"); `ervisio-sync` and `ervisio-actions` become reserved names. Bots cannot sign in (password, SSO, passkeys and sessions all refuse them), do not count as users for the first-admin rule and the instance counts, are left out of user search, own no repositories and cannot be collaborators. Admin > Users lists them with a "bot" badge, read-only (changes answer 409).
