@@ -129,8 +129,17 @@ function Contributors({ repo, refName }: { repo: Repo; refName: string }) {
           const label = c.username && c.username !== c.name ? `${c.name} (@${c.username})` : c.name;
           return (
             <li key={i} title={label}>
-              <Avatar user={{ username: c.name, avatarUrl: c.avatarUrl }} size="md" />
-              <span className="sr-only">{label}</span>
+              {c.username ? (
+                <Link to="/$owner" params={{ owner: c.username }}>
+                  <Avatar user={{ username: c.name, avatarUrl: c.avatarUrl }} size="md" />
+                  <span className="sr-only">{label}</span>
+                </Link>
+              ) : (
+                <>
+                  <Avatar user={{ username: c.name, avatarUrl: c.avatarUrl }} size="md" />
+                  <span className="sr-only">{label}</span>
+                </>
+              )}
             </li>
           );
         })}

@@ -14,7 +14,7 @@ import (
 
 // contentSecurityPolicy allows only same-origin resources and no framing.
 const contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; " +
-	"img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; " +
+	"img-src 'self' data: https:; font-src 'self'; connect-src 'self'; object-src 'none'; " +
 	"base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
 
 func securityHeaders(next http.Handler) http.Handler {

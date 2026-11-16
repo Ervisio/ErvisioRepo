@@ -9,6 +9,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - SFTP: a failed directory creation names the remote directory, and the form explains that a relative remote folder starts from the login directory (an absolute one such as `/erepo` fails on a Hetzner Storage Box, whose writable space is `/home`).
+- Avatars set to an external https URL load: the Content-Security-Policy allowed only same-origin images.
+- Repository tabs: Code no longer stays highlighted on Issues, Pull requests or Actions.
+- Contributors in the repository sidebar link to their profile.
 
 ## [1.9.0] - 2026-11-16
 

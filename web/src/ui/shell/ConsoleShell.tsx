@@ -220,7 +220,8 @@ function RepoTabs({ owner, name, admin }: { owner: string; name: string; admin: 
   return (
     <>
       {main.map((it) => (
-        <Link key={it.to} to={it.to} params={{ owner, name }} className="tb-tab" aria-current={sub === it.sub ? "page" : undefined}>
+        // The router marks a Link active by path prefix, which would keep Code lit everywhere: match exactly and let `sub` decide.
+        <Link key={it.to} to={it.to} params={{ owner, name }} activeOptions={{ exact: true }} className="tb-tab" aria-current={sub === it.sub ? "page" : undefined}>
           {t(it.labelKey)}
         </Link>
       ))}
