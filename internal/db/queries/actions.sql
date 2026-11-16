@@ -17,10 +17,16 @@ SELECT * FROM actions_runners WHERE credential_hash = @credential_hash;
 
 -- name: DeclareActionsRunner :one
 UPDATE actions_runners
-SET version = @version, labels = @labels, raw_labels = @raw_labels, online = true, last_seen_at = now(),
-    updated_at = now()
+SET version = @version, labels = @labels, raw_labels = @raw_labels, capacity = @capacity, online = true,
+    last_seen_at = now(), updated_at = now()
 WHERE id = @id
 RETURNING *;
+
+-- name: SetActionsRunnerCapacity :exec
+UPDATE actions_runners SET capacity = @capacity WHERE id = @id AND capacity <> @capacity;
+
+-- name: SetActionsRunnerPaused :one
+UPDATE actions_runners SET paused = @paused, updated_at = now() WHERE id = @id RETURNING *;
 
 -- name: TouchActionsRunner :exec
 UPDATE actions_runners SET online = true, last_seen_at = now() WHERE id = @id;
@@ -64,15 +70,51 @@ SELECT name FROM namespaces WHERE id = @id;
 -- ---- registration tokens ----
 
 -- name: InsertActionsRegistrationToken :one
-INSERT INTO actions_registration_tokens (id, token_hash, scope, owner_id, repo_id, created_by, expires_at)
-VALUES (@id, @token_hash, @scope, @owner_id, @repo_id, @created_by, @expires_at)
+INSERT INTO actions_registration_tokens (id, token_hash, scope, owner_id, repo_id, created_by, expires_at, single_use)
+VALUES (@id, @token_hash, @scope, @owner_id, @repo_id, @created_by, @expires_at, @single_use)
 RETURNING *;
+
+-- name: DeleteActionsRegistrationToken :execrows
+DELETE FROM actions_registration_tokens WHERE id = @id;
 
 -- name: GetActionsRegistrationToken :one
 SELECT * FROM actions_registration_tokens WHERE token_hash = @token_hash AND expires_at > now();
 
 -- name: DeleteExpiredActionsRegistrationTokens :exec
 DELETE FROM actions_registration_tokens WHERE expires_at <= now();
+
+-- ---- runner device registration ----
+
+-- name: InsertActionsRunnerDevice :exec
+INSERT INTO actions_runner_devices (id, device_code_hash, user_code, hostname, os, arch, cpus, memory_bytes, docker,
+    version, name, labels, capacity, request_ip, interval_seconds, expires_at)
+VALUES (@id, @device_code_hash, @user_code, @hostname, @os, @arch, @cpus, @memory_bytes, @docker,
+    @version, @name, @labels, @capacity, @request_ip, @interval_seconds, @expires_at);
+
+-- name: GetActionsRunnerDeviceByHashForUpdate :one
+SELECT * FROM actions_runner_devices WHERE device_code_hash = @device_code_hash FOR UPDATE;
+
+-- name: GetPendingActionsRunnerDevice :one
+SELECT * FROM actions_runner_devices WHERE user_code = @user_code AND status = 'pending' AND expires_at > now();
+
+-- name: GetPendingActionsRunnerDeviceForUpdate :one
+SELECT * FROM actions_runner_devices WHERE user_code = @user_code AND status = 'pending' AND expires_at > now()
+FOR UPDATE;
+
+-- name: DecideActionsRunnerDevice :exec
+UPDATE actions_runner_devices
+SET status = @status, scope = sqlc.narg('scope'), owner_id = sqlc.narg('owner_id'), repo_id = sqlc.narg('repo_id'),
+    name = @name, labels = @labels, capacity = @capacity, decided_by = @decided_by
+WHERE id = @id;
+
+-- name: SetActionsRunnerDevicePoll :exec
+UPDATE actions_runner_devices SET last_poll_at = @polled_at, interval_seconds = @interval_seconds WHERE id = @id;
+
+-- name: ConsumeActionsRunnerDevice :exec
+UPDATE actions_runner_devices SET status = 'consumed' WHERE id = @id;
+
+-- name: DeleteExpiredActionsRunnerDevices :exec
+DELETE FROM actions_runner_devices WHERE expires_at <= @before;
 
 -- ---- runs ----
 

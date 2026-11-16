@@ -190,7 +190,13 @@ func NewRouter(d Deps) http.Handler {
 	r.Get(runnerinstall.ShellPath, runnerinstall.Shell(d.Meta.Version, d.Meta.PublicURL))
 	r.Get(runnerinstall.PowerShellPath, runnerinstall.PowerShell(d.Meta.Version, d.Meta.PublicURL))
 	if d.ActionsRunner != nil {
-		r.Handle("/api/actions/runner/*", d.ActionsRunner)
+		// The client IP (behind trusted proxies) rate-limits the anonymous
+		// device registration calls.
+		r.Handle("/api/actions/runner/*", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			ctx := auth.WithRequestInfo(req.Context(), auth.RequestInfo{IP: auth.ClientIP(req, d.Auth.TrustedProxies),
+				UserAgent: req.UserAgent()})
+			d.ActionsRunner.ServeHTTP(w, req.WithContext(ctx))
+		}))
 	}
 	if d.ActionsResults != nil {
 		for _, p := range []string{"/twirp/*", "/api/actions/results/*", "/api/actions/cache/*"} {

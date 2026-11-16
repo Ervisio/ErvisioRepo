@@ -5,6 +5,8 @@
 //
 // Authentication:
 //   - Register carries a registration token (errt_…) in the request body;
+//   - RequestDevice and PollDevice are anonymous: the device code is the
+//     secret, and an approved poll returns a single-use registration token;
 //   - every other call carries the runner credential returned by Register
 //     as "Authorization: Bearer erun_…".
 // Job tokens (erj_…) travel inside Task and are never used on this service.
@@ -35,6 +37,15 @@ service RunnerService {
   // Heartbeat keeps the runner online and returns the ids of running tasks
   // the server wants cancelled.
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  // RequestDevice starts a device registration (RFC 8628 style): the
+  // installer shows the user code, an admin approves it at
+  // verification_uri and the installer polls PollDevice.
+  rpc RequestDevice(RequestDeviceRequest) returns (RequestDeviceResponse);
+  // PollDevice answers the state of a device registration; once approved
+  // it returns a single-use registration token and the approved settings.
+  rpc PollDevice(PollDeviceRequest) returns (PollDeviceResponse);
+  // Deregister removes the calling runner from the server (uninstall).
+  rpc Deregister(DeregisterRequest) returns (DeregisterResponse);
 }
 
 enum Result {
@@ -65,6 +76,8 @@ message RegisterResponse {
 message DeclareRequest {
   string version = 1;
   repeated string labels = 2;
+  // capacity is how many jobs the runner runs at the same time.
+  int32 capacity = 3;
 }
 
 message DeclareResponse {
@@ -79,6 +92,8 @@ message Runner {
   bool ephemeral = 5;
   // scope is "instance", "org:<name>" or "repo:<owner>/<name>".
   string scope = 6;
+  // paused runners keep running their jobs but receive no new ones.
+  bool paused = 7;
 }
 
 message FetchTaskRequest {
@@ -187,8 +202,61 @@ message UpdateLogResponse {
 
 message HeartbeatRequest {
   repeated string running_task_ids = 1;
+  // capacity is how many jobs the runner runs at the same time.
+  int32 capacity = 2;
 }
 
 message HeartbeatResponse {
   repeated string cancel_task_ids = 1;
+  // paused is true while an admin has paused the runner.
+  bool paused = 2;
 }
+
+message RequestDeviceRequest {
+  // Facts about the machine, shown on the approval page.
+  string hostname = 1;
+  string os = 2;
+  string arch = 3;
+  int32 cpus = 4;
+  int64 memory_bytes = 5;
+  bool docker = 6;
+  string version = 7;
+  // Requested settings; the approver may change them.
+  string name = 8;
+  // labels are label names (no backend).
+  repeated string labels = 9;
+  int32 capacity = 10;
+}
+
+message RequestDeviceResponse {
+  // device_code is the secret the installer polls with.
+  string device_code = 1;
+  // user_code is the XXXX-XXXX code the user enters.
+  string user_code = 2;
+  string verification_uri = 3;
+  // verification_uri_complete carries the user code (?code=).
+  string verification_uri_complete = 4;
+  int32 expires_in = 5;
+  int32 interval = 6;
+}
+
+message PollDeviceRequest {
+  string device_code = 1;
+}
+
+message PollDeviceResponse {
+  // status is "pending", "slow_down", "approved", "denied" or "expired".
+  string status = 1;
+  // interval is the polling interval to use from now on, in seconds.
+  int32 interval = 2;
+  // The fields below are set only when status is "approved".
+  string registration_token = 3;
+  string name = 4;
+  repeated string labels = 5;
+  int32 capacity = 6;
+  string scope = 7;
+}
+
+message DeregisterRequest {}
+
+message DeregisterResponse {}

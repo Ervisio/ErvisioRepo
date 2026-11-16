@@ -5,6 +5,8 @@
 //
 // Authentication:
 //   - Register carries a registration token (errt_…) in the request body;
+//   - RequestDevice and PollDevice are anonymous: the device code is the
+//     secret, and an approved poll returns a single-use registration token;
 //   - every other call carries the runner credential returned by Register
 //     as "Authorization: Bearer erun_…".
 // Job tokens (erj_…) travel inside Task and are never used on this service.
@@ -57,6 +59,15 @@ const (
 	RunnerServiceUpdateLogProcedure = "/ervisio.runner.v1.RunnerService/UpdateLog"
 	// RunnerServiceHeartbeatProcedure is the fully-qualified name of the RunnerService's Heartbeat RPC.
 	RunnerServiceHeartbeatProcedure = "/ervisio.runner.v1.RunnerService/Heartbeat"
+	// RunnerServiceRequestDeviceProcedure is the fully-qualified name of the RunnerService's
+	// RequestDevice RPC.
+	RunnerServiceRequestDeviceProcedure = "/ervisio.runner.v1.RunnerService/RequestDevice"
+	// RunnerServicePollDeviceProcedure is the fully-qualified name of the RunnerService's PollDevice
+	// RPC.
+	RunnerServicePollDeviceProcedure = "/ervisio.runner.v1.RunnerService/PollDevice"
+	// RunnerServiceDeregisterProcedure is the fully-qualified name of the RunnerService's Deregister
+	// RPC.
+	RunnerServiceDeregisterProcedure = "/ervisio.runner.v1.RunnerService/Deregister"
 )
 
 // RunnerServiceClient is a client for the ervisio.runner.v1.RunnerService service.
@@ -78,6 +89,15 @@ type RunnerServiceClient interface {
 	// Heartbeat keeps the runner online and returns the ids of running tasks
 	// the server wants cancelled.
 	Heartbeat(context.Context, *connect.Request[runnerv1.HeartbeatRequest]) (*connect.Response[runnerv1.HeartbeatResponse], error)
+	// RequestDevice starts a device registration (RFC 8628 style): the
+	// installer shows the user code, an admin approves it at
+	// verification_uri and the installer polls PollDevice.
+	RequestDevice(context.Context, *connect.Request[runnerv1.RequestDeviceRequest]) (*connect.Response[runnerv1.RequestDeviceResponse], error)
+	// PollDevice answers the state of a device registration; once approved
+	// it returns a single-use registration token and the approved settings.
+	PollDevice(context.Context, *connect.Request[runnerv1.PollDeviceRequest]) (*connect.Response[runnerv1.PollDeviceResponse], error)
+	// Deregister removes the calling runner from the server (uninstall).
+	Deregister(context.Context, *connect.Request[runnerv1.DeregisterRequest]) (*connect.Response[runnerv1.DeregisterResponse], error)
 }
 
 // NewRunnerServiceClient constructs a client for the ervisio.runner.v1.RunnerService service. By
@@ -127,17 +147,38 @@ func NewRunnerServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(runnerServiceMethods.ByName("Heartbeat")),
 			connect.WithClientOptions(opts...),
 		),
+		requestDevice: connect.NewClient[runnerv1.RequestDeviceRequest, runnerv1.RequestDeviceResponse](
+			httpClient,
+			baseURL+RunnerServiceRequestDeviceProcedure,
+			connect.WithSchema(runnerServiceMethods.ByName("RequestDevice")),
+			connect.WithClientOptions(opts...),
+		),
+		pollDevice: connect.NewClient[runnerv1.PollDeviceRequest, runnerv1.PollDeviceResponse](
+			httpClient,
+			baseURL+RunnerServicePollDeviceProcedure,
+			connect.WithSchema(runnerServiceMethods.ByName("PollDevice")),
+			connect.WithClientOptions(opts...),
+		),
+		deregister: connect.NewClient[runnerv1.DeregisterRequest, runnerv1.DeregisterResponse](
+			httpClient,
+			baseURL+RunnerServiceDeregisterProcedure,
+			connect.WithSchema(runnerServiceMethods.ByName("Deregister")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // runnerServiceClient implements RunnerServiceClient.
 type runnerServiceClient struct {
-	register   *connect.Client[runnerv1.RegisterRequest, runnerv1.RegisterResponse]
-	declare    *connect.Client[runnerv1.DeclareRequest, runnerv1.DeclareResponse]
-	fetchTask  *connect.Client[runnerv1.FetchTaskRequest, runnerv1.FetchTaskResponse]
-	updateTask *connect.Client[runnerv1.UpdateTaskRequest, runnerv1.UpdateTaskResponse]
-	updateLog  *connect.Client[runnerv1.UpdateLogRequest, runnerv1.UpdateLogResponse]
-	heartbeat  *connect.Client[runnerv1.HeartbeatRequest, runnerv1.HeartbeatResponse]
+	register      *connect.Client[runnerv1.RegisterRequest, runnerv1.RegisterResponse]
+	declare       *connect.Client[runnerv1.DeclareRequest, runnerv1.DeclareResponse]
+	fetchTask     *connect.Client[runnerv1.FetchTaskRequest, runnerv1.FetchTaskResponse]
+	updateTask    *connect.Client[runnerv1.UpdateTaskRequest, runnerv1.UpdateTaskResponse]
+	updateLog     *connect.Client[runnerv1.UpdateLogRequest, runnerv1.UpdateLogResponse]
+	heartbeat     *connect.Client[runnerv1.HeartbeatRequest, runnerv1.HeartbeatResponse]
+	requestDevice *connect.Client[runnerv1.RequestDeviceRequest, runnerv1.RequestDeviceResponse]
+	pollDevice    *connect.Client[runnerv1.PollDeviceRequest, runnerv1.PollDeviceResponse]
+	deregister    *connect.Client[runnerv1.DeregisterRequest, runnerv1.DeregisterResponse]
 }
 
 // Register calls ervisio.runner.v1.RunnerService.Register.
@@ -170,6 +211,21 @@ func (c *runnerServiceClient) Heartbeat(ctx context.Context, req *connect.Reques
 	return c.heartbeat.CallUnary(ctx, req)
 }
 
+// RequestDevice calls ervisio.runner.v1.RunnerService.RequestDevice.
+func (c *runnerServiceClient) RequestDevice(ctx context.Context, req *connect.Request[runnerv1.RequestDeviceRequest]) (*connect.Response[runnerv1.RequestDeviceResponse], error) {
+	return c.requestDevice.CallUnary(ctx, req)
+}
+
+// PollDevice calls ervisio.runner.v1.RunnerService.PollDevice.
+func (c *runnerServiceClient) PollDevice(ctx context.Context, req *connect.Request[runnerv1.PollDeviceRequest]) (*connect.Response[runnerv1.PollDeviceResponse], error) {
+	return c.pollDevice.CallUnary(ctx, req)
+}
+
+// Deregister calls ervisio.runner.v1.RunnerService.Deregister.
+func (c *runnerServiceClient) Deregister(ctx context.Context, req *connect.Request[runnerv1.DeregisterRequest]) (*connect.Response[runnerv1.DeregisterResponse], error) {
+	return c.deregister.CallUnary(ctx, req)
+}
+
 // RunnerServiceHandler is an implementation of the ervisio.runner.v1.RunnerService service.
 type RunnerServiceHandler interface {
 	// Register exchanges a registration token for a runner credential.
@@ -189,6 +245,15 @@ type RunnerServiceHandler interface {
 	// Heartbeat keeps the runner online and returns the ids of running tasks
 	// the server wants cancelled.
 	Heartbeat(context.Context, *connect.Request[runnerv1.HeartbeatRequest]) (*connect.Response[runnerv1.HeartbeatResponse], error)
+	// RequestDevice starts a device registration (RFC 8628 style): the
+	// installer shows the user code, an admin approves it at
+	// verification_uri and the installer polls PollDevice.
+	RequestDevice(context.Context, *connect.Request[runnerv1.RequestDeviceRequest]) (*connect.Response[runnerv1.RequestDeviceResponse], error)
+	// PollDevice answers the state of a device registration; once approved
+	// it returns a single-use registration token and the approved settings.
+	PollDevice(context.Context, *connect.Request[runnerv1.PollDeviceRequest]) (*connect.Response[runnerv1.PollDeviceResponse], error)
+	// Deregister removes the calling runner from the server (uninstall).
+	Deregister(context.Context, *connect.Request[runnerv1.DeregisterRequest]) (*connect.Response[runnerv1.DeregisterResponse], error)
 }
 
 // NewRunnerServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -234,6 +299,24 @@ func NewRunnerServiceHandler(svc RunnerServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(runnerServiceMethods.ByName("Heartbeat")),
 		connect.WithHandlerOptions(opts...),
 	)
+	runnerServiceRequestDeviceHandler := connect.NewUnaryHandler(
+		RunnerServiceRequestDeviceProcedure,
+		svc.RequestDevice,
+		connect.WithSchema(runnerServiceMethods.ByName("RequestDevice")),
+		connect.WithHandlerOptions(opts...),
+	)
+	runnerServicePollDeviceHandler := connect.NewUnaryHandler(
+		RunnerServicePollDeviceProcedure,
+		svc.PollDevice,
+		connect.WithSchema(runnerServiceMethods.ByName("PollDevice")),
+		connect.WithHandlerOptions(opts...),
+	)
+	runnerServiceDeregisterHandler := connect.NewUnaryHandler(
+		RunnerServiceDeregisterProcedure,
+		svc.Deregister,
+		connect.WithSchema(runnerServiceMethods.ByName("Deregister")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ervisio.runner.v1.RunnerService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RunnerServiceRegisterProcedure:
@@ -248,6 +331,12 @@ func NewRunnerServiceHandler(svc RunnerServiceHandler, opts ...connect.HandlerOp
 			runnerServiceUpdateLogHandler.ServeHTTP(w, r)
 		case RunnerServiceHeartbeatProcedure:
 			runnerServiceHeartbeatHandler.ServeHTTP(w, r)
+		case RunnerServiceRequestDeviceProcedure:
+			runnerServiceRequestDeviceHandler.ServeHTTP(w, r)
+		case RunnerServicePollDeviceProcedure:
+			runnerServicePollDeviceHandler.ServeHTTP(w, r)
+		case RunnerServiceDeregisterProcedure:
+			runnerServiceDeregisterHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -279,4 +368,16 @@ func (UnimplementedRunnerServiceHandler) UpdateLog(context.Context, *connect.Req
 
 func (UnimplementedRunnerServiceHandler) Heartbeat(context.Context, *connect.Request[runnerv1.HeartbeatRequest]) (*connect.Response[runnerv1.HeartbeatResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ervisio.runner.v1.RunnerService.Heartbeat is not implemented"))
+}
+
+func (UnimplementedRunnerServiceHandler) RequestDevice(context.Context, *connect.Request[runnerv1.RequestDeviceRequest]) (*connect.Response[runnerv1.RequestDeviceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ervisio.runner.v1.RunnerService.RequestDevice is not implemented"))
+}
+
+func (UnimplementedRunnerServiceHandler) PollDevice(context.Context, *connect.Request[runnerv1.PollDeviceRequest]) (*connect.Response[runnerv1.PollDeviceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ervisio.runner.v1.RunnerService.PollDevice is not implemented"))
+}
+
+func (UnimplementedRunnerServiceHandler) Deregister(context.Context, *connect.Request[runnerv1.DeregisterRequest]) (*connect.Response[runnerv1.DeregisterResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ervisio.runner.v1.RunnerService.Deregister is not implemented"))
 }

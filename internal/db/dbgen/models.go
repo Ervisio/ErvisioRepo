@@ -140,6 +140,7 @@ type ActionsRegistrationToken struct {
 	CreatedBy uuid.NullUUID
 	ExpiresAt pgtype.Timestamptz
 	CreatedAt pgtype.Timestamptz
+	SingleUse bool
 }
 
 type ActionsRun struct {
@@ -195,6 +196,34 @@ type ActionsRunner struct {
 	CreatedBy      uuid.NullUUID
 	CreatedAt      pgtype.Timestamptz
 	UpdatedAt      pgtype.Timestamptz
+	Paused         bool
+	Capacity       int32
+}
+
+type ActionsRunnerDevice struct {
+	ID              uuid.UUID
+	DeviceCodeHash  []byte
+	UserCode        string
+	Status          string
+	Hostname        string
+	Os              string
+	Arch            string
+	Cpus            int32
+	MemoryBytes     int64
+	Docker          bool
+	Version         string
+	Name            string
+	Labels          []string
+	Capacity        int32
+	RequestIp       string
+	Scope           pgtype.Text
+	OwnerID         uuid.NullUUID
+	RepoID          uuid.NullUUID
+	DecidedBy       uuid.NullUUID
+	IntervalSeconds int32
+	LastPollAt      pgtype.Timestamptz
+	ExpiresAt       pgtype.Timestamptz
+	CreatedAt       pgtype.Timestamptz
 }
 
 type ActionsSchedule struct {

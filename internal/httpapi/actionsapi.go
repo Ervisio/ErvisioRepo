@@ -56,6 +56,9 @@ type Actions interface {
 	ListRunners(ctx context.Context, sc actions.Scope) ([]actions.Runner, error)
 	ListRepoRunners(ctx context.Context, sc actions.Scope) ([]actions.Runner, error)
 	DeleteRunner(ctx context.Context, sc actions.Scope, id uuid.UUID) error
+	SetRunnerPaused(ctx context.Context, who auth.Principal, sc actions.Scope, id uuid.UUID, paused bool, ip string) (actions.Runner, error)
+	LookupRunnerDevice(ctx context.Context, who auth.Principal, userCode, ip string) (actions.RunnerDevice, error)
+	DecideRunnerDevice(ctx context.Context, who auth.Principal, userCode string, d actions.RunnerDeviceDecision, ip string) error
 	CreateRegistrationToken(ctx context.Context, who auth.Principal, sc actions.Scope) (actions.RegistrationToken, error)
 	SecretsPublicKey() (string, []byte, error)
 	OpenSealedSecret(keyID string, sealed []byte) (string, error)
@@ -130,6 +133,11 @@ type actionsResponse interface {
 	v1gen.ListInstanceActionsRunnersResponseObject
 	v1gen.DeleteInstanceActionsRunnerResponseObject
 	v1gen.CreateInstanceActionsRegistrationTokenResponseObject
+	v1gen.SetRepoActionsRunnerPausedResponseObject
+	v1gen.SetOrgActionsRunnerPausedResponseObject
+	v1gen.SetInstanceActionsRunnerPausedResponseObject
+	v1gen.GetActionsRunnerDeviceResponseObject
+	v1gen.DecideActionsRunnerDeviceResponseObject
 }
 
 var (
@@ -193,7 +201,9 @@ func actionsDTOEnvironment(e actions.Environment) v1gen.ActionsEnvironment {
 
 func actionsDTORunner(r actions.Runner) v1gen.ActionsRunner {
 	return v1gen.ActionsRunner{Id: r.ID, Name: r.Name, Scope: r.Scope, Labels: nonNil(r.Labels), Version: r.Version,
-		Ephemeral: r.Ephemeral, Online: r.Online, Busy: r.Busy, LastSeenAt: r.LastSeenAt, CreatedAt: r.CreatedAt}
+		Ephemeral: r.Ephemeral, Online: r.Online, Busy: r.Busy, Paused: r.Paused,
+		Status: v1gen.ActionsRunnerStatus(r.Status), Running: r.Running, Capacity: r.Capacity,
+		LastSeenAt: r.LastSeenAt, CreatedAt: r.CreatedAt}
 }
 
 func actionsDTOToken(t actions.RegistrationToken) v1gen.ActionsRegistrationToken {
@@ -1186,5 +1196,36 @@ func (m movedResponse) VisitDeleteInstanceActionsRunnerResponse(w http.ResponseW
 	return m.write(w)
 }
 func (m movedResponse) VisitCreateInstanceActionsRegistrationTokenResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+
+func (p problemResponse) VisitSetRepoActionsRunnerPausedResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (p problemResponse) VisitSetOrgActionsRunnerPausedResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (p problemResponse) VisitSetInstanceActionsRunnerPausedResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (p problemResponse) VisitGetActionsRunnerDeviceResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (p problemResponse) VisitDecideActionsRunnerDeviceResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (m movedResponse) VisitSetRepoActionsRunnerPausedResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (m movedResponse) VisitSetOrgActionsRunnerPausedResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (m movedResponse) VisitSetInstanceActionsRunnerPausedResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (m movedResponse) VisitGetActionsRunnerDeviceResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (m movedResponse) VisitDecideActionsRunnerDeviceResponse(w http.ResponseWriter) error {
 	return m.write(w)
 }

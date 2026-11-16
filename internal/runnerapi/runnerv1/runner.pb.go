@@ -5,6 +5,8 @@
 //
 // Authentication:
 //   - Register carries a registration token (errt_…) in the request body;
+//   - RequestDevice and PollDevice are anonymous: the device code is the
+//     secret, and an approved poll returns a single-use registration token;
 //   - every other call carries the runner credential returned by Register
 //     as "Authorization: Bearer erun_…".
 // Job tokens (erj_…) travel inside Task and are never used on this service.
@@ -222,9 +224,11 @@ func (x *RegisterResponse) GetCredential() string {
 }
 
 type DeclareRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Version       string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	Labels        []string               `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Version string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	Labels  []string               `protobuf:"bytes,2,rep,name=labels,proto3" json:"labels,omitempty"`
+	// capacity is how many jobs the runner runs at the same time.
+	Capacity      int32 `protobuf:"varint,3,opt,name=capacity,proto3" json:"capacity,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -271,6 +275,13 @@ func (x *DeclareRequest) GetLabels() []string {
 		return x.Labels
 	}
 	return nil
+}
+
+func (x *DeclareRequest) GetCapacity() int32 {
+	if x != nil {
+		return x.Capacity
+	}
+	return 0
 }
 
 type DeclareResponse struct {
@@ -325,7 +336,9 @@ type Runner struct {
 	Labels    []string               `protobuf:"bytes,4,rep,name=labels,proto3" json:"labels,omitempty"`
 	Ephemeral bool                   `protobuf:"varint,5,opt,name=ephemeral,proto3" json:"ephemeral,omitempty"`
 	// scope is "instance", "org:<name>" or "repo:<owner>/<name>".
-	Scope         string `protobuf:"bytes,6,opt,name=scope,proto3" json:"scope,omitempty"`
+	Scope string `protobuf:"bytes,6,opt,name=scope,proto3" json:"scope,omitempty"`
+	// paused runners keep running their jobs but receive no new ones.
+	Paused        bool `protobuf:"varint,7,opt,name=paused,proto3" json:"paused,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -400,6 +413,13 @@ func (x *Runner) GetScope() string {
 		return x.Scope
 	}
 	return ""
+}
+
+func (x *Runner) GetPaused() bool {
+	if x != nil {
+		return x.Paused
+	}
+	return false
 }
 
 type FetchTaskRequest struct {
@@ -1180,8 +1200,10 @@ func (x *UpdateLogResponse) GetAckIndex() int64 {
 type HeartbeatRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	RunningTaskIds []string               `protobuf:"bytes,1,rep,name=running_task_ids,json=runningTaskIds,proto3" json:"running_task_ids,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// capacity is how many jobs the runner runs at the same time.
+	Capacity      int32 `protobuf:"varint,2,opt,name=capacity,proto3" json:"capacity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *HeartbeatRequest) Reset() {
@@ -1221,9 +1243,18 @@ func (x *HeartbeatRequest) GetRunningTaskIds() []string {
 	return nil
 }
 
+func (x *HeartbeatRequest) GetCapacity() int32 {
+	if x != nil {
+		return x.Capacity
+	}
+	return 0
+}
+
 type HeartbeatResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	CancelTaskIds []string               `protobuf:"bytes,1,rep,name=cancel_task_ids,json=cancelTaskIds,proto3" json:"cancel_task_ids,omitempty"`
+	// paused is true while an admin has paused the runner.
+	Paused        bool `protobuf:"varint,2,opt,name=paused,proto3" json:"paused,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1265,6 +1296,430 @@ func (x *HeartbeatResponse) GetCancelTaskIds() []string {
 	return nil
 }
 
+func (x *HeartbeatResponse) GetPaused() bool {
+	if x != nil {
+		return x.Paused
+	}
+	return false
+}
+
+type RequestDeviceRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Facts about the machine, shown on the approval page.
+	Hostname    string `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Os          string `protobuf:"bytes,2,opt,name=os,proto3" json:"os,omitempty"`
+	Arch        string `protobuf:"bytes,3,opt,name=arch,proto3" json:"arch,omitempty"`
+	Cpus        int32  `protobuf:"varint,4,opt,name=cpus,proto3" json:"cpus,omitempty"`
+	MemoryBytes int64  `protobuf:"varint,5,opt,name=memory_bytes,json=memoryBytes,proto3" json:"memory_bytes,omitempty"`
+	Docker      bool   `protobuf:"varint,6,opt,name=docker,proto3" json:"docker,omitempty"`
+	Version     string `protobuf:"bytes,7,opt,name=version,proto3" json:"version,omitempty"`
+	// Requested settings; the approver may change them.
+	Name string `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
+	// labels are label names (no backend).
+	Labels        []string `protobuf:"bytes,9,rep,name=labels,proto3" json:"labels,omitempty"`
+	Capacity      int32    `protobuf:"varint,10,opt,name=capacity,proto3" json:"capacity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestDeviceRequest) Reset() {
+	*x = RequestDeviceRequest{}
+	mi := &file_v1_runner_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestDeviceRequest) ProtoMessage() {}
+
+func (x *RequestDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_runner_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestDeviceRequest.ProtoReflect.Descriptor instead.
+func (*RequestDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_v1_runner_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *RequestDeviceRequest) GetHostname() string {
+	if x != nil {
+		return x.Hostname
+	}
+	return ""
+}
+
+func (x *RequestDeviceRequest) GetOs() string {
+	if x != nil {
+		return x.Os
+	}
+	return ""
+}
+
+func (x *RequestDeviceRequest) GetArch() string {
+	if x != nil {
+		return x.Arch
+	}
+	return ""
+}
+
+func (x *RequestDeviceRequest) GetCpus() int32 {
+	if x != nil {
+		return x.Cpus
+	}
+	return 0
+}
+
+func (x *RequestDeviceRequest) GetMemoryBytes() int64 {
+	if x != nil {
+		return x.MemoryBytes
+	}
+	return 0
+}
+
+func (x *RequestDeviceRequest) GetDocker() bool {
+	if x != nil {
+		return x.Docker
+	}
+	return false
+}
+
+func (x *RequestDeviceRequest) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *RequestDeviceRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RequestDeviceRequest) GetLabels() []string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
+func (x *RequestDeviceRequest) GetCapacity() int32 {
+	if x != nil {
+		return x.Capacity
+	}
+	return 0
+}
+
+type RequestDeviceResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// device_code is the secret the installer polls with.
+	DeviceCode string `protobuf:"bytes,1,opt,name=device_code,json=deviceCode,proto3" json:"device_code,omitempty"`
+	// user_code is the XXXX-XXXX code the user enters.
+	UserCode        string `protobuf:"bytes,2,opt,name=user_code,json=userCode,proto3" json:"user_code,omitempty"`
+	VerificationUri string `protobuf:"bytes,3,opt,name=verification_uri,json=verificationUri,proto3" json:"verification_uri,omitempty"`
+	// verification_uri_complete carries the user code (?code=).
+	VerificationUriComplete string `protobuf:"bytes,4,opt,name=verification_uri_complete,json=verificationUriComplete,proto3" json:"verification_uri_complete,omitempty"`
+	ExpiresIn               int32  `protobuf:"varint,5,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
+	Interval                int32  `protobuf:"varint,6,opt,name=interval,proto3" json:"interval,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *RequestDeviceResponse) Reset() {
+	*x = RequestDeviceResponse{}
+	mi := &file_v1_runner_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RequestDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RequestDeviceResponse) ProtoMessage() {}
+
+func (x *RequestDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_runner_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RequestDeviceResponse.ProtoReflect.Descriptor instead.
+func (*RequestDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_v1_runner_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *RequestDeviceResponse) GetDeviceCode() string {
+	if x != nil {
+		return x.DeviceCode
+	}
+	return ""
+}
+
+func (x *RequestDeviceResponse) GetUserCode() string {
+	if x != nil {
+		return x.UserCode
+	}
+	return ""
+}
+
+func (x *RequestDeviceResponse) GetVerificationUri() string {
+	if x != nil {
+		return x.VerificationUri
+	}
+	return ""
+}
+
+func (x *RequestDeviceResponse) GetVerificationUriComplete() string {
+	if x != nil {
+		return x.VerificationUriComplete
+	}
+	return ""
+}
+
+func (x *RequestDeviceResponse) GetExpiresIn() int32 {
+	if x != nil {
+		return x.ExpiresIn
+	}
+	return 0
+}
+
+func (x *RequestDeviceResponse) GetInterval() int32 {
+	if x != nil {
+		return x.Interval
+	}
+	return 0
+}
+
+type PollDeviceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeviceCode    string                 `protobuf:"bytes,1,opt,name=device_code,json=deviceCode,proto3" json:"device_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PollDeviceRequest) Reset() {
+	*x = PollDeviceRequest{}
+	mi := &file_v1_runner_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PollDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PollDeviceRequest) ProtoMessage() {}
+
+func (x *PollDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_runner_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PollDeviceRequest.ProtoReflect.Descriptor instead.
+func (*PollDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_v1_runner_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *PollDeviceRequest) GetDeviceCode() string {
+	if x != nil {
+		return x.DeviceCode
+	}
+	return ""
+}
+
+type PollDeviceResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// status is "pending", "slow_down", "approved", "denied" or "expired".
+	Status string `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	// interval is the polling interval to use from now on, in seconds.
+	Interval int32 `protobuf:"varint,2,opt,name=interval,proto3" json:"interval,omitempty"`
+	// The fields below are set only when status is "approved".
+	RegistrationToken string   `protobuf:"bytes,3,opt,name=registration_token,json=registrationToken,proto3" json:"registration_token,omitempty"`
+	Name              string   `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	Labels            []string `protobuf:"bytes,5,rep,name=labels,proto3" json:"labels,omitempty"`
+	Capacity          int32    `protobuf:"varint,6,opt,name=capacity,proto3" json:"capacity,omitempty"`
+	Scope             string   `protobuf:"bytes,7,opt,name=scope,proto3" json:"scope,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *PollDeviceResponse) Reset() {
+	*x = PollDeviceResponse{}
+	mi := &file_v1_runner_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PollDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PollDeviceResponse) ProtoMessage() {}
+
+func (x *PollDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_runner_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PollDeviceResponse.ProtoReflect.Descriptor instead.
+func (*PollDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_v1_runner_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *PollDeviceResponse) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *PollDeviceResponse) GetInterval() int32 {
+	if x != nil {
+		return x.Interval
+	}
+	return 0
+}
+
+func (x *PollDeviceResponse) GetRegistrationToken() string {
+	if x != nil {
+		return x.RegistrationToken
+	}
+	return ""
+}
+
+func (x *PollDeviceResponse) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *PollDeviceResponse) GetLabels() []string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
+func (x *PollDeviceResponse) GetCapacity() int32 {
+	if x != nil {
+		return x.Capacity
+	}
+	return 0
+}
+
+func (x *PollDeviceResponse) GetScope() string {
+	if x != nil {
+		return x.Scope
+	}
+	return ""
+}
+
+type DeregisterRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeregisterRequest) Reset() {
+	*x = DeregisterRequest{}
+	mi := &file_v1_runner_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeregisterRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeregisterRequest) ProtoMessage() {}
+
+func (x *DeregisterRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_runner_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeregisterRequest.ProtoReflect.Descriptor instead.
+func (*DeregisterRequest) Descriptor() ([]byte, []int) {
+	return file_v1_runner_proto_rawDescGZIP(), []int{22}
+}
+
+type DeregisterResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeregisterResponse) Reset() {
+	*x = DeregisterResponse{}
+	mi := &file_v1_runner_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeregisterResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeregisterResponse) ProtoMessage() {}
+
+func (x *DeregisterResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_v1_runner_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeregisterResponse.ProtoReflect.Descriptor instead.
+func (*DeregisterResponse) Descriptor() ([]byte, []int) {
+	return file_v1_runner_proto_rawDescGZIP(), []int{23}
+}
+
 var File_v1_runner_proto protoreflect.FileDescriptor
 
 const file_v1_runner_proto_rawDesc = "" +
@@ -1280,19 +1735,21 @@ const file_v1_runner_proto_rawDesc = "" +
 	"\x06runner\x18\x01 \x01(\v2\x19.ervisio.runner.v1.RunnerR\x06runner\x12\x1e\n" +
 	"\n" +
 	"credential\x18\x02 \x01(\tR\n" +
-	"credential\"B\n" +
+	"credential\"^\n" +
 	"\x0eDeclareRequest\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12\x16\n" +
-	"\x06labels\x18\x02 \x03(\tR\x06labels\"D\n" +
+	"\x06labels\x18\x02 \x03(\tR\x06labels\x12\x1a\n" +
+	"\bcapacity\x18\x03 \x01(\x05R\bcapacity\"D\n" +
 	"\x0fDeclareResponse\x121\n" +
-	"\x06runner\x18\x01 \x01(\v2\x19.ervisio.runner.v1.RunnerR\x06runner\"\x92\x01\n" +
+	"\x06runner\x18\x01 \x01(\v2\x19.ervisio.runner.v1.RunnerR\x06runner\"\xaa\x01\n" +
 	"\x06Runner\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x03 \x01(\tR\aversion\x12\x16\n" +
 	"\x06labels\x18\x04 \x03(\tR\x06labels\x12\x1c\n" +
 	"\tephemeral\x18\x05 \x01(\bR\tephemeral\x12\x14\n" +
-	"\x05scope\x18\x06 \x01(\tR\x05scope\"S\n" +
+	"\x05scope\x18\x06 \x01(\tR\x05scope\x12\x16\n" +
+	"\x06paused\x18\a \x01(\bR\x06paused\"S\n" +
 	"\x10FetchTaskRequest\x12#\n" +
 	"\rtasks_version\x18\x01 \x01(\x03R\ftasksVersion\x12\x1a\n" +
 	"\bcapacity\x18\x02 \x01(\x05R\bcapacity\"e\n" +
@@ -1372,17 +1829,53 @@ const file_v1_runner_proto_rawDesc = "" +
 	"\x04rows\x18\x03 \x03(\v2\x19.ervisio.runner.v1.LogRowR\x04rows\x12\x17\n" +
 	"\ano_more\x18\x04 \x01(\bR\x06noMore\"0\n" +
 	"\x11UpdateLogResponse\x12\x1b\n" +
-	"\tack_index\x18\x01 \x01(\x03R\backIndex\"<\n" +
+	"\tack_index\x18\x01 \x01(\x03R\backIndex\"X\n" +
 	"\x10HeartbeatRequest\x12(\n" +
-	"\x10running_task_ids\x18\x01 \x03(\tR\x0erunningTaskIds\";\n" +
+	"\x10running_task_ids\x18\x01 \x03(\tR\x0erunningTaskIds\x12\x1a\n" +
+	"\bcapacity\x18\x02 \x01(\x05R\bcapacity\"S\n" +
 	"\x11HeartbeatResponse\x12&\n" +
-	"\x0fcancel_task_ids\x18\x01 \x03(\tR\rcancelTaskIds*r\n" +
+	"\x0fcancel_task_ids\x18\x01 \x03(\tR\rcancelTaskIds\x12\x16\n" +
+	"\x06paused\x18\x02 \x01(\bR\x06paused\"\x87\x02\n" +
+	"\x14RequestDeviceRequest\x12\x1a\n" +
+	"\bhostname\x18\x01 \x01(\tR\bhostname\x12\x0e\n" +
+	"\x02os\x18\x02 \x01(\tR\x02os\x12\x12\n" +
+	"\x04arch\x18\x03 \x01(\tR\x04arch\x12\x12\n" +
+	"\x04cpus\x18\x04 \x01(\x05R\x04cpus\x12!\n" +
+	"\fmemory_bytes\x18\x05 \x01(\x03R\vmemoryBytes\x12\x16\n" +
+	"\x06docker\x18\x06 \x01(\bR\x06docker\x12\x18\n" +
+	"\aversion\x18\a \x01(\tR\aversion\x12\x12\n" +
+	"\x04name\x18\b \x01(\tR\x04name\x12\x16\n" +
+	"\x06labels\x18\t \x03(\tR\x06labels\x12\x1a\n" +
+	"\bcapacity\x18\n" +
+	" \x01(\x05R\bcapacity\"\xf7\x01\n" +
+	"\x15RequestDeviceResponse\x12\x1f\n" +
+	"\vdevice_code\x18\x01 \x01(\tR\n" +
+	"deviceCode\x12\x1b\n" +
+	"\tuser_code\x18\x02 \x01(\tR\buserCode\x12)\n" +
+	"\x10verification_uri\x18\x03 \x01(\tR\x0fverificationUri\x12:\n" +
+	"\x19verification_uri_complete\x18\x04 \x01(\tR\x17verificationUriComplete\x12\x1d\n" +
+	"\n" +
+	"expires_in\x18\x05 \x01(\x05R\texpiresIn\x12\x1a\n" +
+	"\binterval\x18\x06 \x01(\x05R\binterval\"4\n" +
+	"\x11PollDeviceRequest\x12\x1f\n" +
+	"\vdevice_code\x18\x01 \x01(\tR\n" +
+	"deviceCode\"\xd5\x01\n" +
+	"\x12PollDeviceResponse\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\tR\x06status\x12\x1a\n" +
+	"\binterval\x18\x02 \x01(\x05R\binterval\x12-\n" +
+	"\x12registration_token\x18\x03 \x01(\tR\x11registrationToken\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12\x16\n" +
+	"\x06labels\x18\x05 \x03(\tR\x06labels\x12\x1a\n" +
+	"\bcapacity\x18\x06 \x01(\x05R\bcapacity\x12\x14\n" +
+	"\x05scope\x18\a \x01(\tR\x05scope\"\x13\n" +
+	"\x11DeregisterRequest\"\x14\n" +
+	"\x12DeregisterResponse*r\n" +
 	"\x06Result\x12\x16\n" +
 	"\x12RESULT_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eRESULT_SUCCESS\x10\x01\x12\x12\n" +
 	"\x0eRESULT_FAILURE\x10\x02\x12\x14\n" +
 	"\x10RESULT_CANCELLED\x10\x03\x12\x12\n" +
-	"\x0eRESULT_SKIPPED\x10\x042\x99\x04\n" +
+	"\x0eRESULT_SKIPPED\x10\x042\xb3\x06\n" +
 	"\rRunnerService\x12S\n" +
 	"\bRegister\x12\".ervisio.runner.v1.RegisterRequest\x1a#.ervisio.runner.v1.RegisterResponse\x12P\n" +
 	"\aDeclare\x12!.ervisio.runner.v1.DeclareRequest\x1a\".ervisio.runner.v1.DeclareResponse\x12V\n" +
@@ -1390,7 +1883,12 @@ const file_v1_runner_proto_rawDesc = "" +
 	"\n" +
 	"UpdateTask\x12$.ervisio.runner.v1.UpdateTaskRequest\x1a%.ervisio.runner.v1.UpdateTaskResponse\x12V\n" +
 	"\tUpdateLog\x12#.ervisio.runner.v1.UpdateLogRequest\x1a$.ervisio.runner.v1.UpdateLogResponse\x12V\n" +
-	"\tHeartbeat\x12#.ervisio.runner.v1.HeartbeatRequest\x1a$.ervisio.runner.v1.HeartbeatResponseBEZCgithub.com/Ervisio/ErvisioRepo/internal/runnerapi/runnerv1;runnerv1b\x06proto3"
+	"\tHeartbeat\x12#.ervisio.runner.v1.HeartbeatRequest\x1a$.ervisio.runner.v1.HeartbeatResponse\x12b\n" +
+	"\rRequestDevice\x12'.ervisio.runner.v1.RequestDeviceRequest\x1a(.ervisio.runner.v1.RequestDeviceResponse\x12Y\n" +
+	"\n" +
+	"PollDevice\x12$.ervisio.runner.v1.PollDeviceRequest\x1a%.ervisio.runner.v1.PollDeviceResponse\x12Y\n" +
+	"\n" +
+	"Deregister\x12$.ervisio.runner.v1.DeregisterRequest\x1a%.ervisio.runner.v1.DeregisterResponseBEZCgithub.com/Ervisio/ErvisioRepo/internal/runnerapi/runnerv1;runnerv1b\x06proto3"
 
 var (
 	file_v1_runner_proto_rawDescOnce sync.Once
@@ -1405,7 +1903,7 @@ func file_v1_runner_proto_rawDescGZIP() []byte {
 }
 
 var file_v1_runner_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_v1_runner_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_v1_runner_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_v1_runner_proto_goTypes = []any{
 	(Result)(0),                   // 0: ervisio.runner.v1.Result
 	(*RegisterRequest)(nil),       // 1: ervisio.runner.v1.RegisterRequest
@@ -1426,34 +1924,40 @@ var file_v1_runner_proto_goTypes = []any{
 	(*UpdateLogResponse)(nil),     // 16: ervisio.runner.v1.UpdateLogResponse
 	(*HeartbeatRequest)(nil),      // 17: ervisio.runner.v1.HeartbeatRequest
 	(*HeartbeatResponse)(nil),     // 18: ervisio.runner.v1.HeartbeatResponse
-	nil,                           // 19: ervisio.runner.v1.Task.SecretsEntry
-	nil,                           // 20: ervisio.runner.v1.Task.VarsEntry
-	nil,                           // 21: ervisio.runner.v1.Task.NeedsEntry
-	nil,                           // 22: ervisio.runner.v1.TaskNeed.OutputsEntry
-	nil,                           // 23: ervisio.runner.v1.UpdateTaskRequest.OutputsEntry
-	(*structpb.Struct)(nil),       // 24: google.protobuf.Struct
-	(*timestamppb.Timestamp)(nil), // 25: google.protobuf.Timestamp
+	(*RequestDeviceRequest)(nil),  // 19: ervisio.runner.v1.RequestDeviceRequest
+	(*RequestDeviceResponse)(nil), // 20: ervisio.runner.v1.RequestDeviceResponse
+	(*PollDeviceRequest)(nil),     // 21: ervisio.runner.v1.PollDeviceRequest
+	(*PollDeviceResponse)(nil),    // 22: ervisio.runner.v1.PollDeviceResponse
+	(*DeregisterRequest)(nil),     // 23: ervisio.runner.v1.DeregisterRequest
+	(*DeregisterResponse)(nil),    // 24: ervisio.runner.v1.DeregisterResponse
+	nil,                           // 25: ervisio.runner.v1.Task.SecretsEntry
+	nil,                           // 26: ervisio.runner.v1.Task.VarsEntry
+	nil,                           // 27: ervisio.runner.v1.Task.NeedsEntry
+	nil,                           // 28: ervisio.runner.v1.TaskNeed.OutputsEntry
+	nil,                           // 29: ervisio.runner.v1.UpdateTaskRequest.OutputsEntry
+	(*structpb.Struct)(nil),       // 30: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil), // 31: google.protobuf.Timestamp
 }
 var file_v1_runner_proto_depIdxs = []int32{
 	5,  // 0: ervisio.runner.v1.RegisterResponse.runner:type_name -> ervisio.runner.v1.Runner
 	5,  // 1: ervisio.runner.v1.DeclareResponse.runner:type_name -> ervisio.runner.v1.Runner
 	8,  // 2: ervisio.runner.v1.FetchTaskResponse.task:type_name -> ervisio.runner.v1.Task
-	24, // 3: ervisio.runner.v1.Task.context:type_name -> google.protobuf.Struct
-	19, // 4: ervisio.runner.v1.Task.secrets:type_name -> ervisio.runner.v1.Task.SecretsEntry
-	20, // 5: ervisio.runner.v1.Task.vars:type_name -> ervisio.runner.v1.Task.VarsEntry
-	21, // 6: ervisio.runner.v1.Task.needs:type_name -> ervisio.runner.v1.Task.NeedsEntry
-	22, // 7: ervisio.runner.v1.TaskNeed.outputs:type_name -> ervisio.runner.v1.TaskNeed.OutputsEntry
+	30, // 3: ervisio.runner.v1.Task.context:type_name -> google.protobuf.Struct
+	25, // 4: ervisio.runner.v1.Task.secrets:type_name -> ervisio.runner.v1.Task.SecretsEntry
+	26, // 5: ervisio.runner.v1.Task.vars:type_name -> ervisio.runner.v1.Task.VarsEntry
+	27, // 6: ervisio.runner.v1.Task.needs:type_name -> ervisio.runner.v1.Task.NeedsEntry
+	28, // 7: ervisio.runner.v1.TaskNeed.outputs:type_name -> ervisio.runner.v1.TaskNeed.OutputsEntry
 	0,  // 8: ervisio.runner.v1.TaskNeed.result:type_name -> ervisio.runner.v1.Result
 	0,  // 9: ervisio.runner.v1.TaskState.result:type_name -> ervisio.runner.v1.Result
-	25, // 10: ervisio.runner.v1.TaskState.started_at:type_name -> google.protobuf.Timestamp
-	25, // 11: ervisio.runner.v1.TaskState.stopped_at:type_name -> google.protobuf.Timestamp
+	31, // 10: ervisio.runner.v1.TaskState.started_at:type_name -> google.protobuf.Timestamp
+	31, // 11: ervisio.runner.v1.TaskState.stopped_at:type_name -> google.protobuf.Timestamp
 	11, // 12: ervisio.runner.v1.TaskState.steps:type_name -> ervisio.runner.v1.StepState
 	0,  // 13: ervisio.runner.v1.StepState.result:type_name -> ervisio.runner.v1.Result
-	25, // 14: ervisio.runner.v1.StepState.started_at:type_name -> google.protobuf.Timestamp
-	25, // 15: ervisio.runner.v1.StepState.stopped_at:type_name -> google.protobuf.Timestamp
+	31, // 14: ervisio.runner.v1.StepState.started_at:type_name -> google.protobuf.Timestamp
+	31, // 15: ervisio.runner.v1.StepState.stopped_at:type_name -> google.protobuf.Timestamp
 	10, // 16: ervisio.runner.v1.UpdateTaskRequest.state:type_name -> ervisio.runner.v1.TaskState
-	23, // 17: ervisio.runner.v1.UpdateTaskRequest.outputs:type_name -> ervisio.runner.v1.UpdateTaskRequest.OutputsEntry
-	25, // 18: ervisio.runner.v1.LogRow.time:type_name -> google.protobuf.Timestamp
+	29, // 17: ervisio.runner.v1.UpdateTaskRequest.outputs:type_name -> ervisio.runner.v1.UpdateTaskRequest.OutputsEntry
+	31, // 18: ervisio.runner.v1.LogRow.time:type_name -> google.protobuf.Timestamp
 	14, // 19: ervisio.runner.v1.UpdateLogRequest.rows:type_name -> ervisio.runner.v1.LogRow
 	9,  // 20: ervisio.runner.v1.Task.NeedsEntry.value:type_name -> ervisio.runner.v1.TaskNeed
 	1,  // 21: ervisio.runner.v1.RunnerService.Register:input_type -> ervisio.runner.v1.RegisterRequest
@@ -1462,14 +1966,20 @@ var file_v1_runner_proto_depIdxs = []int32{
 	12, // 24: ervisio.runner.v1.RunnerService.UpdateTask:input_type -> ervisio.runner.v1.UpdateTaskRequest
 	15, // 25: ervisio.runner.v1.RunnerService.UpdateLog:input_type -> ervisio.runner.v1.UpdateLogRequest
 	17, // 26: ervisio.runner.v1.RunnerService.Heartbeat:input_type -> ervisio.runner.v1.HeartbeatRequest
-	2,  // 27: ervisio.runner.v1.RunnerService.Register:output_type -> ervisio.runner.v1.RegisterResponse
-	4,  // 28: ervisio.runner.v1.RunnerService.Declare:output_type -> ervisio.runner.v1.DeclareResponse
-	7,  // 29: ervisio.runner.v1.RunnerService.FetchTask:output_type -> ervisio.runner.v1.FetchTaskResponse
-	13, // 30: ervisio.runner.v1.RunnerService.UpdateTask:output_type -> ervisio.runner.v1.UpdateTaskResponse
-	16, // 31: ervisio.runner.v1.RunnerService.UpdateLog:output_type -> ervisio.runner.v1.UpdateLogResponse
-	18, // 32: ervisio.runner.v1.RunnerService.Heartbeat:output_type -> ervisio.runner.v1.HeartbeatResponse
-	27, // [27:33] is the sub-list for method output_type
-	21, // [21:27] is the sub-list for method input_type
+	19, // 27: ervisio.runner.v1.RunnerService.RequestDevice:input_type -> ervisio.runner.v1.RequestDeviceRequest
+	21, // 28: ervisio.runner.v1.RunnerService.PollDevice:input_type -> ervisio.runner.v1.PollDeviceRequest
+	23, // 29: ervisio.runner.v1.RunnerService.Deregister:input_type -> ervisio.runner.v1.DeregisterRequest
+	2,  // 30: ervisio.runner.v1.RunnerService.Register:output_type -> ervisio.runner.v1.RegisterResponse
+	4,  // 31: ervisio.runner.v1.RunnerService.Declare:output_type -> ervisio.runner.v1.DeclareResponse
+	7,  // 32: ervisio.runner.v1.RunnerService.FetchTask:output_type -> ervisio.runner.v1.FetchTaskResponse
+	13, // 33: ervisio.runner.v1.RunnerService.UpdateTask:output_type -> ervisio.runner.v1.UpdateTaskResponse
+	16, // 34: ervisio.runner.v1.RunnerService.UpdateLog:output_type -> ervisio.runner.v1.UpdateLogResponse
+	18, // 35: ervisio.runner.v1.RunnerService.Heartbeat:output_type -> ervisio.runner.v1.HeartbeatResponse
+	20, // 36: ervisio.runner.v1.RunnerService.RequestDevice:output_type -> ervisio.runner.v1.RequestDeviceResponse
+	22, // 37: ervisio.runner.v1.RunnerService.PollDevice:output_type -> ervisio.runner.v1.PollDeviceResponse
+	24, // 38: ervisio.runner.v1.RunnerService.Deregister:output_type -> ervisio.runner.v1.DeregisterResponse
+	30, // [30:39] is the sub-list for method output_type
+	21, // [21:30] is the sub-list for method input_type
 	21, // [21:21] is the sub-list for extension type_name
 	21, // [21:21] is the sub-list for extension extendee
 	0,  // [0:21] is the sub-list for field type_name
@@ -1486,7 +1996,7 @@ func file_v1_runner_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_v1_runner_proto_rawDesc), len(file_v1_runner_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   23,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

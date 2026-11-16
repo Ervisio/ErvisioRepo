@@ -167,6 +167,11 @@ func (s *Service) sweep(ctx context.Context) error {
 	if err := s.q.DeleteExpiredActionsRegistrationTokens(ctx); err != nil {
 		return fmt.Errorf("expired registration tokens: %w", err)
 	}
+	// Device codes stay an hour past expiry so a late poll still reads
+	// "expired" rather than an unknown code.
+	if err := s.q.DeleteExpiredActionsRunnerDevices(ctx, ts(now.Add(-time.Hour))); err != nil {
+		return fmt.Errorf("expired runner devices: %w", err)
+	}
 	if n, err := s.q.DeleteUsedEphemeralActionsRunners(ctx, ts(now.Add(-off))); err != nil {
 		return fmt.Errorf("used ephemeral runners: %w", err)
 	} else if n > 0 {

@@ -10056,6 +10056,44 @@ paths:
           $ref: "#/components/responses/Unavailable"
         default:
           $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/runners/{runnerId}/paused:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - $ref: "#/components/parameters/ActionsRunnerId"
+    put:
+      operationId: setRepoActionsRunnerPaused
+      tags: [actions]
+      summary: Pause or resume a self-hosted runner
+      description: |
+        A paused runner finishes the jobs it is running but takes no new
+        ones until it is resumed. Recorded in the audit log.
+      security:
+        - session: []
+        - token: [actions:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActionsRunnerPause"
+      responses:
+        "200":
+          description: The runner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRunner"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
   /repos/{owner}/{name}/actions/runners/registration-token:
     parameters:
       - $ref: "#/components/parameters/RepoOwner"
@@ -10293,6 +10331,41 @@ paths:
           $ref: "#/components/responses/Unavailable"
         default:
           $ref: "#/components/responses/Problem"
+  /orgs/{org}/actions/runners/{runnerId}/paused:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+      - $ref: "#/components/parameters/ActionsRunnerId"
+    put:
+      operationId: setOrgActionsRunnerPaused
+      tags: [actions]
+      summary: Pause or resume a self-hosted runner
+      description: |
+        A paused runner finishes the jobs it is running but takes no new
+        ones until it is resumed. Recorded in the audit log.
+      security:
+        - session: []
+        - token: [actions:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActionsRunnerPause"
+      responses:
+        "200":
+          description: The runner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRunner"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
   /orgs/{org}/actions/runners/registration-token:
     parameters:
       - $ref: "#/components/parameters/OrgName"
@@ -10367,6 +10440,40 @@ paths:
           $ref: "#/components/responses/Unavailable"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/actions/runners/{runnerId}/paused:
+    parameters:
+      - $ref: "#/components/parameters/ActionsRunnerId"
+    put:
+      operationId: setInstanceActionsRunnerPaused
+      tags: [actions]
+      summary: Pause or resume a self-hosted runner
+      description: |
+        A paused runner finishes the jobs it is running but takes no new
+        ones until it is resumed. Recorded in the audit log.
+      security:
+        - session: [admin]
+        - token: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActionsRunnerPause"
+      responses:
+        "200":
+          description: The runner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRunner"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
   /admin/actions/runners/registration-token:
     post:
       operationId: createInstanceActionsRegistrationToken
@@ -10385,6 +10492,76 @@ paths:
         "403":
           $ref: "#/components/responses/Problem"
         "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /actions/runner-devices/{userCode}:
+    parameters:
+      - name: userCode
+        in: path
+        required: true
+        description: The code shown by the runner installer (XXXX-XXXX; case and dash are ignored)
+        schema:
+          type: string
+          maxLength: 32
+    get:
+      operationId: getActionsRunnerDevice
+      tags: [actions]
+      summary: Look up a pending runner registration
+      description: |
+        Session only. Returns the machine facts and requested settings a
+        runner installer sent with the RequestDevice call of the runner
+        protocol, while the request is pending (15 minutes). Wrong codes are
+        rate limited per account and client IP (429 with Retry-After).
+      responses:
+        "200":
+          description: The pending request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRunnerDevice"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: decideActionsRunnerDevice
+      tags: [actions]
+      summary: Approve or deny a pending runner registration
+      description: |
+        Session only. Approving registers the runner at the chosen scope:
+        instance (admins), org:<name> (owners) or repo:<owner>/<name>
+        (repository admins). The installer's next poll receives a
+        single-use registration token and the approved name, labels and
+        capacity. Recorded in the audit log.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActionsRunnerDeviceDecision"
+      responses:
+        "204":
+          description: Recorded
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        "429":
           $ref: "#/components/responses/Problem"
         "503":
           $ref: "#/components/responses/Unavailable"
@@ -11130,7 +11307,7 @@ components:
           items: {type: string, maxLength: 39}
     ActionsRunner:
       type: object
-      required: [id, name, scope, labels, version, ephemeral, online, busy, createdAt]
+      required: [id, name, scope, labels, version, ephemeral, online, busy, paused, status, running, capacity, createdAt]
       properties:
         id: {type: string, format: uuid}
         name: {type: string}
@@ -11142,8 +11319,61 @@ components:
         ephemeral: {type: boolean}
         online: {type: boolean}
         busy: {type: boolean}
+        paused: {type: boolean, description: Takes no new jobs; running ones finish}
+        status:
+          type: string
+          enum: [offline, paused, idle, online, busy]
+          description: |
+            offline (silent), paused, idle (no job), online (running jobs
+            below capacity) or busy (every slot taken).
+        running: {type: integer, description: Jobs running now}
+        capacity: {type: integer, description: Jobs it runs at the same time as it reported; 0 when unknown}
         lastSeenAt: {type: string, format: date-time, nullable: true}
         createdAt: {type: string, format: date-time}
+    ActionsRunnerPause:
+      type: object
+      required: [paused]
+      properties:
+        paused: {type: boolean}
+    ActionsRunnerDevice:
+      type: object
+      required: [userCode, hostname, os, arch, cpus, memoryBytes, docker, version, name, labels, capacity,
+        requestIp, canInstance, createdAt, expiresAt]
+      properties:
+        userCode: {type: string, description: XXXX-XXXX}
+        hostname: {type: string}
+        os: {type: string}
+        arch: {type: string}
+        cpus: {type: integer}
+        memoryBytes: {type: integer, format: int64}
+        docker: {type: boolean, description: Docker was found on the machine}
+        version: {type: string, description: ervisio-runner version}
+        name: {type: string, description: Requested runner name}
+        labels:
+          type: array
+          description: Requested label names
+          items: {type: string}
+        capacity: {type: integer, description: Requested capacity}
+        requestIp: {type: string}
+        canInstance: {type: boolean, description: The caller may approve an instance runner}
+        createdAt: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+    ActionsRunnerDeviceDecision:
+      type: object
+      required: [approve]
+      properties:
+        approve: {type: boolean}
+        scope:
+          type: string
+          maxLength: 300
+          description: "instance, org:<name> or repo:<owner>/<name>; required to approve"
+        name: {type: string, maxLength: 255, description: Defaults to the requested name}
+        labels:
+          type: array
+          maxItems: 64
+          description: Label names; defaults to the requested ones
+          items: {type: string, maxLength: 255}
+        capacity: {type: integer, minimum: 0, maximum: 64, description: 0 keeps the requested capacity}
     ActionsRegistrationToken:
       type: object
       required: [token, scope, expiresAt]

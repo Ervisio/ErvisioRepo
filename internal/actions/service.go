@@ -148,6 +148,8 @@ type Service struct {
 
 	hub       *hub
 	listening atomic.Bool
+	// device rate-limits runner device codes per IP and wrong user codes.
+	device *auth.Limiter
 }
 
 // system acts for Actions inside the server (check runs, statuses).
@@ -177,7 +179,9 @@ func New(o Options) (*Service, error) {
 		return nil, err
 	}
 	s := &Service{pool: o.Pool, q: dbgen.New(o.Pool), log: o.Log.With("component", "actions"), cfg: o.Config,
-		public: strings.TrimRight(o.PublicURL, "/"), seal: sl, box: bk, jwtKey: key, now: o.Now, hub: newHub()}
+		public: strings.TrimRight(o.PublicURL, "/"), seal: sl, box: bk, jwtKey: key, now: o.Now, hub: newHub(),
+		device: auth.NewLimiter(auth.LimiterConfig{FreeFailuresAccount: 5, FreeFailuresIP: 10,
+			BackoffBase: 2 * time.Second, BackoffMax: 5 * time.Minute, ActionsPerHour: deviceCodesPerHour}, o.Now)}
 	if o.Storage != nil {
 		c, err := o.Storage.Class("actions")
 		if err != nil {

@@ -129,7 +129,7 @@ func (s *Service) StartDevice(ctx context.Context, clientID, scope, deviceName, 
 	deviceCode := hex.EncodeToString(raw[:])
 	expires := s.now().Add(DeviceCodeTTL)
 	for range 5 {
-		userCode := newUserCode()
+		userCode := NewUserCode()
 		err = s.q.InsertDeviceCode(ctx, dbgen.InsertDeviceCodeParams{ID: id, DeviceCodeHash: auth.HashToken(deviceCode),
 			UserCode: userCode, ClientID: clientID, Scopes: scopes, DeviceName: cleanDeviceName(deviceName),
 			RequestIp: ip, IntervalSeconds: int32(DevicePollInterval / time.Second),
@@ -149,7 +149,8 @@ func (s *Service) StartDevice(ctx context.Context, clientID, scope, deviceName, 
 // userCodeAlphabet has no vowels (no words) and no look-alike letters.
 const userCodeAlphabet = "BCDFGHJKLMNPQRSTVWXZ"
 
-func newUserCode() string {
+// NewUserCode draws an eight-letter user code (see FormatUserCode).
+func NewUserCode() string {
 	var b [8]byte
 	_, _ = rand.Read(b[:])
 	out := make([]byte, len(b))

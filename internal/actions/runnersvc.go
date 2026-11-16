@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/Ervisio/ErvisioRepo/internal/audit"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/bots"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
@@ -124,7 +125,7 @@ func (s *Service) runnerScope(ctx context.Context, scope string, owner, repo uui
 
 func (s *Service) protoRunner(ctx context.Context, rn dbgen.ActionsRunner) *runnerv1.Runner {
 	return &runnerv1.Runner{Id: rn.ID.String(), Name: rn.Name, Version: rn.Version, Labels: rn.RawLabels,
-		Ephemeral: rn.Ephemeral, Scope: s.runnerScope(ctx, rn.Scope, rn.OwnerID, rn.RepoID)}
+		Ephemeral: rn.Ephemeral, Scope: s.runnerScope(ctx, rn.Scope, rn.OwnerID, rn.RepoID), Paused: rn.Paused}
 }
 
 // Register exchanges a registration token for a runner credential.
@@ -140,6 +141,16 @@ func (r *RunnerService) Register(ctx context.Context, req *connect.Request[runne
 	}
 	if err != nil {
 		return nil, internalErr(r.s, "get registration token", err)
+	}
+	if rt.SingleUse {
+		// Device registration tokens work once; a concurrent use loses.
+		n, err := r.s.q.DeleteActionsRegistrationToken(ctx, rt.ID)
+		if err != nil {
+			return nil, internalErr(r.s, "use registration token", err)
+		}
+		if n == 0 {
+			return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("invalid or expired registration token"))
+		}
 	}
 	name := strings.TrimSpace(m.GetName())
 	if name == "" || len(name) > 255 {
@@ -182,7 +193,7 @@ func (r *RunnerService) Declare(ctx context.Context, req *connect.Request[runner
 		return nil, err
 	}
 	rn, err = r.s.q.DeclareActionsRunner(ctx, dbgen.DeclareActionsRunnerParams{Version: req.Msg.GetVersion(),
-		Labels: labels, RawLabels: raw, ID: rn.ID})
+		Labels: labels, RawLabels: raw, Capacity: clampCapacity(req.Msg.GetCapacity()), ID: rn.ID})
 	if err != nil {
 		return nil, internalErr(r.s, "declare runner", err)
 	}
@@ -204,7 +215,7 @@ func (r *RunnerService) FetchTask(ctx context.Context, req *connect.Request[runn
 		}
 		return connect.NewResponse(&runnerv1.FetchTaskResponse{TasksVersion: v}), nil
 	}
-	if req.Msg.GetCapacity() <= 0 {
+	if req.Msg.GetCapacity() <= 0 || rn.Paused {
 		return empty()
 	}
 	if rn.Ephemeral {
@@ -238,6 +249,10 @@ func (r *RunnerService) FetchTask(ctx context.Context, req *connect.Request[runn
 		s.wait(ctx, changed, left)
 		if err := s.q.TouchActionsRunner(ctx, rn.ID); err != nil && ctx.Err() == nil {
 			s.log.Warn("touch runner", "runner_id", rn.ID, "err", err)
+		}
+		// The runner may have been paused or removed meanwhile.
+		if cur, err := s.q.GetActionsRunner(ctx, rn.ID); err != nil || cur.Paused {
+			return empty()
 		}
 	}
 }
@@ -543,6 +558,11 @@ func (r *RunnerService) Heartbeat(ctx context.Context, req *connect.Request[runn
 	if err != nil {
 		return nil, err
 	}
+	if c := clampCapacity(req.Msg.GetCapacity()); c > 0 && c != rn.Capacity {
+		if err := r.s.q.SetActionsRunnerCapacity(ctx, dbgen.SetActionsRunnerCapacityParams{Capacity: c, ID: rn.ID}); err != nil {
+			r.s.log.Warn("runner capacity", "runner_id", rn.ID, "err", err)
+		}
+	}
 	ids := make([]uuid.UUID, 0, len(req.Msg.GetRunningTaskIds()))
 	var bad []string
 	for _, s := range req.Msg.GetRunningTaskIds() {
@@ -576,7 +596,24 @@ func (r *RunnerService) Heartbeat(ctx context.Context, req *connect.Request[runn
 	if out == nil {
 		out = []string{}
 	}
-	return connect.NewResponse(&runnerv1.HeartbeatResponse{CancelTaskIds: out}), nil
+	return connect.NewResponse(&runnerv1.HeartbeatResponse{CancelTaskIds: out, Paused: rn.Paused}), nil
+}
+
+// clampCapacity bounds a capacity reported by a runner (0 = unknown).
+func clampCapacity(c int32) int32 { return min(max(c, 0), 1024) }
+
+// Deregister removes the calling runner (ervisio-runner deregister, run by
+// the uninstaller). Its running jobs fail at the next sweep.
+func (r *RunnerService) Deregister(ctx context.Context, req *connect.Request[runnerv1.DeregisterRequest]) (*connect.Response[runnerv1.DeregisterResponse], error) {
+	rn, err := r.runner(ctx, req.Header())
+	if err != nil {
+		return nil, err
+	}
+	if _, err := r.s.q.DeleteActionsRunner(ctx, rn.ID); err != nil {
+		return nil, internalErr(r.s, "delete runner", err)
+	}
+	r.s.log.Info("actions runner deregistered itself", "runner_id", rn.ID, "name", rn.Name, "scope", rn.Scope)
+	return connect.NewResponse(&runnerv1.DeregisterResponse{}), nil
 }
 
 // LookupJobToken authenticates a job token (auth.JobTokenLookup): the
@@ -635,25 +672,46 @@ func (s *Service) LookupJobToken(ctx context.Context, token string) (auth.Princi
 
 // Runner is a registered runner as shown to users.
 type Runner struct {
-	ID         uuid.UUID
-	Name       string
-	Scope      string
-	Labels     []string
-	Version    string
-	Ephemeral  bool
-	Online     bool
-	Busy       bool
+	ID        uuid.UUID
+	Name      string
+	Scope     string
+	Labels    []string
+	Version   string
+	Ephemeral bool
+	Online    bool
+	Busy      bool
+	Paused    bool
+	// Status is offline, paused, idle, online (running below capacity)
+	// or busy (every slot taken).
+	Status string
+	// Running is the number of jobs running now; Capacity is what the
+	// runner reported (0 when unknown).
+	Running    int
+	Capacity   int
 	LastSeenAt *time.Time
 	CreatedAt  time.Time
 }
 
-func (s *Service) runnerFrom(ctx context.Context, rn dbgen.ActionsRunner, busy bool) Runner {
+func (s *Service) runnerFrom(ctx context.Context, rn dbgen.ActionsRunner, running int) Runner {
 	out := Runner{ID: rn.ID, Name: rn.Name, Scope: s.runnerScope(ctx, rn.Scope, rn.OwnerID, rn.RepoID),
-		Labels: rn.RawLabels, Version: rn.Version, Ephemeral: rn.Ephemeral, CreatedAt: rn.CreatedAt.Time, Busy: busy}
+		Labels: rn.RawLabels, Version: rn.Version, Ephemeral: rn.Ephemeral, CreatedAt: rn.CreatedAt.Time,
+		Busy: running > 0, Paused: rn.Paused, Running: running, Capacity: int(rn.Capacity)}
 	if rn.LastSeenAt.Valid {
 		t := rn.LastSeenAt.Time
 		out.LastSeenAt = &t
 		out.Online = rn.Online && s.now().Sub(t) < s.offlineAfter()
+	}
+	switch {
+	case !out.Online:
+		out.Status = "offline"
+	case rn.Paused:
+		out.Status = "paused"
+	case running == 0:
+		out.Status = "idle"
+	case out.Capacity > 0 && running < out.Capacity:
+		out.Status = "online"
+	default:
+		out.Status = "busy"
 	}
 	return out
 }
@@ -709,27 +767,85 @@ func (s *Service) runnersFrom(ctx context.Context, rows []dbgen.ActionsRunner) (
 		if err != nil {
 			return nil, fmt.Errorf("runner jobs: %w", err)
 		}
-		out = append(out, s.runnerFrom(ctx, rn, len(running) > 0))
+		out = append(out, s.runnerFrom(ctx, rn, len(running)))
 	}
 	return out, nil
+}
+
+// scopedRunner returns runner id when it is registered at sc.
+func (s *Service) scopedRunner(ctx context.Context, sc Scope, id uuid.UUID) (dbgen.ActionsRunner, error) {
+	if err := runnerScopeOK(sc); err != nil {
+		return dbgen.ActionsRunner{}, err
+	}
+	rn, err := s.q.GetActionsRunner(ctx, id)
+	if isNoRows(err) {
+		return dbgen.ActionsRunner{}, ErrNotFound
+	}
+	if err != nil {
+		return dbgen.ActionsRunner{}, fmt.Errorf("get runner: %w", err)
+	}
+	owner, repo := sc.params()
+	if rn.Scope != sc.kind || rn.OwnerID != owner || rn.RepoID != repo {
+		return dbgen.ActionsRunner{}, ErrNotFound
+	}
+	return rn, nil
+}
+
+// Audit actions of runner administration.
+const (
+	ActionRunnerPaused  = "actions.runner_paused"
+	ActionRunnerResumed = "actions.runner_resumed"
+)
+
+// SetRunnerPaused pauses or resumes a runner registered at a scope. A
+// paused runner finishes its jobs and gets no new ones.
+func (s *Service) SetRunnerPaused(ctx context.Context, who auth.Principal, sc Scope, id uuid.UUID, paused bool, ip string) (Runner, error) {
+	if _, err := s.scopedRunner(ctx, sc, id); err != nil {
+		return Runner{}, err
+	}
+	var rn dbgen.ActionsRunner
+	action := ActionRunnerResumed
+	if paused {
+		action = ActionRunnerPaused
+	}
+	err := s.tx(ctx, func(q *dbgen.Queries) error {
+		var err error
+		if rn, err = q.SetActionsRunnerPaused(ctx, dbgen.SetActionsRunnerPausedParams{Paused: paused, ID: id}); err != nil {
+			return fmt.Errorf("pause runner: %w", err)
+		}
+		return audit.Record(ctx, q, audit.Event{Actor: who.UserID, Action: action, TargetType: "actions_runner",
+			TargetID: id.String(), IP: ip, OrgID: sc.auditOrg(), Data: map[string]any{"name": rn.Name, "scope": sc.label}})
+	})
+	if isNoRows(err) {
+		return Runner{}, ErrNotFound
+	}
+	if err != nil {
+		return Runner{}, err
+	}
+	s.log.Info("actions runner paused", "runner_id", id, "paused", paused, "by", who.Username)
+	// Wake the long polls: a paused runner stops claiming, a resumed one
+	// looks for work at once.
+	s.hub.fireTasks()
+	running, err := s.q.ListRunningActionsJobsOfRunner(ctx, nullID(rn.ID))
+	if err != nil {
+		return Runner{}, fmt.Errorf("runner jobs: %w", err)
+	}
+	return s.runnerFrom(ctx, rn, len(running)), nil
+}
+
+// auditOrg is the namespace whose audit log shows events of an org scope.
+func (s Scope) auditOrg() uuid.UUID {
+	if s.kind == "org" {
+		return s.ownerID
+	}
+	return uuid.Nil
 }
 
 // DeleteRunner removes a runner registered at a scope; its running jobs
 // fail at the next sweep.
 func (s *Service) DeleteRunner(ctx context.Context, sc Scope, id uuid.UUID) error {
-	if err := runnerScopeOK(sc); err != nil {
+	if _, err := s.scopedRunner(ctx, sc, id); err != nil {
 		return err
-	}
-	rn, err := s.q.GetActionsRunner(ctx, id)
-	if isNoRows(err) {
-		return ErrNotFound
-	}
-	if err != nil {
-		return fmt.Errorf("get runner: %w", err)
-	}
-	owner, repo := sc.params()
-	if rn.Scope != sc.kind || rn.OwnerID != owner || rn.RepoID != repo {
-		return ErrNotFound
 	}
 	n, err := s.q.DeleteActionsRunner(ctx, id)
 	if err != nil {
@@ -768,7 +884,7 @@ func (s *Service) CreateRegistrationToken(ctx context.Context, who auth.Principa
 	owner, repo := sc.params()
 	if _, err := s.q.InsertActionsRegistrationToken(ctx, dbgen.InsertActionsRegistrationTokenParams{ID: id,
 		TokenHash: hash, Scope: sc.kind, OwnerID: owner, RepoID: repo, CreatedBy: nullID(who.UserID),
-		ExpiresAt: ts(exp)}); err != nil {
+		ExpiresAt: ts(exp), SingleUse: false}); err != nil {
 		return RegistrationToken{}, fmt.Errorf("insert registration token: %w", err)
 	}
 	s.log.Info("actions registration token created", "scope", sc.label, "by", who.Username)

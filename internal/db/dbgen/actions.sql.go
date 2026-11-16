@@ -219,6 +219,15 @@ func (q *Queries) CompleteOpenActionsSteps(ctx context.Context, arg CompleteOpen
 	return err
 }
 
+const consumeActionsRunnerDevice = `-- name: ConsumeActionsRunnerDevice :exec
+UPDATE actions_runner_devices SET status = 'consumed' WHERE id = $1
+`
+
+func (q *Queries) ConsumeActionsRunnerDevice(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, consumeActionsRunnerDevice, id)
+	return err
+}
+
 const countActionsExternalRuns = `-- name: CountActionsExternalRuns :one
 SELECT count(*) FROM actions_external_runs
 WHERE repo_id = $1
@@ -304,18 +313,53 @@ func (q *Queries) CountActionsRuns(ctx context.Context, arg CountActionsRunsPara
 	return count, err
 }
 
+const decideActionsRunnerDevice = `-- name: DecideActionsRunnerDevice :exec
+UPDATE actions_runner_devices
+SET status = $1, scope = $2, owner_id = $3, repo_id = $4,
+    name = $5, labels = $6, capacity = $7, decided_by = $8
+WHERE id = $9
+`
+
+type DecideActionsRunnerDeviceParams struct {
+	Status    string
+	Scope     pgtype.Text
+	OwnerID   uuid.NullUUID
+	RepoID    uuid.NullUUID
+	Name      string
+	Labels    []string
+	Capacity  int32
+	DecidedBy uuid.NullUUID
+	ID        uuid.UUID
+}
+
+func (q *Queries) DecideActionsRunnerDevice(ctx context.Context, arg DecideActionsRunnerDeviceParams) error {
+	_, err := q.db.Exec(ctx, decideActionsRunnerDevice,
+		arg.Status,
+		arg.Scope,
+		arg.OwnerID,
+		arg.RepoID,
+		arg.Name,
+		arg.Labels,
+		arg.Capacity,
+		arg.DecidedBy,
+		arg.ID,
+	)
+	return err
+}
+
 const declareActionsRunner = `-- name: DeclareActionsRunner :one
 UPDATE actions_runners
-SET version = $1, labels = $2, raw_labels = $3, online = true, last_seen_at = now(),
-    updated_at = now()
-WHERE id = $4
-RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at
+SET version = $1, labels = $2, raw_labels = $3, capacity = $4, online = true,
+    last_seen_at = now(), updated_at = now()
+WHERE id = $5
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity
 `
 
 type DeclareActionsRunnerParams struct {
 	Version   string
 	Labels    []string
 	RawLabels []string
+	Capacity  int32
 	ID        uuid.UUID
 }
 
@@ -324,6 +368,7 @@ func (q *Queries) DeclareActionsRunner(ctx context.Context, arg DeclareActionsRu
 		arg.Version,
 		arg.Labels,
 		arg.RawLabels,
+		arg.Capacity,
 		arg.ID,
 	)
 	var i ActionsRunner
@@ -343,6 +388,8 @@ func (q *Queries) DeclareActionsRunner(ctx context.Context, arg DeclareActionsRu
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Paused,
+		&i.Capacity,
 	)
 	return i, err
 }
@@ -371,6 +418,18 @@ DELETE FROM actions_log_rows WHERE job_id = $1
 func (q *Queries) DeleteActionsLogRows(ctx context.Context, jobID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteActionsLogRows, jobID)
 	return err
+}
+
+const deleteActionsRegistrationToken = `-- name: DeleteActionsRegistrationToken :execrows
+DELETE FROM actions_registration_tokens WHERE id = $1
+`
+
+func (q *Queries) DeleteActionsRegistrationToken(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteActionsRegistrationToken, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const deleteActionsRunner = `-- name: DeleteActionsRunner :execrows
@@ -452,6 +511,15 @@ DELETE FROM actions_registration_tokens WHERE expires_at <= now()
 
 func (q *Queries) DeleteExpiredActionsRegistrationTokens(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, deleteExpiredActionsRegistrationTokens)
+	return err
+}
+
+const deleteExpiredActionsRunnerDevices = `-- name: DeleteExpiredActionsRunnerDevices :exec
+DELETE FROM actions_runner_devices WHERE expires_at <= $1
+`
+
+func (q *Queries) DeleteExpiredActionsRunnerDevices(ctx context.Context, before pgtype.Timestamptz) error {
+	_, err := q.db.Exec(ctx, deleteExpiredActionsRunnerDevices, before)
 	return err
 }
 
@@ -665,7 +733,7 @@ func (q *Queries) GetActionsNamespaceName(ctx context.Context, id uuid.UUID) (st
 }
 
 const getActionsRegistrationToken = `-- name: GetActionsRegistrationToken :one
-SELECT id, token_hash, scope, owner_id, repo_id, created_by, expires_at, created_at FROM actions_registration_tokens WHERE token_hash = $1 AND expires_at > now()
+SELECT id, token_hash, scope, owner_id, repo_id, created_by, expires_at, created_at, single_use FROM actions_registration_tokens WHERE token_hash = $1 AND expires_at > now()
 `
 
 func (q *Queries) GetActionsRegistrationToken(ctx context.Context, tokenHash []byte) (ActionsRegistrationToken, error) {
@@ -680,6 +748,7 @@ func (q *Queries) GetActionsRegistrationToken(ctx context.Context, tokenHash []b
 		&i.CreatedBy,
 		&i.ExpiresAt,
 		&i.CreatedAt,
+		&i.SingleUse,
 	)
 	return i, err
 }
@@ -765,7 +834,7 @@ func (q *Queries) GetActionsRunForUpdate(ctx context.Context, id uuid.UUID) (Act
 }
 
 const getActionsRunner = `-- name: GetActionsRunner :one
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at FROM actions_runners WHERE id = $1
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity FROM actions_runners WHERE id = $1
 `
 
 func (q *Queries) GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRunner, error) {
@@ -787,12 +856,14 @@ func (q *Queries) GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRu
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Paused,
+		&i.Capacity,
 	)
 	return i, err
 }
 
 const getActionsRunnerByCredential = `-- name: GetActionsRunnerByCredential :one
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at FROM actions_runners WHERE credential_hash = $1
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity FROM actions_runners WHERE credential_hash = $1
 `
 
 func (q *Queries) GetActionsRunnerByCredential(ctx context.Context, credentialHash []byte) (ActionsRunner, error) {
@@ -814,6 +885,43 @@ func (q *Queries) GetActionsRunnerByCredential(ctx context.Context, credentialHa
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Paused,
+		&i.Capacity,
+	)
+	return i, err
+}
+
+const getActionsRunnerDeviceByHashForUpdate = `-- name: GetActionsRunnerDeviceByHashForUpdate :one
+SELECT id, device_code_hash, user_code, status, hostname, os, arch, cpus, memory_bytes, docker, version, name, labels, capacity, request_ip, scope, owner_id, repo_id, decided_by, interval_seconds, last_poll_at, expires_at, created_at FROM actions_runner_devices WHERE device_code_hash = $1 FOR UPDATE
+`
+
+func (q *Queries) GetActionsRunnerDeviceByHashForUpdate(ctx context.Context, deviceCodeHash []byte) (ActionsRunnerDevice, error) {
+	row := q.db.QueryRow(ctx, getActionsRunnerDeviceByHashForUpdate, deviceCodeHash)
+	var i ActionsRunnerDevice
+	err := row.Scan(
+		&i.ID,
+		&i.DeviceCodeHash,
+		&i.UserCode,
+		&i.Status,
+		&i.Hostname,
+		&i.Os,
+		&i.Arch,
+		&i.Cpus,
+		&i.MemoryBytes,
+		&i.Docker,
+		&i.Version,
+		&i.Name,
+		&i.Labels,
+		&i.Capacity,
+		&i.RequestIp,
+		&i.Scope,
+		&i.OwnerID,
+		&i.RepoID,
+		&i.DecidedBy,
+		&i.IntervalSeconds,
+		&i.LastPollAt,
+		&i.ExpiresAt,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -827,6 +935,77 @@ func (q *Queries) GetActionsTasksVersion(ctx context.Context) (int64, error) {
 	var version int64
 	err := row.Scan(&version)
 	return version, err
+}
+
+const getPendingActionsRunnerDevice = `-- name: GetPendingActionsRunnerDevice :one
+SELECT id, device_code_hash, user_code, status, hostname, os, arch, cpus, memory_bytes, docker, version, name, labels, capacity, request_ip, scope, owner_id, repo_id, decided_by, interval_seconds, last_poll_at, expires_at, created_at FROM actions_runner_devices WHERE user_code = $1 AND status = 'pending' AND expires_at > now()
+`
+
+func (q *Queries) GetPendingActionsRunnerDevice(ctx context.Context, userCode string) (ActionsRunnerDevice, error) {
+	row := q.db.QueryRow(ctx, getPendingActionsRunnerDevice, userCode)
+	var i ActionsRunnerDevice
+	err := row.Scan(
+		&i.ID,
+		&i.DeviceCodeHash,
+		&i.UserCode,
+		&i.Status,
+		&i.Hostname,
+		&i.Os,
+		&i.Arch,
+		&i.Cpus,
+		&i.MemoryBytes,
+		&i.Docker,
+		&i.Version,
+		&i.Name,
+		&i.Labels,
+		&i.Capacity,
+		&i.RequestIp,
+		&i.Scope,
+		&i.OwnerID,
+		&i.RepoID,
+		&i.DecidedBy,
+		&i.IntervalSeconds,
+		&i.LastPollAt,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getPendingActionsRunnerDeviceForUpdate = `-- name: GetPendingActionsRunnerDeviceForUpdate :one
+SELECT id, device_code_hash, user_code, status, hostname, os, arch, cpus, memory_bytes, docker, version, name, labels, capacity, request_ip, scope, owner_id, repo_id, decided_by, interval_seconds, last_poll_at, expires_at, created_at FROM actions_runner_devices WHERE user_code = $1 AND status = 'pending' AND expires_at > now()
+FOR UPDATE
+`
+
+func (q *Queries) GetPendingActionsRunnerDeviceForUpdate(ctx context.Context, userCode string) (ActionsRunnerDevice, error) {
+	row := q.db.QueryRow(ctx, getPendingActionsRunnerDeviceForUpdate, userCode)
+	var i ActionsRunnerDevice
+	err := row.Scan(
+		&i.ID,
+		&i.DeviceCodeHash,
+		&i.UserCode,
+		&i.Status,
+		&i.Hostname,
+		&i.Os,
+		&i.Arch,
+		&i.Cpus,
+		&i.MemoryBytes,
+		&i.Docker,
+		&i.Version,
+		&i.Name,
+		&i.Labels,
+		&i.Capacity,
+		&i.RequestIp,
+		&i.Scope,
+		&i.OwnerID,
+		&i.RepoID,
+		&i.DecidedBy,
+		&i.IntervalSeconds,
+		&i.LastPollAt,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const insertActionsJob = `-- name: InsertActionsJob :one
@@ -969,9 +1148,9 @@ func (q *Queries) InsertActionsLogRows(ctx context.Context, arg InsertActionsLog
 
 const insertActionsRegistrationToken = `-- name: InsertActionsRegistrationToken :one
 
-INSERT INTO actions_registration_tokens (id, token_hash, scope, owner_id, repo_id, created_by, expires_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, token_hash, scope, owner_id, repo_id, created_by, expires_at, created_at
+INSERT INTO actions_registration_tokens (id, token_hash, scope, owner_id, repo_id, created_by, expires_at, single_use)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, token_hash, scope, owner_id, repo_id, created_by, expires_at, created_at, single_use
 `
 
 type InsertActionsRegistrationTokenParams struct {
@@ -982,6 +1161,7 @@ type InsertActionsRegistrationTokenParams struct {
 	RepoID    uuid.NullUUID
 	CreatedBy uuid.NullUUID
 	ExpiresAt pgtype.Timestamptz
+	SingleUse bool
 }
 
 // ---- registration tokens ----
@@ -994,6 +1174,7 @@ func (q *Queries) InsertActionsRegistrationToken(ctx context.Context, arg Insert
 		arg.RepoID,
 		arg.CreatedBy,
 		arg.ExpiresAt,
+		arg.SingleUse,
 	)
 	var i ActionsRegistrationToken
 	err := row.Scan(
@@ -1005,6 +1186,7 @@ func (q *Queries) InsertActionsRegistrationToken(ctx context.Context, arg Insert
 		&i.CreatedBy,
 		&i.ExpiresAt,
 		&i.CreatedAt,
+		&i.SingleUse,
 	)
 	return i, err
 }
@@ -1108,7 +1290,7 @@ INSERT INTO actions_runners (id, name, scope, owner_id, repo_id, labels, raw_lab
     credential_hash, online, last_seen_at, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
     $10, true, now(), $11)
-RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity
 `
 
 type InsertActionsRunnerParams struct {
@@ -1158,8 +1340,60 @@ func (q *Queries) InsertActionsRunner(ctx context.Context, arg InsertActionsRunn
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Paused,
+		&i.Capacity,
 	)
 	return i, err
+}
+
+const insertActionsRunnerDevice = `-- name: InsertActionsRunnerDevice :exec
+
+INSERT INTO actions_runner_devices (id, device_code_hash, user_code, hostname, os, arch, cpus, memory_bytes, docker,
+    version, name, labels, capacity, request_ip, interval_seconds, expires_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
+    $10, $11, $12, $13, $14, $15, $16)
+`
+
+type InsertActionsRunnerDeviceParams struct {
+	ID              uuid.UUID
+	DeviceCodeHash  []byte
+	UserCode        string
+	Hostname        string
+	Os              string
+	Arch            string
+	Cpus            int32
+	MemoryBytes     int64
+	Docker          bool
+	Version         string
+	Name            string
+	Labels          []string
+	Capacity        int32
+	RequestIp       string
+	IntervalSeconds int32
+	ExpiresAt       pgtype.Timestamptz
+}
+
+// ---- runner device registration ----
+func (q *Queries) InsertActionsRunnerDevice(ctx context.Context, arg InsertActionsRunnerDeviceParams) error {
+	_, err := q.db.Exec(ctx, insertActionsRunnerDevice,
+		arg.ID,
+		arg.DeviceCodeHash,
+		arg.UserCode,
+		arg.Hostname,
+		arg.Os,
+		arg.Arch,
+		arg.Cpus,
+		arg.MemoryBytes,
+		arg.Docker,
+		arg.Version,
+		arg.Name,
+		arg.Labels,
+		arg.Capacity,
+		arg.RequestIp,
+		arg.IntervalSeconds,
+		arg.ExpiresAt,
+	)
+	return err
 }
 
 const insertActionsSchedule = `-- name: InsertActionsSchedule :exec
@@ -1699,7 +1933,7 @@ func (q *Queries) ListActionsRunKeys(ctx context.Context, arg ListActionsRunKeys
 }
 
 const listActionsRunners = `-- name: ListActionsRunners :many
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at FROM actions_runners
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity FROM actions_runners
 WHERE scope = $1
   AND owner_id IS NOT DISTINCT FROM $2::uuid
   AND repo_id IS NOT DISTINCT FROM $3::uuid
@@ -1739,6 +1973,8 @@ func (q *Queries) ListActionsRunners(ctx context.Context, arg ListActionsRunners
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Paused,
+			&i.Capacity,
 		); err != nil {
 			return nil, err
 		}
@@ -1751,7 +1987,7 @@ func (q *Queries) ListActionsRunners(ctx context.Context, arg ListActionsRunners
 }
 
 const listActionsRunnersForRepo = `-- name: ListActionsRunnersForRepo :many
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at FROM actions_runners
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity FROM actions_runners
 WHERE scope = 'instance' OR (scope = 'org' AND owner_id = $1) OR (scope = 'repo' AND repo_id = $2)
 ORDER BY scope, name, id
 `
@@ -1787,6 +2023,8 @@ func (q *Queries) ListActionsRunnersForRepo(ctx context.Context, arg ListActions
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Paused,
+			&i.Capacity,
 		); err != nil {
 			return nil, err
 		}
@@ -2811,6 +3049,69 @@ type SetActionsRunStatusParams struct {
 func (q *Queries) SetActionsRunStatus(ctx context.Context, arg SetActionsRunStatusParams) error {
 	_, err := q.db.Exec(ctx, setActionsRunStatus, arg.Status, arg.Conclusion, arg.ID)
 	return err
+}
+
+const setActionsRunnerCapacity = `-- name: SetActionsRunnerCapacity :exec
+UPDATE actions_runners SET capacity = $1 WHERE id = $2 AND capacity <> $1
+`
+
+type SetActionsRunnerCapacityParams struct {
+	Capacity int32
+	ID       uuid.UUID
+}
+
+func (q *Queries) SetActionsRunnerCapacity(ctx context.Context, arg SetActionsRunnerCapacityParams) error {
+	_, err := q.db.Exec(ctx, setActionsRunnerCapacity, arg.Capacity, arg.ID)
+	return err
+}
+
+const setActionsRunnerDevicePoll = `-- name: SetActionsRunnerDevicePoll :exec
+UPDATE actions_runner_devices SET last_poll_at = $1, interval_seconds = $2 WHERE id = $3
+`
+
+type SetActionsRunnerDevicePollParams struct {
+	PolledAt        pgtype.Timestamptz
+	IntervalSeconds int32
+	ID              uuid.UUID
+}
+
+func (q *Queries) SetActionsRunnerDevicePoll(ctx context.Context, arg SetActionsRunnerDevicePollParams) error {
+	_, err := q.db.Exec(ctx, setActionsRunnerDevicePoll, arg.PolledAt, arg.IntervalSeconds, arg.ID)
+	return err
+}
+
+const setActionsRunnerPaused = `-- name: SetActionsRunnerPaused :one
+UPDATE actions_runners SET paused = $1, updated_at = now() WHERE id = $2 RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity
+`
+
+type SetActionsRunnerPausedParams struct {
+	Paused bool
+	ID     uuid.UUID
+}
+
+func (q *Queries) SetActionsRunnerPaused(ctx context.Context, arg SetActionsRunnerPausedParams) (ActionsRunner, error) {
+	row := q.db.QueryRow(ctx, setActionsRunnerPaused, arg.Paused, arg.ID)
+	var i ActionsRunner
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Scope,
+		&i.OwnerID,
+		&i.RepoID,
+		&i.Labels,
+		&i.RawLabels,
+		&i.Version,
+		&i.Ephemeral,
+		&i.CredentialHash,
+		&i.Online,
+		&i.LastSeenAt,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Paused,
+		&i.Capacity,
+	)
+	return i, err
 }
 
 const setActionsScheduleNext = `-- name: SetActionsScheduleNext :exec

@@ -5855,6 +5855,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repos/{owner}/{name}/actions/runners/{runnerId}/paused": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Pause or resume a self-hosted runner
+         * @description A paused runner finishes the jobs it is running but takes no new
+         *     ones until it is resumed. Recorded in the audit log.
+         */
+        put: operations["setRepoActionsRunnerPaused"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/repos/{owner}/{name}/actions/runners/registration-token": {
         parameters: {
             query?: never;
@@ -6007,6 +6033,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/orgs/{org}/actions/runners/{runnerId}/paused": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Pause or resume a self-hosted runner
+         * @description A paused runner finishes the jobs it is running but takes no new
+         *     ones until it is resumed. Recorded in the audit log.
+         */
+        put: operations["setOrgActionsRunnerPaused"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/orgs/{org}/actions/runners/registration-token": {
         parameters: {
             query?: never;
@@ -6068,6 +6118,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/actions/runners/{runnerId}/paused": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Pause or resume a self-hosted runner
+         * @description A paused runner finishes the jobs it is running but takes no new
+         *     ones until it is resumed. Recorded in the audit log.
+         */
+        put: operations["setInstanceActionsRunnerPaused"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/actions/runners/registration-token": {
         parameters: {
             query?: never;
@@ -6079,6 +6152,40 @@ export interface paths {
         put?: never;
         /** Create a runner registration token */
         post: operations["createInstanceActionsRegistrationToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/actions/runner-devices/{userCode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The code shown by the runner installer (XXXX-XXXX; case and dash are ignored) */
+                userCode: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Look up a pending runner registration
+         * @description Session only. Returns the machine facts and requested settings a
+         *     runner installer sent with the RequestDevice call of the runner
+         *     protocol, while the request is pending (15 minutes). Wrong codes are
+         *     rate limited per account and client IP (429 with Retry-After).
+         */
+        get: operations["getActionsRunnerDevice"];
+        put?: never;
+        /**
+         * Approve or deny a pending runner registration
+         * @description Session only. Approving registers the runner at the chosen scope:
+         *     instance (admins), org:<name> (owners) or repo:<owner>/<name>
+         *     (repository admins). The installer's next poll receives a
+         *     single-use registration token and the approved name, labels and
+         *     capacity. Recorded in the audit log.
+         */
+        post: operations["decideActionsRunnerDevice"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6408,10 +6515,63 @@ export interface components {
             ephemeral: boolean;
             online: boolean;
             busy: boolean;
+            /** @description Takes no new jobs; running ones finish */
+            paused: boolean;
+            /**
+             * @description offline (silent), paused, idle (no job), online (running jobs
+             *     below capacity) or busy (every slot taken).
+             * @enum {string}
+             */
+            status: "offline" | "paused" | "idle" | "online" | "busy";
+            /** @description Jobs running now */
+            running: number;
+            /** @description Jobs it runs at the same time as it reported; 0 when unknown */
+            capacity: number;
             /** Format: date-time */
             lastSeenAt?: string | null;
             /** Format: date-time */
             createdAt: string;
+        };
+        ActionsRunnerPause: {
+            paused: boolean;
+        };
+        ActionsRunnerDevice: {
+            /** @description XXXX-XXXX */
+            userCode: string;
+            hostname: string;
+            os: string;
+            arch: string;
+            cpus: number;
+            /** Format: int64 */
+            memoryBytes: number;
+            /** @description Docker was found on the machine */
+            docker: boolean;
+            /** @description ervisio-runner version */
+            version: string;
+            /** @description Requested runner name */
+            name: string;
+            /** @description Requested label names */
+            labels: string[];
+            /** @description Requested capacity */
+            capacity: number;
+            requestIp: string;
+            /** @description The caller may approve an instance runner */
+            canInstance: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        ActionsRunnerDeviceDecision: {
+            approve: boolean;
+            /** @description instance, org:<name> or repo:<owner>/<name>; required to approve */
+            scope?: string;
+            /** @description Defaults to the requested name */
+            name?: string;
+            /** @description Label names; defaults to the requested ones */
+            labels?: string[];
+            /** @description 0 keeps the requested capacity */
+            capacity?: number;
         };
         ActionsRegistrationToken: {
             /** @description errt_... secret, shown only once */
@@ -19491,6 +19651,40 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    setRepoActionsRunnerPaused: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsRunnerPause"];
+            };
+        };
+        responses: {
+            /** @description The runner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunner"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
     createRepoActionsRegistrationToken: {
         parameters: {
             query?: never;
@@ -19741,6 +19935,37 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    setOrgActionsRunnerPaused: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsRunnerPause"];
+            };
+        };
+        responses: {
+            /** @description The runner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunner"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
     createOrgActionsRegistrationToken: {
         parameters: {
             query?: never;
@@ -19815,6 +20040,36 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    setInstanceActionsRunnerPaused: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsRunnerPause"];
+            };
+        };
+        responses: {
+            /** @description The runner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunner"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
     createInstanceActionsRegistrationToken: {
         parameters: {
             query?: never;
@@ -19835,6 +20090,67 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getActionsRunnerDevice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The code shown by the runner installer (XXXX-XXXX; case and dash are ignored) */
+                userCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The pending request */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunnerDevice"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    decideActionsRunnerDevice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The code shown by the runner installer (XXXX-XXXX; case and dash are ignored) */
+                userCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsRunnerDeviceDecision"];
+            };
+        };
+        responses: {
+            /** @description Recorded */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
             503: components["responses"]["Unavailable"];
             default: components["responses"]["Problem"];
         };

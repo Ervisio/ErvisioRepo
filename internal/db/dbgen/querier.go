@@ -73,6 +73,7 @@ type Querier interface {
 	// Steps left open when a job ends are closed with the job.
 	CompleteOpenActionsSteps(ctx context.Context, arg CompleteOpenActionsStepsParams) error
 	ConfirmTOTP(ctx context.Context, arg ConfirmTOTPParams) (int64, error)
+	ConsumeActionsRunnerDevice(ctx context.Context, id uuid.UUID) error
 	ConsumeDeviceCode(ctx context.Context, arg ConsumeDeviceCodeParams) error
 	ConsumeInvite(ctx context.Context, arg ConsumeInviteParams) (ConsumeInviteRow, error)
 	// Deletes the challenge; a second use (or a concurrent one) matches no row.
@@ -127,12 +128,14 @@ type Querier interface {
 	// finalized artifact of the same name returns no row.
 	CreateActionsArtifact(ctx context.Context, arg CreateActionsArtifactParams) (ActionsArtifact, error)
 	CreateLFSLock(ctx context.Context, arg CreateLFSLockParams) (LfsLock, error)
+	DecideActionsRunnerDevice(ctx context.Context, arg DecideActionsRunnerDeviceParams) error
 	DecideDeviceCode(ctx context.Context, arg DecideDeviceCodeParams) error
 	DeclareActionsRunner(ctx context.Context, arg DeclareActionsRunnerParams) (ActionsRunner, error)
 	DeleteActionsArtifact(ctx context.Context, id int64) error
 	DeleteActionsCache(ctx context.Context, id int64) error
 	DeleteActionsEnvironment(ctx context.Context, arg DeleteActionsEnvironmentParams) (int64, error)
 	DeleteActionsLogRows(ctx context.Context, jobID uuid.UUID) error
+	DeleteActionsRegistrationToken(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteActionsRunner(ctx context.Context, id uuid.UUID) (int64, error)
 	// ---- schedules ----
 	DeleteActionsSchedules(ctx context.Context, repoID uuid.UUID) error
@@ -146,6 +149,7 @@ type Querier interface {
 	// Removes a network without members (its pool can then be trashed).
 	DeleteEmptyForkNetwork(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteExpiredActionsRegistrationTokens(ctx context.Context) error
+	DeleteExpiredActionsRunnerDevices(ctx context.Context, before pgtype.Timestamptz) error
 	// Keeps expired rows for an hour, so that a late poll still gets
 	// expired_token instead of an unknown code.
 	DeleteExpiredDeviceCodes(ctx context.Context) (int64, error)
@@ -269,6 +273,7 @@ type Querier interface {
 	GetActionsRunForUpdate(ctx context.Context, id uuid.UUID) (ActionsRun, error)
 	GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRunner, error)
 	GetActionsRunnerByCredential(ctx context.Context, credentialHash []byte) (ActionsRunner, error)
+	GetActionsRunnerDeviceByHashForUpdate(ctx context.Context, deviceCodeHash []byte) (ActionsRunnerDevice, error)
 	GetActionsTasksVersion(ctx context.Context) (int64, error)
 	GetAppByClientID(ctx context.Context, clientID string) (GetAppByClientIDRow, error)
 	GetAppByID(ctx context.Context, id uuid.UUID) (GetAppByIDRow, error)
@@ -352,6 +357,8 @@ type Querier interface {
 	GetOrgInviteByToken(ctx context.Context, tokenHash []byte) (GetOrgInviteByTokenRow, error)
 	GetOrgMemberRole(ctx context.Context, arg GetOrgMemberRoleParams) (string, error)
 	GetOutboxEvent(ctx context.Context, id uuid.UUID) (GetOutboxEventRow, error)
+	GetPendingActionsRunnerDevice(ctx context.Context, userCode string) (ActionsRunnerDevice, error)
+	GetPendingActionsRunnerDeviceForUpdate(ctx context.Context, userCode string) (ActionsRunnerDevice, error)
 	GetPendingDeviceCode(ctx context.Context, userCode string) (OauthDeviceCode, error)
 	GetPendingDeviceCodeForUpdate(ctx context.Context, userCode string) (OauthDeviceCode, error)
 	GetPendingPullReview(ctx context.Context, arg GetPendingPullReviewParams) (PullReview, error)
@@ -440,6 +447,8 @@ type Querier interface {
 	// Ervisio Actions (internal/actions, PLAN §6).
 	// ---- runners ----
 	InsertActionsRunner(ctx context.Context, arg InsertActionsRunnerParams) (ActionsRunner, error)
+	// ---- runner device registration ----
+	InsertActionsRunnerDevice(ctx context.Context, arg InsertActionsRunnerDeviceParams) error
 	InsertActionsSchedule(ctx context.Context, arg InsertActionsScheduleParams) error
 	InsertActivityEvent(ctx context.Context, arg InsertActivityEventParams) error
 	InsertApp(ctx context.Context, arg InsertAppParams) (pgtype.Int8, error)
@@ -961,6 +970,9 @@ type Querier interface {
 	SetActionsJobLogLength(ctx context.Context, arg SetActionsJobLogLengthParams) error
 	SetActionsJobStatus(ctx context.Context, arg SetActionsJobStatusParams) error
 	SetActionsRunStatus(ctx context.Context, arg SetActionsRunStatusParams) error
+	SetActionsRunnerCapacity(ctx context.Context, arg SetActionsRunnerCapacityParams) error
+	SetActionsRunnerDevicePoll(ctx context.Context, arg SetActionsRunnerDevicePollParams) error
+	SetActionsRunnerPaused(ctx context.Context, arg SetActionsRunnerPausedParams) (ActionsRunner, error)
 	SetActionsScheduleNext(ctx context.Context, arg SetActionsScheduleNextParams) error
 	SetDeviceCodePoll(ctx context.Context, arg SetDeviceCodePollParams) error
 	SetEmailNotifications(ctx context.Context, arg SetEmailNotificationsParams) error
