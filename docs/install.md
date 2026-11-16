@@ -46,14 +46,45 @@ cd deploy/docker
 
 The app listens on `127.0.0.1:3400` (web and API) and `127.0.0.1:2222` (SSH); change `BIND_ADDRESS`, `APP_PORT` and `SSH_PORT` in `.env`. Two networks exist: `private` (Postgres, internal) and `ervisiorepo_edge`, which only the `app` joins (alias `ervisiorepo-app`) so a Caddy container can reach it.
 
-Optional profiles:
+`setup.sh` also asks whether to start the built-in Actions runner (`--runner yes|no`, default yes); see [Runners](#runners). Optional profile:
 
 ```sh
-docker compose --profile runner up -d    # CI runner, mounts /var/run/docker.sock
 docker compose --profile backup up -d    # Postgres WAL archiving sidecar (see docs/backup.md)
 ```
 
-The runner can start containers on the host through the Docker socket: enable it only on machines you trust with that access.
+## Runners
+
+Runners execute Actions jobs. They are provided by the instance operator, like GitHub-hosted runners: runners registered in **Admin > Runners** form a shared pool that takes the jobs of every repository, so users only write `runs-on: ubuntu-latest` and need no setup. Organization and repository runners (their own Settings > Actions pages) are an optional extra for people who want dedicated machines.
+
+Every new runner gets these labels: `ubuntu-latest`, `ubuntu-24.04`, `ubuntu-22.04`, `self-hosted`, `linux` and `x64` or `arm64`, all running jobs in Docker containers from the images in `deploy/runner-images` (`ghcr.io/catthehacker/ubuntu:act-*`). Extra labels (`--labels gpu,big`) join the defaults with the same image; `name=docker://image` maps a label to another image.
+
+**Load sharing.** Runners only dial out and long-poll the server. A job goes to the first runner that asks for it and has every `runs-on` label; a runner asks only while it has a free slot, so a busy runner never holds jobs back from idle ones. `capacity` (jobs at the same time) defaults to half the CPUs, at least 1; set it with `--capacity N` at install or `runner.capacity` in the config. Several machines with the same labels share the queue: add a runner on the server and others on separate hosts to spread the load.
+
+### Built-in runner on the server
+
+- **Docker Compose**: `./setup.sh` (or `./setup.sh --runner yes`) writes `COMPOSE_PROFILES=runner` to `.env`, starts `app`, mints an instance registration token with `ervisio-repo actions runner-token` inside the `app` container and stores it in `data/runner/registration-token` (mode 0600). The `runner` container (`ervisio-runner daemon`) registers itself as `builtin` on first start, deletes the token file and keeps its credential and generated `config.toml` in `data/runner`. Tokens expire after `actions.registration_token_ttl` (1h), so no long-lived shared secret exists. `RUNNER_LABELS` and `RUNNER_CAPACITY` in `.env` set extra labels and capacity before the first start.
+- **Native packages**: `sudo ervisio-repo actions runner-setup` registers the runner `builtin` against the local listener, writes `/etc/ervisio-repo/runner.toml` and enables `ervisio-runner.service` (needs Docker and the `docker` group). Options: `--labels`, `--capacity`, `--url`, `--no-start`.
+
+Admin > Runners shows the built-in runner status at the top. To print a token for any scope from the server shell: `ervisio-repo actions runner-token --scope instance|org/<owner>|repo/<owner>/<name>`.
+
+Job containers clone the repository from the server's `public_url`: it must be reachable from the runner hosts (not `localhost`).
+
+### Remote runners
+
+In Admin > Runners click **New runner**: the dialog creates a registration token (valid 1h) and shows the command for each platform with the server URL, the token and the optional name, extra labels and capacity.
+
+- **Linux** (systemd): `curl -fsSL https://git.example.com/runner/install.sh | sudo sh -s -- --url https://git.example.com --token errt_…` installs `/usr/local/bin/ervisio-runner`, creates the user `ervisio-runner` (added to the `docker` group after you confirm, or with `--docker`), writes `/etc/ervisio-runner/config.toml`, registers and starts `ervisio-runner.service`. Without `sudo` it installs into `~/.local/bin` with a systemd user unit (`loginctl enable-linger` keeps it running after logout).
+- **macOS** (launchd): the same command without `sudo` installs `~/.local/bin/ervisio-runner` and the LaunchAgent `dev.ervisio.runner` (logs in `~/Library/Application Support/ervisio-runner/logs`). Jobs need Docker Desktop running.
+- **Windows**: in an elevated PowerShell, `& ([scriptblock]::Create((irm https://git.example.com/runner/install.ps1))) -Url https://git.example.com -Token errt_…` installs `%ProgramFiles%\ErvisioRunner\ervisio-runner.exe`, keeps config and state in `%ProgramData%\ervisio-runner` (SYSTEM and Administrators only) and registers the scheduled task `ErvisioRunner` (at boot, as SYSTEM, restarted on failure). A scheduled task is used because the runner is not a native Windows service and needs no extra tools. Jobs need Docker Desktop with Linux containers.
+- **Docker**: the dialog prints a `docker run … --entrypoint ervisio-runner ghcr.io/ervisio/ervisio-repo:<version> daemon …` command; the runner registers from `ERVISIO_RUNNER_URL`/`ERVISIO_RUNNER_TOKEN` (also `_NAME`, `_LABELS`, `_CAPACITY`) and keeps its state in the `ervisio-runner` volume.
+
+The scripts are served by the server at `/runner/install.sh` and `/runner/install.ps1` and download the runner of the server's version from the GitHub release (`ervisio-runner_<ver>_<os>_<arch>.tar.gz`, `.zip` on Windows), checking it against `ervisio-runner_<ver>_checksums.txt`. `--version X.Y.Z` picks another release.
+
+**Host mode.** Without Docker the installers stop. `--host` (`-HostMode` on Windows) runs jobs directly on the machine as the runner user, with labels `self-hosted`, the OS and the architecture: no isolation, so use it only for trusted repositories.
+
+**Security.** A runner with the Docker socket can start containers on its host, which is equivalent to root there: use dedicated machines. Fork pull requests from outside contributors wait for approval and never get secrets.
+
+**Uninstall.** `curl -fsSL https://git.example.com/runner/install.sh | sudo sh -s -- --uninstall` (add `--purge` to delete config and credential), `-Uninstall [-Purge]` on Windows, `docker rm -f ervisio-runner` for Docker. Then delete the runner in Admin > Runners.
 
 ## Publishing behind Caddy
 

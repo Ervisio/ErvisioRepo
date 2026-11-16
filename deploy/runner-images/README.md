@@ -11,6 +11,7 @@ the job's `runs-on` label. The mapping lives in `runner.labels` of
 | `ubuntu-latest` | `ghcr.io/catthehacker/ubuntu:act-24.04`    |
 | `ubuntu-24.04`  | `ghcr.io/catthehacker/ubuntu:act-24.04`    |
 | `ubuntu-22.04`  | `ghcr.io/catthehacker/ubuntu:act-22.04`    |
+| `self-hosted`, `linux`, `x64`/`arm64` | `ghcr.io/catthehacker/ubuntu:act-24.04` |
 
 The `act-*` images carry Node.js, git and the common CLI tools that JavaScript
 actions expect. The `full-*` variants are close to GitHub's hosted runners but
