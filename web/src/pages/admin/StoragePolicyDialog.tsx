@@ -2,10 +2,13 @@ import { useState } from "react";
 import { usePutStoragePolicy, type StoragePolicyConfig, type StorageTargetConfig } from "../../api/useStorage.ts";
 import { ApiError } from "../../api/http.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, Dialog, DialogClose, Select } from "../../ui/index.ts";
+import { Button, Dialog, DialogClose, Input, Select } from "../../ui/index.ts";
 
-/** Radix Select rejects an empty item value, so "no cache" has a stand-in. */
-const NO_CACHE = "__none__";
+/** Radix Select rejects an empty item value, so the automatic cache has a stand-in. */
+const AUTO_CACHE = "__auto__";
+/** Cache value that disables the cache of a data type. */
+const NO_CACHE = "none";
+const DAY = 86400;
 
 function PolicyForm({ policy, targets, onSaved, onClose }: {
   policy: StoragePolicyConfig;
@@ -17,13 +20,17 @@ function PolicyForm({ policy, targets, onSaved, onClose }: {
   const tu = useT("ui");
   const [primary, setPrimary] = useState(policy.primary);
   const [replicas, setReplicas] = useState<string[]>(policy.replicas);
-  const [cache, setCache] = useState(policy.cache ?? NO_CACHE);
+  const [cache, setCache] = useState(policy.cache || AUTO_CACHE);
+  const [ttl, setTtl] = useState(policy.cacheTtlOverrideSeconds > 0 ? String(Math.round(policy.cacheTtlOverrideSeconds / DAY)) : "");
+  const ttlDays = ttl.trim() === "" ? 0 : Number(ttl);
+  const ttlValid = Number.isInteger(ttlDays) && ttlDays >= 0 && ttlDays <= 3650;
   const put = usePutStoragePolicy();
 
   const problems = put.error instanceof ApiError ? (put.error.errors ?? []) : [];
   const fieldMsg = (prefix: string) => problems.find((p) => p.path.startsWith(prefix))?.msg;
+  const cacheMsg = problems.find((p) => p.path === "cache")?.msg;
   const general = [
-    ...problems.filter((p) => !["primary", "replicas", "cache"].some((k) => p.path.startsWith(k))).map((p) => p.msg),
+    ...problems.filter((p) => !["primary", "replicas", "cache", "cacheTtl"].some((k) => p.path.startsWith(k))).map((p) => p.msg),
     ...(put.error && !(put.error instanceof ApiError && put.error.errors?.length) ? [put.error.message] : []),
   ];
 
@@ -33,6 +40,7 @@ function PolicyForm({ policy, targets, onSaved, onClose }: {
     .filter((x) => !policy.primaryLocked || x.name === policy.runningPrimary || x.name === policy.primary)
     .map((x) => ({ value: x.name, label: label(x) }));
   const cacheOptions = [
+    { value: AUTO_CACHE, label: t("storage.policy.cache.auto") },
     { value: NO_CACHE, label: t("storage.policy.cache.none") },
     ...targets.filter((x) => x.kind === "local").map((x) => ({ value: x.name, label: label(x) })),
   ];
@@ -47,7 +55,12 @@ function PolicyForm({ policy, targets, onSaved, onClose }: {
         put.mutate(
           {
             policy: policy.name,
-            input: { primary, replicas: replicas.filter((n) => n !== primary), cache: cache === NO_CACHE ? undefined : cache },
+            input: {
+              primary,
+              replicas: replicas.filter((n) => n !== primary),
+              cache: cache === AUTO_CACHE ? undefined : cache,
+              cacheTtlSeconds: ttlDays * DAY,
+            },
           },
           { onSuccess: onSaved },
         );
@@ -76,16 +89,29 @@ function PolicyForm({ policy, targets, onSaved, onClose }: {
       </p>
       <div className="ui-field">
         <Select label={t("storage.cache")} value={cache} onValueChange={setCache} options={cacheOptions} />
-        <p className={fieldMsg("cache") ? "ui-note adm-err" : "ui-note"} role={fieldMsg("cache") ? "alert" : undefined}>
-          {fieldMsg("cache") ?? t("storage.policy.cache.hint")}
+        <p className={cacheMsg ? "ui-note adm-err" : "ui-note"} role={cacheMsg ? "alert" : undefined}>
+          {cacheMsg ?? t("storage.policy.cache.hint")}
         </p>
       </div>
+      <Input
+        label={t("storage.policy.ttl")}
+        type="number"
+        inputMode="numeric"
+        min={0}
+        max={3650}
+        placeholder={t("storage.hot.ttl.default")}
+        disabled={cache === NO_CACHE}
+        value={ttl}
+        error={fieldMsg("cacheTtl") ?? (ttlValid ? undefined : t("storage.hot.ttl.invalid"))}
+        hint={t("storage.policy.ttl.hint", { days: Math.round(policy.cacheTtlSeconds / DAY) })}
+        onChange={(e) => setTtl(e.target.value)}
+      />
       {general.length > 0 && (
         <div role="alert">{general.map((m) => <p key={m} className="adm-err">{m}</p>)}</div>
       )}
       <div className="ui-dialog-foot">
         <DialogClose asChild><Button variant="ghost" onClick={onClose}>{tu("dialog.cancel")}</Button></DialogClose>
-        <Button type="submit" variant="primary" disabled={put.isPending}>{t("storage.target.save")}</Button>
+        <Button type="submit" variant="primary" disabled={put.isPending || !ttlValid}>{t("storage.target.save")}</Button>
       </div>
     </form>
   );

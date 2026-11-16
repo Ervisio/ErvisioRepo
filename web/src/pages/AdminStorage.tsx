@@ -6,7 +6,7 @@ import {
 import { useT } from "../i18n/useT.ts";
 import { AdminPane } from "./admin/AdminFrame.tsx";
 import { AvatarStorageCard } from "./admin/AvatarStorageCard.tsx";
-import { RepoTieringCard } from "./admin/RepoTieringCard.tsx";
+import { HotCacheCard } from "./admin/HotCacheCard.tsx";
 import { StoragePolicyDialog } from "./admin/StoragePolicyDialog.tsx";
 import { StorageTargetDialog } from "./admin/StorageTargetDialog.tsx";
 import { TestResult } from "./admin/StorageTestResult.tsx";
@@ -252,7 +252,8 @@ export function AdminStorage() {
                 const next = planned.get(p.name);
                 const primary = next?.primary ?? p.primary;
                 const replicas = next?.replicas ?? p.replicas;
-                const cache = next ? next.cache : p.cache;
+                const cache = next ? next.effectiveCache : p.cache;
+                const ttl = next ? next.cacheTtlSeconds : p.cacheTtlSeconds;
                 return (
                   <Tr key={p.name}>
                     <Td>
@@ -268,7 +269,15 @@ export function AdminStorage() {
                     </Td>
                     <Td>{primary}</Td>
                     <Td>{replicas.join(", ") || "—"}</Td>
-                    <Td>{cache ?? "—"}</Td>
+                    <Td>
+                      {cache ? (
+                        <span className="ui-inline">
+                          <span>{cache}</span>
+                          {next?.cacheAuto && <Badge tone="neutral">{t("storage.cache.auto")}</Badge>}
+                          {ttl > 0 && <span className="ui-note">{t("storage.cache.ttl", { days: Math.round(ttl / 86400) })}</span>}
+                        </span>
+                      ) : "—"}
+                    </Td>
                     <Td>{p.durability}</Td>
                     <Td className="ui-num">{p.objects}</Td>
                     <Td className="ui-num">{formatBytes(p.bytes)}</Td>
@@ -309,7 +318,7 @@ export function AdminStorage() {
         </Card>
       )}
 
-      <RepoTieringCard />
+      <HotCacheCard setting={cfg.hotCache} caches={s.caches} />
 
       <AvatarStorageCard />
 
