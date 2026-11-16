@@ -69,22 +69,43 @@ Admin > Runners shows the built-in runner status at the top. To print a token fo
 
 Job containers clone the repository from the server's `public_url`: it must be reachable from the runner hosts (not `localhost`).
 
-### Remote runners
+### Add a runner on another Linux server
 
-In Admin > Runners click **New runner**: the dialog creates a registration token (valid 1h) and shows the command for each platform with the server URL, the token and the optional name, extra labels and capacity.
+On the new server (Debian, Ubuntu, Fedora, RHEL, Rocky or Alma, amd64 or arm64), run one command:
 
-- **Linux** (systemd): `curl -fsSL https://git.example.com/runner/install.sh | sudo sh -s -- --url https://git.example.com --token errt_…` installs `/usr/local/bin/ervisio-runner`, creates the user `ervisio-runner` (added to the `docker` group after you confirm, or with `--docker`), writes `/etc/ervisio-runner/config.toml`, registers and starts `ervisio-runner.service`. Without `sudo` it installs into `~/.local/bin` with a systemd user unit (`loginctl enable-linger` keeps it running after logout).
-- **macOS** (launchd): the same command without `sudo` installs `~/.local/bin/ervisio-runner` and the LaunchAgent `dev.ervisio.runner` (logs in `~/Library/Application Support/ervisio-runner/logs`). Jobs need Docker Desktop running.
-- **Windows**: in an elevated PowerShell, `& ([scriptblock]::Create((irm https://git.example.com/runner/install.ps1))) -Url https://git.example.com -Token errt_…` installs `%ProgramFiles%\ErvisioRunner\ervisio-runner.exe`, keeps config and state in `%ProgramData%\ervisio-runner` (SYSTEM and Administrators only) and registers the scheduled task `ErvisioRunner` (at boot, as SYSTEM, restarted on failure). A scheduled task is used because the runner is not a native Windows service and needs no extra tools. Jobs need Docker Desktop with Linux containers.
-- **Docker**: the dialog prints a `docker run … --entrypoint ervisio-runner ghcr.io/ervisio/ervisio-repo:<version> daemon …` command; the runner registers from `ERVISIO_RUNNER_URL`/`ERVISIO_RUNNER_TOKEN` (also `_NAME`, `_LABELS`, `_CAPACITY`) and keeps its state in the `ervisio-runner` volume.
+```sh
+curl -fsSL https://git.example.com/runner/install.sh | sudo sh
+```
 
-The scripts are served by the server at `/runner/install.sh` and `/runner/install.ps1` and download the runner of the server's version from the GitHub release (`ervisio-runner_<ver>_<os>_<arch>.tar.gz`, `.zip` on Windows), checking it against `ervisio-runner_<ver>_checksums.txt`. `--version X.Y.Z` picks another release.
+1. The script detects the distribution and, if Docker is missing, installs Docker Engine from the official repository (`download.docker.com`, apt or dnf) and enables it. `--no-docker` skips Docker and runs jobs on the host (see Host mode).
+2. It downloads `ervisio-runner` of the server's version from the GitHub release and checks its SHA-256.
+3. It prints a code and a link: open `https://git.example.com/runner/approve` (signed in) and enter the code, or follow the direct link `…/runner/approve?code=ABCD-EFGH`. The page shows the machine (host name, OS, architecture, CPUs, memory, Docker, runner version, request IP) and lets you change the name, labels and capacity and pick the scope: **Instance** (admins), an organization (its owners) or a repository (its admins). Approve or Deny. Nothing has to be typed on the server: the script waits without a terminal too, and the code expires after 15 minutes.
+4. On approval the script receives a single-use registration token (never a user token), registers the runner, writes `/etc/ervisio-runner/config.toml` (capacity defaults to half the CPUs, at least 1; labels `ubuntu-latest`, `ubuntu-24.04`, `ubuntu-22.04`, `self-hosted`, `linux`, the architecture), creates the system user `ervisio-runner` in the `docker` group and enables `ervisio-runner.service`.
+5. It installs `ervisio-runner-prune.timer` (daily, randomized by up to 1h, catches up after downtime): it removes Docker images, containers, networks and build cache unused for 7 days, unused anonymous volumes, runner caches and workspaces untouched for 14 days, and every unused image when the Docker data root has less than 15% free. Images of running containers are never removed. Logs: `journalctl -u ervisio-runner-prune`. Not installed with `--no-docker`.
+6. It prints a summary: name, labels, capacity, `systemctl status ervisio-runner` and the uninstall command.
 
-**Host mode.** Without Docker the installers stop. `--host` (`-HostMode` on Windows) runs jobs directly on the machine as the runner user, with labels `self-hosted`, the OS and the architecture: no isolation, so use it only for trusted repositories.
+Options go after `sh -s --`: `--name`, `--labels gpu,big`, `--capacity N`, `--no-docker`, `--version X.Y.Z`, `--token errt_…` (skips the approval, for automation), `--url` (defaults to the server that served the script), `--yes`. Re-running the script on an installed machine asks whether to register again; without a terminal (or with `--upgrade`) it only replaces the binary; `--reconfigure` registers again.
 
-**Security.** A runner with the Docker socket can start containers on its host, which is equivalent to root there: use dedicated machines. Fork pull requests from outside contributors wait for approval and never get secrets.
+Device codes are rate-limited per IP (20 per hour) and wrong codes on the approval page back off; approvals and denials are in the audit log.
 
-**Uninstall.** `curl -fsSL https://git.example.com/runner/install.sh | sudo sh -s -- --uninstall` (add `--purge` to delete config and credential), `-Uninstall [-Purge]` on Windows, `docker rm -f ervisio-runner` for Docker. Then delete the runner in Admin > Runners.
+### Other platforms and non-interactive installs
+
+**New runner** in Admin > Runners (or the org/repository Actions settings) shows the one-liner above. Under **Advanced / non-interactive** it creates a registration token (valid 1h) and shows token commands:
+
+- **Linux** (systemd): `curl -fsSL https://git.example.com/runner/install.sh | sudo sh -s -- --token errt_…`. Without `sudo` it installs into `~/.local/bin` with a systemd user unit (`loginctl enable-linger` keeps it running after logout) and does not install Docker.
+- **macOS** (launchd): `curl -fsSL https://git.example.com/runner/install.sh | sh` (device approval) or with `-s -- --token errt_…`; it installs `~/.local/bin/ervisio-runner` and the LaunchAgent `dev.ervisio.runner` (logs in `~/Library/Application Support/ervisio-runner/logs`). Jobs need Docker Desktop running.
+- **Windows**: in an elevated PowerShell, `irm https://git.example.com/runner/install.ps1 | iex` (device approval) or `& ([scriptblock]::Create((irm https://git.example.com/runner/install.ps1))) -Token errt_…` installs `%ProgramFiles%\ErvisioRunner\ervisio-runner.exe`, keeps config and state in `%ProgramData%\ervisio-runner` (SYSTEM and Administrators only) and registers the scheduled task `ErvisioRunner` (at boot, as SYSTEM, restarted on failure). Docker Desktop with Linux containers is not installed automatically.
+- **Docker**: a `docker run … --entrypoint ervisio-runner ghcr.io/ervisio/ervisio-repo:<version> daemon …` command; the runner registers from `ERVISIO_RUNNER_URL`/`ERVISIO_RUNNER_TOKEN` (also `_NAME`, `_LABELS`, `_CAPACITY`) and keeps its state in the `ervisio-runner` volume.
+
+The scripts are served at `/runner/install.sh` and `/runner/install.ps1` with the server URL and version embedded, and download `ervisio-runner_<ver>_<os>_<arch>.tar.gz` (`.zip` on Windows) checked against `ervisio-runner_<ver>_checksums.txt`.
+
+**Status, pause and load.** The runner lists show status (online, idle, busy, paused, offline), running jobs / capacity (reported by the runner), labels, version and last contact. **Pause** lets a runner finish its running jobs without taking new ones (for maintenance); **Resume** brings it back. Capacity is set at install (`--capacity`) or in `runner.capacity` of the config (restart the service).
+
+**Host mode.** `--no-docker` (or `--host`; `-HostMode` on Windows) runs jobs directly on the machine as the runner user, with labels `self-hosted`, the OS and the architecture: no isolation, so use it only for trusted repositories.
+
+**Security.** The `ervisio-runner` user is in the `docker` group, which is equivalent to root on that host: use dedicated machines. Fork pull requests from outside contributors wait for approval and never get secrets.
+
+**Uninstall.** `curl -fsSL https://git.example.com/runner/install.sh | sudo sh -s -- --uninstall` stops and removes the service, the cleanup timer, the user, the binary, config and state, and removes the runner from the server (`ervisio-runner deregister`); if the server cannot be reached, delete it in Admin > Runners. `-Uninstall` on Windows; `docker rm -f ervisio-runner` for Docker (then delete it in the UI).
 
 ## Publishing behind Caddy
 

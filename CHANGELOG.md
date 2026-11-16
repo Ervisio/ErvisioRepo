@@ -6,8 +6,6 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [1.12.0] - 2026-11-16
-
 ### Added
 
 - One-command runner install with device approval: `curl -fsSL https://<host>/runner/install.sh | sudo sh` on a Linux server installs Docker Engine when missing (official `download.docker.com` repositories, apt on Debian/Ubuntu, dnf on Fedora/RHEL/Rocky/Alma; `--no-docker` runs jobs on the host), downloads and verifies `ervisio-runner`, prints a code to approve at `/runner/approve` (also `?code=`), creates the `ervisio-runner` user in the `docker` group, enables the systemd service and prints a summary. Works when piped to `sudo sh` (questions only through `/dev/tty`, never blocks without a terminal); re-runs offer upgrade or `--reconfigure`; `--uninstall` removes service, user and files and deregisters the runner. `--token` keeps the non-interactive path; the server URL is embedded so `--url` is optional. `install.ps1` uses the same approval (`irm https://<host>/runner/install.ps1 | iex`).
@@ -16,6 +14,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Runner pause and load: `PUT …/actions/runners/{id}/paused` at instance, org and repository scope (audited); a paused runner finishes its jobs and gets no new ones. Runners report their capacity on Declare and Heartbeat; `ActionsRunner` gains `paused`, `status` (offline, paused, idle, online, busy), `running` and `capacity`. Runner lists show status, running/capacity, labels, version and last seen with Pause/Resume/Remove. Migration 00320 adds `actions_runners.paused`/`capacity`, `actions_registration_tokens.single_use` and `actions_runner_devices`.
 - "New runner" dialog leads with the one-line install and the approval link; token commands for Linux, macOS, Windows and Docker moved under "Advanced / non-interactive" (the token is created only when opened).
 - `setup.bat --runner yes|no` (default yes) enables the built-in runner like `setup.sh`.
+
+## [1.12.0] - 2026-11-16
+
+### Added
 
 - Actions runners made easy to set up. The instance pool (Admin > Runners) is the default for every repository; org and repository runners stay as an optional extra. `ervisio-runner daemon` registers itself on first start from `ERVISIO_RUNNER_URL`, `ERVISIO_RUNNER_TOKEN` (or `_TOKEN_FILE`, or a `registration-token` file next to the state file, deleted after use), `_NAME`, `_LABELS`, `_CAPACITY`, and writes a default config when none exists; `register` also creates the config (`--capacity`, `--host`, `--data-dir`) and accepts bare extra labels. Default labels: `ubuntu-latest`, `ubuntu-24.04`, `ubuntu-22.04`, `self-hosted`, `linux`, `x64`/`arm64` on the act images; default capacity is half the CPUs.
 - Built-in runner: `ervisio-repo actions runner-token [--scope instance|org/<o>|repo/<o>/<n>]` prints a registration token from the server shell; `ervisio-repo actions runner-setup` registers the `builtin` runner of a native install, writes `/etc/ervisio-repo/runner.toml` and starts `ervisio-runner.service`. Docker: `setup.sh --runner yes|no` (default yes) enables the compose `runner` profile (`COMPOSE_PROFILES`), mints the token and the runner registers itself; Admin > Runners shows its status.
