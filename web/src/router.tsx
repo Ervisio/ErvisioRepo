@@ -13,6 +13,7 @@ import { Register } from "./pages/auth/Register.tsx";
 import { TwoFactor } from "./pages/auth/TwoFactor.tsx";
 import { VerifyEmail } from "./pages/auth/VerifyEmail.tsx";
 import { DeviceLogin } from "./pages/auth/DeviceLogin.tsx";
+import { RunnerApprove } from "./pages/auth/RunnerApprove.tsx";
 import { OAuthAuthorize } from "./pages/auth/OAuthAuthorize.tsx";
 import { Catalog } from "./pages/Catalog.tsx";
 import { Home } from "./pages/Home.tsx";
@@ -91,6 +92,13 @@ const deviceRoute = createRoute({
   path: "/login/device",
   validateSearch: (s: Record<string, unknown>): { user_code?: string } => ({ user_code: str(s.user_code) }),
   component: () => guard(<DeviceLogin userCode={deviceRoute.useSearch().user_code} />),
+});
+// Runner enrolment approval (install.sh prints the code); same guard as /login/device.
+const runnerApproveRoute = createRoute({
+  getParentRoute: () => bareRoute,
+  path: "/runner/approve",
+  validateSearch: (s: Record<string, unknown>): { code?: string } => ({ code: str(s.code) }),
+  component: () => guard(<RunnerApprove userCode={runnerApproveRoute.useSearch().code} />),
 });
 // OAuth web flow consent (GitHub's /login/oauth/authorize query); the page signs anonymous visitors in itself.
 const oauthAuthorizeRoute = createRoute({ getParentRoute: () => bareRoute, path: "/login/oauth/authorize", component: OAuthAuthorize });
@@ -451,7 +459,7 @@ const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui
 
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
-    bareRoute.addChildren([loginRoute, twoFactorRoute, deviceRoute, oauthAuthorizeRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
+    bareRoute.addChildren([loginRoute, twoFactorRoute, deviceRoute, runnerApproveRoute, oauthAuthorizeRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
     shellRoute.addChildren([homeRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, installAppRoute, reposRoute, exploreRoute, profileRoute,
       repoRoute,
       issuesRoute,

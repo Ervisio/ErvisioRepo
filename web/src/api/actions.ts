@@ -19,6 +19,8 @@ export type ActionsEnvironment = S["ActionsEnvironment"];
 export type ActionsEnvironmentPut = S["ActionsEnvironmentPut"];
 export type ActionsRunner = S["ActionsRunner"];
 export type ActionsRegistrationToken = S["ActionsRegistrationToken"];
+export type ActionsRunnerDevice = S["ActionsRunnerDevice"];
+export type ActionsRunnerDeviceDecision = S["ActionsRunnerDeviceDecision"];
 export type ActionsGitHubImport = S["ActionsGitHubImport"];
 export type ActionsGitHubImportRequest = S["ActionsGitHubImportRequest"];
 
@@ -149,6 +151,29 @@ export function useDeleteRunner(s: ActionsScope) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["actions-cfg", scopeKey(s), "runners"] }),
   });
 }
+export function useSetRunnerPaused(s: ActionsScope) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, paused }: { id: string; paused: boolean }) => request<ActionsRunner>("PUT", `${scopeBase(s)}/runners/${enc(id)}/paused`, { paused }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["actions-cfg", scopeKey(s), "runners"] }),
+  });
+}
+
+const devicePath = (userCode: string) => `/actions/runner-devices/${enc(userCode.trim())}`;
+
+/** Pending runner enrolment started by the installer (device approval); looked up by its XXXX-XXXX code. */
+export const useRunnerDevice = (userCode: string | undefined) =>
+  useQuery({
+    queryKey: ["runner-device", userCode],
+    queryFn: () => request<ActionsRunnerDevice>("GET", devicePath(userCode ?? "")),
+    enabled: !!userCode,
+    retry: false,
+    staleTime: Infinity,
+  });
+
+export const useDecideRunnerDevice = (userCode: string) =>
+  useMutation({ mutationFn: (d: ActionsRunnerDeviceDecision) => request<void>("POST", devicePath(userCode), d) });
+
 export const useRegistrationToken = (s: ActionsScope) =>
   useMutation({ mutationFn: () => request<ActionsRegistrationToken>("POST", `${scopeBase(s)}/runners/registration-token`) });
 

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type SyntheticEvent } from "react";
 import {
   useGitHubActionsImport,
   useImportGitHubActions,
@@ -11,6 +11,8 @@ import {
   usePutEnvironment,
   useRegistrationToken,
   useRunners,
+  useSetRunnerPaused,
+  type ActionsRunner,
   type ActionsRegistrationToken,
   type ActionsScope,
   type ActionsSecret,
@@ -19,7 +21,7 @@ import {
 import { useEntries } from "../../api/actions.ts";
 import { useT } from "../../i18n/useT.ts";
 import { useMeta } from "../../api/useMeta.ts";
-import { Badge, Button, Card, Dialog, Input, Table, TableBody, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, Td, Th, Tr } from "../../ui/index.ts";
+import { Badge, type BadgeTone, Button, Card, Dialog, Input, Table, TableBody, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, Td, Th, Tr } from "../../ui/index.ts";
 import { Async, formatDate, Secret, useNotify } from "../account/common.tsx";
 
 const NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -184,6 +186,16 @@ export function Environments({ owner, name }: { owner: string; name: string }) {
 /** Name the built-in runner registers with (setup.sh, runner-setup). */
 const BUILTIN_RUNNER = "builtin";
 
+const STATUS_TONE: Record<ActionsRunner["status"], BadgeTone> = { offline: "neutral", paused: "warn", idle: "ok", online: "ok", busy: "info" };
+
+function RunnerStatus({ runner }: { runner: ActionsRunner }) {
+  const t = useT("actions");
+  return <Badge tone={STATUS_TONE[runner.status]}>{t(`runners.st.${runner.status}`)}</Badge>;
+}
+
+/** Scope string the server reports for runners registered at this scope. */
+const scopeId = (s: ActionsScope) => (s.kind === "instance" ? "instance" : s.kind === "org" ? `org:${s.org}` : `repo:${s.owner}/${s.name}`).toLowerCase();
+
 /**
  * Runners of one scope. The instance pool is the default for every
  * repository; org and repository runners are an optional extra.
@@ -193,9 +205,11 @@ export function Runners({ scope }: { scope: ActionsScope }) {
   const notify = useNotify();
   const list = useRunners(scope);
   const del = useDeleteRunner(scope);
+  const pause = useSetRunnerPaused(scope);
   const [adding, setAdding] = useState(false);
   const instance = scope.kind === "instance";
   const builtin = instance ? list.data?.find((r) => r.name === BUILTIN_RUNNER) : undefined;
+  const mine = scopeId(scope);
 
   return (
     <>
@@ -203,7 +217,7 @@ export function Runners({ scope }: { scope: ActionsScope }) {
         <Card title={t("runners.builtin")}>
           {builtin ? (
             <div className="ui-row">
-              <Badge tone={builtin.online ? "ok" : "neutral"}>{builtin.online ? (builtin.busy ? t("runners.busy") : t("runners.online")) : t("runners.offline")}</Badge>
+              <RunnerStatus runner={builtin} />
               <span className="ui-mono">{builtin.labels.join(", ")}</span>
               {builtin.version && <span className="ui-note">v{builtin.version}</span>}
             </div>
@@ -228,9 +242,11 @@ export function Runners({ scope }: { scope: ActionsScope }) {
                 <Tr>
                   <Th>{t("cfg.name")}</Th>
                   <Th>{t("runners.status")}</Th>
+                  <Th>{t("runners.jobs")}</Th>
                   <Th>{t("runners.labels")}</Th>
-                  <Th>{t("runners.scope")}</Th>
+                  <Th>{t("runners.version")}</Th>
                   <Th>{t("runners.seen")}</Th>
+                  <Th>{t("runners.scope")}</Th>
                   <Th><span className="sr-only">{t("cfg.actions")}</span></Th>
                 </Tr>
               </TableHead>
@@ -238,16 +254,34 @@ export function Runners({ scope }: { scope: ActionsScope }) {
                 {rows.map((r) => (
                   <Tr key={r.id}>
                     <Td><b>{r.name}</b> {r.ephemeral && <Badge>{t("runners.ephemeral")}</Badge>}</Td>
-                    <Td>
-                      <Badge tone={r.online ? "ok" : "neutral"}>{r.online ? (r.busy ? t("runners.busy") : t("runners.online")) : t("runners.offline")}</Badge>
-                    </Td>
+                    <Td><RunnerStatus runner={r} /></Td>
+                    <Td>{r.capacity > 0 ? `${r.running} / ${r.capacity}` : r.running}</Td>
                     <Td><span className="ui-mono">{r.labels.join(", ")}</span></Td>
-                    <Td><span className="ui-mono">{r.scope}</span></Td>
+                    <Td>{r.version ? <span className="ui-mono">{r.version}</span> : "–"}</Td>
                     <Td>{r.lastSeenAt ? formatDate(r.lastSeenAt) : "–"}</Td>
+                    <Td><span className="ui-mono">{r.scope}</span></Td>
                     <Td>
-                      <Button size="sm" variant="ghost" disabled={del.isPending} aria-label={t("cfg.deleteOf", { name: r.name })} onClick={() => del.mutate(r.id, { onSuccess: () => notify.ok(t("runners.deleted")), onError: notify.fail })}>
-                        {t("cfg.delete")}
-                      </Button>
+                      {r.scope.toLowerCase() === mine && (
+                        <div className="rn-actions">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={pause.isPending}
+                            aria-label={t(r.paused ? "runners.resumeOf" : "runners.pauseOf", { name: r.name })}
+                            onClick={() =>
+                              pause.mutate(
+                                { id: r.id, paused: !r.paused },
+                                { onSuccess: () => notify.ok(t(r.paused ? "runners.resumed" : "runners.paused")), onError: notify.fail },
+                              )
+                            }
+                          >
+                            {t(r.paused ? "runners.resume" : "runners.pause")}
+                          </Button>
+                          <Button size="sm" variant="ghost" disabled={del.isPending} aria-label={t("cfg.deleteOf", { name: r.name })} onClick={() => del.mutate(r.id, { onSuccess: () => notify.ok(t("runners.deleted")), onError: notify.fail })}>
+                            {t("cfg.delete")}
+                          </Button>
+                        </div>
+                      )}
                     </Td>
                   </Tr>
                 ))}
@@ -268,7 +302,7 @@ type RunnerOS = "linux" | "macos" | "windows" | "docker";
 const SAFE_NAME = /[^A-Za-z0-9._-]/g;
 const SAFE_LABELS = /[^A-Za-z0-9._,-]/g;
 
-/** Install commands for a new runner, with a registration token created when the dialog opens. */
+/** Install instructions for a new runner: the device-approval one-liner first, token commands under "Advanced". */
 function NewRunner({ scope }: { scope: ActionsScope }) {
   const t = useT("actions");
   const notify = useNotify();
@@ -282,57 +316,76 @@ function NewRunner({ scope }: { scope: ActionsScope }) {
   const { mutate } = gen;
 
   const started = useRef(false);
-  useEffect(() => {
-    if (started.current) return;
+  // The registration token is created the first time the advanced section opens.
+  const onToggle = (e: SyntheticEvent<HTMLDetailsElement>) => {
+    if (!e.currentTarget.open || started.current) return;
     started.current = true;
     mutate(undefined, { onSuccess: setToken, onError: notify.fail });
-  }, [mutate, notify]);
+  };
 
-  if (!token || !meta.data) return <p className="ui-note">{t("runners.creating")}</p>;
+  if (!meta.data) return <p className="ui-note">{t("runners.creating")}</p>;
 
   const url = meta.data.publicUrl.replace(/\/+$/, "");
   const ver = /^\d+\.\d+\.\d+$/.test(meta.data.version) ? meta.data.version : "latest";
   const n = name.replace(SAFE_NAME, "");
   const l = labels.replace(SAFE_LABELS, "").replace(/^,+|,+$/g, "");
   const c = /^\d{1,2}$/.test(capacity) ? capacity : "";
-  const commands: Record<RunnerOS, string> = {
-    linux: `curl -fsSL ${url}/runner/install.sh | sudo sh -s -- --url ${url} --token ${token.token}${n ? ` --name ${n}` : ""}${l ? ` --labels ${l}` : ""}${c ? ` --capacity ${c}` : ""}`,
-    macos: `curl -fsSL ${url}/runner/install.sh | sh -s -- --url ${url} --token ${token.token}${n ? ` --name ${n}` : ""}${l ? ` --labels ${l}` : ""}${c ? ` --capacity ${c}` : ""}`,
-    windows: `& ([scriptblock]::Create((irm ${url}/runner/install.ps1))) -Url ${url} -Token ${token.token}${n ? ` -Name ${n}` : ""}${l ? ` -Labels ${l}` : ""}${c ? ` -Capacity ${c}` : ""}`,
-    docker: [
-      "docker run -d --name ervisio-runner --restart unless-stopped --user root --no-healthcheck \\",
-      "  -v /var/run/docker.sock:/var/run/docker.sock -v ervisio-runner:/var/lib/ervisio-runner \\",
-      `  -e ERVISIO_RUNNER_URL=${url} -e ERVISIO_RUNNER_TOKEN=${token.token} \\`,
-      "  -e ERVISIO_RUNNER_DATA_DIR=/var/lib/ervisio-runner -e HOME=/var/lib/ervisio-runner \\",
-      ...(n || l || c ? [`  ${[n && `-e ERVISIO_RUNNER_NAME=${n}`, l && `-e ERVISIO_RUNNER_LABELS=${l}`, c && `-e ERVISIO_RUNNER_CAPACITY=${c}`].filter(Boolean).join(" ")} \\`] : []),
-      `  --entrypoint ervisio-runner ghcr.io/ervisio/ervisio-repo:${ver} \\`,
-      "  daemon --config /var/lib/ervisio-runner/config.toml",
-    ].join("\n"),
-  };
+  const commands = token
+    ? {
+        linux: `curl -fsSL ${url}/runner/install.sh | sudo sh -s -- --url ${url} --token ${token.token}${n ? ` --name ${n}` : ""}${l ? ` --labels ${l}` : ""}${c ? ` --capacity ${c}` : ""}`,
+        macos: `curl -fsSL ${url}/runner/install.sh | sh -s -- --url ${url} --token ${token.token}${n ? ` --name ${n}` : ""}${l ? ` --labels ${l}` : ""}${c ? ` --capacity ${c}` : ""}`,
+        windows: `& ([scriptblock]::Create((irm ${url}/runner/install.ps1))) -Url ${url} -Token ${token.token}${n ? ` -Name ${n}` : ""}${l ? ` -Labels ${l}` : ""}${c ? ` -Capacity ${c}` : ""}`,
+        docker: [
+          "docker run -d --name ervisio-runner --restart unless-stopped --user root --no-healthcheck \\",
+          "  -v /var/run/docker.sock:/var/run/docker.sock -v ervisio-runner:/var/lib/ervisio-runner \\",
+          `  -e ERVISIO_RUNNER_URL=${url} -e ERVISIO_RUNNER_TOKEN=${token.token} \\`,
+          "  -e ERVISIO_RUNNER_DATA_DIR=/var/lib/ervisio-runner -e HOME=/var/lib/ervisio-runner \\",
+          ...(n || l || c ? [`  ${[n && `-e ERVISIO_RUNNER_NAME=${n}`, l && `-e ERVISIO_RUNNER_LABELS=${l}`, c && `-e ERVISIO_RUNNER_CAPACITY=${c}`].filter(Boolean).join(" ")} \\`] : []),
+          `  --entrypoint ervisio-runner ghcr.io/ervisio/ervisio-repo:${ver} \\`,
+          "  daemon --config /var/lib/ervisio-runner/config.toml",
+        ].join("\n"),
+      }
+    : null;
 
   return (
     <div className="rn-new">
-      <p className="ui-note">{t("runners.tokenLabel", { when: formatDate(token.expiresAt) })}</p>
-      <div className="rn-fields">
-        <Input label={t("runners.name")} placeholder={t("runners.namePlaceholder")} value={name} onChange={(e) => setName(e.target.value)} mono />
-        <Input label={t("runners.extraLabels")} hint={t("runners.extraLabelsHint")} placeholder="gpu,big" value={labels} onChange={(e) => setLabels(e.target.value)} mono />
-        <Input label={t("runners.capacity")} hint={t("runners.capacityHint")} inputMode="numeric" value={capacity} onChange={(e) => setCapacity(e.target.value)} mono />
-      </div>
-      <Tabs value={os} onValueChange={(v) => setOS(v as RunnerOS)}>
-        <TabsList aria-label={t("runners.platform")}>
-          <TabsTrigger value="linux">Linux</TabsTrigger>
-          <TabsTrigger value="macos">macOS</TabsTrigger>
-          <TabsTrigger value="windows">Windows</TabsTrigger>
-          <TabsTrigger value="docker">Docker</TabsTrigger>
-        </TabsList>
-        {(Object.keys(commands) as RunnerOS[]).map((k) => (
-          <TabsContent key={k} value={k}>
-            <Secret label={t(`runners.os.${k}`)} value={commands[k]} multiline={k === "docker"} />
-          </TabsContent>
-        ))}
-      </Tabs>
-      <p className="ui-note">{t("runners.backendNote")}</p>
-      <Secret label={t("runners.tokenOnly")} value={token.token} />
+      <Secret label={t("runners.oneLiner")} value={`curl -fsSL ${url}/runner/install.sh | sudo sh`} />
+      <p className="ui-note">
+        {t("runners.oneLinerHint")} <a href={`${url}/runner/approve`}>{`${url}/runner/approve`}</a>
+      </p>
+      <p className="ui-note">{t("runners.otherOS")}</p>
+      <Secret label={t("runners.os.macosNoSudo")} value={`curl -fsSL ${url}/runner/install.sh | sh`} />
+      <Secret label={t("runners.os.windowsDevice")} value={`irm ${url}/runner/install.ps1 | iex`} />
+      <details className="rn-adv" onToggle={onToggle}>
+        <summary>{t("runners.advanced")}</summary>
+        {!commands || !token ? (
+          <p className="ui-note">{t("runners.creating")}</p>
+        ) : (
+          <div className="rn-new">
+            <p className="ui-note">{t("runners.tokenLabel", { when: formatDate(token.expiresAt) })}</p>
+            <div className="rn-fields">
+              <Input label={t("runners.name")} placeholder={t("runners.namePlaceholder")} value={name} onChange={(e) => setName(e.target.value)} mono />
+              <Input label={t("runners.extraLabels")} hint={t("runners.extraLabelsHint")} placeholder="gpu,big" value={labels} onChange={(e) => setLabels(e.target.value)} mono />
+              <Input label={t("runners.capacity")} hint={t("runners.capacityHint")} inputMode="numeric" value={capacity} onChange={(e) => setCapacity(e.target.value)} mono />
+            </div>
+            <Tabs value={os} onValueChange={(v) => setOS(v as RunnerOS)}>
+              <TabsList aria-label={t("runners.platform")}>
+                <TabsTrigger value="linux">Linux</TabsTrigger>
+                <TabsTrigger value="macos">macOS</TabsTrigger>
+                <TabsTrigger value="windows">Windows</TabsTrigger>
+                <TabsTrigger value="docker">Docker</TabsTrigger>
+              </TabsList>
+              {(Object.keys(commands) as RunnerOS[]).map((k) => (
+                <TabsContent key={k} value={k}>
+                  <Secret label={t(`runners.os.${k}`)} value={commands[k]} multiline={k === "docker"} />
+                </TabsContent>
+              ))}
+            </Tabs>
+            <p className="ui-note">{t("runners.backendNote")}</p>
+            <Secret label={t("runners.tokenOnly")} value={token.token} />
+          </div>
+        )}
+      </details>
     </div>
   );
 }
