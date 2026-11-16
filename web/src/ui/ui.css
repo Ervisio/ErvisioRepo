@@ -267,6 +267,8 @@
 .adm-notice p { margin: 2px 0 0; }
 .adm-err { color: var(--err); margin: 4px 0 0; }
 .adm-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 6px; }
+.adm-nowrap { white-space: nowrap; }
+.adm-cell2 { display: inline-flex; flex-direction: column; gap: 2px; }
 .adm-lock { display: inline-flex; align-items: center; gap: 4px; color: var(--ink2); }
 .adm-why { color: var(--ink3); font-size: 12px; }
 .adm-list { width: 100%; min-height: 84px; resize: vertical; font-family: var(--mono); background: var(--sunk); color: var(--ink); border: 0; border-radius: var(--r-ctl); padding: 8px 10px; }

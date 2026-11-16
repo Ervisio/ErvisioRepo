@@ -241,10 +241,9 @@ export function AdminStorage() {
                 <Th>{t("storage.replicas")}</Th>
                 <Th>{t("storage.cache")}</Th>
                 <Th>{t("storage.durability")}</Th>
-                <Th className="ui-num">{t("storage.objects")}</Th>
                 <Th className="ui-num">{t("storage.size")}</Th>
-                <Th className="ui-num">{t("storage.pending")}</Th>
-                <Th className="ui-num">{t("storage.errors")}</Th>
+                <Th>{t("storage.health")}</Th>
+                <Th><span className="sr-only">{t("storage.edit")}</span></Th>
               </Tr>
             </TableHead>
             <TableBody>
@@ -256,34 +255,40 @@ export function AdminStorage() {
                 const ttl = next ? next.cacheTtlSeconds : p.cacheTtlSeconds;
                 return (
                   <Tr key={p.name}>
-                    <Td>
+                    <Td className="adm-nowrap">
                       <span className="ui-mono">{p.name}</span>
-                      {next && (
-                        <span className="adm-meta">
-                          {next.restartPending && <Badge tone="warn">{t("storage.restartPending")}</Badge>}
-                          <Button size="sm" icon="edit" aria-label={t("storage.policy.edit", { policy: p.name })} onClick={() => setPolicyName(p.name)}>
-                            {t("storage.edit")}
-                          </Button>
-                        </span>
-                      )}
+                      {next?.restartPending && <> <Badge tone="warn">{t("storage.restartPending")}</Badge></>}
                     </Td>
                     <Td>{primary}</Td>
                     <Td>{replicas.join(", ") || "—"}</Td>
                     <Td>
                       {cache ? (
-                        <span className="ui-inline">
-                          <span>{cache}</span>
-                          {next?.cacheAuto && <Badge tone="neutral">{t("storage.cache.auto")}</Badge>}
-                          {ttl > 0 && <span className="ui-note">{t("storage.cache.ttl", { days: Math.round(ttl / 86400) })}</span>}
+                        <span className="adm-cell2">
+                          <span className="adm-nowrap">
+                            {cache} {next?.cacheAuto && <Badge tone="neutral">{t("storage.cache.auto")}</Badge>}
+                          </span>
+                          {ttl > 0 && <span className="ui-note adm-nowrap">{t("storage.cache.ttl", { days: Math.round(ttl / 86400) })}</span>}
                         </span>
                       ) : "—"}
                     </Td>
                     <Td>{p.durability}</Td>
-                    <Td className="ui-num">{p.objects}</Td>
-                    <Td className="ui-num">{formatBytes(p.bytes)}</Td>
-                    <Td className="ui-num">{p.pendingReplicas}</Td>
                     <Td className="ui-num">
-                      {p.errors > 0 ? <Badge tone="err">{p.errors}</Badge> : p.errors}
+                      <span className="adm-cell2">
+                        <span className="adm-nowrap">{formatBytes(p.bytes)}</span>
+                        <span className="ui-note adm-nowrap">{t("storage.objectsN", { n: p.objects })}</span>
+                      </span>
+                    </Td>
+                    <Td className="adm-nowrap">
+                      {p.errors > 0 ? (
+                        <Badge tone="err">{t("storage.errorsN", { n: p.errors })}</Badge>
+                      ) : p.pendingReplicas > 0 ? (
+                        <Badge tone="warn">{t("storage.pendingN", { n: p.pendingReplicas })}</Badge>
+                      ) : (
+                        <Badge tone="ok">{t("storage.healthy")}</Badge>
+                      )}
+                    </Td>
+                    <Td className="ui-num">
+                      {next && <Button size="sm" icon="edit" aria-label={t("storage.policy.edit", { policy: p.name })} onClick={() => setPolicyName(p.name)} />}
                     </Td>
                   </Tr>
                 );

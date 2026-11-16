@@ -205,6 +205,11 @@ func Facts(ctx context.Context, q *dbgen.Queries, who auth.Principal, r dbgen.Re
 		f.Capped, f.Cap = true, authz.AppRepoPermission(who.UserApp.Permissions)
 		return f, err
 	}
+	if who.UserID == uuid.Nil && who.IsAdmin() {
+		// An in-process system principal (Actions reports, issue and pull
+		// request automation): admin on every repository, never anonymous.
+		return authz.RepoFacts{Signed: true, InstanceAdmin: true, Visibility: authz.Visibility(r.Visibility)}, nil
+	}
 	f := authz.RepoFacts{
 		Signed:        who.UserID != uuid.Nil,
 		InstanceAdmin: who.IsAdmin(),

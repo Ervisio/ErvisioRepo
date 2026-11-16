@@ -478,5 +478,10 @@
   "storage.hot.pinned": "Pinned",
   "storage.hot.evictSoon": "At the next pass",
   "storage.hot.col.used": "Last used",
-  "storage.hot.col.evict": "Moves to remote"
+  "storage.hot.col.evict": "Moves to remote",
+  "storage.health": "Status",
+  "storage.healthy": "OK",
+  "storage.objectsN": "{n} objects",
+  "storage.pendingN": "{n} pending",
+  "storage.errorsN": "{n} errors"
 }

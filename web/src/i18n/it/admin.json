@@ -478,5 +478,10 @@
   "storage.hot.pinned": "Fissato",
   "storage.hot.evictSoon": "Al prossimo passaggio",
   "storage.hot.col.used": "Ultimo uso",
-  "storage.hot.col.evict": "Passa sul remoto"
+  "storage.hot.col.evict": "Passa sul remoto",
+  "storage.health": "Stato",
+  "storage.healthy": "OK",
+  "storage.objectsN": "{n} oggetti",
+  "storage.pendingN": "{n} in attesa",
+  "storage.errorsN": "{n} errori"
 }

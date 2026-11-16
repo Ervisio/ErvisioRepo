@@ -62,6 +62,9 @@ function Meter({ value }: { value?: number }) {
  * instance pool is the default for every repository; org and repository
  * runners are an optional extra.
  */
+/** labelName drops the backend of a raw runner label ("ubuntu-latest:docker://…" → "ubuntu-latest"). */
+const labelName = (l: string) => l.split(":")[0];
+
 export function Runners({ scope }: { scope: ActionsScope }) {
   const t = useT("actions");
   const list = useRunners(scope);
@@ -95,7 +98,7 @@ export function Runners({ scope }: { scope: ActionsScope }) {
                 <span className="rn-dim">
                   {" · "}
                   {t(`runners.st.${builtin.status}`)}
-                  {builtin.labels.length > 0 && <> · <span className="ui-mono">{builtin.labels.join(", ")}</span></>}
+                  {builtin.labels.length > 0 && <> · <span className="ui-mono">{builtin.labels.map(labelName).join(", ")}</span></>}
                   {builtin.version && <> · v{builtin.version}</>}
                 </span>
               </span>
@@ -309,7 +312,7 @@ function Details({ runner: r }: { runner: ActionsRunner }) {
           {r.labels.length > 0 && (
             <>
               <dt>{t("runners.labels")}</dt>
-              <dd>{r.labels.map((l) => <span key={l} className="rn-lab">{l}</span>)}</dd>
+              <dd>{r.labels.map((l) => <span key={l} className="rn-lab" title={l}>{labelName(l)}</span>)}</dd>
             </>
           )}
           <dt>{t("runners.version")}</dt>

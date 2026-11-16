@@ -6,6 +6,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.14.1] - 2026-11-16
+
+### Fixed
+
+- Actions check runs: the in-process system principal (Actions reports, issue and pull request automation) was treated as anonymous in repository permissions, so creating check runs failed with "you do not have permission to do this" and the report jobs retried in a loop. It now has admin access to every repository.
+- Admin › Storage: the policy table no longer squeezes the cache column into one letter per line; size and object count share a column, pending replicas and errors become one status badge, and Edit is an icon button at the end of the row.
+- Runner pages show label names (`ubuntu-latest`) instead of the raw `name:docker://image` entries; the full entry is in the tooltip.
+
 ## [1.14.0] - 2026-11-16
 
 ### Added
