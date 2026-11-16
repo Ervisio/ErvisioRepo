@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-11-16
+
 ### Added
 
 - Issue lock and delete over the API: `PUT`/`DELETE /repos/{owner}/{repo}/issues/{n}/lock` (`lock_reason`), GraphQL `lockLockable`, `unlockLockable` and `deleteIssue`, and a v1 `DELETE /repos/{owner}/{name}/issues/{number}` for repository admins (audited, issues only). The issue page has a "Delete issue" menu item with a confirmation dialog.
