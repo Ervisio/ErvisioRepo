@@ -30,7 +30,7 @@ Other targets: `make help`.
 
 Storage targets (`local`, `s3`, `sftp`) and per-data-type policies are set in the `[storage]` section of the configuration; see `docs/PLAN.md` section 4 for a full example. Notes:
 
-- `sftp` targets need `known_hosts_file` (absolute path, host keys are always verified); `root` sets the remote base directory.
+- `sftp` targets need `known_hosts_file` (absolute path, host keys are always verified) and `key_file`, `password_file` or both (absolute paths, readable by the owner only); `root` sets the remote base directory.
 - `s3` targets take an optional `prefix` (ending with `/`). Credentials come from `credentials_file`, or from the standard `AWS_*` environment variables.
 - Targets with `encrypt = true` need `security.master_key_file`: 32 bytes as hex or base64, mode `0600`.
 - Key, credential and known-hosts files must not be readable by group or others.

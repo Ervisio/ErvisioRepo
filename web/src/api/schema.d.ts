@@ -6209,6 +6209,8 @@ export interface components {
             hasPrivateKey: boolean;
             hasPassphrase: boolean;
             hasKnownHosts: boolean;
+            /** @description An SFTP password is stored (instead of or besides the private key) */
+            hasPassword: boolean;
             /** @description Uses of this target, as primary:<policy>, replica:<policy> or cache:<policy> */
             usedBy: string[];
             /** @description The saved definition differs from the one the server runs with */
@@ -6270,6 +6272,12 @@ export interface components {
             privateKey?: string;
             passphrase?: string;
             knownHosts?: string;
+            /**
+             * @description SFTP account password, an alternative to privateKey. Sending only
+             *     a password replaces a stored private key; sending only a private
+             *     key replaces a stored password.
+             */
+            password?: string;
         };
         StoragePolicyInput: {
             primary: string;

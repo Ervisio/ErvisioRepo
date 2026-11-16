@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- SFTP storage targets can sign in with a password instead of a private key. In Admin > Storage the form has a **Sign-in method** choice (private key or password); the password is sealed with the master key like the other credentials, and saving one method replaces the credential of the other. In `config.toml` an `sftp` target accepts `password_file`, alone or together with `key_file`. The server key is still always verified against the known hosts.
+
 ## [1.7.0] - 2026-11-16
 
 ### Added

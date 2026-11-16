@@ -46,6 +46,7 @@ const (
 	SecretPrivateKey = "privateKey"
 	SecretPassphrase = "passphrase"
 	SecretKnownHosts = "knownHosts"
+	SecretPassword   = "password"
 )
 
 // Doc is the stored overlay.
@@ -186,6 +187,7 @@ func (st StoredTarget) config(s *sealer) (config.Target, error) {
 	}{
 		{SecretAccessKey, &t.AccessKey}, {SecretSecretKey, &t.SecretKey},
 		{SecretPrivateKey, &t.KeyPEM}, {SecretPassphrase, &t.KeyPassphrase}, {SecretKnownHosts, &t.KnownHostsData},
+		{SecretPassword, &t.Password},
 	} {
 		if err := open(f.name, f.dst); err != nil {
 			return config.Target{}, err

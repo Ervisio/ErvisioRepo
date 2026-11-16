@@ -95,7 +95,7 @@ type TargetView struct {
 	Host, User, Root string
 	Port, MaxConns   int
 
-	HasAccessKey, HasSecretKey, HasPrivateKey, HasPassphrase, HasKnownHosts bool
+	HasAccessKey, HasSecretKey, HasPrivateKey, HasPassphrase, HasKnownHosts, HasPassword bool
 
 	UsedBy              []string // primary:<policy>, replica:<policy>, cache:<policy>
 	RestartPending      bool
@@ -281,7 +281,7 @@ func fileTargetView(t config.Target, usedBy []string) TargetView {
 		Endpoint: t.Endpoint, Bucket: t.Bucket, Region: t.Region, Prefix: t.Prefix, PathStyle: t.PathStyle,
 		Host: t.Host, User: t.User, Root: t.Root, Port: t.Port, MaxConns: t.MaxConns,
 		HasAccessKey: t.CredentialsFile != "", HasSecretKey: t.CredentialsFile != "",
-		HasPrivateKey: t.KeyFile != "", HasKnownHosts: t.KnownHostsFile != "",
+		HasPrivateKey: t.KeyFile != "", HasKnownHosts: t.KnownHostsFile != "", HasPassword: t.Kind == KindSFTP && t.PasswordFile != "",
 		UsedBy: nonNil(usedBy),
 	}
 }
@@ -292,11 +292,12 @@ func storedTargetView(t StoredTarget, usedBy []string) TargetView {
 	_, key := t.Secrets[SecretPrivateKey]
 	_, pass := t.Secrets[SecretPassphrase]
 	_, hosts := t.Secrets[SecretKnownHosts]
+	_, password := t.Secrets[SecretPassword]
 	return TargetView{
 		Name: t.Name, Kind: t.Kind, Source: SourceDatabase, Encrypt: t.Encrypt,
 		Endpoint: t.Endpoint, Bucket: t.Bucket, Region: t.Region, Prefix: t.Prefix, PathStyle: t.PathStyle,
 		Host: t.Host, User: t.User, Root: t.Root, Port: t.Port, MaxConns: t.MaxConns,
-		HasAccessKey: access, HasSecretKey: secret, HasPrivateKey: key, HasPassphrase: pass, HasKnownHosts: hosts,
+		HasAccessKey: access, HasSecretKey: secret, HasPrivateKey: key, HasPassphrase: pass, HasKnownHosts: hosts, HasPassword: password,
 		UsedBy: nonNil(usedBy),
 	}
 }
@@ -473,9 +474,16 @@ func (s *Service) build(in TargetInput, prev *StoredTarget, moved bool) (StoredT
 		take(SecretAccessKey, in.Secrets.AccessKey, true, true)
 		take(SecretSecretKey, in.Secrets.SecretKey, true, true)
 	case KindSFTP:
-		take(SecretPrivateKey, in.Secrets.PrivateKey, true, true)
-		take(SecretPassphrase, in.Secrets.Passphrase, false, in.Secrets.PrivateKey == "")
+		// A private key, a password or both. Typing only one of them replaces
+		// the other: that is how the form switches the sign-in method.
+		keepKey, keepPassword := sftpKeep(in.Secrets)
+		take(SecretPrivateKey, in.Secrets.PrivateKey, false, keepKey)
+		take(SecretPassphrase, in.Secrets.Passphrase, false, keepKey && in.Secrets.PrivateKey == "")
+		take(SecretPassword, in.Secrets.Password, false, keepPassword)
 		take(SecretKnownHosts, in.Secrets.KnownHosts, true, true)
+		if st.Secrets[SecretPrivateKey] == "" && st.Secrets[SecretPassword] == "" {
+			p.add("secrets.privateKey", "%s", missingSFTPAuth(moved))
+		}
 		if len(p) == 0 {
 			checkSFTPSecrets(plain[SecretPrivateKey], plain[SecretPassphrase], plain[SecretKnownHosts], &p)
 		}
@@ -694,11 +702,20 @@ func (s *Service) draftConfig(in TargetInput, prev *StoredTarget, moved bool) (c
 		t.AccessKey = pick(SecretAccessKey, in.Secrets.AccessKey, true)
 		t.SecretKey = pick(SecretSecretKey, in.Secrets.SecretKey, true)
 	case KindSFTP:
-		t.KeyPEM = pick(SecretPrivateKey, in.Secrets.PrivateKey, true)
-		if in.Secrets.PrivateKey != "" {
-			t.KeyPassphrase = in.Secrets.Passphrase // a new key does not inherit the old passphrase
-		} else {
-			t.KeyPassphrase = pick(SecretPassphrase, in.Secrets.Passphrase, false)
+		keepKey, keepPassword := sftpKeep(in.Secrets)
+		if keepKey {
+			t.KeyPEM = pick(SecretPrivateKey, in.Secrets.PrivateKey, false)
+			if in.Secrets.PrivateKey != "" {
+				t.KeyPassphrase = in.Secrets.Passphrase // a new key does not inherit the old passphrase
+			} else {
+				t.KeyPassphrase = pick(SecretPassphrase, in.Secrets.Passphrase, false)
+			}
+		}
+		if keepPassword {
+			t.Password = pick(SecretPassword, in.Secrets.Password, false)
+		}
+		if t.KeyPEM == "" && t.Password == "" {
+			p.add("secrets.privateKey", "%s", missingSFTPAuth(moved))
 		}
 		t.KnownHostsData = pick(SecretKnownHosts, in.Secrets.KnownHosts, true)
 		if len(p) == 0 {
@@ -706,4 +723,19 @@ func (s *Service) draftConfig(in TargetInput, prev *StoredTarget, moved bool) (c
 		}
 	}
 	return t, p.err()
+}
+
+// sftpKeep tells which stored SFTP credentials an input keeps when it leaves
+// them blank: typing only a password drops the stored key (and passphrase),
+// typing only a key drops the stored password.
+func sftpKeep(s Secrets) (key, password bool) {
+	typedKey, typedPassword := s.PrivateKey != "", s.Password != ""
+	return !typedPassword || typedKey, !typedKey || typedPassword
+}
+
+func missingSFTPAuth(moved bool) string {
+	if moved {
+		return "must be entered again because the address changed: stored credentials are not sent to another server"
+	}
+	return "a private key or a password is required"
 }

@@ -4899,6 +4899,11 @@ type StorageSecretsInput struct {
 	AccessKey  *string `json:"accessKey,omitempty"`
 	KnownHosts *string `json:"knownHosts,omitempty"`
 	Passphrase *string `json:"passphrase,omitempty"`
+
+	// Password SFTP account password, an alternative to privateKey. Sending only
+	// a password replaces a stored private key; sending only a private
+	// key replaces a stored password.
+	Password   *string `json:"password,omitempty"`
 	PrivateKey *string `json:"privateKey,omitempty"`
 	SecretKey  *string `json:"secretKey,omitempty"`
 }
@@ -4929,12 +4934,15 @@ type StorageTargetKind string
 
 // StorageTargetConfig A storage target. Credentials are never returned, only whether each one is stored.
 type StorageTargetConfig struct {
-	Bucket        *string                 `json:"bucket,omitempty"`
-	Encrypt       bool                    `json:"encrypt"`
-	Endpoint      *string                 `json:"endpoint,omitempty"`
-	HasAccessKey  bool                    `json:"hasAccessKey"`
-	HasKnownHosts bool                    `json:"hasKnownHosts"`
-	HasPassphrase bool                    `json:"hasPassphrase"`
+	Bucket        *string `json:"bucket,omitempty"`
+	Encrypt       bool    `json:"encrypt"`
+	Endpoint      *string `json:"endpoint,omitempty"`
+	HasAccessKey  bool    `json:"hasAccessKey"`
+	HasKnownHosts bool    `json:"hasKnownHosts"`
+	HasPassphrase bool    `json:"hasPassphrase"`
+
+	// HasPassword An SFTP password is stored (instead of or besides the private key)
+	HasPassword   bool                    `json:"hasPassword"`
 	HasPrivateKey bool                    `json:"hasPrivateKey"`
 	HasSecretKey  bool                    `json:"hasSecretKey"`
 	Host          *string                 `json:"host,omitempty"`

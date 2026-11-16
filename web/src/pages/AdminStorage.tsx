@@ -60,6 +60,7 @@ function TargetCard({ target, running, secretsAvailable, onEdit }: {
     target.hasSecretKey && t("storage.cred.secretKey"),
     target.hasPrivateKey && t("storage.cred.privateKey"),
     target.hasPassphrase && t("storage.cred.passphrase"),
+    target.hasPassword && t("storage.cred.password"),
     target.hasKnownHosts && t("storage.cred.knownHosts"),
   ].filter(Boolean);
   const where = location(target);

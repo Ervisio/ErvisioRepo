@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"golang.org/x/crypto/ssh"
@@ -88,23 +89,13 @@ func openS3(_ context.Context, t config.Target, _ BuildOptions) (blob.Store, err
 	return s3.New(o)
 }
 
-// openSFTP builds an SFTP store authenticated with a private key, inline
-// (key_pem) or from key_file. The server key is always verified against the
-// inline known_hosts content or known_hosts_file.
+// openSFTP builds an SFTP store authenticated with a private key (inline or
+// key_file), a password (inline or password_file), or both. The server key is
+// always verified against the inline known_hosts content or known_hosts_file.
 func openSFTP(_ context.Context, t config.Target, _ BuildOptions) (blob.Store, error) {
-	var pem []byte
-	keyName := "key_file " + t.KeyFile
-	if t.KeyPEM != "" {
-		pem, keyName = []byte(t.KeyPEM), "private key"
-	} else {
-		var err error
-		if pem, err = readSecretFile(t.KeyFile); err != nil {
-			return nil, err
-		}
-	}
-	signer, err := ParsePrivateKey(pem, []byte(t.KeyPassphrase))
+	auth, err := sftpAuth(t)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", keyName, err)
+		return nil, err
 	}
 	var hostKeys ssh.HostKeyCallback
 	switch {
@@ -128,11 +119,54 @@ func openSFTP(_ context.Context, t config.Target, _ BuildOptions) (blob.Store, e
 		Name:            t.Name,
 		Addr:            net.JoinHostPort(t.Host, strconv.Itoa(t.Port)),
 		User:            t.User,
-		Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
+		Auth:            auth,
 		HostKeyCallback: hostKeys,
 		Root:            t.Root,
 		MaxConns:        t.MaxConns,
 	})
+}
+
+// sftpAuth returns the SSH auth methods of an SFTP target: the private key
+// first, then the password (also offered as keyboard-interactive, which some
+// servers use instead of the password method).
+func sftpAuth(t config.Target) ([]ssh.AuthMethod, error) {
+	var auth []ssh.AuthMethod
+	pem, keyName := []byte(t.KeyPEM), "private key"
+	if t.KeyPEM == "" && t.KeyFile != "" {
+		var err error
+		if pem, err = readSecretFile(t.KeyFile); err != nil {
+			return nil, err
+		}
+		keyName = "key_file " + t.KeyFile
+	}
+	if len(pem) > 0 {
+		signer, err := ParsePrivateKey(pem, []byte(t.KeyPassphrase))
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", keyName, err)
+		}
+		auth = append(auth, ssh.PublicKeys(signer))
+	}
+	password := t.Password
+	if password == "" && t.PasswordFile != "" {
+		raw, err := readSecretFile(t.PasswordFile)
+		if err != nil {
+			return nil, err
+		}
+		password = strings.TrimRight(string(raw), "\r\n")
+	}
+	if password != "" {
+		auth = append(auth, ssh.Password(password), ssh.KeyboardInteractive(func(_, _ string, questions []string, _ []bool) ([]string, error) {
+			answers := make([]string, len(questions))
+			for i := range answers {
+				answers[i] = password
+			}
+			return answers, nil
+		}))
+	}
+	if len(auth) == 0 {
+		return nil, errors.New("no credentials: set a private key or a password")
+	}
+	return auth, nil
 }
 
 // ParsePrivateKey parses an SSH private key, using passphrase when it is not

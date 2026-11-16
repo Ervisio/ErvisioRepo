@@ -163,7 +163,7 @@ func targetInput(b v1gen.StorageTargetInput) storagecfg.TargetInput {
 	if sec := b.Secrets; sec != nil {
 		in.Secrets = storagecfg.Secrets{
 			AccessKey: deref(sec.AccessKey), SecretKey: deref(sec.SecretKey), PrivateKey: deref(sec.PrivateKey),
-			Passphrase: deref(sec.Passphrase), KnownHosts: deref(sec.KnownHosts),
+			Passphrase: deref(sec.Passphrase), KnownHosts: deref(sec.KnownHosts), Password: deref(sec.Password),
 		}
 	}
 	return in
@@ -203,7 +203,7 @@ func storageConfigDTO(v storagecfg.View) v1gen.StorageConfig {
 			PathStyle: t.PathStyle,
 			Host:      optString(t.Host), Port: optInt(t.Port), User: optString(t.User), Root: optString(t.Root), MaxConns: optInt(t.MaxConns),
 			HasAccessKey: t.HasAccessKey, HasSecretKey: t.HasSecretKey, HasPrivateKey: t.HasPrivateKey,
-			HasPassphrase: t.HasPassphrase, HasKnownHosts: t.HasKnownHosts,
+			HasPassphrase: t.HasPassphrase, HasKnownHosts: t.HasKnownHosts, HasPassword: t.HasPassword,
 			UsedBy: t.UsedBy, RestartPending: t.RestartPending, RemovedAfterRestart: t.RemovedAfterRestart,
 			Objects: t.Objects, Locked: t.Locked,
 		})

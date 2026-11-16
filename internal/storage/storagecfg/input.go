@@ -68,6 +68,8 @@ type Secrets struct {
 	PrivateKey string
 	Passphrase string
 	KnownHosts string
+	// Password is the SFTP account password, an alternative to PrivateKey.
+	Password string
 }
 
 // TargetInput is the definition of an s3 or sftp target as sent by the form.
@@ -140,7 +142,7 @@ func (in *TargetInput) s3Fields(p *problems) {
 	if in.Host != "" || in.Port != 0 || in.User != "" || in.Root != "" || in.MaxConns != 0 {
 		p.add("kind", "SFTP fields are not used by an S3 target")
 	}
-	if in.Secrets.PrivateKey != "" || in.Secrets.Passphrase != "" || in.Secrets.KnownHosts != "" {
+	if in.Secrets.PrivateKey != "" || in.Secrets.Passphrase != "" || in.Secrets.KnownHosts != "" || in.Secrets.Password != "" {
 		p.add("secrets", "SFTP credentials are not used by an S3 target")
 	}
 	switch u, err := url.Parse(in.Endpoint); {
@@ -227,6 +229,9 @@ func (s *Secrets) shape(p *problems) {
 	}
 	if len(s.Passphrase) > maxCredential {
 		p.add("secrets.passphrase", "is too long")
+	}
+	if len(s.Password) > maxCredential || strings.IndexFunc(s.Password, unicode.IsControl) >= 0 {
+		p.add("secrets.password", "must not contain control characters (up to %d characters)", maxCredential)
 	}
 	if s.KnownHosts != "" {
 		s.KnownHosts = strings.TrimSpace(strings.ReplaceAll(s.KnownHosts, "\r\n", "\n")) + "\n"

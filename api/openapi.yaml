@@ -10752,7 +10752,7 @@ components:
     StorageTargetConfig:
       type: object
       description: A storage target. Credentials are never returned, only whether each one is stored.
-      required: [name, kind, source, encrypt, pathStyle, usedBy, restartPending, removedAfterRestart, objects, locked, hasAccessKey, hasSecretKey, hasPrivateKey, hasPassphrase, hasKnownHosts]
+      required: [name, kind, source, encrypt, pathStyle, usedBy, restartPending, removedAfterRestart, objects, locked, hasAccessKey, hasSecretKey, hasPrivateKey, hasPassphrase, hasKnownHosts, hasPassword]
       properties:
         name:
           type: string
@@ -10798,6 +10798,9 @@ components:
           type: boolean
         hasKnownHosts:
           type: boolean
+        hasPassword:
+          type: boolean
+          description: An SFTP password is stored (instead of or besides the private key)
         usedBy:
           type: array
           description: Uses of this target, as primary:<policy>, replica:<policy> or cache:<policy>
@@ -10917,6 +10920,13 @@ components:
         knownHosts:
           type: string
           maxLength: 65536
+        password:
+          type: string
+          maxLength: 512
+          description: |
+            SFTP account password, an alternative to privateKey. Sending only
+            a password replaces a stored private key; sending only a private
+            key replaces a stored password.
     StoragePolicyInput:
       type: object
       required: [primary, replicas]

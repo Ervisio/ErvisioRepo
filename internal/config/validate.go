@@ -228,8 +228,17 @@ func (v *validator) target(p string, t *Target) {
 	case "sftp":
 		v.required(p+".host", t.Host)
 		v.required(p+".user", t.User)
-		if t.KeyPEM == "" {
-			v.absPath(p+".key_file", t.KeyFile)
+		switch {
+		case t.KeyPEM != "" || t.Password != "":
+		case t.KeyFile == "" && t.PasswordFile == "":
+			v.add(p+".key_file", "or password_file is required")
+		default:
+			if t.KeyFile != "" {
+				v.absPath(p+".key_file", t.KeyFile)
+			}
+			if t.PasswordFile != "" {
+				v.absPath(p+".password_file", t.PasswordFile)
+			}
 		}
 		if t.KnownHostsData == "" {
 			v.absPath(p+".known_hosts_file", t.KnownHostsFile)

@@ -30,7 +30,7 @@ Altri target: `make help`.
 
 Le destinazioni (`local`, `s3`, `sftp`) e le policy per tipo di dato si configurano nella sezione `[storage]`; un esempio completo è in `docs/PLAN.md`, sezione 4. Note:
 
-- Le destinazioni `sftp` richiedono `known_hosts_file` (percorso assoluto, la chiave dell'host è sempre verificata); `root` imposta la directory remota di base.
+- Le destinazioni `sftp` richiedono `known_hosts_file` (percorso assoluto, la chiave dell'host è sempre verificata) e `key_file`, `password_file` o entrambi (percorsi assoluti, leggibili solo dal proprietario); `root` imposta la directory remota di base.
 - Le destinazioni `s3` accettano un `prefix` opzionale (che termina con `/`). Le credenziali vengono da `credentials_file` o dalle variabili d'ambiente standard `AWS_*`.
 - Le destinazioni con `encrypt = true` richiedono `security.master_key_file`: 32 byte in hex o base64, permessi `0600`.
 - I file di chiavi, credenziali e known_hosts non devono essere leggibili dal gruppo o da altri.

@@ -75,7 +75,7 @@ When no usable Caddy is found, the command prints the snippet to paste yourself.
 
 Besides `[[storage.target]]` in `config.toml`, an instance admin can add S3-compatible and SFTP targets in **Admin > Storage** and change where each data type (`git`, `lfs`, `actions`, ...) is stored.
 
-- **Credentials.** The S3 access and secret keys, the SFTP private key (with its optional passphrase) and the known hosts lines are typed in the form and sealed in the database with the master key (`security.master_key_file`). They are never shown again: the page only says whether each one is stored, and a blank field keeps the stored value. Without a master key credentials cannot be saved. Do not lose the key: stored credentials cannot be read without it.
+- **Credentials.** The S3 access and secret keys, the SFTP private key (with its optional passphrase) or password, and the known hosts lines are typed in the form and sealed in the database with the master key (`security.master_key_file`). They are never shown again: the page only says whether each one is stored, and a blank field keeps the stored value. Without a master key credentials cannot be saved. Do not lose the key: stored credentials cannot be read without it. An SFTP target signs in with a private key or a password (**Sign-in method**); saving one replaces the other.
 - **Test connection** works on the form before saving, with the same write, read, list and delete round trip as `ervisio-repo storage test`.
 - **Policies.** Replicas and cache can be changed at any time. The primary can change only while the policy holds no objects, because objects are not moved between targets. A cache must be a local target.
 - **Restart.** Changes apply the next time the server starts; the page says so until then.

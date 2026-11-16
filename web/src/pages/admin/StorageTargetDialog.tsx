@@ -9,6 +9,8 @@ import { Button, Dialog, DialogClose, Icon, Input, Select, Toggle } from "../../
 import { TestResult } from "./StorageTestResult.tsx";
 
 type Kind = "s3" | "sftp";
+/** How an SFTP target signs in. */
+type Auth = "key" | "password";
 
 type Form = {
   kind: Kind;
@@ -29,11 +31,13 @@ type Form = {
   privateKey: string;
   passphrase: string;
   knownHosts: string;
+  auth: Auth;
+  password: string;
 };
 
 const FIELD_PATHS = new Set([
   "name", "kind", "encrypt", "endpoint", "bucket", "region", "prefix", "host", "port", "user", "root", "maxConns",
-  "secrets.accessKey", "secrets.secretKey", "secrets.privateKey", "secrets.passphrase", "secrets.knownHosts",
+  "secrets.accessKey", "secrets.secretKey", "secrets.privateKey", "secrets.passphrase", "secrets.knownHosts", "secrets.password",
 ]);
 
 function initial(existing?: StorageTargetConfig): Form {
@@ -56,6 +60,8 @@ function initial(existing?: StorageTargetConfig): Form {
     privateKey: "",
     passphrase: "",
     knownHosts: "",
+    auth: existing?.hasPassword && !existing.hasPrivateKey ? "password" : "key",
+    password: "",
   };
 }
 
@@ -79,7 +85,10 @@ function toInput(f: Form): StorageTargetInput {
   return {
     ...base,
     host: opt(f.host), port: num(f.port), user: opt(f.user), root: opt(f.root), maxConns: num(f.maxConns),
-    secrets: { privateKey: opt(f.privateKey), passphrase: opt(f.passphrase), knownHosts: opt(f.knownHosts) },
+    // Only the chosen method is sent: the server then drops the credential of the other one.
+    secrets: f.auth === "key"
+      ? { privateKey: opt(f.privateKey), passphrase: opt(f.passphrase), knownHosts: opt(f.knownHosts) }
+      : { password: opt(f.password), knownHosts: opt(f.knownHosts) },
   };
 }
 
@@ -131,6 +140,10 @@ function TargetForm({ existing, secretsAvailable, onSaved, onClose }: {
   const mustType = (has: boolean | undefined) => !editing || !has || moved;
 
   const save = () => put.mutate({ name: f.name.trim(), input: toInput(f) }, { onSuccess: onSaved });
+  const authOptions = [
+    { value: "key", label: t("storage.f.auth.key") },
+    { value: "password", label: t("storage.f.auth.password") },
+  ];
   const kindOptions = [
     { value: "s3", label: t("storage.kind.s3") },
     { value: "sftp", label: t("storage.kind.sftp") },
@@ -201,12 +214,21 @@ function TargetForm({ existing, secretsAvailable, onSaved, onClose }: {
             hint={t("storage.f.root.hint")} error={err("root")} onChange={(e) => set("root", e.target.value)} />
           <Input label={t("storage.f.maxConns")} mono inputMode="numeric" autoComplete="off" value={f.maxConns}
             error={err("maxConns")} onChange={(e) => set("maxConns", e.target.value)} />
-          <Area label={t("storage.f.privateKey")} value={f.privateKey} onChange={(v) => set("privateKey", v)}
-            placeholder={editing && existing?.hasPrivateKey ? t("storage.cred.stored") : "-----BEGIN OPENSSH PRIVATE KEY-----"}
-            hint={stored(existing?.hasPrivateKey) ?? t("storage.f.privateKey.hint")} error={err("secrets.privateKey")} />
-          <Input label={t("storage.f.passphrase")} type="password" mono autoComplete="new-password" value={f.passphrase}
-            hint={f.privateKey !== "" ? t("storage.f.passphrase.new") : (stored(existing?.hasPassphrase) ?? t("storage.f.passphrase.hint"))}
-            error={err("secrets.passphrase")} onChange={(e) => set("passphrase", e.target.value)} />
+          <Select label={t("storage.f.auth")} value={f.auth} onValueChange={(v) => set("auth", v === "password" ? "password" : "key")} options={authOptions} />
+          {f.auth === "key" ? (
+            <>
+              <Area label={t("storage.f.privateKey")} value={f.privateKey} onChange={(v) => set("privateKey", v)}
+                placeholder={editing && existing?.hasPrivateKey ? t("storage.cred.stored") : "-----BEGIN OPENSSH PRIVATE KEY-----"}
+                hint={stored(existing?.hasPrivateKey) ?? t("storage.f.privateKey.hint")} error={err("secrets.privateKey")} />
+              <Input label={t("storage.f.passphrase")} type="password" mono autoComplete="new-password" value={f.passphrase}
+                hint={f.privateKey !== "" ? t("storage.f.passphrase.new") : (stored(existing?.hasPassphrase) ?? t("storage.f.passphrase.hint"))}
+                error={err("secrets.passphrase")} onChange={(e) => set("passphrase", e.target.value)} />
+            </>
+          ) : (
+            <Input label={t("storage.f.password")} type="password" autoComplete="new-password" required={mustType(existing?.hasPassword)} value={f.password}
+              hint={stored(existing?.hasPassword) ?? t("storage.f.password.hint")} error={err("secrets.password") ?? err("secrets.privateKey")}
+              onChange={(e) => set("password", e.target.value)} />
+          )}
           <Area label={t("storage.f.knownHosts")} value={f.knownHosts} onChange={(v) => set("knownHosts", v)}
             placeholder={editing && existing?.hasKnownHosts ? t("storage.cred.stored") : "example.com ssh-ed25519 AAAA..."}
             hint={stored(existing?.hasKnownHosts) ?? t("storage.f.knownHosts.hint")} error={err("secrets.knownHosts")} />

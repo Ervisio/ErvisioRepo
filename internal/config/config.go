@@ -247,8 +247,10 @@ type Target struct {
 	// KnownHostsFile verifies the SFTP server key (OpenSSH known_hosts format).
 	KnownHostsFile string `toml:"known_hosts_file"`
 	// Root is the remote SFTP directory holding the objects (default: login directory).
-	Root         string `toml:"root"`
-	URL          string `toml:"url"`
+	Root string `toml:"root"`
+	URL  string `toml:"url"`
+	// PasswordFile holds the account password (webdav, and sftp as an
+	// alternative or an addition to key_file).
 	PasswordFile string `toml:"password_file"`
 
 	// Inline credentials. They are never read from the TOML file: targets
@@ -259,6 +261,7 @@ type Target struct {
 	SecretKey      string `toml:"-"` // s3
 	KeyPEM         string `toml:"-"` // sftp private key
 	KeyPassphrase  string `toml:"-"` // sftp, optional
+	Password       string `toml:"-"` // sftp password, instead of or besides the key
 	KnownHostsData string `toml:"-"` // sftp known_hosts content
 	// Guarded makes the drivers refuse link-local, cloud metadata, unspecified
 	// and multicast addresses when they connect. Set for targets that come
