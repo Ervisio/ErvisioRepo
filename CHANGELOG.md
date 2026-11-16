@@ -6,6 +6,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Actions runner: steps now get `GITHUB_API_URL=<server>/api/v3` and `GITHUB_GRAPHQL_URL=<server>/api/graphql` (the act library forced Gitea's `/api/v1` and an empty GraphQL URL), so octokit, `gh` and similar tools reach the GitHub-compatible API directly.
+- Actions runner: a step's own `env:` now overrides `GITHUB_SERVER_URL`, `GITHUB_API_URL` and `GITHUB_GRAPHQL_URL` instead of being overwritten.
+- Actions runner: `actions/upload-artifact` and `actions/download-artifact` v4+ work out of the box; their steps see `GITHUB_SERVER_URL=https://github.com` so `@actions/artifact` passes its GHES check, while the upload still goes to ErvisioRepo through `ACTIONS_RESULTS_URL`.
+- The act library is now a patched copy in `third_party/gitea-runner` (v1.0.8, see `PATCHES.md`), wired with a `replace` in `go.mod`.
+
 ## [1.14.1] - 2026-11-16
 
 ### Fixed

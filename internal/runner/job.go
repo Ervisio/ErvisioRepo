@@ -189,7 +189,8 @@ func (e *executor) execute(ctx context.Context, task *runnerv1.Task, rep *report
 		env["ACTIONS_RUNTIME_TOKEN"] = v
 	}
 
-	// act derives github.server_url (and, for now, api_url) from this.
+	// act derives github.server_url, api_url (/api/v3) and graphql_url from
+	// this (third_party/gitea-runner patch).
 	instance := tc["server_url"].GetStringValue()
 	if instance == "" {
 		instance = e.server

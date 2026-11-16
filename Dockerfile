@@ -15,6 +15,8 @@ ARG COMMIT=unknown
 ENV CGO_ENABLED=0
 WORKDIR /src
 COPY go.mod go.sum ./
+# go.mod replaces the act library with this patched copy.
+COPY third_party/ third_party/
 RUN go mod download
 COPY . .
 COPY --from=web /src/web/dist/ web/dist/

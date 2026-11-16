@@ -162,3 +162,6 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	tags.cncf.io/container-device-interface v1.1.0 // indirect
 )
+
+// Patched copy of the act library: see third_party/gitea-runner/PATCHES.md.
+replace gitea.com/gitea/runner => ./third_party/gitea-runner

@@ -12,7 +12,7 @@ Invariants:
 - Jobs run on a context detached from the daemon ctx; they are cancelled only after shutdown_timeout grace.
 - Output limits: key 255 bytes, value 1 MiB (report.maxOutput*), also enforced by the server.
 Gotchas:
-- act hardcodes GITHUB_API_URL=<server_url>/api/v1 and blanks graphql_url, so the server must alias /api/v1 to /api/v3 (the GitHub-compatible API); without it actions calling the API 404.
+- act is a patched copy in third_party/gitea-runner (go.mod replace, PATCHES.md): GITHUB_API_URL=<server>/api/v3, GITHUB_GRAPHQL_URL=<server>/api/graphql, step env: wins over the three server URLs, actions/{upload,download}-artifact get GITHUB_SERVER_URL=https://github.com (isGhes check). The server still aliases /api/v1 job-token calls to /api/v3 (jobAPIAlias) for older runners. Dockerfile copies third_party before go mod download.
 - go.mod marks gitea.com/gitea/runner, actions-proto-go and others as // indirect although they are imported directly; do not "fix" with go mod tidy without noting it in the report (CLAUDE.md rule 9).
 - job.go, workflow.go and report/ are ported from gitea/runner (MIT); keep the license header and upstream behaviours (e.g. isJobStepEntry log routing) when editing.
 - Generated protobuf lives in internal/runnerapi/runnerv1 (package path in the proto go_package); regenerate with make generate (buf), never hand-edit.
