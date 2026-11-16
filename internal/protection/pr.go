@@ -46,6 +46,12 @@ const (
 type CheckStatus struct {
 	Context string
 	State   string
+	// AppNumID is the App that reported a check run (0: not an App).
+	AppNumID int64
+	// Superseded marks a check run older than the latest run of the same
+	// name from another reporter: it only counts for a context pinned to
+	// its App.
+	Superseded bool
 }
 
 // CheckSource returns the latest status of each check context on a commit
@@ -153,7 +159,7 @@ func (e *Engine) PullRequestStatus(ctx context.Context, in PRInput) (PRStatus, e
 		}
 	}
 	if len(r.RequiredStatusChecks) > 0 {
-		st.MissingChecks, err = e.missingChecks(ctx, in.RepoID, in.HeadSHA, r.RequiredStatusChecks)
+		st.MissingChecks, err = e.missingChecks(ctx, in.RepoID, in.HeadSHA, r.RequiredStatusChecks, r.RequiredCheckApps)
 		if err != nil {
 			return st, err
 		}

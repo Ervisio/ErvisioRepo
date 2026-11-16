@@ -172,6 +172,8 @@ func (s *Service) enqueue(ctx context.Context, id uuid.UUID) error {
 type Scope struct {
 	RepoID uuid.UUID
 	OrgID  uuid.UUID
+	// AppID is set for the hook of an App (AppScope).
+	AppID uuid.UUID
 	// Repo is set for a repository scope.
 	Repo *repos.Repo
 	// OrgName is set for an organization scope.
@@ -179,6 +181,9 @@ type Scope struct {
 }
 
 func (sc Scope) owns(h dbgen.Webhook) bool {
+	if sc.AppID != uuid.Nil {
+		return h.AppID.Valid && h.AppID.UUID == sc.AppID
+	}
 	if sc.RepoID != uuid.Nil {
 		return h.RepoID.Valid && h.RepoID.UUID == sc.RepoID
 	}

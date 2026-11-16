@@ -67,13 +67,20 @@ func ValidAccessTokenFormat(s string) bool {
 // workflow job).
 const JobTokenPrefix = "erj_"
 
-// ValidCredentialFormat reports whether s looks like a personal access
-// token or an Ervisio Actions job token.
-func ValidCredentialFormat(s string) bool {
-	if ValidAccessTokenFormat(s) {
-		return true
-	}
-	rest, ok := strings.CutPrefix(s, JobTokenPrefix)
+// InstallationTokenPrefix starts every App installation access token.
+const InstallationTokenPrefix = "erps_"
+
+// NewInstallationToken returns a new installation access token and its
+// stored hash.
+func NewInstallationToken() (token string, hash []byte) {
+	t, _ := NewToken()
+	token = InstallationTokenPrefix + t
+	return token, HashToken(token)
+}
+
+// prefixedFormat reports whether s is prefix followed by a NewToken token.
+func prefixedFormat(s, prefix string) bool {
+	rest, ok := strings.CutPrefix(s, prefix)
 	if !ok || len(rest) != base64.RawURLEncoding.EncodedLen(TokenBytes) {
 		return false
 	}
@@ -81,10 +88,24 @@ func ValidCredentialFormat(s string) bool {
 	return err == nil
 }
 
+// ValidCredentialFormat reports whether s looks like a personal access
+// token, an Ervisio Actions job token or an App installation token.
+func ValidCredentialFormat(s string) bool {
+	return ValidAccessTokenFormat(s) || prefixedFormat(s, JobTokenPrefix) || prefixedFormat(s, InstallationTokenPrefix)
+}
+
 // JobTokenLookup authenticates Ervisio Actions job tokens. It returns
 // ErrNoToken for an unknown or expired token.
 type JobTokenLookup interface {
 	LookupJobToken(ctx context.Context, token string) (Principal, error)
+}
+
+// AppTokenLookup authenticates App installation tokens and resolves the
+// App behind a user-to-server token. LookupInstallationToken returns
+// ErrNoToken for an unknown, expired or suspended token.
+type AppTokenLookup interface {
+	LookupInstallationToken(ctx context.Context, token string) (Principal, error)
+	UserAppGrant(ctx context.Context, appID uuid.UUID) (*UserAppGrant, error)
 }
 
 // TokenHint is the part of a token shown in lists to recognize it.
@@ -107,6 +128,9 @@ type Tokens struct {
 	Now   func() time.Time // defaults to time.Now
 	// Jobs authenticates job tokens (erj_…); nil refuses them.
 	Jobs JobTokenLookup
+	// Apps authenticates installation tokens (erps_…) and bounds the
+	// user-to-server tokens of Apps; nil refuses both.
+	Apps AppTokenLookup
 }
 
 // Lookup returns the caller authenticated by token.
@@ -116,6 +140,12 @@ func (t *Tokens) Lookup(ctx context.Context, token string) (Principal, error) {
 			return Principal{}, ErrNoToken
 		}
 		return t.Jobs.LookupJobToken(ctx, token)
+	}
+	if strings.HasPrefix(token, InstallationTokenPrefix) {
+		if t.Apps == nil || !ValidCredentialFormat(token) {
+			return Principal{}, ErrNoToken
+		}
+		return t.Apps.LookupInstallationToken(ctx, token)
 	}
 	if !ValidAccessTokenFormat(token) {
 		return Principal{}, ErrNoToken
@@ -137,6 +167,18 @@ func (t *Tokens) Lookup(ctx context.Context, token string) (Principal, error) {
 	if err := t.Store.TouchToken(ctx, row.ID); err != nil {
 		return Principal{}, fmt.Errorf("touch token: %w", err)
 	}
-	return Principal{UserID: row.UserID, Username: row.Username, Role: row.Role, Method: MethodToken,
-		TokenID: row.ID, Scopes: slices.Clone(row.Scopes)}, nil
+	p := Principal{UserID: row.UserID, Username: row.Username, Role: row.Role, Method: MethodToken,
+		TokenID: row.ID, Scopes: slices.Clone(row.Scopes)}
+	if row.AppID.Valid {
+		// A user-to-server token: bounded by the App.
+		if t.Apps == nil {
+			return Principal{}, ErrNoToken
+		}
+		g, err := t.Apps.UserAppGrant(ctx, row.AppID.UUID)
+		if err != nil {
+			return Principal{}, err
+		}
+		p.UserApp = g
+	}
+	return p, nil
 }

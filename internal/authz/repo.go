@@ -79,11 +79,23 @@ type RepoFacts struct {
 	// Teams and Collaborator are the explicit grants of the caller.
 	Teams        []Permission
 	Collaborator Permission
+	// Capped bounds the result by Cap: the permission set of the App of a
+	// user-to-server token (AppRepoPermission).
+	Capped bool
+	Cap    Permission
 }
 
 // RepoPermission returns the effective permission: the highest of all the
 // grants that apply.
 func RepoPermission(f RepoFacts) Permission {
+	p := repoPermission(f)
+	if f.Capped {
+		p = min(p, f.Cap)
+	}
+	return p
+}
+
+func repoPermission(f RepoFacts) Permission {
 	if f.Suspended {
 		return PermNone
 	}

@@ -179,6 +179,32 @@ func Facts(ctx context.Context, q *dbgen.Queries, who auth.Principal, r dbgen.Re
 		}
 		return f, nil
 	}
+	if g := who.Installation; g != nil {
+		// An App installation token: its permission set on the
+		// repositories it covers, anonymous access elsewhere.
+		f := authz.RepoFacts{Visibility: authz.Visibility(r.Visibility)}
+		if g.Covers(r.ID, r.OwnerID) {
+			f.Signed = true
+			f.Collaborator = authz.AppRepoPermission(g.Permissions)
+		}
+		return f, nil
+	}
+	if who.UserApp != nil && who.UserID != uuid.Nil {
+		// A user-to-server token: the user's access, bounded by the App's
+		// permissions, on the repositories where the App is installed.
+		installed, err := q.AppInstalledOnRepo(ctx, dbgen.AppInstalledOnRepoParams{RepoID: r.ID, AppID: who.UserApp.AppID})
+		if err != nil {
+			return authz.RepoFacts{}, fmt.Errorf("app installed on repo: %w", err)
+		}
+		if !installed {
+			return authz.RepoFacts{Visibility: authz.Visibility(r.Visibility)}, nil
+		}
+		user := who
+		user.UserApp = nil
+		f, err := Facts(ctx, q, user, r, ownerKind)
+		f.Capped, f.Cap = true, authz.AppRepoPermission(who.UserApp.Permissions)
+		return f, err
+	}
 	f := authz.RepoFacts{
 		Signed:        who.UserID != uuid.Nil,
 		InstanceAdmin: who.IsAdmin(),
@@ -277,6 +303,9 @@ func (s *Service) Authorize(ctx context.Context, who auth.Principal, owner, name
 		return Repo{}, err
 	}
 	if !authz.Allowed(r.Permission, action) {
+		return Repo{}, ErrForbidden
+	}
+	if perms, ok := who.AppPermissions(); ok && !authz.AppActionAllowed(perms, action) {
 		return Repo{}, ErrForbidden
 	}
 	return r, nil

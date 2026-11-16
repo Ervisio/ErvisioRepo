@@ -176,13 +176,15 @@ type Output struct {
 
 // CheckRun is one check run.
 type CheckRun struct {
-	ID          uuid.UUID
-	SuiteID     uuid.UUID
-	RepoID      uuid.UUID
-	HeadSHA     string
-	HeadBranch  string
-	Name        string
-	App         string
+	ID         uuid.UUID
+	SuiteID    uuid.UUID
+	RepoID     uuid.UUID
+	HeadSHA    string
+	HeadBranch string
+	Name       string
+	App        string
+	// AppID is the App that reported the run with an installation token.
+	AppID       uuid.UUID
 	Status      string
 	Conclusion  string // empty unless completed
 	ExternalID  string
@@ -204,6 +206,8 @@ type CheckSuite struct {
 	HeadSHA    string
 	HeadBranch string
 	App        string
+	// AppID is the App that reported the suite with an installation token.
+	AppID      uuid.UUID
 	Status     string
 	Conclusion string // empty unless completed
 	Runs       int    // number of distinct run names
@@ -259,7 +263,10 @@ func (s *Service) access(ctx context.Context, who auth.Principal, owner, name st
 	if err != nil {
 		return repos.Repo{}, err
 	}
-	if write && !authz.Allowed(r.Permission, authz.ActPush) {
+	// An installation token writes statuses and checks with the statuses
+	// or checks permission alone (checked by the API) on a covered
+	// repository, as on GitHub.
+	if write && !authz.Allowed(r.Permission, authz.ActPush) && (who.Installation == nil || r.Permission < authz.PermRead) {
 		return repos.Repo{}, repos.ErrForbidden
 	}
 	return r, nil

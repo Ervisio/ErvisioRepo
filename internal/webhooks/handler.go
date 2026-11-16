@@ -47,9 +47,6 @@ func (s *Service) handle(ctx context.Context, ev events.Event) error {
 	if err != nil {
 		return fmt.Errorf("active webhooks: %w", err)
 	}
-	if len(hooks) == 0 {
-		return nil
-	}
 	b := s.newBuilder(ctx)
 	if err := b.loadRepo(ev.RepoID); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -60,6 +57,19 @@ func (s *Service) handle(ctx context.Context, ev events.Event) error {
 	name := githubEvent(ev)
 	var gh []item
 	var ghBuilt bool
+	items := func() ([]item, error) {
+		if !ghBuilt {
+			var err error
+			if gh, err = b.items(ev); err != nil {
+				return nil, err
+			}
+			ghBuilt = true
+		}
+		return gh, nil
+	}
+	if err := s.handleApps(ctx, ev, items); err != nil {
+		return err
+	}
 	var native []byte
 	for _, h := range hooks {
 		if h.Format == FormatErvisio {
@@ -76,11 +86,8 @@ func (s *Service) handle(ctx context.Context, ev events.Event) error {
 			}
 			continue
 		}
-		if !ghBuilt {
-			if gh, err = b.items(ev); err != nil {
-				return err
-			}
-			ghBuilt = true
+		if gh, err = items(); err != nil {
+			return err
 		}
 		for i, it := range gh {
 			if i >= nativeSeq {

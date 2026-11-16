@@ -13,10 +13,11 @@ SELECT a.*, n.kind AS owner_kind, n.name AS owner_name,
 FROM oauth_apps a
 JOIN namespaces n ON n.id = a.owner_id
 WHERE a.owner_id = $1
+  AND NOT EXISTS (SELECT 1 FROM apps x WHERE x.oauth_app_id = a.id)
 ORDER BY a.created_at DESC;
 
 -- name: CountOAuthAppsByOwner :one
-SELECT count(*) FROM oauth_apps WHERE owner_id = $1;
+SELECT count(*) FROM oauth_apps o WHERE o.owner_id = $1 AND NOT EXISTS (SELECT 1 FROM apps x WHERE x.oauth_app_id = o.id);
 
 -- name: CountOAuthAppUsers :one
 SELECT count(*) FROM oauth_grants WHERE app_id = $1;

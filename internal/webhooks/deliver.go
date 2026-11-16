@@ -159,6 +159,9 @@ func (s *Service) deliver(ctx context.Context, id uuid.UUID, final bool) error {
 		prefix + "Delivery": d.Guid.String(),
 		prefix + "Hook-ID":  h.ID.String(),
 	}
+	if err := s.appHeaders(ctx, h, headers); err != nil {
+		return err
+	}
 	if len(secret) > 0 {
 		mac := hmac.New(sha256.New, secret)
 		mac.Write(body)

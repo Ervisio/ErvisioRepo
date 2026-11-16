@@ -3,16 +3,19 @@ package statuses
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/events"
+	"github.com/Ervisio/ErvisioRepo/internal/repos"
 )
 
 // conclusionRank orders conclusions from the one that dominates a suite to
@@ -118,6 +121,27 @@ func app(who auth.Principal, given string) string {
 	return DefaultApp
 }
 
+// reporter is the app of a new check run: the App itself for an
+// installation token; otherwise the given name, which may not be the slug
+// of an App (a suite of an App is only written by its installations).
+func (s *Service) reporter(ctx context.Context, who auth.Principal, given string) (string, uuid.NullUUID, error) {
+	if g := who.Installation; g != nil {
+		return g.AppSlug, uuid.NullUUID{UUID: g.AppID, Valid: true}, nil
+	}
+	name := app(who, given)
+	if err := checkLen("app", name, 255); err != nil {
+		return "", uuid.NullUUID{}, err
+	}
+	_, err := s.q.GetAppBySlug(ctx, strings.ToLower(name))
+	switch {
+	case err == nil:
+		return "", uuid.NullUUID{}, invalid("app %q is reserved by an App", name)
+	case !errors.Is(err, pgx.ErrNoRows):
+		return "", uuid.NullUUID{}, fmt.Errorf("get app: %w", err)
+	}
+	return name, uuid.NullUUID{}, nil
+}
+
 // CreateCheckRun records a check run on the commit in.HeadSHA resolves to,
 // in the suite of (commit, app). It needs the push permission.
 func (s *Service) CreateCheckRun(ctx context.Context, who auth.Principal, owner, name string, in CheckRunInput) (CheckRun, error) {
@@ -151,8 +175,8 @@ func (s *Service) CreateCheckRun(ctx context.Context, who auth.Principal, owner,
 	if err := validateOutput(in.Output); err != nil {
 		return CheckRun{}, err
 	}
-	appName := app(who, in.App)
-	if err := checkLen("app", appName, 255); err != nil {
+	appName, appID, err := s.reporter(ctx, who, in.App)
+	if err != nil {
 		return CheckRun{}, err
 	}
 	r, err := s.access(ctx, who, owner, name, true)
@@ -195,7 +219,7 @@ func (s *Service) CreateCheckRun(ctx context.Context, who auth.Principal, owner,
 		// The upsert locks the suite row until the end of the transaction,
 		// so concurrent reports of one suite are serialized.
 		suite, err := q.UpsertCheckSuite(ctx, dbgen.UpsertCheckSuiteParams{ID: suiteID, RepoID: r.ID, HeadSha: sha,
-			HeadBranch: branch, App: appName})
+			HeadBranch: branch, App: appName, AppID: appID})
 		if err != nil {
 			return fmt.Errorf("upsert check suite: %w", err)
 		}
@@ -255,6 +279,15 @@ func (s *Service) UpdateCheckRun(ctx context.Context, who auth.Principal, owner,
 			return CheckRun{}, ErrCheckRunNotFound
 		}
 		return CheckRun{}, fmt.Errorf("get check run: %w", err)
+	}
+	// Only the App that created a run changes it, and only with its
+	// installation token; runs of other reporters stay out of its reach.
+	var mine uuid.UUID
+	if who.Installation != nil {
+		mine = who.Installation.AppID
+	}
+	if cur.SuiteAppID.UUID != mine {
+		return CheckRun{}, repos.ErrForbidden
 	}
 	completedNow := false
 	err = s.tx(ctx, func(q *dbgen.Queries) error {
@@ -590,7 +623,7 @@ func (s *Service) withRuns(ctx context.Context, rows []dbgen.CheckSuite) ([]Chec
 	out := make([]CheckSuite, 0, len(rows))
 	for _, x := range rows {
 		out = append(out, CheckSuite{ID: x.ID, RepoID: x.RepoID, HeadSHA: x.HeadSha, HeadBranch: x.HeadBranch,
-			App: x.App, Status: x.Status, Conclusion: x.Conclusion, Runs: counts[x.ID],
+			App: x.App, AppID: x.AppID.UUID, Status: x.Status, Conclusion: x.Conclusion, Runs: counts[x.ID],
 			CreatedAt: x.CreatedAt.Time, UpdatedAt: x.UpdatedAt.Time})
 	}
 	return out, nil
@@ -598,7 +631,7 @@ func (s *Service) withRuns(ctx context.Context, rows []dbgen.CheckSuite) ([]Chec
 
 func runOf(x dbgen.GetCheckRunRow) CheckRun {
 	return CheckRun{ID: x.ID, SuiteID: x.SuiteID, RepoID: x.RepoID, HeadSHA: x.HeadSha, HeadBranch: x.HeadBranch,
-		Name: x.Name, App: x.App, Status: x.Status, Conclusion: x.Conclusion, ExternalID: x.ExternalID,
+		Name: x.Name, App: x.App, AppID: x.SuiteAppID.UUID, Status: x.Status, Conclusion: x.Conclusion, ExternalID: x.ExternalID,
 		DetailsURL: x.DetailsUrl, Title: x.OutputTitle, Summary: x.OutputSummary, Text: x.OutputText,
 		Annotations: len(decodeAnnotations(x.Annotations)), StartedAt: tsPtr(x.StartedAt),
 		CompletedAt: tsPtr(x.CompletedAt), CreatedAt: x.CreatedAt.Time, UpdatedAt: x.UpdatedAt.Time}

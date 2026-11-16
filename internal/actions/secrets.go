@@ -132,6 +132,14 @@ func (s *Service) manageRepo(ctx context.Context, who auth.Principal, owner, nam
 	if err != nil {
 		return repos.Repo{}, err
 	}
+	if who.Installation != nil {
+		// /api/v3 checked the secrets or variables permission of the
+		// endpoint; the installation must cover the repository.
+		if !who.WritesTo(repo.ID, repo.OwnerID) {
+			return repos.Repo{}, ErrForbidden
+		}
+		return repo, nil
+	}
 	if !authz.Allowed(repo.Permission, authz.ActSettings) {
 		return repos.Repo{}, ErrForbidden
 	}
@@ -200,7 +208,7 @@ func (s *Service) SetSecret(ctx context.Context, who auth.Principal, sc Scope, n
 	owner, repo := sc.params()
 	id, _ := uuid.NewV7()
 	r, err := s.q.UpsertActionsSecret(ctx, dbgen.UpsertActionsSecretParams{ID: id, Scope: sc.kind, OwnerID: owner, RepoID: repo,
-		Environment: sc.env, Name: n, Sealed: sealed, CreatedBy: nullID(who.UserID)})
+		Environment: sc.env, Name: n, Sealed: sealed, CreatedBy: nullID(who.Actor())})
 	if err != nil {
 		return Secret{}, fmt.Errorf("store secret: %w", err)
 	}
@@ -260,7 +268,7 @@ func (s *Service) SetVariable(ctx context.Context, who auth.Principal, sc Scope,
 	owner, repo := sc.params()
 	id, _ := uuid.NewV7()
 	r, err := s.q.UpsertActionsVariable(ctx, dbgen.UpsertActionsVariableParams{ID: id, Scope: sc.kind, OwnerID: owner, RepoID: repo,
-		Environment: sc.env, Name: n, Value: value, CreatedBy: nullID(who.UserID)})
+		Environment: sc.env, Name: n, Value: value, CreatedBy: nullID(who.Actor())})
 	if err != nil {
 		return Variable{}, fmt.Errorf("store variable: %w", err)
 	}

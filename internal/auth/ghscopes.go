@@ -3,6 +3,8 @@ package auth
 import (
 	"slices"
 	"strings"
+
+	"github.com/Ervisio/ErvisioRepo/internal/authz"
 )
 
 // toGitHubScopes maps the token scopes to the classic GitHub OAuth scopes
@@ -111,4 +113,27 @@ func ScopesFromGitHub(gh []string) []string {
 	}
 	slices.Sort(kept)
 	return kept
+}
+
+// AppGitHubScopes maps the permissions of an App to the classic GitHub
+// scopes its user-to-server tokens get (then token scopes through
+// ScopesFromGitHub). Apps ignore the scopes a client requests: the App's
+// permissions bound the tokens (Principal.UserApp).
+func AppGitHubScopes(p authz.AppPermissions) []string {
+	scopes := []string{"read:user"}
+	write := false
+	for _, k := range authz.AppRepoPermissions {
+		if k != authz.AppMetadata && p.Has(k, authz.AppWrite) {
+			write = true
+		}
+	}
+	if write {
+		scopes = append(scopes, "repo")
+	} else {
+		scopes = append(scopes, "read:repo_hook")
+	}
+	if p.Has(authz.AppWorkflows, authz.AppWrite) {
+		scopes = append(scopes, "workflow")
+	}
+	return scopes
 }

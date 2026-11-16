@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -169,8 +170,17 @@ func (s *Service) Statuses(ctx context.Context, repoID uuid.UUID, sha string) ([
 	for _, st := range list {
 		out = append(out, protection.CheckStatus{Context: st.Context, State: st.State})
 	}
+	// The latest run of each name and App; the older ones of a name only
+	// count for a context pinned to their App.
+	latestAt := map[string]time.Time{}
 	for _, run := range runs {
-		out = append(out, protection.CheckStatus{Context: run.Name, State: runState(run.Status, run.Conclusion)})
+		if t := run.CreatedAt.Time; t.After(latestAt[run.Name]) {
+			latestAt[run.Name] = t
+		}
+	}
+	for _, run := range runs {
+		out = append(out, protection.CheckStatus{Context: run.Name, State: runState(run.Status, run.Conclusion),
+			AppNumID: run.AppNumID.Int64, Superseded: run.CreatedAt.Time.Before(latestAt[run.Name])})
 	}
 	return out, nil
 }

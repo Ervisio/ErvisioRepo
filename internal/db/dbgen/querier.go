@@ -41,6 +41,7 @@ type Querier interface {
 	// Accepts a code for step only once: a replay in the same window matches
 	// no row.
 	AdvanceTOTPStep(ctx context.Context, arg AdvanceTOTPStepParams) (int64, error)
+	AppInstalledOnRepo(ctx context.Context, arg AppInstalledOnRepoParams) (bool, error)
 	ApproveActionsJob(ctx context.Context, arg ApproveActionsJobParams) error
 	ApproveActionsRun(ctx context.Context, arg ApproveActionsRunParams) error
 	// Numeric ids of the GitHub compatible API (internal/ghapi).
@@ -81,6 +82,9 @@ type Querier interface {
 	CountActionsExternalRuns(ctx context.Context, arg CountActionsExternalRunsParams) (int64, error)
 	CountActionsRuns(ctx context.Context, arg CountActionsRunsParams) (int64, error)
 	CountActiveAdmins(ctx context.Context) (int64, error)
+	CountAppInstallations(ctx context.Context, appID uuid.UUID) (int64, error)
+	CountAppKeys(ctx context.Context, appID uuid.UUID) (int64, error)
+	CountAppsByOwner(ctx context.Context, ownerID uuid.UUID) (int64, error)
 	CountCheckRuns(ctx context.Context, arg CountCheckRunsParams) (int64, error)
 	CountCheckSuites(ctx context.Context, arg CountCheckSuitesParams) (int64, error)
 	CountCommitStatuses(ctx context.Context, arg CountCommitStatusesParams) (int64, error)
@@ -134,6 +138,9 @@ type Querier interface {
 	DeleteActionsSecret(ctx context.Context, arg DeleteActionsSecretParams) (int64, error)
 	DeleteActionsUploadParts(ctx context.Context, owner string) error
 	DeleteActionsVariable(ctx context.Context, arg DeleteActionsVariableParams) (int64, error)
+	DeleteApp(ctx context.Context, id uuid.UUID) (uuid.UUID, error)
+	DeleteAppKey(ctx context.Context, arg DeleteAppKeyParams) (int64, error)
+	DeleteAppWebhook(ctx context.Context, appID uuid.NullUUID) error
 	DeleteBranchProtection(ctx context.Context, arg DeleteBranchProtectionParams) (int64, error)
 	// Removes a network without members (its pool can then be trashed).
 	DeleteEmptyForkNetwork(ctx context.Context, id uuid.UUID) (int64, error)
@@ -141,6 +148,7 @@ type Querier interface {
 	// Keeps expired rows for an hour, so that a late poll still gets
 	// expired_token instead of an unknown code.
 	DeleteExpiredDeviceCodes(ctx context.Context) (int64, error)
+	DeleteExpiredInstallationTokens(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	DeleteExpiredLFSTokens(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	DeleteExpiredMFAChallenges(ctx context.Context) (int64, error)
 	DeleteExpiredOAuthCodes(ctx context.Context) (int64, error)
@@ -153,6 +161,9 @@ type Querier interface {
 	DeleteGitHubConnection(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteGitHubSyncLinkByRepo(ctx context.Context, repoID uuid.UUID) (int64, error)
 	DeleteGitHubSyncRef(ctx context.Context, arg DeleteGitHubSyncRefParams) error
+	DeleteInstallation(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteInstallationRepos(ctx context.Context, installationID uuid.UUID) error
+	DeleteInstallationToken(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteInstanceSettings(ctx context.Context, keys []string) (int64, error)
 	// Plain issues only: pull requests go away with their repository. Comments,
 	// timeline, labels, assignees, reactions and references cascade.
@@ -166,6 +177,7 @@ type Querier interface {
 	DeleteMFAChallenge(ctx context.Context, id uuid.UUID) error
 	DeleteMilestone(ctx context.Context, arg DeleteMilestoneParams) (int64, error)
 	DeleteOAuthApp(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteOAuthAppOfApp(ctx context.Context, id uuid.UUID) error
 	DeleteOAuthAppSecret(ctx context.Context, arg DeleteOAuthAppSecretParams) (int64, error)
 	DeleteOAuthGrant(ctx context.Context, arg DeleteOAuthGrantParams) (int64, error)
 	// Invalidates the outstanding tokens of one purpose for a user.
@@ -257,8 +269,16 @@ type Querier interface {
 	GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRunner, error)
 	GetActionsRunnerByCredential(ctx context.Context, credentialHash []byte) (ActionsRunner, error)
 	GetActionsTasksVersion(ctx context.Context) (int64, error)
+	GetAppByClientID(ctx context.Context, clientID string) (GetAppByClientIDRow, error)
+	GetAppByID(ctx context.Context, id uuid.UUID) (GetAppByIDRow, error)
+	GetAppByNumID(ctx context.Context, numID pgtype.Int8) (GetAppByNumIDRow, error)
+	GetAppBySlug(ctx context.Context, slug string) (GetAppBySlugRow, error)
+	GetAppNumID(ctx context.Context, id uuid.UUID) (pgtype.Int8, error)
+	GetAppPermissions(ctx context.Context, id uuid.UUID) ([]byte, error)
+	GetAppPermissionsByOAuthApp(ctx context.Context, oauthAppID uuid.UUID) (GetAppPermissionsByOAuthAppRow, error)
 	// A token issued to the app with client id app_id, with its owner.
 	GetAppTokenByHash(ctx context.Context, arg GetAppTokenByHashParams) (GetAppTokenByHashRow, error)
+	GetAppWebhook(ctx context.Context, appID uuid.NullUUID) (Webhook, error)
 	GetBranchProtection(ctx context.Context, arg GetBranchProtectionParams) (BranchProtection, error)
 	GetCheckRun(ctx context.Context, arg GetCheckRunParams) (GetCheckRunRow, error)
 	GetCheckRunForUpdate(ctx context.Context, arg GetCheckRunForUpdateParams) (CheckRun, error)
@@ -287,6 +307,10 @@ type Querier interface {
 	// The mode of the enabled link of a repository (hook path).
 	GetGitHubSyncModeByRepo(ctx context.Context, repoID uuid.UUID) (string, error)
 	GetGitHubSyncRef(ctx context.Context, arg GetGitHubSyncRefParams) (GithubSyncRef, error)
+	GetInstallation(ctx context.Context, id uuid.UUID) (GetInstallationRow, error)
+	GetInstallationByAccount(ctx context.Context, arg GetInstallationByAccountParams) (uuid.UUID, error)
+	GetInstallationByNum(ctx context.Context, numID pgtype.Int8) (GetInstallationByNumRow, error)
+	GetInstallationToken(ctx context.Context, tokenHash []byte) (GetInstallationTokenRow, error)
 	GetIssueAttachment(ctx context.Context, arg GetIssueAttachmentParams) (IssueAttachment, error)
 	GetIssueByID(ctx context.Context, id uuid.UUID) (Issue, error)
 	GetIssueByNumber(ctx context.Context, arg GetIssueByNumberParams) (Issue, error)
@@ -369,6 +393,8 @@ type Querier interface {
 	GetTeamByName(ctx context.Context, arg GetTeamByNameParams) (GetTeamByNameRow, error)
 	GetTeamMemberRole(ctx context.Context, arg GetTeamMemberRoleParams) (string, error)
 	GetThreadSubscription(ctx context.Context, arg GetThreadSubscriptionParams) (ThreadSubscription, error)
+	// app_id is set for a user-to-server token of an app (a grant of the
+	// app's OAuth client).
 	GetTokenByHash(ctx context.Context, tokenHash []byte) (GetTokenByHashRow, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error)
 	GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error)
@@ -413,7 +439,15 @@ type Querier interface {
 	InsertActionsRunner(ctx context.Context, arg InsertActionsRunnerParams) (ActionsRunner, error)
 	InsertActionsSchedule(ctx context.Context, arg InsertActionsScheduleParams) error
 	InsertActivityEvent(ctx context.Context, arg InsertActivityEventParams) error
+	InsertApp(ctx context.Context, arg InsertAppParams) (pgtype.Int8, error)
+	InsertAppBot(ctx context.Context, arg InsertAppBotParams) error
+	InsertAppKey(ctx context.Context, arg InsertAppKeyParams) error
+	InsertAppWebhook(ctx context.Context, arg InsertAppWebhookParams) error
 	InsertAuditEvent(ctx context.Context, arg InsertAuditEventParams) error
+	// Apps in the style of GitHub Apps (APPS-PLAN A2): registration, private
+	// keys, installations and installation access tokens.
+	InsertBotNamespace(ctx context.Context, arg InsertBotNamespaceParams) error
+	InsertBotUser(ctx context.Context, arg InsertBotUserParams) error
 	InsertBranchProtection(ctx context.Context, arg InsertBranchProtectionParams) (BranchProtection, error)
 	InsertCheckRun(ctx context.Context, arg InsertCheckRunParams) (uuid.UUID, error)
 	// Commit statuses, check suites and check runs (PLAN §5).
@@ -427,6 +461,9 @@ type Querier interface {
 	InsertGitHubImport(ctx context.Context, arg InsertGitHubImportParams) (GithubImport, error)
 	InsertGitHubImportMap(ctx context.Context, arg InsertGitHubImportMapParams) error
 	InsertGrantToken(ctx context.Context, arg InsertGrantTokenParams) error
+	InsertInstallation(ctx context.Context, arg InsertInstallationParams) (pgtype.Int8, error)
+	InsertInstallationRepo(ctx context.Context, arg InsertInstallationRepoParams) error
+	InsertInstallationToken(ctx context.Context, arg InsertInstallationTokenParams) error
 	InsertInvite(ctx context.Context, arg InsertInviteParams) error
 	// ---- issues ----
 	InsertIssue(ctx context.Context, arg InsertIssueParams) (Issue, error)
@@ -490,6 +527,11 @@ type Querier interface {
 	// Records a delivery; for a bus event the id is derived from the event, so
 	// a repeated delivery conflicts and no row is returned.
 	InsertWebhookDelivery(ctx context.Context, arg InsertWebhookDeliveryParams) (uuid.UUID, error)
+	// The installation of app_id that covers repository repo_id.
+	InstallationForRepo(ctx context.Context, arg InstallationForRepoParams) (uuid.UUID, error)
+	// Active installations covering a repository, with the webhook of their app
+	// (for event deliveries).
+	InstallationsForRepo(ctx context.Context, repoID uuid.UUID) ([]InstallationsForRepoRow, error)
 	// Totals shown by the Ervisio plugin's status page.
 	InstanceCounts(ctx context.Context) (InstanceCountsRow, error)
 	IsRepoStarred(ctx context.Context, arg IsRepoStarredParams) (bool, error)
@@ -504,7 +546,8 @@ type Querier interface {
 	LastWebhookDelivery(ctx context.Context, webhookID uuid.UUID) (LastWebhookDeliveryRow, error)
 	// The latest completed run of a workflow on a ref (status badges).
 	LatestActionsRun(ctx context.Context, arg LatestActionsRunParams) (ActionsRun, error)
-	// The latest run of each name on a commit, across suites, for protection.
+	// The latest run of each name and App on a commit, for protection; the
+	// runs of reporters other than Apps share app_num_id NULL.
 	LatestCheckRunStates(ctx context.Context, arg LatestCheckRunStatesParams) ([]LatestCheckRunStatesRow, error)
 	// The latest status of each context of a commit.
 	LatestCommitStatuses(ctx context.Context, arg LatestCommitStatusesParams) ([]LatestCommitStatusesRow, error)
@@ -513,6 +556,7 @@ type Querier interface {
 	LatestPullReviews(ctx context.Context, pullID uuid.UUID) ([]LatestPullReviewsRow, error)
 	// Pull requests whose body or comments reference issue_id, newest first.
 	LinkedPullsOfIssue(ctx context.Context, issueID uuid.NullUUID) ([]LinkedPullsOfIssueRow, error)
+	ListAccountInstallations(ctx context.Context, accountID uuid.UUID) ([]ListAccountInstallationsRow, error)
 	ListActionsArtifacts(ctx context.Context, arg ListActionsArtifactsParams) ([]ActionsArtifact, error)
 	// Repositories whose complete cache entries exceed max_size bytes.
 	ListActionsCacheReposOver(ctx context.Context, maxSize int64) ([]ListActionsCacheReposOverRow, error)
@@ -554,6 +598,9 @@ type Querier interface {
 	ListActiveActionsJobsInGroup(ctx context.Context, arg ListActiveActionsJobsInGroupParams) ([]ActionsJob, error)
 	// Runs of a concurrency group that are not completed, oldest first.
 	ListActiveActionsRunsInGroup(ctx context.Context, arg ListActiveActionsRunsInGroupParams) ([]ActionsRun, error)
+	ListAppInstallations(ctx context.Context, arg ListAppInstallationsParams) ([]ListAppInstallationsRow, error)
+	ListAppKeys(ctx context.Context, appID uuid.UUID) ([]ListAppKeysRow, error)
+	ListAppsByOwner(ctx context.Context, ownerID uuid.UUID) ([]ListAppsByOwnerRow, error)
 	// Newest first; pass the last id of a page as before to get the next one.
 	// action matches exactly, or a whole prefix when it ends with ".".
 	ListAuditEvents(ctx context.Context, arg ListAuditEventsParams) ([]ListAuditEventsRow, error)
@@ -594,6 +641,10 @@ type Querier interface {
 	ListGrantTokenIDs(ctx context.Context, grantID uuid.NullUUID) ([]uuid.UUID, error)
 	// Watermark eviction candidates; the caller weights age by size.
 	ListHotUnpinnedRepos(ctx context.Context, lim int32) ([]ListHotUnpinnedReposRow, error)
+	ListInstallationGrants(ctx context.Context, appID uuid.UUID) ([]ListInstallationGrantsRow, error)
+	ListInstallationRepoIDs(ctx context.Context, installationID uuid.UUID) ([]uuid.UUID, error)
+	// The repositories an installation covers.
+	ListInstallationRepos(ctx context.Context, installationID uuid.UUID) ([]ListInstallationReposRow, error)
 	ListInstanceSettings(ctx context.Context) ([]InstanceSetting, error)
 	ListIssueComments(ctx context.Context, arg ListIssueCommentsParams) ([]IssueComment, error)
 	// Previous bodies of an issue (comment_id NULL) or of a comment, newest first.
@@ -708,6 +759,8 @@ type Querier interface {
 	ListUserActivity(ctx context.Context, arg ListUserActivityParams) ([]ListUserActivityRow, error)
 	ListUserEmails(ctx context.Context, userID uuid.UUID) ([]ListUserEmailsRow, error)
 	ListUserGPGKeys(ctx context.Context, userID uuid.UUID) ([]ListUserGPGKeysRow, error)
+	// Installations on the account of user_id or on organizations it belongs to.
+	ListUserInstallations(ctx context.Context, arg ListUserInstallationsParams) ([]ListUserInstallationsRow, error)
 	// Home dashboard and explore page. Every listing filters repositories
 	// through repo_readable(repo, viewer, all_repos, internal): all_repos =
 	// instance admin; internal = the viewer is signed in and not restricted.
@@ -718,6 +771,7 @@ type Querier interface {
 	ListUserOAuthGrants(ctx context.Context, userID uuid.UUID) ([]ListUserOAuthGrantsRow, error)
 	ListUserOIDCLinks(ctx context.Context, userID uuid.UUID) ([]ListUserOIDCLinksRow, error)
 	ListUserOrgs(ctx context.Context, userID uuid.UUID) ([]ListUserOrgsRow, error)
+	ListUserOwnedOrgs(ctx context.Context, userID uuid.UUID) ([]ListUserOwnedOrgsRow, error)
 	// Pinned repositories the user can still read, in order.
 	ListUserPins(ctx context.Context, arg ListUserPinsParams) ([]ListUserPinsRow, error)
 	ListUserSSHKeys(ctx context.Context, userID uuid.UUID) ([]ListUserSSHKeysRow, error)
@@ -743,6 +797,7 @@ type Querier interface {
 	// Serializes role and suspension changes, so that two admins cannot demote
 	// each other at the same time.
 	LockAdminChanges(ctx context.Context) error
+	LockApp(ctx context.Context, id uuid.UUID) error
 	// Serializes secret changes of one app inside a transaction.
 	LockOAuthApp(ctx context.Context, appID uuid.UUID) error
 	// Serializes membership changes of one organization inside a transaction,
@@ -803,6 +858,7 @@ type Querier interface {
 	NotifyUserName(ctx context.Context, id uuid.UUID) (string, error)
 	// Active recipients with their preferences and primary verified address.
 	NotifyUsers(ctx context.Context, ids []uuid.UUID) ([]NotifyUsersRow, error)
+	OAuthAppIsApp(ctx context.Context, oauthAppID uuid.UUID) (bool, error)
 	OpenPullExists(ctx context.Context, arg OpenPullExistsParams) (bool, error)
 	OpenPullsByBase(ctx context.Context, arg OpenPullsByBaseParams) ([]PullRequest, error)
 	// Open pull requests whose head is ref of repository repo_id.
@@ -842,6 +898,9 @@ type Querier interface {
 	// True while the hot copy holds pushes not yet in the remote journal.
 	RepoJournalDirty(ctx context.Context, id uuid.UUID) (bool, error)
 	RepoLFSUsage(ctx context.Context, repoID uuid.UUID) (RepoLFSUsageRow, error)
+	ReposByIDs(ctx context.Context, ids []uuid.UUID) ([]ReposByIDsRow, error)
+	// Repositories of an account by name (installation repository selection).
+	ReposByNames(ctx context.Context, arg ReposByNamesParams) ([]ReposByNamesRow, error)
 	RequestActionsJobCancel(ctx context.Context, id uuid.UUID) error
 	// ---- cache ----
 	// Reserves a cache entry. An existing entry is taken over only when it is
@@ -901,6 +960,8 @@ type Querier interface {
 	SetForkNetworkMemberPooled(ctx context.Context, arg SetForkNetworkMemberPooledParams) error
 	SetGitHubImportInclude(ctx context.Context, arg SetGitHubImportIncludeParams) error
 	SetGitHubImportStatus(ctx context.Context, arg SetGitHubImportStatusParams) error
+	SetInstallationGrants(ctx context.Context, arg SetInstallationGrantsParams) error
+	SetInstallationSuspended(ctx context.Context, arg SetInstallationSuspendedParams) error
 	SetIssueLock(ctx context.Context, arg SetIssueLockParams) (Issue, error)
 	SetIssueMilestone(ctx context.Context, arg SetIssueMilestoneParams) (Issue, error)
 	SetIssueState(ctx context.Context, arg SetIssueStateParams) (Issue, error)
@@ -963,6 +1024,7 @@ type Querier interface {
 	TouchActionsJob(ctx context.Context, id uuid.UUID) error
 	TouchActionsRun(ctx context.Context, id uuid.UUID) error
 	TouchActionsRunner(ctx context.Context, id uuid.UUID) error
+	TouchAppKey(ctx context.Context, id uuid.UUID) error
 	TouchIssue(ctx context.Context, id uuid.UUID) error
 	TouchLFSObjects(ctx context.Context, arg TouchLFSObjectsParams) error
 	TouchOAuthAppSecret(ctx context.Context, id uuid.UUID) error
@@ -979,10 +1041,17 @@ type Querier interface {
 	UnlockRepoSession(ctx context.Context, repoID uuid.UUID) (bool, error)
 	UnpinRepo(ctx context.Context, arg UnpinRepoParams) error
 	UnstarRepo(ctx context.Context, arg UnstarRepoParams) error
+	UpdateApp(ctx context.Context, arg UpdateAppParams) error
+	// Keeps the linked OAuth client in step with the app.
+	UpdateAppOAuthClient(ctx context.Context, arg UpdateAppOAuthClientParams) error
+	UpdateAppWebhook(ctx context.Context, arg UpdateAppWebhookParams) error
+	UpdateBotDescription(ctx context.Context, arg UpdateBotDescriptionParams) error
+	UpdateBotDisplayName(ctx context.Context, arg UpdateBotDisplayNameParams) error
 	UpdateBranchProtection(ctx context.Context, arg UpdateBranchProtectionParams) (BranchProtection, error)
 	UpdateCheckRun(ctx context.Context, arg UpdateCheckRunParams) error
 	UpdateCheckSuiteState(ctx context.Context, arg UpdateCheckSuiteStateParams) error
 	UpdateGitHubConnection(ctx context.Context, arg UpdateGitHubConnectionParams) (GithubConnection, error)
+	UpdateInstallationSelection(ctx context.Context, arg UpdateInstallationSelectionParams) error
 	UpdateIssueCommentBody(ctx context.Context, arg UpdateIssueCommentBodyParams) (IssueComment, error)
 	UpdateIssueContent(ctx context.Context, arg UpdateIssueContentParams) (Issue, error)
 	UpdateLabel(ctx context.Context, arg UpdateLabelParams) (Label, error)

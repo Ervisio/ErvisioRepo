@@ -137,7 +137,7 @@ func (h *Handler) serveLFS(w http.ResponseWriter, r *http.Request, owner, name, 
 		http.Redirect(w, r, u.String(), status)
 		return
 	case errors.Is(err, repos.ErrNotFound):
-		if who.UserID == uuid.Nil {
+		if who.UserID == uuid.Nil && !who.Automated() {
 			LFSUnauthorized(w, "authentication required")
 			return
 		}

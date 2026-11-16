@@ -35,7 +35,7 @@ func (q *Queries) CountOAuthAppUsers(ctx context.Context, appID uuid.UUID) (int6
 }
 
 const countOAuthAppsByOwner = `-- name: CountOAuthAppsByOwner :one
-SELECT count(*) FROM oauth_apps WHERE owner_id = $1
+SELECT count(*) FROM oauth_apps o WHERE o.owner_id = $1 AND NOT EXISTS (SELECT 1 FROM apps x WHERE x.oauth_app_id = o.id)
 `
 
 func (q *Queries) CountOAuthAppsByOwner(ctx context.Context, ownerID uuid.NullUUID) (int64, error) {
@@ -482,6 +482,7 @@ SELECT a.id, a.client_id, a.owner_id, a.is_system, a.name, a.short_name, a.descr
 FROM oauth_apps a
 JOIN namespaces n ON n.id = a.owner_id
 WHERE a.owner_id = $1
+  AND NOT EXISTS (SELECT 1 FROM apps x WHERE x.oauth_app_id = a.id)
 ORDER BY a.created_at DESC
 `
 

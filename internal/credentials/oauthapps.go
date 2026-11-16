@@ -451,6 +451,9 @@ func (s *Service) UpdateOAuthApp(ctx context.Context, p auth.Principal, clientID
 	if err != nil {
 		return OAuthApp{}, err
 	}
+	if err := s.notAppClient(ctx, app); err != nil {
+		return OAuthApp{}, err
+	}
 	f, err := in.apply(appFields{name: app.Name, description: app.Description, homepage: app.HomepageURL, logo: app.LogoURL,
 		callbacks: app.CallbackURLs, deviceFlow: app.DeviceFlow})
 	if err != nil {
@@ -477,6 +480,9 @@ func (s *Service) UpdateOAuthApp(ctx context.Context, p auth.Principal, clientID
 func (s *Service) DeleteOAuthApp(ctx context.Context, p auth.Principal, clientID, ip string) error {
 	app, err := s.managedApp(ctx, p, clientID)
 	if err != nil {
+		return err
+	}
+	if err := s.notAppClient(ctx, app); err != nil {
 		return err
 	}
 	err = s.tx(ctx, func(q *dbgen.Queries) error {
@@ -694,4 +700,18 @@ func (s *Service) issueGrantToken(ctx context.Context, q *dbgen.Queries, app OAu
 	}
 	s.log.InfoContext(ctx, "oauth token issued", "user_id", userID, "client_id", app.ClientID, "token_id", id, "grant", grant)
 	return secret, nil
+}
+
+// notAppClient refuses to edit or delete the OAuth client of an App (A2)
+// through the OAuth app endpoints: the App manages it. Its client secrets
+// are managed here.
+func (s *Service) notAppClient(ctx context.Context, app OAuthApp) error {
+	isApp, err := s.q.OAuthAppIsApp(ctx, app.ID)
+	if err != nil {
+		return fmt.Errorf("check app client: %w", err)
+	}
+	if isApp {
+		return ErrForbidden
+	}
+	return nil
 }

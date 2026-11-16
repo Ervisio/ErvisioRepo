@@ -123,7 +123,7 @@ func (q *Queries) CountSuiteRuns(ctx context.Context, suiteIds []uuid.UUID) ([]C
 }
 
 const getCheckRun = `-- name: GetCheckRun :one
-SELECT r.id, r.suite_id, r.repo_id, r.head_sha, r.name, r.status, r.conclusion, r.external_id, r.details_url, r.output_title, r.output_summary, r.output_text, r.annotations, r.creator_id, r.started_at, r.completed_at, r.created_at, r.updated_at, s.app, s.head_branch
+SELECT r.id, r.suite_id, r.repo_id, r.head_sha, r.name, r.status, r.conclusion, r.external_id, r.details_url, r.output_title, r.output_summary, r.output_text, r.annotations, r.creator_id, r.started_at, r.completed_at, r.created_at, r.updated_at, s.app, s.head_branch, s.app_id AS suite_app_id
 FROM check_runs r JOIN check_suites s ON s.id = r.suite_id
 WHERE r.id = $1 AND r.repo_id = $2
 `
@@ -154,6 +154,7 @@ type GetCheckRunRow struct {
 	UpdatedAt     pgtype.Timestamptz
 	App           string
 	HeadBranch    string
+	SuiteAppID    uuid.NullUUID
 }
 
 func (q *Queries) GetCheckRun(ctx context.Context, arg GetCheckRunParams) (GetCheckRunRow, error) {
@@ -180,6 +181,7 @@ func (q *Queries) GetCheckRun(ctx context.Context, arg GetCheckRunParams) (GetCh
 		&i.UpdatedAt,
 		&i.App,
 		&i.HeadBranch,
+		&i.SuiteAppID,
 	)
 	return i, err
 }
@@ -220,7 +222,7 @@ func (q *Queries) GetCheckRunForUpdate(ctx context.Context, arg GetCheckRunForUp
 }
 
 const getCheckSuite = `-- name: GetCheckSuite :one
-SELECT id, repo_id, head_sha, head_branch, app, status, conclusion, created_at, updated_at FROM check_suites WHERE id = $1 AND repo_id = $2
+SELECT id, repo_id, head_sha, head_branch, app, status, conclusion, created_at, updated_at, app_id FROM check_suites WHERE id = $1 AND repo_id = $2
 `
 
 type GetCheckSuiteParams struct {
@@ -241,12 +243,13 @@ func (q *Queries) GetCheckSuite(ctx context.Context, arg GetCheckSuiteParams) (C
 		&i.Conclusion,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AppID,
 	)
 	return i, err
 }
 
 const getCheckSuiteForUpdate = `-- name: GetCheckSuiteForUpdate :one
-SELECT id, repo_id, head_sha, head_branch, app, status, conclusion, created_at, updated_at FROM check_suites WHERE id = $1 FOR UPDATE
+SELECT id, repo_id, head_sha, head_branch, app, status, conclusion, created_at, updated_at, app_id FROM check_suites WHERE id = $1 FOR UPDATE
 `
 
 func (q *Queries) GetCheckSuiteForUpdate(ctx context.Context, id uuid.UUID) (CheckSuite, error) {
@@ -262,6 +265,7 @@ func (q *Queries) GetCheckSuiteForUpdate(ctx context.Context, id uuid.UUID) (Che
 		&i.Conclusion,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AppID,
 	)
 	return i, err
 }
@@ -363,9 +367,12 @@ func (q *Queries) InsertCommitStatus(ctx context.Context, arg InsertCommitStatus
 }
 
 const latestCheckRunStates = `-- name: LatestCheckRunStates :many
-SELECT DISTINCT ON (name) name, status, conclusion
-FROM check_runs WHERE repo_id = $1 AND head_sha = $2
-ORDER BY name, created_at DESC, id DESC
+SELECT DISTINCT ON (r.name, s.app_id) r.name, r.status, r.conclusion, r.created_at, a.num_id AS app_num_id
+FROM check_runs r
+JOIN check_suites s ON s.id = r.suite_id
+LEFT JOIN apps a ON a.id = s.app_id
+WHERE r.repo_id = $1 AND r.head_sha = $2
+ORDER BY r.name, s.app_id, r.created_at DESC, r.id DESC
 `
 
 type LatestCheckRunStatesParams struct {
@@ -377,9 +384,12 @@ type LatestCheckRunStatesRow struct {
 	Name       string
 	Status     string
 	Conclusion string
+	CreatedAt  pgtype.Timestamptz
+	AppNumID   pgtype.Int8
 }
 
-// The latest run of each name on a commit, across suites, for protection.
+// The latest run of each name and App on a commit, for protection; the
+// runs of reporters other than Apps share app_num_id NULL.
 func (q *Queries) LatestCheckRunStates(ctx context.Context, arg LatestCheckRunStatesParams) ([]LatestCheckRunStatesRow, error) {
 	rows, err := q.db.Query(ctx, latestCheckRunStates, arg.RepoID, arg.HeadSha)
 	if err != nil {
@@ -389,7 +399,13 @@ func (q *Queries) LatestCheckRunStates(ctx context.Context, arg LatestCheckRunSt
 	items := []LatestCheckRunStatesRow{}
 	for rows.Next() {
 		var i LatestCheckRunStatesRow
-		if err := rows.Scan(&i.Name, &i.Status, &i.Conclusion); err != nil {
+		if err := rows.Scan(
+			&i.Name,
+			&i.Status,
+			&i.Conclusion,
+			&i.CreatedAt,
+			&i.AppNumID,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -459,7 +475,7 @@ func (q *Queries) LatestCommitStatuses(ctx context.Context, arg LatestCommitStat
 }
 
 const listCheckRuns = `-- name: ListCheckRuns :many
-SELECT r.id, r.suite_id, r.repo_id, r.head_sha, r.name, r.status, r.conclusion, r.external_id, r.details_url, r.output_title, r.output_summary, r.output_text, r.annotations, r.creator_id, r.started_at, r.completed_at, r.created_at, r.updated_at, s.app, s.head_branch
+SELECT r.id, r.suite_id, r.repo_id, r.head_sha, r.name, r.status, r.conclusion, r.external_id, r.details_url, r.output_title, r.output_summary, r.output_text, r.annotations, r.creator_id, r.started_at, r.completed_at, r.created_at, r.updated_at, s.app, s.head_branch, s.app_id AS suite_app_id
 FROM check_runs r JOIN check_suites s ON s.id = r.suite_id
 WHERE r.repo_id = $1
   AND ($2::text = '' OR r.head_sha = $2::text)
@@ -509,6 +525,7 @@ type ListCheckRunsRow struct {
 	UpdatedAt     pgtype.Timestamptz
 	App           string
 	HeadBranch    string
+	SuiteAppID    uuid.NullUUID
 }
 
 // The check runs of a commit (or of a suite), filtered by name and status.
@@ -554,6 +571,7 @@ func (q *Queries) ListCheckRuns(ctx context.Context, arg ListCheckRunsParams) ([
 			&i.UpdatedAt,
 			&i.App,
 			&i.HeadBranch,
+			&i.SuiteAppID,
 		); err != nil {
 			return nil, err
 		}
@@ -566,7 +584,7 @@ func (q *Queries) ListCheckRuns(ctx context.Context, arg ListCheckRunsParams) ([
 }
 
 const listCheckSuites = `-- name: ListCheckSuites :many
-SELECT id, repo_id, head_sha, head_branch, app, status, conclusion, created_at, updated_at FROM check_suites
+SELECT id, repo_id, head_sha, head_branch, app, status, conclusion, created_at, updated_at, app_id FROM check_suites
 WHERE repo_id = $1 AND head_sha = $2
   AND ($3::text = '' OR app = $3::text)
 ORDER BY created_at, id
@@ -606,6 +624,7 @@ func (q *Queries) ListCheckSuites(ctx context.Context, arg ListCheckSuitesParams
 			&i.Conclusion,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.AppID,
 		); err != nil {
 			return nil, err
 		}
@@ -773,11 +792,12 @@ func (q *Queries) UpdateCheckSuiteState(ctx context.Context, arg UpdateCheckSuit
 }
 
 const upsertCheckSuite = `-- name: UpsertCheckSuite :one
-INSERT INTO check_suites (id, repo_id, head_sha, head_branch, app)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO check_suites (id, repo_id, head_sha, head_branch, app, app_id)
+VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (repo_id, head_sha, app) DO UPDATE
-    SET head_branch = CASE WHEN check_suites.head_branch = '' THEN EXCLUDED.head_branch ELSE check_suites.head_branch END
-RETURNING id, repo_id, head_sha, head_branch, app, status, conclusion, created_at, updated_at
+    SET head_branch = CASE WHEN check_suites.head_branch = '' THEN EXCLUDED.head_branch ELSE check_suites.head_branch END,
+        app_id = COALESCE(check_suites.app_id, EXCLUDED.app_id)
+RETURNING id, repo_id, head_sha, head_branch, app, status, conclusion, created_at, updated_at, app_id
 `
 
 type UpsertCheckSuiteParams struct {
@@ -786,6 +806,7 @@ type UpsertCheckSuiteParams struct {
 	HeadSha    string
 	HeadBranch string
 	App        string
+	AppID      uuid.NullUUID
 }
 
 // The suite of (commit, app), created queued when missing.
@@ -796,6 +817,7 @@ func (q *Queries) UpsertCheckSuite(ctx context.Context, arg UpsertCheckSuitePara
 		arg.HeadSha,
 		arg.HeadBranch,
 		arg.App,
+		arg.AppID,
 	)
 	var i CheckSuite
 	err := row.Scan(
@@ -808,6 +830,7 @@ func (q *Queries) UpsertCheckSuite(ctx context.Context, arg UpsertCheckSuitePara
 		&i.Conclusion,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AppID,
 	)
 	return i, err
 }

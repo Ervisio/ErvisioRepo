@@ -55,10 +55,12 @@ func (q *Queries) DeleteUserToken(ctx context.Context, arg DeleteUserTokenParams
 
 const getTokenByHash = `-- name: GetTokenByHash :one
 SELECT t.id, t.user_id, t.scopes, t.expires_at, t.last_used_at,
-       n.name AS username, u.role, u.suspended_at
+       n.name AS username, u.role, u.suspended_at, a.id AS app_id
 FROM tokens t
 JOIN users u ON u.id = t.user_id
 JOIN namespaces n ON n.id = u.id
+LEFT JOIN oauth_grants g ON g.id = t.grant_id
+LEFT JOIN apps a ON a.oauth_app_id = g.app_id
 WHERE t.token_hash = $1
 `
 
@@ -71,8 +73,11 @@ type GetTokenByHashRow struct {
 	Username    string
 	Role        string
 	SuspendedAt pgtype.Timestamptz
+	AppID       uuid.NullUUID
 }
 
+// app_id is set for a user-to-server token of an app (a grant of the
+// app's OAuth client).
 func (q *Queries) GetTokenByHash(ctx context.Context, tokenHash []byte) (GetTokenByHashRow, error) {
 	row := q.db.QueryRow(ctx, getTokenByHash, tokenHash)
 	var i GetTokenByHashRow
@@ -85,6 +90,7 @@ func (q *Queries) GetTokenByHash(ctx context.Context, tokenHash []byte) (GetToke
 		&i.Username,
 		&i.Role,
 		&i.SuspendedAt,
+		&i.AppID,
 	)
 	return i, err
 }

@@ -64,6 +64,10 @@ func (m *Middleware) LoadSession(next http.Handler) http.Handler {
 			// the same client is ignored, and no CSRF cookie is issued.
 			p, err := m.lookupToken(ctx, bearer)
 			switch {
+			case err == nil && (p.Installation != nil || p.UserApp != nil):
+				// App tokens are bounded by a permission set that only the
+				// GitHub-compatible API (/api/v3) and git enforce.
+				m.Problem(w, http.StatusForbidden, "App tokens are accepted by /api/v3 and git only")
 			case err == nil:
 				next.ServeHTTP(w, r.WithContext(WithRequestInfo(WithPrincipal(ctx, p), ri)))
 			case errors.Is(err, ErrNoToken):

@@ -13,7 +13,7 @@ import (
 )
 
 const activeWebhooksForRepo = `-- name: ActiveWebhooksForRepo :many
-SELECT w.id, w.repo_id, w.org_id, w.url, w.content_type, w.format, w.secret, w.events, w.active, w.created_by, w.created_at, w.updated_at FROM webhooks w
+SELECT w.id, w.repo_id, w.org_id, w.url, w.content_type, w.format, w.secret, w.events, w.active, w.created_by, w.created_at, w.updated_at, w.app_id FROM webhooks w
 WHERE w.active AND (w.repo_id = $1
     OR w.org_id = (SELECT r.owner_id FROM repos r WHERE r.id = $1))
 ORDER BY w.created_at, w.id
@@ -42,6 +42,7 @@ func (q *Queries) ActiveWebhooksForRepo(ctx context.Context, repoID uuid.NullUUI
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.AppID,
 		); err != nil {
 			return nil, err
 		}
@@ -88,7 +89,7 @@ func (q *Queries) DeleteWebhook(ctx context.Context, id uuid.UUID) (int64, error
 }
 
 const getWebhook = `-- name: GetWebhook :one
-SELECT id, repo_id, org_id, url, content_type, format, secret, events, active, created_by, created_at, updated_at FROM webhooks WHERE id = $1
+SELECT id, repo_id, org_id, url, content_type, format, secret, events, active, created_by, created_at, updated_at, app_id FROM webhooks WHERE id = $1
 `
 
 func (q *Queries) GetWebhook(ctx context.Context, id uuid.UUID) (Webhook, error) {
@@ -107,6 +108,7 @@ func (q *Queries) GetWebhook(ctx context.Context, id uuid.UUID) (Webhook, error)
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AppID,
 	)
 	return i, err
 }
@@ -146,7 +148,7 @@ const insertWebhook = `-- name: InsertWebhook :one
 
 INSERT INTO webhooks (id, repo_id, org_id, url, content_type, format, secret, events, active, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-RETURNING id, repo_id, org_id, url, content_type, format, secret, events, active, created_by, created_at, updated_at
+RETURNING id, repo_id, org_id, url, content_type, format, secret, events, active, created_by, created_at, updated_at, app_id
 `
 
 type InsertWebhookParams struct {
@@ -190,6 +192,7 @@ func (q *Queries) InsertWebhook(ctx context.Context, arg InsertWebhookParams) (W
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AppID,
 	)
 	return i, err
 }
@@ -251,7 +254,7 @@ func (q *Queries) LastWebhookDelivery(ctx context.Context, webhookID uuid.UUID) 
 }
 
 const listOrgWebhooks = `-- name: ListOrgWebhooks :many
-SELECT id, repo_id, org_id, url, content_type, format, secret, events, active, created_by, created_at, updated_at FROM webhooks WHERE org_id = $1 ORDER BY created_at, id
+SELECT id, repo_id, org_id, url, content_type, format, secret, events, active, created_by, created_at, updated_at, app_id FROM webhooks WHERE org_id = $1 ORDER BY created_at, id
 `
 
 func (q *Queries) ListOrgWebhooks(ctx context.Context, orgID uuid.NullUUID) ([]Webhook, error) {
@@ -276,6 +279,7 @@ func (q *Queries) ListOrgWebhooks(ctx context.Context, orgID uuid.NullUUID) ([]W
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.AppID,
 		); err != nil {
 			return nil, err
 		}
@@ -288,7 +292,7 @@ func (q *Queries) ListOrgWebhooks(ctx context.Context, orgID uuid.NullUUID) ([]W
 }
 
 const listRepoWebhooks = `-- name: ListRepoWebhooks :many
-SELECT id, repo_id, org_id, url, content_type, format, secret, events, active, created_by, created_at, updated_at FROM webhooks WHERE repo_id = $1 ORDER BY created_at, id
+SELECT id, repo_id, org_id, url, content_type, format, secret, events, active, created_by, created_at, updated_at, app_id FROM webhooks WHERE repo_id = $1 ORDER BY created_at, id
 `
 
 func (q *Queries) ListRepoWebhooks(ctx context.Context, repoID uuid.NullUUID) ([]Webhook, error) {
@@ -313,6 +317,7 @@ func (q *Queries) ListRepoWebhooks(ctx context.Context, repoID uuid.NullUUID) ([
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.AppID,
 		); err != nil {
 			return nil, err
 		}
@@ -443,7 +448,7 @@ const updateWebhook = `-- name: UpdateWebhook :one
 UPDATE webhooks
 SET url = $2, content_type = $3, format = $4, secret = $5, events = $6, active = $7, updated_at = now()
 WHERE id = $1
-RETURNING id, repo_id, org_id, url, content_type, format, secret, events, active, created_by, created_at, updated_at
+RETURNING id, repo_id, org_id, url, content_type, format, secret, events, active, created_by, created_at, updated_at, app_id
 `
 
 type UpdateWebhookParams struct {
@@ -480,6 +485,7 @@ func (q *Queries) UpdateWebhook(ctx context.Context, arg UpdateWebhookParams) (W
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AppID,
 	)
 	return i, err
 }

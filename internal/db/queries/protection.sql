@@ -11,8 +11,8 @@ INSERT INTO branch_protections (
     id, repo_id, pattern, required_approvals, require_code_owner_reviews, dismiss_stale_reviews,
     required_status_checks, strict_status_checks, require_linear_history, allow_force_pushes,
     allow_deletions, require_signed_commits, restrict_pushes, push_user_ids, push_team_ids,
-    admins_bypass, created_by)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+    admins_bypass, created_by, required_check_apps)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 RETURNING *;
 
 -- name: UpdateBranchProtection :one
@@ -21,7 +21,7 @@ UPDATE branch_protections SET
     required_status_checks = $7, strict_status_checks = $8, require_linear_history = $9,
     allow_force_pushes = $10, allow_deletions = $11, require_signed_commits = $12,
     restrict_pushes = $13, push_user_ids = $14, push_team_ids = $15, admins_bypass = $16,
-    updated_at = now()
+    required_check_apps = $17, updated_at = now()
 WHERE repo_id = $1 AND id = $2
 RETURNING *;
 

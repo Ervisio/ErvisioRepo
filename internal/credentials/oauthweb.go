@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/Ervisio/ErvisioRepo/internal/audit"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
+	"github.com/Ervisio/ErvisioRepo/internal/authz"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 )
 
@@ -73,7 +75,10 @@ func (s *Service) CheckAuthorize(ctx context.Context, userID uuid.UUID, req Auth
 	if err != nil {
 		return Consent{}, err
 	}
-	scopes := auth.ParseGitHubScopes(req.Scope)
+	scopes, err := s.requestScopes(ctx, app, req.Scope)
+	if err != nil {
+		return Consent{}, err
+	}
 	c := Consent{App: app, RedirectURI: redirect, RequestedScopes: scopes, Scopes: auth.ScopesFromGitHub(scopes)}
 	g, err := s.q.GetOAuthGrant(ctx, dbgen.GetOAuthGrantParams{AppID: app.ID, UserID: userID})
 	switch {
@@ -185,7 +190,10 @@ func (s *Service) Authorize(ctx context.Context, userID uuid.UUID, req Authorize
 		u.RawQuery = q.Encode()
 		return u.String(), nil
 	}
-	scopes := auth.ParseGitHubScopes(req.Scope)
+	scopes, err := s.requestScopes(ctx, app, req.Scope)
+	if err != nil {
+		return "", err
+	}
 	raw, codeHash := newClientSecret() // 40 hex characters, like a GitHub code
 	err = s.tx(ctx, func(tq *dbgen.Queries) error {
 		if _, err := upsertGrant(ctx, tq, app, userID, scopes, ip); err != nil {
@@ -425,4 +433,20 @@ func (s *Service) DeleteAppGrant(ctx context.Context, clientID, secret, token, i
 		return audit.Record(ctx, q, audit.Event{Actor: t.UserID, Action: ActionOAuthGrantRevoked, TargetType: "oauth_grant",
 			TargetID: g.ID.String(), IP: ip, Data: map[string]any{"client_id": t.App.ClientID, "by": "app"}})
 	})
+}
+
+// requestScopes returns the GitHub scopes of a web flow request: those
+// asked for, or for the client of an App (A2) the scopes its permissions
+// map to, whatever was asked.
+func (s *Service) requestScopes(ctx context.Context, app OAuthApp, scope string) ([]string, error) {
+	row, err := s.q.GetAppPermissionsByOAuthApp(ctx, app.ID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return auth.ParseGitHubScopes(scope), nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get app permissions: %w", err)
+	}
+	perms := authz.AppPermissions{}
+	_ = json.Unmarshal(row.Permissions, &perms)
+	return auth.AppGitHubScopes(perms), nil
 }

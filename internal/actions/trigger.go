@@ -349,6 +349,14 @@ func (s *Service) writable(ctx context.Context, d *Deps, who auth.Principal, own
 	if err != nil {
 		return repos.Repo{}, fmt.Errorf("get repo: %w", err)
 	}
+	if who.Installation != nil {
+		// /api/v3 checked actions:write; the installation must cover the
+		// repository.
+		if !who.WritesTo(repo.ID, repo.OwnerID) {
+			return repos.Repo{}, ErrForbidden
+		}
+		return repo, nil
+	}
 	if repo.Permission < authz.PermWrite || who.UserID == uuid.Nil {
 		return repos.Repo{}, ErrForbidden
 	}
@@ -388,7 +396,7 @@ func (s *Service) Dispatch(ctx context.Context, who auth.Principal, owner, name,
 	}
 	payload := map[string]any{"ref": runRef, "workflow": pw.Path, "inputs": in}
 	return s.createRun(ctx, runInput{Repo: repo, WF: pw, Event: "workflow_dispatch", Ref: runRef, Sha: res.Commit,
-		ActorID: who.UserID, Payload: payload, Inputs: in})
+		ActorID: who.Actor(), Payload: payload, Inputs: in})
 }
 
 // findWorkflow returns a workflow of a commit by path or file name.

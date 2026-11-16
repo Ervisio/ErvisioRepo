@@ -283,10 +283,12 @@ func (h *Handler) allowRequest(who auth.Principal, ip string) (bool, time.Durati
 		return true, 0
 	}
 	key := "git:ip:" + ip
-	switch who.Method {
-	case auth.MethodToken:
+	switch {
+	case who.Installation != nil:
+		key = "git:installation:" + who.Installation.ID.String()
+	case who.Method == auth.MethodToken:
 		key = "git:token:" + who.TokenID.String()
-	case auth.MethodSession:
+	case who.Method == auth.MethodSession:
 		key = "git:user:" + who.UserID.String()
 	}
 	return h.o.Requests.AllowAction(key)
@@ -295,7 +297,7 @@ func (h *Handler) allowRequest(who auth.Principal, ip string) (bool, time.Durati
 // denied hides private repositories from anonymous callers: they get 401
 // so that git asks for credentials, signed-in callers the real status.
 func (h *Handler) denied(w http.ResponseWriter, who auth.Principal, status int, msg string) {
-	if who.UserID == uuid.Nil {
+	if who.UserID == uuid.Nil && !who.Automated() {
 		w.Header().Set("WWW-Authenticate", realm)
 		textError(w, http.StatusUnauthorized, "authentication required")
 		return

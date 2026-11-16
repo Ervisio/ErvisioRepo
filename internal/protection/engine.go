@@ -267,7 +267,7 @@ func (e *Engine) checkBranch(ctx context.Context, in Input, p *pusher, r dbgen.B
 			add(CodePullRequestRequired, "changes must be made through a pull request with the required reviews", "")
 		}
 		if len(r.RequiredStatusChecks) > 0 {
-			missing, err := e.missingChecks(ctx, in.RepoID, u.New, r.RequiredStatusChecks)
+			missing, err := e.missingChecks(ctx, in.RepoID, u.New, r.RequiredStatusChecks, r.RequiredCheckApps)
 			if err != nil {
 				return nil, err
 			}
@@ -311,17 +311,24 @@ func (e *Engine) checkSignatures(ctx context.Context, in Input, tip string) ([]V
 }
 
 // missingChecks returns the required contexts without a successful status
-// on sha.
-func (e *Engine) missingChecks(ctx context.Context, repoID uuid.UUID, sha string, required []string) ([]string, error) {
+// on sha. A context pinned to an App in appsJSON (context -> App id) only
+// counts the latest check run of that App; the others count the latest
+// commit status and the latest check run of any reporter.
+func (e *Engine) missingChecks(ctx context.Context, repoID uuid.UUID, sha string, required []string, appsJSON []byte) ([]string, error) {
 	st, err := e.checks.Statuses(ctx, repoID, sha)
 	if err != nil {
 		return nil, fmt.Errorf("load statuses: %w", err)
 	}
+	pinned := DecodeCheckApps(appsJSON)
 	var missing []string
 	for _, c := range required {
 		ok := false
+		app := pinned[c]
 		for _, s := range st {
-			if s.Context == c && s.State == StateSuccess {
+			if s.Context != c || s.State != StateSuccess {
+				continue
+			}
+			if (app != 0 && s.AppNumID == app) || (app == 0 && !s.Superseded) {
 				ok = true
 				break
 			}

@@ -271,6 +271,67 @@ type ActivityEvent struct {
 	CreatedAt pgtype.Timestamptz
 }
 
+type App struct {
+	ID          uuid.UUID
+	NumID       pgtype.Int8
+	Slug        string
+	OwnerID     uuid.UUID
+	OauthAppID  uuid.UUID
+	BotID       uuid.UUID
+	Name        string
+	NameLower   pgtype.Text
+	Description string
+	HomepageUrl string
+	LogoUrl     string
+	Public      bool
+	Permissions []byte
+	Events      []string
+	SetupUrl    string
+	CreatedBy   uuid.NullUUID
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type AppInstallation struct {
+	ID                  uuid.UUID
+	NumID               pgtype.Int8
+	AppID               uuid.UUID
+	AccountID           uuid.UUID
+	RepositorySelection string
+	Permissions         []byte
+	Events              []string
+	SuspendedAt         pgtype.Timestamptz
+	SuspendedBy         uuid.NullUUID
+	CreatedBy           uuid.NullUUID
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
+}
+
+type AppInstallationRepo struct {
+	InstallationID uuid.UUID
+	RepoID         uuid.UUID
+}
+
+type AppInstallationToken struct {
+	ID             uuid.UUID
+	InstallationID uuid.UUID
+	TokenHash      []byte
+	Permissions    []byte
+	RepoIds        []uuid.UUID
+	CreatedAt      pgtype.Timestamptz
+	ExpiresAt      pgtype.Timestamptz
+}
+
+type AppKey struct {
+	ID          uuid.UUID
+	AppID       uuid.UUID
+	PublicKey   []byte
+	Fingerprint string
+	CreatedBy   uuid.NullUUID
+	CreatedAt   pgtype.Timestamptz
+	LastUsedAt  pgtype.Timestamptz
+}
+
 type AuditLog struct {
 	ID         uuid.UUID
 	At         pgtype.Timestamptz
@@ -310,6 +371,7 @@ type BranchProtection struct {
 	CreatedBy               uuid.NullUUID
 	CreatedAt               pgtype.Timestamptz
 	UpdatedAt               pgtype.Timestamptz
+	RequiredCheckApps       []byte
 }
 
 type CheckRun struct {
@@ -343,6 +405,7 @@ type CheckSuite struct {
 	Conclusion string
 	CreatedAt  pgtype.Timestamptz
 	UpdatedAt  pgtype.Timestamptz
+	AppID      uuid.NullUUID
 }
 
 type CommitStatus struct {
@@ -1206,6 +1269,7 @@ type Webhook struct {
 	CreatedBy   uuid.NullUUID
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
+	AppID       uuid.NullUUID
 }
 
 type WebhookDelivery struct {

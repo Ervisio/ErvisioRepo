@@ -3,11 +3,15 @@ INSERT INTO tokens (id, user_id, name, token_hash, hint, scopes, expires_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7);
 
 -- name: GetTokenByHash :one
+-- app_id is set for a user-to-server token of an app (a grant of the
+-- app's OAuth client).
 SELECT t.id, t.user_id, t.scopes, t.expires_at, t.last_used_at,
-       n.name AS username, u.role, u.suspended_at
+       n.name AS username, u.role, u.suspended_at, a.id AS app_id
 FROM tokens t
 JOIN users u ON u.id = t.user_id
 JOIN namespaces n ON n.id = u.id
+LEFT JOIN oauth_grants g ON g.id = t.grant_id
+LEFT JOIN apps a ON a.oauth_app_id = g.app_id
 WHERE t.token_hash = $1;
 
 -- name: TouchToken :exec

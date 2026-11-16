@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/Ervisio/ErvisioRepo/internal/authz"
 	"github.com/Ervisio/ErvisioRepo/internal/bots"
 )
 
@@ -21,6 +22,8 @@ const (
 const (
 	MethodSession = "session"
 	MethodToken   = "token" // personal access token (Authorization: Bearer)
+	// MethodApp is an App authenticated with its JWT (ghapi /app routes).
+	MethodApp = "app"
 )
 
 // Principal is the authenticated caller of a request.
@@ -37,7 +40,77 @@ type Principal struct {
 	// acts on Grant.RepoID only, with Grant.Permission, and is anonymous
 	// everywhere else. UserID is uuid.Nil for such callers.
 	Grant *RepoGrant
+	// Installation is set for an App installation access token (erps_…):
+	// the caller acts as the App's bot on the repositories the installation
+	// covers, with its permission set, and is anonymous everywhere else.
+	// UserID is uuid.Nil for such callers.
+	Installation *InstallationGrant
+	// App is set for an App authenticated with its JWT (MethodApp); it can
+	// only manage its installations.
+	App *AppIdentity
+	// UserApp is set for a user-to-server token of an App: the user's
+	// access is bounded by the App's permissions and limited to the
+	// repositories where the App is installed.
+	UserApp *UserAppGrant
 }
+
+// AppIdentity is an App authenticated with its JWT.
+type AppIdentity struct {
+	ID    uuid.UUID
+	NumID int64
+	Slug  string
+}
+
+// UserAppGrant is the App behind a user-to-server token.
+type UserAppGrant struct {
+	AppID       uuid.UUID
+	Permissions authz.AppPermissions
+}
+
+// InstallationGrant is the access of an installation access token.
+type InstallationGrant struct {
+	ID       uuid.UUID
+	NumID    int64
+	AppID    uuid.UUID
+	AppNumID int64
+	AppSlug  string
+	// BotID is the App's bot account, the author of the changes.
+	BotID uuid.UUID
+	// AccountID is the user or organization the App is installed on.
+	AccountID uuid.UUID
+	// AllRepos covers every repository of the account; otherwise RepoIDs.
+	AllRepos bool
+	RepoIDs  []uuid.UUID
+	// Permissions are the effective permissions of the token.
+	Permissions authz.AppPermissions
+	// TokenID is the access token row.
+	TokenID uuid.UUID
+}
+
+// Covers reports whether the installation grants access to repository
+// repoID owned by ownerID.
+func (g *InstallationGrant) Covers(repoID, ownerID uuid.UUID) bool {
+	if g == nil || ownerID != g.AccountID {
+		return false
+	}
+	return g.AllRepos || slices.Contains(g.RepoIDs, repoID)
+}
+
+// AppPermissions returns the App permission set bounding the caller, if
+// any: an installation token or a user-to-server token.
+func (p Principal) AppPermissions() (authz.AppPermissions, bool) {
+	switch {
+	case p.Installation != nil:
+		return p.Installation.Permissions, true
+	case p.UserApp != nil:
+		return p.UserApp.Permissions, true
+	}
+	return nil, false
+}
+
+// Automated reports whether the caller is a token acting for an
+// automation (an Actions job or an App installation) rather than a user.
+func (p Principal) Automated() bool { return p.Grant != nil || p.Installation != nil }
 
 // RepoGrant is the repository access of an Ervisio Actions job token.
 type RepoGrant struct {
@@ -67,19 +140,26 @@ func (p Principal) HasScope(scope string) bool {
 // caller itself, or ervisio-actions[bot] for an Actions job token (whose
 // UserID stays uuid.Nil, so that it is anonymous outside its repository).
 func (p Principal) Actor() uuid.UUID {
-	if p.Grant != nil {
+	switch {
+	case p.Grant != nil:
 		return bots.ActionsID
+	case p.Installation != nil:
+		return p.Installation.BotID
 	}
 	return p.UserID
 }
 
 // WritesTo reports whether the caller may make signed-in changes (issues,
-// comments, pull requests) on repository repoID: any signed-in user, or an
-// Actions job token on its own repository. The repository permission is
+// comments, pull requests) on repository repoID owned by ownerID: any
+// signed-in user, an Actions job token on its own repository, or an
+// installation on a repository it covers. The repository permission is
 // checked separately.
-func (p Principal) WritesTo(repoID uuid.UUID) bool {
-	if p.Grant != nil {
+func (p Principal) WritesTo(repoID, ownerID uuid.UUID) bool {
+	switch {
+	case p.Grant != nil:
 		return p.Grant.RepoID == repoID && p.Grant.Permission != "none"
+	case p.Installation != nil:
+		return p.Installation.Covers(repoID, ownerID)
 	}
 	return p.UserID != uuid.Nil
 }

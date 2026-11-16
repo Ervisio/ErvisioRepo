@@ -27,10 +27,11 @@ ORDER BY s.context, s.created_at DESC, s.id DESC;
 
 -- name: UpsertCheckSuite :one
 -- The suite of (commit, app), created queued when missing.
-INSERT INTO check_suites (id, repo_id, head_sha, head_branch, app)
-VALUES (@id, @repo_id, @head_sha, @head_branch, @app)
+INSERT INTO check_suites (id, repo_id, head_sha, head_branch, app, app_id)
+VALUES (@id, @repo_id, @head_sha, @head_branch, @app, @app_id)
 ON CONFLICT (repo_id, head_sha, app) DO UPDATE
-    SET head_branch = CASE WHEN check_suites.head_branch = '' THEN EXCLUDED.head_branch ELSE check_suites.head_branch END
+    SET head_branch = CASE WHEN check_suites.head_branch = '' THEN EXCLUDED.head_branch ELSE check_suites.head_branch END,
+        app_id = COALESCE(check_suites.app_id, EXCLUDED.app_id)
 RETURNING *;
 
 -- name: GetCheckSuite :one
@@ -63,7 +64,7 @@ VALUES (@id, @suite_id, @repo_id, @head_sha, @name, @status, @conclusion, @exter
 RETURNING id;
 
 -- name: GetCheckRun :one
-SELECT r.*, s.app, s.head_branch
+SELECT r.*, s.app, s.head_branch, s.app_id AS suite_app_id
 FROM check_runs r JOIN check_suites s ON s.id = r.suite_id
 WHERE r.id = @id AND r.repo_id = @repo_id;
 
@@ -80,7 +81,7 @@ WHERE id = @id;
 -- name: ListCheckRuns :many
 -- The check runs of a commit (or of a suite), filtered by name and status.
 -- latest_only keeps the newest run of each name in its suite.
-SELECT r.*, s.app, s.head_branch
+SELECT r.*, s.app, s.head_branch, s.app_id AS suite_app_id
 FROM check_runs r JOIN check_suites s ON s.id = r.suite_id
 WHERE r.repo_id = @repo_id
   AND (@head_sha::text = '' OR r.head_sha = @head_sha::text)
@@ -122,7 +123,11 @@ FROM check_runs WHERE suite_id = ANY(@suite_ids::uuid[])
 GROUP BY suite_id;
 
 -- name: LatestCheckRunStates :many
--- The latest run of each name on a commit, across suites, for protection.
-SELECT DISTINCT ON (name) name, status, conclusion
-FROM check_runs WHERE repo_id = @repo_id AND head_sha = @head_sha
-ORDER BY name, created_at DESC, id DESC;
+-- The latest run of each name and App on a commit, for protection; the
+-- runs of reporters other than Apps share app_num_id NULL.
+SELECT DISTINCT ON (r.name, s.app_id) r.name, r.status, r.conclusion, r.created_at, a.num_id AS app_num_id
+FROM check_runs r
+JOIN check_suites s ON s.id = r.suite_id
+LEFT JOIN apps a ON a.id = s.app_id
+WHERE r.repo_id = @repo_id AND r.head_sha = @head_sha
+ORDER BY r.name, s.app_id, r.created_at DESC, r.id DESC;

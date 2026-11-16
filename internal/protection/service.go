@@ -8,6 +8,7 @@ package protection
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -17,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
@@ -69,15 +71,18 @@ type BranchRuleInput struct {
 	RequireCodeOwnerReviews bool
 	DismissStaleReviews     bool
 	RequiredStatusChecks    []string
-	StrictStatusChecks      bool
-	RequireLinearHistory    bool
-	AllowForcePushes        bool
-	AllowDeletions          bool
-	RequireSignedCommits    bool
-	RestrictPushes          bool
-	PushUsers               []string
-	PushTeams               []string
-	AdminsBypass            bool
+	// RequiredCheckApps pins required contexts to the App (numeric id)
+	// that must report them.
+	RequiredCheckApps    map[string]int64
+	StrictStatusChecks   bool
+	RequireLinearHistory bool
+	AllowForcePushes     bool
+	AllowDeletions       bool
+	RequireSignedCommits bool
+	RestrictPushes       bool
+	PushUsers            []string
+	PushTeams            []string
+	AdminsBypass         bool
 }
 
 // TagRuleInput creates or replaces a tag rule. Empty levels take the
@@ -216,6 +221,7 @@ func (e *Engine) CreateBranchRule(ctx context.Context, who auth.Principal, owner
 		AllowDeletions: in.AllowDeletions, RequireSignedCommits: in.RequireSignedCommits,
 		RestrictPushes: in.RestrictPushes, PushUserIds: users, PushTeamIds: teams,
 		AdminsBypass: in.AdminsBypass, CreatedBy: uuid.NullUUID{UUID: who.UserID, Valid: who.UserID != uuid.Nil},
+		RequiredCheckApps: encodeCheckApps(in.RequiredCheckApps),
 	})
 	if err != nil {
 		return BranchRule{}, writeFail("insert branch protection", err)
@@ -241,6 +247,7 @@ func (e *Engine) UpdateBranchRule(ctx context.Context, who auth.Principal, owner
 		RequireLinearHistory: in.RequireLinearHistory, AllowForcePushes: in.AllowForcePushes,
 		AllowDeletions: in.AllowDeletions, RequireSignedCommits: in.RequireSignedCommits,
 		RestrictPushes: in.RestrictPushes, PushUserIds: users, PushTeamIds: teams, AdminsBypass: in.AdminsBypass,
+		RequiredCheckApps: encodeCheckApps(in.RequiredCheckApps),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return BranchRule{}, ErrNotFound
@@ -399,6 +406,20 @@ func (e *Engine) validateBranch(ctx context.Context, r repos.Repo, in *BranchRul
 		}
 	}
 	in.RequiredStatusChecks = checks
+	for c, app := range in.RequiredCheckApps {
+		if !slices.Contains(checks, strings.TrimSpace(c)) {
+			return nil, nil, fmt.Errorf("%w: requiredCheckApps names %q, which is not a required status check", ErrInvalid, c)
+		}
+		if app <= 0 {
+			return nil, nil, fmt.Errorf("%w: requiredCheckApps needs App ids", ErrInvalid)
+		}
+		if _, err := e.q.GetAppByNumID(ctx, pgtype.Int8{Int64: app, Valid: true}); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return nil, nil, fmt.Errorf("%w: no App has id %d", ErrInvalid, app)
+			}
+			return nil, nil, fmt.Errorf("get app: %w", err)
+		}
+	}
 	if users, err = e.userIDs(ctx, in.PushUsers); err != nil {
 		return nil, nil, err
 	}
@@ -540,6 +561,22 @@ func (e *Engine) tagView(ctx context.Context, r repos.Repo, row dbgen.TagRule) (
 		return TagRule{}, err
 	}
 	return TagRule{TagRule: row, AllowedUsers: u, AllowedTeams: t}, nil
+}
+
+// DecodeCheckApps reads the required_check_apps column.
+func DecodeCheckApps(raw []byte) map[string]int64 {
+	out := map[string]int64{}
+	_ = json.Unmarshal(raw, &out)
+	return out
+}
+
+func encodeCheckApps(m map[string]int64) []byte {
+	clean := map[string]int64{}
+	for c, app := range m {
+		clean[strings.TrimSpace(c)] = app
+	}
+	b, _ := json.Marshal(clean)
+	return b
 }
 
 // SetRepos sets the repository service the REST methods authorize with

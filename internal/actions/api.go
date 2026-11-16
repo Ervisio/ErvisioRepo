@@ -163,6 +163,14 @@ func (s *Service) repoFor(ctx context.Context, who auth.Principal, owner, name s
 	if who.Grant != nil && who.Grant.RepoID != repo.ID {
 		return nil, repos.Repo{}, ErrForbidden
 	}
+	if who.Installation != nil && act != authz.ActRead {
+		// /api/v3 checked the actions permission of the endpoint; the
+		// installation must cover the repository.
+		if !who.WritesTo(repo.ID, repo.OwnerID) {
+			return nil, repos.Repo{}, ErrForbidden
+		}
+		return d, repo, nil
+	}
 	if !authz.Allowed(repo.Permission, act) {
 		return nil, repos.Repo{}, ErrForbidden
 	}
@@ -535,7 +543,7 @@ func (s *Service) CancelRun(ctx context.Context, who auth.Principal, owner, name
 	if run.Status == "completed" {
 		return ErrConflict
 	}
-	return s.cancelRun(ctx, run.ID, who.UserID)
+	return s.cancelRun(ctx, run.ID, who.Actor())
 }
 
 // CancelJob cancels one job of a run.
@@ -557,7 +565,7 @@ func (s *Service) CancelJob(ctx context.Context, who auth.Principal, owner, name
 // RerunRun starts a new attempt of a completed run with every job, from
 // the workflow file the run was planned from.
 func (s *Service) RerunRun(ctx context.Context, who auth.Principal, owner, name string, runID uuid.UUID) (Run, error) {
-	if who.UserID == uuid.Nil {
+	if who.UserID == uuid.Nil && who.Installation == nil {
 		return Run{}, ErrForbidden
 	}
 	_, repo, err := s.repoFor(ctx, who, owner, name, authz.ActPush)
@@ -589,7 +597,7 @@ func (s *Service) RerunRun(ctx context.Context, who auth.Principal, owner, name 
 		}
 		locked.Attempt++
 		if err := q.StartActionsRunAttempt(ctx, dbgen.StartActionsRunAttemptParams{Attempt: locked.Attempt,
-			TriggerActorID: nullID(who.UserID), ID: locked.ID}); err != nil {
+			TriggerActorID: nullID(who.Actor()), ID: locked.ID}); err != nil {
 			return fmt.Errorf("start attempt: %w", err)
 		}
 		run = locked
