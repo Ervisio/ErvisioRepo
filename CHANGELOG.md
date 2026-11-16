@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-11-16
+
 ### Added
 
 - One-command runner install with device approval: `curl -fsSL https://<host>/runner/install.sh | sudo sh` on a Linux server installs Docker Engine when missing (official `download.docker.com` repositories, apt on Debian/Ubuntu, dnf on Fedora/RHEL/Rocky/Alma; `--no-docker` runs jobs on the host), downloads and verifies `ervisio-runner`, prints a code to approve at `/runner/approve` (also `?code=`), creates the `ervisio-runner` user in the `docker` group, enables the systemd service and prints a summary. Works when piped to `sudo sh` (questions only through `/dev/tty`, never blocks without a terminal); re-runs offer upgrade or `--reconfigure`; `--uninstall` removes service, user and files and deregisters the runner. `--token` keeps the non-interactive path; the server URL is embedded so `--url` is optional. `install.ps1` uses the same approval (`irm https://<host>/runner/install.ps1 | iex`).
