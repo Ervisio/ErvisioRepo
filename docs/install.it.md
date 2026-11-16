@@ -84,6 +84,14 @@ Oltre a `[[storage.target]]` in `config.toml`, un amministratore dell'istanza pu
 - **Se all'avvio la configurazione salvata non si può applicare** (per esempio è cambiata la chiave master), il server scrive un avviso e parte con il solo `config.toml`, a meno che sposti una primaria: in quel caso rifiuta di partire, perché gli oggetti diventerebbero introvabili.
 - **Stato.** Se la configurazione salvata non è stata applicata, Admin > Storage ne mostra il motivo. Una destinazione eliminata mentre è in uso resta in elenco come "Rimossa dopo il riavvio".
 
+### Avatar
+
+Gli utenti caricano un avatar in **Impostazioni > Profilo** (PNG, JPEG o GIF fino a 2 MiB; il server lo ritaglia a quadrato, lo ridimensiona a 460x460 e salva un PNG senza metadati). Le immagini sono indirizzate per contenuto (`avatars/<sha256>.png`), quindi i loro URL non cambiano mai.
+
+- **Dove.** In **Admin > Storage > Avatar** scegli l'archiviazione locale (la prima destinazione `local`, predefinita) o una destinazione attiva (S3 o SFTP). La modifica vale subito per i nuovi caricamenti; gli avatar esistenti non vengono spostati e il server continua a servirli dalla destinazione attiva che li contiene.
+- **Distribuzione.** `GET /avatars/<sha256>.png` su questo server, pubblico, con `Cache-Control: public, max-age=31536000, immutable`.
+- **CDN.** Imposta **URL pubblico di base** perché i nuovi URL degli avatar puntino a `<base>/avatars/<sha256>.png`. La CDN può usare come origine questo server (percorso `/avatars/`) oppure direttamente il bucket della destinazione S3 (oggetti sotto `avatars/`, dopo il prefisso della destinazione; non funziona con una destinazione cifrata). Altrimenti gli URL degli avatar sono assoluti su `server.public_url`.
+
 ### Recupero
 
 - `ervisio-repo storage overlay show [--config PERCORSO]` elenca la configurazione salvata (senza credenziali) e gli oggetti di ogni policy. `ervisio-repo storage overlay clear [--config PERCORSO] [--force]` la azzera, così il prossimo avvio usa solo `config.toml`. `clear` rifiuta se sposterebbe la primaria di una policy che contiene oggetti; `--force` lo supera, solo se quegli oggetti si trovano anche sotto la primaria del file.

@@ -20,6 +20,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/actions"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
+	"github.com/Ervisio/ErvisioRepo/internal/avatars"
 	"github.com/Ervisio/ErvisioRepo/internal/buildinfo"
 	"github.com/Ervisio/ErvisioRepo/internal/config"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
@@ -251,6 +252,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		Registry:    registry,
 		Storage:     storage,
 		StorageCfg:  storageCfg,
+		Avatars:     avatars.New(avatars.Options{Pool: pool, Targets: storage, ServerURL: cfg.Server.PublicURL, Log: log}),
 		Identity:    ids.Service,
 		MFA:         mfaSvc,
 		Orgs:        orgs.New(orgs.Options{Pool: pool, Jobs: runner, Log: log, Config: cfg}),

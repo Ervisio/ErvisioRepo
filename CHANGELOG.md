@@ -12,6 +12,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Repository header on every repository page: owner avatar, owner / name, visibility, and Pin, Watch (notification level), Fork and Star (with the star count) buttons; signed out they lead to sign-in. On narrow screens the labels hide and icons and counts stay.
 - "Code" drop-down on the repository home: HTTPS / SSH / CLI clone URL with copy, Download ZIP and Download tar.gz. It replaces the Clone dialog and the archive entries of the ⋯ menu. The About sidebar shows the star count.
 - Profile README: the README of the public repository `username/username` appears above the repositories on the profile, with an edit pencil for the owner; owners without one get a card that creates the repository and its README.md.
+- Avatar upload: `PUT /user/avatar` takes a PNG, JPEG or GIF (up to 2 MiB, 4096x4096), crops it to a centred square, scales it to 460x460 and stores a metadata-free PNG under `avatars/<sha256>.png`; `DELETE /user/avatar` clears the avatar. Images are served publicly and immutably at `/avatars/<sha256>.png`. The profile settings show a preview with Upload and Remove; the external URL field stays as an alternative.
+- Avatar storage in Admin > Storage (`GET`/`PUT /admin/storage/avatars`): local storage or any running target (S3, SFTP), and an optional public base URL for a CDN. Applies at once to new uploads; existing avatars are not moved and stay reachable from any running target.
 
 ### Fixed
 

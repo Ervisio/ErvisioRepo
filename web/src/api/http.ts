@@ -48,6 +48,19 @@ export async function requestWithHeaders<T = void>(method: string, path: string,
   return { data: (text ? JSON.parse(text) : undefined) as T, headers: res.headers };
 }
 
+/** Sends a file as the raw request body (Content-Type from the file); throws ApiError on any non-2xx answer. */
+export async function uploadBlob<T>(method: string, path: string, body: Blob): Promise<T> {
+  const headers: Record<string, string> = {
+    Accept: "application/json, application/problem+json",
+    "Content-Type": body.type || "application/octet-stream",
+  };
+  const token = typeof document === "undefined" ? undefined : csrfToken(document.cookie);
+  if (token) headers[CSRF_HEADER] = token;
+  const res = await fetch(`/api/v1${path}`, { method, headers, credentials: "same-origin", body });
+  if (!res.ok) throw await toError(res);
+  return (await res.json()) as T;
+}
+
 async function toError(res: Response): Promise<ApiError> {
   const retry = Number(res.headers.get("Retry-After"));
   let title = `HTTP ${res.status}`;

@@ -292,6 +292,60 @@ paths:
                 $ref: "#/components/schemas/ValidationProblem"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/storage/avatars:
+    get:
+      operationId: getAdminAvatarStorage
+      tags: [admin]
+      summary: Where uploaded avatars are stored
+      security:
+        - session: [admin]
+      responses:
+        "200":
+          description: Avatar storage settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvatarStorage"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: putAdminAvatarStorage
+      tags: [admin]
+      summary: Change where uploaded avatars are stored
+      description: |
+        Instance admins only. target is empty for the local storage of the
+        instance (its first local target) or the name of a running target.
+        publicUrl, when set, is the base URL a CDN serves the avatars from:
+        new avatar URLs become <publicUrl>/avatars/<sha256>.png. The CDN may
+        front this server (origin /avatars/) or the bucket of the target
+        (objects under avatars/; not with an encrypted target). Applies at
+        once to new uploads; avatars already uploaded are not moved, and
+        this server keeps serving them from any running target.
+      security:
+        - session: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvatarStorageInput"
+      responses:
+        "200":
+          description: The settings after the change
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvatarStorage"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "422":
+          description: Unknown target or invalid public URL
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ValidationProblem"
+        default:
+          $ref: "#/components/responses/Problem"
   /admin/repos/{owner}/{name}/pin:
     parameters:
       - $ref: "#/components/parameters/RepoOwner"
@@ -801,6 +855,65 @@ paths:
                 $ref: "#/components/schemas/User"
         "400":
           $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/avatar:
+    put:
+      operationId: uploadAvatar
+      tags: [users]
+      summary: Upload an avatar image
+      description: |
+        The raw image is the body (Content-Type image/png, image/jpeg or
+        image/gif; the format is detected from the content): at most 2 MiB and
+        4096x4096 pixels. The server crops it to a centred square, scales it
+        to 460x460 and stores it as PNG (dropping any metadata) under a
+        content-addressed name, on the storage chosen by the admin (see
+        /admin/storage/avatars). avatarUrl becomes the URL that serves it:
+        GET /avatars/{sha256}.png on this server (public, outside this
+        document, cached as immutable), or the same path under the public
+        base URL set by the admin. It replaces an external avatar URL.
+      security:
+        - session: []
+        - token: [user:write]
+      requestBody:
+        required: true
+        content:
+          image/*:
+            schema: {type: string, format: binary}
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "413":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteAvatar
+      tags: [users]
+      summary: Remove the avatar
+      description: Clears avatarUrl, uploaded or external. Stored images are kept, their URLs are immutable.
+      security:
+        - session: []
+        - token: [user:write]
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Problem"
         default:
@@ -10670,7 +10783,7 @@ components:
         avatarUrl:
           type: string
           maxLength: 2048
-          description: Absolute https URL, or empty to clear
+          description: Absolute https URL, or empty to clear; the current value (for example an uploaded avatar) is accepted as it is
         locale:
           type: string
           enum: [en, it]
@@ -11099,6 +11212,43 @@ components:
         cache:
           type: string
           maxLength: 63
+    AvatarStorage:
+      type: object
+      required: [target, publicUrl, localTarget, targets]
+      properties:
+        target:
+          type: string
+          description: Chosen target; empty means the local storage
+        publicUrl:
+          type: string
+          description: CDN base URL; empty when avatars are served by this server
+        localTarget:
+          type: string
+          description: Local target used when target is empty; empty when the instance has none
+        targets:
+          type: array
+          description: Running targets that can hold avatars
+          items:
+            $ref: "#/components/schemas/AvatarStorageTarget"
+    AvatarStorageTarget:
+      type: object
+      required: [name, kind, encrypted]
+      properties:
+        name: {type: string}
+        kind: {type: string}
+        encrypted:
+          type: boolean
+          description: Objects are encrypted at rest, so a CDN cannot serve them from the bucket
+    AvatarStorageInput:
+      type: object
+      required: [target, publicUrl]
+      properties:
+        target:
+          type: string
+          maxLength: 63
+        publicUrl:
+          type: string
+          maxLength: 512
     RepoTiering:
       type: object
       required: [state, pinned, sizeBytes, manifestSeq]

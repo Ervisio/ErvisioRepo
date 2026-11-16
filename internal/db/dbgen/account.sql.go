@@ -153,6 +153,20 @@ func (q *Queries) SetPrimaryEmail(ctx context.Context, arg SetPrimaryEmailParams
 	return result.RowsAffected(), nil
 }
 
+const setUserAvatar = `-- name: SetUserAvatar :exec
+UPDATE users SET avatar_url = $2, updated_at = now() WHERE id = $1
+`
+
+type SetUserAvatarParams struct {
+	ID        uuid.UUID
+	AvatarUrl string
+}
+
+func (q *Queries) SetUserAvatar(ctx context.Context, arg SetUserAvatarParams) error {
+	_, err := q.db.Exec(ctx, setUserAvatar, arg.ID, arg.AvatarUrl)
+	return err
+}
+
 const updateUserProfile = `-- name: UpdateUserProfile :exec
 
 UPDATE users SET display_name = $2, avatar_url = $3, locale = $4, updated_at = now() WHERE id = $1

@@ -103,3 +103,23 @@ export function useTiering() {
     },
   });
 }
+
+export type AvatarStorage = components["schemas"]["AvatarStorage"];
+export type AvatarStorageInput = components["schemas"]["AvatarStorageInput"];
+
+/** Where uploaded avatars go and the optional CDN base URL (GET /admin/storage/avatars). */
+export function useAvatarStorage() {
+  return useQuery({
+    queryKey: [...STORAGE_KEY, "avatars"],
+    queryFn: () => request<AvatarStorage>("GET", "/admin/storage/avatars"),
+  });
+}
+
+/** Saves the avatar storage settings (PUT /admin/storage/avatars); applies at once. */
+export function usePutAvatarStorage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AvatarStorageInput) => request<AvatarStorage>("PUT", "/admin/storage/avatars", input),
+    onSuccess: (v) => qc.setQueryData([...STORAGE_KEY, "avatars"], v),
+  });
+}

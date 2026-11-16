@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ApiError, request } from "./http.ts";
+import { ApiError, request, uploadBlob } from "./http.ts";
 import type { components } from "./schema";
 
 // Identity, security, credentials, organizations and audit. Every type comes from the
@@ -207,6 +207,28 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: (b: S["ProfileUpdate"]) => request<User>("PATCH", "/user/profile", b),
     onSuccess: (u) => qc.setQueryData(["user"], u),
+  });
+}
+/** Uploads an avatar image (PUT /user/avatar, PNG, JPEG or GIF up to 2 MiB); the server crops and scales it. */
+export function useUploadAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => uploadBlob<User>("PUT", "/user/avatar", file),
+    onSuccess: (u) => {
+      qc.setQueryData(["user"], u);
+      return qc.invalidateQueries({ queryKey: ["users", u.username, "profile"] });
+    },
+  });
+}
+/** Clears the avatar, uploaded or external (DELETE /user/avatar). */
+export function useDeleteAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => request<User>("DELETE", "/user/avatar"),
+    onSuccess: (u) => {
+      qc.setQueryData(["user"], u);
+      return qc.invalidateQueries({ queryKey: ["users", u.username, "profile"] });
+    },
   });
 }
 export const changePassword = (b: S["PasswordChange"]) => request("PUT", "/user/password", b);

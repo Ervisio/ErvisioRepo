@@ -75,7 +75,17 @@ func (s *Service) UpdateProfile(ctx context.Context, userID uuid.UUID, in Profil
 		return User{}, fmt.Errorf("%w: display name", ErrInvalidProfile)
 	}
 	avatar := strings.TrimSpace(in.AvatarURL)
+	// The current value passes as it is: an uploaded avatar may be served
+	// over http or from a relative path.
+	unchanged := false
 	if avatar != "" {
+		cur, err := s.User(ctx, userID)
+		if err != nil {
+			return User{}, err
+		}
+		unchanged = cur.AvatarURL == avatar
+	}
+	if avatar != "" && !unchanged {
 		u, err := url.Parse(avatar)
 		if err != nil || len(avatar) > maxAvatarURL || u.Scheme != "https" || u.Host == "" || u.User != nil {
 			return User{}, fmt.Errorf("%w: avatar must be an absolute https URL", ErrInvalidProfile)

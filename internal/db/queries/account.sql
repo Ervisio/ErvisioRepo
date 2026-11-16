@@ -25,3 +25,6 @@ DELETE FROM emails WHERE id = $1 AND user_id = $2 AND NOT is_primary;
 
 -- name: DeleteUserSessionByID :execrows
 DELETE FROM sessions WHERE id = $1 AND user_id = $2;
+
+-- name: SetUserAvatar :exec
+UPDATE users SET avatar_url = $2, updated_at = now() WHERE id = $1;

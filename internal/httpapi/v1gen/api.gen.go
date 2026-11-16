@@ -2827,6 +2827,35 @@ type AuditPage struct {
 	Next *openapi_types.UUID `json:"next,omitempty"`
 }
 
+// AvatarStorage defines model for AvatarStorage.
+type AvatarStorage struct {
+	// LocalTarget Local target used when target is empty; empty when the instance has none
+	LocalTarget string `json:"localTarget"`
+
+	// PublicUrl CDN base URL; empty when avatars are served by this server
+	PublicUrl string `json:"publicUrl"`
+
+	// Target Chosen target; empty means the local storage
+	Target string `json:"target"`
+
+	// Targets Running targets that can hold avatars
+	Targets []AvatarStorageTarget `json:"targets"`
+}
+
+// AvatarStorageInput defines model for AvatarStorageInput.
+type AvatarStorageInput struct {
+	PublicUrl string `json:"publicUrl"`
+	Target    string `json:"target"`
+}
+
+// AvatarStorageTarget defines model for AvatarStorageTarget.
+type AvatarStorageTarget struct {
+	// Encrypted Objects are encrypted at rest, so a CDN cannot serve them from the bucket
+	Encrypted bool   `json:"encrypted"`
+	Kind      string `json:"kind"`
+	Name      string `json:"name"`
+}
+
 // Blame defines model for Blame.
 type Blame struct {
 	Lines  []string     `json:"lines"`
@@ -4121,7 +4150,7 @@ type Problem struct {
 
 // ProfileUpdate defines model for ProfileUpdate.
 type ProfileUpdate struct {
-	// AvatarUrl Absolute https URL, or empty to clear
+	// AvatarUrl Absolute https URL, or empty to clear; the current value (for example an uploaded avatar) is accepted as it is
 	AvatarUrl   *string             `json:"avatarUrl,omitempty"`
 	DisplayName string              `json:"displayName"`
 	Locale      ProfileUpdateLocale `json:"locale"`
@@ -6299,6 +6328,9 @@ type CreateInviteJSONRequestBody = InviteRequest
 // UpdateInstanceSettingsJSONRequestBody defines body for UpdateInstanceSettings for application/json ContentType.
 type UpdateInstanceSettingsJSONRequestBody = InstanceSettingsUpdate
 
+// PutAdminAvatarStorageJSONRequestBody defines body for PutAdminAvatarStorage for application/json ContentType.
+type PutAdminAvatarStorageJSONRequestBody = AvatarStorageInput
+
 // ScanAdminStorageHostKeysJSONRequestBody defines body for ScanAdminStorageHostKeys for application/json ContentType.
 type ScanAdminStorageHostKeysJSONRequestBody = StorageHostKeyScan
 
@@ -6643,6 +6675,12 @@ type ServerInterface interface {
 	// GetAdminStorage Storage targets, policies, cache usage and permanent warnings
 	// (GET /admin/storage)
 	GetAdminStorage(w http.ResponseWriter, r *http.Request)
+	// GetAdminAvatarStorage Where uploaded avatars are stored
+	// (GET /admin/storage/avatars)
+	GetAdminAvatarStorage(w http.ResponseWriter, r *http.Request)
+	// PutAdminAvatarStorage Change where uploaded avatars are stored
+	// (PUT /admin/storage/avatars)
+	PutAdminAvatarStorage(w http.ResponseWriter, r *http.Request)
 	// GetAdminStorageConfig Storage targets and policies as the next start will run with them
 	// (GET /admin/storage/config)
 	GetAdminStorageConfig(w http.ResponseWriter, r *http.Request)
@@ -7420,6 +7458,12 @@ type ServerInterface interface {
 	// ListUserActivity Activity feed of the repositories the signed-in user can read
 	// (GET /user/activity)
 	ListUserActivity(w http.ResponseWriter, r *http.Request, params ListUserActivityParams)
+	// DeleteAvatar Remove the avatar
+	// (DELETE /user/avatar)
+	DeleteAvatar(w http.ResponseWriter, r *http.Request)
+	// UploadAvatar Upload an avatar image
+	// (PUT /user/avatar)
+	UploadAvatar(w http.ResponseWriter, r *http.Request)
 	// ListEmails Email addresses of the signed-in user
 	// (GET /user/emails)
 	ListEmails(w http.ResponseWriter, r *http.Request)
@@ -7627,6 +7671,18 @@ func (_ Unimplemented) UpdateInstanceSettings(w http.ResponseWriter, r *http.Req
 // GetAdminStorage Storage targets, policies, cache usage and permanent warnings
 // (GET /admin/storage)
 func (_ Unimplemented) GetAdminStorage(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetAdminAvatarStorage Where uploaded avatars are stored
+// (GET /admin/storage/avatars)
+func (_ Unimplemented) GetAdminAvatarStorage(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PutAdminAvatarStorage Change where uploaded avatars are stored
+// (PUT /admin/storage/avatars)
+func (_ Unimplemented) PutAdminAvatarStorage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9184,6 +9240,18 @@ func (_ Unimplemented) ListUserActivity(w http.ResponseWriter, r *http.Request, 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// DeleteAvatar Remove the avatar
+// (DELETE /user/avatar)
+func (_ Unimplemented) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UploadAvatar Upload an avatar image
+// (PUT /user/avatar)
+func (_ Unimplemented) UploadAvatar(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListEmails Email addresses of the signed-in user
 // (GET /user/emails)
 func (_ Unimplemented) ListEmails(w http.ResponseWriter, r *http.Request) {
@@ -9892,6 +9960,46 @@ func (siw *ServerInterfaceWrapper) GetAdminStorage(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetAdminStorage(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAdminAvatarStorage operation middleware
+func (siw *ServerInterfaceWrapper) GetAdminAvatarStorage(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAdminAvatarStorage(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutAdminAvatarStorage operation middleware
+func (siw *ServerInterfaceWrapper) PutAdminAvatarStorage(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutAdminAvatarStorage(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -23031,6 +23139,50 @@ func (siw *ServerInterfaceWrapper) ListUserActivity(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteAvatar operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAvatar(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UploadAvatar operation middleware
+func (siw *ServerInterfaceWrapper) UploadAvatar(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UploadAvatar(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListEmails operation middleware
 func (siw *ServerInterfaceWrapper) ListEmails(w http.ResponseWriter, r *http.Request) {
 
@@ -24407,6 +24559,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/admin/storage/policies/{policy}", wrapper.PutAdminStoragePolicy)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/storage/avatars", wrapper.GetAdminAvatarStorage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/admin/storage/avatars", wrapper.PutAdminAvatarStorage)
+	})
+	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/admin/repos/{owner}/{name}/pin", wrapper.UnpinAdminRepo)
 	})
 	r.Group(func(r chi.Router) {
@@ -24468,6 +24626,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/user/profile", wrapper.UpdateProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/avatar", wrapper.DeleteAvatar)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/user/avatar", wrapper.UploadAvatar)
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/user/password", wrapper.ChangePassword)
@@ -26108,6 +26272,113 @@ type GetAdminStoragedefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response GetAdminStoragedefaultApplicationProblemPlusJSONResponse) VisitGetAdminStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAdminAvatarStorageRequestObject struct {
+}
+
+type GetAdminAvatarStorageResponseObject interface {
+	VisitGetAdminAvatarStorageResponse(w http.ResponseWriter) error
+}
+
+type GetAdminAvatarStorage200JSONResponse AvatarStorage
+
+func (response GetAdminAvatarStorage200JSONResponse) VisitGetAdminAvatarStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAdminAvatarStoragedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetAdminAvatarStoragedefaultApplicationProblemPlusJSONResponse) VisitGetAdminAvatarStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAdminAvatarStorageRequestObject struct {
+	Body *PutAdminAvatarStorageJSONRequestBody
+}
+
+type PutAdminAvatarStorageResponseObject interface {
+	VisitPutAdminAvatarStorageResponse(w http.ResponseWriter) error
+}
+
+type PutAdminAvatarStorage200JSONResponse AvatarStorage
+
+func (response PutAdminAvatarStorage200JSONResponse) VisitPutAdminAvatarStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAdminAvatarStorage400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutAdminAvatarStorage400ApplicationProblemPlusJSONResponse) VisitPutAdminAvatarStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAdminAvatarStorage422ApplicationProblemPlusJSONResponse ValidationProblem
+
+func (response PutAdminAvatarStorage422ApplicationProblemPlusJSONResponse) VisitPutAdminAvatarStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAdminAvatarStoragedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PutAdminAvatarStoragedefaultApplicationProblemPlusJSONResponse) VisitPutAdminAvatarStorageResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -49551,6 +49822,158 @@ func (response ListUserActivitydefaultApplicationProblemPlusJSONResponse) VisitL
 	return err
 }
 
+type DeleteAvatarRequestObject struct {
+}
+
+type DeleteAvatarResponseObject interface {
+	VisitDeleteAvatarResponse(w http.ResponseWriter) error
+}
+
+type DeleteAvatar200JSONResponse User
+
+func (response DeleteAvatar200JSONResponse) VisitDeleteAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAvatar401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteAvatar401ApplicationProblemPlusJSONResponse) VisitDeleteAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAvatardefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteAvatardefaultApplicationProblemPlusJSONResponse) VisitDeleteAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAvatarRequestObject struct {
+	ContentType string
+	Body        io.Reader
+}
+
+type UploadAvatarResponseObject interface {
+	VisitUploadAvatarResponse(w http.ResponseWriter) error
+}
+
+type UploadAvatar200JSONResponse User
+
+func (response UploadAvatar200JSONResponse) VisitUploadAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAvatar400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UploadAvatar400ApplicationProblemPlusJSONResponse) VisitUploadAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAvatar401ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadAvatar401ApplicationProblemPlusJSONResponse) VisitUploadAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAvatar413ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadAvatar413ApplicationProblemPlusJSONResponse) VisitUploadAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(413)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAvatar503ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadAvatar503ApplicationProblemPlusJSONResponse) VisitUploadAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAvatardefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UploadAvatardefaultApplicationProblemPlusJSONResponse) VisitUploadAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListEmailsRequestObject struct {
 }
 
@@ -52651,6 +53074,12 @@ type StrictServerInterface interface {
 	// GetAdminStorage Storage targets, policies, cache usage and permanent warnings
 	// (GET /admin/storage)
 	GetAdminStorage(ctx context.Context, request GetAdminStorageRequestObject) (GetAdminStorageResponseObject, error)
+	// GetAdminAvatarStorage Where uploaded avatars are stored
+	// (GET /admin/storage/avatars)
+	GetAdminAvatarStorage(ctx context.Context, request GetAdminAvatarStorageRequestObject) (GetAdminAvatarStorageResponseObject, error)
+	// PutAdminAvatarStorage Change where uploaded avatars are stored
+	// (PUT /admin/storage/avatars)
+	PutAdminAvatarStorage(ctx context.Context, request PutAdminAvatarStorageRequestObject) (PutAdminAvatarStorageResponseObject, error)
 	// GetAdminStorageConfig Storage targets and policies as the next start will run with them
 	// (GET /admin/storage/config)
 	GetAdminStorageConfig(ctx context.Context, request GetAdminStorageConfigRequestObject) (GetAdminStorageConfigResponseObject, error)
@@ -53428,6 +53857,12 @@ type StrictServerInterface interface {
 	// ListUserActivity Activity feed of the repositories the signed-in user can read
 	// (GET /user/activity)
 	ListUserActivity(ctx context.Context, request ListUserActivityRequestObject) (ListUserActivityResponseObject, error)
+	// DeleteAvatar Remove the avatar
+	// (DELETE /user/avatar)
+	DeleteAvatar(ctx context.Context, request DeleteAvatarRequestObject) (DeleteAvatarResponseObject, error)
+	// UploadAvatar Upload an avatar image
+	// (PUT /user/avatar)
+	UploadAvatar(ctx context.Context, request UploadAvatarRequestObject) (UploadAvatarResponseObject, error)
 	// ListEmails Email addresses of the signed-in user
 	// (GET /user/emails)
 	ListEmails(ctx context.Context, request ListEmailsRequestObject) (ListEmailsResponseObject, error)
@@ -53931,6 +54366,61 @@ func (sh *strictHandler) GetAdminStorage(w http.ResponseWriter, r *http.Request)
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetAdminStorageResponseObject); ok {
 		if err := validResponse.VisitGetAdminStorageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAdminAvatarStorage operation middleware
+func (sh *strictHandler) GetAdminAvatarStorage(w http.ResponseWriter, r *http.Request) {
+	var request GetAdminAvatarStorageRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAdminAvatarStorage(ctx, request.(GetAdminAvatarStorageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAdminAvatarStorage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAdminAvatarStorageResponseObject); ok {
+		if err := validResponse.VisitGetAdminAvatarStorageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutAdminAvatarStorage operation middleware
+func (sh *strictHandler) PutAdminAvatarStorage(w http.ResponseWriter, r *http.Request) {
+	var request PutAdminAvatarStorageRequestObject
+
+	var body PutAdminAvatarStorageJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutAdminAvatarStorage(ctx, request.(PutAdminAvatarStorageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutAdminAvatarStorage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutAdminAvatarStorageResponseObject); ok {
+		if err := validResponse.VisitPutAdminAvatarStorageResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -61546,6 +62036,58 @@ func (sh *strictHandler) ListUserActivity(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListUserActivityResponseObject); ok {
 		if err := validResponse.VisitListUserActivityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteAvatar operation middleware
+func (sh *strictHandler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
+	var request DeleteAvatarRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteAvatar(ctx, request.(DeleteAvatarRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteAvatar")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteAvatarResponseObject); ok {
+		if err := validResponse.VisitDeleteAvatarResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UploadAvatar operation middleware
+func (sh *strictHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
+	var request UploadAvatarRequestObject
+
+	request.ContentType = r.Header.Get("Content-Type")
+
+	request.Body = r.Body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UploadAvatar(ctx, request.(UploadAvatarRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UploadAvatar")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UploadAvatarResponseObject); ok {
+		if err := validResponse.VisitUploadAvatarResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

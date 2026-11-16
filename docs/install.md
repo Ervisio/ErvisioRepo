@@ -84,6 +84,14 @@ Besides `[[storage.target]]` in `config.toml`, an instance admin can add S3-comp
 - **If the stored configuration cannot be applied at start** (for example the master key changed), the server logs a warning and starts with `config.toml` alone, unless it moves a primary: then it refuses to start, because objects would become unfindable.
 - **Status.** When the stored configuration was not applied, Admin > Storage shows why. A target deleted while running stays listed as "Removed after restart".
 
+### Avatars
+
+Users upload an avatar in **Settings > Profile** (PNG, JPEG or GIF up to 2 MiB; the server crops it to a square, scales it to 460x460 and stores a PNG without metadata). Images are content-addressed (`avatars/<sha256>.png`), so their URLs never change.
+
+- **Where.** In **Admin > Storage > Avatars** choose the local storage (the first `local` target, the default) or any running target (S3 or SFTP). The change applies at once to new uploads; old avatars are not moved, and the server keeps serving them from whichever running target holds them.
+- **Serving.** `GET /avatars/<sha256>.png` on this server, public, with `Cache-Control: public, max-age=31536000, immutable`.
+- **CDN.** Set **Public base URL** to have new avatar URLs point at `<base>/avatars/<sha256>.png`. The CDN can use this server as origin (path `/avatars/`) or the bucket of the S3 target directly (objects under `avatars/`, after the target prefix; this does not work with an encrypted target). Avatar URLs are absolute on `server.public_url` otherwise.
+
 ### Recovery
 
 - `ervisio-repo storage overlay show [--config PATH]` lists the stored configuration (no credentials) and the objects each policy holds. `ervisio-repo storage overlay clear [--config PATH] [--force]` resets it, so the next start uses `config.toml` only. `clear` refuses when it would move the primary of a policy that holds objects; `--force` overrides that, only if those objects are also found under the primary of the file.

@@ -184,6 +184,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/storage/avatars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Where uploaded avatars are stored */
+        get: operations["getAdminAvatarStorage"];
+        /**
+         * Change where uploaded avatars are stored
+         * @description Instance admins only. target is empty for the local storage of the
+         *     instance (its first local target) or the name of a running target.
+         *     publicUrl, when set, is the base URL a CDN serves the avatars from:
+         *     new avatar URLs become <publicUrl>/avatars/<sha256>.png. The CDN may
+         *     front this server (origin /avatars/) or the bucket of the target
+         *     (objects under avatars/; not with an encrypted target). Applies at
+         *     once to new uploads; avatars already uploaded are not moved, and
+         *     this server keeps serving them from any running target.
+         */
+        put: operations["putAdminAvatarStorage"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/repos/{owner}/{name}/pin": {
         parameters: {
             query?: never;
@@ -554,6 +582,38 @@ export interface paths {
         head?: never;
         /** Change display name, avatar and language */
         patch: operations["updateProfile"];
+        trace?: never;
+    };
+    "/user/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Upload an avatar image
+         * @description The raw image is the body (Content-Type image/png, image/jpeg or
+         *     image/gif; the format is detected from the content): at most 2 MiB and
+         *     4096x4096 pixels. The server crops it to a centred square, scales it
+         *     to 460x460 and stores it as PNG (dropping any metadata) under a
+         *     content-addressed name, on the storage chosen by the admin (see
+         *     /admin/storage/avatars). avatarUrl becomes the URL that serves it:
+         *     GET /avatars/{sha256}.png on this server (public, outside this
+         *     document, cached as immutable), or the same path under the public
+         *     base URL set by the admin. It replaces an external avatar URL.
+         */
+        put: operations["uploadAvatar"];
+        post?: never;
+        /**
+         * Remove the avatar
+         * @description Clears avatarUrl, uploaded or external. Stored images are kept, their URLs are immutable.
+         */
+        delete: operations["deleteAvatar"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/user/password": {
@@ -6158,7 +6218,7 @@ export interface components {
         };
         ProfileUpdate: {
             displayName: string;
-            /** @description Absolute https URL, or empty to clear */
+            /** @description Absolute https URL, or empty to clear; the current value (for example an uploaded avatar) is accepted as it is */
             avatarUrl?: string;
             /** @enum {string} */
             locale: "en" | "it";
@@ -6390,6 +6450,26 @@ export interface components {
             primary: string;
             replicas: string[];
             cache?: string;
+        };
+        AvatarStorage: {
+            /** @description Chosen target; empty means the local storage */
+            target: string;
+            /** @description CDN base URL; empty when avatars are served by this server */
+            publicUrl: string;
+            /** @description Local target used when target is empty; empty when the instance has none */
+            localTarget: string;
+            /** @description Running targets that can hold avatars */
+            targets: components["schemas"]["AvatarStorageTarget"][];
+        };
+        AvatarStorageTarget: {
+            name: string;
+            kind: string;
+            /** @description Objects are encrypted at rest, so a CDN cannot serve them from the bucket */
+            encrypted: boolean;
+        };
+        AvatarStorageInput: {
+            target: string;
+            publicUrl: string;
         };
         RepoTiering: {
             /** @enum {string} */
@@ -8234,6 +8314,62 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    getAdminAvatarStorage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Avatar storage settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvatarStorage"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    putAdminAvatarStorage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvatarStorageInput"];
+            };
+        };
+        responses: {
+            /** @description The settings after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvatarStorage"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            /** @description Unknown target or invalid public URL */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ValidationProblem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
     pinAdminRepo: {
         parameters: {
             query?: never;
@@ -8774,6 +8910,57 @@ export interface operations {
                 };
             };
             400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    uploadAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/*": string;
+            };
+        };
+        responses: {
+            /** @description Updated user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Updated user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
             401: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };

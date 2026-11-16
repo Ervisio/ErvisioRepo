@@ -6,6 +6,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/audit"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
+	"github.com/Ervisio/ErvisioRepo/internal/avatars"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/dashboard"
 	"github.com/Ervisio/ErvisioRepo/internal/ghsync"
@@ -54,6 +55,8 @@ type v1Server struct {
 	settings InstanceSettings
 	// storageCfg serves the storage configuration endpoints; nil answers 503.
 	storageCfg StorageConfig
+	// avatars serves /user/avatar and /admin/storage/avatars; nil answers 503.
+	avatars *avatars.Service
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

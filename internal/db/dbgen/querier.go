@@ -860,6 +860,7 @@ type Querier interface {
 	SetStorageObjectError(ctx context.Context, arg SetStorageObjectErrorParams) error
 	SetStorageObjectReplicasPending(ctx context.Context, arg SetStorageObjectReplicasPendingParams) error
 	SetTeamRepoPermission(ctx context.Context, arg SetTeamRepoPermissionParams) error
+	SetUserAvatar(ctx context.Context, arg SetUserAvatarParams) error
 	SetUserRole(ctx context.Context, arg SetUserRoleParams) error
 	SetUserSuspended(ctx context.Context, arg SetUserSuspendedParams) error
 	// Repository stars. repos.stars_count follows repo_stars through a trigger.

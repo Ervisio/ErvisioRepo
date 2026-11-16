@@ -21,6 +21,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/audit"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
+	"github.com/Ervisio/ErvisioRepo/internal/avatars"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/dashboard"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
@@ -116,6 +117,9 @@ type Deps struct {
 	Dashboard *dashboard.Service
 	// Settings serves /admin/settings; nil answers 503.
 	Settings InstanceSettings
+	// Avatars stores and serves uploaded avatars (/user/avatar, /avatars/,
+	// /admin/storage/avatars); nil answers 503.
+	Avatars *avatars.Service
 
 	// Pulls serves the pull request, review and fork endpoints; nil answers 503.
 	Pulls Pulls
@@ -173,6 +177,7 @@ func NewRouter(d Deps) http.Handler {
 	mountGit(r, d)
 	mountGitHubAPI(r, d)
 	mountActions(r, d)
+	mountAvatars(r, d)
 	if d.ActionsRunner != nil {
 		r.Handle("/api/actions/runner/*", d.ActionsRunner)
 	}
@@ -309,6 +314,7 @@ func mountV1(r chi.Router, d Deps) {
 	srv.dashboard = d.Dashboard
 	srv.settings = d.Settings
 	srv.storageCfg = d.StorageCfg
+	srv.avatars = d.Avatars
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())

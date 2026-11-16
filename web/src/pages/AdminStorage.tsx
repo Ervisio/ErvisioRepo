@@ -5,6 +5,7 @@ import {
 } from "../api/useStorage.ts";
 import { useT } from "../i18n/useT.ts";
 import { AdminPane } from "./admin/AdminFrame.tsx";
+import { AvatarStorageCard } from "./admin/AvatarStorageCard.tsx";
 import { StoragePolicyDialog } from "./admin/StoragePolicyDialog.tsx";
 import { StorageTargetDialog } from "./admin/StorageTargetDialog.tsx";
 import { TestResult } from "./admin/StorageTestResult.tsx";
@@ -306,6 +307,8 @@ export function AdminStorage() {
           </Table>
         </Card>
       )}
+
+      <AvatarStorageCard />
 
       <Card title={t("storage.targets")} actions={<Button size="sm" variant="primary" icon="plus" onClick={() => setTargetDialog({ open: true })}>{t("storage.target.add")}</Button>}>
         <p className="ui-note acc-pad">{t("storage.targets.hint")}</p>
