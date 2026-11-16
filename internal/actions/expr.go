@@ -67,7 +67,9 @@ func (c *exprCtx) interpreter() exprparser.Interpreter {
 	if env.Needs == nil {
 		env.Needs = map[string]exprparser.Needs{}
 	}
-	return exprparser.NewInterpeter(env, exprparser.Config{Run: &model.Run{Workflow: wf, JobID: id}})
+	// The server only evaluates job-level expressions: success() and
+	// failure() look at the needs, step conditions run on the runner.
+	return exprparser.NewInterpeter(env, exprparser.Config{Run: &model.Run{Workflow: wf, JobID: id}, Context: "job"})
 }
 
 func nonNilS(m map[string]string) map[string]string {

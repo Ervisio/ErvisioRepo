@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.13.2] - 2026-11-16
+
+### Fixed
+
+- Actions: every job failed at planning with "Error in the job condition: … Context '' must be one of 'job' or 'step'". The server's expression interpreter now runs in the job context, so the implied `success()` and explicit `success()`/`failure()` job conditions work.
+
 ## [1.13.1] - 2026-11-16
 
 ### Fixed
