@@ -1,9 +1,15 @@
 # Ervisio runner installer for Windows, served by Ervisio Repo at
 # /runner/install.ps1. Run it in an elevated PowerShell:
 #
-#   & ([scriptblock]::Create((irm https://<host>/runner/install.ps1))) -Url https://<host> -Token <errt_...>
+#   irm https://<host>/runner/install.ps1 | iex
 #
-# or set $env:ERVISIO_RUNNER_TOKEN first and use: irm https://<host>/runner/install.ps1 | iex
+# Without a token it shows a code that an admin approves at
+# https://<host>/runner/approve. Non-interactive installs pass a token:
+#
+#   & ([scriptblock]::Create((irm https://<host>/runner/install.ps1))) -Token <errt_...>
+#
+# Docker Desktop (Linux containers) is not installed automatically: install
+# it first, or pass -HostMode to run jobs directly on this machine.
 #
 # The runner is installed in %ProgramFiles%\ErvisioRunner, its config and
 # state in %ProgramData%\ervisio-runner, and it starts at boot through the
@@ -36,11 +42,17 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
 
 if ($Uninstall) {
   Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+  $deregistered = $false
+  if ((Test-Path $Bin) -and (Test-Path (Join-Path $DataDir ".runner"))) {
+    & $Bin deregister --config $Cfg
+    $deregistered = ($LASTEXITCODE -eq 0)
+  }
   Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
   Get-Process ervisio-runner -ErrorAction SilentlyContinue | Stop-Process -Force
   Remove-Item -Recurse -Force $BinDir -ErrorAction SilentlyContinue
-  if ($Purge) { Remove-Item -Recurse -Force $DataDir -ErrorAction SilentlyContinue }
-  Write-Host "ervisio-runner removed. Delete it from the Runners page of the server too."
+  Remove-Item -Recurse -Force $DataDir -ErrorAction SilentlyContinue
+  Write-Host "ervisio-runner removed from this machine."
+  if (-not $deregistered) { Write-Host "Delete it from the Runners page of the server too." }
   return
 }
 
@@ -91,15 +103,16 @@ New-Item -ItemType Directory -Force $DataDir | Out-Null
 icacls $DataDir /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" | Out-Null
 
 if (Test-Path (Join-Path $DataDir ".runner")) {
-  Write-Host "==> Already registered; run with -Uninstall -Purge to start over"
+  Write-Host "==> Already registered; run with -Uninstall first to register again"
 } else {
-  if (-not $Token) { throw "-Token is required" }
   $argv = @("register", "--config", $Cfg, "--data-dir", $DataDir, "--url", $Url)
   if ($Name) { $argv += @("--name", $Name) }
   if ($Labels) { $argv += @("--labels", $Labels) }
   if ($Capacity -gt 0) { $argv += @("--capacity", "$Capacity") }
   if ($HostMode) { $argv += "--host" }
-  $env:ERVISIO_RUNNER_TOKEN = $Token
+  # Without a token the runner prints a code to approve at $Url/runner/approve
+  # and waits for the approval (up to 15 minutes).
+  if ($Token) { $env:ERVISIO_RUNNER_TOKEN = $Token } else { Write-Host "==> Requesting approval from $Url" }
   try { & $Bin @argv; if ($LASTEXITCODE -ne 0) { throw "registration failed" } }
   finally { Remove-Item Env:\ERVISIO_RUNNER_TOKEN -ErrorAction SilentlyContinue }
 }
@@ -112,3 +125,5 @@ $task = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -R
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Settings $settings -Principal $task -Force | Out-Null
 Start-ScheduledTask -TaskName $TaskName
 Write-Host "==> Scheduled task $TaskName registered and started (runs at boot as SYSTEM)"
+Write-Host "    status: Get-ScheduledTask $TaskName"
+Write-Host "    remove: & ([scriptblock]::Create((irm $Url/runner/install.ps1))) -Uninstall"

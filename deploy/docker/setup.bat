@@ -6,12 +6,14 @@ set "NONINT=0"
 set "ADMIN_EMAIL="
 set "URL="
 set "ERVISIO="
+set "RUNNER="
 :parse
 if "%~1"=="" goto parsed
 if /i "%~1"=="--non-interactive" ( set "NONINT=1" & shift & goto parse )
 if /i "%~1"=="--admin-email" ( set "ADMIN_EMAIL=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--url" ( set "URL=%~2" & shift & shift & goto parse )
 if /i "%~1"=="--ervisio" ( set "ERVISIO=%~2" & shift & shift & goto parse )
+if /i "%~1"=="--runner" ( set "RUNNER=%~2" & shift & shift & goto parse )
 echo Unknown option: %~1
 exit /b 2
 :parsed
@@ -38,6 +40,18 @@ if "%URL%"=="" (
 if "%ERVISIO%"=="" set "ERVISIO=no"
 if /i not "%ERVISIO%"=="yes" if /i not "%ERVISIO%"=="no" (
   echo --ervisio must be yes or no
+  exit /b 2
+)
+rem Built-in Actions runner (compose profile "runner"): jobs run in Docker
+rem containers through the Docker Desktop socket.
+if "%RUNNER%"=="" (
+  if "%NONINT%"=="1" ( set "RUNNER=yes" ) else (
+    set /p "RUNNER=Start the built-in Actions runner (jobs run in Docker containers) (yes/no) [yes]: "
+    if "!RUNNER!"=="" set "RUNNER=yes"
+  )
+)
+if /i not "%RUNNER%"=="yes" if /i not "%RUNNER%"=="no" (
+  echo --runner must be yes or no
   exit /b 2
 )
 
@@ -72,6 +86,8 @@ if not exist .env (
     echo SSH_PORT=2222
     echo DOCKER_GID=0
   ) > .env
+  rem COMPOSE_PROFILES makes a plain "docker compose up" include the runner.
+  if /i "!RUNNER!"=="yes" echo COMPOSE_PROFILES=runner>> .env
 )
 
 set "SOCK="
@@ -117,7 +133,23 @@ if errorlevel 1 (
   docker compose build app
   if errorlevel 1 exit /b 1
 )
-docker compose up -d --wait --wait-timeout 300
+docker compose up -d --wait --wait-timeout 300 postgres app
+if errorlevel 1 exit /b 1
+
+rem Built-in runner: the server CLI mints an instance registration token into
+rem a file the runner reads on its first start and deletes after registering.
+set "PROFILE="
+if /i "%RUNNER%"=="yes" (
+  set "PROFILE=--profile runner"
+  if exist data\runner\.runner (
+    echo The built-in runner is already registered ^(data\runner\.runner^).
+  ) else (
+    docker compose exec -T app ervisio-repo actions runner-token --scope instance --config /etc/ervisio-repo/config.toml > data\runner\registration-token
+    if errorlevel 1 exit /b 1
+    echo Created a registration token for the built-in runner.
+  )
+)
+docker compose !PROFILE! up -d --wait --wait-timeout 300
 if errorlevel 1 exit /b 1
 
 echo.
@@ -125,5 +157,11 @@ echo Ervisio Repo is running at %URL%
 echo   1. Open the URL and register: the first account becomes the administrator.
 if not "%ADMIN_EMAIL%"=="" echo      Use %ADMIN_EMAIL% for that account.
 echo   2. Behind Caddy: ervisio-repo caddy setup --host ^<your-domain^> (see docs\install.md).
-echo   3. Stop with: docker compose stop. Optional: --profile runner, --profile backup.
+if /i "%RUNNER%"=="yes" (
+  echo   3. The built-in runner 'builtin' runs jobs for every repository ^(Admin ^> Runners^).
+  echo      Add more machines from Admin ^> Runners ^> New runner.
+) else (
+  echo   3. Actions runner: re-run setup.bat --runner yes, or add one from Admin ^> Runners.
+)
+echo   4. Stop with: docker compose stop. Optional: --profile backup.
 endlocal
