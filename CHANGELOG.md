@@ -11,6 +11,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Runner resource metrics: `ervisio-runner` reports CPU usage (Linux), CPU count, load average, memory, disk of its data directory and NVIDIA GPUs (`nvidia-smi`, when installed) on Declare and every Heartbeat (`RunnerMetrics` in the runner protocol). macOS reports load, memory and disk; Windows only CPU count, OS and hostname. Unmeasured values are omitted, and metrics never fail a heartbeat. The server keeps the latest report per runner (migration 00330, no history).
 - Runner lists (`/admin`, org and repo runner endpoints) return `metrics` (with `reportedAt`) and `jobs`, the jobs running on each runner with run number, workflow and repository; repository details appear only when the caller can read the repository (`visible: false` otherwise).
 
+### Changed
+
+- Runner pages (Admin › Runners, org and repository settings) use one dense table (round 014 A): summary line (runners, online, slots in use), compact built-in runner row, CPU/RAM/GPU bars (warn from 75 %, error from 90 %), jobs, last seen and a ⋯ menu for Pause/Resume and Remove. A row expands to its running jobs (linked to the run, private ones hidden) and details (RAM, cores and load, disk, GPU, labels, version and scope). New "Registration token" action opens the new-runner dialog on the token section; the empty state shows the install one-liner. GPU and last seen are hidden under 720 px.
+
 ## [1.13.2] - 2026-11-16
 
 ### Fixed

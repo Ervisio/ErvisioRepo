@@ -22,7 +22,8 @@ import {
 } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { repoHooks } from "../../api/settings.ts";
-import { Entries, Environments, GitHubActionsImport, Runners } from "../actions/Settings.tsx";
+import { Entries, Environments, GitHubActionsImport } from "../actions/Settings.tsx";
+import { Runners } from "../actions/Runners.tsx";
 import { Webhooks } from "../settings/Webhooks.tsx";
 import { Collaborators, Labels, Milestones } from "./RepoAccess.tsx";
 import { GitHubSettings } from "./GitHubSettings.tsx";
