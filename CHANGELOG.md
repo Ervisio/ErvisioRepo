@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.13.1] - 2026-11-16
+
+### Fixed
+
+- Runner device registration: the device code was hex while `PollDevice` only accepted the base64 token shape, so the first poll answered "the server no longer knows this code" and `install.sh` stopped before the approval. Device codes now use the same shape as the other secret tokens.
+
 ## [1.13.0] - 2026-11-16
 
 ### Added

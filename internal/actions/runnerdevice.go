@@ -2,8 +2,6 @@ package actions
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -45,6 +43,8 @@ const (
 	deviceCodesPerHour = 20
 	// maxDeviceCapacity bounds the capacity requested or approved.
 	maxDeviceCapacity = 64
+	// deviceCodePrefix starts the secret device code the runner polls with.
+	deviceCodePrefix = "erdc_"
 )
 
 // Device statuses (actions_runner_devices.status) and poll answers.
@@ -151,13 +151,10 @@ func (r *RunnerService) RequestDevice(ctx context.Context, req *connect.Request[
 	if err != nil {
 		return nil, internalErr(s, "device id", err)
 	}
-	var raw [20]byte
-	if _, err := rand.Read(raw[:]); err != nil {
-		return nil, internalErr(s, "device code", err)
-	}
-	deviceCode := "erdc_" + hex.EncodeToString(raw[:])
+	// Shaped like the other secret tokens so PollDevice's validToken accepts it.
+	deviceCode, deviceHash := newSecretToken(deviceCodePrefix)
 	expires := s.now().Add(RunnerDeviceTTL)
-	params := dbgen.InsertActionsRunnerDeviceParams{ID: id, DeviceCodeHash: auth.HashToken(deviceCode),
+	params := dbgen.InsertActionsRunnerDeviceParams{ID: id, DeviceCodeHash: deviceHash,
 		Hostname: cleanText(m.GetHostname(), 255), Os: cleanText(m.GetOs(), 32), Arch: cleanText(m.GetArch(), 32),
 		Cpus: min(max(m.GetCpus(), 0), 1<<16), MemoryBytes: max(m.GetMemoryBytes(), 0), Docker: m.GetDocker(),
 		Version: cleanText(m.GetVersion(), 255), Name: cleanText(m.GetName(), 255), Labels: labels,
@@ -185,7 +182,7 @@ func (r *RunnerService) RequestDevice(ctx context.Context, req *connect.Request[
 func (r *RunnerService) PollDevice(ctx context.Context, req *connect.Request[runnerv1.PollDeviceRequest]) (*connect.Response[runnerv1.PollDeviceResponse], error) {
 	s := r.s
 	code := strings.TrimSpace(req.Msg.GetDeviceCode())
-	if !validToken(code, "erdc_") {
+	if !validToken(code, deviceCodePrefix) {
 		return nil, connect.NewError(connect.CodeNotFound, errors.New("unknown device code"))
 	}
 	var out *runnerv1.PollDeviceResponse
