@@ -130,7 +130,7 @@ function BlobBox({ repo, blob: b, refName, path, view, onView }: { repo: Repo; b
         </div>
       </div>
       <BlobContent repo={repo} blob={b} refName={refName} view={view} />
-      {writable && <DeleteFile repo={repo} blob={b} branch={b.ref.name} open={deleting} onOpenChange={setDeleting} />}
+      {writable && <DeleteFile repo={repo} blob={b} branch={b.ref.name.replace(/^refs\/heads\//, "")} open={deleting} onOpenChange={setDeleting} />}
     </div>
   );
 }

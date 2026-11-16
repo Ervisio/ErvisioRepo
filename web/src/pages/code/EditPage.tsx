@@ -30,6 +30,9 @@ function NotAllowed() {
   return <EmptyState icon="lock" title={t("edit.notAllowed")} description={t("edit.notAllowedHint")} />;
 }
 
+/** Branch name without refs/heads/, as the editor shows it and the API takes it. */
+const shortBranch = (name: string) => name.replace(/^refs\/heads\//, "");
+
 const writable = (repo: Repo, ref: ResolvedRef) => canWrite(repo.permission) && ref.kind === "branch";
 
 function EditExisting({ repo, refName, path }: { repo: Repo; refName: string; path: string }) {
@@ -40,7 +43,7 @@ function EditExisting({ repo, refName, path }: { repo: Repo; refName: string; pa
         !writable(repo, b.ref) || b.binary || b.truncated || b.lfs || b.content === undefined ? (
           <NotAllowed />
         ) : (
-          <EditorForm repo={repo} branch={b.ref.name} dir="" existing={b} refetch={async () => (await blob.refetch()).data} />
+          <EditorForm repo={repo} branch={shortBranch(b.ref.name)} dir="" existing={b} refetch={async () => (await blob.refetch()).data} />
         )
       }
     </Gate>
@@ -49,7 +52,7 @@ function EditExisting({ repo, refName, path }: { repo: Repo; refName: string; pa
 
 function EditNew({ repo, refName, dir }: { repo: Repo; refName: string; dir: string }) {
   const tree = useTree(repo.owner, repo.name, refName, dir);
-  return <Gate query={tree}>{(tr) => (writable(repo, tr.ref) ? <EditorForm repo={repo} branch={tr.ref.name} dir={dir} /> : <NotAllowed />)}</Gate>;
+  return <Gate query={tree}>{(tr) => (writable(repo, tr.ref) ? <EditorForm repo={repo} branch={shortBranch(tr.ref.name)} dir={dir} /> : <NotAllowed />)}</Gate>;
 }
 
 /** Problem with a new file name, or undefined when it is acceptable. */

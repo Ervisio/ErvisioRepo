@@ -232,6 +232,8 @@ func (s *Service) checkEdit(e *Edit, repo Repo) error {
 	if err := git.ValidateTreePath(e.Path); err != nil {
 		return fmt.Errorf("%w: %w", ErrInvalid, err)
 	}
+	// Resolved refs carry the full name (refs/heads/main): accept it too.
+	e.Branch = strings.TrimPrefix(e.Branch, "refs/heads/")
 	if e.Branch == "" {
 		e.Branch = repo.DefaultBranch
 	}

@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Web editor: committing a change to an existing branch failed with "invalid branch: reserved name" (the page sent the full ref `refs/heads/…`); the API now also accepts the full name.
+
 ## [1.10.0] - 2026-11-16
 
 ### Added
