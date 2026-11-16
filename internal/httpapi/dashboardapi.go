@@ -142,7 +142,11 @@ func (s *v1Server) ExploreRepos(ctx context.Context, req v1gen.ExploreReposReque
 	if err != nil {
 		return dashFail[v1gen.ExploreReposResponseObject](err)
 	}
-	return v1gen.ExploreRepos200JSONResponse{TotalCount: list.Total, Items: repoList(list.Items)}, nil
+	items, err := s.reposOut(ctx, list.Items)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.ExploreRepos200JSONResponse{TotalCount: list.Total, Items: items}, nil
 }
 
 func (s *v1Server) ListUserPins(ctx context.Context, _ v1gen.ListUserPinsRequestObject) (v1gen.ListUserPinsResponseObject, error) {
@@ -158,7 +162,11 @@ func (s *v1Server) ListUserPins(ctx context.Context, _ v1gen.ListUserPinsRequest
 	if err != nil {
 		return dashFail[v1gen.ListUserPinsResponseObject](err)
 	}
-	return v1gen.ListUserPins200JSONResponse(repoList(list)), nil
+	out, err := s.reposOut(ctx, list)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.ListUserPins200JSONResponse(out), nil
 }
 
 func (s *v1Server) PinRepo(ctx context.Context, req v1gen.PinRepoRequestObject) (v1gen.PinRepoResponseObject, error) {

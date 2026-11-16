@@ -535,7 +535,11 @@ func (s *v1Server) ListForks(ctx context.Context, req v1gen.ListForksRequestObje
 	if err != nil {
 		return pullsFail(err, http.MethodGet, "/forks")
 	}
-	return v1gen.ListForks200JSONResponse(repoList(list)), nil
+	out, err := s.reposOut(ctx, list)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.ListForks200JSONResponse(out), nil
 }
 
 func (s *v1Server) CreateFork(ctx context.Context, req v1gen.CreateForkRequestObject) (v1gen.CreateForkResponseObject, error) {

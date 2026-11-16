@@ -86,7 +86,8 @@ LIMIT sqlc.arg(lim) OFFSET sqlc.arg(off);
 
 -- name: ExploreRepos :many
 -- Public repositories, optionally filtered by a lower-cased name or
--- description fragment (LIKE metacharacters escaped). sort is updated or name.
+-- description fragment (LIKE metacharacters escaped). sort is updated, name
+-- or stars.
 SELECT sqlc.embed(r), n.name AS owner_name, n.kind AS owner_kind
 FROM repos r
 JOIN namespaces n ON n.id = r.owner_id
@@ -96,6 +97,7 @@ WHERE r.visibility = 'public'
        OR lower(r.description) LIKE '%' || sqlc.arg(pattern)::text || '%' ESCAPE '\')
 ORDER BY
   CASE WHEN sqlc.arg(sort)::text = 'name' THEN n.name_lower || '/' || r.name_lower END ASC,
+  CASE WHEN sqlc.arg(sort)::text = 'stars' THEN r.stars_count END DESC,
   r.updated_at DESC, r.id
 LIMIT sqlc.arg(lim) OFFSET sqlc.arg(off);
 

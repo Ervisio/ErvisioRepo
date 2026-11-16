@@ -27,7 +27,8 @@ type ExploreList struct {
 }
 
 // Explore lists the public repositories whose name or description contains
-// query (all of them when empty). sort is "updated" (default) or "name".
+// query (all of them when empty). sort is "updated" (default), "name" or
+// "stars".
 // page is 1-based. It works for anonymous callers.
 func (s *Service) Explore(ctx context.Context, who auth.Principal, query, sort string, page, perPage int) (ExploreList, error) {
 	query = strings.ToLower(strings.TrimSpace(query))
@@ -37,9 +38,9 @@ func (s *Service) Explore(ctx context.Context, who auth.Principal, query, sort s
 	switch sort {
 	case "", "updated":
 		sort = "updated"
-	case "name":
+	case "name", "stars":
 	default:
-		return ExploreList{}, invalid("sort must be updated or name")
+		return ExploreList{}, invalid("sort must be updated, name or stars")
 	}
 	pattern := likeEscape(query)
 	total, err := s.q.CountExploreRepos(ctx, pattern)

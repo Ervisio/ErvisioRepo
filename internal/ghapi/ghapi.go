@@ -170,15 +170,21 @@ func (s *Server) routes(r chi.Router) {
 	r.Get("/user", s.h((*call).currentUser))
 	r.Get("/user/orgs", s.h((*call).myOrgs))
 	r.Get("/user/repos", s.h((*call).myRepos))
+	r.Get("/user/starred", s.h((*call).myStarred))
+	r.Get("/user/starred/{owner}/{repo}", s.h((*call).checkStarred))
+	r.Put("/user/starred/{owner}/{repo}", s.h((*call).starRepo))
+	r.Delete("/user/starred/{owner}/{repo}", s.h((*call).unstarRepo))
 	r.Post("/user/repos", s.h((*call).createRepo))
 	r.Get("/users/{username}", s.h((*call).getUser))
 	r.Get("/users/{username}/repos", s.h(s.ownerRepos("username")))
+	r.Get("/users/{username}/starred", s.h((*call).userStarred))
 	r.Get("/orgs/{org}", s.h((*call).getOrg))
 	r.Get("/orgs/{org}/repos", s.h(s.ownerRepos("org")))
 	r.Post("/orgs/{org}/repos", s.h((*call).createRepo))
 
 	r.Route("/repos/{owner}/{repo}", func(r chi.Router) {
 		r.Get("/", s.h((*call).getRepo))
+		r.Get("/stargazers", s.h((*call).listStargazers))
 		r.Patch("/", s.h((*call).updateRepo))
 		r.Delete("/", s.h((*call).deleteRepo))
 

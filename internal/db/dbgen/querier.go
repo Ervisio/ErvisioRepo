@@ -90,6 +90,7 @@ type Querier interface {
 	CountPendingReviewComments(ctx context.Context, reviewID uuid.NullUUID) (int64, error)
 	CountRecoveryCodes(ctx context.Context, userID uuid.UUID) (CountRecoveryCodesRow, error)
 	CountRepoForks(ctx context.Context, parentID uuid.NullUUID) (int64, error)
+	CountRepoStars(ctx context.Context, id uuid.UUID) (int32, error)
 	CountRepoWebhooks(ctx context.Context, repoID uuid.NullUUID) (int64, error)
 	// Number of distinct run names of each suite.
 	CountSuiteRuns(ctx context.Context, suiteIds []uuid.UUID) ([]CountSuiteRunsRow, error)
@@ -197,7 +198,8 @@ type Querier interface {
 	EmailTaken(ctx context.Context, address string) (bool, error)
 	EnsureUsageCounter(ctx context.Context, namespaceID uuid.UUID) error
 	// Public repositories, optionally filtered by a lower-cased name or
-	// description fragment (LIKE metacharacters escaped). sort is updated or name.
+	// description fragment (LIKE metacharacters escaped). sort is updated, name
+	// or stars.
 	ExploreRepos(ctx context.Context, arg ExploreReposParams) ([]ExploreReposRow, error)
 	FailMFAChallenge(ctx context.Context, id uuid.UUID) (int32, error)
 	FinalizeActionsArtifact(ctx context.Context, id int64) (ActionsArtifact, error)
@@ -447,6 +449,7 @@ type Querier interface {
 	InsertWebhookDelivery(ctx context.Context, arg InsertWebhookDeliveryParams) (uuid.UUID, error)
 	// Totals shown by the Ervisio plugin's status page.
 	InstanceCounts(ctx context.Context) (InstanceCountsRow, error)
+	IsRepoStarred(ctx context.Context, arg IsRepoStarredParams) (bool, error)
 	// ---- assignees and users ----
 	IssueAssigneesOf(ctx context.Context, issueIds []uuid.UUID) ([]IssueAssigneesOfRow, error)
 	IssueLabelsOf(ctx context.Context, issueIds []uuid.UUID) ([]IssueLabelsOfRow, error)
@@ -607,6 +610,10 @@ type Querier interface {
 	ListRetiredGenerations(ctx context.Context, repoID uuid.UUID) ([]GitGenerationsRetired, error)
 	ListRunningActionsJobsOfRunner(ctx context.Context, runnerID uuid.NullUUID) ([]ListRunningActionsJobsOfRunnerRow, error)
 	ListStaleActionsUploadOwners(ctx context.Context, arg ListStaleActionsUploadOwnersParams) ([]string, error)
+	// Users who starred a repository, latest first.
+	ListStargazers(ctx context.Context, arg ListStargazersParams) ([]ListStargazersRow, error)
+	// The repositories of repo_ids the user starred.
+	ListStarredAmong(ctx context.Context, arg ListStarredAmongParams) ([]uuid.UUID, error)
 	ListStorageObjectsByKeys(ctx context.Context, arg ListStorageObjectsByKeysParams) ([]StorageObject, error)
 	ListStorageObjectsPendingReplicas(ctx context.Context, arg ListStorageObjectsPendingReplicasParams) ([]StorageObject, error)
 	// Runs not completed and not touched since before: the sweeper advances
@@ -648,6 +655,8 @@ type Querier interface {
 	ListUserPins(ctx context.Context, arg ListUserPinsParams) ([]ListUserPinsRow, error)
 	ListUserSSHKeys(ctx context.Context, userID uuid.UUID) ([]ListUserSSHKeysRow, error)
 	ListUserSessions(ctx context.Context, userID uuid.UUID) ([]ListUserSessionsRow, error)
+	// Repositories starred by a user that a viewer can read, latest star first.
+	ListUserStarredRepos(ctx context.Context, arg ListUserStarredReposParams) ([]ListUserStarredReposRow, error)
 	// The permissions a user receives on a repository through teams.
 	ListUserTeamRepoPermissions(ctx context.Context, arg ListUserTeamRepoPermissionsParams) ([]string, error)
 	ListUserTokens(ctx context.Context, userID uuid.UUID) ([]ListUserTokensRow, error)
@@ -853,6 +862,9 @@ type Querier interface {
 	SetTeamRepoPermission(ctx context.Context, arg SetTeamRepoPermissionParams) error
 	SetUserRole(ctx context.Context, arg SetUserRoleParams) error
 	SetUserSuspended(ctx context.Context, arg SetUserSuspendedParams) error
+	// Repository stars. repos.stars_count follows repo_stars through a trigger.
+	// A repeated star changes nothing.
+	StarRepo(ctx context.Context, arg StarRepoParams) error
 	// A re-run: the run goes back to queued under a new attempt.
 	StartActionsRunAttempt(ctx context.Context, arg StartActionsRunAttemptParams) error
 	// Rows per policy and primary target, with how many are fully replicated.
@@ -890,6 +902,7 @@ type Querier interface {
 	TryLockRepoSession(ctx context.Context, repoID uuid.UUID) (bool, error)
 	UnlockRepoSession(ctx context.Context, repoID uuid.UUID) (bool, error)
 	UnpinRepo(ctx context.Context, arg UnpinRepoParams) error
+	UnstarRepo(ctx context.Context, arg UnstarRepoParams) error
 	UpdateBranchProtection(ctx context.Context, arg UpdateBranchProtectionParams) (BranchProtection, error)
 	UpdateCheckRun(ctx context.Context, arg UpdateCheckRunParams) error
 	UpdateCheckSuiteState(ctx context.Context, arg UpdateCheckSuiteStateParams) error

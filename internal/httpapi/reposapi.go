@@ -29,6 +29,12 @@ type Repos interface {
 	ListCollaborators(ctx context.Context, who auth.Principal, owner, name string) ([]repos.Collaborator, error)
 	SetCollaborator(ctx context.Context, who auth.Principal, owner, name, username, permission string, c identity.Client) error
 	RemoveCollaborator(ctx context.Context, who auth.Principal, owner, name, username string, c identity.Client) error
+	Star(ctx context.Context, who auth.Principal, owner, name string) error
+	Unstar(ctx context.Context, who auth.Principal, owner, name string) error
+	IsStarred(ctx context.Context, who auth.Principal, owner, name string) (bool, error)
+	MarkStarred(ctx context.Context, who auth.Principal, list []repos.Repo) error
+	ListStargazers(ctx context.Context, who auth.Principal, owner, name string, offset, limit int) ([]repos.Stargazer, error)
+	ListStarred(ctx context.Context, who auth.Principal, username string, offset, limit int) ([]repos.StarredRepo, error)
 }
 
 var _ Repos = (*repos.Service)(nil)
@@ -90,13 +96,17 @@ type repoResponse interface {
 	v1gen.ListUserReposResponseObject
 	v1gen.ListOrgReposResponseObject
 	v1gen.CreateOrgRepoResponseObject
+	v1gen.StarRepoResponseObject
+	v1gen.UnstarRepoResponseObject
+	v1gen.ListStargazersResponseObject
+	v1gen.ListUserStarredResponseObject
 }
 
 func repoDTO(r repos.Repo) v1gen.Repo {
 	return v1gen.Repo{Id: r.ID, Owner: r.Owner, OwnerKind: v1gen.RepoOwnerKind(r.OwnerKind), Name: r.Name,
 		FullName: r.FullName(), Description: r.Description, Visibility: v1gen.Visibility(r.Visibility),
 		DefaultBranch: r.DefaultBranch, StorageState: v1gen.RepoStorageState(r.StorageState), SizeBytes: r.SizeBytes,
-		Permission: v1gen.Permission(r.Permission.String()), CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt}
+		StarsCount: r.StarsCount, Starred: r.Starred, Permission: v1gen.Permission(r.Permission.String()), CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt}
 }
 
 func repoList(list []repos.Repo) []v1gen.Repo {
@@ -105,6 +115,26 @@ func repoList(list []repos.Repo) []v1gen.Repo {
 		out = append(out, repoDTO(r))
 	}
 	return out
+}
+
+// reposOut converts repositories for the caller, with their starred flag
+// loaded in one query.
+func (s *v1Server) reposOut(ctx context.Context, list []repos.Repo) ([]v1gen.Repo, error) {
+	if s.repos != nil {
+		if err := s.repos.MarkStarred(ctx, principal(ctx), list); err != nil {
+			return nil, err
+		}
+	}
+	return repoList(list), nil
+}
+
+// repoOut is reposOut for one repository.
+func (s *v1Server) repoOut(ctx context.Context, r repos.Repo) (v1gen.Repo, error) {
+	out, err := s.reposOut(ctx, []repos.Repo{r})
+	if err != nil {
+		return v1gen.Repo{}, err
+	}
+	return out[0], nil
 }
 
 func page(offset, limit *int) (int, int) {
@@ -141,7 +171,11 @@ func (s *v1Server) ListMyRepos(ctx context.Context, req v1gen.ListMyReposRequest
 	if err != nil {
 		return reposFail(err, http.MethodGet, "")
 	}
-	return v1gen.ListMyRepos200JSONResponse(repoList(list)), nil
+	out, err := s.reposOut(ctx, list)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.ListMyRepos200JSONResponse(out), nil
 }
 
 func (s *v1Server) CreateUserRepo(ctx context.Context, req v1gen.CreateUserRepoRequestObject) (v1gen.CreateUserRepoResponseObject, error) {
@@ -168,7 +202,11 @@ func (s *v1Server) ListUserRepos(ctx context.Context, req v1gen.ListUserReposReq
 	if err != nil {
 		return reposFail(err, http.MethodGet, "")
 	}
-	return v1gen.ListUserRepos200JSONResponse(repoList(list)), nil
+	out, err := s.reposOut(ctx, list)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.ListUserRepos200JSONResponse(out), nil
 }
 
 func (s *v1Server) ListOrgRepos(ctx context.Context, req v1gen.ListOrgReposRequestObject) (v1gen.ListOrgReposResponseObject, error) {
@@ -180,7 +218,11 @@ func (s *v1Server) ListOrgRepos(ctx context.Context, req v1gen.ListOrgReposReque
 	if err != nil {
 		return reposFail(err, http.MethodGet, "")
 	}
-	return v1gen.ListOrgRepos200JSONResponse(repoList(list)), nil
+	out, err := s.reposOut(ctx, list)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.ListOrgRepos200JSONResponse(out), nil
 }
 
 func (s *v1Server) CreateOrgRepo(ctx context.Context, req v1gen.CreateOrgRepoRequestObject) (v1gen.CreateOrgRepoResponseObject, error) {
@@ -205,7 +247,11 @@ func (s *v1Server) GetRepo(ctx context.Context, req v1gen.GetRepoRequestObject) 
 	if err != nil {
 		return reposFail(err, http.MethodGet, "")
 	}
-	return v1gen.GetRepo200JSONResponse(repoDTO(r)), nil
+	out, err := s.repoOut(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.GetRepo200JSONResponse(out), nil
 }
 
 func (s *v1Server) UpdateRepo(ctx context.Context, req v1gen.UpdateRepoRequestObject) (v1gen.UpdateRepoResponseObject, error) {
@@ -224,7 +270,11 @@ func (s *v1Server) UpdateRepo(ctx context.Context, req v1gen.UpdateRepoRequestOb
 	if err != nil {
 		return reposFail(err, http.MethodPatch, "")
 	}
-	return v1gen.UpdateRepo200JSONResponse(repoDTO(r)), nil
+	out, err := s.repoOut(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.UpdateRepo200JSONResponse(out), nil
 }
 
 func (s *v1Server) DeleteRepo(ctx context.Context, req v1gen.DeleteRepoRequestObject) (v1gen.DeleteRepoResponseObject, error) {
@@ -252,7 +302,11 @@ func (s *v1Server) TransferRepo(ctx context.Context, req v1gen.TransferRepoReque
 	if err != nil {
 		return reposFail(err, http.MethodPost, "/transfer")
 	}
-	return v1gen.TransferRepo200JSONResponse(repoDTO(r)), nil
+	out, err := s.repoOut(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.TransferRepo200JSONResponse(out), nil
 }
 
 func (s *v1Server) ListRepoCollaborators(ctx context.Context, req v1gen.ListRepoCollaboratorsRequestObject) (v1gen.ListRepoCollaboratorsResponseObject, error) {

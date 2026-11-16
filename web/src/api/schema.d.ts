@@ -1729,6 +1729,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/{username}/starred": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Repositories starred by a user that the caller can see
+         * @description Latest star first.
+         */
+        get: operations["listUserStarred"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/orgs/{org}/repos": {
         parameters: {
             query?: never;
@@ -1857,6 +1879,55 @@ export interface paths {
          * @description Admins of the repository, or the collaborator.
          */
         delete: operations["removeRepoCollaborator"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/star": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Star a repository (no change when already starred)
+         * @description Any signed-in user who can read the repository.
+         */
+        put: operations["starRepo"];
+        post?: never;
+        /** Remove a star (also when it was not starred) */
+        delete: operations["unstarRepo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/stargazers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Users who starred the repository
+         * @description Latest star first.
+         */
+        get: operations["listStargazers"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -6477,11 +6548,28 @@ export interface components {
             storageState: "hot" | "cold" | "hydrating" | "evicting" | "degraded";
             /** Format: int64 */
             sizeBytes: number;
+            /** @description Number of users who starred the repository */
+            starsCount: number;
+            /** @description Whether the caller starred the repository; false when anonymous */
+            starred: boolean;
             permission: components["schemas"]["Permission"];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        StarredRepo: {
+            repo: components["schemas"]["Repo"];
+            /** Format: date-time */
+            starredAt: string;
+        };
+        Stargazer: {
+            username: string;
+            displayName: string;
+            /** @description Absolute https URL of the avatar; empty when unset */
+            avatarUrl: string;
+            /** Format: date-time */
+            starredAt: string;
         };
         RepoCreate: {
             name: string;
@@ -10565,8 +10653,8 @@ export interface operations {
     exploreRepos: {
         parameters: {
             query?: {
-                /** @description Default updated */
-                sort?: "updated" | "name";
+                /** @description Default updated; stars = most starred first */
+                sort?: "updated" | "name" | "stars";
                 q?: string;
                 page?: components["parameters"]["ActionsPage"];
                 perPage?: components["parameters"]["ActionsPerPage"];
@@ -10635,6 +10723,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Repo"][];
+                };
+            };
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listUserStarred: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Starred repositories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StarredRepo"][];
                 };
             };
             404: components["responses"]["Problem"];
@@ -10902,6 +11017,86 @@ export interface operations {
             };
             307: components["responses"]["Moved"];
             403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    starRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Starred */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    unstarRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unstarred */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listStargazers: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stargazers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Stargazer"][];
+                };
+            };
+            301: components["responses"]["Moved"];
             404: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };

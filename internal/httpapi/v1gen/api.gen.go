@@ -2204,6 +2204,7 @@ func (e ListAdminUsersParamsRole) Valid() bool {
 // Defines values for ExploreReposParamsSort.
 const (
 	ExploreReposParamsSortName    ExploreReposParamsSort = "name"
+	ExploreReposParamsSortStars   ExploreReposParamsSort = "stars"
 	ExploreReposParamsSortUpdated ExploreReposParamsSort = "updated"
 )
 
@@ -2211,6 +2212,8 @@ const (
 func (e ExploreReposParamsSort) Valid() bool {
 	switch e {
 	case ExploreReposParamsSortName:
+		return true
+	case ExploreReposParamsSortStars:
 		return true
 	case ExploreReposParamsSortUpdated:
 		return true
@@ -4636,6 +4639,12 @@ type Repo struct {
 	Permission Permission         `json:"permission"`
 	SizeBytes  int64              `json:"sizeBytes"`
 
+	// Starred Whether the caller starred the repository; false when anonymous
+	Starred bool `json:"starred"`
+
+	// StarsCount Number of users who starred the repository
+	StarsCount int `json:"starsCount"`
+
 	// StorageState Where the git data is; cold repositories are restored on first access.
 	StorageState RepoStorageState `json:"storageState"`
 	UpdatedAt    time.Time        `json:"updatedAt"`
@@ -4781,6 +4790,21 @@ type SshKeyCreate struct {
 
 	// Title Empty uses the key comment, or the key type
 	Title string `json:"title"`
+}
+
+// Stargazer defines model for Stargazer.
+type Stargazer struct {
+	// AvatarUrl Absolute https URL of the avatar; empty when unset
+	AvatarUrl   string    `json:"avatarUrl"`
+	DisplayName string    `json:"displayName"`
+	StarredAt   time.Time `json:"starredAt"`
+	Username    string    `json:"username"`
+}
+
+// StarredRepo defines model for StarredRepo.
+type StarredRepo struct {
+	Repo      Repo      `json:"repo"`
+	StarredAt time.Time `json:"starredAt"`
 }
 
 // StorageCache defines model for StorageCache.
@@ -5670,7 +5694,7 @@ type ListAdminUsersParamsRole string
 
 // ExploreReposParams defines parameters for ExploreRepos.
 type ExploreReposParams struct {
-	// Sort Default updated
+	// Sort Default updated; stars = most starred first
 	Sort    *ExploreReposParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
 	Q       *string                 `form:"q,omitempty" json:"q,omitempty"`
 	Page    *ActionsPage            `form:"page,omitempty" json:"page,omitempty"`
@@ -6170,6 +6194,12 @@ type SearchCodeParams struct {
 	Limit      *int  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListStargazersParams defines parameters for ListStargazers.
+type ListStargazersParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListCommitStatusesParams defines parameters for ListCommitStatuses.
 type ListCommitStatusesParams struct {
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
@@ -6253,6 +6283,12 @@ type ListMyReposParams struct {
 
 // ListUserReposParams defines parameters for ListUserRepos.
 type ListUserReposParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListUserStarredParams defines parameters for ListUserStarred.
+type ListUserStarredParams struct {
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
@@ -7324,6 +7360,15 @@ type ServerInterface interface {
 	// SearchCode Search the text files of a ref (git grep)
 	// (GET /repos/{owner}/{name}/search/code)
 	SearchCode(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params SearchCodeParams)
+	// UnstarRepo Remove a star (also when it was not starred)
+	// (DELETE /repos/{owner}/{name}/star)
+	UnstarRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// StarRepo Star a repository (no change when already starred)
+	// (PUT /repos/{owner}/{name}/star)
+	StarRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// ListStargazers Users who starred the repository
+	// (GET /repos/{owner}/{name}/stargazers)
+	ListStargazers(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListStargazersParams)
 	// ListCommitStatuses Statuses of a commit, newest first
 	// (GET /repos/{owner}/{name}/statuses/{sha})
 	ListCommitStatuses(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCommitStatusesParams)
@@ -7495,6 +7540,9 @@ type ServerInterface interface {
 	// ListUserRepos Repositories of a user the caller can see
 	// (GET /users/{username}/repos)
 	ListUserRepos(w http.ResponseWriter, r *http.Request, username Username, params ListUserReposParams)
+	// ListUserStarred Repositories starred by a user that the caller can see
+	// (GET /users/{username}/starred)
+	ListUserStarred(w http.ResponseWriter, r *http.Request, username Username, params ListUserStarredParams)
 	// ListWebhookEvents Events a webhook can subscribe to
 	// (GET /webhooks/events)
 	ListWebhookEvents(w http.ResponseWriter, r *http.Request)
@@ -9016,6 +9064,24 @@ func (_ Unimplemented) SearchCode(w http.ResponseWriter, r *http.Request, owner 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// UnstarRepo Remove a star (also when it was not starred)
+// (DELETE /repos/{owner}/{name}/star)
+func (_ Unimplemented) UnstarRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// StarRepo Star a repository (no change when already starred)
+// (PUT /repos/{owner}/{name}/star)
+func (_ Unimplemented) StarRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListStargazers Users who starred the repository
+// (GET /repos/{owner}/{name}/stargazers)
+func (_ Unimplemented) ListStargazers(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListStargazersParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListCommitStatuses Statuses of a commit, newest first
 // (GET /repos/{owner}/{name}/statuses/{sha})
 func (_ Unimplemented) ListCommitStatuses(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCommitStatusesParams) {
@@ -9355,6 +9421,12 @@ func (_ Unimplemented) GetUserProfile(w http.ResponseWriter, r *http.Request, us
 // ListUserRepos Repositories of a user the caller can see
 // (GET /users/{username}/repos)
 func (_ Unimplemented) ListUserRepos(w http.ResponseWriter, r *http.Request, username Username, params ListUserReposParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListUserStarred Repositories starred by a user that the caller can see
+// (GET /users/{username}/starred)
+func (_ Unimplemented) ListUserStarred(w http.ResponseWriter, r *http.Request, username Username, params ListUserStarredParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -21863,6 +21935,164 @@ func (siw *ServerInterfaceWrapper) SearchCode(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// UnstarRepo operation middleware
+func (siw *ServerInterfaceWrapper) UnstarRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnstarRepo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StarRepo operation middleware
+func (siw *ServerInterfaceWrapper) StarRepo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StarRepo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListStargazers operation middleware
+func (siw *ServerInterfaceWrapper) ListStargazers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListStargazersParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListStargazers(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListCommitStatuses operation middleware
 func (siw *ServerInterfaceWrapper) ListCommitStatuses(w http.ResponseWriter, r *http.Request) {
 
@@ -23951,6 +24181,69 @@ func (siw *ServerInterfaceWrapper) ListUserRepos(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// ListUserStarred operation middleware
+func (siw *ServerInterfaceWrapper) ListUserStarred(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListUserStarredParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUserStarred(w, r, username, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListWebhookEvents operation middleware
 func (siw *ServerInterfaceWrapper) ListWebhookEvents(w http.ResponseWriter, r *http.Request) {
 
@@ -24402,6 +24695,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/users/{username}/repos", wrapper.ListUserRepos)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/users/{username}/starred", wrapper.ListUserStarred)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/orgs/{org}/repos", wrapper.ListOrgRepos)
 	})
 	r.Group(func(r chi.Router) {
@@ -24427,6 +24723,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/repos/{owner}/{name}/collaborators/{username}", wrapper.SetRepoCollaborator)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/star", wrapper.UnstarRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/star", wrapper.StarRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/stargazers", wrapper.ListStargazers)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/releases", wrapper.ListReleases)
@@ -47514,6 +47819,211 @@ func (response SearchCodedefaultApplicationProblemPlusJSONResponse) VisitSearchC
 	return err
 }
 
+type UnstarRepoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type UnstarRepoResponseObject interface {
+	VisitUnstarRepoResponse(w http.ResponseWriter) error
+}
+
+type UnstarRepo204Response struct {
+}
+
+func (response UnstarRepo204Response) VisitUnstarRepoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnstarRepo401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UnstarRepo401ApplicationProblemPlusJSONResponse) VisitUnstarRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnstarRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UnstarRepodefaultApplicationProblemPlusJSONResponse) VisitUnstarRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StarRepoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type StarRepoResponseObject interface {
+	VisitStarRepoResponse(w http.ResponseWriter) error
+}
+
+type StarRepo204Response struct {
+}
+
+func (response StarRepo204Response) VisitStarRepoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type StarRepo307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response StarRepo307ApplicationProblemPlusJSONResponse) VisitStarRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StarRepo401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response StarRepo401ApplicationProblemPlusJSONResponse) VisitStarRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StarRepo404ApplicationProblemPlusJSONResponse Problem
+
+func (response StarRepo404ApplicationProblemPlusJSONResponse) VisitStarRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StarRepodefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response StarRepodefaultApplicationProblemPlusJSONResponse) VisitStarRepoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListStargazersRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params ListStargazersParams
+}
+
+type ListStargazersResponseObject interface {
+	VisitListStargazersResponse(w http.ResponseWriter) error
+}
+
+type ListStargazers200JSONResponse []Stargazer
+
+func (response ListStargazers200JSONResponse) VisitListStargazersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListStargazers301ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ListStargazers301ApplicationProblemPlusJSONResponse) VisitListStargazersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(301)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListStargazers404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListStargazers404ApplicationProblemPlusJSONResponse) VisitListStargazersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListStargazersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListStargazersdefaultApplicationProblemPlusJSONResponse) VisitListStargazersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListCommitStatusesRequestObject struct {
 	Owner  RepoOwner `json:"owner"`
 	Name   RepoName  `json:"name"`
@@ -52006,6 +52516,62 @@ func (response ListUserReposdefaultApplicationProblemPlusJSONResponse) VisitList
 	return err
 }
 
+type ListUserStarredRequestObject struct {
+	Username Username `json:"username"`
+	Params   ListUserStarredParams
+}
+
+type ListUserStarredResponseObject interface {
+	VisitListUserStarredResponse(w http.ResponseWriter) error
+}
+
+type ListUserStarred200JSONResponse []StarredRepo
+
+func (response ListUserStarred200JSONResponse) VisitListUserStarredResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserStarred404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListUserStarred404ApplicationProblemPlusJSONResponse) VisitListUserStarredResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserStarreddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListUserStarreddefaultApplicationProblemPlusJSONResponse) VisitListUserStarredResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListWebhookEventsRequestObject struct {
 }
 
@@ -52802,6 +53368,15 @@ type StrictServerInterface interface {
 	// SearchCode Search the text files of a ref (git grep)
 	// (GET /repos/{owner}/{name}/search/code)
 	SearchCode(ctx context.Context, request SearchCodeRequestObject) (SearchCodeResponseObject, error)
+	// UnstarRepo Remove a star (also when it was not starred)
+	// (DELETE /repos/{owner}/{name}/star)
+	UnstarRepo(ctx context.Context, request UnstarRepoRequestObject) (UnstarRepoResponseObject, error)
+	// StarRepo Star a repository (no change when already starred)
+	// (PUT /repos/{owner}/{name}/star)
+	StarRepo(ctx context.Context, request StarRepoRequestObject) (StarRepoResponseObject, error)
+	// ListStargazers Users who starred the repository
+	// (GET /repos/{owner}/{name}/stargazers)
+	ListStargazers(ctx context.Context, request ListStargazersRequestObject) (ListStargazersResponseObject, error)
 	// ListCommitStatuses Statuses of a commit, newest first
 	// (GET /repos/{owner}/{name}/statuses/{sha})
 	ListCommitStatuses(ctx context.Context, request ListCommitStatusesRequestObject) (ListCommitStatusesResponseObject, error)
@@ -52973,6 +53548,9 @@ type StrictServerInterface interface {
 	// ListUserRepos Repositories of a user the caller can see
 	// (GET /users/{username}/repos)
 	ListUserRepos(ctx context.Context, request ListUserReposRequestObject) (ListUserReposResponseObject, error)
+	// ListUserStarred Repositories starred by a user that the caller can see
+	// (GET /users/{username}/starred)
+	ListUserStarred(ctx context.Context, request ListUserStarredRequestObject) (ListUserStarredResponseObject, error)
 	// ListWebhookEvents Events a webhook can subscribe to
 	// (GET /webhooks/events)
 	ListWebhookEvents(ctx context.Context, request ListWebhookEventsRequestObject) (ListWebhookEventsResponseObject, error)
@@ -60398,6 +60976,88 @@ func (sh *strictHandler) SearchCode(w http.ResponseWriter, r *http.Request, owne
 	}
 }
 
+// UnstarRepo operation middleware
+func (sh *strictHandler) UnstarRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request UnstarRepoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnstarRepo(ctx, request.(UnstarRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnstarRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnstarRepoResponseObject); ok {
+		if err := validResponse.VisitUnstarRepoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// StarRepo operation middleware
+func (sh *strictHandler) StarRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request StarRepoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.StarRepo(ctx, request.(StarRepoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StarRepo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(StarRepoResponseObject); ok {
+		if err := validResponse.VisitStarRepoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListStargazers operation middleware
+func (sh *strictHandler) ListStargazers(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListStargazersParams) {
+	var request ListStargazersRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListStargazers(ctx, request.(ListStargazersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListStargazers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListStargazersResponseObject); ok {
+		if err := validResponse.VisitListStargazersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListCommitStatuses operation middleware
 func (sh *strictHandler) ListCommitStatuses(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, sha CommitRef, params ListCommitStatusesParams) {
 	var request ListCommitStatusesRequestObject
@@ -61996,6 +62656,33 @@ func (sh *strictHandler) ListUserRepos(w http.ResponseWriter, r *http.Request, u
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListUserReposResponseObject); ok {
 		if err := validResponse.VisitListUserReposResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListUserStarred operation middleware
+func (sh *strictHandler) ListUserStarred(w http.ResponseWriter, r *http.Request, username Username, params ListUserStarredParams) {
+	var request ListUserStarredRequestObject
+
+	request.Username = username
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListUserStarred(ctx, request.(ListUserStarredRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListUserStarred")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListUserStarredResponseObject); ok {
+		if err := validResponse.VisitListUserStarredResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

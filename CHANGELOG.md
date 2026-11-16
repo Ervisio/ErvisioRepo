@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Repository stars: `PUT`/`DELETE /repos/{owner}/{name}/star`, `GET /repos/{owner}/{name}/stargazers` and `GET /users/{username}/starred` (only repositories the caller can read). Every `Repo` now carries `starsCount` and `starred` (false when signed out), and explore accepts `sort=stars`. The GitHub-compatible API fills `stargazers_count`/`watchers_count` and serves `PUT`/`DELETE`/`GET /user/starred/{owner}/{repo}`, `GET /user/starred`, `GET /users/{username}/starred` and `GET /repos/{owner}/{repo}/stargazers` (with `application/vnd.github.star+json` support).
+
 ### Fixed
 
 - SFTP: a failed directory creation names the remote directory, and the form explains that a relative remote folder starts from the login directory (an absolute one such as `/erepo` fails on a Hetzner Storage Box, whose writable space is `/home`).

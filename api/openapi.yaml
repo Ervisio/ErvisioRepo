@@ -2526,10 +2526,10 @@ paths:
       parameters:
         - name: sort
           in: query
-          description: "Default updated"
+          description: "Default updated; stars = most starred first"
           schema:
             type: string
-            enum: [updated, name]
+            enum: [updated, name, stars]
         - name: q
           in: query
           schema:
@@ -2591,6 +2591,33 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Repo"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /users/{username}/starred:
+    parameters:
+      - $ref: "#/components/parameters/Username"
+    get:
+      operationId: listUserStarred
+      tags: [repos]
+      summary: Repositories starred by a user that the caller can see
+      description: Latest star first.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Starred repositories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StarredRepo"
         "404":
           $ref: "#/components/responses/Problem"
         default:
@@ -2847,6 +2874,73 @@ paths:
           $ref: "#/components/responses/Moved"
         "403":
           $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/star:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    put:
+      operationId: starRepo
+      tags: [repos]
+      summary: Star a repository (no change when already starred)
+      description: Any signed-in user who can read the repository.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Starred
+        "307":
+          $ref: "#/components/responses/Moved"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: unstarRepo
+      tags: [repos]
+      summary: Remove a star (also when it was not starred)
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Unstarred
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/stargazers:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: listStargazers
+      tags: [repos]
+      summary: Users who starred the repository
+      description: Latest star first.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Stargazers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Stargazer"
+        "301":
+          $ref: "#/components/responses/Moved"
         "404":
           $ref: "#/components/responses/Problem"
         default:
@@ -11239,7 +11333,7 @@ components:
     Repo:
       type: object
       required: [id, owner, ownerKind, name, fullName, description, visibility, defaultBranch, storageState,
-        sizeBytes, permission, createdAt, updatedAt]
+        sizeBytes, starsCount, starred, permission, createdAt, updatedAt]
       properties:
         id:
           type: string
@@ -11267,6 +11361,12 @@ components:
         sizeBytes:
           type: integer
           format: int64
+        starsCount:
+          type: integer
+          description: Number of users who starred the repository
+        starred:
+          type: boolean
+          description: Whether the caller starred the repository; false when anonymous
         permission:
           $ref: "#/components/schemas/Permission"
         createdAt:
@@ -11275,6 +11375,23 @@ components:
         updatedAt:
           type: string
           format: date-time
+    StarredRepo:
+      type: object
+      required: [repo, starredAt]
+      properties:
+        repo:
+          $ref: "#/components/schemas/Repo"
+        starredAt:
+          type: string
+          format: date-time
+    Stargazer:
+      type: object
+      required: [username, displayName, avatarUrl, starredAt]
+      properties:
+        username: {type: string}
+        displayName: {type: string}
+        avatarUrl: {type: string, description: Absolute https URL of the avatar; empty when unset}
+        starredAt: {type: string, format: date-time}
     RepoCreate:
       type: object
       required: [name]

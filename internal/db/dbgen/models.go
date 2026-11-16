@@ -893,6 +893,7 @@ type Repo struct {
 	UpdatedAt              pgtype.Timestamptz
 	JournalDirtySince      pgtype.Timestamptz
 	PushesSinceMaintenance int32
+	StarsCount             int32
 }
 
 type RepoCollaborator struct {
@@ -912,6 +913,12 @@ type RepoFork struct {
 type RepoRedirect struct {
 	OwnerID   uuid.UUID
 	NameLower string
+	RepoID    uuid.UUID
+	CreatedAt pgtype.Timestamptz
+}
+
+type RepoStar struct {
+	UserID    uuid.UUID
 	RepoID    uuid.UUID
 	CreatedAt pgtype.Timestamptz
 }

@@ -313,6 +313,7 @@ func (c *call) repoObj(r repos.Repo) *ghRepo {
 		SSHURL: "git@" + host + ":" + r.Owner + "/" + r.Name + ".git",
 		Size:   r.SizeBytes / 1024, DefaultBranch: r.DefaultBranch, Visibility: string(r.Visibility),
 		HasIssues: true, HasDownloads: true, Topics: []string{},
+		StargazersCount: r.StarsCount, WatchersCount: r.StarsCount,
 		PushedAt: ts(r.UpdatedAt), CreatedAt: ts(r.CreatedAt), UpdatedAt: ts(r.UpdatedAt),
 		AllowMergeCommit: true, AllowSquashMerge: true, AllowRebaseMerge: true,
 	}

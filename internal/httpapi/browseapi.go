@@ -388,7 +388,11 @@ func (s *v1Server) SearchRepos(ctx context.Context, req v1gen.SearchReposRequest
 	if err != nil {
 		return browseFail(err, http.MethodGet, "")
 	}
-	return v1gen.SearchRepos200JSONResponse(repoList(list)), nil
+	out, err := s.reposOut(ctx, list)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.SearchRepos200JSONResponse(out), nil
 }
 
 // ---- DTOs ----

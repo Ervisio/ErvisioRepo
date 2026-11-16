@@ -30,6 +30,11 @@ type Repos interface {
 	Update(ctx context.Context, who auth.Principal, owner, name string, in repos.UpdateInput, c identity.Client) (repos.Repo, error)
 	Delete(ctx context.Context, who auth.Principal, owner, name string, c identity.Client) error
 	ListCollaborators(ctx context.Context, who auth.Principal, owner, name string) ([]repos.Collaborator, error)
+	Star(ctx context.Context, who auth.Principal, owner, name string) error
+	Unstar(ctx context.Context, who auth.Principal, owner, name string) error
+	IsStarred(ctx context.Context, who auth.Principal, owner, name string) (bool, error)
+	ListStargazers(ctx context.Context, who auth.Principal, owner, name string, offset, limit int) ([]repos.Stargazer, error)
+	ListStarred(ctx context.Context, who auth.Principal, username string, offset, limit int) ([]repos.StarredRepo, error)
 }
 
 // Orgs is the subset of the organization service used by the API.

@@ -106,7 +106,7 @@ func (q *Queries) CountUserPins(ctx context.Context, userID uuid.UUID) (int64, e
 }
 
 const exploreRepos = `-- name: ExploreRepos :many
-SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, n.name AS owner_name, n.kind AS owner_kind
+SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, n.name AS owner_name, n.kind AS owner_kind
 FROM repos r
 JOIN namespaces n ON n.id = r.owner_id
 WHERE r.visibility = 'public'
@@ -115,6 +115,7 @@ WHERE r.visibility = 'public'
        OR lower(r.description) LIKE '%' || $1::text || '%' ESCAPE '\')
 ORDER BY
   CASE WHEN $2::text = 'name' THEN n.name_lower || '/' || r.name_lower END ASC,
+  CASE WHEN $2::text = 'stars' THEN r.stars_count END DESC,
   r.updated_at DESC, r.id
 LIMIT $4 OFFSET $3
 `
@@ -133,7 +134,8 @@ type ExploreReposRow struct {
 }
 
 // Public repositories, optionally filtered by a lower-cased name or
-// description fragment (LIKE metacharacters escaped). sort is updated or name.
+// description fragment (LIKE metacharacters escaped). sort is updated, name
+// or stars.
 func (q *Queries) ExploreRepos(ctx context.Context, arg ExploreReposParams) ([]ExploreReposRow, error) {
 	rows, err := q.db.Query(ctx, exploreRepos,
 		arg.Pattern,
@@ -167,6 +169,7 @@ func (q *Queries) ExploreRepos(ctx context.Context, arg ExploreReposParams) ([]E
 			&i.Repo.UpdatedAt,
 			&i.Repo.JournalDirtySince,
 			&i.Repo.PushesSinceMaintenance,
+			&i.Repo.StarsCount,
 			&i.OwnerName,
 			&i.OwnerKind,
 		); err != nil {
@@ -488,7 +491,7 @@ func (q *Queries) ListUserIssues(ctx context.Context, arg ListUserIssuesParams) 
 }
 
 const listUserPins = `-- name: ListUserPins :many
-SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, n.name AS owner_name, n.kind AS owner_kind
+SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, n.name AS owner_name, n.kind AS owner_kind
 FROM user_pinned_repos p
 JOIN repos r ON r.id = p.repo_id
 JOIN namespaces n ON n.id = r.owner_id
@@ -538,6 +541,7 @@ func (q *Queries) ListUserPins(ctx context.Context, arg ListUserPinsParams) ([]L
 			&i.Repo.UpdatedAt,
 			&i.Repo.JournalDirtySince,
 			&i.Repo.PushesSinceMaintenance,
+			&i.Repo.StarsCount,
 			&i.OwnerName,
 			&i.OwnerKind,
 		); err != nil {
