@@ -234,11 +234,27 @@ apps answer `404`, as on GitHub.
 | `DELETE /applications/{client_id}/token` | yes | Revokes the token. |
 | `DELETE /applications/{client_id}/grant` | yes | Revokes the user's grant and every token of it. |
 
+### GitHub Apps
+
+See [GitHub Apps](#github-apps) below for the authentication.
+
+| Endpoint | Status | Notes |
+|---|---|---|
+| `GET /app` | yes | App JWT. The App object (`id`, `slug`, `client_id`, `owner`, `permissions`, `events`, `installations_count`). |
+| `GET /app/installations`, `GET/DELETE /app/installations/{installation_id}` | yes | App JWT. `DELETE` uninstalls. |
+| `PUT/DELETE /app/installations/{installation_id}/suspended` | yes | App JWT. |
+| `POST /app/installations/{installation_id}/access_tokens` | yes | App JWT. Optional `repositories` (names), `repository_ids` and `permissions` narrow the token; widening answers `422`. `403` on a suspended installation. |
+| `GET /repos/{owner}/{repo}/installation`, `/orgs/{org}/installation`, `/users/{username}/installation` | yes | App JWT. |
+| `GET /installation/repositories` | yes | Installation token: the repositories it reaches. |
+| `DELETE /installation/token` | yes | Installation token: revokes itself. |
+| `GET /user/installations`, `GET /user/installations/{installation_id}/repositories` | yes | User token: installations on the user and the organizations the user owns (a user-to-server token: only its App's). |
+| `GET /apps/{slug}` | yes | Public Apps for everyone, private ones for their managers and the App itself. |
+
 ### Not available
 
 Commit search, gists, notifications, events, packages, projects,
 deployments, webhooks (use `/api/v1/.../hooks`), collaborators management,
-teams, GitHub Apps and installations.
+teams, App manifests and the marketplace.
 
 ## GraphQL (`/api/graphql`)
 
@@ -434,3 +450,81 @@ use; "Revoke" deletes the grant and all its tokens. An app keeps at most ten
 live tokens per user (older ones are revoked). Deleting an app revokes every
 grant, token and secret. App creation and deletion, secrets, grants and
 revocations are recorded in the audit log.
+
+## GitHub Apps
+
+Users and organization owners register Apps under Settings > Developer
+settings > Apps (organizations: settings tab "Apps"), subject to
+`security.app_registration` like OAuth apps. An App has a name, a slug
+(its bot is `<slug>[bot]`, the author of everything the App does), a
+description, homepage and logo URLs, a visibility (private: installable
+only on its owner; public: on any account), a permission set, the events
+its webhook receives (only those its permissions cover), a webhook URL,
+secret and on/off switch, a setup URL, and the callback URLs and client
+secrets of its OAuth client (`client_id` `Iv23li…`).
+
+Permissions (`read` or `write`, `metadata` is always `read`):
+
+- repository: `contents`, `metadata`, `issues`, `pull_requests`, `checks`,
+  `statuses`, `actions`, `secrets`, `variables`, `administration`,
+  `workflows` (write only), `deployments`;
+- organization: `members`, `organization_administration`;
+- user: `email_addresses`.
+
+### Installation
+
+`/apps/{slug}/installations/new` lets a user install the App on the user
+account or an organization they own, on all repositories or on selected
+ones, after reviewing the permissions. The browser then goes to the setup
+URL with `installation_id` and `setup_action=install`. Settings > Installed
+Apps (and the organization tab of the same name) changes the repositories,
+suspends, resumes or uninstalls. When the App asks for more permissions or
+events, installations keep the accepted ones until an owner accepts the new
+ones there; dropped permissions stop working at once.
+
+### Authentication
+
+- **App JWT**: an RS256 JWT signed with one of the App's private keys
+  (Settings > App > Private keys: the key pair is generated on the server,
+  the PEM is shown once and only the public key and its SHA-256 fingerprint
+  are kept; an App can have up to ten keys, each revocable). Claims: `iss`
+  the App id (numeric) or its `client_id`, `iat` and `exp` at most ten
+  minutes apart; 60 seconds of clock skew are tolerated. The JWT only
+  reaches the `/app…`, `.../installation` and `/apps/{slug}` endpoints.
+  Libraries like Octokit's `createAppAuth` and go-github's `ghinstallation`
+  work with `baseUrl` set to `https://<host>/api/v3`.
+- **Installation token**: `POST /app/installations/{id}/access_tokens`
+  returns an `erps_…` token valid one hour, acting as `<slug>[bot]` on the
+  repositories of the installation with its permissions (or fewer). Every
+  `/api/v3` route needs a permission: `metadata` for repository reads,
+  `contents` for files, refs, commits and releases, `issues` or
+  `pull_requests` for issues, labels and milestones, `pull_requests` for
+  pull requests, `checks`, `statuses`, `actions`, `secrets`, `variables`,
+  and `administration` to change or delete a repository; routes outside
+  this map answer `403` "Resource not accessible by integration". Check
+  runs created with it carry the App as `app`, and only that App can update
+  them; branch protection can pin a required context to an App id
+  (`requiredCheckApps` in `/api/v1`). Installation tokens are refused by
+  `/api/v1` and GraphQL.
+- **Git over HTTPS**: `https://x-access-token:<erps_token>@<host>/<owner>/<repo>.git`
+  (any user name works); `contents: read` clones and fetches,
+  `contents: write` pushes, LFS included.
+- **User-to-server tokens**: the App's OAuth client runs the
+  [web flow](#oauth-web-application-flow-registered-oauth-apps). The token
+  acts as the user, limited to the repositories where the App is installed
+  and to the permissions both the user and the App have.
+
+Token creation, installations, suspensions, permission acceptances, keys
+and App changes are recorded in the audit log.
+
+### Webhooks
+
+An App with an active webhook receives, for each installation, the events
+it subscribed to on the repositories of the installation (filtered by the
+accepted permissions), with an `installation` object (`id`, `node_id`) in
+the payload, the usual `X-GitHub-Event`, `X-GitHub-Delivery` and
+`X-Hub-Signature-256` headers, and `X-GitHub-Hook-Installation-Target-Type: integration`
+plus `X-GitHub-Hook-Installation-Target-ID: <app id>`. It also receives
+`installation` (`created`, `deleted`, `suspend`, `unsuspend`,
+`new_permissions_accepted`) and `installation_repositories` (`added`,
+`removed`). The App page lists the recent deliveries and can redeliver.

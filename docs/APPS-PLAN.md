@@ -61,7 +61,7 @@ Retro-compatibilità: le righe esistenti con attore nullo restano tali, e la UI 
 - **Org**: politica «accesso OAuth App» con approvazione dell'org per le App esterne (rinviata).
 - **API GitHub-compatibili**: `/applications/{client_id}/token` (check/reset/delete) e `/applications/{client_id}/grant`.
 
-## Fase A2 — App (stile GitHub App)
+## Fase A2 — App (stile GitHub App) (fatto)
 
 ### Registrazione
 
@@ -160,7 +160,8 @@ A0 → A1 → A2 → A3 → A4.
 
 ## Decisioni ancora aperte
 
-- Prefissi dei token: `erps_` per le installazioni, `erpu_` per user-to-server (oggi i PAT sono `erp_`).
+- Prefissi dei token (deciso in A2): `erps_` per le installazioni; i token user-to-server restano `erp_`, legati al grant dell'utente come quelli delle app OAuth.
+
 - Immagine del runner per Claude: decisa, immagine nostra `ghcr.io/ervisio/claude-runner` con Claude Code preinstallato.
 - Tetto di spesa: misurato dai token riportati dall'API Anthropic e salvato per org.
 - Dopo la A2: approvazione delle OAuth App da parte delle org (A1) e marketplace con pagamenti (escluso).
