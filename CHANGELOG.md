@@ -6,6 +6,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.14.4] - 2026-11-16
+
+### Fixed
+
+- Release assets, LFS objects and issue attachments: without `[storage.policy.releases]`/`[storage.policy.lfs]` (shipped configs only set `git` and `actions`) uploads answered 503. Both policies now default to the targets of the `git` policy.
+- Releases: users and tokens with write access (including Actions jobs with `permissions: contents: write`) can create and edit releases, as on GitHub; maintain is no longer required.
+
 ## [1.14.3] - 2026-11-16
 
 ### Fixed

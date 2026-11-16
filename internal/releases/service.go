@@ -161,20 +161,22 @@ type Asset struct {
 	CreatedAt     time.Time
 }
 
-// access resolves the repository; write needs the releases permission,
+// access resolves the repository; write needs the push permission,
 // otherwise reading is enough. canDraft reports whether drafts are visible.
 func (s *Service) access(ctx context.Context, who auth.Principal, owner, name string, write bool) (repos.Repo, error) {
 	r, err := s.o.Repos.Get(ctx, who, owner, name)
 	if err != nil {
 		return repos.Repo{}, err
 	}
-	if write && !authz.Allowed(r.Permission, authz.ActManageBranches) {
+	// Writers manage releases, as on GitHub (an Actions job with
+	// contents: write included).
+	if write && !authz.Allowed(r.Permission, authz.ActPush) {
 		return repos.Repo{}, repos.ErrForbidden
 	}
 	return r, nil
 }
 
-func canSeeDrafts(r repos.Repo) bool { return authz.Allowed(r.Permission, authz.ActManageBranches) }
+func canSeeDrafts(r repos.Repo) bool { return authz.Allowed(r.Permission, authz.ActPush) }
 
 func (s *Service) auditEvent(who auth.Principal, action string, r repos.Repo, rel uuid.UUID, c identity.Client, data map[string]any) audit.Event {
 	org := uuid.Nil

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -443,6 +444,16 @@ func applyStorageDefaults(s *Storage) {
 		// go on the first local target.
 		if t := s.HotTarget(); s.HotPath == "" && t != nil {
 			s.HotPath = filepath.Join(t.Path, HotDirName)
+		}
+	}
+	// Release assets and LFS objects (also issue attachments) live where
+	// the repositories live unless configured: shipped configs only set
+	// git and actions, and uploads failed with 503 without these.
+	if g, ok := s.Policy["git"]; ok {
+		for _, name := range []string{"lfs", "releases"} {
+			if _, ok := s.Policy[name]; !ok {
+				s.Policy[name] = Policy{Primary: g.Primary, Replicas: slices.Clone(g.Replicas), Durability: g.Durability}
+			}
 		}
 	}
 	for name, p := range s.Policy {
