@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import {
   useDeleteHook,
+  hookRoot,
   useDeliveries,
   useDelivery,
   useHooks,
@@ -75,7 +76,7 @@ export function Webhooks({ base, scope }: { base: string; scope: "repo" | "org" 
                     aria-label={t("deleteOf", { url: h.url })}
                     onClick={() => window.confirm(t("deleteConfirm", { url: h.url })) && remove.mutate(h.id, { onSuccess: () => notify.ok(t("deleted")), onError: notify.fail })}
                   />
-                  {open === h.id && <Deliveries base={base} hookId={h.id} />}
+                  {open === h.id && <Deliveries root={hookRoot(base, h.id)} also={["hooks", base]} />}
                 </li>
               ))}
             </ul>
@@ -151,13 +152,14 @@ function HookEditor({ base, hook, close }: { base: string; hook?: Webhook; close
   );
 }
 
-function Deliveries({ base, hookId }: { base: string; hookId: string }) {
+/** Recent deliveries under root (a webhook or an App) with details and redelivery; `also` is refreshed after a redelivery. */
+export function Deliveries({ root, also }: { root: string; also: unknown[] }) {
   const t = useT("hooks");
   const notify = useNotify();
   const [page, setPage] = useState(1);
   const [shown, setShown] = useState<string | undefined>(undefined);
-  const list = useDeliveries(base, hookId, page);
-  const redeliver = useRedeliver(base, hookId);
+  const list = useDeliveries(root, page);
+  const redeliver = useRedeliver(root, also);
 
   return (
     <div className="wk-deliveries">
@@ -188,7 +190,7 @@ function Deliveries({ base, hookId }: { base: string; hookId: string }) {
                       </Button>
                     </div>
                     {d.error && <p className="ui-note wk-dl-err">{d.error}</p>}
-                    {shown === d.id && <DeliveryDetail base={base} hookId={hookId} id={d.id} />}
+                    {shown === d.id && <DeliveryDetail root={root} id={d.id} />}
                   </li>
                 ))}
               </ul>
@@ -205,9 +207,9 @@ function Headers({ h }: { h: Record<string, string> }) {
   return <pre className="wk-pre">{Object.entries(h).map(([k, v]) => `${k}: ${v}`).join("\n")}</pre>;
 }
 
-function DeliveryDetail({ base, hookId, id }: { base: string; hookId: string; id: string }) {
+function DeliveryDetail({ root, id }: { root: string; id: string }) {
   const t = useT("hooks");
-  const q = useDelivery(base, hookId, id);
+  const q = useDelivery(root, id);
   return (
     <Gate query={q}>
       {(d) => (

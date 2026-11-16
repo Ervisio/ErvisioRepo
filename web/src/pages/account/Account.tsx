@@ -14,14 +14,16 @@ import { Profile } from "./Profile.tsx";
 import { Security } from "./Security.tsx";
 import { Sessions } from "./Sessions.tsx";
 import { Tokens } from "./Tokens.tsx";
-import { AppsPlaceholder, AuthorizedApps } from "../oauth/AuthorizedApps.tsx";
+import { AuthorizedApps } from "../oauth/AuthorizedApps.tsx";
 import { OAuthAppsSection, type AppsNav, type AppTarget } from "../oauth/OAuthApps.tsx";
+import { AppsSection, type AppsNav as GhAppsNav, type AppTarget as GhAppTarget } from "../apps/Apps.tsx";
+import { InstalledApps, type InstalledNav } from "../apps/Installed.tsx";
 
-export const accountSections = ["emails", "notifications", "appearance", "security", "sessions", "tokens", "keys", "linked", "applications", "apps", "oauth-apps"] as const;
+export const accountSections = ["emails", "notifications", "appearance", "security", "sessions", "tokens", "keys", "linked", "applications", "installations", "apps", "oauth-apps"] as const;
 export type AccountSection = (typeof accountSections)[number];
 
 /** Account settings. Rendered inside <Protected>, so the session is already loaded. */
-export function Account({ section, app, oidcError }: { section?: AccountSection; app?: string; oidcError?: string }) {
+export function Account({ section, app, installation, oidcError }: { section?: AccountSection; app?: string; installation?: number; oidcError?: string }) {
   const t = useT("account");
   const user = useSession().data;
   const meta = useMeta().data;
@@ -32,11 +34,21 @@ export function Account({ section, app, oidcError }: { section?: AccountSection;
     link: (to, props) => <Link to="/settings" search={appSearch(to)} className={props.className}>{props.children}</Link>,
     go: (to) => void navigate({ to: "/settings", search: appSearch(to) }),
   };
+  const ghSearch = (to: GhAppTarget) => ({ section: "apps" as const, app: to.kind === "list" ? undefined : to.kind === "new" ? "new" : to.slug });
+  const ghAppsNav: GhAppsNav = {
+    link: (to, props) => <Link to="/settings" search={ghSearch(to)} className={props.className}>{props.children}</Link>,
+    go: (to) => void navigate({ to: "/settings", search: ghSearch(to) }),
+  };
+  const instSearch = (id: number | undefined) => ({ section: "installations" as const, installation: id });
+  const installedNav: InstalledNav = {
+    link: (id, props) => <Link to="/settings" search={instSearch(id)} className={props.className}>{props.children}</Link>,
+    go: (id) => void navigate({ to: "/settings", search: instSearch(id) }),
+  };
   const active = section ?? (oidcError ? "linked" : undefined);
   const item = (id: AccountSection | "profile", icon: SettingsNavItem["icon"]): SettingsNavItem => ({ id, icon, label: t(`tab.${id}`) });
   const groups: SettingsNavGroup[] = [
     { title: t("group.personal"), items: [item("profile", "user"), item("emails", "info"), item("notifications", "bell"), item("appearance", "layers")] },
-    { title: t("group.access"), items: [item("security", "shield"), item("sessions", "clock"), item("keys", "code"), item("linked", "users"), item("applications", "check")] },
+    { title: t("group.access"), items: [item("security", "shield"), item("sessions", "clock"), item("keys", "code"), item("linked", "users"), item("applications", "check"), item("installations", "pkg")] },
     { title: t("group.developer"), items: [item("apps", "grid"), item("oauth-apps", "cpu"), item("tokens", "lock")] },
   ];
   return (
@@ -57,7 +69,10 @@ export function Account({ section, app, oidcError }: { section?: AccountSection;
         {active === "keys" && <Keys />}
         {active === "linked" && <Linked oidcError={oidcError} />}
         {active === "applications" && <AuthorizedApps />}
-        {active === "apps" && <AppsPlaceholder />}
+        {active === "installations" && <InstalledApps owner={{ kind: "user" }} installation={installation} nav={installedNav} />}
+        {active === "apps" && (
+          <AppsSection owner={{ kind: "user" }} app={app} nav={ghAppsNav} canRegister={canRegisterApps(meta?.appRegistration, "user", user.role === "admin")} />
+        )}
         {active === "oauth-apps" && (
           <OAuthAppsSection owner={{ kind: "user" }} app={app} nav={appsNav} canRegister={canRegisterApps(meta?.appRegistration, "user", user.role === "admin")} />
         )}

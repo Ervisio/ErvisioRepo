@@ -105,5 +105,7 @@
   "danger.deleteConfirm": "Elimina definitivamente",
   "danger.deleted": "Organizzazione eliminata",
   "tab.oauth-apps": "OAuth App",
+  "tab.apps": "App",
+  "tab.installations": "App installate",
   "settings.group.developer": "Impostazioni sviluppatore"
 }

@@ -49,13 +49,3 @@ export function AuthorizedApps() {
     </SettingsSection>
   );
 }
-
-/** Placeholder for Apps (installable integrations), which arrive in a later phase. */
-export function AppsPlaceholder() {
-  const t = useT("oauth");
-  return (
-    <SettingsSection title={t("ghApps.title")} description={t("ghApps.hint")}>
-      <p className="ui-note">{t("ghApps.soon")}</p>
-    </SettingsSection>
-  );
-}

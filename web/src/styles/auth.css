@@ -75,3 +75,50 @@
   .auth-card { padding: 22px 18px; }
   .acc-form { max-width: none; }
 }
+
+/* Apps (round 013 A): permission matrix, event chips, repository picker, install card. */
+.ap-groups { display: flex; flex-direction: column; gap: 20px; }
+.ap-perms { margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-ctl); overflow: hidden; min-width: 0; }
+.ap-perms-h { float: left; width: 100%; padding: 10px 16px; font-weight: 600; font-size: 13.5px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.ap-perm { clear: both; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 16px; }
+.ap-perm + .ap-perm { border-top: 1px solid var(--line); }
+.ap-perm-m { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ap-perm-l { font-weight: 600; font-size: 13.5px; }
+.ap-seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-ctl); overflow: hidden; flex: none; }
+.ap-segi { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; font-size: 13px; font-weight: 500; color: var(--ink2); cursor: pointer; }
+.ap-segi + .ap-segi { border-left: 1px solid var(--line); }
+.ap-segi:hover { background: var(--raise); color: var(--ink); }
+.ap-segi[data-on] { background: var(--sel); color: var(--ink); font-weight: 600; }
+.ap-segi[data-off] { color: var(--ink3); cursor: not-allowed; background: none; }
+.ap-segi:has(input:focus-visible), .ap-target:has(input:focus-visible) { outline: 2px solid var(--hue); outline-offset: -2px; }
+.ap-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ap-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink2); font: 500 12.5px var(--mono); cursor: pointer; }
+.ap-chip[aria-pressed="true"], .ap-chip[data-on] { background: var(--sel); color: var(--ink); border-color: var(--edge); }
+.ap-chip:disabled { color: var(--ink3); border-style: dashed; cursor: not-allowed; }
+.ap-chip .ui-btn { height: 22px; min-width: 22px; padding: 0; }
+.ap-repos { display: flex; flex-direction: column; gap: 10px; }
+.ap-radio { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; cursor: pointer; }
+.ap-radio input { margin-top: 3px; }
+.ap-radio > span { display: flex; flex-direction: column; gap: 2px; }
+.ap-pick { display: flex; flex-direction: column; gap: 8px; margin-left: 24px; }
+.ap-picked, .ap-options { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ap-options { flex-direction: column; flex-wrap: nowrap; gap: 0; border: 1px solid var(--line); border-radius: var(--r-ctl); overflow: hidden; }
+.ap-options li + li { border-top: 1px solid var(--line); }
+.ap-option { width: 100%; text-align: left; padding: 8px 12px; background: none; border: 0; color: var(--ink); cursor: pointer; }
+.ap-option:hover, .ap-option:focus-visible { background: var(--raise); outline: none; }
+.ap-ids { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.ap-plain { font-family: var(--font); margin-top: 8px; }
+.ap-diff { display: flex; flex-direction: column; gap: 8px; }
+.ap-diff-t { border-collapse: collapse; font-size: 13px; }
+.ap-diff-t th, .ap-diff-t td { text-align: left; padding: 4px 16px 4px 0; }
+.ap-diff-t th { color: var(--ink2); font-weight: 500; }
+.ap-install { max-width: 620px; margin: 24px auto; }
+.ap-card { display: flex; flex-direction: column; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--bg); }
+.ap-install-h { margin: 0; font-size: 22px; }
+.ap-card .oa-consent-h .ui-note { margin: 2px 0 0; }
+.ap-targets { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--r-ctl); overflow: hidden; }
+.ap-target { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; font-size: 13.5px; cursor: pointer; }
+.ap-target + .ap-target { border-top: 1px solid var(--line); }
+.ap-target[data-on] { background: var(--sel); box-shadow: inset 3px 0 0 var(--acc-fill); }
+.ap-target[data-off] { cursor: default; color: var(--ink2); }
+@media (pointer: coarse) { .ap-segi { height: 44px; } .ap-chip { min-height: 36px; } }

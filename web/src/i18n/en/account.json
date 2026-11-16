@@ -179,6 +179,7 @@
   "layout.corsie": "Lanes",
   "appearance.saved": "Appearance saved",
   "tab.applications": "Applications",
+  "tab.installations": "Installed Apps",
   "tab.apps": "Apps",
   "tab.oauth-apps": "OAuth Apps",
   "group.developer": "Developer settings"

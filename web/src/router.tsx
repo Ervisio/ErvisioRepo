@@ -17,6 +17,7 @@ import { OAuthAuthorize } from "./pages/auth/OAuthAuthorize.tsx";
 import { Catalog } from "./pages/Catalog.tsx";
 import { Home } from "./pages/Home.tsx";
 import { OrgPage } from "./pages/Org.tsx";
+import { InstallApp } from "./pages/apps/InstallApp.tsx";
 import { OrgInviteAccept } from "./pages/OrgInvite.tsx";
 import { BlobPage, type BlobMode } from "./pages/code/BlobPage.tsx";
 import { ComparePage } from "./pages/code/ComparePage.tsx";
@@ -51,6 +52,11 @@ const str = (v: unknown) => (typeof v === "string" ? v : typeof v === "number" ?
 const num = (v: unknown) => {
   const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
   return Number.isInteger(n) && n > 1 ? n : undefined;
+};
+// Positive integer ids (installation ids), 1 included.
+const id = (v: unknown) => {
+  const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+  return Number.isSafeInteger(n) && n > 0 ? n : undefined;
 };
 const bool = (v: unknown) => (v === true || v === "true" ? true : v === false || v === "false" ? false : undefined);
 const nextSearch = (s: Record<string, unknown>): { next?: string } => ({ next: str(s.next) });
@@ -156,23 +162,34 @@ const adminSettingsRoute = createRoute({
 const settingsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/settings",
-  validateSearch: (s: Record<string, unknown>): { section?: AccountSection; app?: string; oidc_error?: string } => ({ section: accountSections.find((x) => x === s.section), app: str(s.app), ...oidcSearch(s) }),
+  validateSearch: (s: Record<string, unknown>): { section?: AccountSection; app?: string; installation?: number; oidc_error?: string } => ({
+    section: accountSections.find((x) => x === s.section),
+    app: str(s.app),
+    installation: id(s.installation),
+    ...oidcSearch(s),
+  }),
   component: function AccountRoute() {
     const s = settingsRoute.useSearch();
-    return guard(<Account section={s.section} app={s.app} oidcError={s.oidc_error} />);
+    return guard(<Account section={s.section} app={s.app} installation={s.installation} oidcError={s.oidc_error} />);
   },
 });
 const orgInviteRoute = createRoute({ getParentRoute: () => shellRoute, path: "/org-invite", validateSearch: tokenSearch, component: () => guard(<OrgInviteAccept token={orgInviteRoute.useSearch().token} />) });
-const orgTabValues: OrgTab[] = ["repos", "members", "teams", "invites", "hooks", "secrets", "variables", "runners", "oauth-apps", "settings"];
+const orgTabValues: OrgTab[] = ["repos", "members", "teams", "invites", "hooks", "secrets", "variables", "runners", "oauth-apps", "apps", "installations", "settings"];
 const orgRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/orgs/$org",
-  validateSearch: (s: Record<string, unknown>): { tab?: OrgTab; app?: string } => ({ tab: orgTabValues.find((v) => v === s.tab), app: str(s.app) }),
+  validateSearch: (s: Record<string, unknown>): { tab?: OrgTab; app?: string; installation?: number } => ({ tab: orgTabValues.find((v) => v === s.tab), app: str(s.app), installation: id(s.installation) }),
   component: function OrgRoute() {
-    const { tab, app } = orgRoute.useSearch();
+    const { tab, app, installation } = orgRoute.useSearch();
     const navigate = orgRoute.useNavigate();
-    return guard(<OrgPage name={orgRoute.useParams().org} tab={tab ?? "repos"} app={app} onTab={(v) => void navigate({ search: { tab: v === "repos" ? undefined : v } })} />);
+    return guard(<OrgPage name={orgRoute.useParams().org} tab={tab ?? "repos"} app={app} installation={installation} onTab={(v) => void navigate({ search: { tab: v === "repos" ? undefined : v } })} />);
   },
+});
+// App install flow (account, repositories, permissions); signed-in only.
+const installAppRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/apps/$slug/installations/new",
+  component: () => guard(<InstallApp slug={installAppRoute.useParams().slug} />),
 });
 const orgsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/orgs", component: () => guard(<OrgsPage />) });
 const exploreRoute = createRoute({
@@ -435,7 +452,7 @@ const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
     bareRoute.addChildren([loginRoute, twoFactorRoute, deviceRoute, oauthAuthorizeRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
-    shellRoute.addChildren([homeRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute, exploreRoute, profileRoute,
+    shellRoute.addChildren([homeRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, installAppRoute, reposRoute, exploreRoute, profileRoute,
       repoRoute,
       issuesRoute,
       issueNewRoute,

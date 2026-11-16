@@ -71,20 +71,30 @@ export const useSaveHook = (base: string) =>
 export const useDeleteHook = (base: string) => useInvalidating<string, void>(["hooks", base], (id) => request("DELETE", `${base}/${enc(id)}`));
 export const usePingHook = (base: string) => useInvalidating<string, unknown>(["hooks", base], (id) => request("POST", `${base}/${enc(id)}/pings`));
 
-export const useDeliveries = (base: string, hookId: string, page: number) =>
+/** Path the deliveries of a repository or organization webhook hang from. */
+export const hookRoot = (base: string, hookId: string) => `${base}/${enc(hookId)}`;
+
+// Deliveries live under root + "/deliveries": a webhook (hookRoot) or an App ("/apps/{slug}").
+export const useDeliveries = (root: string, page: number) =>
   useQuery({
-    queryKey: ["hooks", base, hookId, "deliveries", page],
-    queryFn: () => pagedHeader<WebhookDelivery>(`${base}/${enc(hookId)}/deliveries`, page),
+    queryKey: ["deliveries", root, page],
+    queryFn: () => pagedHeader<WebhookDelivery>(`${root}/deliveries`, page),
     placeholderData: keepPreviousData,
   });
-export const useDelivery = (base: string, hookId: string, deliveryId: string | undefined) =>
+export const useDelivery = (root: string, deliveryId: string | undefined) =>
   useQuery({
-    queryKey: ["hooks", base, hookId, "delivery", deliveryId],
-    queryFn: () => request<WebhookDeliveryDetail>("GET", `${base}/${enc(hookId)}/deliveries/${enc(deliveryId ?? "")}`),
+    queryKey: ["deliveries", root, "one", deliveryId],
+    queryFn: () => request<WebhookDeliveryDetail>("GET", `${root}/deliveries/${enc(deliveryId ?? "")}`),
     enabled: deliveryId !== undefined,
   });
-export const useRedeliver = (base: string, hookId: string) =>
-  useInvalidating<string, unknown>(["hooks", base], (deliveryId) => request("POST", `${base}/${enc(hookId)}/deliveries/${enc(deliveryId)}/attempts`));
+/** Redelivers one delivery; `also` is another query to refresh (the hook list, the App). */
+export function useRedeliver(root: string, also: unknown[]) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (deliveryId: string) => request<unknown>("POST", `${root}/deliveries/${enc(deliveryId)}/attempts`),
+    onSuccess: () => Promise.all([qc.invalidateQueries({ queryKey: ["deliveries", root] }), qc.invalidateQueries({ queryKey: also })]),
+  });
+}
 
 /* GitHub connections, imports and sync. */
 

@@ -179,6 +179,7 @@
   "layout.corsie": "Corsie",
   "appearance.saved": "Aspetto salvato",
   "tab.applications": "Applicazioni",
+  "tab.installations": "App installate",
   "tab.apps": "App",
   "tab.oauth-apps": "OAuth App",
   "group.developer": "Impostazioni sviluppatore"

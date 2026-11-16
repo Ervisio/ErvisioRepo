@@ -69,6 +69,8 @@ import { Async, formatDate, Secret, useNotify } from "./account/common.tsx";
 import { canRegisterApps } from "../api/oauth.ts";
 import { useMeta } from "../api/useMeta.ts";
 import { OAuthAppsSection, type AppsNav, type AppTarget } from "./oauth/OAuthApps.tsx";
+import { AppsSection, type AppsNav as GhAppsNav, type AppTarget as GhAppTarget } from "./apps/Apps.tsx";
+import { InstalledApps, type InstalledNav } from "./apps/Installed.tsx";
 import { isOrgSettingsTab, orgTabs, type OrgSettingsTab, type OrgTab } from "../ui/shell/nav.tsx";
 
 const roles: OrgRole[] = ["owner", "admin", "member"];
@@ -501,7 +503,7 @@ function Settings({ org }: { org: Org }) {
 }
 
 /** Settings-type tabs share one SettingsLayout; the sidebar shows them as a single entry. */
-function OrgSettings({ org, tab, app }: { org: Org; tab: OrgSettingsTab; app?: string }) {
+function OrgSettings({ org, tab, app, installation }: { org: Org; tab: OrgSettingsTab; app?: string; installation?: number }) {
   const t = useT("org");
   const navigate = useNavigate();
   const meta = useMeta().data;
@@ -511,11 +513,21 @@ function OrgSettings({ org, tab, app }: { org: Org; tab: OrgSettingsTab; app?: s
     link: (to, props) => <Link to="/orgs/$org" params={{ org: org.name }} search={appSearch(to)} className={props.className}>{props.children}</Link>,
     go: (to) => void navigate({ to: "/orgs/$org", params: { org: org.name }, search: appSearch(to) }),
   };
+  const ghSearch = (to: GhAppTarget) => ({ tab: "apps" as const, app: to.kind === "list" ? undefined : to.kind === "new" ? "new" : to.slug });
+  const ghAppsNav: GhAppsNav = {
+    link: (to, props) => <Link to="/orgs/$org" params={{ org: org.name }} search={ghSearch(to)} className={props.className}>{props.children}</Link>,
+    go: (to) => void navigate({ to: "/orgs/$org", params: { org: org.name }, search: ghSearch(to) }),
+  };
+  const instSearch = (id: number | undefined) => ({ tab: "installations" as const, installation: id });
+  const installedNav: InstalledNav = {
+    link: (id, props) => <Link to="/orgs/$org" params={{ org: org.name }} search={instSearch(id)} className={props.className}>{props.children}</Link>,
+    go: (id) => void navigate({ to: "/orgs/$org", params: { org: org.name }, search: instSearch(id) }),
+  };
   const scope = { kind: "org" as const, org: org.name };
   const item = (id: OrgSettingsTab, icon: SettingsNavItem["icon"]): SettingsNavItem => ({ id, icon, label: t(id === "settings" ? "settings.general" : `tab.${id}`) });
   const groups: SettingsNavGroup[] = [
-    { title: t("settings.group.org"), items: [item("settings", "gear"), item("hooks", "bell")] },
-    { title: t("settings.group.developer"), items: [item("oauth-apps", "cpu")] },
+    { title: t("settings.group.org"), items: [item("settings", "gear"), item("hooks", "bell"), item("installations", "pkg")] },
+    { title: t("settings.group.developer"), items: [item("apps", "grid"), item("oauth-apps", "cpu")] },
     { title: t("settings.group.actions"), items: [item("secrets", "lock"), item("variables", "code"), item("runners", "cpu")] },
   ];
   return (
@@ -530,6 +542,10 @@ function OrgSettings({ org, tab, app }: { org: Org; tab: OrgSettingsTab; app?: s
       {tab === "secrets" && <Entries scope={scope} kind="secrets" />}
       {tab === "variables" && <Entries scope={scope} kind="variables" />}
       {tab === "runners" && <Runners scope={scope} />}
+      {tab === "installations" && <InstalledApps owner={scope} installation={installation} nav={installedNav} />}
+      {tab === "apps" && (
+        <AppsSection owner={scope} app={app} nav={ghAppsNav} canRegister={canRegisterApps(meta?.appRegistration, "org", instanceAdmin)} />
+      )}
       {tab === "oauth-apps" && (
         <OAuthAppsSection owner={{ kind: "org", org: org.name }} app={app} nav={appsNav} canRegister={canRegisterApps(meta?.appRegistration, "org", instanceAdmin)} />
       )}
@@ -538,7 +554,7 @@ function OrgSettings({ org, tab, app }: { org: Org; tab: OrgSettingsTab; app?: s
 }
 
 /** Organization page: members, teams and invitations. Owners can manage; others read. */
-export function OrgPage({ name, tab, app, onTab }: { name: string; tab: OrgTab; app?: string; onTab: (tab: OrgTab) => void }) {
+export function OrgPage({ name, tab, app, installation, onTab }: { name: string; tab: OrgTab; app?: string; installation?: number; onTab: (tab: OrgTab) => void }) {
   const t = useT("org");
   const tc = useT("common");
   const org = useOrg(name);
@@ -570,7 +586,7 @@ export function OrgPage({ name, tab, app, onTab }: { name: string; tab: OrgTab; 
   if (settingsTab) {
     return (
       <Page section="pr" title={o.displayName || o.name} subtitle={`@${o.name}`} compact>
-        <OrgSettings org={o} tab={settingsTab} app={app} />
+        <OrgSettings org={o} tab={settingsTab} app={app} installation={installation} />
       </Page>
     );
   }
