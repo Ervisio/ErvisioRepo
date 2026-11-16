@@ -161,6 +161,6 @@ A0 → A1 → A2 → A3 → A4.
 ## Decisioni ancora aperte
 
 - Prefissi dei token: `erps_` per le installazioni, `erpu_` per user-to-server (oggi i PAT sono `erp_`).
-- Immagine del runner per Claude: una nostra (`ghcr.io/ervisio/claude-runner`) o installazione al volo nel job.
+- Immagine del runner per Claude: decisa, immagine nostra `ghcr.io/ervisio/claude-runner` con Claude Code preinstallato.
 - Tetto di spesa: misurato dai token riportati dall'API Anthropic e salvato per org.
 - Dopo la A2: approvazione delle OAuth App da parte delle org (A1) e marketplace con pagamenti (escluso).
