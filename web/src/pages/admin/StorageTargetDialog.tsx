@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import {
-  usePutStorageTarget, useStorageDraftTest,
+  usePutStorageTarget, useStorageDraftTest, useStorageHostKeys,
   type StorageTargetConfig, type StorageTargetInput,
 } from "../../api/useStorage.ts";
 import { ApiError } from "../../api/http.ts";
@@ -121,6 +121,12 @@ function TargetForm({ existing, secretsAvailable, onSaved, onClose }: {
   const [f, setF] = useState<Form>(() => initial(existing));
   const put = usePutStorageTarget();
   const test = useStorageDraftTest();
+  const scan = useStorageHostKeys();
+  const scanProblem = scan.error instanceof ApiError ? scan.error.errors?.[0]?.msg ?? scan.error.message : scan.error?.message;
+  const fetchKeys = () => {
+    const port = Number(f.port);
+    scan.mutate({ host: f.host.trim(), port: Number.isInteger(port) && port > 0 ? port : undefined }, { onSuccess: (r) => set("knownHosts", r.knownHosts) });
+  };
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((p) => ({ ...p, [k]: v }));
   const editing = existing !== undefined;
   // Objects live here: where they resolve cannot change, only the credentials.
@@ -241,6 +247,17 @@ function TargetForm({ existing, secretsAvailable, onSaved, onClose }: {
           <Area label={t("storage.f.knownHosts")} value={f.knownHosts} onChange={(v) => set("knownHosts", v)}
             placeholder={editing && existing?.hasKnownHosts ? t("storage.cred.stored") : "example.com ssh-ed25519 AAAA..."}
             hint={stored(existing?.hasKnownHosts) ?? t("storage.f.knownHosts.hint")} error={err("secrets.knownHosts")} />
+          <div className="adm-scan">
+            <Button size="sm" icon="download" disabled={scan.isPending || f.host.trim() === ""} onClick={fetchKeys}>
+              {scan.isPending ? t("storage.f.knownHosts.scanning") : t("storage.f.knownHosts.scan")}
+            </Button>
+            {scan.data && (
+              <p className="ui-note" role="status">
+                {t("storage.f.knownHosts.got")} {scan.data.keys.map((k) => `${k.type} ${k.fingerprint}`).join(", ")}
+              </p>
+            )}
+            {scan.isError && <p className="adm-err" role="alert">{scanProblem}</p>}
+          </div>
         </>
       )}
 

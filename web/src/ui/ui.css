@@ -280,6 +280,8 @@
 .adm-pager { justify-content: flex-end; padding: 10px 12px; }
 .adm-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 @media (max-width: 480px) { .adm-pair { grid-template-columns: 1fr; } }
+.adm-scan { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: -4px; }
+.adm-scan .ui-note { overflow-wrap: anywhere; }
 .adm-kv { margin: 0; padding: 4px 12px; }
 .adm-kv > div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; }
 .adm-kv dt { color: var(--ink2); }

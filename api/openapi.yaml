@@ -107,6 +107,40 @@ paths:
                 $ref: "#/components/schemas/StorageConfig"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/storage/host-keys:
+    post:
+      operationId: scanAdminStorageHostKeys
+      tags: [admin]
+      summary: Read the SSH host keys of an SFTP server
+      description: |
+        Instance admins only. Connects to the server, reads the host keys it
+        offers (ed25519, ECDSA, RSA) without signing in, and returns them as
+        known_hosts lines for the admin to check and save.
+      security:
+        - session: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StorageHostKeyScan"
+      responses:
+        "200":
+          description: Host keys offered by the server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageHostKeys"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "422":
+          description: Invalid host or port, or the server cannot be reached
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ValidationProblem"
+        default:
+          $ref: "#/components/responses/Problem"
   /admin/storage/test:
     post:
       operationId: testAdminStorageDraft
@@ -10901,6 +10935,34 @@ components:
           type: integer
         secrets:
           $ref: "#/components/schemas/StorageSecretsInput"
+    StorageHostKeyScan:
+      type: object
+      required: [host]
+      properties:
+        host:
+          type: string
+          maxLength: 253
+        port:
+          type: integer
+          description: Default 22
+    StorageHostKeys:
+      type: object
+      required: [knownHosts, keys]
+      properties:
+        knownHosts:
+          type: string
+          description: The keys as known_hosts lines, ready for the knownHosts credential
+        keys:
+          type: array
+          items:
+            type: object
+            required: [type, fingerprint]
+            properties:
+              type:
+                type: string
+              fingerprint:
+                type: string
+                description: SHA256 fingerprint, as printed by ssh-keygen -l
     StorageSecretsInput:
       type: object
       description: Write-only credentials, sealed with the master key. Never returned.

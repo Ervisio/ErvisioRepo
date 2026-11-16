@@ -739,3 +739,30 @@ func missingSFTPAuth(moved bool) string {
 	}
 	return "a private key or a password is required"
 }
+
+// ScanHostKeys reads the SSH host keys of an SFTP server for the form. The
+// host gets the same checks as a target host.
+func (s *Service) ScanHostKeys(ctx context.Context, host string, port int) ([]tier.HostKey, error) {
+	var p problems
+	host = strings.TrimSpace(host)
+	if port == 0 {
+		port = defaultPort
+	}
+	switch {
+	case !validHost(host):
+		p.add("host", "must be a host name or an IP address")
+	case blockedHost(host):
+		p.add("host", "is a link-local, metadata, unspecified or multicast address, which is not allowed")
+	}
+	if port < 1 || port > 65535 {
+		p.add("port", "must be between 1 and 65535")
+	}
+	if err := p.err(); err != nil {
+		return nil, err
+	}
+	keys, err := tier.ScanHostKeys(ctx, host, port)
+	if err != nil {
+		return nil, &ValidationError{Detail: "the server did not answer", Errors: []FieldError{{Path: "host", Msg: shorten(err.Error(), maxTestError)}}}
+	}
+	return keys, nil
+}

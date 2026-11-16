@@ -21,6 +21,7 @@ type StorageConfig interface {
 	DeleteTarget(ctx context.Context, actor uuid.UUID, ip, name string) (storagecfg.View, error)
 	PutPolicy(ctx context.Context, actor uuid.UUID, ip, policy string, in storagecfg.PolicyInput) (storagecfg.View, error)
 	Test(ctx context.Context, in storagecfg.TargetInput) (tier.CheckResult, error)
+	ScanHostKeys(ctx context.Context, host string, port int) ([]tier.HostKey, error)
 }
 
 // maxStorageBody bounds the JSON bodies of the storage configuration
@@ -217,4 +218,39 @@ func storageConfigDTO(v storagecfg.View) v1gen.StorageConfig {
 		})
 	}
 	return out
+}
+
+func (p problemResponse) VisitScanAdminStorageHostKeysResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+
+func (s *v1Server) ScanAdminStorageHostKeys(ctx context.Context, req v1gen.ScanAdminStorageHostKeysRequestObject) (v1gen.ScanAdminStorageHostKeysResponseObject, error) {
+	if s.storageCfg == nil {
+		return errStorageCfgUnavailable, nil
+	}
+	if req.Body == nil {
+		return badRequest("a host is required"), nil
+	}
+	keys, err := s.storageCfg.ScanHostKeys(ctx, req.Body.Host, deref(req.Body.Port))
+	var verr *storagecfg.ValidationError
+	switch {
+	case errors.As(err, &verr):
+		return v1gen.ScanAdminStorageHostKeys422ApplicationProblemPlusJSONResponse(storageProblem(verr)), nil
+	case err != nil:
+		return nil, err
+	}
+	out := v1gen.ScanAdminStorageHostKeys200JSONResponse{Keys: make([]struct {
+		Fingerprint string `json:"fingerprint"`
+		Type        string `json:"type"`
+	}, 0, len(keys))}
+	lines := make([]string, 0, len(keys))
+	for _, k := range keys {
+		out.Keys = append(out.Keys, struct {
+			Fingerprint string `json:"fingerprint"`
+			Type        string `json:"type"`
+		}{Fingerprint: k.Fingerprint, Type: k.Type})
+		lines = append(lines, k.Line)
+	}
+	out.KnownHosts = strings.Join(lines, "\n") + "\n"
+	return out, nil
 }

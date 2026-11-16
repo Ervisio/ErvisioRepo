@@ -4845,6 +4845,26 @@ type StorageConfig struct {
 	Targets          []StorageTargetConfig `json:"targets"`
 }
 
+// StorageHostKeyScan defines model for StorageHostKeyScan.
+type StorageHostKeyScan struct {
+	Host string `json:"host"`
+
+	// Port Default 22
+	Port *int `json:"port,omitempty"`
+}
+
+// StorageHostKeys defines model for StorageHostKeys.
+type StorageHostKeys struct {
+	Keys []struct {
+		// Fingerprint SHA256 fingerprint, as printed by ssh-keygen -l
+		Fingerprint string `json:"fingerprint"`
+		Type        string `json:"type"`
+	} `json:"keys"`
+
+	// KnownHosts The keys as known_hosts lines, ready for the knownHosts credential
+	KnownHosts string `json:"knownHosts"`
+}
+
 // StoragePolicy defines model for StoragePolicy.
 type StoragePolicy struct {
 	Bytes           int64   `json:"bytes"`
@@ -6243,6 +6263,9 @@ type CreateInviteJSONRequestBody = InviteRequest
 // UpdateInstanceSettingsJSONRequestBody defines body for UpdateInstanceSettings for application/json ContentType.
 type UpdateInstanceSettingsJSONRequestBody = InstanceSettingsUpdate
 
+// ScanAdminStorageHostKeysJSONRequestBody defines body for ScanAdminStorageHostKeys for application/json ContentType.
+type ScanAdminStorageHostKeysJSONRequestBody = StorageHostKeyScan
+
 // PutAdminStoragePolicyJSONRequestBody defines body for PutAdminStoragePolicy for application/json ContentType.
 type PutAdminStoragePolicyJSONRequestBody = StoragePolicyInput
 
@@ -6587,6 +6610,9 @@ type ServerInterface interface {
 	// GetAdminStorageConfig Storage targets and policies as the next start will run with them
 	// (GET /admin/storage/config)
 	GetAdminStorageConfig(w http.ResponseWriter, r *http.Request)
+	// ScanAdminStorageHostKeys Read the SSH host keys of an SFTP server
+	// (POST /admin/storage/host-keys)
+	ScanAdminStorageHostKeys(w http.ResponseWriter, r *http.Request)
 	// PutAdminStoragePolicy Change where a data type is stored
 	// (PUT /admin/storage/policies/{policy})
 	PutAdminStoragePolicy(w http.ResponseWriter, r *http.Request, policy string)
@@ -7559,6 +7585,12 @@ func (_ Unimplemented) GetAdminStorage(w http.ResponseWriter, r *http.Request) {
 // GetAdminStorageConfig Storage targets and policies as the next start will run with them
 // (GET /admin/storage/config)
 func (_ Unimplemented) GetAdminStorageConfig(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ScanAdminStorageHostKeys Read the SSH host keys of an SFTP server
+// (POST /admin/storage/host-keys)
+func (_ Unimplemented) ScanAdminStorageHostKeys(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9808,6 +9840,26 @@ func (siw *ServerInterfaceWrapper) GetAdminStorageConfig(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetAdminStorageConfig(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScanAdminStorageHostKeys operation middleware
+func (siw *ServerInterfaceWrapper) ScanAdminStorageHostKeys(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScanAdminStorageHostKeys(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -24047,6 +24099,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/admin/storage/config", wrapper.GetAdminStorageConfig)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/storage/host-keys", wrapper.ScanAdminStorageHostKeys)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/admin/storage/test", wrapper.TestAdminStorageDraft)
 	})
 	r.Group(func(r chi.Router) {
@@ -25786,6 +25841,75 @@ type GetAdminStorageConfigdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response GetAdminStorageConfigdefaultApplicationProblemPlusJSONResponse) VisitGetAdminStorageConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScanAdminStorageHostKeysRequestObject struct {
+	Body *ScanAdminStorageHostKeysJSONRequestBody
+}
+
+type ScanAdminStorageHostKeysResponseObject interface {
+	VisitScanAdminStorageHostKeysResponse(w http.ResponseWriter) error
+}
+
+type ScanAdminStorageHostKeys200JSONResponse StorageHostKeys
+
+func (response ScanAdminStorageHostKeys200JSONResponse) VisitScanAdminStorageHostKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScanAdminStorageHostKeys400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScanAdminStorageHostKeys400ApplicationProblemPlusJSONResponse) VisitScanAdminStorageHostKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScanAdminStorageHostKeys422ApplicationProblemPlusJSONResponse ValidationProblem
+
+func (response ScanAdminStorageHostKeys422ApplicationProblemPlusJSONResponse) VisitScanAdminStorageHostKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScanAdminStorageHostKeysdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ScanAdminStorageHostKeysdefaultApplicationProblemPlusJSONResponse) VisitScanAdminStorageHostKeysResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -51964,6 +52088,9 @@ type StrictServerInterface interface {
 	// GetAdminStorageConfig Storage targets and policies as the next start will run with them
 	// (GET /admin/storage/config)
 	GetAdminStorageConfig(ctx context.Context, request GetAdminStorageConfigRequestObject) (GetAdminStorageConfigResponseObject, error)
+	// ScanAdminStorageHostKeys Read the SSH host keys of an SFTP server
+	// (POST /admin/storage/host-keys)
+	ScanAdminStorageHostKeys(ctx context.Context, request ScanAdminStorageHostKeysRequestObject) (ScanAdminStorageHostKeysResponseObject, error)
 	// PutAdminStoragePolicy Change where a data type is stored
 	// (PUT /admin/storage/policies/{policy})
 	PutAdminStoragePolicy(ctx context.Context, request PutAdminStoragePolicyRequestObject) (PutAdminStoragePolicyResponseObject, error)
@@ -53250,6 +53377,37 @@ func (sh *strictHandler) GetAdminStorageConfig(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetAdminStorageConfigResponseObject); ok {
 		if err := validResponse.VisitGetAdminStorageConfigResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScanAdminStorageHostKeys operation middleware
+func (sh *strictHandler) ScanAdminStorageHostKeys(w http.ResponseWriter, r *http.Request) {
+	var request ScanAdminStorageHostKeysRequestObject
+
+	var body ScanAdminStorageHostKeysJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScanAdminStorageHostKeys(ctx, request.(ScanAdminStorageHostKeysRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScanAdminStorageHostKeys")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScanAdminStorageHostKeysResponseObject); ok {
+		if err := validResponse.VisitScanAdminStorageHostKeysResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

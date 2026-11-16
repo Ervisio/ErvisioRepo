@@ -78,6 +78,15 @@ export function usePutStoragePolicy() {
 }
 
 /** Connection test of a target definition that is not saved (POST /admin/storage/test). */
+export type StorageHostKeys = components["schemas"]["StorageHostKeys"];
+
+/** Reads the SSH host keys an SFTP server offers, as known_hosts lines (POST /admin/storage/host-keys). */
+export function useStorageHostKeys() {
+  return useMutation({
+    mutationFn: (to: { host: string; port?: number }) => request<StorageHostKeys>("POST", "/admin/storage/host-keys", to),
+  });
+}
+
 export function useStorageDraftTest() {
   return useMutation({
     mutationFn: (input: StorageTargetInput) => request<StorageCheckResult>("POST", "/admin/storage/test", input),

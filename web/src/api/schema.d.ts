@@ -84,6 +84,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/storage/host-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Read the SSH host keys of an SFTP server
+         * @description Instance admins only. Connects to the server, reads the host keys it
+         *     offers (ed25519, ECDSA, RSA) without signing in, and returns them as
+         *     known_hosts lines for the admin to check and save.
+         */
+        post: operations["scanAdminStorageHostKeys"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/storage/test": {
         parameters: {
             query?: never;
@@ -6265,6 +6287,20 @@ export interface components {
             maxConns?: number;
             secrets?: components["schemas"]["StorageSecretsInput"];
         };
+        StorageHostKeyScan: {
+            host: string;
+            /** @description Default 22 */
+            port?: number;
+        };
+        StorageHostKeys: {
+            /** @description The keys as known_hosts lines, ready for the knownHosts credential */
+            knownHosts: string;
+            keys: {
+                type: string;
+                /** @description SHA256 fingerprint, as printed by ssh-keygen -l */
+                fingerprint: string;
+            }[];
+        };
         /** @description Write-only credentials, sealed with the master key. Never returned. */
         StorageSecretsInput: {
             accessKey?: string;
@@ -7925,6 +7961,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StorageConfig"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    scanAdminStorageHostKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorageHostKeyScan"];
+            };
+        };
+        responses: {
+            /** @description Host keys offered by the server */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageHostKeys"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            /** @description Invalid host or port, or the server cannot be reached */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ValidationProblem"];
                 };
             };
             default: components["responses"]["Problem"];
