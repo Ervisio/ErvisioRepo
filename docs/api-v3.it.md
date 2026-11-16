@@ -222,11 +222,25 @@ attraverso questa API (issue, commenti, pull request, release, stati, check,
 contenuti) se il workflow ha `contents: write`; le modifiche sono attribuite a
 `ervisio-actions[bot]` e non avviano workflow.
 
+### App OAuth
+
+Questi endpoint autenticano l'app, non un utente: HTTP Basic con
+`client_id:client_secret` (il `client_id` deve coincidere con quello del
+path). Il body è `{"access_token": "<token>"}`. Credenziali del client
+sbagliate e token di altre app rispondono `404`, come su GitHub.
+
+| Endpoint | Stato | Note |
+|---|---|---|
+| `POST /applications/{client_id}/token` | sì | Verifica un token: oggetto authorization con `scopes`, `token`, `token_last_eight`, `hashed_token`, `app`, `user`. |
+| `PATCH /applications/{client_id}/token` | sì | Rigenera il token: il vecchio smette di funzionare e la risposta contiene il nuovo. |
+| `DELETE /applications/{client_id}/token` | sì | Revoca il token. |
+| `DELETE /applications/{client_id}/grant` | sì | Revoca l'autorizzazione dell'utente e tutti i suoi token. |
+
 ### Non disponibili
 
 Ricerca nei commit, gist, notifiche, eventi, package, project, deployment,
-webhook (usare `/api/v1/.../hooks`), gestione dei collaboratori, team, app e
-installazioni.
+webhook (usare `/api/v1/.../hooks`), gestione dei collaboratori, team, GitHub
+App e installazioni.
 
 ## GraphQL (`/api/graphql`)
 
@@ -347,15 +361,17 @@ form-encoded. I device code sono salvati come hash e durano 15 minuti; i
 codici sbagliati nella pagina di approvazione sono limitati per account e IP
 client, e ogni IP client può chiedere 60 device code all'ora.
 
-Client integrati (le app OAuth registrate arriveranno in seguito):
+Client integrati (le app OAuth registrate con «Abilita device flow» usano
+gli stessi endpoint con il proprio `client_id`):
 
 | Client | `client_id` |
 |---|---|
 | `eg`, la CLI di ErvisioRepo | `Ov23liErvisioEgCli01` |
 | GitHub CLI (`gh auth login --hostname <host>`) | `178c6fc778ccc68e1d6a` |
 
-Il dispositivo riceve un token di accesso personale, elencato in
-Impostazioni > Token come `eg on <dispositivo o host del server> (device)`
+Un'app registrata riceve un token dell'autorizzazione dell'utente, elencato
+in Impostazioni > Applicazioni (vedi sotto). Un client integrato
+riceve un token di accesso personale, elencato in Impostazioni > Token come `eg on <dispositivo o host del server> (device)`
 (con `#2`, `#3`... se il nome è già usato) e revocabile da lì. Dura quanto la
 durata massima dei token (`auth.token_max_ttl`). Gli scope GitHub diventano
 scope del token così; uno `scope` vuoto vale i default di gh
@@ -376,3 +392,47 @@ Nessuno scope GitHub concede lo scope `admin` dell'istanza. Con gli scope di
 default `GET /api/v3/user` risponde `X-OAuth-Scopes: workflow, repo, read:user,
 read:org`, che basta a `gh auth status`. L'API accetta il token come
 `Authorization: token <t>` (quello che manda gh) o `Bearer <t>`.
+
+## Flusso web OAuth (app OAuth registrate)
+
+Utenti e organizzazioni registrano le app OAuth in Impostazioni > Impostazioni sviluppatore > OAuth App (gli owner di un'organizzazione nelle
+impostazioni dell'organizzazione). Ogni app ha un `client_id` generato
+(`Ov23li…`), uno o più URL di callback e fino a cinque client secret, mostrati
+una sola volta e salvati come hash. L'impostazione d'istanza
+`security.app_registration` decide chi può registrare app: `everyone`
+(default), `org_owners` (solo app di organizzazione) o `admins`.
+
+Il flusso segue quello di GitHub
+([documentazione](https://docs.github.com/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps)):
+
+1. L'app manda il browser a `GET /login/oauth/authorize` con `client_id`,
+   `redirect_uri`, `scope`, `state` e, se vuole, PKCE `code_challenge` +
+   `code_challenge_method=S256` (`login` e `allow_signup` sono accettati e
+   ignorati). Chi non è autenticato fa prima il login. La pagina di consenso
+   mostra l'app, il proprietario e gli scope richiesti a parole; se l'utente
+   ha già concesso gli stessi scope o meno, viene saltata.
+2. Il browser torna a `redirect_uri` con `code` e `state`, oppure con
+   `error=access_denied` se l'utente annulla. Il codice vale una volta sola
+   per 10 minuti.
+3. L'app chiama `POST /login/oauth/access_token` con `client_id`,
+   `client_secret` (o HTTP Basic), `code` e `redirect_uri`. Un client
+   pubblico (senza secret) manda invece `code_verifier`, che richiede un
+   `code_challenge` al passo 1. La risposta contiene `access_token`,
+   `token_type=bearer` e `scope` (separati da virgole), in JSON o form secondo
+   `Accept`; gli errori sono `bad_verification_code`,
+   `incorrect_client_credentials`, `redirect_uri_mismatch` e
+   `unsupported_grant_type`, con HTTP 200 come su GitHub.
+
+`redirect_uri` segue le regole di GitHub: stesso schema, host e porta di un
+URL di callback registrato (porta libera per `localhost`, `127.0.0.1` e
+`::1`) e un path uguale a quello della callback o sotto di esso. Senza
+`redirect_uri` si usa il primo URL di callback.
+
+I token hanno gli scope della tabella sopra e durano `auth.token_max_ttl`.
+Non sono token personali: appartengono all'autorizzazione dell'utente e
+compaiono in Impostazioni > Applicazioni, con scope e ultimo uso;
+«Revoca» elimina l'autorizzazione e tutti i suoi token. Un'app tiene al
+massimo dieci token attivi per utente (i più vecchi vengono revocati).
+Eliminare un'app revoca autorizzazioni, token e secret. Creazione ed
+eliminazione delle app, secret, autorizzazioni e revoche finiscono
+nell'audit log.

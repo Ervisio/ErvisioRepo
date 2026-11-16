@@ -46,7 +46,7 @@ Commit: email noreply dei bot (`<id>+<login>@users.noreply.<host>`), mappata sul
 
 Retro-compatibilità: le righe esistenti con attore nullo restano tali, e la UI continua a mostrarle come ErvisioSync.
 
-## Fase A1 — OAuth App
+## Fase A1 — OAuth App (fatto)
 
 - **Registrazione**: in Impostazioni › Sviluppatore › OAuth App, per utenti e org. Campi:
   - nome, homepage, descrizione, logo (con la stessa pipeline degli avatar);
@@ -58,7 +58,7 @@ Retro-compatibilità: le righe esistenti con attore nullo restano tali, e la UI 
 - **Device flow**: riusa `internal/credentials/device.go`. I client built-in (`eg`, `gh`) diventano righe di sistema della stessa tabella.
 - **Token**: token utente con scope mappati (`internal/auth/ghscopes.go`), legati al grant (utente, app).
 - **Utente**: Impostazioni › Applicazioni autorizzate, con elenco, scope, ultimo uso e «Revoca» (revoca tutti i token del grant).
-- **Org**: politica «accesso OAuth App» con approvazione dell'org per le App esterne (si può rinviare).
+- **Org**: politica «accesso OAuth App» con approvazione dell'org per le App esterne (rinviata).
 - **API GitHub-compatibili**: `/applications/{client_id}/token` (check/reset/delete) e `/applications/{client_id}/grant`.
 
 ## Fase A2 — App (stile GitHub App)
