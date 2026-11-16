@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- SFTP: a failed directory creation names the remote directory, and the form explains that a relative remote folder starts from the login directory (an absolute one such as `/erepo` fails on a Hetzner Storage Box, whose writable space is `/home`).
+
 ## [1.9.0] - 2026-11-16
 
 ### Added

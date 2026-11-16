@@ -103,7 +103,7 @@
   "storage.f.port": "Port",
   "storage.f.user": "User",
   "storage.f.root": "Remote directory",
-  "storage.f.root.hint": "Optional. Defaults to the login directory.",
+  "storage.f.root.hint": "Optional. A relative path starts from the login directory (recommended, e.g. erepo); an absolute one from the server root, which some providers do not let you write (Hetzner Storage Box: use /home/...).",
   "storage.f.maxConns": "Max connections",
   "storage.f.privateKey": "Private key",
   "storage.f.privateKey.hint": "OpenSSH or PEM format.",

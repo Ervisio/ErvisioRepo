@@ -225,7 +225,7 @@ function TargetForm({ existing, secretsAvailable, onSaved, onClose }: {
           </div>
           <Input label={t("storage.f.user")} mono required autoComplete="off" value={f.user} disabled={locked}
             error={err("user")} onChange={(e) => set("user", e.target.value)} />
-          <Input label={t("storage.f.root")} mono autoComplete="off" placeholder="/srv/erepo" value={f.root} disabled={locked}
+          <Input label={t("storage.f.root")} mono autoComplete="off" placeholder="erepo" value={f.root} disabled={locked}
             hint={t("storage.f.root.hint")} error={err("root")} onChange={(e) => set("root", e.target.value)} />
           <Input label={t("storage.f.maxConns")} mono inputMode="numeric" autoComplete="off" value={f.maxConns}
             error={err("maxConns")} onChange={(e) => set("maxConns", e.target.value)} />

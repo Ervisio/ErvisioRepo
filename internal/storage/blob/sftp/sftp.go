@@ -284,7 +284,7 @@ func (s *Store) putOn(ctx context.Context, c *sftp.Client, key string, vr *blob.
 	dst := s.remote(key)
 	dir := path.Dir(dst)
 	if err := c.MkdirAll(dir); err != nil {
-		return blob.Info{}, s.wrap("put: mkdir", key, err)
+		return blob.Info{}, s.wrap("put: mkdir "+dir+" for", key, err)
 	}
 	tmp, f, err := createTemp(c, dir, "tmp-")
 	if err != nil {

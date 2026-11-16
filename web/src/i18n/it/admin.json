@@ -103,7 +103,7 @@
   "storage.f.port": "Porta",
   "storage.f.user": "Utente",
   "storage.f.root": "Cartella remota",
-  "storage.f.root.hint": "Facoltativa. Il valore predefinito è la cartella di login.",
+  "storage.f.root.hint": "Facoltativa. Un percorso relativo parte dalla cartella di login (consigliato, per esempio erepo); uno assoluto dalla radice del server, dove alcuni provider non permettono di scrivere (Hetzner Storage Box: usa /home/...).",
   "storage.f.maxConns": "Connessioni massime",
   "storage.f.privateKey": "Chiave privata",
   "storage.f.privateKey.hint": "Formato OpenSSH o PEM.",
