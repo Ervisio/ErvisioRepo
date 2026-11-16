@@ -78,6 +78,8 @@ message DeclareRequest {
   repeated string labels = 2;
   // capacity is how many jobs the runner runs at the same time.
   int32 capacity = 3;
+  // metrics is the machine usage right now (best effort, may be unset).
+  RunnerMetrics metrics = 4;
 }
 
 message DeclareResponse {
@@ -204,6 +206,34 @@ message HeartbeatRequest {
   repeated string running_task_ids = 1;
   // capacity is how many jobs the runner runs at the same time.
   int32 capacity = 2;
+  // metrics is the machine usage right now (best effort, may be unset).
+  RunnerMetrics metrics = 3;
+}
+
+// RunnerMetrics is the resource usage of the runner machine, sent on
+// Declare and Heartbeat. Unknown values are left unset, never 0.
+message RunnerMetrics {
+  string hostname = 1;
+  string os = 2;
+  string arch = 3;
+  int32 cpu_count = 4;
+  // cpu_percent is the busy share of the whole machine (0-100) since the
+  // previous report.
+  optional double cpu_percent = 5;
+  optional double load1 = 6;
+  optional int64 memory_used_bytes = 7;
+  optional int64 memory_total_bytes = 8;
+  // disk_* describe the filesystem of the runner data directory.
+  optional int64 disk_used_bytes = 9;
+  optional int64 disk_total_bytes = 10;
+  repeated RunnerGPU gpus = 11;
+}
+
+message RunnerGPU {
+  string name = 1;
+  optional double utilization_percent = 2;
+  optional int64 memory_used_bytes = 3;
+  optional int64 memory_total_bytes = 4;
 }
 
 message HeartbeatResponse {

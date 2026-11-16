@@ -53,8 +53,8 @@ type Actions interface {
 	ListEnvironments(ctx context.Context, who auth.Principal, owner, name string) ([]actions.Environment, error)
 	PutEnvironment(ctx context.Context, who auth.Principal, owner, name, env string, in actions.EnvironmentInput) (actions.Environment, error)
 	DeleteEnvironment(ctx context.Context, who auth.Principal, owner, name, env string) error
-	ListRunners(ctx context.Context, sc actions.Scope) ([]actions.Runner, error)
-	ListRepoRunners(ctx context.Context, sc actions.Scope) ([]actions.Runner, error)
+	ListRunners(ctx context.Context, who auth.Principal, sc actions.Scope) ([]actions.Runner, error)
+	ListRepoRunners(ctx context.Context, who auth.Principal, sc actions.Scope) ([]actions.Runner, error)
 	DeleteRunner(ctx context.Context, sc actions.Scope, id uuid.UUID) error
 	SetRunnerPaused(ctx context.Context, who auth.Principal, sc actions.Scope, id uuid.UUID, paused bool, ip string) (actions.Runner, error)
 	LookupRunnerDevice(ctx context.Context, who auth.Principal, userCode, ip string) (actions.RunnerDevice, error)
@@ -203,7 +203,35 @@ func actionsDTORunner(r actions.Runner) v1gen.ActionsRunner {
 	return v1gen.ActionsRunner{Id: r.ID, Name: r.Name, Scope: r.Scope, Labels: nonNil(r.Labels), Version: r.Version,
 		Ephemeral: r.Ephemeral, Online: r.Online, Busy: r.Busy, Paused: r.Paused,
 		Status: v1gen.ActionsRunnerStatus(r.Status), Running: r.Running, Capacity: r.Capacity,
-		LastSeenAt: r.LastSeenAt, CreatedAt: r.CreatedAt}
+		LastSeenAt: r.LastSeenAt, CreatedAt: r.CreatedAt, Metrics: actionsDTORunnerMetrics(r.Metrics),
+		Jobs: mapList(r.Jobs, actionsDTORunnerJob)}
+}
+
+func actionsDTORunnerMetrics(m *actions.RunnerMetrics) *v1gen.ActionsRunnerMetrics {
+	if m == nil {
+		return nil
+	}
+	out := &v1gen.ActionsRunnerMetrics{ReportedAt: m.ReportedAt, Hostname: optStr(m.Hostname), Os: optStr(m.OS),
+		Arch: optStr(m.Arch), CpuCount: m.CPUCount, CpuPercent: m.CPUPercent, Load1: m.Load1,
+		MemoryUsedBytes: m.MemoryUsedBytes, MemoryTotalBytes: m.MemoryTotalBytes,
+		DiskUsedBytes: m.DiskUsedBytes, DiskTotalBytes: m.DiskTotalBytes,
+		Gpus: make([]v1gen.ActionsRunnerGpu, 0, len(m.GPUs))}
+	for _, g := range m.GPUs {
+		out.Gpus = append(out.Gpus, v1gen.ActionsRunnerGpu{Name: g.Name, UtilizationPercent: g.UtilizationPercent,
+			MemoryUsedBytes: g.MemoryUsedBytes, MemoryTotalBytes: g.MemoryTotalBytes})
+	}
+	return out
+}
+
+func actionsDTORunnerJob(j actions.RunnerJob) v1gen.ActionsRunnerJob {
+	out := v1gen.ActionsRunnerJob{Id: j.ID, StartedAt: j.StartedAt, Visible: j.Visible}
+	if !j.Visible {
+		return out
+	}
+	runID, runNumber := j.RunID, j.RunNumber
+	out.Name, out.RunId, out.RunNumber, out.WorkflowName = &j.Name, &runID, &runNumber, &j.WorkflowName
+	out.Repository = &v1gen.ActionsRunnerJobRepo{Owner: j.Owner, Name: j.Repo, FullName: j.Owner + "/" + j.Repo}
+	return out
 }
 
 func actionsDTOToken(t actions.RegistrationToken) v1gen.ActionsRegistrationToken {
@@ -588,7 +616,7 @@ func (s *v1Server) ListRepoActionsRunners(ctx context.Context, req v1gen.ListRep
 	if err != nil {
 		return actionsFail(err, http.MethodGet, "/actions/runners")
 	}
-	list, err := s.actions.ListRepoRunners(ctx, sc)
+	list, err := s.actions.ListRepoRunners(ctx, principal(ctx), sc)
 	if err != nil {
 		return actionsFail(err, http.MethodGet, "/actions/runners")
 	}
@@ -731,7 +759,7 @@ func (s *v1Server) ListOrgActionsRunners(ctx context.Context, req v1gen.ListOrgA
 	if err != nil {
 		return actionsFail(err, http.MethodGet, "")
 	}
-	list, err := s.actions.ListRunners(ctx, sc)
+	list, err := s.actions.ListRunners(ctx, principal(ctx), sc)
 	if err != nil {
 		return actionsFail(err, http.MethodGet, "")
 	}
@@ -778,7 +806,7 @@ func (s *v1Server) ListInstanceActionsRunners(ctx context.Context, _ v1gen.ListI
 	if err != nil {
 		return actionsFail(err, http.MethodGet, "")
 	}
-	list, err := s.actions.ListRunners(ctx, sc)
+	list, err := s.actions.ListRunners(ctx, principal(ctx), sc)
 	if err != nil {
 		return actionsFail(err, http.MethodGet, "")
 	}

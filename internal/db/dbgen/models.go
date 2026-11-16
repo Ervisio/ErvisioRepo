@@ -198,6 +198,8 @@ type ActionsRunner struct {
 	UpdatedAt      pgtype.Timestamptz
 	Paused         bool
 	Capacity       int32
+	Metrics        []byte
+	MetricsAt      pgtype.Timestamptz
 }
 
 type ActionsRunnerDevice struct {

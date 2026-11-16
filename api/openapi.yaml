@@ -11307,7 +11307,8 @@ components:
           items: {type: string, maxLength: 39}
     ActionsRunner:
       type: object
-      required: [id, name, scope, labels, version, ephemeral, online, busy, paused, status, running, capacity, createdAt]
+      required: [id, name, scope, labels, version, ephemeral, online, busy, paused, status, running, capacity, createdAt,
+        jobs]
       properties:
         id: {type: string, format: uuid}
         name: {type: string}
@@ -11330,6 +11331,63 @@ components:
         capacity: {type: integer, description: Jobs it runs at the same time as it reported; 0 when unknown}
         lastSeenAt: {type: string, format: date-time, nullable: true}
         createdAt: {type: string, format: date-time}
+        metrics:
+          $ref: '#/components/schemas/ActionsRunnerMetrics'
+        jobs:
+          type: array
+          description: Jobs running on the runner now, oldest first
+          items: {$ref: '#/components/schemas/ActionsRunnerJob'}
+    ActionsRunnerMetrics:
+      type: object
+      description: |
+        Latest resource usage reported by the runner (absent until it reports).
+        Fields the runner could not measure are omitted.
+      required: [reportedAt, cpuCount, gpus]
+      properties:
+        reportedAt: {type: string, format: date-time}
+        hostname: {type: string}
+        os: {type: string}
+        arch: {type: string}
+        cpuCount: {type: integer, description: Logical CPUs; 0 when unknown}
+        cpuPercent: {type: number, format: double, description: Busy share of the whole machine (0-100)}
+        load1: {type: number, format: double, description: One-minute load average}
+        memoryUsedBytes: {type: integer, format: int64}
+        memoryTotalBytes: {type: integer, format: int64}
+        diskUsedBytes: {type: integer, format: int64, description: Filesystem of the runner data directory}
+        diskTotalBytes: {type: integer, format: int64}
+        gpus:
+          type: array
+          items: {$ref: '#/components/schemas/ActionsRunnerGpu'}
+    ActionsRunnerGpu:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string}
+        utilizationPercent: {type: number, format: double}
+        memoryUsedBytes: {type: integer, format: int64}
+        memoryTotalBytes: {type: integer, format: int64}
+    ActionsRunnerJob:
+      type: object
+      description: |
+        A job running on a runner. visible is false when the caller cannot
+        read its repository: only id and startedAt are set then.
+      required: [id, visible]
+      properties:
+        id: {type: string, format: uuid}
+        visible: {type: boolean}
+        startedAt: {type: string, format: date-time}
+        name: {type: string}
+        runId: {type: string, format: uuid}
+        runNumber: {type: integer, format: int64}
+        workflowName: {type: string}
+        repository: {$ref: '#/components/schemas/ActionsRunnerJobRepo'}
+    ActionsRunnerJobRepo:
+      type: object
+      required: [owner, name, fullName]
+      properties:
+        owner: {type: string}
+        name: {type: string}
+        fullName: {type: string, description: owner/name}
     ActionsRunnerPause:
       type: object
       required: [paused]

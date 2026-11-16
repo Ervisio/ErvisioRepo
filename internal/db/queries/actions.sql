@@ -25,6 +25,9 @@ RETURNING *;
 -- name: SetActionsRunnerCapacity :exec
 UPDATE actions_runners SET capacity = @capacity WHERE id = @id AND capacity <> @capacity;
 
+-- name: SetActionsRunnerMetrics :exec
+UPDATE actions_runners SET metrics = @metrics, metrics_at = now() WHERE id = @id;
+
 -- name: SetActionsRunnerPaused :one
 UPDATE actions_runners SET paused = @paused, updated_at = now() WHERE id = @id RETURNING *;
 
@@ -349,8 +352,13 @@ SELECT id, run_id FROM actions_jobs
 WHERE repo_id = @repo_id AND concurrency_group = @concurrency_group AND status = 'waiting'
 ORDER BY created_at, id;
 
--- name: ListRunningActionsJobsOfRunner :many
-SELECT id, run_id FROM actions_jobs WHERE runner_id = @runner_id AND status = 'in_progress';
+-- name: ListRunningActionsJobsOfRunners :many
+-- The jobs running on a set of runners, with their run, oldest first.
+SELECT j.id, j.runner_id, j.name, j.run_id, j.repo_id, j.started_at, r.run_number, r.workflow_name
+FROM actions_jobs j
+JOIN actions_runs r ON r.id = j.run_id
+WHERE j.runner_id = ANY(@runner_ids::uuid[]) AND j.status = 'in_progress'
+ORDER BY j.started_at, j.id;
 
 -- ---- steps ----
 

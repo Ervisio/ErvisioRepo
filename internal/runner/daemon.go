@@ -33,6 +33,7 @@ type Daemon struct {
 	exec    *executor
 	logger  *slog.Logger
 	version string
+	metrics *metricsCollector
 
 	mu      sync.Mutex
 	running map[string]context.CancelFunc
@@ -66,6 +67,7 @@ func NewDaemon(cfg *config.Config, st *State, version string, logger *slog.Logge
 		client:  client,
 		logger:  logger,
 		version: version,
+		metrics: newMetricsCollector(cfg.Runner.StateFile, logger),
 		running: map[string]context.CancelFunc{},
 		exec: &executor{
 			cfg:     cfg,
@@ -135,6 +137,7 @@ func (d *Daemon) declare(ctx context.Context) error {
 			Version:  d.version,
 			Labels:   d.labels.Wire(),
 			Capacity: int32(d.cfg.Runner.Capacity), //nolint:gosec // capacity is at most 64
+			Metrics:  d.metrics.collect(ctx),
 		}))
 		if err == nil {
 			if r := resp.Msg.GetRunner(); r != nil {
@@ -308,10 +311,12 @@ func (d *Daemon) heartbeatLoop(ctx context.Context) {
 			return
 		case <-t.C:
 		}
+		metrics := d.metrics.collect(ctx)
 		hctx, cancel := context.WithTimeout(ctx, d.cfg.Runner.FetchTimeout.D())
 		resp, err := d.client.Heartbeat(hctx, connect.NewRequest(&runnerv1.HeartbeatRequest{
 			RunningTaskIds: d.runningIDs(),
 			Capacity:       int32(d.cfg.Runner.Capacity), //nolint:gosec // capacity is at most 64
+			Metrics:        metrics,
 		}))
 		cancel()
 		if err != nil {

@@ -741,7 +741,8 @@ type Querier interface {
 	ListReposByState(ctx context.Context, state string) ([]ListReposByStateRow, error)
 	// Newest first.
 	ListRetiredGenerations(ctx context.Context, repoID uuid.UUID) ([]GitGenerationsRetired, error)
-	ListRunningActionsJobsOfRunner(ctx context.Context, runnerID uuid.NullUUID) ([]ListRunningActionsJobsOfRunnerRow, error)
+	// The jobs running on a set of runners, with their run, oldest first.
+	ListRunningActionsJobsOfRunners(ctx context.Context, runnerIds []uuid.UUID) ([]ListRunningActionsJobsOfRunnersRow, error)
 	ListStaleActionsUploadOwners(ctx context.Context, arg ListStaleActionsUploadOwnersParams) ([]string, error)
 	// Users who starred a repository, latest first.
 	ListStargazers(ctx context.Context, arg ListStargazersParams) ([]ListStargazersRow, error)
@@ -972,6 +973,7 @@ type Querier interface {
 	SetActionsRunStatus(ctx context.Context, arg SetActionsRunStatusParams) error
 	SetActionsRunnerCapacity(ctx context.Context, arg SetActionsRunnerCapacityParams) error
 	SetActionsRunnerDevicePoll(ctx context.Context, arg SetActionsRunnerDevicePollParams) error
+	SetActionsRunnerMetrics(ctx context.Context, arg SetActionsRunnerMetricsParams) error
 	SetActionsRunnerPaused(ctx context.Context, arg SetActionsRunnerPausedParams) (ActionsRunner, error)
 	SetActionsScheduleNext(ctx context.Context, arg SetActionsScheduleNextParams) error
 	SetDeviceCodePoll(ctx context.Context, arg SetDeviceCodePollParams) error

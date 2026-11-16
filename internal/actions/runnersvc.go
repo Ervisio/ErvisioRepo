@@ -197,6 +197,7 @@ func (r *RunnerService) Declare(ctx context.Context, req *connect.Request[runner
 	if err != nil {
 		return nil, internalErr(r.s, "declare runner", err)
 	}
+	r.saveMetrics(ctx, rn.ID, req.Msg.GetMetrics())
 	return connect.NewResponse(&runnerv1.DeclareResponse{Runner: r.s.protoRunner(ctx, rn)}), nil
 }
 
@@ -563,6 +564,7 @@ func (r *RunnerService) Heartbeat(ctx context.Context, req *connect.Request[runn
 			r.s.log.Warn("runner capacity", "runner_id", rn.ID, "err", err)
 		}
 	}
+	r.saveMetrics(ctx, rn.ID, req.Msg.GetMetrics())
 	ids := make([]uuid.UUID, 0, len(req.Msg.GetRunningTaskIds()))
 	var bad []string
 	for _, s := range req.Msg.GetRunningTaskIds() {
@@ -690,12 +692,16 @@ type Runner struct {
 	Capacity   int
 	LastSeenAt *time.Time
 	CreatedAt  time.Time
+	// Metrics is the latest resource report (nil before the first one).
+	Metrics *RunnerMetrics
+	// Jobs are the jobs running now, oldest first.
+	Jobs []RunnerJob
 }
 
 func (s *Service) runnerFrom(ctx context.Context, rn dbgen.ActionsRunner, running int) Runner {
 	out := Runner{ID: rn.ID, Name: rn.Name, Scope: s.runnerScope(ctx, rn.Scope, rn.OwnerID, rn.RepoID),
 		Labels: rn.RawLabels, Version: rn.Version, Ephemeral: rn.Ephemeral, CreatedAt: rn.CreatedAt.Time,
-		Busy: running > 0, Paused: rn.Paused, Running: running, Capacity: int(rn.Capacity)}
+		Busy: running > 0, Paused: rn.Paused, Running: running, Capacity: int(rn.Capacity), Metrics: runnerMetrics(rn)}
 	if rn.LastSeenAt.Valid {
 		t := rn.LastSeenAt.Time
 		out.LastSeenAt = &t
@@ -726,8 +732,9 @@ func runnerScopeOK(sc Scope) error {
 	return invalid("runners cannot be registered at the %s scope", sc.kind)
 }
 
-// ListRunners lists the runners registered at a scope.
-func (s *Service) ListRunners(ctx context.Context, sc Scope) ([]Runner, error) {
+// ListRunners lists the runners registered at a scope; who decides which
+// running jobs show their repository.
+func (s *Service) ListRunners(ctx context.Context, who auth.Principal, sc Scope) ([]Runner, error) {
 	if err := runnerScopeOK(sc); err != nil {
 		return nil, err
 	}
@@ -736,12 +743,12 @@ func (s *Service) ListRunners(ctx context.Context, sc Scope) ([]Runner, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list runners: %w", err)
 	}
-	return s.runnersFrom(ctx, rows)
+	return s.runnersFrom(ctx, who, rows)
 }
 
 // ListRepoRunners lists every runner that can take the jobs of a
 // repository (its own, its owner's and the instance runners).
-func (s *Service) ListRepoRunners(ctx context.Context, sc Scope) ([]Runner, error) {
+func (s *Service) ListRepoRunners(ctx context.Context, who auth.Principal, sc Scope) ([]Runner, error) {
 	if sc.kind != "repo" {
 		return nil, invalid("not a repository scope")
 	}
@@ -757,19 +764,7 @@ func (s *Service) ListRepoRunners(ctx context.Context, sc Scope) ([]Runner, erro
 	if err != nil {
 		return nil, fmt.Errorf("list runners: %w", err)
 	}
-	return s.runnersFrom(ctx, rows)
-}
-
-func (s *Service) runnersFrom(ctx context.Context, rows []dbgen.ActionsRunner) ([]Runner, error) {
-	out := make([]Runner, 0, len(rows))
-	for _, rn := range rows {
-		running, err := s.q.ListRunningActionsJobsOfRunner(ctx, nullID(rn.ID))
-		if err != nil {
-			return nil, fmt.Errorf("runner jobs: %w", err)
-		}
-		out = append(out, s.runnerFrom(ctx, rn, len(running)))
-	}
-	return out, nil
+	return s.runnersFrom(ctx, who, rows)
 }
 
 // scopedRunner returns runner id when it is registered at sc.
@@ -826,11 +821,11 @@ func (s *Service) SetRunnerPaused(ctx context.Context, who auth.Principal, sc Sc
 	// Wake the long polls: a paused runner stops claiming, a resumed one
 	// looks for work at once.
 	s.hub.fireTasks()
-	running, err := s.q.ListRunningActionsJobsOfRunner(ctx, nullID(rn.ID))
+	list, err := s.runnersFrom(ctx, who, []dbgen.ActionsRunner{rn})
 	if err != nil {
-		return Runner{}, fmt.Errorf("runner jobs: %w", err)
+		return Runner{}, err
 	}
-	return s.runnerFrom(ctx, rn, len(running)), nil
+	return list[0], nil
 }
 
 // auditOrg is the namespace whose audit log shows events of an org scope.

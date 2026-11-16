@@ -6531,6 +6531,77 @@ export interface components {
             lastSeenAt?: string | null;
             /** Format: date-time */
             createdAt: string;
+            metrics?: components["schemas"]["ActionsRunnerMetrics"];
+            /** @description Jobs running on the runner now, oldest first */
+            jobs: components["schemas"]["ActionsRunnerJob"][];
+        };
+        /**
+         * @description Latest resource usage reported by the runner (absent until it reports).
+         *     Fields the runner could not measure are omitted.
+         */
+        ActionsRunnerMetrics: {
+            /** Format: date-time */
+            reportedAt: string;
+            hostname?: string;
+            os?: string;
+            arch?: string;
+            /** @description Logical CPUs; 0 when unknown */
+            cpuCount: number;
+            /**
+             * Format: double
+             * @description Busy share of the whole machine (0-100)
+             */
+            cpuPercent?: number;
+            /**
+             * Format: double
+             * @description One-minute load average
+             */
+            load1?: number;
+            /** Format: int64 */
+            memoryUsedBytes?: number;
+            /** Format: int64 */
+            memoryTotalBytes?: number;
+            /**
+             * Format: int64
+             * @description Filesystem of the runner data directory
+             */
+            diskUsedBytes?: number;
+            /** Format: int64 */
+            diskTotalBytes?: number;
+            gpus: components["schemas"]["ActionsRunnerGpu"][];
+        };
+        ActionsRunnerGpu: {
+            name: string;
+            /** Format: double */
+            utilizationPercent?: number;
+            /** Format: int64 */
+            memoryUsedBytes?: number;
+            /** Format: int64 */
+            memoryTotalBytes?: number;
+        };
+        /**
+         * @description A job running on a runner. visible is false when the caller cannot
+         *     read its repository: only id and startedAt are set then.
+         */
+        ActionsRunnerJob: {
+            /** Format: uuid */
+            id: string;
+            visible: boolean;
+            /** Format: date-time */
+            startedAt?: string;
+            name?: string;
+            /** Format: uuid */
+            runId?: string;
+            /** Format: int64 */
+            runNumber?: number;
+            workflowName?: string;
+            repository?: components["schemas"]["ActionsRunnerJobRepo"];
+        };
+        ActionsRunnerJobRepo: {
+            owner: string;
+            name: string;
+            /** @description owner/name */
+            fullName: string;
         };
         ActionsRunnerPause: {
             paused: boolean;

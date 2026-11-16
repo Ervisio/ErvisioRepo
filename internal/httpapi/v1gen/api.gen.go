@@ -2940,14 +2940,21 @@ type ActionsRunner struct {
 	Busy bool `json:"busy"`
 
 	// Capacity Jobs it runs at the same time as it reported; 0 when unknown
-	Capacity   int                `json:"capacity"`
-	CreatedAt  time.Time          `json:"createdAt"`
-	Ephemeral  bool               `json:"ephemeral"`
-	Id         openapi_types.UUID `json:"id"`
+	Capacity  int                `json:"capacity"`
+	CreatedAt time.Time          `json:"createdAt"`
+	Ephemeral bool               `json:"ephemeral"`
+	Id        openapi_types.UUID `json:"id"`
+
+	// Jobs Jobs running on the runner now, oldest first
+	Jobs       []ActionsRunnerJob `json:"jobs"`
 	Labels     []string           `json:"labels"`
 	LastSeenAt *time.Time         `json:"lastSeenAt,omitempty"`
-	Name       string             `json:"name"`
-	Online     bool               `json:"online"`
+
+	// Metrics Latest resource usage reported by the runner (absent until it reports).
+	// Fields the runner could not measure are omitted.
+	Metrics *ActionsRunnerMetrics `json:"metrics,omitempty"`
+	Name    string                `json:"name"`
+	Online  bool                  `json:"online"`
 
 	// Paused Takes no new jobs; running ones finish
 	Paused bool `json:"paused"`
@@ -3016,6 +3023,60 @@ type ActionsRunnerDeviceDecision struct {
 
 	// Scope instance, org:<name> or repo:<owner>/<name>; required to approve
 	Scope *string `json:"scope,omitempty"`
+}
+
+// ActionsRunnerGpu defines model for ActionsRunnerGpu.
+type ActionsRunnerGpu struct {
+	MemoryTotalBytes   *int64   `json:"memoryTotalBytes,omitempty"`
+	MemoryUsedBytes    *int64   `json:"memoryUsedBytes,omitempty"`
+	Name               string   `json:"name"`
+	UtilizationPercent *float64 `json:"utilizationPercent,omitempty"`
+}
+
+// ActionsRunnerJob A job running on a runner. visible is false when the caller cannot
+// read its repository: only id and startedAt are set then.
+type ActionsRunnerJob struct {
+	Id           openapi_types.UUID    `json:"id"`
+	Name         *string               `json:"name,omitempty"`
+	Repository   *ActionsRunnerJobRepo `json:"repository,omitempty"`
+	RunId        *openapi_types.UUID   `json:"runId,omitempty"`
+	RunNumber    *int64                `json:"runNumber,omitempty"`
+	StartedAt    *time.Time            `json:"startedAt,omitempty"`
+	Visible      bool                  `json:"visible"`
+	WorkflowName *string               `json:"workflowName,omitempty"`
+}
+
+// ActionsRunnerJobRepo defines model for ActionsRunnerJobRepo.
+type ActionsRunnerJobRepo struct {
+	// FullName owner/name
+	FullName string `json:"fullName"`
+	Name     string `json:"name"`
+	Owner    string `json:"owner"`
+}
+
+// ActionsRunnerMetrics Latest resource usage reported by the runner (absent until it reports).
+// Fields the runner could not measure are omitted.
+type ActionsRunnerMetrics struct {
+	Arch *string `json:"arch,omitempty"`
+
+	// CpuCount Logical CPUs; 0 when unknown
+	CpuCount int `json:"cpuCount"`
+
+	// CpuPercent Busy share of the whole machine (0-100)
+	CpuPercent     *float64 `json:"cpuPercent,omitempty"`
+	DiskTotalBytes *int64   `json:"diskTotalBytes,omitempty"`
+
+	// DiskUsedBytes Filesystem of the runner data directory
+	DiskUsedBytes *int64             `json:"diskUsedBytes,omitempty"`
+	Gpus          []ActionsRunnerGpu `json:"gpus"`
+	Hostname      *string            `json:"hostname,omitempty"`
+
+	// Load1 One-minute load average
+	Load1            *float64  `json:"load1,omitempty"`
+	MemoryTotalBytes *int64    `json:"memoryTotalBytes,omitempty"`
+	MemoryUsedBytes  *int64    `json:"memoryUsedBytes,omitempty"`
+	Os               *string   `json:"os,omitempty"`
+	ReportedAt       time.Time `json:"reportedAt"`
 }
 
 // ActionsRunnerPause defines model for ActionsRunnerPause.

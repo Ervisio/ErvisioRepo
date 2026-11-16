@@ -352,7 +352,7 @@ UPDATE actions_runners
 SET version = $1, labels = $2, raw_labels = $3, capacity = $4, online = true,
     last_seen_at = now(), updated_at = now()
 WHERE id = $5
-RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at
 `
 
 type DeclareActionsRunnerParams struct {
@@ -390,6 +390,8 @@ func (q *Queries) DeclareActionsRunner(ctx context.Context, arg DeclareActionsRu
 		&i.UpdatedAt,
 		&i.Paused,
 		&i.Capacity,
+		&i.Metrics,
+		&i.MetricsAt,
 	)
 	return i, err
 }
@@ -834,7 +836,7 @@ func (q *Queries) GetActionsRunForUpdate(ctx context.Context, id uuid.UUID) (Act
 }
 
 const getActionsRunner = `-- name: GetActionsRunner :one
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity FROM actions_runners WHERE id = $1
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at FROM actions_runners WHERE id = $1
 `
 
 func (q *Queries) GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRunner, error) {
@@ -858,12 +860,14 @@ func (q *Queries) GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRu
 		&i.UpdatedAt,
 		&i.Paused,
 		&i.Capacity,
+		&i.Metrics,
+		&i.MetricsAt,
 	)
 	return i, err
 }
 
 const getActionsRunnerByCredential = `-- name: GetActionsRunnerByCredential :one
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity FROM actions_runners WHERE credential_hash = $1
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at FROM actions_runners WHERE credential_hash = $1
 `
 
 func (q *Queries) GetActionsRunnerByCredential(ctx context.Context, credentialHash []byte) (ActionsRunner, error) {
@@ -887,6 +891,8 @@ func (q *Queries) GetActionsRunnerByCredential(ctx context.Context, credentialHa
 		&i.UpdatedAt,
 		&i.Paused,
 		&i.Capacity,
+		&i.Metrics,
+		&i.MetricsAt,
 	)
 	return i, err
 }
@@ -1290,7 +1296,7 @@ INSERT INTO actions_runners (id, name, scope, owner_id, repo_id, labels, raw_lab
     credential_hash, online, last_seen_at, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
     $10, true, now(), $11)
-RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at
 `
 
 type InsertActionsRunnerParams struct {
@@ -1342,6 +1348,8 @@ func (q *Queries) InsertActionsRunner(ctx context.Context, arg InsertActionsRunn
 		&i.UpdatedAt,
 		&i.Paused,
 		&i.Capacity,
+		&i.Metrics,
+		&i.MetricsAt,
 	)
 	return i, err
 }
@@ -1933,7 +1941,7 @@ func (q *Queries) ListActionsRunKeys(ctx context.Context, arg ListActionsRunKeys
 }
 
 const listActionsRunners = `-- name: ListActionsRunners :many
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity FROM actions_runners
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at FROM actions_runners
 WHERE scope = $1
   AND owner_id IS NOT DISTINCT FROM $2::uuid
   AND repo_id IS NOT DISTINCT FROM $3::uuid
@@ -1975,6 +1983,8 @@ func (q *Queries) ListActionsRunners(ctx context.Context, arg ListActionsRunners
 			&i.UpdatedAt,
 			&i.Paused,
 			&i.Capacity,
+			&i.Metrics,
+			&i.MetricsAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1987,7 +1997,7 @@ func (q *Queries) ListActionsRunners(ctx context.Context, arg ListActionsRunners
 }
 
 const listActionsRunnersForRepo = `-- name: ListActionsRunnersForRepo :many
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity FROM actions_runners
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at FROM actions_runners
 WHERE scope = 'instance' OR (scope = 'org' AND owner_id = $1) OR (scope = 'repo' AND repo_id = $2)
 ORDER BY scope, name, id
 `
@@ -2025,6 +2035,8 @@ func (q *Queries) ListActionsRunnersForRepo(ctx context.Context, arg ListActions
 			&i.UpdatedAt,
 			&i.Paused,
 			&i.Capacity,
+			&i.Metrics,
+			&i.MetricsAt,
 		); err != nil {
 			return nil, err
 		}
@@ -2561,25 +2573,45 @@ func (q *Queries) ListActiveActionsRunsInGroup(ctx context.Context, arg ListActi
 	return items, nil
 }
 
-const listRunningActionsJobsOfRunner = `-- name: ListRunningActionsJobsOfRunner :many
-SELECT id, run_id FROM actions_jobs WHERE runner_id = $1 AND status = 'in_progress'
+const listRunningActionsJobsOfRunners = `-- name: ListRunningActionsJobsOfRunners :many
+SELECT j.id, j.runner_id, j.name, j.run_id, j.repo_id, j.started_at, r.run_number, r.workflow_name
+FROM actions_jobs j
+JOIN actions_runs r ON r.id = j.run_id
+WHERE j.runner_id = ANY($1::uuid[]) AND j.status = 'in_progress'
+ORDER BY j.started_at, j.id
 `
 
-type ListRunningActionsJobsOfRunnerRow struct {
-	ID    uuid.UUID
-	RunID uuid.UUID
+type ListRunningActionsJobsOfRunnersRow struct {
+	ID           uuid.UUID
+	RunnerID     uuid.NullUUID
+	Name         string
+	RunID        uuid.UUID
+	RepoID       uuid.UUID
+	StartedAt    pgtype.Timestamptz
+	RunNumber    int64
+	WorkflowName string
 }
 
-func (q *Queries) ListRunningActionsJobsOfRunner(ctx context.Context, runnerID uuid.NullUUID) ([]ListRunningActionsJobsOfRunnerRow, error) {
-	rows, err := q.db.Query(ctx, listRunningActionsJobsOfRunner, runnerID)
+// The jobs running on a set of runners, with their run, oldest first.
+func (q *Queries) ListRunningActionsJobsOfRunners(ctx context.Context, runnerIds []uuid.UUID) ([]ListRunningActionsJobsOfRunnersRow, error) {
+	rows, err := q.db.Query(ctx, listRunningActionsJobsOfRunners, runnerIds)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListRunningActionsJobsOfRunnerRow{}
+	items := []ListRunningActionsJobsOfRunnersRow{}
 	for rows.Next() {
-		var i ListRunningActionsJobsOfRunnerRow
-		if err := rows.Scan(&i.ID, &i.RunID); err != nil {
+		var i ListRunningActionsJobsOfRunnersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.RunnerID,
+			&i.Name,
+			&i.RunID,
+			&i.RepoID,
+			&i.StartedAt,
+			&i.RunNumber,
+			&i.WorkflowName,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -3080,8 +3112,22 @@ func (q *Queries) SetActionsRunnerDevicePoll(ctx context.Context, arg SetActions
 	return err
 }
 
+const setActionsRunnerMetrics = `-- name: SetActionsRunnerMetrics :exec
+UPDATE actions_runners SET metrics = $1, metrics_at = now() WHERE id = $2
+`
+
+type SetActionsRunnerMetricsParams struct {
+	Metrics []byte
+	ID      uuid.UUID
+}
+
+func (q *Queries) SetActionsRunnerMetrics(ctx context.Context, arg SetActionsRunnerMetricsParams) error {
+	_, err := q.db.Exec(ctx, setActionsRunnerMetrics, arg.Metrics, arg.ID)
+	return err
+}
+
 const setActionsRunnerPaused = `-- name: SetActionsRunnerPaused :one
-UPDATE actions_runners SET paused = $1, updated_at = now() WHERE id = $2 RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity
+UPDATE actions_runners SET paused = $1, updated_at = now() WHERE id = $2 RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at
 `
 
 type SetActionsRunnerPausedParams struct {
@@ -3110,6 +3156,8 @@ func (q *Queries) SetActionsRunnerPaused(ctx context.Context, arg SetActionsRunn
 		&i.UpdatedAt,
 		&i.Paused,
 		&i.Capacity,
+		&i.Metrics,
+		&i.MetricsAt,
 	)
 	return i, err
 }
