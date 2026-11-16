@@ -8,6 +8,7 @@ import (
 	"html"
 	"io"
 	"path"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -41,10 +42,14 @@ type Run struct {
 	Actor         string
 	TriggerActor  string
 	URL           string
-	StartedAt     *time.Time
-	CompletedAt   *time.Time
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	// External marks a read-only run imported from GitHub: no jobs or
+	// logs here, HTMLURL is its page on GitHub.
+	External    bool
+	HTMLURL     string
+	StartedAt   *time.Time
+	CompletedAt *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // Job is one job of a run attempt.
@@ -84,11 +89,15 @@ type Step struct {
 	CompletedAt *time.Time
 }
 
-// Workflow is a workflow file that ran in a repository.
+// Workflow is a workflow file of the default branch or of past runs.
 type Workflow struct {
-	Path    string
-	Name    string
-	LastRun time.Time
+	Path string
+	Name string
+	// LastRun is nil when the workflow never ran.
+	LastRun *time.Time
+	// OnDefaultBranch reports whether the file exists on the default
+	// branch.
+	OnDefaultBranch bool
 }
 
 // RunFilter filters ListRuns.
@@ -100,6 +109,8 @@ type RunFilter struct {
 	Sha      string
 	Page     int // from 1
 	PerPage  int // default 30, at most 100
+	// External includes the runs imported from GitHub.
+	External bool
 }
 
 func timePtr(t time.Time, ok bool) *time.Time {
@@ -113,7 +124,7 @@ func (s *Service) runFrom(ctx context.Context, repo repos.Repo, r dbgen.ActionsR
 	return Run{ID: r.ID, RunNumber: r.RunNumber, Attempt: r.Attempt, WorkflowPath: r.WorkflowPath,
 		WorkflowName: r.WorkflowName, Event: r.Event, EventAction: r.EventAction, Ref: r.Ref, Sha: r.Sha, Title: r.Title,
 		Status: r.Status, Conclusion: r.Conclusion, NeedsApproval: r.NeedsApproval, Fork: r.Fork,
-		Actor: s.userName(ctx, r.ActorID), TriggerActor: s.userName(ctx, r.TriggerActorID), URL: s.RunURL(repo, r),
+		Actor: s.actorName(ctx, r.ActorID, r.SystemActor), TriggerActor: s.actorName(ctx, r.TriggerActorID, r.SystemActor), URL: s.RunURL(repo, r),
 		StartedAt: timePtr(r.StartedAt.Time, r.StartedAt.Valid), CompletedAt: timePtr(r.CompletedAt.Time, r.CompletedAt.Valid),
 		CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time}
 }
@@ -206,21 +217,73 @@ func (s *Service) workflowPath(ctx context.Context, repoID uuid.UUID, wf string)
 	return found, nil
 }
 
-// ListWorkflows lists the workflow files that ever ran in a repository.
+// ListWorkflows lists the workflow files of the default branch and the
+// ones that ran in a repository (here or, imported, on GitHub), by path.
 func (s *Service) ListWorkflows(ctx context.Context, who auth.Principal, owner, name string) ([]Workflow, error) {
-	_, repo, err := s.repoFor(ctx, who, owner, name, authz.ActRead)
+	d, repo, err := s.repoFor(ctx, who, owner, name, authz.ActRead)
 	if err != nil {
 		return nil, err
+	}
+	byPath := map[string]*Workflow{}
+	for _, f := range s.defaultWorkflows(ctx, d, repo) {
+		w := &Workflow{Path: f.Path, OnDefaultBranch: true}
+		if pw, err := parseWorkflow(f.Path, f.Content); err == nil {
+			w.Name = pw.workflowName()
+		}
+		byPath[f.Path] = w
+	}
+	ran := func(p, n string, at time.Time) {
+		w, ok := byPath[p]
+		if !ok {
+			w = &Workflow{Path: p, Name: n}
+			byPath[p] = w
+		}
+		if w.Name == "" {
+			w.Name = n
+		}
+		if w.LastRun == nil || at.After(*w.LastRun) {
+			t := at
+			w.LastRun = &t
+		}
 	}
 	rows, err := s.q.ListActionsWorkflows(ctx, repo.ID)
 	if err != nil {
 		return nil, fmt.Errorf("list workflows: %w", err)
 	}
-	out := make([]Workflow, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, Workflow{Path: r.WorkflowPath, Name: r.WorkflowName, LastRun: r.CreatedAt.Time})
+		ran(r.WorkflowPath, r.WorkflowName, r.CreatedAt.Time)
 	}
+	ext, err := s.q.ListActionsExternalWorkflows(ctx, repo.ID)
+	if err != nil {
+		return nil, fmt.Errorf("list external workflows: %w", err)
+	}
+	for _, r := range ext {
+		ran(r.WorkflowPath, r.WorkflowName, r.CreatedAt.Time)
+	}
+	out := make([]Workflow, 0, len(byPath))
+	for _, w := range byPath {
+		out = append(out, *w)
+	}
+	slices.SortFunc(out, func(a, b Workflow) int { return strings.Compare(a.Path, b.Path) })
 	return out, nil
+}
+
+// defaultWorkflows reads the workflow files of the head of the default
+// branch; none when the repository is empty or unreadable.
+func (s *Service) defaultWorkflows(ctx context.Context, d *Deps, repo repos.Repo) []workflowFile {
+	if repo.DefaultBranch == "" {
+		return nil
+	}
+	head, err := d.Browse.Resolve(ctx, browseRepo(repo), "refs/heads/"+repo.DefaultBranch)
+	if err != nil {
+		return nil
+	}
+	files, err := s.discover(ctx, d.Browse, browseRepo(repo), head.Commit)
+	if err != nil {
+		s.log.Info("default branch workflows unknown", "repo_id", repo.ID, "err", err)
+		return nil
+	}
+	return files
 }
 
 // ListRuns lists the runs of a repository, newest first, with the total
@@ -244,8 +307,8 @@ func (s *Service) ListRuns(ctx context.Context, who auth.Principal, owner, name 
 	if ref != "" && !strings.HasPrefix(ref, "refs/") {
 		ref = "refs/heads/" + ref
 	}
-	rows, err := s.q.ListActionsRuns(ctx, dbgen.ListActionsRunsParams{RepoID: repo.ID, WorkflowPath: wf, Event: f.Event,
-		Status: f.Status, Ref: ref, Sha: f.Sha, Lim: int32(per), Off: int32((page - 1) * per)}) // #nosec G115 -- per <= 100, page <= 2^20
+	keys, err := s.q.ListActionsRunKeys(ctx, dbgen.ListActionsRunKeysParams{RepoID: repo.ID, WorkflowPath: wf, Event: f.Event,
+		Status: f.Status, Ref: ref, Sha: f.Sha, WithExternal: f.External, Lim: int32(per), Off: int32((page - 1) * per)}) // #nosec G115 -- per <= 100, page <= 2^20
 	if err != nil {
 		return nil, 0, fmt.Errorf("list runs: %w", err)
 	}
@@ -254,9 +317,46 @@ func (s *Service) ListRuns(ctx context.Context, who auth.Principal, owner, name 
 	if err != nil {
 		return nil, 0, fmt.Errorf("count runs: %w", err)
 	}
-	out := make([]Run, 0, len(rows))
-	for _, r := range rows {
-		out = append(out, s.runFrom(ctx, repo, r))
+	if f.External {
+		n, err := s.q.CountActionsExternalRuns(ctx, dbgen.CountActionsExternalRunsParams{RepoID: repo.ID, WorkflowPath: wf,
+			Event: f.Event, Status: f.Status, Ref: ref, Sha: f.Sha})
+		if err != nil {
+			return nil, 0, fmt.Errorf("count external runs: %w", err)
+		}
+		total += n
+	}
+	var local, external []uuid.UUID
+	for _, k := range keys {
+		if k.External {
+			external = append(external, k.ID)
+		} else {
+			local = append(local, k.ID)
+		}
+	}
+	byID := make(map[uuid.UUID]Run, len(keys))
+	if len(local) > 0 {
+		rows, err := s.q.ListActionsRunsByIDs(ctx, local)
+		if err != nil {
+			return nil, 0, fmt.Errorf("list runs: %w", err)
+		}
+		for _, r := range rows {
+			byID[r.ID] = s.runFrom(ctx, repo, r)
+		}
+	}
+	if len(external) > 0 {
+		rows, err := s.q.ListActionsExternalRunsByIDs(ctx, external)
+		if err != nil {
+			return nil, 0, fmt.Errorf("list external runs: %w", err)
+		}
+		for _, r := range rows {
+			byID[r.ID] = externalRunFrom(r)
+		}
+	}
+	out := make([]Run, 0, len(keys))
+	for _, k := range keys {
+		if r, ok := byID[k.ID]; ok {
+			out = append(out, r)
+		}
 	}
 	return out, total, nil
 }

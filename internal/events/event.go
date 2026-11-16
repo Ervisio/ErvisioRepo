@@ -94,9 +94,16 @@ type RefUpdate struct {
 	New string `json:"new"`
 }
 
-// PushPayload is the payload of KindPush events.
+// OriginSync marks the push events of the ref updates written by a GitHub
+// sync link that runs Actions on synced pushes (ghsync): they have no
+// actor, yet start workflows as the sync bot.
+const OriginSync = "ghsync"
+
+// PushPayload is the payload of KindPush events. Origin is set for
+// actorless pushes that must still be treated as pushes (OriginSync).
 type PushPayload struct {
 	Updates []RefUpdate `json:"updates"`
+	Origin  string      `json:"origin,omitempty"`
 }
 
 func nullID(id uuid.UUID) uuid.NullUUID { return uuid.NullUUID{UUID: id, Valid: id != uuid.Nil} }

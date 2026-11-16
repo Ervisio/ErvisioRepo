@@ -19,6 +19,8 @@ export type ActionsEnvironment = S["ActionsEnvironment"];
 export type ActionsEnvironmentPut = S["ActionsEnvironmentPut"];
 export type ActionsRunner = S["ActionsRunner"];
 export type ActionsRegistrationToken = S["ActionsRegistrationToken"];
+export type ActionsGitHubImport = S["ActionsGitHubImport"];
+export type ActionsGitHubImportRequest = S["ActionsGitHubImportRequest"];
 
 const enc = encodeURIComponent;
 export const RUNS_PER_PAGE = 30;
@@ -149,3 +151,20 @@ export function useDeleteRunner(s: ActionsScope) {
 }
 export const useRegistrationToken = (s: ActionsScope) =>
   useMutation({ mutationFn: () => request<ActionsRegistrationToken>("POST", `${scopeBase(s)}/runners/registration-token`) });
+
+/* Import of the Actions configuration and runs from GitHub (repository). */
+
+const ghImportKey = (owner: string, name: string) => ["actions-cfg", `${owner}/${name}`, "github"];
+export const useGitHubActionsImport = (owner: string, name: string) =>
+  useQuery({ queryKey: ghImportKey(owner, name), queryFn: () => request<ActionsGitHubImport>("GET", `${repoBase(owner, name)}/actions/github`) });
+export function useImportGitHubActions(owner: string, name: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ActionsGitHubImportRequest) => request<ActionsGitHubImport>("POST", `${repoBase(owner, name)}/actions/github/import`, body),
+    onSuccess: (data) => {
+      qc.setQueryData(ghImportKey(owner, name), data);
+      void qc.invalidateQueries({ queryKey: ["actions-cfg", `${owner}/${name}`] });
+      void qc.invalidateQueries({ queryKey: ["actions", owner, name] });
+    },
+  });
+}

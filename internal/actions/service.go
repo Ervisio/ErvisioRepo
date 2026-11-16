@@ -107,6 +107,9 @@ type Deps struct {
 	IDTokens IDTokens
 	// Secrets is the Phase 9 hook for external secret stores.
 	Secrets SecretHook
+	// GitHub is the GitHub sync (import of the Actions configuration and
+	// runs); nil without git hooks.
+	GitHub GitHubSource
 }
 
 // Options configure New.

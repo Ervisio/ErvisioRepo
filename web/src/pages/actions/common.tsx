@@ -7,6 +7,8 @@ type Tone = "ok" | "err" | "run" | "wait" | "idle";
 
 export function runState(status: string, conclusion: string): RunState {
   if (status === "completed") {
+    // GitHub-only conclusions of imported runs.
+    if (conclusion === "neutral" || conclusion === "stale") return "skipped";
     return conclusion === "success" || conclusion === "failure" || conclusion === "cancelled" || conclusion === "skipped" || conclusion === "timed_out" ? conclusion : "failure";
   }
   return status === "in_progress" || status === "queued" || status === "waiting" || status === "pending" || status === "blocked" ? status : "queued";

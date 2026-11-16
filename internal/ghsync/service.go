@@ -29,6 +29,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
+	"github.com/Ervisio/ErvisioRepo/internal/events"
 	"github.com/Ervisio/ErvisioRepo/internal/githooks"
 	"github.com/Ervisio/ErvisioRepo/internal/gitstore"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
@@ -54,6 +55,34 @@ const Protocol = "ghsync"
 // git data and the pull request heads). It behaves like Protocol, and the
 // event hooks publish no push for it (see Quiet).
 const ImportProtocol = "ghsync-import"
+
+// ActionsProtocol is the githooks protocol of the writes of a link that
+// runs Actions on synced pushes (run_actions): it behaves like Protocol,
+// and the push events it publishes carry events.OriginSync, so that
+// workflows start for them as the sync bot.
+const ActionsProtocol = "ghsync-actions"
+
+// own reports whether a hook session protocol is one of this package.
+func own(protocol string) bool {
+	return protocol == Protocol || protocol == ImportProtocol || protocol == ActionsProtocol
+}
+
+// Origin returns events.OriginSync for the sessions of a link that runs
+// Actions on synced pushes (events.PushHooks.Origin).
+func Origin(s *githooks.Session) string {
+	if s.Protocol == ActionsProtocol {
+		return events.OriginSync
+	}
+	return ""
+}
+
+// protocolOf is the hook session protocol of the local writes of a link.
+func protocolOf(link dbgen.GithubSyncLink) string {
+	if link.RunActions && link.Mode != ModeBackup {
+		return ActionsProtocol
+	}
+	return Protocol
+}
 
 // Quiet reports whether the ref updates of a hook session are part of an
 // import, whose writes must not fan out to webhooks, notifications and
@@ -125,6 +154,18 @@ type Service struct {
 	imps   atomic.Pointer[[]Importer]
 	repos  atomic.Value // Repos
 	jobs   atomic.Value // Enqueuer
+	after  atomic.Pointer[func(ctx context.Context, repoID uuid.UUID)]
+}
+
+// SetAfterRun sets a function called after every successful run of a
+// link (the refresh of the GitHub Actions run history). It runs in the
+// job of the run; it should be quick and log its own failures.
+func (s *Service) SetAfterRun(fn func(ctx context.Context, repoID uuid.UUID)) {
+	if fn == nil {
+		s.after.Store(nil)
+		return
+	}
+	s.after.Store(&fn)
 }
 
 // New builds the service.

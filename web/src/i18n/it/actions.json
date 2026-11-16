@@ -147,5 +147,19 @@
   "runners.tokenLabel": "Token di registrazione (valido fino al {when})",
   "runners.tokenOnce": "Copialo adesso: viene mostrato una sola volta.",
   "admin.title": "Runner",
-  "admin.subtitle": "Runner condivisi da tutti i repository di questa istanza."
+  "admin.subtitle": "Runner condivisi da tutti i repository di questa istanza.",
+  "run.github": "GitHub",
+  "run.onGitHub": "Importata da GitHub: apri l’esecuzione e i log su GitHub",
+  "gh.title": "Importa da GitHub",
+  "gh.hint": "Questo repository è collegato a {remote} su GitHub. Importa le variabili Actions, i nomi dei secret, gli environment e le ultime esecuzioni dei workflow.",
+  "gh.open": "Apri su GitHub",
+  "gh.last": "Ultimo import {when}: {vars} variabili importate, {skipped} mantenute, {runs} esecuzioni lette.",
+  "gh.missing": "Secret da compilare ({count}): GitHub non restituisce mai i valori dei secret, impostali qui.",
+  "gh.env": "environment {env}",
+  "gh.fill": "Vai ai secret del repository",
+  "gh.overwrite": "Sostituisci le variabili già presenti",
+  "gh.import": "Importa da GitHub",
+  "gh.running": "Importazione…",
+  "gh.done": "Importato da GitHub",
+  "gh.error": "Problema"
 }

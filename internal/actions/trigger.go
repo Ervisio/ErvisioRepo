@@ -41,11 +41,37 @@ func (s *Service) EventHandler() events.Handler {
 	return events.HandlerFunc(s.handleEvent)
 }
 
+// SyncBot is the actor of the runs started by the pushes of a GitHub sync
+// link that runs Actions on synced pushes.
+const SyncBot = "ervisio-sync[bot]"
+
+// systemActor returns the bot an actorless event runs as: SyncBot for the
+// pushes of a GitHub sync link with Actions on (events.OriginSync), ""
+// for every other one.
+func systemActor(ev events.Event) string {
+	if ev.Kind != events.KindPush {
+		return ""
+	}
+	var p events.PushPayload
+	if err := ev.Decode(&p); err != nil || p.Origin != events.OriginSync {
+		return ""
+	}
+	return SyncBot
+}
+
 func (s *Service) handleEvent(ctx context.Context, ev events.Event) error {
-	if ev.RepoID == uuid.Nil || ev.ActorID == uuid.Nil {
-		// Events of Actions itself (job tokens, check runs) and of the
-		// system never start workflows: no loops.
+	if ev.RepoID == uuid.Nil {
 		return nil
+	}
+	bot := ""
+	if ev.ActorID == uuid.Nil {
+		// Events of Actions itself (job tokens, check runs) and of the
+		// system never start workflows: no loops. The one exception is
+		// the pushes of a GitHub sync link with Actions on: written by
+		// the sync, never by a workflow token.
+		if bot = systemActor(ev); bot == "" {
+			return nil
+		}
 	}
 	d, err := s.d()
 	if err != nil {
@@ -79,7 +105,7 @@ func (s *Service) handleEvent(ctx context.Context, ev events.Event) error {
 		var err error
 		switch it.Event {
 		case events.KindPush:
-			err = s.onPush(ctx, d, repo, ev, payload)
+			err = s.onPush(ctx, d, repo, ev, bot, payload)
 		case events.KindPull, events.KindPullReview, events.KindPullReviewComment:
 			err = s.onPull(ctx, d, repo, ev, it, payload)
 		case events.KindRelease:
@@ -101,7 +127,9 @@ type event struct {
 	RunRef  string
 	Title   string
 	ActorID uuid.UUID
-	Payload map[string]any
+	// SystemActor names the bot of an actorless event (SyncBot).
+	SystemActor string
+	Payload     map[string]any
 	// HeadRepoID and Fork describe pull requests.
 	HeadRepoID    uuid.UUID
 	Fork          bool
@@ -126,7 +154,8 @@ func (s *Service) start(ctx context.Context, d *Deps, repo repos.Repo, e event) 
 		}
 		payload := clonePayload(e.Payload)
 		if _, err := s.createRun(ctx, runInput{Repo: repo, WF: pw, Event: e.Event, Action: e.Action, Ref: e.RunRef,
-			Sha: e.Sha, Title: e.Title, ActorID: e.ActorID, Payload: payload, HeadRepoID: e.HeadRepoID, Fork: e.Fork,
+			Sha: e.Sha, Title: e.Title, ActorID: e.ActorID, SystemActor: e.SystemActor, Payload: payload,
+			HeadRepoID: e.HeadRepoID, Fork: e.Fork,
 			NeedsApproval: e.NeedsApproval}); err != nil {
 			var ve *ValidationError
 			if errors.As(err, &ve) {
@@ -146,7 +175,7 @@ func clonePayload(p map[string]any) map[string]any {
 	return out
 }
 
-func (s *Service) onPush(ctx context.Context, d *Deps, repo repos.Repo, ev events.Event, payload map[string]any) error {
+func (s *Service) onPush(ctx context.Context, d *Deps, repo repos.Repo, ev events.Event, bot string, payload map[string]any) error {
 	ref, _ := payload["ref"].(string)
 	before, _ := payload["before"].(string)
 	after, _ := payload["after"].(string)
@@ -170,8 +199,13 @@ func (s *Service) onPush(ctx context.Context, d *Deps, repo repos.Repo, ev event
 		title, _ = hc["message"].(string)
 		title, _, _ = strings.Cut(title, "\n")
 	}
+	if bot != "" {
+		// The webhook payload of an actorless push has no sender.
+		payload["sender"] = map[string]any{"login": bot, "type": "Bot"}
+		payload["pusher"] = map[string]any{"name": bot, "email": nil}
+	}
 	return s.start(ctx, d, repo, event{trigger: trigger{Event: "push", Ref: ref, Files: files}, Sha: after, RunRef: ref,
-		Title: title, ActorID: ev.ActorID, Payload: payload})
+		Title: title, ActorID: ev.ActorID, SystemActor: bot, Payload: payload})
 }
 
 // changedFiles lists the paths changed between two commits; nil when

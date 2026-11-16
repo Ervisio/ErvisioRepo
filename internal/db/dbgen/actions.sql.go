@@ -219,6 +219,39 @@ func (q *Queries) CompleteOpenActionsSteps(ctx context.Context, arg CompleteOpen
 	return err
 }
 
+const countActionsExternalRuns = `-- name: CountActionsExternalRuns :one
+SELECT count(*) FROM actions_external_runs
+WHERE repo_id = $1
+  AND ($2::text = '' OR workflow_path = $2::text)
+  AND ($3::text = '' OR event = $3::text)
+  AND ($4::text = '' OR status = $4::text OR conclusion = $4::text)
+  AND ($5::text = '' OR ref = $5::text)
+  AND ($6::text = '' OR sha = $6::text)
+`
+
+type CountActionsExternalRunsParams struct {
+	RepoID       uuid.UUID
+	WorkflowPath string
+	Event        string
+	Status       string
+	Ref          string
+	Sha          string
+}
+
+func (q *Queries) CountActionsExternalRuns(ctx context.Context, arg CountActionsExternalRunsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countActionsExternalRuns,
+		arg.RepoID,
+		arg.WorkflowPath,
+		arg.Event,
+		arg.Status,
+		arg.Ref,
+		arg.Sha,
+	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countActionsRuns = `-- name: CountActionsRuns :one
 SELECT count(*) FROM actions_runs
 WHERE repo_id = $1
@@ -443,6 +476,27 @@ func (q *Queries) GetActionsEnvironment(ctx context.Context, arg GetActionsEnvir
 	return i, err
 }
 
+const getActionsGitHubImport = `-- name: GetActionsGitHubImport :one
+SELECT repo_id, secret_names, variables_imported, variables_skipped, runs_imported, last_error, imported_at, runs_synced_at, updated_at FROM actions_github_imports WHERE repo_id = $1
+`
+
+func (q *Queries) GetActionsGitHubImport(ctx context.Context, repoID uuid.UUID) (ActionsGithubImport, error) {
+	row := q.db.QueryRow(ctx, getActionsGitHubImport, repoID)
+	var i ActionsGithubImport
+	err := row.Scan(
+		&i.RepoID,
+		&i.SecretNames,
+		&i.VariablesImported,
+		&i.VariablesSkipped,
+		&i.RunsImported,
+		&i.LastError,
+		&i.ImportedAt,
+		&i.RunsSyncedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getActionsJob = `-- name: GetActionsJob :one
 SELECT id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at FROM actions_jobs WHERE id = $1
 `
@@ -612,7 +666,7 @@ func (q *Queries) GetActionsRegistrationToken(ctx context.Context, tokenHash []b
 }
 
 const getActionsRun = `-- name: GetActionsRun :one
-SELECT id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at FROM actions_runs WHERE id = $1
+SELECT id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at, system_actor FROM actions_runs WHERE id = $1
 `
 
 func (q *Queries) GetActionsRun(ctx context.Context, id uuid.UUID) (ActionsRun, error) {
@@ -646,12 +700,13 @@ func (q *Queries) GetActionsRun(ctx context.Context, id uuid.UUID) (ActionsRun, 
 		&i.CompletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SystemActor,
 	)
 	return i, err
 }
 
 const getActionsRunForUpdate = `-- name: GetActionsRunForUpdate :one
-SELECT id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at FROM actions_runs WHERE id = $1 FOR UPDATE
+SELECT id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at, system_actor FROM actions_runs WHERE id = $1 FOR UPDATE
 `
 
 func (q *Queries) GetActionsRunForUpdate(ctx context.Context, id uuid.UUID) (ActionsRun, error) {
@@ -685,6 +740,7 @@ func (q *Queries) GetActionsRunForUpdate(ctx context.Context, id uuid.UUID) (Act
 		&i.CompletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SystemActor,
 	)
 	return i, err
 }
@@ -937,11 +993,11 @@ func (q *Queries) InsertActionsRegistrationToken(ctx context.Context, arg Insert
 const insertActionsRun = `-- name: InsertActionsRun :one
 INSERT INTO actions_runs (id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title,
     run_number, status, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel,
-    head_repo_id, fork, needs_approval)
+    head_repo_id, fork, needs_approval, system_actor)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
     $11, $12, $13, $14, $15, $16, $17,
-    $18, $19, $20)
-RETURNING id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at
+    $18, $19, $20, $21)
+RETURNING id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at, system_actor
 `
 
 type InsertActionsRunParams struct {
@@ -965,6 +1021,7 @@ type InsertActionsRunParams struct {
 	HeadRepoID        uuid.NullUUID
 	Fork              bool
 	NeedsApproval     bool
+	SystemActor       string
 }
 
 func (q *Queries) InsertActionsRun(ctx context.Context, arg InsertActionsRunParams) (ActionsRun, error) {
@@ -989,6 +1046,7 @@ func (q *Queries) InsertActionsRun(ctx context.Context, arg InsertActionsRunPara
 		arg.HeadRepoID,
 		arg.Fork,
 		arg.NeedsApproval,
+		arg.SystemActor,
 	)
 	var i ActionsRun
 	err := row.Scan(
@@ -1019,6 +1077,7 @@ func (q *Queries) InsertActionsRun(ctx context.Context, arg InsertActionsRunPara
 		&i.CompletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SystemActor,
 	)
 	return i, err
 }
@@ -1110,7 +1169,7 @@ func (q *Queries) InsertActionsSchedule(ctx context.Context, arg InsertActionsSc
 }
 
 const latestActionsRun = `-- name: LatestActionsRun :one
-SELECT id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at FROM actions_runs
+SELECT id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at, system_actor FROM actions_runs
 WHERE repo_id = $1 AND workflow_path = $2 AND ref = $3 AND status = 'completed'
 ORDER BY created_at DESC, id DESC
 LIMIT 1
@@ -1154,6 +1213,7 @@ func (q *Queries) LatestActionsRun(ctx context.Context, arg LatestActionsRunPara
 		&i.CompletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SystemActor,
 	)
 	return i, err
 }
@@ -1180,6 +1240,83 @@ func (q *Queries) ListActionsEnvironments(ctx context.Context, repoID uuid.UUID)
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActionsExternalRunsByIDs = `-- name: ListActionsExternalRunsByIDs :many
+SELECT id, repo_id, provider, external_id, run_number, attempt, workflow_path, workflow_name, event, ref, sha, title, status, conclusion, actor_login, html_url, started_at, created_at, updated_at FROM actions_external_runs WHERE id = ANY($1::uuid[])
+`
+
+func (q *Queries) ListActionsExternalRunsByIDs(ctx context.Context, ids []uuid.UUID) ([]ActionsExternalRun, error) {
+	rows, err := q.db.Query(ctx, listActionsExternalRunsByIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ActionsExternalRun{}
+	for rows.Next() {
+		var i ActionsExternalRun
+		if err := rows.Scan(
+			&i.ID,
+			&i.RepoID,
+			&i.Provider,
+			&i.ExternalID,
+			&i.RunNumber,
+			&i.Attempt,
+			&i.WorkflowPath,
+			&i.WorkflowName,
+			&i.Event,
+			&i.Ref,
+			&i.Sha,
+			&i.Title,
+			&i.Status,
+			&i.Conclusion,
+			&i.ActorLogin,
+			&i.HtmlUrl,
+			&i.StartedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActionsExternalWorkflows = `-- name: ListActionsExternalWorkflows :many
+SELECT DISTINCT ON (workflow_path) workflow_path, workflow_name, created_at
+FROM actions_external_runs WHERE repo_id = $1 AND workflow_path <> ''
+ORDER BY workflow_path, created_at DESC
+`
+
+type ListActionsExternalWorkflowsRow struct {
+	WorkflowPath string
+	WorkflowName string
+	CreatedAt    pgtype.Timestamptz
+}
+
+// The workflow files of the runs read from GitHub, with their last name.
+func (q *Queries) ListActionsExternalWorkflows(ctx context.Context, repoID uuid.UUID) ([]ListActionsExternalWorkflowsRow, error) {
+	rows, err := q.db.Query(ctx, listActionsExternalWorkflows, repoID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListActionsExternalWorkflowsRow{}
+	for rows.Next() {
+		var i ListActionsExternalWorkflowsRow
+		if err := rows.Scan(&i.WorkflowPath, &i.WorkflowName, &i.CreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -1394,6 +1531,141 @@ func (q *Queries) ListActionsLogRows(ctx context.Context, arg ListActionsLogRows
 	return items, nil
 }
 
+const listActionsRepoSecretKeys = `-- name: ListActionsRepoSecretKeys :many
+SELECT environment, name FROM actions_secrets
+WHERE repo_id = $1 AND scope IN ('repo', 'environment')
+`
+
+type ListActionsRepoSecretKeysRow struct {
+	Environment string
+	Name        string
+}
+
+// The secrets of a repository and of its environments.
+func (q *Queries) ListActionsRepoSecretKeys(ctx context.Context, repoID uuid.NullUUID) ([]ListActionsRepoSecretKeysRow, error) {
+	rows, err := q.db.Query(ctx, listActionsRepoSecretKeys, repoID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListActionsRepoSecretKeysRow{}
+	for rows.Next() {
+		var i ListActionsRepoSecretKeysRow
+		if err := rows.Scan(&i.Environment, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActionsRepoVariableKeys = `-- name: ListActionsRepoVariableKeys :many
+SELECT environment, name FROM actions_variables
+WHERE repo_id = $1 AND scope IN ('repo', 'environment')
+`
+
+type ListActionsRepoVariableKeysRow struct {
+	Environment string
+	Name        string
+}
+
+func (q *Queries) ListActionsRepoVariableKeys(ctx context.Context, repoID uuid.NullUUID) ([]ListActionsRepoVariableKeysRow, error) {
+	rows, err := q.db.Query(ctx, listActionsRepoVariableKeys, repoID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListActionsRepoVariableKeysRow{}
+	for rows.Next() {
+		var i ListActionsRepoVariableKeysRow
+		if err := rows.Scan(&i.Environment, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActionsRunKeys = `-- name: ListActionsRunKeys :many
+
+SELECT id, external, created_at FROM (
+    SELECT r.id, false::boolean AS external, r.created_at FROM actions_runs r
+    WHERE r.repo_id = $1
+      AND ($2::text = '' OR r.workflow_path = $2::text)
+      AND ($3::text = '' OR r.event = $3::text)
+      AND ($4::text = '' OR r.status = $4::text OR r.conclusion = $4::text)
+      AND ($5::text = '' OR r.ref = $5::text)
+      AND ($6::text = '' OR r.sha = $6::text)
+    UNION ALL
+    SELECT x.id, true::boolean AS external, x.created_at FROM actions_external_runs x
+    WHERE $7::boolean AND x.repo_id = $1
+      AND ($2::text = '' OR x.workflow_path = $2::text)
+      AND ($3::text = '' OR x.event = $3::text)
+      AND ($4::text = '' OR x.status = $4::text OR x.conclusion = $4::text)
+      AND ($5::text = '' OR x.ref = $5::text)
+      AND ($6::text = '' OR x.sha = $6::text)
+) k
+ORDER BY created_at DESC, id DESC
+LIMIT $9 OFFSET $8
+`
+
+type ListActionsRunKeysParams struct {
+	RepoID       uuid.UUID
+	WorkflowPath string
+	Event        string
+	Status       string
+	Ref          string
+	Sha          string
+	WithExternal bool
+	Off          int32
+	Lim          int32
+}
+
+type ListActionsRunKeysRow struct {
+	ID        uuid.UUID
+	External  bool
+	CreatedAt pgtype.Timestamptz
+}
+
+// GitHub Actions import (ghimport.go): external runs and imported state.
+// One page of the runs of a repository, newest first, merged with the
+// external runs read from GitHub when with_external is set.
+func (q *Queries) ListActionsRunKeys(ctx context.Context, arg ListActionsRunKeysParams) ([]ListActionsRunKeysRow, error) {
+	rows, err := q.db.Query(ctx, listActionsRunKeys,
+		arg.RepoID,
+		arg.WorkflowPath,
+		arg.Event,
+		arg.Status,
+		arg.Ref,
+		arg.Sha,
+		arg.WithExternal,
+		arg.Off,
+		arg.Lim,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListActionsRunKeysRow{}
+	for rows.Next() {
+		var i ListActionsRunKeysRow
+		if err := rows.Scan(&i.ID, &i.External, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listActionsRunners = `-- name: ListActionsRunners :many
 SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at FROM actions_runners
 WHERE scope = $1
@@ -1495,7 +1767,7 @@ func (q *Queries) ListActionsRunnersForRepo(ctx context.Context, arg ListActions
 }
 
 const listActionsRuns = `-- name: ListActionsRuns :many
-SELECT id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at FROM actions_runs
+SELECT id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at, system_actor FROM actions_runs
 WHERE repo_id = $1
   AND ($2::text = '' OR workflow_path = $2::text)
   AND ($3::text = '' OR event = $3::text)
@@ -1564,6 +1836,60 @@ func (q *Queries) ListActionsRuns(ctx context.Context, arg ListActionsRunsParams
 			&i.CompletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SystemActor,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActionsRunsByIDs = `-- name: ListActionsRunsByIDs :many
+SELECT id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at, system_actor FROM actions_runs WHERE id = ANY($1::uuid[])
+`
+
+func (q *Queries) ListActionsRunsByIDs(ctx context.Context, ids []uuid.UUID) ([]ActionsRun, error) {
+	rows, err := q.db.Query(ctx, listActionsRunsByIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ActionsRun{}
+	for rows.Next() {
+		var i ActionsRun
+		if err := rows.Scan(
+			&i.ID,
+			&i.RepoID,
+			&i.WorkflowPath,
+			&i.WorkflowName,
+			&i.Workflow,
+			&i.Event,
+			&i.EventAction,
+			&i.Ref,
+			&i.Sha,
+			&i.Title,
+			&i.RunNumber,
+			&i.Attempt,
+			&i.Status,
+			&i.Conclusion,
+			&i.ActorID,
+			&i.TriggerActorID,
+			&i.EventPayload,
+			&i.ConcurrencyGroup,
+			&i.ConcurrencyCancel,
+			&i.HeadRepoID,
+			&i.Fork,
+			&i.NeedsApproval,
+			&i.ApprovedBy,
+			&i.StartedAt,
+			&i.CompletedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.SystemActor,
 		); err != nil {
 			return nil, err
 		}
@@ -1904,7 +2230,7 @@ func (q *Queries) ListActiveActionsJobsInGroup(ctx context.Context, arg ListActi
 }
 
 const listActiveActionsRunsInGroup = `-- name: ListActiveActionsRunsInGroup :many
-SELECT id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at FROM actions_runs
+SELECT id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title, run_number, attempt, status, conclusion, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel, head_repo_id, fork, needs_approval, approved_by, started_at, completed_at, created_at, updated_at, system_actor FROM actions_runs
 WHERE repo_id = $1 AND concurrency_group = $2 AND status <> 'completed' AND id <> $3
 ORDER BY created_at, id
 `
@@ -1953,6 +2279,7 @@ func (q *Queries) ListActiveActionsRunsInGroup(ctx context.Context, arg ListActi
 			&i.CompletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.SystemActor,
 		); err != nil {
 			return nil, err
 		}
@@ -2258,6 +2585,24 @@ func (q *Queries) NotifyActions(ctx context.Context, arg NotifyActionsParams) er
 	return err
 }
 
+const pruneActionsExternalRuns = `-- name: PruneActionsExternalRuns :exec
+DELETE FROM actions_external_runs d
+WHERE d.repo_id = $1 AND d.id NOT IN (
+    SELECT k.id FROM actions_external_runs k WHERE k.repo_id = $1
+    ORDER BY k.created_at DESC, k.id DESC LIMIT $2)
+`
+
+type PruneActionsExternalRunsParams struct {
+	RepoID uuid.UUID
+	Keep   int32
+}
+
+// Keeps the newest external runs of a repository (keep of them).
+func (q *Queries) PruneActionsExternalRuns(ctx context.Context, arg PruneActionsExternalRunsParams) error {
+	_, err := q.db.Exec(ctx, pruneActionsExternalRuns, arg.RepoID, arg.Keep)
+	return err
+}
+
 const readyActionsJob = `-- name: ReadyActionsJob :execrows
 UPDATE actions_jobs
 SET status = $1, name = $2, matrix = $3, payload = $4, runs_on = $5,
@@ -2313,6 +2658,50 @@ UPDATE actions_jobs SET cancel_requested = true, updated_at = now() WHERE id = $
 
 func (q *Queries) RequestActionsJobCancel(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, requestActionsJobCancel, id)
+	return err
+}
+
+const saveActionsGitHubImport = `-- name: SaveActionsGitHubImport :exec
+INSERT INTO actions_github_imports (repo_id, secret_names, variables_imported, variables_skipped, runs_imported,
+    last_error, imported_at, runs_synced_at)
+VALUES ($1, $2, $3, $4, $5, $6, now(),
+    CASE WHEN $7::boolean THEN now() END)
+ON CONFLICT (repo_id) DO UPDATE
+SET secret_names = EXCLUDED.secret_names, variables_imported = EXCLUDED.variables_imported,
+    variables_skipped = EXCLUDED.variables_skipped, runs_imported = EXCLUDED.runs_imported,
+    last_error = EXCLUDED.last_error, imported_at = now(),
+    runs_synced_at = COALESCE(EXCLUDED.runs_synced_at, actions_github_imports.runs_synced_at), updated_at = now()
+`
+
+type SaveActionsGitHubImportParams struct {
+	RepoID            uuid.UUID
+	SecretNames       []byte
+	VariablesImported int32
+	VariablesSkipped  int32
+	RunsImported      int32
+	LastError         string
+	RunsSynced        bool
+}
+
+func (q *Queries) SaveActionsGitHubImport(ctx context.Context, arg SaveActionsGitHubImportParams) error {
+	_, err := q.db.Exec(ctx, saveActionsGitHubImport,
+		arg.RepoID,
+		arg.SecretNames,
+		arg.VariablesImported,
+		arg.VariablesSkipped,
+		arg.RunsImported,
+		arg.LastError,
+		arg.RunsSynced,
+	)
+	return err
+}
+
+const setActionsGitHubRunsSynced = `-- name: SetActionsGitHubRunsSynced :exec
+UPDATE actions_github_imports SET runs_synced_at = now(), updated_at = now() WHERE repo_id = $1
+`
+
+func (q *Queries) SetActionsGitHubRunsSynced(ctx context.Context, repoID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, setActionsGitHubRunsSynced, repoID)
 	return err
 }
 
@@ -2489,6 +2878,64 @@ func (q *Queries) UpsertActionsEnvironment(ctx context.Context, arg UpsertAction
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const upsertActionsExternalRun = `-- name: UpsertActionsExternalRun :exec
+INSERT INTO actions_external_runs (id, repo_id, provider, external_id, run_number, attempt, workflow_path,
+    workflow_name, event, ref, sha, title, status, conclusion, actor_login, html_url, started_at, created_at, updated_at)
+VALUES ($1, $2, 'github', $3, $4, $5, $6, $7, $8, $9,
+    $10, $11, $12, $13, $14, $15, $16, $17, $18)
+ON CONFLICT (repo_id, provider, external_id) DO UPDATE
+SET run_number = EXCLUDED.run_number, attempt = EXCLUDED.attempt, workflow_path = EXCLUDED.workflow_path,
+    workflow_name = EXCLUDED.workflow_name, event = EXCLUDED.event, ref = EXCLUDED.ref, sha = EXCLUDED.sha,
+    title = EXCLUDED.title, status = EXCLUDED.status, conclusion = EXCLUDED.conclusion,
+    actor_login = EXCLUDED.actor_login, html_url = EXCLUDED.html_url, started_at = EXCLUDED.started_at,
+    updated_at = EXCLUDED.updated_at
+`
+
+type UpsertActionsExternalRunParams struct {
+	ID           uuid.UUID
+	RepoID       uuid.UUID
+	ExternalID   int64
+	RunNumber    int64
+	Attempt      int32
+	WorkflowPath string
+	WorkflowName string
+	Event        string
+	Ref          string
+	Sha          string
+	Title        string
+	Status       string
+	Conclusion   string
+	ActorLogin   string
+	HtmlUrl      string
+	StartedAt    pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+}
+
+func (q *Queries) UpsertActionsExternalRun(ctx context.Context, arg UpsertActionsExternalRunParams) error {
+	_, err := q.db.Exec(ctx, upsertActionsExternalRun,
+		arg.ID,
+		arg.RepoID,
+		arg.ExternalID,
+		arg.RunNumber,
+		arg.Attempt,
+		arg.WorkflowPath,
+		arg.WorkflowName,
+		arg.Event,
+		arg.Ref,
+		arg.Sha,
+		arg.Title,
+		arg.Status,
+		arg.Conclusion,
+		arg.ActorLogin,
+		arg.HtmlUrl,
+		arg.StartedAt,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+	)
+	return err
 }
 
 const upsertActionsSecret = `-- name: UpsertActionsSecret :one

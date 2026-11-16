@@ -174,7 +174,7 @@ func (q *Queries) GetGitHubImportByRepo(ctx context.Context, repoID uuid.UUID) (
 }
 
 const getGitHubSyncLink = `-- name: GetGitHubSyncLink :one
-SELECT id, repo_id, connection_id, mode, remote_owner, remote_name, prune, trust_github, create_missing, interval_seconds, enabled, status, last_error, failures, next_attempt_at, last_run_at, last_success_at, lfs_skipped, created_by, created_at, updated_at FROM github_sync_links WHERE id = $1
+SELECT id, repo_id, connection_id, mode, remote_owner, remote_name, prune, trust_github, create_missing, interval_seconds, enabled, status, last_error, failures, next_attempt_at, last_run_at, last_success_at, lfs_skipped, created_by, created_at, updated_at, run_actions FROM github_sync_links WHERE id = $1
 `
 
 func (q *Queries) GetGitHubSyncLink(ctx context.Context, id uuid.UUID) (GithubSyncLink, error) {
@@ -202,12 +202,13 @@ func (q *Queries) GetGitHubSyncLink(ctx context.Context, id uuid.UUID) (GithubSy
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RunActions,
 	)
 	return i, err
 }
 
 const getGitHubSyncLinkByRepo = `-- name: GetGitHubSyncLinkByRepo :one
-SELECT id, repo_id, connection_id, mode, remote_owner, remote_name, prune, trust_github, create_missing, interval_seconds, enabled, status, last_error, failures, next_attempt_at, last_run_at, last_success_at, lfs_skipped, created_by, created_at, updated_at FROM github_sync_links WHERE repo_id = $1
+SELECT id, repo_id, connection_id, mode, remote_owner, remote_name, prune, trust_github, create_missing, interval_seconds, enabled, status, last_error, failures, next_attempt_at, last_run_at, last_success_at, lfs_skipped, created_by, created_at, updated_at, run_actions FROM github_sync_links WHERE repo_id = $1
 `
 
 func (q *Queries) GetGitHubSyncLinkByRepo(ctx context.Context, repoID uuid.UUID) (GithubSyncLink, error) {
@@ -235,6 +236,7 @@ func (q *Queries) GetGitHubSyncLinkByRepo(ctx context.Context, repoID uuid.UUID)
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RunActions,
 	)
 	return i, err
 }
@@ -373,7 +375,7 @@ func (q *Queries) InsertGitHubImport(ctx context.Context, arg InsertGitHubImport
 }
 
 const listDueGitHubSyncLinks = `-- name: ListDueGitHubSyncLinks :many
-SELECT l.id, l.repo_id, l.connection_id, l.mode, l.remote_owner, l.remote_name, l.prune, l.trust_github, l.create_missing, l.interval_seconds, l.enabled, l.status, l.last_error, l.failures, l.next_attempt_at, l.last_run_at, l.last_success_at, l.lfs_skipped, l.created_by, l.created_at, l.updated_at FROM github_sync_links l
+SELECT l.id, l.repo_id, l.connection_id, l.mode, l.remote_owner, l.remote_name, l.prune, l.trust_github, l.create_missing, l.interval_seconds, l.enabled, l.status, l.last_error, l.failures, l.next_attempt_at, l.last_run_at, l.last_success_at, l.lfs_skipped, l.created_by, l.created_at, l.updated_at, l.run_actions FROM github_sync_links l
 JOIN repos r ON r.id = l.repo_id
 WHERE l.enabled AND r.storage_state = 'hot'
   AND (l.last_run_at IS NULL OR l.last_run_at <= now() - make_interval(secs => l.interval_seconds))
@@ -414,6 +416,7 @@ func (q *Queries) ListDueGitHubSyncLinks(ctx context.Context, limit int32) ([]Gi
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.RunActions,
 		); err != nil {
 			return nil, err
 		}
@@ -426,7 +429,7 @@ func (q *Queries) ListDueGitHubSyncLinks(ctx context.Context, limit int32) ([]Gi
 }
 
 const listGitHubBackupLinks = `-- name: ListGitHubBackupLinks :many
-SELECT l.id, l.repo_id, l.connection_id, l.mode, l.remote_owner, l.remote_name, l.prune, l.trust_github, l.create_missing, l.interval_seconds, l.enabled, l.status, l.last_error, l.failures, l.next_attempt_at, l.last_run_at, l.last_success_at, l.lfs_skipped, l.created_by, l.created_at, l.updated_at FROM github_sync_links l
+SELECT l.id, l.repo_id, l.connection_id, l.mode, l.remote_owner, l.remote_name, l.prune, l.trust_github, l.create_missing, l.interval_seconds, l.enabled, l.status, l.last_error, l.failures, l.next_attempt_at, l.last_run_at, l.last_success_at, l.lfs_skipped, l.created_by, l.created_at, l.updated_at, l.run_actions FROM github_sync_links l
 JOIN repos r ON r.id = l.repo_id
 WHERE l.enabled AND l.mode IN ('backup', 'sync') AND r.storage_state = 'hot'
 ORDER BY l.id
@@ -470,6 +473,7 @@ func (q *Queries) ListGitHubBackupLinks(ctx context.Context, arg ListGitHubBacku
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.RunActions,
 		); err != nil {
 			return nil, err
 		}
@@ -589,7 +593,7 @@ func (q *Queries) ListGitHubImportsByCreator(ctx context.Context, arg ListGitHub
 }
 
 const listGitHubSyncLinksByRemote = `-- name: ListGitHubSyncLinksByRemote :many
-SELECT id, repo_id, connection_id, mode, remote_owner, remote_name, prune, trust_github, create_missing, interval_seconds, enabled, status, last_error, failures, next_attempt_at, last_run_at, last_success_at, lfs_skipped, created_by, created_at, updated_at FROM github_sync_links
+SELECT id, repo_id, connection_id, mode, remote_owner, remote_name, prune, trust_github, create_missing, interval_seconds, enabled, status, last_error, failures, next_attempt_at, last_run_at, last_success_at, lfs_skipped, created_by, created_at, updated_at, run_actions FROM github_sync_links
 WHERE connection_id = $1 AND lower(remote_owner) = lower($2::text)
   AND lower(remote_name) = lower($3::text) AND enabled
 `
@@ -632,6 +636,7 @@ func (q *Queries) ListGitHubSyncLinksByRemote(ctx context.Context, arg ListGitHu
 			&i.CreatedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.RunActions,
 		); err != nil {
 			return nil, err
 		}
@@ -763,15 +768,16 @@ func (q *Queries) UpdateGitHubConnection(ctx context.Context, arg UpdateGitHubCo
 
 const upsertGitHubSyncLink = `-- name: UpsertGitHubSyncLink :one
 INSERT INTO github_sync_links (id, repo_id, connection_id, mode, remote_owner, remote_name, prune, trust_github,
-    create_missing, interval_seconds, enabled, created_by)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    create_missing, interval_seconds, enabled, created_by, run_actions)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 ON CONFLICT (repo_id) DO UPDATE
 SET connection_id = EXCLUDED.connection_id, mode = EXCLUDED.mode, remote_owner = EXCLUDED.remote_owner,
     remote_name = EXCLUDED.remote_name, prune = EXCLUDED.prune, trust_github = EXCLUDED.trust_github,
     create_missing = EXCLUDED.create_missing, interval_seconds = EXCLUDED.interval_seconds,
+    run_actions = EXCLUDED.run_actions,
     enabled = EXCLUDED.enabled, status = 'pending', last_error = '', failures = 0, next_attempt_at = NULL,
     updated_at = now()
-RETURNING id, repo_id, connection_id, mode, remote_owner, remote_name, prune, trust_github, create_missing, interval_seconds, enabled, status, last_error, failures, next_attempt_at, last_run_at, last_success_at, lfs_skipped, created_by, created_at, updated_at
+RETURNING id, repo_id, connection_id, mode, remote_owner, remote_name, prune, trust_github, create_missing, interval_seconds, enabled, status, last_error, failures, next_attempt_at, last_run_at, last_success_at, lfs_skipped, created_by, created_at, updated_at, run_actions
 `
 
 type UpsertGitHubSyncLinkParams struct {
@@ -787,6 +793,7 @@ type UpsertGitHubSyncLinkParams struct {
 	IntervalSeconds int32
 	Enabled         bool
 	CreatedBy       uuid.NullUUID
+	RunActions      bool
 }
 
 func (q *Queries) UpsertGitHubSyncLink(ctx context.Context, arg UpsertGitHubSyncLinkParams) (GithubSyncLink, error) {
@@ -803,6 +810,7 @@ func (q *Queries) UpsertGitHubSyncLink(ctx context.Context, arg UpsertGitHubSync
 		arg.IntervalSeconds,
 		arg.Enabled,
 		arg.CreatedBy,
+		arg.RunActions,
 	)
 	var i GithubSyncLink
 	err := row.Scan(
@@ -827,6 +835,7 @@ func (q *Queries) UpsertGitHubSyncLink(ctx context.Context, arg UpsertGitHubSync
 		&i.CreatedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RunActions,
 	)
 	return i, err
 }

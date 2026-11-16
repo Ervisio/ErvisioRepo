@@ -49,13 +49,15 @@ type Link struct {
 	CreateMissing           bool
 	IntervalMinutes         int
 	Enabled                 bool
-	Status, LastError       string
-	Failures                int
-	NextAttemptAt           *time.Time
-	LastRunAt               *time.Time
-	LastSuccessAt           *time.Time
-	LFSSkipped              bool
-	CreatedAt, UpdatedAt    time.Time
+	// RunActions makes the synced pushes start workflows.
+	RunActions           bool
+	Status, LastError    string
+	Failures             int
+	NextAttemptAt        *time.Time
+	LastRunAt            *time.Time
+	LastSuccessAt        *time.Time
+	LFSSkipped           bool
+	CreatedAt, UpdatedAt time.Time
 }
 
 func toLink(l dbgen.GithubSyncLink) Link {
@@ -66,7 +68,8 @@ func toLink(l dbgen.GithubSyncLink) Link {
 	return Link{ID: l.ID, RepoID: l.RepoID, ConnectionID: l.ConnectionID, Mode: l.Mode,
 		RemoteOwner: l.RemoteOwner, RemoteName: l.RemoteName, Prune: l.Prune, TrustGitHub: trust,
 		CreateMissing: l.CreateMissing, IntervalMinutes: int(l.IntervalSeconds / 60), Enabled: l.Enabled,
-		Status: l.Status, LastError: l.LastError, Failures: int(l.Failures), NextAttemptAt: ts(l.NextAttemptAt),
+		RunActions: l.RunActions,
+		Status:     l.Status, LastError: l.LastError, Failures: int(l.Failures), NextAttemptAt: ts(l.NextAttemptAt),
 		LastRunAt: ts(l.LastRunAt), LastSuccessAt: ts(l.LastSuccessAt), LFSSkipped: l.LfsSkipped,
 		CreatedAt: l.CreatedAt.Time, UpdatedAt: l.UpdatedAt.Time}
 }
@@ -81,6 +84,7 @@ type LinkInput struct {
 	CreateMissing           *bool
 	IntervalMinutes         *int
 	Enabled                 *bool
+	RunActions              *bool
 }
 
 // Ref is the sync state of one ref.
@@ -205,7 +209,7 @@ func (s *Service) PutLink(ctx context.Context, who auth.Principal, owner, name s
 		Prune: in.Prune != nil && *in.Prune, TrustGithub: trust,
 		CreateMissing:   in.CreateMissing != nil && *in.CreateMissing && in.Mode != ModeMirror,
 		IntervalSeconds: int32(interval * 60), Enabled: in.Enabled == nil || *in.Enabled,
-		CreatedBy: nullUser(who.UserID)})
+		CreatedBy: nullUser(who.UserID), RunActions: in.RunActions != nil && *in.RunActions && in.Mode != ModeBackup})
 	if err != nil {
 		return Link{}, fmt.Errorf("save sync link: %w", err)
 	}
@@ -413,7 +417,7 @@ func (s *Service) keepGitHub(ctx context.Context, link dbgen.GithubSyncLink, ref
 	if c := local[ConflictRef(ref)]; c == st.conflict {
 		edits = append(edits, edit{ref: ConflictRef(ref), oldSHA: c, verify: true})
 	}
-	if err := s.updateRefs(ctx, l, edits); err != nil {
+	if err := s.updateRefsAs(ctx, l, edits, protocolOf(link)); err != nil {
 		return st, &conflictError{"the branch could not be updated: " + refError(err)}
 	}
 	return refState{local: st.conflict, remote: st.conflict, status: stateOK}, nil

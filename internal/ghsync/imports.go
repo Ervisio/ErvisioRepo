@@ -73,10 +73,13 @@ const (
 	ImportPulls      = "pulls"
 	ImportIssues     = "issues"
 	ImportReleases   = "releases"
+	// ImportActions is the Actions configuration (variables, secret
+	// names, environments) and the latest workflow runs.
+	ImportActions = "actions"
 )
 
 // ImportKinds lists the kinds an import can include.
-var ImportKinds = []string{ImportLabels, ImportMilestones, ImportPulls, ImportIssues, ImportReleases}
+var ImportKinds = []string{ImportLabels, ImportMilestones, ImportPulls, ImportIssues, ImportReleases, ImportActions}
 
 // ImportInput starts an import.
 type ImportInput struct {

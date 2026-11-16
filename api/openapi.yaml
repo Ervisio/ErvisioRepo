@@ -8259,7 +8259,7 @@ paths:
     get:
       operationId: listActionsWorkflows
       tags: [actions]
-      summary: Workflow files that ran in the repository
+      summary: Workflow files of the default branch and of past runs
       security:
         - session: [anonymous]
         - token: [repo:read]
@@ -8718,6 +8718,78 @@ paths:
                 type: string
         "307":
           $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/github:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getActionsGitHubImport
+      tags: [actions]
+      summary: State of the import of the GitHub Actions configuration
+      description: |
+        available is false when the repository has no GitHub sync link and
+        was not imported from GitHub. missingSecrets lists the secrets
+        GitHub has that are not set here yet (GitHub never returns values).
+      security:
+        - session: []
+        - token: [actions:write]
+      responses:
+        "200":
+          description: Import state
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ActionsGitHubImport"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/actions/github/import:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    post:
+      operationId: importActionsFromGitHub
+      tags: [actions]
+      summary: Import variables, secret names and run history from GitHub
+      description: |
+        Reads the repository variables, the secret names, the environments
+        with their variables and the latest workflow runs of the linked
+        GitHub repository. Existing variables are kept unless
+        overwriteVariables is set. What the connection may not read (a
+        missing permission) is reported in lastError; 400 when the
+        repository has no usable GitHub counterpart.
+      security:
+        - session: []
+        - token: [actions:write]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ActionsGitHubImportRequest"}
+      responses:
+        "200":
+          description: Import state
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ActionsGitHubImport"}
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
         "404":
           $ref: "#/components/responses/Problem"
         "503":
@@ -9814,11 +9886,39 @@ components:
     # --- actions schemas ---
     ActionsWorkflow:
       type: object
-      required: [path, name, lastRunAt]
+      required: [path, name]
       properties:
         path: {type: string}
         name: {type: string}
-        lastRunAt: {type: string, format: date-time}
+        lastRunAt: {type: string, format: date-time, nullable: true, description: Absent when it never ran}
+        onDefaultBranch: {type: boolean, description: The file exists on the default branch}
+    ActionsGitHubImportRequest:
+      type: object
+      properties:
+        overwriteVariables: {type: boolean, default: false, description: Replace the variables that already exist}
+        runs: {type: boolean, default: true, description: Also read the latest workflow runs}
+    ActionsGitHubSecretName:
+      type: object
+      required: [name, environment]
+      properties:
+        name: {type: string}
+        environment: {type: string, description: Empty for a repository secret}
+    ActionsGitHubImport:
+      type: object
+      required: [available, remote, variablesImported, variablesSkipped, runsImported, lastError, missingSecrets]
+      properties:
+        available: {type: boolean, description: The repository is linked to or was imported from GitHub}
+        remote: {type: string, description: owner/name on GitHub}
+        remoteUrl: {type: string}
+        importedAt: {type: string, format: date-time, nullable: true}
+        runsSyncedAt: {type: string, format: date-time, nullable: true}
+        variablesImported: {type: integer}
+        variablesSkipped: {type: integer, description: Variables kept because they already existed}
+        runsImported: {type: integer}
+        lastError: {type: string}
+        missingSecrets:
+          type: array
+          items: {$ref: "#/components/schemas/ActionsGitHubSecretName"}
     ActionsRun:
       type: object
       required: [id, runNumber, attempt, workflowPath, workflowName, event, eventAction, ref, sha, title, status,
@@ -9841,6 +9941,10 @@ components:
         actor: {type: string}
         triggerActor: {type: string}
         url: {type: string, description: Web page of the run}
+        external:
+          type: boolean
+          description: A read-only run imported from GitHub (no jobs or logs here; see htmlUrl)
+        htmlUrl: {type: string, description: Page of an external run on GitHub}
         startedAt: {type: string, format: date-time, nullable: true}
         completedAt: {type: string, format: date-time, nullable: true}
         createdAt: {type: string, format: date-time}
@@ -10299,11 +10403,11 @@ components:
         include:
           type: array
           description: Kinds of non-git data to import; all when empty or absent
-          maxItems: 5
+          maxItems: 6
           items: {$ref: "#/components/schemas/GitHubImportKind"}
     GitHubImportKind:
       type: string
-      enum: [labels, milestones, pulls, issues, releases]
+      enum: [labels, milestones, pulls, issues, releases, actions]
     GitHubImport:
       type: object
       required: [id, repoId, repoFullName, remoteOwner, remoteName, status, lastError, createdAt]
@@ -10328,7 +10432,7 @@ components:
     GitHubSyncLink:
       type: object
       required: [connectionId, mode, remoteOwner, remoteName, prune, trustGithub, createMissing, intervalMinutes,
-        enabled, readOnly, status, lastError, failures, lfsSkipped, createdAt, updatedAt]
+        enabled, runActions, readOnly, status, lastError, failures, lfsSkipped, createdAt, updatedAt]
       properties:
         connectionId: {type: string, format: uuid}
         mode: {$ref: "#/components/schemas/GitHubSyncMode"}
@@ -10341,6 +10445,7 @@ components:
         createMissing: {type: boolean}
         intervalMinutes: {type: integer}
         enabled: {type: boolean}
+        runActions: {type: boolean, description: "Synced pushes start workflows (as ervisio-sync[bot])"}
         readOnly: {type: boolean, description: Pushes are refused (mirror)}
         status: {type: string, enum: [pending, ok, diverged, error]}
         lastError: {type: string}
@@ -10373,6 +10478,10 @@ components:
           description: Create the GitHub repository (private) when it does not exist (backup, sync)
         intervalMinutes: {type: integer, minimum: 10, maximum: 10080, default: 10}
         enabled: {type: boolean, default: true}
+        runActions:
+          type: boolean
+          default: false
+          description: Run Actions on synced pushes (mirror, sync); the runs show ervisio-sync[bot] as actor
     GitHubSyncRef:
       type: object
       required: [ref, localSha, remoteSha, status, lastError, retries, resolution, updatedAt]

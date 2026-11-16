@@ -84,10 +84,10 @@ RETURNING last;
 -- name: InsertActionsRun :one
 INSERT INTO actions_runs (id, repo_id, workflow_path, workflow_name, workflow, event, event_action, ref, sha, title,
     run_number, status, actor_id, trigger_actor_id, event_payload, concurrency_group, concurrency_cancel,
-    head_repo_id, fork, needs_approval)
+    head_repo_id, fork, needs_approval, system_actor)
 VALUES (@id, @repo_id, @workflow_path, @workflow_name, @workflow, @event, @event_action, @ref, @sha, @title,
     @run_number, @status, @actor_id, @trigger_actor_id, @event_payload, @concurrency_group, @concurrency_cancel,
-    @head_repo_id, @fork, @needs_approval)
+    @head_repo_id, @fork, @needs_approval, @system_actor)
 RETURNING *;
 
 -- name: GetActionsRun :one
@@ -446,3 +446,94 @@ LISTEN ervisio_actions_tasks;
 -- name: ListenActionsLogs :exec
 -- Log followers wait on this channel ("<job id>:<length>").
 LISTEN ervisio_actions_logs;
+
+-- GitHub Actions import (ghimport.go): external runs and imported state.
+
+-- name: ListActionsRunKeys :many
+-- One page of the runs of a repository, newest first, merged with the
+-- external runs read from GitHub when with_external is set.
+SELECT id, external, created_at FROM (
+    SELECT r.id, false::boolean AS external, r.created_at FROM actions_runs r
+    WHERE r.repo_id = @repo_id
+      AND (@workflow_path::text = '' OR r.workflow_path = @workflow_path::text)
+      AND (@event::text = '' OR r.event = @event::text)
+      AND (@status::text = '' OR r.status = @status::text OR r.conclusion = @status::text)
+      AND (@ref::text = '' OR r.ref = @ref::text)
+      AND (@sha::text = '' OR r.sha = @sha::text)
+    UNION ALL
+    SELECT x.id, true::boolean AS external, x.created_at FROM actions_external_runs x
+    WHERE @with_external::boolean AND x.repo_id = @repo_id
+      AND (@workflow_path::text = '' OR x.workflow_path = @workflow_path::text)
+      AND (@event::text = '' OR x.event = @event::text)
+      AND (@status::text = '' OR x.status = @status::text OR x.conclusion = @status::text)
+      AND (@ref::text = '' OR x.ref = @ref::text)
+      AND (@sha::text = '' OR x.sha = @sha::text)
+) k
+ORDER BY created_at DESC, id DESC
+LIMIT @lim OFFSET @off;
+
+-- name: ListActionsRunsByIDs :many
+SELECT * FROM actions_runs WHERE id = ANY(@ids::uuid[]);
+
+-- name: ListActionsExternalRunsByIDs :many
+SELECT * FROM actions_external_runs WHERE id = ANY(@ids::uuid[]);
+
+-- name: CountActionsExternalRuns :one
+SELECT count(*) FROM actions_external_runs
+WHERE repo_id = @repo_id
+  AND (@workflow_path::text = '' OR workflow_path = @workflow_path::text)
+  AND (@event::text = '' OR event = @event::text)
+  AND (@status::text = '' OR status = @status::text OR conclusion = @status::text)
+  AND (@ref::text = '' OR ref = @ref::text)
+  AND (@sha::text = '' OR sha = @sha::text);
+
+-- name: ListActionsExternalWorkflows :many
+-- The workflow files of the runs read from GitHub, with their last name.
+SELECT DISTINCT ON (workflow_path) workflow_path, workflow_name, created_at
+FROM actions_external_runs WHERE repo_id = @repo_id AND workflow_path <> ''
+ORDER BY workflow_path, created_at DESC;
+
+-- name: UpsertActionsExternalRun :exec
+INSERT INTO actions_external_runs (id, repo_id, provider, external_id, run_number, attempt, workflow_path,
+    workflow_name, event, ref, sha, title, status, conclusion, actor_login, html_url, started_at, created_at, updated_at)
+VALUES (@id, @repo_id, 'github', @external_id, @run_number, @attempt, @workflow_path, @workflow_name, @event, @ref,
+    @sha, @title, @status, @conclusion, @actor_login, @html_url, @started_at, @created_at, @updated_at)
+ON CONFLICT (repo_id, provider, external_id) DO UPDATE
+SET run_number = EXCLUDED.run_number, attempt = EXCLUDED.attempt, workflow_path = EXCLUDED.workflow_path,
+    workflow_name = EXCLUDED.workflow_name, event = EXCLUDED.event, ref = EXCLUDED.ref, sha = EXCLUDED.sha,
+    title = EXCLUDED.title, status = EXCLUDED.status, conclusion = EXCLUDED.conclusion,
+    actor_login = EXCLUDED.actor_login, html_url = EXCLUDED.html_url, started_at = EXCLUDED.started_at,
+    updated_at = EXCLUDED.updated_at;
+
+-- name: PruneActionsExternalRuns :exec
+-- Keeps the newest external runs of a repository (keep of them).
+DELETE FROM actions_external_runs d
+WHERE d.repo_id = @repo_id AND d.id NOT IN (
+    SELECT k.id FROM actions_external_runs k WHERE k.repo_id = @repo_id
+    ORDER BY k.created_at DESC, k.id DESC LIMIT @keep);
+
+-- name: GetActionsGitHubImport :one
+SELECT * FROM actions_github_imports WHERE repo_id = @repo_id;
+
+-- name: SaveActionsGitHubImport :exec
+INSERT INTO actions_github_imports (repo_id, secret_names, variables_imported, variables_skipped, runs_imported,
+    last_error, imported_at, runs_synced_at)
+VALUES (@repo_id, @secret_names, @variables_imported, @variables_skipped, @runs_imported, @last_error, now(),
+    CASE WHEN @runs_synced::boolean THEN now() END)
+ON CONFLICT (repo_id) DO UPDATE
+SET secret_names = EXCLUDED.secret_names, variables_imported = EXCLUDED.variables_imported,
+    variables_skipped = EXCLUDED.variables_skipped, runs_imported = EXCLUDED.runs_imported,
+    last_error = EXCLUDED.last_error, imported_at = now(),
+    runs_synced_at = COALESCE(EXCLUDED.runs_synced_at, actions_github_imports.runs_synced_at), updated_at = now();
+
+-- name: SetActionsGitHubRunsSynced :exec
+UPDATE actions_github_imports SET runs_synced_at = now(), updated_at = now() WHERE repo_id = @repo_id;
+
+-- name: ListActionsRepoSecretKeys :many
+-- The secrets of a repository and of its environments.
+SELECT environment, name FROM actions_secrets
+WHERE repo_id = @repo_id AND scope IN ('repo', 'environment');
+
+-- name: ListActionsRepoVariableKeys :many
+SELECT environment, name FROM actions_variables
+WHERE repo_id = @repo_id AND scope IN ('repo', 'environment');

@@ -28,7 +28,7 @@ import { splitList } from "./RulesSettings.tsx";
 
 const tone: Record<string, BadgeTone> = { ok: "ok", done: "ok", pending: "warn", running: "info", diverged: "warn", error: "err" };
 const isNotFound = (e: unknown) => e instanceof ApiError && e.status === 404;
-const importKinds = ["labels", "milestones", "issues", "pulls", "releases"] as const;
+const importKinds = ["labels", "milestones", "issues", "pulls", "releases", "actions"] as const;
 
 /** GitHub section of the repository settings: connections, sync link and import. */
 export function GitHubSettings({ owner, name }: { owner: string; name: string }) {
@@ -396,6 +396,7 @@ function SyncForm({ owner, name, link }: { owner: string; name: string; link?: G
     createMissing: link?.createMissing ?? false,
     intervalMinutes: link?.intervalMinutes ?? 10,
     enabled: link?.enabled ?? true,
+    runActions: link?.runActions ?? false,
   });
   const [trust, setTrust] = useState((link?.trustGithub ?? []).join(", "));
   const set = (p: Partial<GitHubSyncLinkPut>) => setV((x) => ({ ...x, ...p }));
@@ -427,6 +428,15 @@ function SyncForm({ owner, name, link }: { owner: string; name: string; link?: G
           <input type="checkbox" checked={v.createMissing} onChange={(e) => set({ createMissing: e.target.checked })} />
           <span>{t("sync.createMissing")}</span>
         </label>
+      )}
+      {v.mode !== "backup" && (
+        <>
+          <label className="acc-check">
+            <input type="checkbox" checked={v.runActions ?? false} onChange={(e) => set({ runActions: e.target.checked })} />
+            <span>{t("sync.runActions")}</span>
+          </label>
+          <p className="ui-note">{t("sync.runActionsHint")}</p>
+        </>
       )}
       <label className="acc-check">
         <input type="checkbox" checked={v.enabled} onChange={(e) => set({ enabled: e.target.checked })} />

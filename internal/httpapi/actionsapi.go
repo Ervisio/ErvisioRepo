@@ -38,6 +38,8 @@ type Actions interface {
 	ApproveDeployment(ctx context.Context, who auth.Principal, owner, name string, jobID uuid.UUID, approve bool) error
 	Badge(ctx context.Context, who auth.Principal, owner, name, workflow, branch string) ([]byte, error)
 	Dispatch(ctx context.Context, who auth.Principal, owner, name, workflow, ref string, inputs map[string]any) (dbgen.ActionsRun, error)
+	GitHubImportState(ctx context.Context, who auth.Principal, owner, name string) (actions.GitHubImport, error)
+	ImportFromGitHub(ctx context.Context, who auth.Principal, owner, name string, overwrite, runs bool) (actions.GitHubImport, error)
 
 	InstanceScope(who auth.Principal) (actions.Scope, error)
 	OwnerScope(ctx context.Context, who auth.Principal, owner string) (actions.Scope, error)
@@ -104,6 +106,8 @@ type actionsResponse interface {
 	v1gen.PutRepoActionsSecretResponseObject
 	v1gen.DeleteRepoActionsSecretResponseObject
 	v1gen.ListRepoActionsVariablesResponseObject
+	v1gen.GetActionsGitHubImportResponseObject
+	v1gen.ImportActionsFromGitHubResponseObject
 	v1gen.PutRepoActionsVariableResponseObject
 	v1gen.DeleteRepoActionsVariableResponseObject
 	v1gen.ListActionsEnvironmentsResponseObject
@@ -132,11 +136,29 @@ var (
 )
 
 func actionsDTORun(r actions.Run) v1gen.ActionsRun {
-	return v1gen.ActionsRun{Id: r.ID, RunNumber: r.RunNumber, Attempt: int(r.Attempt), WorkflowPath: r.WorkflowPath,
+	out := v1gen.ActionsRun{Id: r.ID, RunNumber: r.RunNumber, Attempt: int(r.Attempt), WorkflowPath: r.WorkflowPath,
 		WorkflowName: r.WorkflowName, Event: r.Event, EventAction: r.EventAction, Ref: r.Ref, Sha: r.Sha, Title: r.Title,
 		Status: v1gen.ActionsRunStatus(r.Status), Conclusion: r.Conclusion, NeedsApproval: r.NeedsApproval, Fork: r.Fork,
 		Actor: r.Actor, TriggerActor: r.TriggerActor, Url: r.URL, StartedAt: r.StartedAt, CompletedAt: r.CompletedAt,
 		CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt}
+	if r.External {
+		out.External, out.HtmlUrl = &r.External, &r.HTMLURL
+	}
+	return out
+}
+
+func actionsDTOGitHubImport(g actions.GitHubImport) v1gen.ActionsGitHubImport {
+	out := v1gen.ActionsGitHubImport{Available: g.Available, Remote: g.Remote, ImportedAt: g.ImportedAt,
+		RunsSyncedAt: g.RunsSyncedAt, VariablesImported: g.VariablesImported, VariablesSkipped: g.VariablesSkipped,
+		RunsImported: g.RunsImported, LastError: g.LastError,
+		MissingSecrets: make([]v1gen.ActionsGitHubSecretName, 0, len(g.MissingSecrets))}
+	if g.RemoteURL != "" {
+		out.RemoteUrl = &g.RemoteURL
+	}
+	for _, m := range g.MissingSecrets {
+		out.MissingSecrets = append(out.MissingSecrets, v1gen.ActionsGitHubSecretName{Name: m.Name, Environment: m.Environment})
+	}
+	return out
 }
 
 func actionsDTOJob(j actions.Job) v1gen.ActionsJob {
@@ -216,7 +238,7 @@ func (s *v1Server) ListActionsWorkflows(ctx context.Context, req v1gen.ListActio
 		return actionsFail(err, http.MethodGet, "/actions/workflows")
 	}
 	return v1gen.ListActionsWorkflows200JSONResponse(mapList(list, func(w actions.Workflow) v1gen.ActionsWorkflow {
-		return v1gen.ActionsWorkflow{Path: w.Path, Name: w.Name, LastRunAt: w.LastRun}
+		return v1gen.ActionsWorkflow{Path: w.Path, Name: w.Name, LastRunAt: w.LastRun, OnDefaultBranch: &w.OnDefaultBranch}
 	})), nil
 }
 
@@ -260,7 +282,7 @@ func (s *v1Server) ListActionsRuns(ctx context.Context, req v1gen.ListActionsRun
 	}
 	p := req.Params
 	f := actions.RunFilter{Workflow: deref(p.Workflow), Event: deref(p.Event), Status: deref(p.Status),
-		Ref: deref(p.Branch), Sha: deref(p.Sha), Page: deref(p.Page), PerPage: deref(p.PerPage)}
+		Ref: deref(p.Branch), Sha: deref(p.Sha), Page: deref(p.Page), PerPage: deref(p.PerPage), External: true}
 	list, total, err := s.actions.ListRuns(ctx, principal(ctx), req.Owner, req.Name, f)
 	if err != nil {
 		return actionsFail(err, http.MethodGet, "/actions/runs")
@@ -427,6 +449,35 @@ func (s *v1Server) DeleteRepoActionsSecret(ctx context.Context, req v1gen.Delete
 		return actionsFail(err, http.MethodDelete, suffix)
 	}
 	return v1gen.DeleteRepoActionsSecret204Response{}, nil
+}
+
+func (s *v1Server) GetActionsGitHubImport(ctx context.Context, req v1gen.GetActionsGitHubImportRequestObject) (v1gen.GetActionsGitHubImportResponseObject, error) {
+	if s.actions == nil {
+		return errActionsUnavailable, nil
+	}
+	g, err := s.actions.GitHubImportState(ctx, principal(ctx), req.Owner, req.Name)
+	if err != nil {
+		return actionsFail(err, http.MethodGet, "/actions/github")
+	}
+	return v1gen.GetActionsGitHubImport200JSONResponse(actionsDTOGitHubImport(g)), nil
+}
+
+func (s *v1Server) ImportActionsFromGitHub(ctx context.Context, req v1gen.ImportActionsFromGitHubRequestObject) (v1gen.ImportActionsFromGitHubResponseObject, error) {
+	if s.actions == nil {
+		return errActionsUnavailable, nil
+	}
+	overwrite, runs := false, true
+	if b := req.Body; b != nil {
+		overwrite = deref(b.OverwriteVariables)
+		if b.Runs != nil {
+			runs = *b.Runs
+		}
+	}
+	g, err := s.actions.ImportFromGitHub(ctx, principal(ctx), req.Owner, req.Name, overwrite, runs)
+	if err != nil {
+		return actionsFail(err, http.MethodPost, "/actions/github/import")
+	}
+	return v1gen.ImportActionsFromGitHub200JSONResponse(actionsDTOGitHubImport(g)), nil
 }
 
 func (s *v1Server) ListRepoActionsVariables(ctx context.Context, req v1gen.ListRepoActionsVariablesRequestObject) (v1gen.ListRepoActionsVariablesResponseObject, error) {
@@ -969,6 +1020,12 @@ func (p problemResponse) VisitDeleteRepoActionsSecretResponse(w http.ResponseWri
 func (p problemResponse) VisitListRepoActionsVariablesResponse(w http.ResponseWriter) error {
 	return p.write(w)
 }
+func (p problemResponse) VisitGetActionsGitHubImportResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (p problemResponse) VisitImportActionsFromGitHubResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
 func (p problemResponse) VisitPutRepoActionsVariableResponse(w http.ResponseWriter) error {
 	return p.write(w)
 }
@@ -1061,6 +1118,12 @@ func (m movedResponse) VisitDeleteRepoActionsSecretResponse(w http.ResponseWrite
 	return m.write(w)
 }
 func (m movedResponse) VisitListRepoActionsVariablesResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (m movedResponse) VisitGetActionsGitHubImportResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (m movedResponse) VisitImportActionsFromGitHubResponse(w http.ResponseWriter) error {
 	return m.write(w)
 }
 func (m movedResponse) VisitPutRepoActionsVariableResponse(w http.ResponseWriter) error {

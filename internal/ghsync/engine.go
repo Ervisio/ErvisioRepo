@@ -211,7 +211,7 @@ func updateRefsRaw(ctx context.Context, repo string, edits []edit) error {
 // when possible, otherwise one per group so that a refused ref (branch
 // protection, a concurrent change) does not hold back the others. It
 // returns the error of each failed group.
-func (s *Service) apply(ctx context.Context, l *gitstore.Lease, groups []group, scratch group) map[string]error {
+func (s *Service) apply(ctx context.Context, l *gitstore.Lease, protocol string, groups []group, scratch group) map[string]error {
 	failed := map[string]error{}
 	if len(groups) == 0 {
 		if err := updateRefsRaw(ctx, l.Path, scratch.edits); err != nil {
@@ -223,13 +223,13 @@ func (s *Service) apply(ctx context.Context, l *gitstore.Lease, groups []group, 
 	for _, g := range groups {
 		all = append(all, g.edits...)
 	}
-	if err := s.updateRefs(ctx, l, append(all, scratch.edits...)); err == nil {
+	if err := s.updateRefsAs(ctx, l, append(all, scratch.edits...), protocol); err == nil {
 		return failed
 	} else if len(groups) == 1 {
 		failed[groups[0].ref] = err
 	} else {
 		for _, g := range groups {
-			if err := s.updateRefs(ctx, l, g.edits); err != nil {
+			if err := s.updateRefsAs(ctx, l, g.edits, protocol); err != nil {
 				failed[g.ref] = err
 			}
 		}

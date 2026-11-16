@@ -286,7 +286,7 @@ func (s *Service) buildTask(ctx context.Context, d *Deps, job dbgen.ActionsJob, 
 	if !actorID.Valid {
 		actorID = run.ActorID
 	}
-	gh := s.githubCtx(run, repo, s.userName(ctx, actorID))
+	gh := s.githubCtx(run, repo, s.actorName(ctx, actorID, run.SystemActor))
 	gh.Token = token
 	gh.Job = strings.TrimPrefix(job.JobKey, extra.Prefix)
 	gh.JobName = job.Name

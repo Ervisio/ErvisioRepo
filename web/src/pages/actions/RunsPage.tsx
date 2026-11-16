@@ -96,9 +96,15 @@ function RunRow({ repo, run: r }: { repo: Repo; run: ActionsRun }) {
     <li className="ax-row">
       <StatusIcon status={r.status} conclusion={r.conclusion} />
       <span className="ax-row-main">
-        <Link to="/$owner/$name/actions/runs/$runId" params={{ owner, name, runId: r.id }} className="ax-row-title">
-          {r.title || r.workflowName}
-        </Link>
+        {r.external ? (
+          <a href={r.htmlUrl} target="_blank" rel="noreferrer" className="ax-row-title" title={t("run.onGitHub")}>
+            {r.title || r.workflowName}
+          </a>
+        ) : (
+          <Link to="/$owner/$name/actions/runs/$runId" params={{ owner, name, runId: r.id }} className="ax-row-title">
+            {r.title || r.workflowName}
+          </Link>
+        )}
         <span className="ax-row-meta">
           <span>{r.workflowName || r.workflowPath}</span>
           <span>#{r.runNumber}</span>
@@ -109,6 +115,7 @@ function RunRow({ repo, run: r }: { repo: Repo; run: ActionsRun }) {
           {r.attempt > 1 && <span>{t("run.attempt", { n: r.attempt })}</span>}
           {r.needsApproval && <Badge tone="warn">{t("run.needsApproval")}</Badge>}
           {r.fork && <Badge>{t("run.fork")}</Badge>}
+          {r.external && <Badge tone="info">{t("run.github")}</Badge>}
         </span>
       </span>
       <span className="ax-row-time">

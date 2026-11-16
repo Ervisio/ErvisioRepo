@@ -89,7 +89,9 @@ type runInput struct {
 	// ActorID is who caused the event, TriggerActorID who started this
 	// attempt (a re-run).
 	ActorID uuid.UUID
-	Payload map[string]any
+	// SystemActor names the bot of a run without an actor (SyncBot).
+	SystemActor string
+	Payload     map[string]any
 	// Inputs are the workflow_dispatch inputs.
 	Inputs     map[string]any
 	HeadRepoID uuid.UUID
@@ -124,7 +126,7 @@ func (s *Service) createRun(ctx context.Context, in runInput) (dbgen.ActionsRun,
 		title = in.WF.workflowName()
 	}
 	title = truncate(title, 1024)
-	actor := s.userName(ctx, nullID(in.ActorID))
+	actor := s.actorName(ctx, nullID(in.ActorID), in.SystemActor)
 	var run dbgen.ActionsRun
 	var cancel []uuid.UUID
 	err = s.tx(ctx, func(q *dbgen.Queries) error {
@@ -172,7 +174,8 @@ func (s *Service) createRun(ctx context.Context, in runInput) (dbgen.ActionsRun,
 			WorkflowName: truncate(in.WF.workflowName(), 1024), Workflow: in.WF.Raw, Event: in.Event, EventAction: in.Action,
 			Ref: in.Ref, Sha: in.Sha, Title: title, RunNumber: num, Status: status, ActorID: nullID(in.ActorID),
 			TriggerActorID: nullID(in.ActorID), EventPayload: evJSON, ConcurrencyGroup: truncate(group, 1024),
-			ConcurrencyCancel: cancelInProgress, HeadRepoID: nullID(in.HeadRepoID), Fork: in.Fork, NeedsApproval: in.NeedsApproval})
+			ConcurrencyCancel: cancelInProgress, HeadRepoID: nullID(in.HeadRepoID), Fork: in.Fork, NeedsApproval: in.NeedsApproval,
+			SystemActor: truncate(in.SystemActor, 64)})
 		if err != nil {
 			return fmt.Errorf("insert run: %w", err)
 		}
@@ -853,12 +856,16 @@ func (s *Service) githubCtx(run dbgen.ActionsRun, repo repos.Repo, actor string)
 		RetentionDays: "90", ServerURL: s.public, APIURL: s.public + "/api/v3", GraphQLURL: s.public + "/api/graphql"}
 }
 
-// userName is the username of a user, or the Actions bot.
-func (s *Service) userName(ctx context.Context, id uuid.NullUUID) string {
+// actorName is the login of a user, or else bot (ervisio-actions[bot]
+// when empty).
+func (s *Service) actorName(ctx context.Context, id uuid.NullUUID, bot string) string {
 	if id.Valid {
 		if u, err := s.q.GetUserByID(ctx, id.UUID); err == nil {
 			return u.Username
 		}
+	}
+	if bot != "" {
+		return bot
 	}
 	return "ervisio-actions[bot]"
 }

@@ -20,6 +20,9 @@ type PushHooks struct {
 	// Skip, when set, keeps the updates of the sessions it reports from
 	// being published (bulk imports).
 	Skip func(s *githooks.Session) bool
+	// Origin, when set, names the origin of the updates of a session
+	// (PushPayload.Origin).
+	Origin func(s *githooks.Session) string
 }
 
 var (
@@ -51,6 +54,9 @@ func (h *PushHooks) Committed(ctx context.Context, s *githooks.Session, updates 
 	}
 	if h.Bus != nil && len(updates) > 0 && (h.Skip == nil || !h.Skip(s)) {
 		p := PushPayload{Updates: make([]RefUpdate, 0, len(updates))}
+		if h.Origin != nil {
+			p.Origin = h.Origin(s)
+		}
 		for _, u := range updates {
 			p.Updates = append(p.Updates, RefUpdate{Ref: u.Ref, Old: u.Old, New: u.New})
 		}

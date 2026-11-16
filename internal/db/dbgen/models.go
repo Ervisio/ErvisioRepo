@@ -50,6 +50,40 @@ type ActionsEnvironment struct {
 	UpdatedAt       pgtype.Timestamptz
 }
 
+type ActionsExternalRun struct {
+	ID           uuid.UUID
+	RepoID       uuid.UUID
+	Provider     string
+	ExternalID   int64
+	RunNumber    int64
+	Attempt      int32
+	WorkflowPath string
+	WorkflowName string
+	Event        string
+	Ref          string
+	Sha          string
+	Title        string
+	Status       string
+	Conclusion   string
+	ActorLogin   string
+	HtmlUrl      string
+	StartedAt    pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+}
+
+type ActionsGithubImport struct {
+	RepoID            uuid.UUID
+	SecretNames       []byte
+	VariablesImported int32
+	VariablesSkipped  int32
+	RunsImported      int32
+	LastError         string
+	ImportedAt        pgtype.Timestamptz
+	RunsSyncedAt      pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
 type ActionsJob struct {
 	ID                uuid.UUID
 	RunID             uuid.UUID
@@ -136,6 +170,7 @@ type ActionsRun struct {
 	CompletedAt       pgtype.Timestamptz
 	CreatedAt         pgtype.Timestamptz
 	UpdatedAt         pgtype.Timestamptz
+	SystemActor       string
 }
 
 type ActionsRunNumber struct {
@@ -421,6 +456,7 @@ type GithubSyncLink struct {
 	CreatedBy       uuid.NullUUID
 	CreatedAt       pgtype.Timestamptz
 	UpdatedAt       pgtype.Timestamptz
+	RunActions      bool
 }
 
 type GithubSyncRef struct {

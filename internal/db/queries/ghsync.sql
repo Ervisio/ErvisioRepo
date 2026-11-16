@@ -32,12 +32,13 @@ SELECT count(*) FROM github_sync_links WHERE connection_id = $1;
 
 -- name: UpsertGitHubSyncLink :one
 INSERT INTO github_sync_links (id, repo_id, connection_id, mode, remote_owner, remote_name, prune, trust_github,
-    create_missing, interval_seconds, enabled, created_by)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    create_missing, interval_seconds, enabled, created_by, run_actions)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 ON CONFLICT (repo_id) DO UPDATE
 SET connection_id = EXCLUDED.connection_id, mode = EXCLUDED.mode, remote_owner = EXCLUDED.remote_owner,
     remote_name = EXCLUDED.remote_name, prune = EXCLUDED.prune, trust_github = EXCLUDED.trust_github,
     create_missing = EXCLUDED.create_missing, interval_seconds = EXCLUDED.interval_seconds,
+    run_actions = EXCLUDED.run_actions,
     enabled = EXCLUDED.enabled, status = 'pending', last_error = '', failures = 0, next_attempt_at = NULL,
     updated_at = now()
 RETURNING *;

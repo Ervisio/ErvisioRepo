@@ -231,7 +231,7 @@ func (q *Queries) InsertActivityEvent(ctx context.Context, arg InsertActivityEve
 }
 
 const listUserActionsRuns = `-- name: ListUserActionsRuns :many
-SELECT a.id, a.repo_id, a.workflow_path, a.workflow_name, a.workflow, a.event, a.event_action, a.ref, a.sha, a.title, a.run_number, a.attempt, a.status, a.conclusion, a.actor_id, a.trigger_actor_id, a.event_payload, a.concurrency_group, a.concurrency_cancel, a.head_repo_id, a.fork, a.needs_approval, a.approved_by, a.started_at, a.completed_at, a.created_at, a.updated_at, n.name AS owner_name, r.name AS repo_name
+SELECT a.id, a.repo_id, a.workflow_path, a.workflow_name, a.workflow, a.event, a.event_action, a.ref, a.sha, a.title, a.run_number, a.attempt, a.status, a.conclusion, a.actor_id, a.trigger_actor_id, a.event_payload, a.concurrency_group, a.concurrency_cancel, a.head_repo_id, a.fork, a.needs_approval, a.approved_by, a.started_at, a.completed_at, a.created_at, a.updated_at, a.system_actor, n.name AS owner_name, r.name AS repo_name
 FROM actions_runs a
 JOIN repos r ON r.id = a.repo_id
 JOIN namespaces n ON n.id = r.owner_id
@@ -302,6 +302,7 @@ func (q *Queries) ListUserActionsRuns(ctx context.Context, arg ListUserActionsRu
 			&i.ActionsRun.CompletedAt,
 			&i.ActionsRun.CreatedAt,
 			&i.ActionsRun.UpdatedAt,
+			&i.ActionsRun.SystemActor,
 			&i.OwnerName,
 			&i.RepoName,
 		); err != nil {

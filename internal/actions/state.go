@@ -126,7 +126,7 @@ func (s *Service) advanceOne(ctx context.Context, runID uuid.UUID) (effects, err
 	if err != nil {
 		return eff, fmt.Errorf("run repository: %w", err)
 	}
-	actor := s.userName(ctx, run.TriggerActorID)
+	actor := s.actorName(ctx, run.TriggerActorID, run.SystemActor)
 	vars, err := s.variables(ctx, repo, "")
 	if err != nil {
 		return eff, err

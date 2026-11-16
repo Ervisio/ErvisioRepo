@@ -1,5 +1,8 @@
+import { Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import {
+  useGitHubActionsImport,
+  useImportGitHubActions,
   useDeleteEntry,
   useDeleteEnvironment,
   useDeleteRunner,
@@ -238,5 +241,74 @@ export function Runners({ scope }: { scope: ActionsScope }) {
         </div>
       </Card>
     </>
+  );
+}
+
+/** Import of variables, secret names and run history from the GitHub counterpart of a repository; lists the secrets still to fill in. */
+export function GitHubActionsImport({ owner, name }: { owner: string; name: string }) {
+  const t = useT("actions");
+  const notify = useNotify();
+  const state = useGitHubActionsImport(owner, name);
+  const run = useImportGitHubActions(owner, name);
+  const [overwrite, setOverwrite] = useState(false);
+  const g = state.data;
+  if (!g?.available) return null;
+
+  return (
+    <Card title={t("gh.title")}>
+      <p className="ui-note acc-pad">
+        {t("gh.hint", { remote: g.remote })}{" "}
+        {g.remoteUrl && (
+          <a href={g.remoteUrl} target="_blank" rel="noreferrer">
+            {t("gh.open")}
+          </a>
+        )}
+      </p>
+      {g.importedAt && (
+        <p className="ui-note acc-pad">
+          {t("gh.last", { when: formatDate(g.importedAt), vars: g.variablesImported, skipped: g.variablesSkipped, runs: g.runsImported })}
+        </p>
+      )}
+      {g.lastError && (
+        <p className="ui-note acc-pad" role="alert">
+          <Badge tone="err">{t("gh.error")}</Badge> {g.lastError}
+        </p>
+      )}
+      {g.missingSecrets.length > 0 && (
+        <div className="acc-pad">
+          <p className="ui-note">{t("gh.missing", { count: g.missingSecrets.length })}</p>
+          <ul>
+            {g.missingSecrets.map((m) => (
+              <li key={`${m.environment}/${m.name}`}>
+                <span className="ui-mono">{m.name}</span> {m.environment && <Badge>{t("gh.env", { env: m.environment })}</Badge>}
+              </li>
+            ))}
+          </ul>
+          <Link to="/$owner/$name/settings" params={{ owner, name }} search={{ section: "secrets" }}>
+            {t("gh.fill")}
+          </Link>
+        </div>
+      )}
+      <div className="acc-form acc-pad">
+        <label className="acc-check">
+          <input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} />
+          <span>{t("gh.overwrite")}</span>
+        </label>
+        <div className="acc-actions">
+          <Button
+            icon="download"
+            disabled={run.isPending}
+            onClick={() =>
+              run.mutate(
+                { overwriteVariables: overwrite, runs: true },
+                { onSuccess: (r) => (r.lastError ? notify.fail(new Error(r.lastError)) : notify.ok(t("gh.done"))), onError: notify.fail },
+              )
+            }
+          >
+            {run.isPending ? t("gh.running") : t("gh.import")}
+          </Button>
+        </div>
+      </div>
+    </Card>
   );
 }

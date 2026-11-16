@@ -218,7 +218,7 @@ func importKinds(in *[]v1gen.GitHubImportKind) []string {
 func linkDTO(l ghsync.Link) v1gen.GitHubSyncLink {
 	return v1gen.GitHubSyncLink{ConnectionId: l.ConnectionID, Mode: v1gen.GitHubSyncMode(l.Mode),
 		RemoteOwner: l.RemoteOwner, RemoteName: l.RemoteName, Prune: l.Prune, TrustGithub: l.TrustGitHub,
-		CreateMissing: l.CreateMissing, IntervalMinutes: l.IntervalMinutes, Enabled: l.Enabled,
+		CreateMissing: l.CreateMissing, IntervalMinutes: l.IntervalMinutes, Enabled: l.Enabled, RunActions: l.RunActions,
 		ReadOnly: l.Mode == "mirror", Status: v1gen.GitHubSyncLinkStatus(l.Status), LastError: l.LastError,
 		Failures: l.Failures, NextAttemptAt: l.NextAttemptAt, LastRunAt: l.LastRunAt,
 		LastSuccessAt: l.LastSuccessAt, LfsSkipped: l.LFSSkipped, CreatedAt: l.CreatedAt, UpdatedAt: l.UpdatedAt}
@@ -376,7 +376,7 @@ func (s *v1Server) PutGitHubSyncLink(ctx context.Context, req v1gen.PutGitHubSyn
 	l, err := s.github.PutLink(ctx, principal(ctx), req.Owner, req.Name, ghsync.LinkInput{
 		ConnectionID: b.ConnectionId, Mode: string(b.Mode), RemoteOwner: b.RemoteOwner, RemoteName: b.RemoteName,
 		Prune: b.Prune, TrustGitHub: deref(b.TrustGithub), CreateMissing: b.CreateMissing,
-		IntervalMinutes: b.IntervalMinutes, Enabled: b.Enabled})
+		IntervalMinutes: b.IntervalMinutes, Enabled: b.Enabled, RunActions: b.RunActions})
 	if err != nil {
 		return ghsyncFail(err, http.MethodPut, "/github/sync")
 	}

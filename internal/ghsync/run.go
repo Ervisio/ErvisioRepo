@@ -190,7 +190,13 @@ func (s *Service) runLink(ctx context.Context, repoID uuid.UUID, force bool) err
 	if states == nil {
 		states = prev
 	}
-	return s.finish(ctx, link, err, states, lfs)
+	if ferr := s.finish(ctx, link, err, states, lfs); ferr != nil {
+		return ferr
+	}
+	if fn := s.after.Load(); fn != nil && err == nil {
+		(*fn)(ctx, link.RepoID)
+	}
+	return nil
 }
 
 func (s *Service) runMode(ctx context.Context, link dbgen.GithubSyncLink, prev map[string]refState, force bool) (map[string]refState, bool, error) {
@@ -322,7 +328,7 @@ func (s *Service) runMirror(ctx context.Context, l *gitstore.Lease, link dbgen.G
 		return nil, err
 	}
 	p := planMirror(link, local, rem)
-	failed := s.apply(ctx, l, p.groups, cleanup(scratch))
+	failed := s.apply(ctx, l, protocolOf(link), p.groups, cleanup(scratch))
 	markFailed(p.states, failed, local, rem, prev)
 	return p.states, nil
 }
@@ -339,7 +345,7 @@ func (s *Service) runSync(ctx context.Context, l *gitstore.Lease, link dbgen.Git
 		return nil, err
 	}
 	p.groups = append(p.groups, resolvedConflicts(local, p.states, prev)...)
-	failed := s.apply(ctx, l, p.groups, cleanup(scratch))
+	failed := s.apply(ctx, l, protocolOf(link), p.groups, cleanup(scratch))
 	markFailed(p.states, failed, local, rem, prev)
 	if err := pushSpecs(ctx, l.Path, r.url, r.env, p.pushes, p.states, prev); err != nil {
 		return nil, err

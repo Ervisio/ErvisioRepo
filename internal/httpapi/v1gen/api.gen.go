@@ -625,6 +625,7 @@ func (e GitHubImportStatus) Valid() bool {
 
 // Defines values for GitHubImportKind.
 const (
+	Actions    GitHubImportKind = "actions"
 	Issues     GitHubImportKind = "issues"
 	Labels     GitHubImportKind = "labels"
 	Milestones GitHubImportKind = "milestones"
@@ -635,6 +636,8 @@ const (
 // Valid indicates whether the value is a known member of the GitHubImportKind enum.
 func (e GitHubImportKind) Valid() bool {
 	switch e {
+	case Actions:
+		return true
 	case Issues:
 		return true
 	case Labels:
@@ -2549,6 +2552,41 @@ type ActionsEnvironmentPut struct {
 	Reviewers *[]string `json:"reviewers,omitempty"`
 }
 
+// ActionsGitHubImport defines model for ActionsGitHubImport.
+type ActionsGitHubImport struct {
+	// Available The repository is linked to or was imported from GitHub
+	Available      bool                      `json:"available"`
+	ImportedAt     *time.Time                `json:"importedAt,omitempty"`
+	LastError      string                    `json:"lastError"`
+	MissingSecrets []ActionsGitHubSecretName `json:"missingSecrets"`
+
+	// Remote owner/name on GitHub
+	Remote            string     `json:"remote"`
+	RemoteUrl         *string    `json:"remoteUrl,omitempty"`
+	RunsImported      int        `json:"runsImported"`
+	RunsSyncedAt      *time.Time `json:"runsSyncedAt,omitempty"`
+	VariablesImported int        `json:"variablesImported"`
+
+	// VariablesSkipped Variables kept because they already existed
+	VariablesSkipped int `json:"variablesSkipped"`
+}
+
+// ActionsGitHubImportRequest defines model for ActionsGitHubImportRequest.
+type ActionsGitHubImportRequest struct {
+	// OverwriteVariables Replace the variables that already exist
+	OverwriteVariables *bool `json:"overwriteVariables,omitempty"`
+
+	// Runs Also read the latest workflow runs
+	Runs *bool `json:"runs,omitempty"`
+}
+
+// ActionsGitHubSecretName defines model for ActionsGitHubSecretName.
+type ActionsGitHubSecretName struct {
+	// Environment Empty for a repository secret
+	Environment string `json:"environment"`
+	Name        string `json:"name"`
+}
+
 // ActionsJob defines model for ActionsJob.
 type ActionsJob struct {
 	// Approved The deployment to environment was approved
@@ -2620,11 +2658,17 @@ type ActionsRun struct {
 	CompletedAt *time.Time `json:"completedAt,omitempty"`
 
 	// Conclusion Empty unless completed
-	Conclusion    string             `json:"conclusion"`
-	CreatedAt     time.Time          `json:"createdAt"`
-	Event         string             `json:"event"`
-	EventAction   string             `json:"eventAction"`
-	Fork          bool               `json:"fork"`
+	Conclusion  string    `json:"conclusion"`
+	CreatedAt   time.Time `json:"createdAt"`
+	Event       string    `json:"event"`
+	EventAction string    `json:"eventAction"`
+
+	// External A read-only run imported from GitHub (no jobs or logs here; see htmlUrl)
+	External *bool `json:"external,omitempty"`
+	Fork     bool  `json:"fork"`
+
+	// HtmlUrl Page of an external run on GitHub
+	HtmlUrl       *string            `json:"htmlUrl,omitempty"`
 	Id            openapi_types.UUID `json:"id"`
 	NeedsApproval bool               `json:"needsApproval"`
 	Ref           string             `json:"ref"`
@@ -2714,9 +2758,13 @@ type ActionsVariablePut struct {
 
 // ActionsWorkflow defines model for ActionsWorkflow.
 type ActionsWorkflow struct {
-	LastRunAt time.Time `json:"lastRunAt"`
-	Name      string    `json:"name"`
-	Path      string    `json:"path"`
+	// LastRunAt Absent when it never ran
+	LastRunAt *time.Time `json:"lastRunAt,omitempty"`
+	Name      string     `json:"name"`
+
+	// OnDefaultBranch The file exists on the default branch
+	OnDefaultBranch *bool  `json:"onDefaultBranch,omitempty"`
+	Path            string `json:"path"`
 }
 
 // ActivityItem defines model for ActivityItem.
@@ -3529,9 +3577,12 @@ type GitHubSyncLink struct {
 	Prune         bool           `json:"prune"`
 
 	// ReadOnly Pushes are refused (mirror)
-	ReadOnly    bool                 `json:"readOnly"`
-	RemoteName  string               `json:"remoteName"`
-	RemoteOwner string               `json:"remoteOwner"`
+	ReadOnly    bool   `json:"readOnly"`
+	RemoteName  string `json:"remoteName"`
+	RemoteOwner string `json:"remoteOwner"`
+
+	// RunActions Synced pushes start workflows (as ervisio-sync[bot])
+	RunActions  bool                 `json:"runActions"`
 	Status      GitHubSyncLinkStatus `json:"status"`
 	TrustGithub []string             `json:"trustGithub"`
 	UpdatedAt   time.Time            `json:"updatedAt"`
@@ -3554,6 +3605,9 @@ type GitHubSyncLinkPut struct {
 	Prune       *bool  `json:"prune,omitempty"`
 	RemoteName  string `json:"remoteName"`
 	RemoteOwner string `json:"remoteOwner"`
+
+	// RunActions Run Actions on synced pushes (mirror, sync); the runs show ervisio-sync[bot] as actor
+	RunActions *bool `json:"runActions,omitempty"`
 
 	// TrustGithub Branch patterns (sync) on which GitHub wins a divergence
 	TrustGithub *[]string `json:"trustGithub,omitempty"`
@@ -6471,6 +6525,9 @@ type UpdateRepoJSONRequestBody = RepoUpdate
 // PutActionsEnvironmentJSONRequestBody defines body for PutActionsEnvironment for application/json ContentType.
 type PutActionsEnvironmentJSONRequestBody = ActionsEnvironmentPut
 
+// ImportActionsFromGitHubJSONRequestBody defines body for ImportActionsFromGitHub for application/json ContentType.
+type ImportActionsFromGitHubJSONRequestBody = ActionsGitHubImportRequest
+
 // ReviewActionsDeploymentJSONRequestBody defines body for ReviewActionsDeployment for application/json ContentType.
 type ReviewActionsDeploymentJSONRequestBody = ActionsDeploymentReview
 
@@ -7013,6 +7070,12 @@ type ServerInterface interface {
 	// PutActionsEnvironment Create or update an environment
 	// (PUT /repos/{owner}/{name}/actions/environments/{environment})
 	PutActionsEnvironment(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, environment ActionsEnvironmentName)
+	// GetActionsGitHubImport State of the import of the GitHub Actions configuration
+	// (GET /repos/{owner}/{name}/actions/github)
+	GetActionsGitHubImport(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// ImportActionsFromGitHub Import variables, secret names and run history from GitHub
+	// (POST /repos/{owner}/{name}/actions/github/import)
+	ImportActionsFromGitHub(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
 	// GetActionsJob A job with its steps
 	// (GET /repos/{owner}/{name}/actions/jobs/{jobId})
 	GetActionsJob(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId)
@@ -7070,7 +7133,7 @@ type ServerInterface interface {
 	// PutRepoActionsVariable Create or replace an Actions variable
 	// (PUT /repos/{owner}/{name}/actions/variables/{variableName})
 	PutRepoActionsVariable(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, variableName ActionsVariableName, params PutRepoActionsVariableParams)
-	// ListActionsWorkflows Workflow files that ran in the repository
+	// ListActionsWorkflows Workflow files of the default branch and of past runs
 	// (GET /repos/{owner}/{name}/actions/workflows)
 	ListActionsWorkflows(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
 	// GetActionsBadge SVG status badge of a workflow
@@ -8327,6 +8390,18 @@ func (_ Unimplemented) PutActionsEnvironment(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetActionsGitHubImport State of the import of the GitHub Actions configuration
+// (GET /repos/{owner}/{name}/actions/github)
+func (_ Unimplemented) GetActionsGitHubImport(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ImportActionsFromGitHub Import variables, secret names and run history from GitHub
+// (POST /repos/{owner}/{name}/actions/github/import)
+func (_ Unimplemented) ImportActionsFromGitHub(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetActionsJob A job with its steps
 // (GET /repos/{owner}/{name}/actions/jobs/{jobId})
 func (_ Unimplemented) GetActionsJob(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, jobId ActionsJobId) {
@@ -8441,7 +8516,7 @@ func (_ Unimplemented) PutRepoActionsVariable(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// ListActionsWorkflows Workflow files that ran in the repository
+// ListActionsWorkflows Workflow files of the default branch and of past runs
 // (GET /repos/{owner}/{name}/actions/workflows)
 func (_ Unimplemented) ListActionsWorkflows(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -13613,6 +13688,92 @@ func (siw *ServerInterfaceWrapper) PutActionsEnvironment(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PutActionsEnvironment(w, r, owner, name, environment)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetActionsGitHubImport operation middleware
+func (siw *ServerInterfaceWrapper) GetActionsGitHubImport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetActionsGitHubImport(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImportActionsFromGitHub operation middleware
+func (siw *ServerInterfaceWrapper) ImportActionsFromGitHub(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"actions:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportActionsFromGitHub(w, r, owner, name)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -25531,6 +25692,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/jobs/{jobId}/logs", wrapper.GetActionsJobLog)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/github", wrapper.GetActionsGitHubImport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/actions/github/import", wrapper.ImportActionsFromGitHub)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/actions/secrets", wrapper.ListRepoActionsSecrets)
 	})
 	r.Group(func(r chi.Router) {
@@ -34264,6 +34431,233 @@ type PutActionsEnvironmentdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response PutActionsEnvironmentdefaultApplicationProblemPlusJSONResponse) VisitPutActionsEnvironmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsGitHubImportRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type GetActionsGitHubImportResponseObject interface {
+	VisitGetActionsGitHubImportResponse(w http.ResponseWriter) error
+}
+
+type GetActionsGitHubImport200JSONResponse ActionsGitHubImport
+
+func (response GetActionsGitHubImport200JSONResponse) VisitGetActionsGitHubImportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsGitHubImport307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsGitHubImport307ApplicationProblemPlusJSONResponse) VisitGetActionsGitHubImportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsGitHubImport403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsGitHubImport403ApplicationProblemPlusJSONResponse) VisitGetActionsGitHubImportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsGitHubImport404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetActionsGitHubImport404ApplicationProblemPlusJSONResponse) VisitGetActionsGitHubImportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsGitHubImport503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response GetActionsGitHubImport503ApplicationProblemPlusJSONResponse) VisitGetActionsGitHubImportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetActionsGitHubImportdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetActionsGitHubImportdefaultApplicationProblemPlusJSONResponse) VisitGetActionsGitHubImportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportActionsFromGitHubRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *ImportActionsFromGitHubJSONRequestBody
+}
+
+type ImportActionsFromGitHubResponseObject interface {
+	VisitImportActionsFromGitHubResponse(w http.ResponseWriter) error
+}
+
+type ImportActionsFromGitHub200JSONResponse ActionsGitHubImport
+
+func (response ImportActionsFromGitHub200JSONResponse) VisitImportActionsFromGitHubResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportActionsFromGitHub307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response ImportActionsFromGitHub307ApplicationProblemPlusJSONResponse) VisitImportActionsFromGitHubResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportActionsFromGitHub400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ImportActionsFromGitHub400ApplicationProblemPlusJSONResponse) VisitImportActionsFromGitHubResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportActionsFromGitHub403ApplicationProblemPlusJSONResponse Problem
+
+func (response ImportActionsFromGitHub403ApplicationProblemPlusJSONResponse) VisitImportActionsFromGitHubResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportActionsFromGitHub404ApplicationProblemPlusJSONResponse Problem
+
+func (response ImportActionsFromGitHub404ApplicationProblemPlusJSONResponse) VisitImportActionsFromGitHubResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportActionsFromGitHub503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response ImportActionsFromGitHub503ApplicationProblemPlusJSONResponse) VisitImportActionsFromGitHubResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportActionsFromGitHubdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ImportActionsFromGitHubdefaultApplicationProblemPlusJSONResponse) VisitImportActionsFromGitHubResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -53675,6 +54069,12 @@ type StrictServerInterface interface {
 	// PutActionsEnvironment Create or update an environment
 	// (PUT /repos/{owner}/{name}/actions/environments/{environment})
 	PutActionsEnvironment(ctx context.Context, request PutActionsEnvironmentRequestObject) (PutActionsEnvironmentResponseObject, error)
+	// GetActionsGitHubImport State of the import of the GitHub Actions configuration
+	// (GET /repos/{owner}/{name}/actions/github)
+	GetActionsGitHubImport(ctx context.Context, request GetActionsGitHubImportRequestObject) (GetActionsGitHubImportResponseObject, error)
+	// ImportActionsFromGitHub Import variables, secret names and run history from GitHub
+	// (POST /repos/{owner}/{name}/actions/github/import)
+	ImportActionsFromGitHub(ctx context.Context, request ImportActionsFromGitHubRequestObject) (ImportActionsFromGitHubResponseObject, error)
 	// GetActionsJob A job with its steps
 	// (GET /repos/{owner}/{name}/actions/jobs/{jobId})
 	GetActionsJob(ctx context.Context, request GetActionsJobRequestObject) (GetActionsJobResponseObject, error)
@@ -53732,7 +54132,7 @@ type StrictServerInterface interface {
 	// PutRepoActionsVariable Create or replace an Actions variable
 	// (PUT /repos/{owner}/{name}/actions/variables/{variableName})
 	PutRepoActionsVariable(ctx context.Context, request PutRepoActionsVariableRequestObject) (PutRepoActionsVariableResponseObject, error)
-	// ListActionsWorkflows Workflow files that ran in the repository
+	// ListActionsWorkflows Workflow files of the default branch and of past runs
 	// (GET /repos/{owner}/{name}/actions/workflows)
 	ListActionsWorkflows(ctx context.Context, request ListActionsWorkflowsRequestObject) (ListActionsWorkflowsResponseObject, error)
 	// GetActionsBadge SVG status badge of a workflow
@@ -57590,6 +57990,70 @@ func (sh *strictHandler) PutActionsEnvironment(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(PutActionsEnvironmentResponseObject); ok {
 		if err := validResponse.VisitPutActionsEnvironmentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetActionsGitHubImport operation middleware
+func (sh *strictHandler) GetActionsGitHubImport(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request GetActionsGitHubImportRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetActionsGitHubImport(ctx, request.(GetActionsGitHubImportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetActionsGitHubImport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetActionsGitHubImportResponseObject); ok {
+		if err := validResponse.VisitGetActionsGitHubImportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImportActionsFromGitHub operation middleware
+func (sh *strictHandler) ImportActionsFromGitHub(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request ImportActionsFromGitHubRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body ImportActionsFromGitHubJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImportActionsFromGitHub(ctx, request.(ImportActionsFromGitHubRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImportActionsFromGitHub")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImportActionsFromGitHubResponseObject); ok {
+		if err := validResponse.VisitImportActionsFromGitHubResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

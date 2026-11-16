@@ -76,6 +76,7 @@ type Querier interface {
 	ConsumeMFAChallenge(ctx context.Context, id uuid.UUID) (int64, error)
 	// Deletes and returns a token; the caller checks expires_at.
 	ConsumeOneTimeToken(ctx context.Context, arg ConsumeOneTimeTokenParams) (ConsumeOneTimeTokenRow, error)
+	CountActionsExternalRuns(ctx context.Context, arg CountActionsExternalRunsParams) (int64, error)
 	CountActionsRuns(ctx context.Context, arg CountActionsRunsParams) (int64, error)
 	CountActiveAdmins(ctx context.Context) (int64, error)
 	CountCheckRuns(ctx context.Context, arg CountCheckRunsParams) (int64, error)
@@ -223,6 +224,7 @@ type Querier interface {
 	GetActionsCache(ctx context.Context, id int64) (ActionsCache, error)
 	GetActionsCacheByKey(ctx context.Context, arg GetActionsCacheByKeyParams) (ActionsCache, error)
 	GetActionsEnvironment(ctx context.Context, arg GetActionsEnvironmentParams) (ActionsEnvironment, error)
+	GetActionsGitHubImport(ctx context.Context, repoID uuid.UUID) (ActionsGithubImport, error)
 	GetActionsJob(ctx context.Context, id uuid.UUID) (ActionsJob, error)
 	// The running job of a job token, with what the token principal needs.
 	GetActionsJobByToken(ctx context.Context, tokenHash []byte) (GetActionsJobByTokenRow, error)
@@ -484,11 +486,21 @@ type Querier interface {
 	ListActionsCacheReposOver(ctx context.Context, maxSize int64) ([]ListActionsCacheReposOverRow, error)
 	ListActionsCachesLRU(ctx context.Context, arg ListActionsCachesLRUParams) ([]ActionsCache, error)
 	ListActionsEnvironments(ctx context.Context, repoID uuid.UUID) ([]ActionsEnvironment, error)
+	ListActionsExternalRunsByIDs(ctx context.Context, ids []uuid.UUID) ([]ActionsExternalRun, error)
+	// The workflow files of the runs read from GitHub, with their last name.
+	ListActionsExternalWorkflows(ctx context.Context, repoID uuid.UUID) ([]ListActionsExternalWorkflowsRow, error)
 	ListActionsJobs(ctx context.Context, arg ListActionsJobsParams) ([]ActionsJob, error)
 	ListActionsJobsForUpdate(ctx context.Context, arg ListActionsJobsForUpdateParams) ([]ActionsJob, error)
 	// Of the jobs a runner reports as running, the ones it must stop.
 	ListActionsJobsToCancel(ctx context.Context, arg ListActionsJobsToCancelParams) ([]uuid.UUID, error)
 	ListActionsLogRows(ctx context.Context, arg ListActionsLogRowsParams) ([]ListActionsLogRowsRow, error)
+	// The secrets of a repository and of its environments.
+	ListActionsRepoSecretKeys(ctx context.Context, repoID uuid.NullUUID) ([]ListActionsRepoSecretKeysRow, error)
+	ListActionsRepoVariableKeys(ctx context.Context, repoID uuid.NullUUID) ([]ListActionsRepoVariableKeysRow, error)
+	// GitHub Actions import (ghimport.go): external runs and imported state.
+	// One page of the runs of a repository, newest first, merged with the
+	// external runs read from GitHub when with_external is set.
+	ListActionsRunKeys(ctx context.Context, arg ListActionsRunKeysParams) ([]ListActionsRunKeysRow, error)
 	// The runners registered at one scope (owner_id and repo_id are NULL when
 	// not part of the scope).
 	ListActionsRunners(ctx context.Context, arg ListActionsRunnersParams) ([]ActionsRunner, error)
@@ -496,6 +508,7 @@ type Querier interface {
 	ListActionsRunnersForRepo(ctx context.Context, arg ListActionsRunnersForRepoParams) ([]ActionsRunner, error)
 	// Runs of a repository, newest first, optionally filtered.
 	ListActionsRuns(ctx context.Context, arg ListActionsRunsParams) ([]ActionsRun, error)
+	ListActionsRunsByIDs(ctx context.Context, ids []uuid.UUID) ([]ActionsRun, error)
 	ListActionsSecretNames(ctx context.Context, arg ListActionsSecretNamesParams) ([]ListActionsSecretNamesRow, error)
 	// Every secret visible to a job; the caller resolves the precedence.
 	ListActionsSecretsForJob(ctx context.Context, arg ListActionsSecretsForJobParams) ([]ActionsSecret, error)
@@ -751,6 +764,8 @@ type Querier interface {
 	OpenPullsWithHeadRepo(ctx context.Context, headRepoID uuid.NullUUID) ([]PullRequest, error)
 	// Appends the repository after the last pin; a repeated pin changes nothing.
 	PinRepo(ctx context.Context, arg PinRepoParams) error
+	// Keeps the newest external runs of a repository (keep of them).
+	PruneActionsExternalRuns(ctx context.Context, arg PruneActionsExternalRunsParams) error
 	// Dispatched events older than "before" (their delivery jobs are done or
 	// have given up).
 	PruneOutboxEvents(ctx context.Context, before pgtype.Timestamptz) (int64, error)
@@ -803,6 +818,7 @@ type Querier interface {
 	// Oldest-verified first, random within the same age, so repeated runs cover
 	// every object over time.
 	SampleStorageObjectsForVerify(ctx context.Context, arg SampleStorageObjectsForVerifyParams) ([]StorageObject, error)
+	SaveActionsGitHubImport(ctx context.Context, arg SaveActionsGitHubImportParams) error
 	// Issues of a repository matching every given filter. Modes: milestone_mode
 	// and assignee_mode are '' (no filter), 'none', 'any' or 'id'. query is a
 	// websearch_to_tsquery text matched against title, body and comments.
@@ -826,6 +842,7 @@ type Querier interface {
 	// members of that repository.
 	SearchUsers(ctx context.Context, arg SearchUsersParams) ([]SearchUsersRow, error)
 	SetActionsArtifactBlob(ctx context.Context, arg SetActionsArtifactBlobParams) (ActionsArtifact, error)
+	SetActionsGitHubRunsSynced(ctx context.Context, repoID uuid.UUID) error
 	SetActionsJobCheckRun(ctx context.Context, arg SetActionsJobCheckRunParams) error
 	SetActionsJobLogKey(ctx context.Context, arg SetActionsJobLogKeyParams) error
 	SetActionsJobLogLength(ctx context.Context, arg SetActionsJobLogLengthParams) error
@@ -935,6 +952,7 @@ type Querier interface {
 	UpdateWebhook(ctx context.Context, arg UpdateWebhookParams) (Webhook, error)
 	// ---- environments ----
 	UpsertActionsEnvironment(ctx context.Context, arg UpsertActionsEnvironmentParams) (ActionsEnvironment, error)
+	UpsertActionsExternalRun(ctx context.Context, arg UpsertActionsExternalRunParams) error
 	// ---- secrets and variables ----
 	UpsertActionsSecret(ctx context.Context, arg UpsertActionsSecretParams) (UpsertActionsSecretRow, error)
 	// ---- steps ----

@@ -20,7 +20,8 @@ Invariants:
 - Secrets are write-only in the API: Secret struct has name/scope/env/times, no value. Values are sealed (sealer: per-secret AES-256-GCM DEK, wrapped by KEK from HKDF of master key; AAD = scope, scope id, env, name).
 - Secrets and variables are resolved per job by scope rank (repo/env/owner) and passed to runners; fork pull_request runs get no secrets (secrets() returns empty when run.Fork).
 - pull_request_target runs the base ref and its workflow (from base commit), not the fork's; pull_request on a fork needs approval for outside contributors.
-- Events without RepoID or ActorID never start workflows (no loops from Actions' own events).
+- Events without RepoID or ActorID never start workflows (no loops from Actions' own events). Exception: push events with PushPayload.Origin = events.OriginSync (ghsync ActionsProtocol, link run_actions on) run as SyncBot (actions_runs.system_actor).
+- GitHub import (ghimport.go): variables, secret names (actions_github_imports), latest GitHub runs in actions_external_runs (read-only, never scheduled; merged into ListRuns via ListActionsRunKeys when RunFilter.External). Refreshed by ghsync SetAfterRun. ListWorkflows = default-branch files + run history + external runs.
 - Secrets masked in logs by per-job replacer (masks) before storage; job log rows capped at maxLogRowBytes (64 KiB).
 - Runner heartbeat/offline: runners silent for runner_offline_after (default 2m) marked offline; jobs whose runner vanished after twice that are failed by sweep (appendServerLog + completeJob failure).
 - Jobs timeout: min(timeout-minutes, max_job_timeout (default 6h)); jobs with no timeout use max.

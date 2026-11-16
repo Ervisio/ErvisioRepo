@@ -309,8 +309,13 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		deps.Pulls = pullSvc
 		deps.Statuses = statusSvc
 		if actionsSvc != nil {
-			wireActions(ctx, actionsSvc, actions.Deps{Repos: repoSvc, Browse: browse, Statuses: statusSvc,
-				Payloads: hooks, Jobs: runner, Bus: bus}, bus)
+			ad := actions.Deps{Repos: repoSvc, Browse: browse, Statuses: statusSvc, Payloads: hooks, Jobs: runner, Bus: bus}
+			if journal != nil {
+				ad.GitHub = journal.GitHub
+				// Refresh of the GitHub run history after every sync run.
+				journal.GitHub.SetAfterRun(actionsSvc.RefreshGitHubRuns)
+			}
+			wireActions(ctx, actionsSvc, ad, bus)
 			deps.ActionsRunner = actionsSvc.RunnerHandler()
 			deps.Actions = actionsSvc
 			deps.ActionsResults = actionsResults
@@ -330,9 +335,13 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 			journal.GitHub.SetRepos(repoSvc)
 			bus.Register("ghsync.push", journal.GitHub.EventHandler(), events.KindPush)
 			// GitHub import of the non-git data (labels, milestones, issues,
-			// pull requests, releases).
-			journal.GitHub.SetImporters(append(issueSvc.GitHubImporters(),
-				pullSvc.GitHubImporter(issueSvc.ImportGitHubComments), relSvc.GitHubImporter())...)
+			// pull requests, releases, Actions configuration and runs).
+			imps := append(issueSvc.GitHubImporters(),
+				pullSvc.GitHubImporter(issueSvc.ImportGitHubComments), relSvc.GitHubImporter())
+			if actionsSvc != nil {
+				imps = append(imps, actionsSvc.GitHubImporter())
+			}
+			journal.GitHub.SetImporters(imps...)
 			deps.GitHub = journal.GitHub
 		}
 	}

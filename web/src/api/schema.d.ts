@@ -4646,7 +4646,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Workflow files that ran in the repository */
+        /** Workflow files of the default branch and of past runs */
         get: operations["listActionsWorkflows"];
         put?: never;
         post?: never;
@@ -4992,6 +4992,61 @@ export interface paths {
         get: operations["streamActionsJobLog"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/github": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * State of the import of the GitHub Actions configuration
+         * @description available is false when the repository has no GitHub sync link and
+         *     was not imported from GitHub. missingSecrets lists the secrets
+         *     GitHub has that are not set here yet (GitHub never returns values).
+         */
+        get: operations["getActionsGitHubImport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/actions/github/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import variables, secret names and run history from GitHub
+         * @description Reads the repository variables, the secret names, the environments
+         *     with their variables and the latest workflow runs of the linked
+         *     GitHub repository. Existing variables are kept unless
+         *     overwriteVariables is set. What the connection may not read (a
+         *     missing permission) is reported in lastError; 400 when the
+         *     repository has no usable GitHub counterpart.
+         */
+        post: operations["importActionsFromGitHub"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5423,8 +5478,47 @@ export interface components {
         ActionsWorkflow: {
             path: string;
             name: string;
+            /**
+             * Format: date-time
+             * @description Absent when it never ran
+             */
+            lastRunAt?: string | null;
+            /** @description The file exists on the default branch */
+            onDefaultBranch?: boolean;
+        };
+        ActionsGitHubImportRequest: {
+            /**
+             * @description Replace the variables that already exist
+             * @default false
+             */
+            overwriteVariables: boolean;
+            /**
+             * @description Also read the latest workflow runs
+             * @default true
+             */
+            runs: boolean;
+        };
+        ActionsGitHubSecretName: {
+            name: string;
+            /** @description Empty for a repository secret */
+            environment: string;
+        };
+        ActionsGitHubImport: {
+            /** @description The repository is linked to or was imported from GitHub */
+            available: boolean;
+            /** @description owner/name on GitHub */
+            remote: string;
+            remoteUrl?: string;
             /** Format: date-time */
-            lastRunAt: string;
+            importedAt?: string | null;
+            /** Format: date-time */
+            runsSyncedAt?: string | null;
+            variablesImported: number;
+            /** @description Variables kept because they already existed */
+            variablesSkipped: number;
+            runsImported: number;
+            lastError: string;
+            missingSecrets: components["schemas"]["ActionsGitHubSecretName"][];
         };
         ActionsRun: {
             /** Format: uuid */
@@ -5449,6 +5543,10 @@ export interface components {
             triggerActor: string;
             /** @description Web page of the run */
             url: string;
+            /** @description A read-only run imported from GitHub (no jobs or logs here; see htmlUrl) */
+            external?: boolean;
+            /** @description Page of an external run on GitHub */
+            htmlUrl?: string;
             /** Format: date-time */
             startedAt?: string | null;
             /** Format: date-time */
@@ -5915,7 +6013,7 @@ export interface components {
             include?: components["schemas"]["GitHubImportKind"][];
         };
         /** @enum {string} */
-        GitHubImportKind: "labels" | "milestones" | "pulls" | "issues" | "releases";
+        GitHubImportKind: "labels" | "milestones" | "pulls" | "issues" | "releases" | "actions";
         GitHubImport: {
             /** Format: uuid */
             id: string;
@@ -5949,6 +6047,8 @@ export interface components {
             createMissing: boolean;
             intervalMinutes: number;
             enabled: boolean;
+            /** @description Synced pushes start workflows (as ervisio-sync[bot]) */
+            runActions: boolean;
             /** @description Pushes are refused (mirror) */
             readOnly: boolean;
             /** @enum {string} */
@@ -5990,6 +6090,11 @@ export interface components {
             intervalMinutes: number;
             /** @default true */
             enabled: boolean;
+            /**
+             * @description Run Actions on synced pushes (mirror, sync); the runs show ervisio-sync[bot] as actor
+             * @default false
+             */
+            runActions: boolean;
         };
         GitHubSyncRef: {
             ref: string;
@@ -16844,6 +16949,69 @@ export interface operations {
                 };
             };
             307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getActionsGitHubImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Import state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsGitHubImport"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    importActionsFromGitHub: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ActionsGitHubImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Import state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsGitHubImport"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             503: components["responses"]["Unavailable"];
             default: components["responses"]["Problem"];

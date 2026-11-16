@@ -15,6 +15,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Avatar upload: `PUT /user/avatar` takes a PNG, JPEG or GIF (up to 2 MiB, 4096x4096), crops it to a centred square, scales it to 460x460 and stores a metadata-free PNG under `avatars/<sha256>.png`; `DELETE /user/avatar` clears the avatar. Images are served publicly and immutably at `/avatars/<sha256>.png`. The profile settings show a preview with Upload and Remove; the external URL field stays as an alternative.
 - Avatar storage in Admin > Storage (`GET`/`PUT /admin/storage/avatars`): local storage or any running target (S3, SFTP), and an optional public base URL for a CDN. Applies at once to new uploads; existing avatars are not moved and stay reachable from any running target.
 - OAuth device flow for command line clients (RFC 8628, GitHub compatible): `POST /login/device/code` and `POST /login/oauth/access_token` (form or JSON, JSON or form-encoded answers, GitHub error codes with `slow_down` backoff), an approval page at `/login/device` (`?user_code=` pre-fills the code) backed by `GET`/`POST /user/device/{userCode}`. Built-in clients: `eg` (`Ov23liErvisioEgCli01`) and the GitHub CLI. The device gets a personal access token named `eg on <host> (device)` with the requested GitHub scopes mapped to token scopes (default `repo read:org workflow`); expired codes are purged by the hourly identity cleanup. See docs/api-v3.md.
+- GitHub sync: "Run Actions on synced pushes" (`runActions` on the sync link, off by default, mirror and sync modes). Commits arriving from GitHub start the workflows like a push, as `ervisio-sync[bot]`; pushes of workflow tokens and of Ervisio to GitHub still start nothing. See docs/github-sync.md.
+- Import of GitHub Actions: `POST /repos/{owner}/{name}/actions/github/import` and the "Import from GitHub" card in the repository secrets and variables settings read the repository and environment variables (existing ones kept unless asked), the secret names (listed as "secrets to fill in" until set) and the latest 100 workflow runs. The repository import has a new `actions` kind doing the same. A missing permission is reported, not fatal.
+- GitHub run history: imported runs are stored read-only (`actions_external_runs`, at most 500 per repository), refreshed after every sync run, and listed in the Actions run list with a GitHub badge linking to their logs on GitHub.
 
 ### Fixed
 
@@ -24,6 +27,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Contributors in the repository sidebar link to their profile.
 - An avatar URL that does not load shows the initials instead of a broken image.
 - Home activity: events with no user behind them (GitHub sync, imports) show "ErvisioSync" with a bot badge instead of "Someone".
+- Actions: workflows of repositories imported or synced from GitHub are listed. The workflow list came only from past runs, and the import (quiet) and the sync (no actor) never start one, so the list stayed empty; it now reads the workflow files of the default branch too.
 
 ## [1.9.0] - 2026-11-16
 

@@ -26,7 +26,7 @@ import {
 import { useNotify } from "../account/common.tsx";
 import { formatBytes } from "../code/common.tsx";
 import { repoHooks } from "../../api/settings.ts";
-import { Entries, Environments, Runners } from "../actions/Settings.tsx";
+import { Entries, Environments, GitHubActionsImport, Runners } from "../actions/Settings.tsx";
 import { Webhooks } from "../settings/Webhooks.tsx";
 import { Collaborators, Labels, Milestones } from "./RepoAccess.tsx";
 import { GitHubSettings } from "./GitHubSettings.tsx";
@@ -235,6 +235,7 @@ export function RepoSettings({ owner, name, section }: { owner: string; name: st
           {section === "tags" && <TagRules owner={r.owner} name={r.name} />}
           {section === "hooks" && <Webhooks base={repoHooks(r.owner, r.name)} scope="repo" />}
           {section === "github" && <GitHubSettings owner={r.owner} name={r.name} />}
+          {(section === "secrets" || section === "variables") && <GitHubActionsImport owner={r.owner} name={r.name} />}
           {section === "secrets" && <Entries scope={scope} kind="secrets" />}
           {section === "variables" && <Entries scope={scope} kind="variables" />}
           {section === "environments" && <Environments owner={r.owner} name={r.name} />}
