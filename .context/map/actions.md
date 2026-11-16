@@ -3,6 +3,7 @@ Purpose: Actions server (internal/actions). Turns repo events and manual trigger
 Entry points:
 - internal/actions/service.go: New(Options), Wire(Deps), VerifyRuntimeToken, PublicURL, errors (ErrNotFound/ErrForbidden/ErrDisabled/ErrNotWired/ErrConflict, ValidationError).
 - Queries/control (api.go, all take who auth.Principal): ListWorkflows, ListRuns, GetRun, RunWorkflow, ListJobs, GetJob, ReadLog, WaitLog, RawLog, CancelRun, CancelJob, RerunRun, ApproveRun, ApproveDeployment, Badge.
+- GitHub-compatible API (internal/ghapi/actions.go) uses the same methods plus SecretsPublicKey/OpenSealedSecret (sealedbox.go: Curve25519 key HKDF-derived from the master key, libsodium sealed box via x/crypto/nacl/box) and artifacts.Service List/Get/DownloadURL/Delete (artifacts/browse.go, wired as httpapi Deps.ActionsArtifacts). RunFilter also has Actor and CreatedFrom/To; GetRun falls back to external (GitHub-imported) runs.
 - Triggers (trigger.go): Dispatch (workflow_dispatch), RepositoryDispatch, EventHandler (bus handler, events.KindX list in EventKinds), Listen (notification loop, started by wireActions).
 - Secrets/vars/envs/runners (secrets.go, runnersvc.go): Scope builders InstanceScope/OwnerScope/RepoScope; Set/List/Delete Secret, Variable; ListEnvironments/PutEnvironment/DeleteEnvironment; Runners() *RunnerService; ListRunners, ListRepoRunners, DeleteRunner, CreateRegistrationToken, LookupJobToken (auth.JobTokenLookup).
 - RunnerHandler() (http.go): ConnectRPC RunnerService under /api/actions/runner/. Long polls: no request timeout.

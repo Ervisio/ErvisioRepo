@@ -176,9 +176,36 @@ ha GitHub App, quindi `app.slug` e `app.name` sono quel nome.
 | `GET .../check-suites/{id}`, `GET .../check-suites/{id}/check-runs` | sì | |
 | `POST .../check-suites` | no | `501`: una suite nasce con il suo primo check run. Le ri-richieste e le preferenze delle check suite non sono disponibili. |
 
+### Actions
+
+Esecuzioni dei workflow di Ervisio Actions. Le esecuzioni importate da
+GitHub (sincronizzazione GitHub) sono elencate in sola lettura con
+`"external": true`: il loro `html_url` è l'esecuzione su GitHub e qui non
+hanno job, log né artifact. L'`id` di un workflow deriva dal repository e
+dal percorso del workflow; al suo posto funziona anche il nome del file.
+
+| Endpoint | Stato | Note |
+|---|---|---|
+| `GET .../actions/workflows`, `GET .../actions/workflows/{id}` | sì | Workflow del branch di default e delle esecuzioni passate; `state` è sempre `active`. |
+| `PUT .../actions/workflows/{id}/enable`, `/disable` | no | I workflow non si possono disattivare (`404`). |
+| `POST .../actions/workflows/{id}/dispatches` | sì | `ref` (predefinito: il branch di default), `inputs`. `204`. |
+| `GET .../actions/runs`, `GET .../actions/workflows/{id}/runs` | sì | `branch`, `event`, `status` (stato o esito), `actor`, `head_sha`, `created` (`>=`, `<`, `a..b`, una data). `total_count` è esatto. |
+| `GET .../actions/runs/{id}`, `.../attempts/{n}` | sì | |
+| `GET .../actions/runs/{id}/jobs`, `.../attempts/{n}/jobs` | sì | Con gli step (`number` da 1). I job in attesa dei loro `needs` sono `pending`. |
+| `POST .../actions/runs/{id}/rerun`, `/cancel` | sì | `rerun` richiede un'esecuzione conclusa, `cancel` una in corso (altrimenti `409`). |
+| `POST .../actions/runs/{id}/rerun-failed-jobs` | no | `422`: si può rieseguire solo l'intera esecuzione. |
+| `DELETE .../actions/runs/{id}` | no | Le esecuzioni non si possono eliminare. |
+| `GET .../actions/runs/{id}/logs` | sì | Zip dell'ultimo tentativo: `<n>_<job>.txt` e `<job>/<step>_<nome>.txt`, come GitHub. Servito direttamente (senza redirect). |
+| `GET .../actions/jobs/{id}`, `GET .../actions/jobs/{id}/logs` | sì | Il log è testo semplice, servito direttamente. |
+| `GET .../actions/artifacts`, `GET .../actions/runs/{id}/artifacts` | sì | Filtro `name`. Vuoto se non è configurata una policy di storage per actions. |
+| `GET/DELETE .../actions/artifacts/{id}`, `GET .../actions/artifacts/{id}/zip` | sì | `zip` reindirizza (`302`) a un URL di download firmato valido un'ora. |
+| `GET .../actions/secrets/public-key` | sì | Chiave Curve25519 derivata da `security.master_key_file`; senza, `503`. |
+| `GET/PUT/DELETE .../actions/secrets[/{name}]` | sì | `PUT` accetta `encrypted_value` (sealed box libsodium per la chiave pubblica) e `key_id`. Richiede il permesso sulle impostazioni del repository. |
+| `GET/POST .../actions/variables`, `GET/PATCH/DELETE .../actions/variables/{name}` | sì | `PATCH` può rinominare. |
+
 ### Non disponibili
 
-Ricerca nei commit, gist, notifiche, eventi, actions, package, project, deployment,
+Ricerca nei commit, gist, notifiche, eventi, package, project, deployment,
 webhook (usare `/api/v1/.../hooks`), gestione dei collaboratori, team, app e
 installazioni.
 
@@ -261,7 +288,10 @@ nell'ambiente. In un clone il cui remote punta all'host, `-R` non serve.
 | `gh label create`, `edit`, `delete`, `clone` | sì | REST. |
 | `gh api <percorso REST>` (anche `--paginate`), `gh api graphql` | sì | |
 | `gh search repos`, `issues`, `prs`, `code` | parziale | REST `/search/*`; `issues`, `prs` e `code` richiedono `--repo`. `gh search commits` non è disponibile. |
-| `gh run`, `gh workflow`, `gh gist`, `gh codespace`, `gh project` | no | Non implementati. |
+| `gh run list`, `view` (anche `--log`), `watch`, `rerun`, `cancel`, `download` | sì | REST `/actions/*`. `rerun --failed` è rifiutato (`422`). Le esecuzioni importate da GitHub mostrano solo il link a GitHub. |
+| `gh workflow list`, `view`, `run` | sì | `enable`/`disable` non sono disponibili. |
+| `gh secret list`, `set`, `delete`; `gh variable list`, `get`, `set`, `delete` | sì | Solo a livello di repository. |
+| `gh gist`, `gh codespace`, `gh project` | no | Non implementati. |
 
 Sono attese ricavate dal sorgente di `gh` e dagli endpoint implementati; non
 sono state verificate con test automatici.

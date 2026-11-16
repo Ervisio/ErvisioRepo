@@ -136,6 +136,9 @@ type Deps struct {
 	// Actions serves the workflow run, log, secret and runner endpoints;
 	// nil answers 503.
 	Actions Actions
+	// ActionsArtifacts lists and serves workflow artifacts in /api/v3; nil
+	// answers empty lists.
+	ActionsArtifacts ghapi.Artifacts
 }
 
 // NewRouter builds the root handler.
@@ -229,6 +232,10 @@ func mountGitHubAPI(r chi.Router, d Deps) {
 	if d.Statuses != nil {
 		g.Statuses = d.Statuses
 	}
+	if d.Actions != nil {
+		g.Actions = d.Actions
+	}
+	g.Artifacts = d.ActionsArtifacts
 	ghapi.Mount(r, g)
 }
 

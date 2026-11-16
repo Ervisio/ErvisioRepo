@@ -14,6 +14,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
@@ -107,8 +108,12 @@ type RunFilter struct {
 	Status   string // a status or a conclusion
 	Ref      string // full ref or branch name
 	Sha      string
-	Page     int // from 1
-	PerPage  int // default 30, at most 100
+	// Actor is the user name (or bot name) that caused the run.
+	Actor string
+	// CreatedFrom and CreatedTo bound the creation time [from, to).
+	CreatedFrom, CreatedTo *time.Time
+	Page                   int // from 1
+	PerPage                int // default 30, at most 100
 	// External includes the runs imported from GitHub.
 	External bool
 }
@@ -307,19 +312,21 @@ func (s *Service) ListRuns(ctx context.Context, who auth.Principal, owner, name 
 	if ref != "" && !strings.HasPrefix(ref, "refs/") {
 		ref = "refs/heads/" + ref
 	}
+	from, to := tsArg(f.CreatedFrom), tsArg(f.CreatedTo)
 	keys, err := s.q.ListActionsRunKeys(ctx, dbgen.ListActionsRunKeysParams{RepoID: repo.ID, WorkflowPath: wf, Event: f.Event,
-		Status: f.Status, Ref: ref, Sha: f.Sha, WithExternal: f.External, Lim: int32(per), Off: int32((page - 1) * per)}) // #nosec G115 -- per <= 100, page <= 2^20
+		Status: f.Status, Ref: ref, Sha: f.Sha, Actor: f.Actor, CreatedFrom: from, CreatedTo: to, WithExternal: f.External,
+		Lim: int32(per), Off: int32((page - 1) * per)}) // #nosec G115 -- per <= 100, page <= 2^20
 	if err != nil {
 		return nil, 0, fmt.Errorf("list runs: %w", err)
 	}
 	total, err := s.q.CountActionsRuns(ctx, dbgen.CountActionsRunsParams{RepoID: repo.ID, WorkflowPath: wf, Event: f.Event,
-		Status: f.Status, Ref: ref, Sha: f.Sha})
+		Status: f.Status, Ref: ref, Sha: f.Sha, Actor: f.Actor, CreatedFrom: from, CreatedTo: to})
 	if err != nil {
 		return nil, 0, fmt.Errorf("count runs: %w", err)
 	}
 	if f.External {
 		n, err := s.q.CountActionsExternalRuns(ctx, dbgen.CountActionsExternalRunsParams{RepoID: repo.ID, WorkflowPath: wf,
-			Event: f.Event, Status: f.Status, Ref: ref, Sha: f.Sha})
+			Event: f.Event, Status: f.Status, Ref: ref, Sha: f.Sha, Actor: f.Actor, CreatedFrom: from, CreatedTo: to})
 		if err != nil {
 			return nil, 0, fmt.Errorf("count external runs: %w", err)
 		}
@@ -361,17 +368,35 @@ func (s *Service) ListRuns(ctx context.Context, who auth.Principal, owner, name 
 	return out, total, nil
 }
 
-// GetRun returns a run by its id.
+// GetRun returns a run by its id, also a run imported from GitHub
+// (External, read-only).
 func (s *Service) GetRun(ctx context.Context, who auth.Principal, owner, name string, runID uuid.UUID) (Run, error) {
 	_, repo, err := s.repoFor(ctx, who, owner, name, authz.ActRead)
 	if err != nil {
 		return Run{}, err
 	}
 	run, err := s.runByID(ctx, repo, runID)
+	if errors.Is(err, ErrNotFound) {
+		ext, xerr := s.q.ListActionsExternalRunsByIDs(ctx, []uuid.UUID{runID})
+		if xerr != nil {
+			return Run{}, fmt.Errorf("get external run: %w", xerr)
+		}
+		if len(ext) == 1 && ext[0].RepoID == repo.ID {
+			return externalRunFrom(ext[0]), nil
+		}
+	}
 	if err != nil {
 		return Run{}, err
 	}
 	return s.runFrom(ctx, repo, run), nil
+}
+
+// tsArg is an optional time as a query argument.
+func tsArg(t *time.Time) pgtype.Timestamptz {
+	if t == nil {
+		return pgtype.Timestamptz{}
+	}
+	return pgtype.Timestamptz{Time: *t, Valid: true}
 }
 
 // RunWorkflow returns the workflow file a run was planned from.

@@ -60,31 +60,31 @@ func wireActions(ctx context.Context, a *actions.Service, d actions.Deps, bus *e
 // toolkit talks to with the runtime token; nil when Actions is off or no
 // storage policy holds the actions data.
 func setupActionsResults(cfg *config.Config, pool *pgxpool.Pool, storage *tier.Tier, a *actions.Service,
-	log *slog.Logger) (http.Handler, []jobs.Option, error) {
+	log *slog.Logger) (http.Handler, *artifacts.Service, []jobs.Option, error) {
 	if a == nil || storage == nil {
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 	if _, err := storage.Class("actions"); errors.Is(err, tier.ErrUnknownPolicy) {
 		log.Warn("no actions storage policy, the actions cache and artifacts are disabled", "component", "actions")
-		return nil, nil, nil
+		return nil, nil, nil, nil
 	}
 	key, err := optionalMasterKey(cfg.Security.MasterKeyFile)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	signer, err := blobsvc.NewSigner(key, cfg.Server.PublicURL)
 	if err != nil {
-		return nil, nil, fmt.Errorf("actions results: %w", err)
+		return nil, nil, nil, fmt.Errorf("actions results: %w", err)
 	}
 	cacheSvc, err := cache.New(cache.Options{Pool: pool, Storage: storage, Verifier: a, Signer: signer, Log: log,
 		MaxRepoSize: int64(cfg.Actions.CacheMaxRepoSize), TTL: time.Duration(cfg.Actions.CacheTTL)})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	artSvc, err := artifacts.New(artifacts.Options{Pool: pool, Storage: storage, Verifier: a, Signer: signer,
 		Log: log, Retention: time.Duration(cfg.Actions.ArtifactRetention)})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	mux := http.NewServeMux()
 	ch, ah := cacheSvc.Handler(), artSvc.Handler()
@@ -93,5 +93,5 @@ func setupActionsResults(cfg *config.Config, pool *pgxpool.Pool, storage *tier.T
 	mux.Handle(blobsvc.BlobPrefix+"cache/", ch)
 	mux.Handle(artifacts.TwirpPrefix, ah)
 	mux.Handle(blobsvc.BlobPrefix+"artifact/", ah)
-	return mux, []jobs.Option{cacheSvc.JobsOption(), artSvc.JobsOption()}, nil
+	return mux, artSvc, []jobs.Option{cacheSvc.JobsOption(), artSvc.JobsOption()}, nil
 }

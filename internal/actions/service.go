@@ -136,6 +136,7 @@ type Service struct {
 	cfg    config.Actions
 	public string
 	seal   *sealer
+	box    *boxKeys
 	jwtKey []byte
 	logs   *tier.Class
 	now    func() time.Time
@@ -171,8 +172,12 @@ func New(o Options) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
+	bk, err := newBoxKeys(o.MasterKey)
+	if err != nil {
+		return nil, err
+	}
 	s := &Service{pool: o.Pool, q: dbgen.New(o.Pool), log: o.Log.With("component", "actions"), cfg: o.Config,
-		public: strings.TrimRight(o.PublicURL, "/"), seal: sl, jwtKey: key, now: o.Now, hub: newHub()}
+		public: strings.TrimRight(o.PublicURL, "/"), seal: sl, box: bk, jwtKey: key, now: o.Now, hub: newHub()}
 	if o.Storage != nil {
 		c, err := o.Storage.Class("actions")
 		if err != nil {

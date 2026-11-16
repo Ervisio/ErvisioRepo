@@ -45,6 +45,26 @@ func (q *Queries) CompleteActionsCache(ctx context.Context, arg CompleteActionsC
 	return i, err
 }
 
+const countRepoActionsArtifacts = `-- name: CountRepoActionsArtifacts :one
+SELECT count(*) FROM actions_artifacts
+WHERE repo_id = $1 AND finalized
+  AND ($2::uuid IS NULL OR run_id = $2::uuid)
+  AND ($3::text IS NULL OR name = $3::text)
+`
+
+type CountRepoActionsArtifactsParams struct {
+	RepoID uuid.UUID
+	RunID  uuid.NullUUID
+	Name   pgtype.Text
+}
+
+func (q *Queries) CountRepoActionsArtifacts(ctx context.Context, arg CountRepoActionsArtifactsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countRepoActionsArtifacts, arg.RepoID, arg.RunID, arg.Name)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createActionsArtifact = `-- name: CreateActionsArtifact :one
 
 INSERT INTO actions_artifacts (repo_id, run_id, job_id, name, mime_type, expires_at)
@@ -592,6 +612,64 @@ func (q *Queries) ListExpiredActionsCaches(ctx context.Context, arg ListExpiredA
 			&i.CreatedAt,
 			&i.CompletedAt,
 			&i.LastUsedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRepoActionsArtifacts = `-- name: ListRepoActionsArtifacts :many
+SELECT id, repo_id, run_id, job_id, name, mime_type, size, digest, storage_key, finalized, expires_at, created_at, finalized_at FROM actions_artifacts
+WHERE repo_id = $1 AND finalized
+  AND ($2::uuid IS NULL OR run_id = $2::uuid)
+  AND ($3::text IS NULL OR name = $3::text)
+ORDER BY id DESC
+LIMIT $5 OFFSET $4
+`
+
+type ListRepoActionsArtifactsParams struct {
+	RepoID uuid.UUID
+	RunID  uuid.NullUUID
+	Name   pgtype.Text
+	Off    int32
+	Lim    int32
+}
+
+// Finalized artifacts of a repository, newest first (/api/v3 listings).
+func (q *Queries) ListRepoActionsArtifacts(ctx context.Context, arg ListRepoActionsArtifactsParams) ([]ActionsArtifact, error) {
+	rows, err := q.db.Query(ctx, listRepoActionsArtifacts,
+		arg.RepoID,
+		arg.RunID,
+		arg.Name,
+		arg.Off,
+		arg.Lim,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ActionsArtifact{}
+	for rows.Next() {
+		var i ActionsArtifact
+		if err := rows.Scan(
+			&i.ID,
+			&i.RepoID,
+			&i.RunID,
+			&i.JobID,
+			&i.Name,
+			&i.MimeType,
+			&i.Size,
+			&i.Digest,
+			&i.StorageKey,
+			&i.Finalized,
+			&i.ExpiresAt,
+			&i.CreatedAt,
+			&i.FinalizedAt,
 		); err != nil {
 			return nil, err
 		}

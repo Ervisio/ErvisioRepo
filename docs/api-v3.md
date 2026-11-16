@@ -174,9 +174,36 @@ Apps, so `app.slug` and `app.name` are that name.
 | `GET .../check-suites/{id}`, `GET .../check-suites/{id}/check-runs` | yes | |
 | `POST .../check-suites` | no | `501`: a suite is created with its first check run. Re-requests and the check suite preferences are not available. |
 
+### Actions
+
+Workflow runs of Ervisio Actions. Runs imported from GitHub (GitHub sync)
+are listed read-only with `"external": true`: their `html_url` is the run on
+GitHub and they have no jobs, logs or artifacts here. A workflow `id` is
+derived from the repository and the workflow path; the file name works in
+its place.
+
+| Endpoint | Status | Notes |
+|---|---|---|
+| `GET .../actions/workflows`, `GET .../actions/workflows/{id}` | yes | Workflows of the default branch and of past runs; `state` is always `active`. |
+| `PUT .../actions/workflows/{id}/enable`, `/disable` | no | Workflows cannot be disabled (`404`). |
+| `POST .../actions/workflows/{id}/dispatches` | yes | `ref` (default: the default branch), `inputs`. `204`. |
+| `GET .../actions/runs`, `GET .../actions/workflows/{id}/runs` | yes | `branch`, `event`, `status` (status or conclusion), `actor`, `head_sha`, `created` (`>=`, `<`, `a..b`, a date). `total_count` is exact. |
+| `GET .../actions/runs/{id}`, `.../attempts/{n}` | yes | |
+| `GET .../actions/runs/{id}/jobs`, `.../attempts/{n}/jobs` | yes | With steps (`number` from 1). Jobs waiting for their `needs` are `pending`. |
+| `POST .../actions/runs/{id}/rerun`, `/cancel` | yes | `rerun` needs a completed run, `cancel` a running one (`409` otherwise). |
+| `POST .../actions/runs/{id}/rerun-failed-jobs` | no | `422`: only whole runs can be re-run. |
+| `DELETE .../actions/runs/{id}` | no | Runs cannot be deleted. |
+| `GET .../actions/runs/{id}/logs` | yes | Zip of the latest attempt: `<n>_<job>.txt` and `<job>/<step>_<name>.txt`, as GitHub. Served directly (no redirect). |
+| `GET .../actions/jobs/{id}`, `GET .../actions/jobs/{id}/logs` | yes | The log is plain text, served directly. |
+| `GET .../actions/artifacts`, `GET .../actions/runs/{id}/artifacts` | yes | `name` filter. Empty when no actions storage policy is configured. |
+| `GET/DELETE .../actions/artifacts/{id}`, `GET .../actions/artifacts/{id}/zip` | yes | `zip` redirects (`302`) to a signed download URL valid for one hour. |
+| `GET .../actions/secrets/public-key` | yes | Curve25519 key derived from `security.master_key_file`; `503` without it. |
+| `GET/PUT/DELETE .../actions/secrets[/{name}]` | yes | `PUT` takes `encrypted_value` (libsodium sealed box for the public key) and `key_id`. Needs the repository settings permission. |
+| `GET/POST .../actions/variables`, `GET/PATCH/DELETE .../actions/variables/{name}` | yes | `PATCH` can rename. |
+
 ### Not available
 
-Commit search, gists, notifications, events, actions, packages, projects,
+Commit search, gists, notifications, events, packages, projects,
 deployments, webhooks (use `/api/v1/.../hooks`), collaborators management,
 teams, apps and installations.
 
@@ -260,7 +287,10 @@ environment work as well. Inside a clone whose remote points at the host,
 | `gh label create`, `edit`, `delete`, `clone` | yes | REST. |
 | `gh api <REST path>` (also `--paginate`), `gh api graphql` | yes | |
 | `gh search repos`, `issues`, `prs`, `code` | partial | REST `/search/*`; `issues`, `prs` and `code` need `--repo`. `gh search commits` is not available. |
-| `gh run`, `gh workflow`, `gh gist`, `gh codespace`, `gh project` | no | Not implemented. |
+| `gh run list`, `view` (also `--log`), `watch`, `rerun`, `cancel`, `download` | yes | REST `/actions/*`. `rerun --failed` is refused (`422`). Imported GitHub runs show their GitHub link only. |
+| `gh workflow list`, `view`, `run` | yes | `enable`/`disable` are not available. |
+| `gh secret list`, `set`, `delete`; `gh variable list`, `get`, `set`, `delete` | yes | Repository scope only. |
+| `gh gist`, `gh codespace`, `gh project` | no | Not implemented. |
 
 These are expectations from the `gh` source and the endpoints implemented;
 they have not been exercised in an automated test.

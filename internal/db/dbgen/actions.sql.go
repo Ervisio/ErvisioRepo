@@ -227,6 +227,9 @@ WHERE repo_id = $1
   AND ($4::text = '' OR status = $4::text OR conclusion = $4::text)
   AND ($5::text = '' OR ref = $5::text)
   AND ($6::text = '' OR sha = $6::text)
+  AND ($7::text = '' OR lower(actor_login) = lower($7::text))
+  AND ($8::timestamptz IS NULL OR created_at >= $8::timestamptz)
+  AND ($9::timestamptz IS NULL OR created_at < $9::timestamptz)
 `
 
 type CountActionsExternalRunsParams struct {
@@ -236,6 +239,9 @@ type CountActionsExternalRunsParams struct {
 	Status       string
 	Ref          string
 	Sha          string
+	Actor        string
+	CreatedFrom  pgtype.Timestamptz
+	CreatedTo    pgtype.Timestamptz
 }
 
 func (q *Queries) CountActionsExternalRuns(ctx context.Context, arg CountActionsExternalRunsParams) (int64, error) {
@@ -246,6 +252,9 @@ func (q *Queries) CountActionsExternalRuns(ctx context.Context, arg CountActions
 		arg.Status,
 		arg.Ref,
 		arg.Sha,
+		arg.Actor,
+		arg.CreatedFrom,
+		arg.CreatedTo,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -260,6 +269,10 @@ WHERE repo_id = $1
   AND ($4::text = '' OR status = $4::text OR conclusion = $4::text)
   AND ($5::text = '' OR ref = $5::text)
   AND ($6::text = '' OR sha = $6::text)
+  AND ($7::text = '' OR lower(system_actor) = lower($7::text)
+       OR actor_id = (SELECT n.id FROM namespaces n WHERE n.name_lower = lower($7::text)))
+  AND ($8::timestamptz IS NULL OR created_at >= $8::timestamptz)
+  AND ($9::timestamptz IS NULL OR created_at < $9::timestamptz)
 `
 
 type CountActionsRunsParams struct {
@@ -269,6 +282,9 @@ type CountActionsRunsParams struct {
 	Status       string
 	Ref          string
 	Sha          string
+	Actor        string
+	CreatedFrom  pgtype.Timestamptz
+	CreatedTo    pgtype.Timestamptz
 }
 
 func (q *Queries) CountActionsRuns(ctx context.Context, arg CountActionsRunsParams) (int64, error) {
@@ -279,6 +295,9 @@ func (q *Queries) CountActionsRuns(ctx context.Context, arg CountActionsRunsPara
 		arg.Status,
 		arg.Ref,
 		arg.Sha,
+		arg.Actor,
+		arg.CreatedFrom,
+		arg.CreatedTo,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -1602,17 +1621,24 @@ SELECT id, external, created_at FROM (
       AND ($4::text = '' OR r.status = $4::text OR r.conclusion = $4::text)
       AND ($5::text = '' OR r.ref = $5::text)
       AND ($6::text = '' OR r.sha = $6::text)
+      AND ($7::text = '' OR lower(r.system_actor) = lower($7::text)
+           OR r.actor_id = (SELECT n.id FROM namespaces n WHERE n.name_lower = lower($7::text)))
+      AND ($8::timestamptz IS NULL OR r.created_at >= $8::timestamptz)
+      AND ($9::timestamptz IS NULL OR r.created_at < $9::timestamptz)
     UNION ALL
     SELECT x.id, true::boolean AS external, x.created_at FROM actions_external_runs x
-    WHERE $7::boolean AND x.repo_id = $1
+    WHERE $10::boolean AND x.repo_id = $1
       AND ($2::text = '' OR x.workflow_path = $2::text)
       AND ($3::text = '' OR x.event = $3::text)
       AND ($4::text = '' OR x.status = $4::text OR x.conclusion = $4::text)
       AND ($5::text = '' OR x.ref = $5::text)
       AND ($6::text = '' OR x.sha = $6::text)
+      AND ($7::text = '' OR lower(x.actor_login) = lower($7::text))
+      AND ($8::timestamptz IS NULL OR x.created_at >= $8::timestamptz)
+      AND ($9::timestamptz IS NULL OR x.created_at < $9::timestamptz)
 ) k
 ORDER BY created_at DESC, id DESC
-LIMIT $9 OFFSET $8
+LIMIT $12 OFFSET $11
 `
 
 type ListActionsRunKeysParams struct {
@@ -1622,6 +1648,9 @@ type ListActionsRunKeysParams struct {
 	Status       string
 	Ref          string
 	Sha          string
+	Actor        string
+	CreatedFrom  pgtype.Timestamptz
+	CreatedTo    pgtype.Timestamptz
 	WithExternal bool
 	Off          int32
 	Lim          int32
@@ -1644,6 +1673,9 @@ func (q *Queries) ListActionsRunKeys(ctx context.Context, arg ListActionsRunKeys
 		arg.Status,
 		arg.Ref,
 		arg.Sha,
+		arg.Actor,
+		arg.CreatedFrom,
+		arg.CreatedTo,
 		arg.WithExternal,
 		arg.Off,
 		arg.Lim,

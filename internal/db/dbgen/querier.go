@@ -91,6 +91,7 @@ type Querier interface {
 	CountOwnerRepos(ctx context.Context, ownerID uuid.UUID) (int64, error)
 	CountPendingReviewComments(ctx context.Context, reviewID uuid.NullUUID) (int64, error)
 	CountRecoveryCodes(ctx context.Context, userID uuid.UUID) (CountRecoveryCodesRow, error)
+	CountRepoActionsArtifacts(ctx context.Context, arg CountRepoActionsArtifactsParams) (int64, error)
 	CountRepoForks(ctx context.Context, parentID uuid.NullUUID) (int64, error)
 	CountRepoStars(ctx context.Context, id uuid.UUID) (int32, error)
 	CountRepoWebhooks(ctx context.Context, repoID uuid.NullUUID) (int64, error)
@@ -617,6 +618,8 @@ type Querier interface {
 	ListReleaseAssets(ctx context.Context, releaseIds []uuid.UUID) ([]ReleaseAsset, error)
 	// Newest first; drafts only when include_drafts. An empty tag matches all.
 	ListReleases(ctx context.Context, arg ListReleasesParams) ([]Release, error)
+	// Finalized artifacts of a repository, newest first (/api/v3 listings).
+	ListRepoActionsArtifacts(ctx context.Context, arg ListRepoActionsArtifactsParams) ([]ActionsArtifact, error)
 	ListRepoCollaborators(ctx context.Context, repoID uuid.UUID) ([]ListRepoCollaboratorsRow, error)
 	// ---- service additions ----
 	ListRepoForks(ctx context.Context, arg ListRepoForksParams) ([]uuid.UUID, error)

@@ -57,6 +57,8 @@ type Actions interface {
 	ListRepoRunners(ctx context.Context, sc actions.Scope) ([]actions.Runner, error)
 	DeleteRunner(ctx context.Context, sc actions.Scope, id uuid.UUID) error
 	CreateRegistrationToken(ctx context.Context, who auth.Principal, sc actions.Scope) (actions.RegistrationToken, error)
+	SecretsPublicKey() (string, []byte, error)
+	OpenSealedSecret(keyID string, sealed []byte) (string, error)
 }
 
 var _ Actions = (*actions.Service)(nil)

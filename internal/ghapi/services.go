@@ -6,7 +6,10 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/Ervisio/ErvisioRepo/internal/actions"
+	"github.com/Ervisio/ErvisioRepo/internal/actions/artifacts"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
+	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
 	"github.com/Ervisio/ErvisioRepo/internal/issues"
@@ -135,4 +138,37 @@ type Statuses interface {
 	ListSuiteCheckRuns(ctx context.Context, who auth.Principal, owner, name string, suiteID uuid.UUID, f statuses.CheckRunFilter) ([]statuses.CheckRun, int, error)
 	GetCheckSuite(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID) (statuses.CheckSuite, error)
 	ListCheckSuites(ctx context.Context, who auth.Principal, owner, name, ref, app string, offset, limit int) ([]statuses.CheckSuite, int, string, error)
+}
+
+// Actions is the subset of the Actions service used by the API; nil
+// answers 404 on the Actions endpoints.
+type Actions interface {
+	ListWorkflows(ctx context.Context, who auth.Principal, owner, name string) ([]actions.Workflow, error)
+	ListRuns(ctx context.Context, who auth.Principal, owner, name string, f actions.RunFilter) ([]actions.Run, int64, error)
+	GetRun(ctx context.Context, who auth.Principal, owner, name string, runID uuid.UUID) (actions.Run, error)
+	ListJobs(ctx context.Context, who auth.Principal, owner, name string, runID uuid.UUID, attempt int32) ([]actions.Job, error)
+	GetJob(ctx context.Context, who auth.Principal, owner, name string, jobID uuid.UUID) (actions.Job, []actions.Step, error)
+	RawLog(ctx context.Context, who auth.Principal, owner, name string, jobID uuid.UUID) (io.ReadCloser, error)
+	CancelRun(ctx context.Context, who auth.Principal, owner, name string, runID uuid.UUID) error
+	RerunRun(ctx context.Context, who auth.Principal, owner, name string, runID uuid.UUID) (actions.Run, error)
+	Dispatch(ctx context.Context, who auth.Principal, owner, name, workflow, ref string, inputs map[string]any) (dbgen.ActionsRun, error)
+
+	RepoScope(ctx context.Context, who auth.Principal, owner, name, environment string) (actions.Scope, error)
+	ListSecrets(ctx context.Context, sc actions.Scope) ([]actions.Secret, error)
+	SetSecret(ctx context.Context, who auth.Principal, sc actions.Scope, name, value string) (actions.Secret, error)
+	DeleteSecret(ctx context.Context, sc actions.Scope, name string) error
+	ListVariables(ctx context.Context, sc actions.Scope) ([]actions.Variable, error)
+	SetVariable(ctx context.Context, who auth.Principal, sc actions.Scope, name, value string) (actions.Variable, error)
+	DeleteVariable(ctx context.Context, sc actions.Scope, name string) error
+	SecretsPublicKey() (string, []byte, error)
+	OpenSealedSecret(keyID string, sealed []byte) (string, error)
+}
+
+// Artifacts lists and serves the workflow artifacts; nil (no actions
+// storage) answers empty lists and 404.
+type Artifacts interface {
+	List(ctx context.Context, repoID uuid.UUID, f artifacts.ListFilter) ([]artifacts.Artifact, int64, error)
+	Get(ctx context.Context, repoID uuid.UUID, id int64) (artifacts.Artifact, error)
+	DownloadURL(ctx context.Context, repoID uuid.UUID, id int64) (string, error)
+	Delete(ctx context.Context, repoID uuid.UUID, id int64) error
 }

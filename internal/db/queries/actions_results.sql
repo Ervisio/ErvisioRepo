@@ -104,6 +104,21 @@ WHERE run_id = @run_id AND finalized AND expires_at > now()
   AND (sqlc.narg('id')::bigint IS NULL OR id = sqlc.narg('id'))
 ORDER BY id;
 
+-- name: ListRepoActionsArtifacts :many
+-- Finalized artifacts of a repository, newest first (/api/v3 listings).
+SELECT * FROM actions_artifacts
+WHERE repo_id = @repo_id AND finalized
+  AND (sqlc.narg('run_id')::uuid IS NULL OR run_id = sqlc.narg('run_id')::uuid)
+  AND (sqlc.narg('name')::text IS NULL OR name = sqlc.narg('name')::text)
+ORDER BY id DESC
+LIMIT @lim OFFSET @off;
+
+-- name: CountRepoActionsArtifacts :one
+SELECT count(*) FROM actions_artifacts
+WHERE repo_id = @repo_id AND finalized
+  AND (sqlc.narg('run_id')::uuid IS NULL OR run_id = sqlc.narg('run_id')::uuid)
+  AND (sqlc.narg('name')::text IS NULL OR name = sqlc.narg('name')::text);
+
 -- name: DeleteActionsArtifact :exec
 DELETE FROM actions_artifacts WHERE id = @id;
 

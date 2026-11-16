@@ -68,6 +68,11 @@ type Deps struct {
 	// Statuses stores commit statuses and checks; nil answers empty lists
 	// and 501 on writes.
 	Statuses Statuses
+	// Actions serves the workflow, run, job, secret and variable
+	// endpoints; nil answers 404 there.
+	Actions Actions
+	// Artifacts serves the artifact endpoints; nil answers empty lists.
+	Artifacts Artifacts
 	// Timeout bounds the non-streaming requests (0 = none).
 	Timeout time.Duration
 }
@@ -109,9 +114,11 @@ func Mount(r chi.Router, d Deps) {
 		v3.MethodNotAllowed(func(w http.ResponseWriter, _ *http.Request) {
 			writeError(w, http.StatusMethodNotAllowed, "Method Not Allowed")
 		})
-		// Streaming routes: asset upload and download.
+		// Streaming routes: asset upload and download, workflow logs.
 		v3.Post("/repos/{owner}/{repo}/releases/{id}/assets", s.h((*call).uploadAsset))
 		v3.Get("/repos/{owner}/{repo}/releases/assets/{id}", s.h((*call).getAsset))
+		v3.Get("/repos/{owner}/{repo}/actions/runs/{run}/logs", s.h((*call).runLogs))
+		v3.Get("/repos/{owner}/{repo}/actions/jobs/{job}/logs", s.h((*call).jobLogs))
 		v3.Group(func(g chi.Router) {
 			if d.Timeout > 0 {
 				g.Use(middleware.Timeout(d.Timeout))
@@ -296,6 +303,35 @@ func (s *Server) routes(r chi.Router) {
 		r.Get("/releases/{id}/assets", s.h((*call).listAssets))
 		r.Patch("/releases/assets/{id}", s.h((*call).updateAsset))
 		r.Delete("/releases/assets/{id}", s.h((*call).deleteAsset))
+
+		r.Get("/actions/workflows", s.h((*call).listWorkflows))
+		r.Get("/actions/workflows/{workflow}", s.h((*call).getWorkflow))
+		r.Get("/actions/workflows/{workflow}/runs", s.h((*call).workflowRuns))
+		r.Post("/actions/workflows/{workflow}/dispatches", s.h((*call).dispatchWorkflow))
+		r.Get("/actions/runs", s.h((*call).listRuns))
+		r.Get("/actions/runs/{run}", s.h((*call).getRun))
+		r.Get("/actions/runs/{run}/attempts/{attempt}", s.h((*call).getRun))
+		r.Get("/actions/runs/{run}/jobs", s.h((*call).listRunJobs))
+		r.Get("/actions/runs/{run}/attempts/{attempt}/jobs", s.h((*call).listRunJobs))
+		r.Post("/actions/runs/{run}/cancel", s.h((*call).cancelRun))
+		r.Post("/actions/runs/{run}/rerun", s.h((*call).rerunRun))
+		r.Post("/actions/runs/{run}/rerun-failed-jobs", s.h((*call).rerunFailedJobs))
+		r.Get("/actions/runs/{run}/artifacts", s.h((*call).listArtifacts))
+		r.Get("/actions/jobs/{job}", s.h((*call).getJob))
+		r.Get("/actions/artifacts", s.h((*call).listArtifacts))
+		r.Get("/actions/artifacts/{artifact}", s.h((*call).getArtifact))
+		r.Get("/actions/artifacts/{artifact}/zip", s.h((*call).downloadArtifact))
+		r.Delete("/actions/artifacts/{artifact}", s.h((*call).deleteArtifact))
+		r.Get("/actions/secrets", s.h((*call).listSecrets))
+		r.Get("/actions/secrets/public-key", s.h((*call).secretsPublicKey))
+		r.Get("/actions/secrets/{name}", s.h((*call).getSecret))
+		r.Put("/actions/secrets/{name}", s.h((*call).putSecret))
+		r.Delete("/actions/secrets/{name}", s.h((*call).deleteSecret))
+		r.Get("/actions/variables", s.h((*call).listVariables))
+		r.Post("/actions/variables", s.h((*call).createVariable))
+		r.Get("/actions/variables/{name}", s.h((*call).getVariable))
+		r.Patch("/actions/variables/{name}", s.h((*call).updateVariable))
+		r.Delete("/actions/variables/{name}", s.h((*call).deleteVariable))
 	})
 }
 

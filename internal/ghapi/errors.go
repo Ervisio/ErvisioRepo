@@ -4,6 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/Ervisio/ErvisioRepo/internal/actions"
+	"github.com/Ervisio/ErvisioRepo/internal/actions/artifacts"
 	"github.com/Ervisio/ErvisioRepo/internal/git"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/gitstore"
@@ -21,6 +23,7 @@ import (
 func classify(err error) *apiError {
 	e := func(status int, msg string) *apiError { return &apiError{status: status, msg: msg} }
 	var (
+		av  *actions.ValidationError
 		rv  *repos.ValidationError
 		iv  *issues.ValidationError
 		pv  *pulls.ValidationError
@@ -30,6 +33,18 @@ func classify(err error) *apiError {
 		mbe *http.MaxBytesError
 	)
 	switch {
+	case errors.As(err, &av):
+		return e(http.StatusUnprocessableEntity, av.Msg)
+	case actions.IsNotFound(err), errors.Is(err, artifacts.ErrNotFound):
+		return e(http.StatusNotFound, "Not Found")
+	case errors.Is(err, actions.ErrForbidden):
+		return e(http.StatusForbidden, "Resource not accessible: you do not have permission to do this")
+	case errors.Is(err, actions.ErrConflict):
+		return e(http.StatusConflict, "Conflict: the workflow run is not in a state that allows this")
+	case errors.Is(err, actions.ErrSealedSecret):
+		return e(http.StatusUnprocessableEntity, "Validation Failed: "+err.Error())
+	case errors.Is(err, actions.ErrDisabled), errors.Is(err, actions.ErrNotWired), errors.Is(err, actions.ErrNoMasterKey):
+		return e(http.StatusServiceUnavailable, "Service Unavailable: "+err.Error())
 	case errors.As(err, &rv):
 		return e(http.StatusUnprocessableEntity, rv.Msg)
 	case errors.As(err, &iv):

@@ -115,7 +115,11 @@ WHERE repo_id = @repo_id
   AND (@event::text = '' OR event = @event::text)
   AND (@status::text = '' OR status = @status::text OR conclusion = @status::text)
   AND (@ref::text = '' OR ref = @ref::text)
-  AND (@sha::text = '' OR sha = @sha::text);
+  AND (@sha::text = '' OR sha = @sha::text)
+  AND (@actor::text = '' OR lower(system_actor) = lower(@actor::text)
+       OR actor_id = (SELECT n.id FROM namespaces n WHERE n.name_lower = lower(@actor::text)))
+  AND (sqlc.narg('created_from')::timestamptz IS NULL OR created_at >= sqlc.narg('created_from')::timestamptz)
+  AND (sqlc.narg('created_to')::timestamptz IS NULL OR created_at < sqlc.narg('created_to')::timestamptz);
 
 -- name: ListActionsWorkflows :many
 -- The workflow files that ever ran in a repository, with their last name.
@@ -460,6 +464,10 @@ SELECT id, external, created_at FROM (
       AND (@status::text = '' OR r.status = @status::text OR r.conclusion = @status::text)
       AND (@ref::text = '' OR r.ref = @ref::text)
       AND (@sha::text = '' OR r.sha = @sha::text)
+      AND (@actor::text = '' OR lower(r.system_actor) = lower(@actor::text)
+           OR r.actor_id = (SELECT n.id FROM namespaces n WHERE n.name_lower = lower(@actor::text)))
+      AND (sqlc.narg('created_from')::timestamptz IS NULL OR r.created_at >= sqlc.narg('created_from')::timestamptz)
+      AND (sqlc.narg('created_to')::timestamptz IS NULL OR r.created_at < sqlc.narg('created_to')::timestamptz)
     UNION ALL
     SELECT x.id, true::boolean AS external, x.created_at FROM actions_external_runs x
     WHERE @with_external::boolean AND x.repo_id = @repo_id
@@ -468,6 +476,9 @@ SELECT id, external, created_at FROM (
       AND (@status::text = '' OR x.status = @status::text OR x.conclusion = @status::text)
       AND (@ref::text = '' OR x.ref = @ref::text)
       AND (@sha::text = '' OR x.sha = @sha::text)
+      AND (@actor::text = '' OR lower(x.actor_login) = lower(@actor::text))
+      AND (sqlc.narg('created_from')::timestamptz IS NULL OR x.created_at >= sqlc.narg('created_from')::timestamptz)
+      AND (sqlc.narg('created_to')::timestamptz IS NULL OR x.created_at < sqlc.narg('created_to')::timestamptz)
 ) k
 ORDER BY created_at DESC, id DESC
 LIMIT @lim OFFSET @off;
@@ -485,7 +496,10 @@ WHERE repo_id = @repo_id
   AND (@event::text = '' OR event = @event::text)
   AND (@status::text = '' OR status = @status::text OR conclusion = @status::text)
   AND (@ref::text = '' OR ref = @ref::text)
-  AND (@sha::text = '' OR sha = @sha::text);
+  AND (@sha::text = '' OR sha = @sha::text)
+  AND (@actor::text = '' OR lower(actor_login) = lower(@actor::text))
+  AND (sqlc.narg('created_from')::timestamptz IS NULL OR created_at >= sqlc.narg('created_from')::timestamptz)
+  AND (sqlc.narg('created_to')::timestamptz IS NULL OR created_at < sqlc.narg('created_to')::timestamptz);
 
 -- name: ListActionsExternalWorkflows :many
 -- The workflow files of the runs read from GitHub, with their last name.
