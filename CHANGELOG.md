@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-11-16
+
 ### Added
 
 - Runner resource metrics: `ervisio-runner` reports CPU usage (Linux), CPU count, load average, memory, disk of its data directory and NVIDIA GPUs (`nvidia-smi`, when installed) on Declare and every Heartbeat (`RunnerMetrics` in the runner protocol). macOS reports load, memory and disk; Windows only CPU count, OS and hostname. Unmeasured values are omitted, and metrics never fail a heartbeat. The server keeps the latest report per runner (migration 00330, no history).
