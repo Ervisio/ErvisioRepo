@@ -12,6 +12,7 @@ import { ForgotPassword, ResetPassword } from "./pages/auth/PasswordReset.tsx";
 import { Register } from "./pages/auth/Register.tsx";
 import { TwoFactor } from "./pages/auth/TwoFactor.tsx";
 import { VerifyEmail } from "./pages/auth/VerifyEmail.tsx";
+import { DeviceLogin } from "./pages/auth/DeviceLogin.tsx";
 import { Catalog } from "./pages/Catalog.tsx";
 import { Home } from "./pages/Home.tsx";
 import { OrgPage } from "./pages/Org.tsx";
@@ -77,6 +78,13 @@ const loginRoute = createRoute({
   },
 });
 const twoFactorRoute = createRoute({ getParentRoute: () => bareRoute, path: "/login/2fa", validateSearch: nextSearch, component: () => <TwoFactor next={twoFactorRoute.useSearch().next} /> });
+// OAuth device flow approval (gh-style CLIs open it); Protected sends anonymous visitors to /login?next=.
+const deviceRoute = createRoute({
+  getParentRoute: () => bareRoute,
+  path: "/login/device",
+  validateSearch: (s: Record<string, unknown>): { user_code?: string } => ({ user_code: str(s.user_code) }),
+  component: () => guard(<DeviceLogin userCode={deviceRoute.useSearch().user_code} />),
+});
 const registerRoute = createRoute({ getParentRoute: () => bareRoute, path: "/register", validateSearch: (s: Record<string, unknown>): { invite?: string } => ({ invite: str(s.invite) }), component: () => <Register invite={registerRoute.useSearch().invite} /> });
 const verifyRoute = createRoute({ getParentRoute: () => bareRoute, path: "/verify-email", validateSearch: tokenSearch, component: () => <VerifyEmail token={verifyRoute.useSearch().token} /> });
 const forgotRoute = createRoute({ getParentRoute: () => bareRoute, path: "/forgot-password", component: ForgotPassword });
@@ -423,7 +431,7 @@ const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui
 
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
-    bareRoute.addChildren([loginRoute, twoFactorRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
+    bareRoute.addChildren([loginRoute, twoFactorRoute, deviceRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
     shellRoute.addChildren([homeRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute, exploreRoute, profileRoute,
       repoRoute,
       issuesRoute,

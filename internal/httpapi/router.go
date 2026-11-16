@@ -195,6 +195,7 @@ func NewRouter(d Deps) http.Handler {
 			api.Route("/v1", func(v1 chi.Router) { mountV1(v1, d) })
 		})
 		mountOIDC(r, d)
+		mountDeviceFlow(r, d)
 		r.Handle("/*", spaHandler(d.Web, d.HasIndex))
 	})
 	return r

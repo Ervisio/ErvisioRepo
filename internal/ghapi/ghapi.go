@@ -21,7 +21,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -316,29 +315,9 @@ func (s *Server) authenticate(next http.Handler) http.Handler {
 	})
 }
 
-// githubScopes maps the token scopes to the classic GitHub scopes that
-// clients check in X-OAuth-Scopes (gh requires repo and read:org).
-var githubScopes = map[string][]string{
-	auth.ScopeWriteRepo:     {"repo"},
-	auth.ScopeReadUser:      {"read:user", "read:org"},
-	auth.ScopeWriteUser:     {"user", "read:org"},
-	auth.ScopeReadPackages:  {"read:packages"},
-	auth.ScopeWritePackages: {"write:packages"},
-	auth.ScopeWriteActions:  {"workflow"},
-	auth.ScopeAdmin:         {"admin:org"},
-}
-
 // oauthScopes is the X-OAuth-Scopes value of a token.
 func oauthScopes(scopes []string) string {
-	var out []string
-	for _, sc := range scopes {
-		for _, g := range githubScopes[sc] {
-			if !slices.Contains(out, g) {
-				out = append(out, g)
-			}
-		}
-	}
-	return strings.Join(out, ", ")
+	return strings.Join(auth.GitHubScopes(scopes), ", ")
 }
 
 // credential returns the access token of the Authorization header:

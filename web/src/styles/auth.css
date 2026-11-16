@@ -18,6 +18,10 @@
 .auth-sep::before, .auth-sep::after { content: ""; flex: 1; height: 1px; background: var(--sunk); }
 .auth-alt { display: flex; flex-direction: column; gap: 8px; }
 .auth-alt .ui-btn { width: 100%; justify-content: center; }
+.auth-dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0 0 14px; font-size: 13.5px; }
+.auth-dl dt { color: var(--ink2); }
+.auth-dl dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.auth-mono { font-family: var(--mono); }
 .auth-foot { margin: 18px 0 0; color: var(--ink2); font-size: 13px; text-align: center; }
 
 /* ---------- Account, organization, audit ---------- */

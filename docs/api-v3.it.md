@@ -248,3 +248,64 @@ nell'ambiente. In un clone il cui remote punta all'host, `-R` non serve.
 
 Sono attese ricavate dal sorgente di `gh` e dagli endpoint implementati; non
 sono state verificate con test automatici.
+
+## Device flow OAuth (`eg auth login`, `gh auth login`)
+
+Il server implementa l'OAuth 2.0 Device Authorization Grant
+([RFC 8628](https://www.rfc-editor.org/rfc/rfc8628)) con gli endpoint e il
+formato di GitHub, così i client a riga di comando possono accedere passando
+dal browser:
+
+1. `POST /login/device/code` con `client_id` e uno `scope` facoltativo
+   (scope GitHub separati da spazi o virgole). La risposta contiene
+   `device_code`, `user_code` (`XXXX-XXXX`), `verification_uri`
+   (`https://<host>/login/device`), `expires_in` (900) e `interval` (5). Un
+   campo non standard `device_name` dà il nome al token (per esempio il nome
+   host della macchina).
+2. L'utente apre `/login/device` (con l'accesso fatto, o dopo averlo fatto),
+   inserisce il codice (`?user_code=` lo precompila), controlla app e scope e
+   sceglie Autorizza o Annulla.
+3. Il client interroga `POST /login/oauth/access_token` con `client_id`,
+   `device_code` e `grant_type=urn:ietf:params:oauth:grant-type:device_code`
+   non più spesso di `interval`. Riceve `access_token`, `token_type=bearer` e
+   `scope`, oppure uno degli errori `authorization_pending`, `slow_down`
+   (l'intervallo cresce di 5 secondi, il nuovo valore è in `interval`),
+   `expired_token`, `access_denied`, `incorrect_client_credentials`,
+   `incorrect_device_code` o `unsupported_grant_type`. Come su GitHub questi
+   errori arrivano con HTTP 200.
+
+Entrambi gli endpoint accettano corpi form-encoded o JSON e rispondono in
+JSON quando l'header `Accept` contiene `application/json`, altrimenti
+form-encoded. I device code sono salvati come hash e durano 15 minuti; i
+codici sbagliati nella pagina di approvazione sono limitati per account e IP
+client, e ogni IP client può chiedere 60 device code all'ora.
+
+Client integrati (le app OAuth registrate arriveranno in seguito):
+
+| Client | `client_id` |
+|---|---|
+| `eg`, la CLI di ErvisioRepo | `Ov23liErvisioEgCli01` |
+| GitHub CLI (`gh auth login --hostname <host>`) | `178c6fc778ccc68e1d6a` |
+
+Il dispositivo riceve un token di accesso personale, elencato in
+Impostazioni > Token come `eg on <dispositivo o host del server> (device)`
+(con `#2`, `#3`... se il nome è già usato) e revocabile da lì. Dura quanto la
+durata massima dei token (`auth.token_max_ttl`). Gli scope GitHub diventano
+scope del token così; uno `scope` vuoto vale i default di gh
+`repo read:org workflow`, e `user:read` è sempre concesso:
+
+| Scope GitHub | Scope del token |
+|---|---|
+| `repo`, `public_repo`, `repo:status`, `repo_deployment`, `delete_repo`, `admin:repo_hook`, `write:repo_hook` | `repo:write` |
+| `read:repo_hook` | `repo:read` |
+| `workflow` | `actions:write` |
+| `read:org`, `read:user`, `user:email`, `read:public_key`, `read:gpg_key`, `read:discussion` | `user:read` |
+| `user`, `user:follow`, `write:org`, `admin:org`, `admin:org_hook`, `write:public_key`, `admin:public_key`, `write:gpg_key`, `admin:gpg_key`, `notifications`, `write:discussion` | `user:write` |
+| `read:packages` | `packages:read` |
+| `write:packages`, `delete:packages` | `packages:write` |
+| `gist`, `codespace`, `project`, altri | nessuno |
+
+Nessuno scope GitHub concede lo scope `admin` dell'istanza. Con gli scope di
+default `GET /api/v3/user` risponde `X-OAuth-Scopes: workflow, repo, read:user,
+read:org`, che basta a `gh auth status`. L'API accetta il token come
+`Authorization: token <t>` (quello che manda gh) o `Bearer <t>`.

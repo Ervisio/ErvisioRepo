@@ -220,7 +220,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	}()
 
 	creds := credentials.New(credentials.Options{Pool: pool, Log: log,
-		TokenMaxTTL: time.Duration(cfg.Auth.TokenMaxTTL)})
+		TokenMaxTTL: time.Duration(cfg.Auth.TokenMaxTTL), PublicURL: cfg.Server.PublicURL})
 	var git *gitTransports
 	var repoSvc *repos.Service
 	if gitTier != nil {

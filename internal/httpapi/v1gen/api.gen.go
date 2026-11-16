@@ -3235,6 +3235,32 @@ type CreatedAccessToken struct {
 	Token  AccessToken `json:"token"`
 }
 
+// DeviceAuthorization defines model for DeviceAuthorization.
+type DeviceAuthorization struct {
+	// AppName Display name of the OAuth client
+	AppName   string    `json:"appName"`
+	ClientId  string    `json:"clientId"`
+	CreatedAt time.Time `json:"createdAt"`
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// RequestIp Client IP that started the request, when known
+	RequestIp *string `json:"requestIp,omitempty"`
+
+	// RequestedScopes GitHub-style scopes the device asked for (repo, read:org, workflow...)
+	RequestedScopes []string `json:"requestedScopes"`
+
+	// Scopes Token scopes of this server the device will receive
+	Scopes []string `json:"scopes"`
+
+	// UserCode Normalized code (XXXX-XXXX)
+	UserCode string `json:"userCode"`
+}
+
+// DeviceAuthorizationDecision defines model for DeviceAuthorizationDecision.
+type DeviceAuthorizationDecision struct {
+	Approve bool `json:"approve"`
+}
+
 // Diff defines model for Diff.
 type Diff struct {
 	Additions int        `json:"additions"`
@@ -6586,6 +6612,9 @@ type UpdateTagRuleJSONRequestBody = TagRuleInput
 // TransferRepoJSONRequestBody defines body for TransferRepo for application/json ContentType.
 type TransferRepoJSONRequestBody = RepoTransfer
 
+// DecideDeviceAuthorizationJSONRequestBody defines body for DecideDeviceAuthorization for application/json ContentType.
+type DecideDeviceAuthorizationJSONRequestBody = DeviceAuthorizationDecision
+
 // AddEmailJSONRequestBody defines body for AddEmail for application/json ContentType.
 type AddEmailJSONRequestBody = EmailRequest
 
@@ -7464,6 +7493,12 @@ type ServerInterface interface {
 	// UploadAvatar Upload an avatar image
 	// (PUT /user/avatar)
 	UploadAvatar(w http.ResponseWriter, r *http.Request)
+	// GetDeviceAuthorization Look up a pending OAuth device authorization
+	// (GET /user/device/{userCode})
+	GetDeviceAuthorization(w http.ResponseWriter, r *http.Request, userCode string)
+	// DecideDeviceAuthorization Authorize or deny a pending OAuth device authorization
+	// (POST /user/device/{userCode})
+	DecideDeviceAuthorization(w http.ResponseWriter, r *http.Request, userCode string)
 	// ListEmails Email addresses of the signed-in user
 	// (GET /user/emails)
 	ListEmails(w http.ResponseWriter, r *http.Request)
@@ -9249,6 +9284,18 @@ func (_ Unimplemented) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
 // UploadAvatar Upload an avatar image
 // (PUT /user/avatar)
 func (_ Unimplemented) UploadAvatar(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetDeviceAuthorization Look up a pending OAuth device authorization
+// (GET /user/device/{userCode})
+func (_ Unimplemented) GetDeviceAuthorization(w http.ResponseWriter, r *http.Request, userCode string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DecideDeviceAuthorization Authorize or deny a pending OAuth device authorization
+// (POST /user/device/{userCode})
+func (_ Unimplemented) DecideDeviceAuthorization(w http.ResponseWriter, r *http.Request, userCode string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -23183,6 +23230,70 @@ func (siw *ServerInterfaceWrapper) UploadAvatar(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// GetDeviceAuthorization operation middleware
+func (siw *ServerInterfaceWrapper) GetDeviceAuthorization(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userCode" -------------
+	var userCode string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userCode", chi.URLParam(r, "userCode"), &userCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userCode", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDeviceAuthorization(w, r, userCode)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DecideDeviceAuthorization operation middleware
+func (siw *ServerInterfaceWrapper) DecideDeviceAuthorization(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userCode" -------------
+	var userCode string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userCode", chi.URLParam(r, "userCode"), &userCode, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userCode", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DecideDeviceAuthorization(w, r, userCode)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListEmails operation middleware
 func (siw *ServerInterfaceWrapper) ListEmails(w http.ResponseWriter, r *http.Request) {
 
@@ -24731,6 +24842,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/user/tokens/{id}", wrapper.RevokeAccessToken)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/device/{userCode}", wrapper.GetDeviceAuthorization)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/device/{userCode}", wrapper.DecideDeviceAuthorization)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/user/keys/ssh", wrapper.ListSshKeys)
@@ -49974,6 +50091,181 @@ func (response UploadAvatardefaultApplicationProblemPlusJSONResponse) VisitUploa
 	return err
 }
 
+type GetDeviceAuthorizationRequestObject struct {
+	UserCode string `json:"userCode"`
+}
+
+type GetDeviceAuthorizationResponseObject interface {
+	VisitGetDeviceAuthorizationResponse(w http.ResponseWriter) error
+}
+
+type GetDeviceAuthorization200JSONResponse DeviceAuthorization
+
+func (response GetDeviceAuthorization200JSONResponse) VisitGetDeviceAuthorizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDeviceAuthorization401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetDeviceAuthorization401ApplicationProblemPlusJSONResponse) VisitGetDeviceAuthorizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDeviceAuthorization404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetDeviceAuthorization404ApplicationProblemPlusJSONResponse) VisitGetDeviceAuthorizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDeviceAuthorization429ApplicationProblemPlusJSONResponse Problem
+
+func (response GetDeviceAuthorization429ApplicationProblemPlusJSONResponse) VisitGetDeviceAuthorizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDeviceAuthorizationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetDeviceAuthorizationdefaultApplicationProblemPlusJSONResponse) VisitGetDeviceAuthorizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DecideDeviceAuthorizationRequestObject struct {
+	UserCode string `json:"userCode"`
+	Body     *DecideDeviceAuthorizationJSONRequestBody
+}
+
+type DecideDeviceAuthorizationResponseObject interface {
+	VisitDecideDeviceAuthorizationResponse(w http.ResponseWriter) error
+}
+
+type DecideDeviceAuthorization204Response struct {
+}
+
+func (response DecideDeviceAuthorization204Response) VisitDecideDeviceAuthorizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DecideDeviceAuthorization400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DecideDeviceAuthorization400ApplicationProblemPlusJSONResponse) VisitDecideDeviceAuthorizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DecideDeviceAuthorization401ApplicationProblemPlusJSONResponse Problem
+
+func (response DecideDeviceAuthorization401ApplicationProblemPlusJSONResponse) VisitDecideDeviceAuthorizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DecideDeviceAuthorization404ApplicationProblemPlusJSONResponse Problem
+
+func (response DecideDeviceAuthorization404ApplicationProblemPlusJSONResponse) VisitDecideDeviceAuthorizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DecideDeviceAuthorization429ApplicationProblemPlusJSONResponse Problem
+
+func (response DecideDeviceAuthorization429ApplicationProblemPlusJSONResponse) VisitDecideDeviceAuthorizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DecideDeviceAuthorizationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DecideDeviceAuthorizationdefaultApplicationProblemPlusJSONResponse) VisitDecideDeviceAuthorizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListEmailsRequestObject struct {
 }
 
@@ -53863,6 +54155,12 @@ type StrictServerInterface interface {
 	// UploadAvatar Upload an avatar image
 	// (PUT /user/avatar)
 	UploadAvatar(ctx context.Context, request UploadAvatarRequestObject) (UploadAvatarResponseObject, error)
+	// GetDeviceAuthorization Look up a pending OAuth device authorization
+	// (GET /user/device/{userCode})
+	GetDeviceAuthorization(ctx context.Context, request GetDeviceAuthorizationRequestObject) (GetDeviceAuthorizationResponseObject, error)
+	// DecideDeviceAuthorization Authorize or deny a pending OAuth device authorization
+	// (POST /user/device/{userCode})
+	DecideDeviceAuthorization(ctx context.Context, request DecideDeviceAuthorizationRequestObject) (DecideDeviceAuthorizationResponseObject, error)
 	// ListEmails Email addresses of the signed-in user
 	// (GET /user/emails)
 	ListEmails(ctx context.Context, request ListEmailsRequestObject) (ListEmailsResponseObject, error)
@@ -62088,6 +62386,65 @@ func (sh *strictHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UploadAvatarResponseObject); ok {
 		if err := validResponse.VisitUploadAvatarResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetDeviceAuthorization operation middleware
+func (sh *strictHandler) GetDeviceAuthorization(w http.ResponseWriter, r *http.Request, userCode string) {
+	var request GetDeviceAuthorizationRequestObject
+
+	request.UserCode = userCode
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetDeviceAuthorization(ctx, request.(GetDeviceAuthorizationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetDeviceAuthorization")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetDeviceAuthorizationResponseObject); ok {
+		if err := validResponse.VisitGetDeviceAuthorizationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DecideDeviceAuthorization operation middleware
+func (sh *strictHandler) DecideDeviceAuthorization(w http.ResponseWriter, r *http.Request, userCode string) {
+	var request DecideDeviceAuthorizationRequestObject
+
+	request.UserCode = userCode
+
+	var body DecideDeviceAuthorizationJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DecideDeviceAuthorization(ctx, request.(DecideDeviceAuthorizationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DecideDeviceAuthorization")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DecideDeviceAuthorizationResponseObject); ok {
+		if err := validResponse.VisitDecideDeviceAuthorizationResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

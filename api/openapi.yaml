@@ -1715,6 +1715,66 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /user/device/{userCode}:
+    parameters:
+      - name: userCode
+        in: path
+        required: true
+        description: The one-time code shown by the device (XXXX-XXXX; case and dash are ignored)
+        schema:
+          type: string
+          maxLength: 32
+    get:
+      operationId: getDeviceAuthorization
+      tags: [users]
+      summary: Look up a pending OAuth device authorization
+      description: |
+        Session only. Returns the request a device started with
+        POST /login/device/code (RFC 8628) while it is pending and not
+        expired. Wrong codes are rate limited per account and client IP
+        (429 with Retry-After).
+      responses:
+        "200":
+          description: The pending request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceAuthorization"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: decideDeviceAuthorization
+      tags: [users]
+      summary: Authorize or deny a pending OAuth device authorization
+      description: |
+        Session only. On approval the device receives a new access token of
+        the caller at its next poll of POST /login/oauth/access_token; the
+        token appears among the personal access tokens.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceAuthorizationDecision"
+      responses:
+        "204":
+          description: Recorded
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
   /user/keys/ssh:
     get:
       operationId: listSshKeys
@@ -10420,6 +10480,43 @@ components:
           type: string
           format: date-time
           description: Required; at most the configured maximum lifetime from now
+    DeviceAuthorization:
+      type: object
+      required: [userCode, clientId, appName, requestedScopes, scopes, createdAt, expiresAt]
+      properties:
+        userCode:
+          type: string
+          description: Normalized code (XXXX-XXXX)
+        clientId:
+          type: string
+        appName:
+          type: string
+          description: Display name of the OAuth client
+        requestedScopes:
+          type: array
+          description: GitHub-style scopes the device asked for (repo, read:org, workflow...)
+          items:
+            type: string
+        scopes:
+          type: array
+          description: Token scopes of this server the device will receive
+          items:
+            type: string
+        requestIp:
+          type: string
+          description: Client IP that started the request, when known
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+    DeviceAuthorizationDecision:
+      type: object
+      required: [approve]
+      properties:
+        approve:
+          type: boolean
     CreatedAccessToken:
       type: object
       required: [token, secret]

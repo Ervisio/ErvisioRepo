@@ -1183,6 +1183,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/user/device/{userCode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The one-time code shown by the device (XXXX-XXXX; case and dash are ignored) */
+                userCode: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Look up a pending OAuth device authorization
+         * @description Session only. Returns the request a device started with
+         *     POST /login/device/code (RFC 8628) while it is pending and not
+         *     expired. Wrong codes are rate limited per account and client IP
+         *     (429 with Retry-After).
+         */
+        get: operations["getDeviceAuthorization"];
+        put?: never;
+        /**
+         * Authorize or deny a pending OAuth device authorization
+         * @description Session only. On approval the device receives a new access token of
+         *     the caller at its next poll of POST /login/oauth/access_token; the
+         *     token appears among the personal access tokens.
+         */
+        post: operations["decideDeviceAuthorization"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/user/keys/ssh": {
         parameters: {
             query?: never;
@@ -6028,6 +6060,26 @@ export interface components {
              */
             expiresAt: string;
         };
+        DeviceAuthorization: {
+            /** @description Normalized code (XXXX-XXXX) */
+            userCode: string;
+            clientId: string;
+            /** @description Display name of the OAuth client */
+            appName: string;
+            /** @description GitHub-style scopes the device asked for (repo, read:org, workflow...) */
+            requestedScopes: string[];
+            /** @description Token scopes of this server the device will receive */
+            scopes: string[];
+            /** @description Client IP that started the request, when known */
+            requestIp?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        DeviceAuthorizationDecision: {
+            approve: boolean;
+        };
         CreatedAccessToken: {
             token: components["schemas"]["AccessToken"];
             /** @description The token (erp_...), shown only once; send it as "Authorization Bearer" */
@@ -9813,6 +9865,63 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getDeviceAuthorization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The one-time code shown by the device (XXXX-XXXX; case and dash are ignored) */
+                userCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The pending request */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceAuthorization"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    decideDeviceAuthorization: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The one-time code shown by the device (XXXX-XXXX; case and dash are ignored) */
+                userCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceAuthorizationDecision"];
+            };
+        };
+        responses: {
+            /** @description Recorded */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -59,6 +60,9 @@ type Service struct {
 	log    *slog.Logger
 	maxTTL time.Duration
 	now    func() time.Time
+	// device limits wrong user codes and device code requests.
+	device *auth.Limiter
+	host   string // public host, names device flow tokens
 }
 
 // Options configures a Service.
@@ -67,7 +71,9 @@ type Options struct {
 	Log  *slog.Logger
 	// TokenMaxTTL bounds the lifetime of access tokens (auth.token_max_ttl).
 	TokenMaxTTL time.Duration
-	Now         func() time.Time
+	// PublicURL is the external base URL of the server.
+	PublicURL string
+	Now       func() time.Time
 }
 
 // New returns a Service.
@@ -80,7 +86,14 @@ func New(o Options) *Service {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{pool: o.Pool, q: dbgen.New(o.Pool), log: log, maxTTL: o.TokenMaxTTL, now: now}
+	var host string
+	if u, err := url.Parse(o.PublicURL); err == nil {
+		host = u.Hostname()
+	}
+	device := auth.NewLimiter(auth.LimiterConfig{FreeFailuresAccount: 5, FreeFailuresIP: 10,
+		BackoffBase: 2 * time.Second, BackoffMax: 5 * time.Minute, ActionsPerHour: 60}, now)
+	return &Service{pool: o.Pool, q: dbgen.New(o.Pool), log: log, maxTTL: o.TokenMaxTTL, now: now,
+		device: device, host: host}
 }
 
 // MaxTokenTTL is the longest lifetime of a new token.
@@ -201,25 +214,35 @@ func (s *Service) CreateToken(ctx context.Context, p auth.Principal, in NewToken
 		if err := lockUser(ctx, q, p.UserID); err != nil {
 			return err
 		}
-		if n, err := q.CountUserTokens(ctx, p.UserID); err != nil {
-			return fmt.Errorf("count tokens: %w", err)
-		} else if n >= MaxTokens {
-			return ErrTooMany
-		}
-		if err := q.InsertToken(ctx, dbgen.InsertTokenParams{ID: id, UserID: p.UserID, Name: name, TokenHash: hash,
-			Hint: out.Hint, Scopes: scopes, ExpiresAt: pgtype.Timestamptz{Time: out.ExpiresAt, Valid: true}}); err != nil {
-			if isUniqueViolation(err) {
-				return ErrNameTaken
-			}
-			return fmt.Errorf("insert token: %w", err)
-		}
-		return audit.Record(ctx, q, audit.Event{Actor: p.UserID, Action: ActionTokenCreated, TargetType: "token",
-			TargetID: id.String(), IP: ip, Data: map[string]any{"name": name, "scopes": scopes, "expires_at": out.ExpiresAt}})
+		return insertToken(ctx, q, p.UserID, out, hash, ip, nil)
 	})
 	if err != nil {
 		return CreatedToken{}, err
 	}
 	return out, nil
+}
+
+// insertToken stores t for userID and records the audit event; the caller
+// holds the user lock. extra is merged into the audit data.
+func insertToken(ctx context.Context, q *dbgen.Queries, userID uuid.UUID, t CreatedToken, hash []byte, ip string, extra map[string]any) error {
+	if n, err := q.CountUserTokens(ctx, userID); err != nil {
+		return fmt.Errorf("count tokens: %w", err)
+	} else if n >= MaxTokens {
+		return ErrTooMany
+	}
+	if err := q.InsertToken(ctx, dbgen.InsertTokenParams{ID: t.ID, UserID: userID, Name: t.Name, TokenHash: hash,
+		Hint: t.Hint, Scopes: t.Scopes, ExpiresAt: pgtype.Timestamptz{Time: t.ExpiresAt, Valid: true}}); err != nil {
+		if isUniqueViolation(err) {
+			return ErrNameTaken
+		}
+		return fmt.Errorf("insert token: %w", err)
+	}
+	data := map[string]any{"name": t.Name, "scopes": t.Scopes, "expires_at": t.ExpiresAt}
+	for k, v := range extra {
+		data[k] = v
+	}
+	return audit.Record(ctx, q, audit.Event{Actor: userID, Action: ActionTokenCreated, TargetType: "token",
+		TargetID: t.ID.String(), IP: ip, Data: data})
 }
 
 // ListTokens returns the tokens of userID, newest first.

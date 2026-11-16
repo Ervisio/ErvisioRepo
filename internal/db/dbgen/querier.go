@@ -70,6 +70,7 @@ type Querier interface {
 	// Steps left open when a job ends are closed with the job.
 	CompleteOpenActionsSteps(ctx context.Context, arg CompleteOpenActionsStepsParams) error
 	ConfirmTOTP(ctx context.Context, arg ConfirmTOTPParams) (int64, error)
+	ConsumeDeviceCode(ctx context.Context, arg ConsumeDeviceCodeParams) error
 	ConsumeInvite(ctx context.Context, arg ConsumeInviteParams) (ConsumeInviteRow, error)
 	// Deletes the challenge; a second use (or a concurrent one) matches no row.
 	ConsumeMFAChallenge(ctx context.Context, id uuid.UUID) (int64, error)
@@ -111,6 +112,7 @@ type Querier interface {
 	// finalized artifact of the same name returns no row.
 	CreateActionsArtifact(ctx context.Context, arg CreateActionsArtifactParams) (ActionsArtifact, error)
 	CreateLFSLock(ctx context.Context, arg CreateLFSLockParams) (LfsLock, error)
+	DecideDeviceCode(ctx context.Context, arg DecideDeviceCodeParams) error
 	DeclareActionsRunner(ctx context.Context, arg DeclareActionsRunnerParams) (ActionsRunner, error)
 	DeleteActionsArtifact(ctx context.Context, id int64) error
 	DeleteActionsCache(ctx context.Context, id int64) error
@@ -126,6 +128,9 @@ type Querier interface {
 	// Removes a network without members (its pool can then be trashed).
 	DeleteEmptyForkNetwork(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteExpiredActionsRegistrationTokens(ctx context.Context) error
+	// Keeps expired rows for an hour, so that a late poll still gets
+	// expired_token instead of an unknown code.
+	DeleteExpiredDeviceCodes(ctx context.Context) (int64, error)
 	DeleteExpiredLFSTokens(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	DeleteExpiredMFAChallenges(ctx context.Context) (int64, error)
 	DeleteExpiredOIDCFlows(ctx context.Context) (int64, error)
@@ -236,6 +241,7 @@ type Querier interface {
 	GetCheckRunForUpdate(ctx context.Context, arg GetCheckRunForUpdateParams) (CheckRun, error)
 	GetCheckSuite(ctx context.Context, arg GetCheckSuiteParams) (CheckSuite, error)
 	GetCheckSuiteForUpdate(ctx context.Context, id uuid.UUID) (CheckSuite, error)
+	GetDeviceCodeByHashForUpdate(ctx context.Context, deviceCodeHash []byte) (OauthDeviceCode, error)
 	// Quotas per user and organization, and their usage counters (PLAN §8.2).
 	// Limits of a namespace (override, else instance default; -1 = unlimited)
 	// and its current usage.
@@ -292,6 +298,8 @@ type Querier interface {
 	GetOrgInviteByToken(ctx context.Context, tokenHash []byte) (GetOrgInviteByTokenRow, error)
 	GetOrgMemberRole(ctx context.Context, arg GetOrgMemberRoleParams) (string, error)
 	GetOutboxEvent(ctx context.Context, id uuid.UUID) (GetOutboxEventRow, error)
+	GetPendingDeviceCode(ctx context.Context, userCode string) (OauthDeviceCode, error)
+	GetPendingDeviceCodeForUpdate(ctx context.Context, userCode string) (OauthDeviceCode, error)
 	GetPendingPullReview(ctx context.Context, arg GetPendingPullReviewParams) (PullReview, error)
 	// The account owning a verified address (commit signer, CODEOWNERS email).
 	GetProtectionUserByVerifiedEmail(ctx context.Context, address string) (uuid.UUID, error)
@@ -380,6 +388,7 @@ type Querier interface {
 	InsertCheckRun(ctx context.Context, arg InsertCheckRunParams) (uuid.UUID, error)
 	// Commit statuses, check suites and check runs (PLAN §5).
 	InsertCommitStatus(ctx context.Context, arg InsertCommitStatusParams) (CommitStatus, error)
+	InsertDeviceCode(ctx context.Context, arg InsertDeviceCodeParams) error
 	InsertEmail(ctx context.Context, arg InsertEmailParams) error
 	InsertForkNetwork(ctx context.Context, arg InsertForkNetworkParams) error
 	InsertGPGKey(ctx context.Context, arg InsertGPGKeyParams) error
@@ -823,6 +832,7 @@ type Querier interface {
 	SetActionsJobStatus(ctx context.Context, arg SetActionsJobStatusParams) error
 	SetActionsRunStatus(ctx context.Context, arg SetActionsRunStatusParams) error
 	SetActionsScheduleNext(ctx context.Context, arg SetActionsScheduleNextParams) error
+	SetDeviceCodePoll(ctx context.Context, arg SetDeviceCodePollParams) error
 	SetEmailNotifications(ctx context.Context, arg SetEmailNotificationsParams) error
 	SetForkNetworkMemberPooled(ctx context.Context, arg SetForkNetworkMemberPooledParams) error
 	SetGitHubImportInclude(ctx context.Context, arg SetGitHubImportIncludeParams) error

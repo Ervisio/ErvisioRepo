@@ -683,6 +683,23 @@ type NotificationThread struct {
 	UpdatedAt   pgtype.Timestamptz
 }
 
+type OauthDeviceCode struct {
+	ID              uuid.UUID
+	DeviceCodeHash  []byte
+	UserCode        string
+	ClientID        string
+	Scopes          []string
+	DeviceName      string
+	Status          string
+	UserID          uuid.NullUUID
+	TokenID         uuid.NullUUID
+	RequestIp       string
+	IntervalSeconds int32
+	LastPollAt      pgtype.Timestamptz
+	CreatedAt       pgtype.Timestamptz
+	ExpiresAt       pgtype.Timestamptz
+}
+
 type OidcFlow struct {
 	StateHash    []byte
 	Provider     string
