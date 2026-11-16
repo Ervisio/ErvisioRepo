@@ -130,16 +130,25 @@ function TargetForm({ existing, secretsAvailable, onSaved, onClose }: {
     f.endpoint.trim() !== (existing.endpoint ?? "") || f.host.trim() !== (existing.host ?? "") || Number(f.port) !== (existing.port ?? 22)
   ) && f.kind === existing.kind;
 
-  const problems = put.error instanceof ApiError ? (put.error.errors ?? []) : [];
+  // Save and connection test reject a draft the same way: show their field errors under the fields.
+  const failure = put.error ?? test.error;
+  const problems = failure instanceof ApiError ? (failure.errors ?? []) : [];
   const err = (path: string) => problems.find((p) => p.path === path)?.msg;
   const general = [
     ...problems.filter((p) => !FIELD_PATHS.has(p.path)).map((p) => p.msg),
-    ...(put.error && !(put.error instanceof ApiError && put.error.errors?.length) ? [put.error.message] : []),
+    ...(failure && !(failure instanceof ApiError && failure.errors?.length) ? [failure.message] : []),
   ];
   const stored = (has: boolean | undefined) => (editing && has && !moved ? t("storage.cred.keep") : moved ? t("storage.cred.moved") : undefined);
   const mustType = (has: boolean | undefined) => !editing || !has || moved;
 
-  const save = () => put.mutate({ name: f.name.trim(), input: toInput(f) }, { onSuccess: onSaved });
+  const save = () => {
+    test.reset();
+    put.mutate({ name: f.name.trim(), input: toInput(f) }, { onSuccess: onSaved });
+  };
+  const runTest = () => {
+    put.reset();
+    test.mutate(toInput(f));
+  };
   const authOptions = [
     { value: "key", label: t("storage.f.auth.key") },
     { value: "password", label: t("storage.f.auth.password") },
@@ -240,15 +249,15 @@ function TargetForm({ existing, secretsAvailable, onSaved, onClose }: {
           {general.map((m) => <p key={m} className="adm-err">{m}</p>)}
         </div>
       )}
-      {test.isError && (
+      {test.isError && general.length === 0 && (
         <div role="alert" className="ui-inline">
-          <span className="ui-note">{t("storage.test.failed")}: {test.error.message}</span>
+          <span className="ui-note">{t("storage.test.failed")}: {t("storage.test.fix")}</span>
         </div>
       )}
       {test.data && <TestResult result={test.data} name={f.name.trim() || undefined} />}
 
       <div className="ui-dialog-foot">
-        <Button icon="play" disabled={test.isPending || put.isPending} onClick={() => test.mutate(toInput(f))}>
+        <Button icon="play" disabled={test.isPending || put.isPending} onClick={runTest}>
           {test.isPending ? t("storage.test.running") : t("storage.test.run")}
         </Button>
         <DialogClose asChild><Button variant="ghost" onClick={onClose}>{tu("dialog.cancel")}</Button></DialogClose>

@@ -40,6 +40,7 @@
   "storage.test.result": "Connection test of {target}",
   "storage.test.ok": "OK",
   "storage.test.failed": "Failed",
+  "storage.test.fix": "check the fields marked above.",
   "storage.test.duration": "{ms} ms",
   "storage.test.step": "Step",
   "storage.test.outcome": "Outcome",

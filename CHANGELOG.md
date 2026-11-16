@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Admin > Storage: a failed connection test now marks the wrong fields (for example an upper-case name or missing known hosts) instead of showing only "invalid storage configuration".
+
 ## [1.8.0] - 2026-11-16
 
 ### Added
