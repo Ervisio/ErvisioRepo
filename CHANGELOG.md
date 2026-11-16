@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-11-16
+
 ### Added
 
 - Admin > Storage: **Fetch from the server** fills the known hosts of an SFTP target with the host keys the server offers (ed25519, ECDSA, RSA) and shows their SHA256 fingerprints, so no `ssh-keyscan` is needed. New endpoint `POST /admin/storage/host-keys`; it connects without signing in and refuses the same addresses as storage targets.
