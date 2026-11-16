@@ -122,3 +122,8 @@
 .ap-target[data-on] { background: var(--sel); box-shadow: inset 3px 0 0 var(--acc-fill); }
 .ap-target[data-off] { cursor: default; color: var(--ink2); }
 @media (pointer: coarse) { .ap-segi { height: 44px; } .ap-chip { min-height: 36px; } }
+/* New runner dialog: wider, for the install commands. */
+.ui-dialog:has(.rn-new) { width: min(720px, calc(100vw - 32px)); }
+.rn-new { display: grid; gap: 14px; }
+.rn-new .ui-tabpanel { margin-top: 10px; }
+.rn-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }

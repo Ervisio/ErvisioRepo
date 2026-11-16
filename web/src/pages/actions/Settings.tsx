@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   useGitHubActionsImport,
   useImportGitHubActions,
@@ -18,7 +18,8 @@ import {
 } from "../../api/actions.ts";
 import { useEntries } from "../../api/actions.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, Button, Card, Input, Table, TableBody, TableHead, Td, Th, Tr } from "../../ui/index.ts";
+import { useMeta } from "../../api/useMeta.ts";
+import { Badge, Button, Card, Dialog, Input, Table, TableBody, TableHead, Tabs, TabsContent, TabsList, TabsTrigger, Td, Th, Tr } from "../../ui/index.ts";
 import { Async, formatDate, Secret, useNotify } from "../account/common.tsx";
 
 const NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -180,19 +181,46 @@ export function Environments({ owner, name }: { owner: string; name: string }) {
   );
 }
 
-/** Runners of one scope, with a registration token generated on demand and shown once. */
+/** Name the built-in runner registers with (setup.sh, runner-setup). */
+const BUILTIN_RUNNER = "builtin";
+
+/**
+ * Runners of one scope. The instance pool is the default for every
+ * repository; org and repository runners are an optional extra.
+ */
 export function Runners({ scope }: { scope: ActionsScope }) {
   const t = useT("actions");
   const notify = useNotify();
   const list = useRunners(scope);
   const del = useDeleteRunner(scope);
-  const gen = useRegistrationToken(scope);
-  const [token, setToken] = useState<ActionsRegistrationToken | null>(null);
+  const [adding, setAdding] = useState(false);
+  const instance = scope.kind === "instance";
+  const builtin = instance ? list.data?.find((r) => r.name === BUILTIN_RUNNER) : undefined;
 
   return (
     <>
-      <Card title={t("runners.title")}>
-        <p className="ui-note acc-pad">{t("runners.hint")}</p>
+      {instance && list.data && (
+        <Card title={t("runners.builtin")}>
+          {builtin ? (
+            <div className="ui-row">
+              <Badge tone={builtin.online ? "ok" : "neutral"}>{builtin.online ? (builtin.busy ? t("runners.busy") : t("runners.online")) : t("runners.offline")}</Badge>
+              <span className="ui-mono">{builtin.labels.join(", ")}</span>
+              {builtin.version && <span className="ui-note">v{builtin.version}</span>}
+            </div>
+          ) : (
+            <p className="ui-note acc-pad">{t("runners.builtinNone")}</p>
+          )}
+        </Card>
+      )}
+      <Card
+        title={instance ? t("runners.title") : t("runners.selfHosted")}
+        actions={
+          <Button size="sm" variant={instance ? "primary" : "secondary"} icon="plus" onClick={() => setAdding(true)}>
+            {t("runners.new")}
+          </Button>
+        }
+      >
+        <p className="ui-note acc-pad">{instance ? t("runners.hintInstance") : t("runners.hintScoped")}</p>
         <Async query={list} empty={t("runners.empty")}>
           {(rows) => (
             <Table>
@@ -228,19 +256,84 @@ export function Runners({ scope }: { scope: ActionsScope }) {
           )}
         </Async>
       </Card>
-      <Card title={t("runners.register")}>
-        <p className="ui-note acc-pad">{t("runners.registerHint")}</p>
-        {token && (
-          <>
-            <Secret label={t("runners.tokenLabel", { when: formatDate(token.expiresAt) })} value={token.token} />
-            <p className="ui-note acc-pad">{t("runners.tokenOnce")}</p>
-          </>
-        )}
-        <div className="acc-actions">
-          <Button disabled={gen.isPending} onClick={() => gen.mutate(undefined, { onSuccess: setToken, onError: notify.fail })}>{t("runners.generate")}</Button>
-        </div>
-      </Card>
+      <Dialog open={adding} onOpenChange={setAdding} title={t("runners.new")} description={t("runners.newHint")}>
+        {adding && <NewRunner scope={scope} />}
+      </Dialog>
     </>
+  );
+}
+
+type RunnerOS = "linux" | "macos" | "windows" | "docker";
+
+const SAFE_NAME = /[^A-Za-z0-9._-]/g;
+const SAFE_LABELS = /[^A-Za-z0-9._,-]/g;
+
+/** Install commands for a new runner, with a registration token created when the dialog opens. */
+function NewRunner({ scope }: { scope: ActionsScope }) {
+  const t = useT("actions");
+  const notify = useNotify();
+  const meta = useMeta();
+  const gen = useRegistrationToken(scope);
+  const [token, setToken] = useState<ActionsRegistrationToken | null>(null);
+  const [name, setName] = useState("");
+  const [labels, setLabels] = useState("");
+  const [capacity, setCapacity] = useState("");
+  const [os, setOS] = useState<RunnerOS>("linux");
+  const { mutate } = gen;
+
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    mutate(undefined, { onSuccess: setToken, onError: notify.fail });
+  }, [mutate, notify]);
+
+  if (!token || !meta.data) return <p className="ui-note">{t("runners.creating")}</p>;
+
+  const url = meta.data.publicUrl.replace(/\/+$/, "");
+  const ver = /^\d+\.\d+\.\d+$/.test(meta.data.version) ? meta.data.version : "latest";
+  const n = name.replace(SAFE_NAME, "");
+  const l = labels.replace(SAFE_LABELS, "").replace(/^,+|,+$/g, "");
+  const c = /^\d{1,2}$/.test(capacity) ? capacity : "";
+  const commands: Record<RunnerOS, string> = {
+    linux: `curl -fsSL ${url}/runner/install.sh | sudo sh -s -- --url ${url} --token ${token.token}${n ? ` --name ${n}` : ""}${l ? ` --labels ${l}` : ""}${c ? ` --capacity ${c}` : ""}`,
+    macos: `curl -fsSL ${url}/runner/install.sh | sh -s -- --url ${url} --token ${token.token}${n ? ` --name ${n}` : ""}${l ? ` --labels ${l}` : ""}${c ? ` --capacity ${c}` : ""}`,
+    windows: `& ([scriptblock]::Create((irm ${url}/runner/install.ps1))) -Url ${url} -Token ${token.token}${n ? ` -Name ${n}` : ""}${l ? ` -Labels ${l}` : ""}${c ? ` -Capacity ${c}` : ""}`,
+    docker: [
+      "docker run -d --name ervisio-runner --restart unless-stopped --user root --no-healthcheck \\",
+      "  -v /var/run/docker.sock:/var/run/docker.sock -v ervisio-runner:/var/lib/ervisio-runner \\",
+      `  -e ERVISIO_RUNNER_URL=${url} -e ERVISIO_RUNNER_TOKEN=${token.token} \\`,
+      "  -e ERVISIO_RUNNER_DATA_DIR=/var/lib/ervisio-runner -e HOME=/var/lib/ervisio-runner \\",
+      ...(n || l || c ? [`  ${[n && `-e ERVISIO_RUNNER_NAME=${n}`, l && `-e ERVISIO_RUNNER_LABELS=${l}`, c && `-e ERVISIO_RUNNER_CAPACITY=${c}`].filter(Boolean).join(" ")} \\`] : []),
+      `  --entrypoint ervisio-runner ghcr.io/ervisio/ervisio-repo:${ver} \\`,
+      "  daemon --config /var/lib/ervisio-runner/config.toml",
+    ].join("\n"),
+  };
+
+  return (
+    <div className="rn-new">
+      <p className="ui-note">{t("runners.tokenLabel", { when: formatDate(token.expiresAt) })}</p>
+      <div className="rn-fields">
+        <Input label={t("runners.name")} placeholder={t("runners.namePlaceholder")} value={name} onChange={(e) => setName(e.target.value)} mono />
+        <Input label={t("runners.extraLabels")} hint={t("runners.extraLabelsHint")} placeholder="gpu,big" value={labels} onChange={(e) => setLabels(e.target.value)} mono />
+        <Input label={t("runners.capacity")} hint={t("runners.capacityHint")} inputMode="numeric" value={capacity} onChange={(e) => setCapacity(e.target.value)} mono />
+      </div>
+      <Tabs value={os} onValueChange={(v) => setOS(v as RunnerOS)}>
+        <TabsList aria-label={t("runners.platform")}>
+          <TabsTrigger value="linux">Linux</TabsTrigger>
+          <TabsTrigger value="macos">macOS</TabsTrigger>
+          <TabsTrigger value="windows">Windows</TabsTrigger>
+          <TabsTrigger value="docker">Docker</TabsTrigger>
+        </TabsList>
+        {(Object.keys(commands) as RunnerOS[]).map((k) => (
+          <TabsContent key={k} value={k}>
+            <Secret label={t(`runners.os.${k}`)} value={commands[k]} multiline={k === "docker"} />
+          </TabsContent>
+        ))}
+      </Tabs>
+      <p className="ui-note">{t("runners.backendNote")}</p>
+      <Secret label={t("runners.tokenOnly")} value={token.token} />
+    </div>
   );
 }
 
