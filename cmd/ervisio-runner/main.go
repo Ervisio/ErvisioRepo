@@ -1,6 +1,7 @@
 // Command ervisio-runner runs Ervisio Actions jobs with act.
 //
-//	ervisio-runner register --url <url> --token <token> [--name <n>] [--labels <l,...>] [--capacity <n>] [--host] [--ephemeral]
+//	ervisio-runner register --url <url> [--token <token>] [--name <n>] [--labels <l,...>] [--capacity <n>] [--host] [--ephemeral]
+//	ervisio-runner deregister [--config <path>]
 //	ervisio-runner daemon [--config <path>]   (registers itself from ERVISIO_RUNNER_* on first start)
 //	ervisio-runner generate-config
 //	ervisio-runner version
@@ -22,12 +23,16 @@ import (
 )
 
 const usage = `Usage:
-  ervisio-runner register --url <url> --token <token> [--name <name>]
+  ervisio-runner register --url <url> [--token <token>] [--name <name>]
                           [--labels <name[=docker://image|=host],...>] [--ephemeral]
                           [--capacity <n>] [--host] [--data-dir <dir>]
                           [--config <path>] [--state <path>]
                                            register this runner; writes a default config
-                                           when missing (token also via ERVISIO_RUNNER_TOKEN)
+                                           when missing (token also via ERVISIO_RUNNER_TOKEN);
+                                           without a token it shows a code to approve at
+                                           <url>/runner/approve
+  ervisio-runner deregister [--config <path>]
+                                           remove this runner from the server
   ervisio-runner daemon [--config <path>]  poll for jobs and run them; on first start it
                                            registers from ERVISIO_RUNNER_URL, _TOKEN (or
                                            _TOKEN_FILE), _NAME, _LABELS, _CAPACITY
@@ -66,6 +71,8 @@ func dispatch(ctx context.Context, args []string, stdout, stderr io.Writer) erro
 	switch cmd {
 	case "register":
 		return registerCmd(ctx, args, stdout, stderr)
+	case "deregister":
+		return deregisterCmd(ctx, args, stdout, stderr)
 	case "daemon":
 		return daemonCmd(ctx, args, stderr)
 	case "generate-config":

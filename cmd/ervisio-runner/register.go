@@ -34,9 +34,6 @@ func registerCmd(ctx context.Context, args []string, stdout, stderr io.Writer) e
 	if *token == "" {
 		*token = os.Getenv("ERVISIO_RUNNER_TOKEN")
 	}
-	if *token == "" {
-		return fmt.Errorf("%w: --token is required", errUsage)
-	}
 	if *url == "" {
 		*url = os.Getenv("ERVISIO_RUNNER_URL")
 	}
@@ -46,6 +43,15 @@ func registerCmd(ctx context.Context, args []string, stdout, stderr io.Writer) e
 	extra := splitList(*labels)
 	if *dataDir == "" && *statePath != "" {
 		*dataDir = filepath.Dir(*statePath)
+	}
+	if *token == "" {
+		// No token: device registration, approved by an admin in the web UI.
+		g, err := deviceRegister(ctx, deviceInput{cfgPath: *cfgPath, url: *url, name: *name, extra: extra,
+			capacity: *capacity, host: *host}, stdout)
+		if err != nil {
+			return err
+		}
+		*token, *name, *capacity, extra = g.Token, g.name, g.capacity, g.labels
 	}
 	written, err := ensureConfig(*cfgPath, newConfigOptions{URL: *url, Extra: extra, Capacity: *capacity, Host: *host,
 		DataDir: *dataDir})
@@ -136,20 +142,9 @@ func ensureConfig(path string, o newConfigOptions) (bool, error) {
 	if _, err := os.Stat(path); err == nil || !errors.Is(err, os.ErrNotExist) {
 		return false, nil
 	}
-	base := config.DefaultLabels()
-	if o.Host {
-		base = config.HostLabels()
-	}
-	labels := base
-	switch {
-	case len(o.Extra) == 0:
-	case config.HasBareLabel(o.Extra):
-		var err error
-		if labels, err = config.ExpandLabels(base, o.Extra); err != nil {
-			return false, fmt.Errorf("%w: labels: %v", errUsage, err)
-		}
-	default:
-		labels = o.Extra
+	labels, err := newConfigLabels(o.Host, o.Extra)
+	if err != nil {
+		return false, err
 	}
 	if o.Capacity == 0 {
 		o.Capacity = config.DefaultCapacity()
@@ -159,6 +154,26 @@ func ensureConfig(path string, o newConfigOptions) (bool, error) {
 	}
 	return config.WriteDefault(path, config.RenderOptions{URL: o.URL, Labels: labels, Capacity: o.Capacity,
 		Host: o.Host, DataDir: o.DataDir})
+}
+
+// newConfigLabels are the labels of a new configuration: the defaults of
+// the backend, joined (bare names) or replaced (full entries) by extra.
+func newConfigLabels(host bool, extra []string) ([]string, error) {
+	base := config.DefaultLabels()
+	if host {
+		base = config.HostLabels()
+	}
+	switch {
+	case len(extra) == 0:
+		return base, nil
+	case config.HasBareLabel(extra):
+		labels, err := config.ExpandLabels(base, extra)
+		if err != nil {
+			return nil, fmt.Errorf("%w: labels: %v", errUsage, err)
+		}
+		return labels, nil
+	}
+	return extra, nil
 }
 
 func splitList(s string) []string {

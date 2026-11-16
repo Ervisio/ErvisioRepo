@@ -132,12 +132,13 @@ func (d *Daemon) declare(ctx context.Context) error {
 	wait := d.cfg.Runner.FetchInterval.D()
 	for {
 		resp, err := d.client.Declare(ctx, connect.NewRequest(&runnerv1.DeclareRequest{
-			Version: d.version,
-			Labels:  d.labels.Wire(),
+			Version:  d.version,
+			Labels:   d.labels.Wire(),
+			Capacity: int32(d.cfg.Runner.Capacity), //nolint:gosec // capacity is at most 64
 		}))
 		if err == nil {
 			if r := resp.Msg.GetRunner(); r != nil {
-				d.logger.Info("runner declared", "id", r.GetId(), "scope", r.GetScope())
+				d.logger.Info("runner declared", "id", r.GetId(), "scope", r.GetScope(), "paused", r.GetPaused())
 			}
 			return nil
 		}
@@ -300,6 +301,7 @@ func (d *Daemon) cancelTask(id string) {
 func (d *Daemon) heartbeatLoop(ctx context.Context) {
 	t := time.NewTicker(d.cfg.Runner.HeartbeatInterval.D())
 	defer t.Stop()
+	paused := false
 	for {
 		select {
 		case <-ctx.Done():
@@ -309,6 +311,7 @@ func (d *Daemon) heartbeatLoop(ctx context.Context) {
 		hctx, cancel := context.WithTimeout(ctx, d.cfg.Runner.FetchTimeout.D())
 		resp, err := d.client.Heartbeat(hctx, connect.NewRequest(&runnerv1.HeartbeatRequest{
 			RunningTaskIds: d.runningIDs(),
+			Capacity:       int32(d.cfg.Runner.Capacity), //nolint:gosec // capacity is at most 64
 		}))
 		cancel()
 		if err != nil {
@@ -319,6 +322,14 @@ func (d *Daemon) heartbeatLoop(ctx context.Context) {
 		}
 		for _, id := range resp.Msg.GetCancelTaskIds() {
 			d.cancelTask(id)
+		}
+		if p := resp.Msg.GetPaused(); p != paused {
+			paused = p
+			if p {
+				d.logger.Info("runner paused on the server: running jobs finish, no new ones are taken")
+			} else {
+				d.logger.Info("runner resumed on the server")
+			}
 		}
 	}
 }
