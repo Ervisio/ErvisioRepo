@@ -74,6 +74,41 @@ func (q *Queries) ListGitHubAPIIDs(ctx context.Context, uuids []uuid.UUID) ([]Gh
 	return items, nil
 }
 
+const listGitHubAPIRepoForks = `-- name: ListGitHubAPIRepoForks :many
+SELECT t.id::uuid AS id,
+       EXISTS (SELECT 1 FROM repo_forks f WHERE f.repo_id = t.id) AS is_fork,
+       (SELECT count(*) FROM repo_forks f WHERE f.parent_id = t.id) AS forks
+FROM unnest($1::uuid[]) AS t (id)
+`
+
+type ListGitHubAPIRepoForksRow struct {
+	ID     uuid.UUID
+	IsFork bool
+	Forks  int64
+}
+
+// Fork flag and direct fork count of repositories, for the repository
+// objects of /api/v3.
+func (q *Queries) ListGitHubAPIRepoForks(ctx context.Context, ids []uuid.UUID) ([]ListGitHubAPIRepoForksRow, error) {
+	rows, err := q.db.Query(ctx, listGitHubAPIRepoForks, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListGitHubAPIRepoForksRow{}
+	for rows.Next() {
+		var i ListGitHubAPIRepoForksRow
+		if err := rows.Scan(&i.ID, &i.IsFork, &i.Forks); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listNamespacesByName = `-- name: ListNamespacesByName :many
 SELECT id, kind, name FROM namespaces WHERE name_lower = ANY($1::text[])
 `

@@ -43,7 +43,7 @@ Legenda: **sì** supportato; **parziale** supportato con i limiti indicati;
 
 | Endpoint | Stato | Note |
 |---|---|---|
-| `GET /` | sì | Radice con i modelli di URL. |
+| `GET /` | sì | Radice con i modelli di URL; `current_user_authorizations_html_url` è la pagina dei token (`/settings?section=tokens`). |
 | `GET /meta` | stub | `verifiable_password_authentication: false`, liste IP vuote. |
 | `GET /rate_limit` | stub | Fisso 5000/5000; non si applica alcun limite. |
 | `GET /user` | sì | Utente autenticato. Richiede un token. |
@@ -55,12 +55,27 @@ Legenda: **sì** supportato; **parziale** supportato con i limiti indicati;
 
 | Endpoint | Stato | Note |
 |---|---|---|
-| `GET /repos/{owner}/{repo}` | sì | `permissions` riflette il chiamante. `ssh_url` usa l'host dell'URL pubblico. |
+| `GET /repos/{owner}/{repo}` | sì | `permissions` riflette il chiamante. `ssh_url` usa l'host dell'URL pubblico. `fork`, `forks_count` e, su un fork, `parent` e `source`. |
 | `GET /user/repos` | sì | Repository del chiamante. |
 | `GET /users/{username}/repos`, `GET /orgs/{org}/repos` | sì | |
-| `POST /user/repos`, `POST /orgs/{org}/repos` | parziale | `name`, `description`, `private`/`visibility`. `auto_init`, template e gitignore sono ignorati. |
-| `PATCH /repos/{owner}/{repo}` | parziale | `name`, `description`, `private`/`visibility`, `default_branch`. |
+| `POST /user/repos`, `POST /orgs/{org}/repos` | parziale | `name`, `description`, `private`/`visibility`, `default_branch`, `auto_init`, `gitignore_template`, `license_template` (un unico "Initial commit" con README.md, .gitignore e LICENSE). `is_template`, `homepage` e le opzioni delle funzionalità sono ignorati. |
+| `PATCH /repos/{owner}/{repo}` | parziale | `name`, `description`, `private`/`visibility`, `default_branch`. I campi che il server non gestisce (`homepage`, `has_*`, `allow_*`, `delete_branch_on_merge`, `archived`) sono ignorati, come GitHub ignora i campi sconosciuti. |
 | `DELETE /repos/{owner}/{repo}` | sì | |
+| `GET /repos/{owner}/{repo}/forks` | sì | I fork che il chiamante può leggere. `sort` è ignorato. |
+| `POST /repos/{owner}/{repo}/forks` | sì | `organization`, `name`; `default_branch_only` è ignorato (si copiano tutti i branch). Risponde `202` con il fork, quello esistente se c'era già. |
+| `POST /repos/{owner}/{repo}/merge-upstream` | parziale | `branch` (predefinito: il branch di default). Solo fast-forward: un branch che diverge dal padre risponde `409`. |
+| `GET /gitignore/templates`, `GET /gitignore/templates/{name}` | sì | Template inclusi: C, Go, Java, macOS, Node, Python, Rust, Windows. |
+| `GET /licenses`, `GET /licenses/{license}` | sì | Inclusi: `mit`, `apache-2.0`, `gpl-3.0`, `bsd-3-clause`, `mpl-2.0`, `unlicense`. |
+| `GET/PUT /repos/{owner}/{repo}/topics`, `POST .../generate` | no | Topic e repository template non sono gestiti. |
+
+### Ricerca
+
+| Endpoint | Stato | Note |
+|---|---|---|
+| `GET /search/repositories` | parziale | Testo su nome e descrizione, `user:`/`org:`/`repo:`, `is:public`/`is:private`. `language:`, `stars:`, `topic:` non danno risultati. `total_count` conta al massimo 1000 risultati. |
+| `GET /search/issues` | parziale | Richiede `repo:owner/name`. `is:issue`/`is:pr`, `is:open`/`closed`/`merged`, `state:`, `author:`, `assignee:`, `mentions:`, `label:`, `milestone:`, `base:`, `head:`, `review-requested:`, `no:`, `sort:` (`@me` funziona), come la ricerca GraphQL. |
+| `GET /search/code` | parziale | Richiede `repo:owner/name`; `path:` limita la cartella. git grep (senza maiuscole, stringa fissa) sul branch di default, un elemento per file; `sha` è il commit cercato. |
+| `GET /search/users` | parziale | Prefisso del nome utente o del nome visualizzato, nella directory utenti visibile al chiamante; i qualificatori sono ignorati. |
 
 ### Contenuti, commit, branch, ref
 
@@ -163,9 +178,9 @@ ha GitHub App, quindi `app.slug` e `app.name` sono quel nome.
 
 ### Non disponibili
 
-Ricerca, gist, notifiche, eventi, actions, package, project, deployment,
-webhook (usare `/api/v1/.../hooks`), gestione dei collaboratori, fork, team,
-app e installazioni.
+Ricerca nei commit, gist, notifiche, eventi, actions, package, project, deployment,
+webhook (usare `/api/v1/.../hooks`), gestione dei collaboratori, team, app e
+installazioni.
 
 ## GraphQL (`/api/graphql`)
 
@@ -229,7 +244,8 @@ nell'ambiente. In un clone il cui remote punta all'host, `-R` non serve.
 | `gh repo view` | sì | |
 | `gh repo list` | sì | `repositoryOwner { repositories }`. |
 | `gh repo clone` | sì | Git puro. |
-| `gh repo create`, `fork`, `edit`, `delete` | no | Non implementati via GraphQL. |
+| `gh repo create`, `edit`, `delete` | no | Non implementati via GraphQL. |
+| `gh repo fork`, `gh repo sync` | sì | REST `POST /forks` e `POST /merge-upstream` (solo fast-forward). |
 | `gh pr list`, `view`, `status` | sì | `status` usa `search` con `author:@me` e `review-requested:@me`. |
 | `gh pr create` (anche `--draft`, `--label`, `--assignee`, `--reviewer` utenti) | sì | Team come reviewer e project vengono rifiutati. |
 | `gh pr checkout` | sì | Scarica il branch head dal repository base. |
@@ -244,7 +260,8 @@ nell'ambiente. In un clone il cui remote punta all'host, `-R` non serve.
 | `gh label list` | sì | GraphQL `labels`. |
 | `gh label create`, `edit`, `delete`, `clone` | sì | REST. |
 | `gh api <percorso REST>` (anche `--paginate`), `gh api graphql` | sì | |
-| `gh run`, `gh workflow`, `gh search`, `gh gist`, `gh codespace`, `gh project` | no | Non implementati (`search` richiede un qualificatore `repo:`). |
+| `gh search repos`, `issues`, `prs`, `code` | parziale | REST `/search/*`; `issues`, `prs` e `code` richiedono `--repo`. `gh search commits` non è disponibile. |
+| `gh run`, `gh workflow`, `gh gist`, `gh codespace`, `gh project` | no | Non implementati. |
 
 Sono attese ricavate dal sorgente di `gh` e dagli endpoint implementati; non
 sono state verificate con test automatici.

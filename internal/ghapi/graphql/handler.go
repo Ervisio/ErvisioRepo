@@ -40,6 +40,11 @@ type Repos interface {
 	Search(ctx context.Context, who auth.Principal, query string, offset, limit int) ([]repos.Repo, error)
 }
 
+// Forks reports the fork parent of a repository.
+type Forks interface {
+	ForkInfo(ctx context.Context, who auth.Principal, repoID uuid.UUID) (pulls.ForkOf, error)
+}
+
 // Orgs is the subset of the organization service used by the resolvers.
 type Orgs interface {
 	GetOrg(ctx context.Context, who auth.Principal, name string) (orgs.Org, error)
@@ -109,6 +114,8 @@ type Deps struct {
 	Releases  Releases
 	// Checks feeds statusCheckRollup; nil: the rollup is empty.
 	Checks Checks
+	// Forks feeds isFork and parent; nil: no repository is a fork.
+	Forks Forks
 	// Classify maps a service error to an HTTP status and message, as the
 	// REST API answers it; status 0 or 500 is an unexpected error.
 	Classify func(error) (int, string)

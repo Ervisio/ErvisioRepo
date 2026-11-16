@@ -48,8 +48,17 @@ type Edit struct {
 	ExpectedOID string
 	Message     string // empty = "<Op> <Path>"
 	AuthorID    uuid.UUID
+	// Extra are more new files written in the same commit (OpCreate only),
+	// as for the first commit of a new repository.
+	Extra []NewFile
 
 	fileMode string
+}
+
+// NewFile is a regular file created by an edit.
+type NewFile struct {
+	Path    string
+	Content []byte
 }
 
 // EditResult is the commit of a web edit.
@@ -108,7 +117,11 @@ func (s *Service) Edit(ctx context.Context, repo Repo, e Edit) (EditResult, erro
 
 	var entry *treeEntry
 	if e.Op != OpDelete {
-		if n := int64(len(e.Content)); n > 0 {
+		n := int64(len(e.Content))
+		for _, f := range e.Extra {
+			n += int64(len(f.Content))
+		}
+		if n > 0 {
 			err := quota.Check(ctx, s.q, repo.OwnerID, quota.Delta{Bytes: n})
 			var ex *quota.ExceededError
 			if errors.As(err, &ex) {
@@ -131,6 +144,19 @@ func (s *Service) Edit(ctx context.Context, repo Repo, e Edit) (EditResult, erro
 	tree, err := writeTree(ctx, rp, baseTree, strings.Split(e.Path, "/"), entry)
 	if err != nil {
 		return res, err
+	}
+	for _, f := range e.Extra {
+		if err := s.checkPath(ctx, rp, parent, &Edit{Op: OpCreate, Path: f.Path}); err != nil {
+			return res, err
+		}
+		oid, err := gitIn(ctx, rp, f.Content, nil, "hash-object", "-w", "--stdin")
+		if err != nil {
+			return res, fmt.Errorf("write blob: %w", err)
+		}
+		tree, err = writeTree(ctx, rp, tree, strings.Split(f.Path, "/"), &treeEntry{mode: "100644", typ: "blob", oid: oid})
+		if err != nil {
+			return res, err
+		}
 	}
 	if tree == "" {
 		if tree, err = mktree(ctx, rp, nil); err != nil {
@@ -220,6 +246,22 @@ func (s *Service) checkEdit(e *Edit, repo Repo) error {
 	if e.ExpectedOID != "" {
 		if err := git.ValidateObjectID(e.ExpectedOID); err != nil {
 			return fmt.Errorf("%w: %w", ErrInvalid, err)
+		}
+	}
+	if len(e.Extra) > 0 && e.Op != OpCreate {
+		return invalidf("extra files need a create")
+	}
+	seen := map[string]bool{e.Path: true}
+	for _, f := range e.Extra {
+		if err := git.ValidateTreePath(f.Path); err != nil {
+			return fmt.Errorf("%w: %w", ErrInvalid, err)
+		}
+		if seen[f.Path] {
+			return invalidf("%q is given twice", f.Path)
+		}
+		seen[f.Path] = true
+		if int64(len(f.Content)) > s.o.MaxEditSize {
+			return fmt.Errorf("%w: the file exceeds %d bytes; use git or Git LFS", ErrTooLarge, s.o.MaxEditSize)
 		}
 	}
 	if e.Op == OpDelete {

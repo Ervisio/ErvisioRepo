@@ -857,6 +857,24 @@ func (e LinkedPullState) Valid() bool {
 	}
 }
 
+// Defines values for MergeUpstreamResultMergeType.
+const (
+	MergeUpstreamResultMergeTypeFastForward MergeUpstreamResultMergeType = "fast-forward"
+	MergeUpstreamResultMergeTypeNone        MergeUpstreamResultMergeType = "none"
+)
+
+// Valid indicates whether the value is a known member of the MergeUpstreamResultMergeType enum.
+func (e MergeUpstreamResultMergeType) Valid() bool {
+	switch e {
+	case MergeUpstreamResultMergeTypeFastForward:
+		return true
+	case MergeUpstreamResultMergeTypeNone:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MetaDefaultLayout.
 const (
 	MetaDefaultLayoutConsole MetaDefaultLayout = "console"
@@ -3940,6 +3958,23 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+// MergeUpstreamInput defines model for MergeUpstreamInput.
+type MergeUpstreamInput struct {
+	// Branch Default the default branch of the fork
+	Branch *string `json:"branch,omitempty"`
+}
+
+// MergeUpstreamResult defines model for MergeUpstreamResult.
+type MergeUpstreamResult struct {
+	// BaseBranch <parent owner>:<branch>
+	BaseBranch string                       `json:"baseBranch"`
+	Branch     string                       `json:"branch"`
+	MergeType  MergeUpstreamResultMergeType `json:"mergeType"`
+}
+
+// MergeUpstreamResultMergeType defines model for MergeUpstreamResult.MergeType.
+type MergeUpstreamResultMergeType string
+
 // Meta defines model for Meta.
 type Meta struct {
 	// Commit VCS revision the binary was built from, if known
@@ -4776,10 +4811,18 @@ type RepoCollaborator struct {
 
 // RepoCreate defines model for RepoCreate.
 type RepoCreate struct {
-	DefaultBranch *string     `json:"defaultBranch,omitempty"`
-	Description   *string     `json:"description,omitempty"`
-	Name          string      `json:"name"`
-	Visibility    *Visibility `json:"visibility,omitempty"`
+	// AutoInit Commit a README (and the chosen .gitignore and license) as the first commit
+	AutoInit      *bool   `json:"autoInit,omitempty"`
+	DefaultBranch *string `json:"defaultBranch,omitempty"`
+	Description   *string `json:"description,omitempty"`
+
+	// GitignoreTemplate Name of a .gitignore template (implies autoInit)
+	GitignoreTemplate *string `json:"gitignoreTemplate,omitempty"`
+
+	// LicenseTemplate Key of a license template (implies autoInit)
+	LicenseTemplate *string     `json:"licenseTemplate,omitempty"`
+	Name            string      `json:"name"`
+	Visibility      *Visibility `json:"visibility,omitempty"`
 }
 
 // RepoPermissionRequest defines model for RepoPermissionRequest.
@@ -6603,6 +6646,9 @@ type CreateLabelJSONRequestBody = LabelCreate
 // UpdateLabelJSONRequestBody defines body for UpdateLabel for application/json ContentType.
 type UpdateLabelJSONRequestBody = LabelUpdate
 
+// MergeUpstreamJSONRequestBody defines body for MergeUpstream for application/json ContentType.
+type MergeUpstreamJSONRequestBody = MergeUpstreamInput
+
 // CreateMilestoneJSONRequestBody defines body for CreateMilestone for application/json ContentType.
 type CreateMilestoneJSONRequestBody = MilestoneCreate
 
@@ -7358,6 +7404,9 @@ type ServerInterface interface {
 	// ListLanguages Languages of a ref by bytes of source
 	// (GET /repos/{owner}/{name}/languages)
 	ListLanguages(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListLanguagesParams)
+	// MergeUpstream Sync a fork branch with its parent
+	// (POST /repos/{owner}/{name}/merge-upstream)
+	MergeUpstream(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
 	// ListMilestones Milestones of the repository
 	// (GET /repos/{owner}/{name}/milestones)
 	ListMilestones(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListMilestonesParams)
@@ -8963,6 +9012,12 @@ func (_ Unimplemented) UpdateLabel(w http.ResponseWriter, r *http.Request, owner
 // ListLanguages Languages of a ref by bytes of source
 // (GET /repos/{owner}/{name}/languages)
 func (_ Unimplemented) ListLanguages(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListLanguagesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// MergeUpstream Sync a fork branch with its parent
+// (POST /repos/{owner}/{name}/merge-upstream)
+func (_ Unimplemented) MergeUpstream(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -19512,6 +19567,49 @@ func (siw *ServerInterfaceWrapper) ListLanguages(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// MergeUpstream operation middleware
+func (siw *ServerInterfaceWrapper) MergeUpstream(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MergeUpstream(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListMilestones operation middleware
 func (siw *ServerInterfaceWrapper) ListMilestones(w http.ResponseWriter, r *http.Request) {
 
@@ -25432,6 +25530,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/repos/{owner}/{name}/forks", wrapper.CreateFork)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/merge-upstream", wrapper.MergeUpstream)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/branch-protections", wrapper.ListBranchProtections)
@@ -44019,6 +44120,141 @@ func (response ListLanguagesdefaultApplicationProblemPlusJSONResponse) VisitList
 	return err
 }
 
+type MergeUpstreamRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *MergeUpstreamJSONRequestBody
+}
+
+type MergeUpstreamResponseObject interface {
+	VisitMergeUpstreamResponse(w http.ResponseWriter) error
+}
+
+type MergeUpstream200JSONResponse MergeUpstreamResult
+
+func (response MergeUpstream200JSONResponse) VisitMergeUpstreamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergeUpstream307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response MergeUpstream307ApplicationProblemPlusJSONResponse) VisitMergeUpstreamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergeUpstream400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response MergeUpstream400ApplicationProblemPlusJSONResponse) VisitMergeUpstreamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergeUpstream403ApplicationProblemPlusJSONResponse Problem
+
+func (response MergeUpstream403ApplicationProblemPlusJSONResponse) VisitMergeUpstreamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergeUpstream404ApplicationProblemPlusJSONResponse Problem
+
+func (response MergeUpstream404ApplicationProblemPlusJSONResponse) VisitMergeUpstreamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergeUpstream409ApplicationProblemPlusJSONResponse Problem
+
+func (response MergeUpstream409ApplicationProblemPlusJSONResponse) VisitMergeUpstreamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergeUpstream503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response MergeUpstream503ApplicationProblemPlusJSONResponse) VisitMergeUpstreamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MergeUpstreamdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response MergeUpstreamdefaultApplicationProblemPlusJSONResponse) VisitMergeUpstreamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListMilestonesRequestObject struct {
 	Owner  RepoOwner `json:"owner"`
 	Name   RepoName  `json:"name"`
@@ -54357,6 +54593,9 @@ type StrictServerInterface interface {
 	// ListLanguages Languages of a ref by bytes of source
 	// (GET /repos/{owner}/{name}/languages)
 	ListLanguages(ctx context.Context, request ListLanguagesRequestObject) (ListLanguagesResponseObject, error)
+	// MergeUpstream Sync a fork branch with its parent
+	// (POST /repos/{owner}/{name}/merge-upstream)
+	MergeUpstream(ctx context.Context, request MergeUpstreamRequestObject) (MergeUpstreamResponseObject, error)
 	// ListMilestones Milestones of the repository
 	// (GET /repos/{owner}/{name}/milestones)
 	ListMilestones(ctx context.Context, request ListMilestonesRequestObject) (ListMilestonesResponseObject, error)
@@ -60861,6 +61100,43 @@ func (sh *strictHandler) ListLanguages(w http.ResponseWriter, r *http.Request, o
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListLanguagesResponseObject); ok {
 		if err := validResponse.VisitListLanguagesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// MergeUpstream operation middleware
+func (sh *strictHandler) MergeUpstream(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request MergeUpstreamRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body MergeUpstreamJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.MergeUpstream(ctx, request.(MergeUpstreamRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "MergeUpstream")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(MergeUpstreamResponseObject); ok {
+		if err := validResponse.VisitMergeUpstreamResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

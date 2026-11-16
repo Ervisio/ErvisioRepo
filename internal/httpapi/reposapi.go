@@ -12,6 +12,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
 	"github.com/Ervisio/ErvisioRepo/internal/quota"
+	"github.com/Ervisio/ErvisioRepo/internal/repoinit"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
 )
 
@@ -148,6 +149,13 @@ func page(offset, limit *int) (int, int) {
 	return o, l
 }
 
+// createRepo creates a repository and, when asked, its first commit.
+func (s *v1Server) createRepo(ctx context.Context, in repos.CreateInput, b *v1gen.RepoCreate) (repos.Repo, error) {
+	init := repoinit.Options{Readme: deref(b.AutoInit), Gitignore: deref(b.GitignoreTemplate),
+		License: deref(b.LicenseTemplate)}
+	return repoinit.Create(ctx, s.repos, s.browse, principal(ctx), in, init, clientOf(ctx), s.log)
+}
+
 func createInput(owner string, b *v1gen.RepoCreate) repos.CreateInput {
 	in := repos.CreateInput{Owner: owner, Name: b.Name}
 	if b.Description != nil {
@@ -186,7 +194,7 @@ func (s *v1Server) CreateUserRepo(ctx context.Context, req v1gen.CreateUserRepoR
 		return badRequest("missing body"), nil
 	}
 	p := principal(ctx)
-	r, err := s.repos.Create(ctx, p, createInput(p.Username, req.Body), clientOf(ctx))
+	r, err := s.createRepo(ctx, createInput(p.Username, req.Body), req.Body)
 	if err != nil {
 		return reposFail(err, http.MethodPost, "")
 	}
@@ -232,7 +240,7 @@ func (s *v1Server) CreateOrgRepo(ctx context.Context, req v1gen.CreateOrgRepoReq
 	if req.Body == nil {
 		return badRequest("missing body"), nil
 	}
-	r, err := s.repos.Create(ctx, principal(ctx), createInput(req.Org, req.Body), clientOf(ctx))
+	r, err := s.createRepo(ctx, createInput(req.Org, req.Body), req.Body)
 	if err != nil {
 		return reposFail(err, http.MethodPost, "")
 	}

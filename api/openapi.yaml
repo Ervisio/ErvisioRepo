@@ -6148,6 +6148,48 @@ paths:
           $ref: "#/components/responses/Unavailable"
         default:
           $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/merge-upstream:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    post:
+      operationId: mergeUpstream
+      tags: [pulls]
+      summary: Sync a fork branch with its parent
+      description: |
+        Fast-forwards a branch of a fork to the same branch of its parent.
+        A branch that diverged from the parent is a conflict (409) and is
+        left unchanged.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MergeUpstreamInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MergeUpstreamResult"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
   # --- end pulls ---
   # --- branch protection (tag: protection) ---
   /repos/{owner}/{name}/branch-protections:
@@ -11763,6 +11805,17 @@ components:
         defaultBranch:
           type: string
           maxLength: 255
+        autoInit:
+          type: boolean
+          description: Commit a README (and the chosen .gitignore and license) as the first commit
+        gitignoreTemplate:
+          type: string
+          maxLength: 64
+          description: Name of a .gitignore template (implies autoInit)
+        licenseTemplate:
+          type: string
+          maxLength: 64
+          description: Key of a license template (implies autoInit)
     RepoUpdate:
       type: object
       properties:
@@ -12914,6 +12967,17 @@ components:
       properties:
         owner: {type: string, description: User or organization; default the caller}
         name: {type: string, description: Default the name of the parent}
+    MergeUpstreamInput:
+      type: object
+      properties:
+        branch: {type: string, maxLength: 255, description: Default the default branch of the fork}
+    MergeUpstreamResult:
+      type: object
+      required: [mergeType, baseBranch, branch]
+      properties:
+        mergeType: {type: string, enum: [fast-forward, none]}
+        baseBranch: {type: string, description: "<parent owner>:<branch>"}
+        branch: {type: string}
     # --- end pulls schemas ---
     # --- branch protection schemas ---
     BranchProtectionInput:

@@ -21,3 +21,11 @@ SELECT id, kind, name FROM namespaces WHERE name_lower = ANY(@names::text[]);
 -- The release of an asset: the asset URLs of /api/v3 carry no release id.
 -- The release service still checks access with the repository.
 SELECT release_id FROM release_assets WHERE id = $1;
+
+-- name: ListGitHubAPIRepoForks :many
+-- Fork flag and direct fork count of repositories, for the repository
+-- objects of /api/v3.
+SELECT t.id::uuid AS id,
+       EXISTS (SELECT 1 FROM repo_forks f WHERE f.repo_id = t.id) AS is_fork,
+       (SELECT count(*) FROM repo_forks f WHERE f.parent_id = t.id) AS forks
+FROM unnest(@ids::uuid[]) AS t (id);

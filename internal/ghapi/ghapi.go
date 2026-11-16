@@ -83,6 +83,9 @@ type Server struct {
 	base string // public URL without the trailing slash
 	api  string // base + Prefix
 	q    *dbgen.Queries
+	// gql runs the searches shared with GraphQL; nil when GraphQL is not
+	// available.
+	gql *graphql.Server
 }
 
 // Mount mounts /api/v3 and the upload endpoint on r. The asset transfers
@@ -145,11 +148,12 @@ func (s *Server) graphql() http.Handler {
 	if d.Statuses != nil {
 		gd.Checks = d.Statuses
 	}
+	gd.Forks = d.Pulls
 	var h http.Handler
 	if ok1 && ok2 && ok3 {
 		srv, err := graphql.New(gd)
 		if err == nil {
-			h = srv
+			h, s.gql = srv, srv
 		} else {
 			d.Log.Warn("ghapi: graphql not available", "error", err)
 		}
@@ -180,12 +184,23 @@ func (s *Server) routes(r chi.Router) {
 	r.Get("/orgs/{org}", s.h((*call).getOrg))
 	r.Get("/orgs/{org}/repos", s.h(s.ownerRepos("org")))
 	r.Post("/orgs/{org}/repos", s.h((*call).createRepo))
+	r.Get("/gitignore/templates", s.h((*call).listGitignores))
+	r.Get("/gitignore/templates/{name}", s.h((*call).getGitignore))
+	r.Get("/licenses", s.h((*call).listLicenses))
+	r.Get("/licenses/{license}", s.h((*call).getLicense))
+	r.Get("/search/repositories", s.h((*call).searchRepositories))
+	r.Get("/search/issues", s.h((*call).searchIssues))
+	r.Get("/search/code", s.h((*call).searchCode))
+	r.Get("/search/users", s.h((*call).searchUsers))
 
 	r.Route("/repos/{owner}/{repo}", func(r chi.Router) {
 		r.Get("/", s.h((*call).getRepo))
 		r.Get("/stargazers", s.h((*call).listStargazers))
 		r.Patch("/", s.h((*call).updateRepo))
 		r.Delete("/", s.h((*call).deleteRepo))
+		r.Get("/forks", s.h((*call).listForks))
+		r.Post("/forks", s.h((*call).createFork))
+		r.Post("/merge-upstream", s.h((*call).mergeUpstream))
 
 		r.Get("/contents", s.h((*call).getContents))
 		r.Get("/contents/*", s.h((*call).getContents))
@@ -386,6 +401,7 @@ type call struct {
 	// owner and repo are the path parameters of /repos/{owner}/{repo}.
 	owner, repo string
 	repos       map[uuid.UUID]*ghRepo
+	forks       map[uuid.UUID]forkFact
 }
 
 func (s *Server) h(fn func(c *call) error) http.HandlerFunc {

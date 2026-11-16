@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"slices"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
 	"github.com/Ervisio/ErvisioRepo/internal/issues"
 	"github.com/Ervisio/ErvisioRepo/internal/orgs"
+	"github.com/Ervisio/ErvisioRepo/internal/pulls"
 	"github.com/Ervisio/ErvisioRepo/internal/releases"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
 )
@@ -238,8 +240,8 @@ func orgFields() map[string]resolver {
 	}
 }
 
-// ownerRepos is the repositories connection of an owner. Forks and archived
-// repositories do not exist, so isFork/isArchived true is empty.
+// ownerRepos is the repositories connection of an owner. Archived
+// repositories do not exist, so isArchived true is empty.
 func (rq *request) ownerRepos(owner string, a args) (any, error) {
 	if err := rq.read(); err != nil {
 		return nil, err
@@ -251,7 +253,7 @@ func (rq *request) ownerRepos(owner string, a args) (any, error) {
 		}
 		return repoItems(rq, list), len(list) == lim, nil
 	}
-	return obj{"RepositoryConnection", newConn("Repository", a, filtered(fetch, repoFilter(a)))}, nil
+	return obj{"RepositoryConnection", newConn("Repository", a, filtered(fetch, repoFilter(rq, a)))}, nil
 }
 
 func repoItems(rq *request, list []repos.Repo) []any {
@@ -264,14 +266,19 @@ func repoItems(rq *request, list []repos.Repo) []any {
 }
 
 // repoFilter applies the privacy, isFork and isArchived arguments.
-func repoFilter(a args) func(any) bool {
+func repoFilter(rq *request, a args) func(any) bool {
 	privacy := strings.ToUpper(a.str("privacy"))
 	fork, forkSet := a.boolean("isFork")
 	archived, archSet := a.boolean("isArchived")
 	return func(it any) bool {
 		r := it.(obj).v.(repos.Repo)
-		if (forkSet && fork) || (archSet && archived) {
+		if archSet && archived {
 			return false
+		}
+		if forkSet {
+			if info, err := rq.forkOf(r); err != nil || info.Fork != fork {
+				return false
+			}
 		}
 		switch privacy {
 		case "PUBLIC":
@@ -475,22 +482,25 @@ func repositoryFields() map[string]resolver {
 		return func(rq *request, src any, a args) (any, error) { return fn(rq, r(src)), nil }
 	}
 	return map[string]resolver{
-		"id":                            f(func(rq *request, r repos.Repo) any { return nodeID("Repository", r.ID) }),
-		"databaseId":                    func(rq *request, src any, a args) (any, error) { return rq.numID(r(src).ID) },
-		"name":                          f(func(rq *request, r repos.Repo) any { return r.Name }),
-		"nameWithOwner":                 f(func(rq *request, r repos.Repo) any { return r.Owner + "/" + r.Name }),
-		"owner":                         f(func(rq *request, r repos.Repo) any { return ownerObj(r.OwnerID, r.OwnerKind, r.Owner) }),
-		"description":                   f(func(rq *request, r repos.Repo) any { return optString(r.Description) }),
-		"url":                           f(func(rq *request, r repos.Repo) any { return rq.repoHTML(r) }),
-		"resourcePath":                  f(func(rq *request, r repos.Repo) any { return "/" + esc(r.Owner) + "/" + esc(r.Name) }),
-		"sshUrl":                        f(func(rq *request, r repos.Repo) any { return rq.sshURL(r) }),
-		"homepageUrl":                   constant(nil),
-		"mirrorUrl":                     constant(nil),
-		"openGraphImageUrl":             constant(nil),
-		"usesCustomOpenGraphImage":      constant(false),
-		"isPrivate":                     f(func(rq *request, r repos.Repo) any { return r.Visibility != authz.Public }),
-		"visibility":                    f(func(rq *request, r repos.Repo) any { return strings.ToUpper(string(r.Visibility)) }),
-		"isFork":                        constant(false),
+		"id":                       f(func(rq *request, r repos.Repo) any { return nodeID("Repository", r.ID) }),
+		"databaseId":               func(rq *request, src any, a args) (any, error) { return rq.numID(r(src).ID) },
+		"name":                     f(func(rq *request, r repos.Repo) any { return r.Name }),
+		"nameWithOwner":            f(func(rq *request, r repos.Repo) any { return r.Owner + "/" + r.Name }),
+		"owner":                    f(func(rq *request, r repos.Repo) any { return ownerObj(r.OwnerID, r.OwnerKind, r.Owner) }),
+		"description":              f(func(rq *request, r repos.Repo) any { return optString(r.Description) }),
+		"url":                      f(func(rq *request, r repos.Repo) any { return rq.repoHTML(r) }),
+		"resourcePath":             f(func(rq *request, r repos.Repo) any { return "/" + esc(r.Owner) + "/" + esc(r.Name) }),
+		"sshUrl":                   f(func(rq *request, r repos.Repo) any { return rq.sshURL(r) }),
+		"homepageUrl":              constant(nil),
+		"mirrorUrl":                constant(nil),
+		"openGraphImageUrl":        constant(nil),
+		"usesCustomOpenGraphImage": constant(false),
+		"isPrivate":                f(func(rq *request, r repos.Repo) any { return r.Visibility != authz.Public }),
+		"visibility":               f(func(rq *request, r repos.Repo) any { return strings.ToUpper(string(r.Visibility)) }),
+		"isFork": func(rq *request, src any, a args) (any, error) {
+			info, err := rq.forkOf(r(src))
+			return info.Fork, err
+		},
 		"isArchived":                    constant(false),
 		"isTemplate":                    constant(false),
 		"isMirror":                      constant(false),
@@ -519,12 +529,24 @@ func repositoryFields() map[string]resolver {
 		"viewerHasStarred":   constant(false),
 		"viewerSubscription": constant("UNSUBSCRIBED"),
 		"stargazerCount":     constant(0),
-		"forkCount":          constant(0),
-		"diskUsage":          f(func(rq *request, r repos.Repo) any { return r.SizeBytes / 1024 }),
-		"createdAt":          f(func(rq *request, r repos.Repo) any { return r.CreatedAt }),
-		"updatedAt":          f(func(rq *request, r repos.Repo) any { return r.UpdatedAt }),
-		"pushedAt":           f(func(rq *request, r repos.Repo) any { return r.UpdatedAt }),
-		"parent":             constant(nil),
+		"forkCount": func(rq *request, src any, a args) (any, error) {
+			n, err := rq.s.q.CountRepoForks(rq.ctx, uuid.NullUUID{UUID: r(src).ID, Valid: true})
+			if err != nil {
+				return nil, fmt.Errorf("count forks: %w", err)
+			}
+			return n, nil
+		},
+		"diskUsage": f(func(rq *request, r repos.Repo) any { return r.SizeBytes / 1024 }),
+		"createdAt": f(func(rq *request, r repos.Repo) any { return r.CreatedAt }),
+		"updatedAt": f(func(rq *request, r repos.Repo) any { return r.UpdatedAt }),
+		"pushedAt":  f(func(rq *request, r repos.Repo) any { return r.UpdatedAt }),
+		"parent": func(rq *request, src any, a args) (any, error) {
+			info, err := rq.forkOf(r(src))
+			if err != nil || info.Parent == nil {
+				return nil, err
+			}
+			return obj{"Repository", *info.Parent}, nil
+		},
 		"templateRepository": constant(nil),
 		"licenseInfo":        constant(nil),
 		"primaryLanguage":    constant(nil),
@@ -775,4 +797,12 @@ func (rq *request) repoReleases(r repos.Repo, a args) (any, error) {
 // containsFold reports whether list contains s, ignoring case.
 func containsFold(list []string, s string) bool {
 	return slices.ContainsFunc(list, func(x string) bool { return strings.EqualFold(x, s) })
+}
+
+// forkOf returns the fork position of a repository.
+func (rq *request) forkOf(r repos.Repo) (pulls.ForkOf, error) {
+	if rq.s.d.Forks == nil {
+		return pulls.ForkOf{}, nil
+	}
+	return rq.s.d.Forks.ForkInfo(rq.ctx, rq.who, r.ID)
 }

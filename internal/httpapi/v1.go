@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/Ervisio/ErvisioRepo/internal/audit"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
@@ -19,6 +20,7 @@ import (
 
 // v1Server implements the strict server generated from api/openapi.yaml.
 type v1Server struct {
+	log      *slog.Logger
 	meta     Meta
 	storage  Storage
 	identity Identity

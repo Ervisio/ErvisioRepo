@@ -94,16 +94,18 @@ export function CreateRepoDialog({ org, open: openProp, onOpenChange }: { org?: 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<Visibility>("private");
+  const [readme, setReadme] = useState(false);
 
   function submit(e: FormEvent) {
     e.preventDefault();
     create.mutate(
-      { name: name.trim(), description: description.trim(), visibility },
+      { name: name.trim(), description: description.trim(), visibility, autoInit: readme },
       {
         onSuccess: (r) => {
           setOpen(false);
           setName("");
           setDescription("");
+          setReadme(false);
           notify.ok(t("create.done"));
           void navigate({ to: "/$owner/$name", params: { owner: r.owner, name: r.name } });
         },
@@ -119,6 +121,10 @@ export function CreateRepoDialog({ org, open: openProp, onOpenChange }: { org?: 
         <Input label={t("create.descriptionLabel")} maxLength={350} value={description} onChange={(e) => setDescription(e.target.value)} />
         <Select label={t("create.visibility")} value={visibility} onValueChange={(v) => setVisibility(v as Visibility)} options={visibilities.map((v) => ({ value: v, label: t(`visibility.${v}`) }))} />
         <p className="ui-note">{t(`visibility.${visibility}.hint`)}</p>
+        <label className="acc-check">
+          <input type="checkbox" checked={readme} onChange={(e) => setReadme(e.target.checked)} />
+          <span>{t("create.readme")}</span>
+        </label>
         <div className="acc-actions">
           <Button variant="primary" type="submit" disabled={create.isPending}>{t("create.submit")}</Button>
         </div>

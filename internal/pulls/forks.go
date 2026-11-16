@@ -2,9 +2,11 @@ package pulls
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
@@ -151,4 +153,125 @@ func (s *Service) ListForks(ctx context.Context, who auth.Principal, owner, name
 		out = append(out, r)
 	}
 	return out, nil
+}
+
+// ForkOf is the place of a repository in its fork network.
+type ForkOf struct {
+	// Fork is true for a repository created as a fork, even when its
+	// parent was deleted since.
+	Fork bool
+	// Parent is the repository it was forked from and Source the root of
+	// the network; nil when gone or not readable by the caller.
+	Parent *repos.Repo
+	Source *repos.Repo
+}
+
+// ForkInfo returns the fork parent and root of a repository. The caller
+// must already be allowed to read the repository itself.
+func (s *Service) ForkInfo(ctx context.Context, who auth.Principal, repoID uuid.UUID) (ForkOf, error) {
+	f, err := s.q.GetRepoFork(ctx, repoID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ForkOf{}, nil
+	}
+	if err != nil {
+		return ForkOf{}, fmt.Errorf("get fork: %w", err)
+	}
+	out := ForkOf{Fork: true}
+	if !f.ParentID.Valid {
+		return out, nil
+	}
+	chain, err := s.forkChain(ctx, f.ParentID.UUID)
+	if err != nil {
+		return ForkOf{}, err
+	}
+	if p, err := s.o.Repos.GetByID(ctx, who, chain[0]); err == nil {
+		out.Parent = &p
+	}
+	if src, err := s.o.Repos.GetByID(ctx, who, chain[len(chain)-1]); err == nil {
+		out.Source = &src
+	}
+	return out, nil
+}
+
+// MergeUpstreamResult is the outcome of MergeUpstream.
+type MergeUpstreamResult struct {
+	// Type is fast-forward, or none when the branch is not behind.
+	Type string
+	// Base is "<parent owner>:<branch>".
+	Base   string
+	Branch string
+}
+
+// MergeUpstream fast-forwards a branch of a fork (default: its default
+// branch) to the same branch of its parent. A branch that diverged from
+// the parent is a conflict: nothing is merged.
+func (s *Service) MergeUpstream(ctx context.Context, who auth.Principal, owner, name, branch string) (MergeUpstreamResult, error) {
+	fork, err := s.writer(ctx, who, owner, name)
+	if err != nil {
+		return MergeUpstreamResult{}, err
+	}
+	if !canWrite(fork) {
+		return MergeUpstreamResult{}, ErrForbidden
+	}
+	if branch == "" {
+		branch = fork.DefaultBranch
+	}
+	if err := git.ValidateBranchName(branch); err != nil {
+		return MergeUpstreamResult{}, invalid("invalid branch name")
+	}
+	info, err := s.ForkInfo(ctx, who, fork.ID)
+	if err != nil {
+		return MergeUpstreamResult{}, err
+	}
+	if info.Parent == nil {
+		return MergeUpstreamResult{}, invalid("the repository is not a fork or its parent is not available")
+	}
+	parent := *info.Parent
+	ref := "refs/heads/" + branch
+	res := MergeUpstreamResult{Type: "none", Base: parent.Owner + ":" + branch, Branch: branch}
+	src, err := s.acquire(ctx, parent.ID, gitstore.Read)
+	if err != nil {
+		return res, err
+	}
+	defer src.Release()
+	upstream, err := git.ResolveRef(ctx, src.Path, nil, ref)
+	if err != nil {
+		return res, fmt.Errorf("resolve upstream branch: %w", err)
+	}
+	if upstream == "" {
+		return res, invalid("branch %q does not exist in %s", branch, parent.FullName())
+	}
+	dst, err := s.acquire(ctx, fork.ID, gitstore.Write)
+	if err != nil {
+		return res, err
+	}
+	defer dst.Release()
+	tip, err := git.ResolveRef(ctx, dst.Path, nil, ref)
+	if err != nil {
+		return res, fmt.Errorf("resolve branch: %w", err)
+	}
+	if tip == upstream {
+		return res, nil
+	}
+	sess, env, done, err := s.session(ctx, dst, who.UserID, "web")
+	if err != nil {
+		return res, err
+	}
+	defer done()
+	// Without '+' the fetch refuses a non fast-forward update; the objects
+	// are fetched anyway, so the ancestry can be checked afterwards.
+	if err := git.FetchBranches(ctx, dst.Path, env, src.Path, ref+":"+ref); err != nil {
+		if sess != nil && sess.Rejected() != "" {
+			return res, fmt.Errorf("%w: %s", ErrForbidden, sess.Rejected())
+		}
+		if tip != "" {
+			if ahead, aerr := git.IsAncestor(ctx, dst.Path, nil, upstream, tip); aerr == nil && ahead {
+				return res, nil
+			}
+		}
+		return res, fmt.Errorf("%w: branch %q diverged from %s; merge it locally", ErrConflict, branch, res.Base)
+	}
+	s.log.InfoContext(ctx, "fork branch synced with upstream", "fork", fork.ID, "parent", parent.ID, "branch", branch)
+	res.Type = "fast-forward"
+	return res, nil
 }

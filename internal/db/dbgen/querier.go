@@ -544,6 +544,9 @@ type Querier interface {
 	// stale_before.
 	ListExpiredActionsCaches(ctx context.Context, arg ListExpiredActionsCachesParams) ([]ActionsCache, error)
 	ListGitHubAPIIDs(ctx context.Context, uuids []uuid.UUID) ([]GhapiID, error)
+	// Fork flag and direct fork count of repositories, for the repository
+	// objects of /api/v3.
+	ListGitHubAPIRepoForks(ctx context.Context, ids []uuid.UUID) ([]ListGitHubAPIRepoForksRow, error)
 	// Every enabled backup or sync link of a hot repository (nightly check).
 	ListGitHubBackupLinks(ctx context.Context, arg ListGitHubBackupLinksParams) ([]GithubSyncLink, error)
 	ListGitHubConnections(ctx context.Context, ownerID uuid.UUID) ([]ListGitHubConnectionsRow, error)

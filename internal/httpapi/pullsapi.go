@@ -53,6 +53,8 @@ type Pulls interface {
 
 	CreateFork(ctx context.Context, who auth.Principal, owner, name string, in pulls.ForkInput, c identity.Client) (repos.Repo, error)
 	ListForks(ctx context.Context, who auth.Principal, owner, name string, offset, limit int) ([]repos.Repo, error)
+	MergeUpstream(ctx context.Context, who auth.Principal, owner, name, branch string) (pulls.MergeUpstreamResult, error)
+	ForkInfo(ctx context.Context, who auth.Principal, repoID uuid.UUID) (pulls.ForkOf, error)
 }
 
 var _ Pulls = (*pulls.Service)(nil)
@@ -557,6 +559,22 @@ func (s *v1Server) CreateFork(ctx context.Context, req v1gen.CreateForkRequestOb
 	return v1gen.CreateFork201JSONResponse(repoDTO(r)), nil
 }
 
+func (s *v1Server) MergeUpstream(ctx context.Context, req v1gen.MergeUpstreamRequestObject) (v1gen.MergeUpstreamResponseObject, error) {
+	if s.pulls == nil {
+		return errPullsUnavailable, nil
+	}
+	branch := ""
+	if req.Body != nil {
+		branch = deref(req.Body.Branch)
+	}
+	res, err := s.pulls.MergeUpstream(ctx, principal(ctx), req.Owner, req.Name, branch)
+	if err != nil {
+		return pullsFail(err, http.MethodPost, "/merge-upstream")
+	}
+	return v1gen.MergeUpstream200JSONResponse(v1gen.MergeUpstreamResult{BaseBranch: res.Base, Branch: res.Branch,
+		MergeType: v1gen.MergeUpstreamResultMergeType(res.Type)}), nil
+}
+
 // ---- DTOs ----
 
 func pullRefDTO(r pulls.Ref) v1gen.PullRef {
@@ -635,6 +653,7 @@ func mergeabilityDTO(m pulls.Mergeability) v1gen.PullMergeability {
 type pullResponse interface {
 	v1gen.ListForksResponseObject
 	v1gen.CreateForkResponseObject
+	v1gen.MergeUpstreamResponseObject
 	v1gen.ListPullsResponseObject
 	v1gen.CreatePullResponseObject
 	v1gen.DeletePullReviewCommentResponseObject
@@ -668,6 +687,9 @@ type pullResponse interface {
 
 func (p problemResponse) VisitListForksResponse(w http.ResponseWriter) error  { return p.write(w) }
 func (p problemResponse) VisitCreateForkResponse(w http.ResponseWriter) error { return p.write(w) }
+func (p problemResponse) VisitMergeUpstreamResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
 func (p problemResponse) VisitListPullsResponse(w http.ResponseWriter) error  { return p.write(w) }
 func (p problemResponse) VisitCreatePullResponse(w http.ResponseWriter) error { return p.write(w) }
 func (p problemResponse) VisitDeletePullReviewCommentResponse(w http.ResponseWriter) error {
@@ -738,6 +760,9 @@ func (p problemResponse) VisitSubmitPullReviewResponse(w http.ResponseWriter) er
 
 func (m movedResponse) VisitListForksResponse(w http.ResponseWriter) error  { return m.write(w) }
 func (m movedResponse) VisitCreateForkResponse(w http.ResponseWriter) error { return m.write(w) }
+func (m movedResponse) VisitMergeUpstreamResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
 func (m movedResponse) VisitListPullsResponse(w http.ResponseWriter) error  { return m.write(w) }
 func (m movedResponse) VisitCreatePullResponse(w http.ResponseWriter) error { return m.write(w) }
 func (m movedResponse) VisitDeletePullReviewCommentResponse(w http.ResponseWriter) error {

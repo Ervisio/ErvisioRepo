@@ -12,6 +12,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
+	"github.com/Ervisio/ErvisioRepo/internal/repoinit"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
 )
 
@@ -275,7 +276,8 @@ type ghRepo struct {
 	HasPages         bool           `json:"has_pages"`
 	HasDownloads     bool           `json:"has_downloads"`
 	HasDiscussions   bool           `json:"has_discussions"`
-	ForksCount       int            `json:"forks_count"`
+	ForksCount       int64          `json:"forks_count"`
+	Forks            int64          `json:"forks"`
 	StargazersCount  int            `json:"stargazers_count"`
 	WatchersCount    int            `json:"watchers_count"`
 	OpenIssuesCount  int            `json:"open_issues_count"`
@@ -287,6 +289,9 @@ type ghRepo struct {
 	AllowMergeCommit bool           `json:"allow_merge_commit"`
 	AllowSquashMerge bool           `json:"allow_squash_merge"`
 	AllowRebaseMerge bool           `json:"allow_rebase_merge"`
+	// Parent and Source are set on a fork by GET /repos/{owner}/{repo}.
+	Parent *ghRepo `json:"parent,omitempty"`
+	Source *ghRepo `json:"source,omitempty"`
 }
 
 func (c *call) repoObj(r repos.Repo) *ghRepo {
@@ -317,6 +322,8 @@ func (c *call) repoObj(r repos.Repo) *ghRepo {
 		PushedAt: ts(r.UpdatedAt), CreatedAt: ts(r.CreatedAt), UpdatedAt: ts(r.UpdatedAt),
 		AllowMergeCommit: true, AllowSquashMerge: true, AllowRebaseMerge: true,
 	}
+	f := c.forkFacts(r.ID)
+	g.Fork, g.ForksCount, g.Forks = f.IsFork, f.Forks, f.Forks
 	if c.who.UserID != uuid.Nil {
 		p := r.Permission
 		g.Permissions = &ghPermissions{Admin: p >= authz.PermAdmin, Maintain: p >= authz.PermMaintain,
@@ -353,16 +360,32 @@ func (c *call) getRepo() error {
 	if err != nil {
 		return err
 	}
-	return c.ok(http.StatusOK, c.repoObj(r))
+	g := c.repoObj(r)
+	if g.Fork {
+		info, err := c.s.d.Pulls.ForkInfo(c.ctx, c.who, r.ID)
+		if err != nil {
+			return err
+		}
+		if info.Parent != nil {
+			g.Parent = c.repoObj(*info.Parent)
+		}
+		if info.Source != nil {
+			g.Source = c.repoObj(*info.Source)
+		}
+	}
+	return c.ok(http.StatusOK, g)
 }
 
 func (c *call) repoList(list []repos.Repo, p pager) error {
 	page, more := cut(p, list)
 	us := make([]uuid.UUID, 0, 2*len(page))
+	rs := make([]uuid.UUID, 0, len(page))
 	for _, r := range page {
 		us = append(us, r.ID, r.OwnerID)
+		rs = append(rs, r.ID)
 	}
 	c.ids.prefetch(us...)
+	c.prefetchForks(rs...)
 	out := make([]*ghRepo, len(page))
 	for i, r := range page {
 		out[i] = c.repoObj(r)
@@ -401,13 +424,18 @@ func (s *Server) ownerRepos(param string) func(c *call) error {
 }
 
 // repoBody is the body of a repository create or update. Settings that
-// have no equivalent (has_wiki, allow_*...) are accepted and ignored.
+// have no equivalent (homepage, has_wiki, allow_*, archived...) are
+// accepted and ignored, as GitHub ignores unknown fields.
 type repoBody struct {
 	Name          *string `json:"name"`
 	Description   *string `json:"description"`
 	Private       *bool   `json:"private"`
 	Visibility    *string `json:"visibility"`
 	DefaultBranch *string `json:"default_branch"`
+	// Create only: the first commit.
+	AutoInit          bool   `json:"auto_init"`
+	GitignoreTemplate string `json:"gitignore_template"`
+	LicenseTemplate   string `json:"license_template"`
 }
 
 func (b repoBody) visibility() *string {
@@ -444,7 +472,8 @@ func (c *call) createRepo() error {
 	}
 	in := repos.CreateInput{Owner: chi.URLParam(c.r, "org"), Name: *b.Name, Description: deref(b.Description),
 		Visibility: deref(b.visibility()), DefaultBranch: deref(b.DefaultBranch)}
-	r, err := c.s.d.Repos.Create(c.ctx, c.who, in, c.client())
+	init := repoinit.Options{Readme: b.AutoInit, Gitignore: b.GitignoreTemplate, License: b.LicenseTemplate}
+	r, err := repoinit.Create(c.ctx, c.s.d.Repos, c.s.d.Browse, c.who, in, init, c.client(), c.s.d.Log)
 	if err != nil {
 		return err
 	}
@@ -484,15 +513,21 @@ func (c *call) deleteRepo() error {
 func (c *call) root() error {
 	a := c.s.api
 	return c.ok(http.StatusOK, map[string]string{
-		"current_user_url":                 a + "/user",
-		"current_user_repositories_url":    a + "/user/repos{?type,page,per_page,sort}",
-		"organization_url":                 a + "/orgs/{org}",
-		"organization_repositories_url":    a + "/orgs/{org}/repos{?type,page,per_page,sort}",
-		"rate_limit_url":                   a + "/rate_limit",
-		"repository_url":                   a + "/repos/{owner}/{repo}",
-		"user_url":                         a + "/users/{user}",
-		"user_repositories_url":            a + "/users/{user}/repos{?type,page,per_page,sort}",
-		"current_user_authorizations_html": c.s.base + "/settings/tokens",
+		"current_user_url":                     a + "/user",
+		"current_user_repositories_url":        a + "/user/repos{?type,page,per_page,sort}",
+		"organization_url":                     a + "/orgs/{org}",
+		"organization_repositories_url":        a + "/orgs/{org}/repos{?type,page,per_page,sort}",
+		"rate_limit_url":                       a + "/rate_limit",
+		"repository_url":                       a + "/repos/{owner}/{repo}",
+		"user_url":                             a + "/users/{user}",
+		"user_repositories_url":                a + "/users/{user}/repos{?type,page,per_page,sort}",
+		"current_user_authorizations_html_url": c.s.base + "/settings?section=tokens",
+		"code_search_url":                      a + "/search/code?q={query}{&page,per_page,sort,order}",
+		"issue_search_url":                     a + "/search/issues?q={query}{&page,per_page,sort,order}",
+		"repository_search_url":                a + "/search/repositories?q={query}{&page,per_page,sort,order}",
+		"user_search_url":                      a + "/search/users?q={query}{&page,per_page,sort,order}",
+		"starred_url":                          a + "/user/starred{/owner}{/repo}",
+		"user_organizations_url":               a + "/user/orgs",
 	})
 }
 

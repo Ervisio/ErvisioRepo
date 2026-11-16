@@ -3581,6 +3581,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repos/{owner}/{name}/merge-upstream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync a fork branch with its parent
+         * @description Fast-forwards a branch of a fork to the same branch of its parent.
+         *     A branch that diverged from the parent is a conflict (409) and is
+         *     left unchanged.
+         */
+        post: operations["mergeUpstream"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/repos/{owner}/{name}/branch-protections": {
         parameters: {
             query?: never;
@@ -6813,6 +6839,12 @@ export interface components {
             description?: string;
             visibility?: components["schemas"]["Visibility"];
             defaultBranch?: string;
+            /** @description Commit a README (and the chosen .gitignore and license) as the first commit */
+            autoInit?: boolean;
+            /** @description Name of a .gitignore template (implies autoInit) */
+            gitignoreTemplate?: string;
+            /** @description Key of a license template (implies autoInit) */
+            licenseTemplate?: string;
         };
         RepoUpdate: {
             name?: string;
@@ -7789,6 +7821,17 @@ export interface components {
             owner?: string;
             /** @description Default the name of the parent */
             name?: string;
+        };
+        MergeUpstreamInput: {
+            /** @description Default the default branch of the fork */
+            branch?: string;
+        };
+        MergeUpstreamResult: {
+            /** @enum {string} */
+            mergeType: "fast-forward" | "none";
+            /** @description <parent owner>:<branch> */
+            baseBranch: string;
+            branch: string;
         };
         BranchProtectionInput: {
             /** @description Glob on the branch name */
@@ -14314,6 +14357,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Repo"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    mergeUpstream: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MergeUpstreamInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MergeUpstreamResult"];
                 };
             };
             307: components["responses"]["Moved"];

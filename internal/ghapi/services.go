@@ -46,6 +46,7 @@ type Orgs interface {
 // Identity is the subset of the identity service used by the API.
 type Identity interface {
 	User(ctx context.Context, id uuid.UUID) (identity.User, error)
+	SearchUsers(ctx context.Context, who auth.Principal, query string, repoID uuid.UUID, limit int) ([]identity.UserSummary, error)
 }
 
 // Issues is the subset of the issue service used by the API.
@@ -98,6 +99,11 @@ type Pulls interface {
 	CreateComment(ctx context.Context, who auth.Principal, owner, name string, number int64, in pulls.CommentInput) (pulls.Comment, error)
 	UpdateComment(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID, body string) (pulls.Comment, error)
 	DeleteComment(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID) error
+
+	CreateFork(ctx context.Context, who auth.Principal, owner, name string, in pulls.ForkInput, c identity.Client) (repos.Repo, error)
+	ListForks(ctx context.Context, who auth.Principal, owner, name string, offset, limit int) ([]repos.Repo, error)
+	ForkInfo(ctx context.Context, who auth.Principal, repoID uuid.UUID) (pulls.ForkOf, error)
+	MergeUpstream(ctx context.Context, who auth.Principal, owner, name, branch string) (pulls.MergeUpstreamResult, error)
 }
 
 // Releases is the subset of the release service used by the API.
