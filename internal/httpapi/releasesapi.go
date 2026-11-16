@@ -29,6 +29,7 @@ type Releases interface {
 	List(ctx context.Context, who auth.Principal, owner, name, tag string, offset, limit int) ([]releases.Release, error)
 	Get(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID) (releases.Release, error)
 	Latest(ctx context.Context, who auth.Principal, owner, name string) (releases.Release, error)
+	GenerateNotes(ctx context.Context, who auth.Principal, owner, name string, in releases.NotesInput) (releases.Notes, error)
 	Create(ctx context.Context, who auth.Principal, owner, name string, in releases.CreateInput, c identity.Client) (releases.Release, error)
 	Update(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID, in releases.UpdateInput, c identity.Client) (releases.Release, error)
 	Delete(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID, c identity.Client) error

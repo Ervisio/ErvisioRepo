@@ -336,6 +336,22 @@ type CreateInput struct {
 	Draft      bool
 	Prerelease bool
 	Target     string
+	// MakeLatest is "true", "false" or "legacy" (the automatic choice); empty
+	// is "legacy".
+	MakeLatest string
+}
+
+// parseMakeLatest maps the GitHub make_latest values to the stored flag.
+func parseMakeLatest(v string) (pgtype.Bool, error) {
+	switch v {
+	case "", "legacy":
+		return pgtype.Bool{}, nil
+	case "true":
+		return pgtype.Bool{Bool: true, Valid: true}, nil
+	case "false":
+		return pgtype.Bool{Valid: true}, nil
+	}
+	return pgtype.Bool{}, invalid("make_latest must be true, false or legacy")
 }
 
 func checkText(name, v string, max int) error {
@@ -376,6 +392,10 @@ func (s *Service) Create(ctx context.Context, who auth.Principal, owner, name st
 	if err := validateFields(in.Name, in.Body, in.Target); err != nil {
 		return Release{}, err
 	}
+	latest, err := parseMakeLatest(in.MakeLatest)
+	if err != nil {
+		return Release{}, err
+	}
 	if exists, err := s.tagTaken(ctx, r.ID, in.Tag, uuid.Nil); err != nil {
 		return Release{}, err
 	} else if exists {
@@ -398,12 +418,15 @@ func (s *Service) Create(ctx context.Context, who auth.Principal, owner, name st
 		var err error
 		row, err = q.InsertRelease(ctx, dbgen.InsertReleaseParams{ID: id, RepoID: r.ID, Tag: in.Tag, Name: in.Name, Body: in.Body,
 			Draft: in.Draft, Prerelease: in.Prerelease, Target: in.Target, CommitSha: sha,
-			AuthorID: uuid.NullUUID{UUID: who.UserID, Valid: who.UserID != uuid.Nil}, PublishedAt: published})
+			AuthorID: uuid.NullUUID{UUID: who.UserID, Valid: who.UserID != uuid.Nil}, PublishedAt: published, MakeLatest: latest})
 		if isUnique(err) {
 			return ErrTagTaken
 		}
 		if err != nil {
 			return fmt.Errorf("insert release: %w", err)
+		}
+		if err := s.claimLatest(ctx, q, row); err != nil {
+			return err
 		}
 		if err := audit.Record(ctx, q, s.auditEvent(who, ActionCreated, r, id, c, map[string]any{"tag": in.Tag, "draft": in.Draft})); err != nil {
 			return err
@@ -418,6 +441,17 @@ func (s *Service) Create(ctx context.Context, who auth.Principal, owner, name st
 	}
 	s.o.Bus.Kick(ctx)
 	return s.single(ctx, r.ID, row)
+}
+
+// claimLatest unflags the other releases when row is flagged as latest.
+func (s *Service) claimLatest(ctx context.Context, q *dbgen.Queries, row dbgen.Release) error {
+	if !row.MakeLatest.Valid || !row.MakeLatest.Bool {
+		return nil
+	}
+	if err := q.ClearOtherLatestReleases(ctx, dbgen.ClearOtherLatestReleasesParams{RepoID: row.RepoID, ID: row.ID}); err != nil {
+		return fmt.Errorf("clear latest releases: %w", err)
+	}
+	return nil
 }
 
 func (s *Service) tagTaken(ctx context.Context, repoID uuid.UUID, tag string, except uuid.UUID) (bool, error) {
@@ -442,6 +476,8 @@ type UpdateInput struct {
 	Draft      *bool
 	Prerelease *bool
 	Target     *string
+	// MakeLatest is "true", "false" or "legacy"; nil keeps the current choice.
+	MakeLatest *string
 }
 
 // Update changes a release. Publishing a draft creates the tag if missing.
@@ -484,6 +520,11 @@ func (s *Service) Update(ctx context.Context, who auth.Principal, owner, name st
 	if in.Draft != nil {
 		next.Draft = *in.Draft
 	}
+	if in.MakeLatest != nil {
+		if next.MakeLatest, err = parseMakeLatest(*in.MakeLatest); err != nil {
+			return Release{}, err
+		}
+	}
 	if err := validateFields(next.Name, next.Body, next.Target); err != nil {
 		return Release{}, err
 	}
@@ -505,12 +546,16 @@ func (s *Service) Update(ctx context.Context, who auth.Principal, owner, name st
 		}
 		var err error
 		row, err = q.UpdateRelease(ctx, dbgen.UpdateReleaseParams{ID: id, RepoID: r.ID, Tag: next.Tag, Name: next.Name, Body: next.Body,
-			Draft: next.Draft, Prerelease: next.Prerelease, Target: next.Target, CommitSha: next.CommitSha, PublishedAt: next.PublishedAt})
+			Draft: next.Draft, Prerelease: next.Prerelease, Target: next.Target, CommitSha: next.CommitSha, PublishedAt: next.PublishedAt,
+			MakeLatest: next.MakeLatest})
 		if isUnique(err) {
 			return ErrTagTaken
 		}
 		if err != nil {
 			return fmt.Errorf("update release: %w", err)
+		}
+		if err := s.claimLatest(ctx, q, row); err != nil {
+			return err
 		}
 		if err := audit.Record(ctx, q, s.auditEvent(who, ActionUpdated, r, id, c, map[string]any{"tag": next.Tag})); err != nil {
 			return err

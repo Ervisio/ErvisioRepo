@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   useCreateIssue,
+  useDeleteIssue,
   useIssue,
   useIssues,
   useIssueTemplates,
@@ -17,7 +18,7 @@ import { useSession } from "../../api/identity.ts";
 import { useLinkedPulls } from "../../api/pulls.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, Card, EmptyState, Icon, Input, Menu, Select } from "../../ui/index.ts";
+import { Button, Card, ConfirmDialog, EmptyState, Icon, Input, Menu, MenuItem, MenuSeparator, Select } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { Gate, Pager, RepoFrame, When } from "../code/common.tsx";
 import { Avatar, Body, Composer, FilterGroup, FilterItem, IconTrigger, LabelChip, ListLayoutSwitch, Meter, SideBlock, SideDetails, StateIcon, StatePill, StatusBox, WorkList, type WorkState } from "../work/common.tsx";
@@ -479,6 +480,10 @@ function IssueDetail({ repo, issue }: { repo: Repo; issue: Issue }) {
   const me = useSession().data?.username;
   const update = useUpdateIssue(repo.owner, repo.name, issue.number);
   const lock = useLockIssue(repo.owner, repo.name, issue.number);
+  const del = useDeleteIssue(repo.owner, repo.name, issue.number);
+  const navigate = useNavigate();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const isAdmin = repo.permission === "admin";
   const state = issueState(issue);
   const canEdit = (me !== undefined && me === issue.author) || canTriage(repo.permission);
   const setState = (s: "open" | "closed", reason?: string) => update.mutate({ state: s, stateReason: reason }, { onError: notify.fail });
@@ -503,7 +508,21 @@ function IssueDetail({ repo, issue }: { repo: Repo; issue: Issue }) {
               <span className="wk-dot">{t("row.comments", { count: issue.commentCount })}</span>
             </span>
           }
-          menu={canTriage(repo.permission) ? <LockMenuItems repo={repo} issue={issue} onLock={(l, reason) => lock.mutate({ lock: l, reason }, { onError: notify.fail })} /> : undefined}
+          menu={
+            canTriage(repo.permission) ? (
+              <>
+                <LockMenuItems repo={repo} issue={issue} onLock={(l, reason) => lock.mutate({ lock: l, reason }, { onError: notify.fail })} />
+                {isAdmin && (
+                  <>
+                    <MenuSeparator />
+                    <MenuItem icon="trash" danger onSelect={() => setConfirmDelete(true)}>
+                      {t("detail.delete")}
+                    </MenuItem>
+                  </>
+                )}
+              </>
+            ) : undefined
+          }
         />
       }
       sidebar={
@@ -535,6 +554,22 @@ function IssueDetail({ repo, issue }: { repo: Repo; issue: Issue }) {
         onState={setState}
         closeLabels={{ close: t("detail.close"), reopen: t("detail.reopen"), withComment: t("detail.closeWithComment") }}
       />
+      {isAdmin && (
+        <ConfirmDialog
+          open={confirmDelete}
+          onOpenChange={setConfirmDelete}
+          title={t("detail.deleteTitle")}
+          description={t("detail.deleteBody", { number: issue.number })}
+          confirmLabel={t("detail.deleteConfirm")}
+          pending={del.isPending}
+          onConfirm={() =>
+            del.mutate(undefined, {
+              onSuccess: () => void navigate({ to: "/$owner/$name/issues", params: { owner: repo.owner, name: repo.name } }),
+              onError: notify.fail,
+            })
+          }
+        />
+      )}
     </DetailLayout>
   );
 }

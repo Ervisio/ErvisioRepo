@@ -109,6 +109,8 @@ export const useLockIssue = (owner: string, name: string, number: number) =>
   useIssueMutation<{ lock: boolean; reason?: string }, Issue>(owner, name, ({ lock, reason }) =>
     lock ? request("PUT", `${base(owner, name)}/${number}/lock`, { lockReason: reason }) : request("DELETE", `${base(owner, name)}/${number}/lock`),
   );
+export const useDeleteIssue = (owner: string, name: string, number: number) =>
+  useIssueMutation<void, void>(owner, name, () => request("DELETE", `${base(owner, name)}/${number}`));
 export const useAddComment = (owner: string, name: string, number: number) =>
   useIssueMutation<string, IssueComment>(owner, name, (body) => request("POST", `${base(owner, name)}/${number}/comments`, { body }));
 export const useEditComment = (owner: string, name: string) =>

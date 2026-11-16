@@ -66,6 +66,10 @@
   "new.submit": "Crea issue",
   "detail.openedBy": "Aperta da {user}",
   "detail.closedBy": "Chiusa da {user}",
+  "detail.delete": "Elimina issue",
+  "detail.deleteTitle": "Eliminare questa issue?",
+  "detail.deleteBody": "La issue #{number} e tutti i suoi commenti verranno eliminati in modo permanente. L'operazione non si può annullare.",
+  "detail.deleteConfirm": "Elimina issue",
   "detail.more": "Altre azioni",
   "detail.side": "Stato e dettagli"
 }

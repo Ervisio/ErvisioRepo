@@ -90,6 +90,7 @@ type OwnerGroup struct {
 // PRStatus is what a pull request still misses before it can be merged.
 type PRStatus struct {
 	Rule              string // "" when no rule protects the base branch
+	AdminsBypass      bool   // the rule exempts repository admins from its requirements
 	RequiredApprovals int
 	Approvals         int
 	MissingChecks     []string
@@ -126,6 +127,7 @@ func (e *Engine) PullRequestStatus(ctx context.Context, in PRInput) (PRStatus, e
 	}
 	r := rules[i]
 	st.Rule, st.RequiredApprovals = r.Pattern, int(r.RequiredApprovals)
+	st.AdminsBypass = r.AdminsBypass
 	add := func(code, msg string) { st.Violations = append(st.Violations, Violation{Code: code, Message: msg}) }
 
 	var approvers []uuid.UUID

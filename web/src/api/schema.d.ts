@@ -2559,7 +2559,12 @@ export interface paths {
         get: operations["getIssue"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete an issue
+         * @description Removes the issue with its comments and timeline for good. Only
+         *     repository admins can do it; pull requests cannot be deleted.
+         */
+        delete: operations["deleteIssue"];
         options?: never;
         head?: never;
         /**
@@ -12423,6 +12428,35 @@ export interface operations {
                 };
             };
             307: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                /** @description Issue number */
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };

@@ -77,7 +77,7 @@ func (q *Queries) GetMilestoneByTitle(ctx context.Context, arg GetMilestoneByTit
 }
 
 const getReleaseByTag = `-- name: GetReleaseByTag :one
-SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at FROM releases WHERE repo_id = $1 AND tag = $2
+SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at, make_latest FROM releases WHERE repo_id = $1 AND tag = $2
 `
 
 type GetReleaseByTagParams struct {
@@ -102,6 +102,7 @@ func (q *Queries) GetReleaseByTag(ctx context.Context, arg GetReleaseByTagParams
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PublishedAt,
+		&i.MakeLatest,
 	)
 	return i, err
 }
@@ -458,7 +459,7 @@ INSERT INTO releases (id, repo_id, tag, name, body, draft, prerelease, target, c
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
   $11, $12, $13)
 ON CONFLICT DO NOTHING
-RETURNING id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at
+RETURNING id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at, make_latest
 `
 
 type ImportReleaseParams struct {
@@ -510,6 +511,7 @@ func (q *Queries) ImportRelease(ctx context.Context, arg ImportReleaseParams) (R
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PublishedAt,
+		&i.MakeLatest,
 	)
 	return i, err
 }

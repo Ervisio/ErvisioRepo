@@ -715,7 +715,7 @@ func (q *Queries) WebhookOrgRole(ctx context.Context, arg WebhookOrgRoleParams) 
 }
 
 const webhookRelease = `-- name: WebhookRelease :one
-SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at FROM releases WHERE id = $1
+SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at, make_latest FROM releases WHERE id = $1
 `
 
 func (q *Queries) WebhookRelease(ctx context.Context, id uuid.UUID) (Release, error) {
@@ -735,6 +735,7 @@ func (q *Queries) WebhookRelease(ctx context.Context, id uuid.UUID) (Release, er
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PublishedAt,
+		&i.MakeLatest,
 	)
 	return i, err
 }

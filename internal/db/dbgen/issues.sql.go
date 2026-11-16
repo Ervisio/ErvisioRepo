@@ -104,6 +104,25 @@ func (q *Queries) CommentReactionGroups(ctx context.Context, arg CommentReaction
 	return items, nil
 }
 
+const deleteIssue = `-- name: DeleteIssue :execrows
+DELETE FROM issues WHERE id = $1 AND repo_id = $2 AND kind = 'issue'
+`
+
+type DeleteIssueParams struct {
+	ID     uuid.UUID
+	RepoID uuid.UUID
+}
+
+// Plain issues only: pull requests go away with their repository. Comments,
+// timeline, labels, assignees, reactions and references cascade.
+func (q *Queries) DeleteIssue(ctx context.Context, arg DeleteIssueParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteIssue, arg.ID, arg.RepoID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deleteIssueAttachment = `-- name: DeleteIssueAttachment :one
 DELETE FROM issue_attachments WHERE id = $1 AND repo_id = $2 RETURNING id, repo_id, uploader_id, name, content_type, size, sha256, storage_policy, storage_key, created_at
 `

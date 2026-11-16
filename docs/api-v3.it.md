@@ -110,7 +110,7 @@ Legenda: **sì** supportato; **parziale** supportato con i limiti indicati;
 | `GET .../pulls/{n}/commits` | sì | |
 | `GET .../pulls/{n}/files` | sì | `sha` del blob e `patch` dal diff dalla merge base; `patch` manca per i file binari e oltre i limiti del diff. |
 | `GET .../pulls/{n}/merge` | sì | `204` se fusa, `404` altrimenti. |
-| `PUT .../pulls/{n}/merge` | sì | `merge_method` merge/squash/rebase, `commit_title`, `commit_message`, `sha`. Si applica la protezione dei branch. |
+| `PUT .../pulls/{n}/merge` | sì | `merge_method` merge/squash/rebase, `commit_title`, `commit_message`, `sha`. Si applica la protezione dei branch; un admin del repository supera i requisiti di review e check di una regola con "admins bypass" (l'auto-merge non supera mai). |
 | `GET/POST .../pulls/{n}/reviews` | parziale | I commenti di una review richiedono `line` (e `side`/`start_line`); il vecchio `position` è rifiutato. |
 | `GET/DELETE .../pulls/{n}/reviews/{id}` | sì | L'eliminazione vale solo per le review in sospeso. |
 | `POST .../pulls/{n}/reviews/{id}/events` | sì | Invia una review in sospeso. |
@@ -138,21 +138,23 @@ Legenda: **sì** supportato; **parziale** supportato con i limiti indicati;
 | `GET /repos/{o}/{r}/assignees`, `GET .../assignees/{user}` | sì | Collaboratori del repository. |
 | `GET/POST /repos/{o}/{r}/labels`, `GET/PATCH/DELETE .../labels/{name}` | sì | `new_name` rinomina. |
 | `GET/POST /repos/{o}/{r}/milestones`, `GET/PATCH/DELETE .../milestones/{n}` | sì | Il `number` della milestone coincide con il suo `id` numerico. |
-| Eventi, timeline, endpoint delle reaction, lock | no | I conteggi delle reaction sono inclusi negli oggetti issue e commento. |
+| `PUT/DELETE .../issues/{n}/lock` | sì | `lock_reason` `off-topic`, `too heated`, `resolved` o `spam`. Richiede il permesso di triage; vale anche per i numeri delle pull request. `204`. |
+| Eventi, timeline, endpoint delle reaction | no | I conteggi delle reaction sono inclusi negli oggetti issue e commento. |
 
 ### Release
 
 | Endpoint | Stato | Note |
 |---|---|---|
 | `GET /repos/{o}/{r}/releases` | sì | Le bozze solo per chi può gestire il repository. |
-| `POST /repos/{o}/{r}/releases` | parziale | `tag_name`, `target_commitish`, `name`, `body`, `draft`, `prerelease`. `generate_release_notes` è rifiutato; `make_latest` è ignorato. |
-| `GET .../releases/latest`, `GET .../releases/tags/{tag}` | sì | |
+| `POST /repos/{o}/{r}/releases` | parziale | `tag_name`, `target_commitish`, `name`, `body`, `draft`, `prerelease`. `generate_release_notes: true` riempie `name` e `body` vuoti con le note generate; `make_latest` (`true`, `false`, `legacy`) fissa o esclude la release da "latest". |
+| `GET .../releases/latest`, `GET .../releases/tags/{tag}` | sì | `latest` rispetta `make_latest`: una release fissata vince, quelle con `make_latest: false` sono saltate, altrimenti la più recente pubblicata non prerelease. |
 | `GET/PATCH/DELETE .../releases/{id}` | sì | |
 | `GET .../releases/{id}/assets` | sì | |
 | `POST {public_url}/api/uploads/repos/{o}/{r}/releases/{id}/assets?name=&label=` | sì | È l'`upload_url` di una release. Corpo grezzo, `Content-Length` obbligatorio (`411`). Accettato anche sotto `/api/v3`. |
 | `GET .../releases/assets/{id}` | sì | JSON, oppure il file con `Accept: application/octet-stream` (supporta un singolo `Range`). |
 | `PATCH/DELETE .../releases/assets/{id}` | sì | `name`, `label`. |
-| `POST .../releases/generate-notes` | no | |
+| `POST .../releases/generate-notes` | parziale | `tag_name`, `target_commitish`, `previous_tag_name` (default: il tag precedente per data) rispondono `{name, body}`: elenco "What's Changed" (titolo della pull request, `@autore`, link) e riga "Full Changelog" di confronto. `configuration_file_path` è ignorato. |
+| `PATCH .../releases/{id}` `make_latest` | sì | Come in creazione. |
 
 ### Stati e check
 
@@ -240,7 +242,8 @@ globali sono i valori `node_id` delle risposte REST.
   `addPullRequestReview`, `enablePullRequestAutoMerge`,
   `disablePullRequestAutoMerge`, `addLabelsToLabelable`,
   `removeLabelsFromLabelable`, `addAssigneesToAssignable`,
-  `removeAssigneesFromAssignable`.
+  `removeAssigneesFromAssignable`, `lockLockable` e `unlockLockable` (con `LockReason`), `deleteIssue` (solo admin del repository).
+- **Check richiesti**: `CheckRun.isRequired` e `StatusContext.isRequired` accettano `pullRequestNumber` e sono true quando il contesto è un controllo di stato richiesto dalla regola di protezione del branch base della pull request.
 
 La lettura richiede un token con `repo:read`, le mutation `repo:write`. Ogni
 risposta autenticata sotto `/api` porta l'header `X-OAuth-Scopes` con i nomi

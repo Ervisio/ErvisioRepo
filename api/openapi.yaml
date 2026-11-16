@@ -4148,6 +4148,29 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteIssue
+      tags: [issues]
+      summary: Delete an issue
+      description: |
+        Removes the issue with its comments and timeline for good. Only
+        repository admins can do it; pull requests cannot be deleted.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "204":
+          description: Deleted
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
   /repos/{owner}/{name}/issues/{number}/edits:
     parameters:
       - $ref: "#/components/parameters/RepoOwner"

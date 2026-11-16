@@ -19,6 +19,7 @@ var (
 
 // enums are the enum types advertised by introspection.
 var enums = map[string][]string{
+	"LockReason":                {"OFF_TOPIC", "TOO_HEATED", "RESOLVED", "SPAM"},
 	"IssueState":                {"OPEN", "CLOSED"},
 	"IssueStateReason":          {"COMPLETED", "NOT_PLANNED", "REOPENED", "DUPLICATE"},
 	"IssueClosedStateReason":    {"COMPLETED", "NOT_PLANNED", "DUPLICATE"},

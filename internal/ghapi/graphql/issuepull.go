@@ -1,11 +1,19 @@
 package graphql
 
 import (
+	"errors"
+	"fmt"
+	"slices"
 	"strings"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
+	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/issues"
+	"github.com/Ervisio/ErvisioRepo/internal/protection"
 	"github.com/Ervisio/ErvisioRepo/internal/pulls"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
 	"github.com/Ervisio/ErvisioRepo/internal/statuses"
@@ -786,6 +794,33 @@ func (rq *request) rollup(r repos.Repo, sha string) (any, error) {
 	return obj{"StatusCheckRollup", &rollupV{state: state, contexts: items}}, nil
 }
 
+// requiredCheck reports whether the check context is a required status check
+// of the branch protection rule on the base branch of the pull request
+// given as pullRequestNumber (false when none is given or no rule applies).
+func (rq *request) requiredCheck(repoID uuid.UUID, context string, a args) (any, error) {
+	num, ok := a.int64("pullRequestNumber")
+	if !ok {
+		return false, nil
+	}
+	pr, err := rq.s.q.GetPullRequest(rq.ctx, dbgen.GetPullRequestParams{RepoID: repoID, Number: num})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("load pull request: %w", err)
+	}
+	rules, err := rq.s.q.ListBranchProtections(rq.ctx, repoID)
+	if err != nil {
+		return nil, fmt.Errorf("list branch protections: %w", err)
+	}
+	pats := make([]string, len(rules))
+	for i, r := range rules {
+		pats[i] = r.Pattern
+	}
+	i := protection.Select(pats, pr.BaseRef)
+	return i >= 0 && slices.Contains(rules[i].RequiredStatusChecks, context), nil
+}
+
 func rollupFields() map[string]resolver {
 	return map[string]resolver{
 		"state": func(rq *request, src any, a args) (any, error) { return src.(*rollupV).state, nil },
@@ -806,7 +841,9 @@ func statusContextFields() map[string]resolver {
 		"createdAt":   func(rq *request, src any, a args) (any, error) { return s(src).CreatedAt, nil },
 		"creator":     func(rq *request, src any, a args) (any, error) { return userObj(s(src).Creator), nil },
 		"avatarUrl":   constant(nil),
-		"isRequired":  constant(false),
+		"isRequired": func(rq *request, src any, a args) (any, error) {
+			return rq.requiredCheck(s(src).RepoID, s(src).Context, a)
+		},
 	}
 }
 
@@ -829,8 +866,10 @@ func checkRunFields() map[string]resolver {
 		"title":       func(rq *request, src any, a args) (any, error) { return optString(c(src).Title), nil },
 		"summary":     func(rq *request, src any, a args) (any, error) { return optString(c(src).Summary), nil },
 		"text":        func(rq *request, src any, a args) (any, error) { return optString(c(src).Text), nil },
-		"isRequired":  constant(false),
-		"checkSuite":  func(rq *request, src any, a args) (any, error) { return obj{"CheckSuite", c(src)}, nil },
+		"isRequired": func(rq *request, src any, a args) (any, error) {
+			return rq.requiredCheck(c(src).RepoID, c(src).Name, a)
+		},
+		"checkSuite": func(rq *request, src any, a args) (any, error) { return obj{"CheckSuite", c(src)}, nil },
 	}
 }
 

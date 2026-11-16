@@ -58,6 +58,8 @@ type Querier interface {
 	// Undispatched events, oldest first, locked for the dispatching transaction
 	// (concurrent dispatchers skip each other's rows).
 	ClaimOutboxEvents(ctx context.Context, lim int32) ([]ClaimOutboxEventsRow, error)
+	// Only one release of a repository can be flagged as latest.
+	ClearOtherLatestReleases(ctx context.Context, arg ClearOtherLatestReleasesParams) error
 	ClearPrimaryEmail(ctx context.Context, userID uuid.UUID) error
 	ClearPullHeadRepo(ctx context.Context, issueID uuid.UUID) error
 	// Clears the marker after a flush. Markers are set and cleared only under
@@ -145,6 +147,9 @@ type Querier interface {
 	DeleteGitHubSyncLinkByRepo(ctx context.Context, repoID uuid.UUID) (int64, error)
 	DeleteGitHubSyncRef(ctx context.Context, arg DeleteGitHubSyncRefParams) error
 	DeleteInstanceSettings(ctx context.Context, keys []string) (int64, error)
+	// Plain issues only: pull requests go away with their repository. Comments,
+	// timeline, labels, assignees, reactions and references cascade.
+	DeleteIssue(ctx context.Context, arg DeleteIssueParams) (int64, error)
 	DeleteIssueAttachment(ctx context.Context, arg DeleteIssueAttachmentParams) (IssueAttachment, error)
 	DeleteIssueComment(ctx context.Context, arg DeleteIssueCommentParams) (int64, error)
 	DeleteIssueReaction(ctx context.Context, arg DeleteIssueReactionParams) (int64, error)
@@ -279,7 +284,8 @@ type Querier interface {
 	GetLFSObject(ctx context.Context, arg GetLFSObjectParams) (LfsObject, error)
 	GetLFSToken(ctx context.Context, tokenHash []byte) (GetLFSTokenRow, error)
 	GetLabelByName(ctx context.Context, arg GetLabelByNameParams) (Label, error)
-	// The newest published release that is not a draft or a prerelease.
+	// The release flagged as latest, else the newest published release that is
+	// not a draft or a prerelease (and not excluded with make_latest = false).
 	GetLatestRelease(ctx context.Context, repoID uuid.UUID) (Release, error)
 	// Credentials for a login by email address; any verified address of the user works.
 	GetLoginByEmail(ctx context.Context, address string) (GetLoginByEmailRow, error)
@@ -577,6 +583,9 @@ type Querier interface {
 	// ---- labels ----
 	ListLabels(ctx context.Context, repoID uuid.UUID) ([]Label, error)
 	ListLabelsByNames(ctx context.Context, arg ListLabelsByNamesParams) ([]Label, error)
+	// Pull requests merged by (or whose head is) one of the given commits, in
+	// merge order; used to write release notes.
+	ListMergedPullsByCommit(ctx context.Context, arg ListMergedPullsByCommitParams) ([]ListMergedPullsByCommitRow, error)
 	// ---- milestones ----
 	ListMilestones(ctx context.Context, arg ListMilestonesParams) ([]ListMilestonesRow, error)
 	// Rows charged to a namespace that no longer owns the repository (transfer).

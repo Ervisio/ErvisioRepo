@@ -15,6 +15,9 @@ type payload map[string]any
 var payloadTypes = map[string][]string{
 	"CreateIssuePayload":                   {"issue"},
 	"UpdateIssuePayload":                   {"issue"},
+	"DeleteIssuePayload":                   {"repository"},
+	"LockLockablePayload":                  {"actor", "lockedRecord"},
+	"UnlockLockablePayload":                {"actor", "unlockedRecord"},
 	"CloseIssuePayload":                    {"issue"},
 	"ReopenIssuePayload":                   {"issue"},
 	"AddCommentPayload":                    {"commentEdge", "subject", "timelineEdge"},
@@ -44,6 +47,9 @@ var payloadTypes = map[string][]string{
 var inputTypes = map[string][]string{
 	"CreateIssueInput":                   {"repositoryId", "title", "body", "assigneeIds", "labelIds", "milestoneId", "projectIds", "issueTemplate", "clientMutationId"},
 	"UpdateIssueInput":                   {"id", "title", "body", "assigneeIds", "labelIds", "milestoneId", "projectIds", "state", "clientMutationId"},
+	"DeleteIssueInput":                   {"issueId", "clientMutationId"},
+	"LockLockableInput":                  {"lockableId", "lockReason", "clientMutationId"},
+	"UnlockLockableInput":                {"lockableId", "clientMutationId"},
 	"CloseIssueInput":                    {"issueId", "stateReason", "duplicateIssueId", "clientMutationId"},
 	"ReopenIssueInput":                   {"issueId", "clientMutationId"},
 	"AddCommentInput":                    {"subjectId", "body", "clientMutationId"},
@@ -93,6 +99,9 @@ func mutationFields() map[string]resolver {
 	return map[string]resolver{
 		"createIssue":                   mutation("CreateIssuePayload", createIssue),
 		"updateIssue":                   mutation("UpdateIssuePayload", updateIssue),
+		"deleteIssue":                   mutation("DeleteIssuePayload", deleteIssue),
+		"lockLockable":                  mutation("LockLockablePayload", lockLockable(true)),
+		"unlockLockable":                mutation("UnlockLockablePayload", lockLockable(false)),
 		"closeIssue":                    mutation("CloseIssuePayload", closeIssue),
 		"reopenIssue":                   mutation("ReopenIssuePayload", reopenIssue),
 		"addComment":                    mutation("AddCommentPayload", addComment),
@@ -331,6 +340,59 @@ func closeIssue(rq *request, in args) (payload, error) {
 
 func reopenIssue(rq *request, in args) (payload, error) {
 	return setIssueState(rq, in, "open", "")
+}
+
+func deleteIssue(rq *request, in args) (payload, error) {
+	id, err := in.required("issueId")
+	if err != nil {
+		return nil, err
+	}
+	r, n, _, err := rq.subjectByID(id, "Issue")
+	if err != nil {
+		return nil, err
+	}
+	if err := rq.s.d.Issues.Delete(rq.ctx, rq.who, r.Owner, r.Name, n, rq.client()); err != nil {
+		return nil, err
+	}
+	return payload{"repository": obj{"Repository", r}}, nil
+}
+
+// lockReasons maps the LockReason enum to the stored reasons.
+var lockReasons = map[string]string{"OFF_TOPIC": "off-topic", "TOO_HEATED": "too heated", "RESOLVED": "resolved", "SPAM": "spam"}
+
+// lockLockable locks or unlocks the conversation of an issue or pull request.
+func lockLockable(lock bool) func(rq *request, in args) (payload, error) {
+	return func(rq *request, in args) (payload, error) {
+		id, err := in.required("lockableId")
+		if err != nil {
+			return nil, err
+		}
+		r, n, _, err := rq.subjectByID(id)
+		if err != nil {
+			return nil, err
+		}
+		key := "unlockedRecord"
+		if lock {
+			key = "lockedRecord"
+			reason := ""
+			if v := strings.ToUpper(in.str("lockReason")); v != "" {
+				if reason = lockReasons[v]; reason == "" {
+					return nil, errorf("BAD_USER_INPUT", "Variable lockReason got invalid value %q", in.str("lockReason"))
+				}
+			}
+			_, err = rq.s.d.Issues.Lock(rq.ctx, rq.who, r.Owner, r.Name, n, reason, rq.client())
+		} else {
+			_, err = rq.s.d.Issues.Unlock(rq.ctx, rq.who, r.Owner, r.Name, n, rq.client())
+		}
+		if err != nil {
+			return nil, err
+		}
+		rec, err := rq.subjectObj(r, n)
+		if err != nil {
+			return nil, err
+		}
+		return payload{key: rec, "actor": nil}, nil
+	}
 }
 
 func addComment(rq *request, in args) (payload, error) {

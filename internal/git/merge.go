@@ -208,16 +208,21 @@ func ReadCommitMeta(ctx context.Context, repoPath string, env []string, id strin
 		Message: strings.TrimRight(f[4], "\n") + "\n"}, nil
 }
 
-// RevList returns the commits reachable from tip and not from exclude,
-// oldest first (topological), at most limit (more reports a truncation).
+// RevList returns the commits reachable from tip and not from exclude (an
+// empty exclude keeps every commit), oldest first (topological), at most
+// limit (more reports a truncation).
 func RevList(ctx context.Context, repoPath string, env []string, exclude, tip string, limit int) (ids []string, more bool, err error) {
-	for _, id := range []string{exclude, tip} {
-		if err := ValidateObjectID(id); err != nil {
+	args := []string{"rev-list", "--reverse", "--topo-order", tip}
+	if exclude != "" {
+		if err := ValidateObjectID(exclude); err != nil {
 			return nil, false, err
 		}
+		args = append(args, "^"+exclude)
 	}
-	out, err := Output(ctx, Cmd{RepoPath: repoPath, Env: env, Timeout: historyTimeout,
-		Args: []string{"rev-list", "--reverse", "--topo-order", tip, "^" + exclude}})
+	if err := ValidateObjectID(tip); err != nil {
+		return nil, false, err
+	}
+	out, err := Output(ctx, Cmd{RepoPath: repoPath, Env: env, Timeout: historyTimeout, Args: args})
 	if err != nil {
 		return nil, false, err
 	}

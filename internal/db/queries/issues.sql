@@ -41,6 +41,11 @@ UPDATE issues SET locked = @locked, lock_reason = @lock_reason, updated_at = now
 WHERE id = @id
 RETURNING *;
 
+-- name: DeleteIssue :execrows
+-- Plain issues only: pull requests go away with their repository. Comments,
+-- timeline, labels, assignees, reactions and references cascade.
+DELETE FROM issues WHERE id = @id AND repo_id = @repo_id AND kind = 'issue';
+
 -- name: SetIssueMilestone :one
 UPDATE issues SET milestone_id = @milestone_id, updated_at = now()
 WHERE id = @id

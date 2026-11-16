@@ -73,6 +73,7 @@ const (
 	ActionMilestoneDeleted  = "milestone.deleted"
 	ActionIssueLocked       = "issue.locked"
 	ActionIssueUnlocked     = "issue.unlocked"
+	ActionIssueDeleted      = "issue.deleted"
 	ActionCommentDeleted    = "issue_comment.deleted"
 	ActionAttachmentDeleted = "issue_attachment.deleted"
 )

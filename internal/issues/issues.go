@@ -12,6 +12,7 @@ import (
 
 	"github.com/Ervisio/ErvisioRepo/internal/audit"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
+	"github.com/Ervisio/ErvisioRepo/internal/authz"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/events"
 	"github.com/Ervisio/ErvisioRepo/internal/identity"
@@ -820,6 +821,39 @@ func (s *Service) setLock(ctx context.Context, who auth.Principal, owner, name s
 		return Issue{}, err
 	}
 	return s.hydrateOne(ctx, who.UserID, row)
+}
+
+// Delete removes an issue for good (repository admins only, as on GitHub).
+// Pull requests cannot be deleted.
+func (s *Service) Delete(ctx context.Context, who auth.Principal, owner, name string, number int64, c identity.Client) error {
+	r, err := s.writer(ctx, who, owner, name)
+	if err != nil {
+		return err
+	}
+	if !authz.Allowed(r.Permission, authz.ActDelete) {
+		return ErrForbidden
+	}
+	return s.tx(ctx, func(q *dbgen.Queries) error {
+		cur, err := s.lockIssue(ctx, q, r, number)
+		if err != nil {
+			return err
+		}
+		if cur.Kind != KindIssue {
+			return invalid("pull requests cannot be deleted")
+		}
+		n, err := q.DeleteIssue(ctx, dbgen.DeleteIssueParams{ID: cur.ID, RepoID: r.ID})
+		if err != nil {
+			return fmt.Errorf("delete issue: %w", err)
+		}
+		if n == 0 {
+			return ErrNotFound
+		}
+		if err := s.emit(ctx, q, events.KindIssue, "deleted", r.ID, who.UserID, cur.ID, issuePayload(cur)); err != nil {
+			return err
+		}
+		return audit.Record(ctx, q, s.auditEvent(who, ActionIssueDeleted, r, "issue", cur.ID, c,
+			map[string]any{"number": cur.Number, "title": cur.Title}))
+	})
 }
 
 // ListEdits returns the previous bodies of an issue, newest first.

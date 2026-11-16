@@ -67,6 +67,9 @@ type Issues interface {
 	CreateComment(ctx context.Context, who auth.Principal, owner, name string, number int64, body string) (issues.Comment, error)
 	UpdateComment(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID, body string) (issues.Comment, error)
 	DeleteComment(ctx context.Context, who auth.Principal, owner, name string, id uuid.UUID, c identity.Client) error
+	Delete(ctx context.Context, who auth.Principal, owner, name string, number int64, c identity.Client) error
+	Lock(ctx context.Context, who auth.Principal, owner, name string, number int64, reason string, c identity.Client) (issues.Issue, error)
+	Unlock(ctx context.Context, who auth.Principal, owner, name string, number int64, c identity.Client) (issues.Issue, error)
 	ListLabels(ctx context.Context, who auth.Principal, owner, name string, offset, limit int) ([]issues.Label, error)
 	ListMilestones(ctx context.Context, who auth.Principal, owner, name, state string, offset, limit int) ([]issues.Milestone, error)
 }

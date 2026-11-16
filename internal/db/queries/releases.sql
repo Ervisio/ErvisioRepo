@@ -2,8 +2,8 @@
 -- tier; the rows here own them.
 
 -- name: InsertRelease :one
-INSERT INTO releases (id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, published_at)
-VALUES (@id, @repo_id, @tag, @name, @body, @draft, @prerelease, @target, @commit_sha, @author_id, @published_at)
+INSERT INTO releases (id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, published_at, make_latest)
+VALUES (@id, @repo_id, @tag, @name, @body, @draft, @prerelease, @target, @commit_sha, @author_id, @published_at, @make_latest)
 RETURNING *;
 
 -- name: GetRelease :one
@@ -22,17 +22,33 @@ ORDER BY COALESCE(published_at, created_at) DESC, id DESC
 LIMIT @lim OFFSET @off;
 
 -- name: GetLatestRelease :one
--- The newest published release that is not a draft or a prerelease.
+-- The release flagged as latest, else the newest published release that is
+-- not a draft or a prerelease (and not excluded with make_latest = false).
 SELECT * FROM releases
-WHERE repo_id = @repo_id AND NOT draft AND NOT prerelease
-ORDER BY published_at DESC NULLS LAST, id DESC
+WHERE repo_id = @repo_id AND NOT draft AND NOT prerelease AND make_latest IS DISTINCT FROM false
+ORDER BY (make_latest IS TRUE) DESC, published_at DESC NULLS LAST, id DESC
 LIMIT 1;
 
 -- name: UpdateRelease :one
 UPDATE releases SET tag = @tag, name = @name, body = @body, draft = @draft, prerelease = @prerelease,
-    target = @target, commit_sha = @commit_sha, published_at = @published_at, updated_at = now()
+    target = @target, commit_sha = @commit_sha, published_at = @published_at, make_latest = @make_latest, updated_at = now()
 WHERE id = @id AND repo_id = @repo_id
 RETURNING *;
+
+-- name: ClearOtherLatestReleases :exec
+-- Only one release of a repository can be flagged as latest.
+UPDATE releases SET make_latest = NULL WHERE repo_id = @repo_id AND id <> @id AND make_latest IS TRUE;
+
+-- name: ListMergedPullsByCommit :many
+-- Pull requests merged by (or whose head is) one of the given commits, in
+-- merge order; used to write release notes.
+SELECT i.number, i.title, COALESCE(n.name, '')::text AS author
+FROM pull_requests pr
+JOIN issues i ON i.id = pr.issue_id
+LEFT JOIN namespaces n ON n.id = i.author_id
+WHERE pr.repo_id = @repo_id AND pr.merged_at IS NOT NULL
+  AND (pr.merge_commit_sha = ANY(@shas::text[]) OR pr.head_sha = ANY(@shas::text[]))
+ORDER BY pr.merged_at, i.number;
 
 -- name: DeleteRelease :execrows
 DELETE FROM releases WHERE id = @id AND repo_id = @repo_id;

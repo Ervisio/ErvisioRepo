@@ -1,6 +1,7 @@
 package ghapi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -208,15 +209,78 @@ func (c *call) releaseByTag() error {
 }
 
 type releaseBody struct {
-	TagName         *string `json:"tag_name"`
+	TagName         *string         `json:"tag_name"`
+	TargetCommitish *string         `json:"target_commitish"`
+	Name            *string         `json:"name"`
+	Body            *string         `json:"body"`
+	Draft           *bool           `json:"draft"`
+	Prerelease      *bool           `json:"prerelease"`
+	MakeLatest      json.RawMessage `json:"make_latest"`
+	GenerateNotes   bool            `json:"generate_release_notes"`
+	DiscussionCat   *string         `json:"discussion_category_name"`
+}
+
+// makeLatest reads make_latest, a string ("true", "false", "legacy") that
+// some clients send as a boolean.
+func makeLatest(m json.RawMessage) (*string, error) {
+	var on bool
+	if len(m) > 0 && json.Unmarshal(m, &on) == nil {
+		v := strconv.FormatBool(on)
+		return &v, nil
+	}
+	return rawString(m)
+}
+
+// notesBody is the body of POST /releases/generate-notes.
+type notesBody struct {
+	TagName         string  `json:"tag_name"`
 	TargetCommitish *string `json:"target_commitish"`
-	Name            *string `json:"name"`
-	Body            *string `json:"body"`
-	Draft           *bool   `json:"draft"`
-	Prerelease      *bool   `json:"prerelease"`
-	MakeLatest      *string `json:"make_latest"`
-	GenerateNotes   bool    `json:"generate_release_notes"`
-	DiscussionCat   *string `json:"discussion_category_name"`
+	PreviousTagName *string `json:"previous_tag_name"`
+	// ConfigurationFilePath is accepted and ignored: notes are not categorised.
+	ConfigurationFilePath *string `json:"configuration_file_path"`
+}
+
+type ghNotes struct {
+	Name string `json:"name"`
+	Body string `json:"body"`
+}
+
+// notesMarkdown renders generated notes like GitHub: a "What's Changed" list
+// of merged pull requests and a link to the full comparison.
+func (c *call) notesMarkdown(n releases.Notes) string {
+	var b strings.Builder
+	b.WriteString("## What's Changed\n")
+	for _, p := range n.Pulls {
+		fmt.Fprintf(&b, "* %s", p.Title)
+		if p.Author != "" {
+			fmt.Fprintf(&b, " by @%s", p.Author)
+		}
+		fmt.Fprintf(&b, " in %s/pulls/%d\n", c.repoHTML(), p.Number)
+	}
+	if n.Previous != "" {
+		q := url.Values{"base": {n.Previous}, "head": {n.Head}}
+		fmt.Fprintf(&b, "\n**Full Changelog**: %s/compare?%s", c.repoHTML(), q.Encode())
+	}
+	return b.String()
+}
+
+func (c *call) generateReleaseNotes() error {
+	if err := c.write(); err != nil {
+		return err
+	}
+	var b notesBody
+	if err := c.decode(&b); err != nil {
+		return err
+	}
+	if b.TagName == "" {
+		return errf(http.StatusUnprocessableEntity, "Validation Failed: tag_name is required")
+	}
+	n, err := c.s.d.Releases.GenerateNotes(c.ctx, c.who, c.owner, c.repo, releases.NotesInput{
+		Tag: b.TagName, Target: deref(b.TargetCommitish), PreviousTag: deref(b.PreviousTagName)})
+	if err != nil {
+		return err
+	}
+	return c.ok(http.StatusOK, ghNotes{Name: n.Name, Body: c.notesMarkdown(n)})
 }
 
 func (c *call) createRelease() error {
@@ -227,14 +291,29 @@ func (c *call) createRelease() error {
 	if err := c.decode(&b); err != nil {
 		return err
 	}
+	ml, err := makeLatest(b.MakeLatest)
+	if err != nil {
+		return err
+	}
 	if b.TagName == nil || *b.TagName == "" {
 		return errf(http.StatusUnprocessableEntity, "Validation Failed: tag_name is required")
 	}
-	if b.GenerateNotes {
-		return errf(http.StatusUnprocessableEntity, "generate_release_notes is not supported")
-	}
 	in := releases.CreateInput{Tag: *b.TagName, Name: deref(b.Name), Body: deref(b.Body),
-		Target: deref(b.TargetCommitish), Draft: b.Draft != nil && *b.Draft, Prerelease: b.Prerelease != nil && *b.Prerelease}
+		Target: deref(b.TargetCommitish), Draft: b.Draft != nil && *b.Draft, Prerelease: b.Prerelease != nil && *b.Prerelease,
+		MakeLatest: deref(ml)}
+	if b.GenerateNotes {
+		n, err := c.s.d.Releases.GenerateNotes(c.ctx, c.who, c.owner, c.repo, releases.NotesInput{Tag: in.Tag, Target: in.Target})
+		if err != nil {
+			return err
+		}
+		if in.Name == "" {
+			in.Name = n.Name
+		}
+		if in.Body != "" {
+			in.Body += "\n\n"
+		}
+		in.Body += c.notesMarkdown(n)
+	}
 	r, err := c.s.d.Releases.Create(c.ctx, c.who, c.owner, c.repo, in, c.client())
 	if err != nil {
 		return err
@@ -254,8 +333,12 @@ func (c *call) updateRelease() error {
 	if err := c.decode(&b); err != nil {
 		return err
 	}
+	ml, err := makeLatest(b.MakeLatest)
+	if err != nil {
+		return err
+	}
 	in := releases.UpdateInput{Tag: b.TagName, Name: b.Name, Body: b.Body, Draft: b.Draft, Prerelease: b.Prerelease,
-		Target: b.TargetCommitish}
+		Target: b.TargetCommitish, MakeLatest: ml}
 	r, err := c.s.d.Releases.Update(c.ctx, c.who, c.owner, c.repo, id, in, c.client())
 	if err != nil {
 		return err

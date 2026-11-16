@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
+	"github.com/Ervisio/ErvisioRepo/internal/authz"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/events"
 	"github.com/Ervisio/ErvisioRepo/internal/git"
@@ -58,10 +59,13 @@ func (s *Service) Merge(ctx context.Context, who auth.Principal, owner, name str
 	if !canMerge(r) {
 		return "", ErrForbidden
 	}
-	return s.merge(ctx, who, r, number, in)
+	return s.merge(ctx, who, r, number, in, true)
 }
 
-func (s *Service) merge(ctx context.Context, who auth.Principal, r repos.Repo, number int64, in MergeInput) (string, error) {
+// merge merges the pull request. allowBypass lets a repository admin merge
+// past the requirements of a rule that has AdminsBypass set; auto-merge
+// never bypasses.
+func (s *Service) merge(ctx context.Context, who auth.Principal, r repos.Repo, number int64, in MergeInput, allowBypass bool) (string, error) {
 	method, err := checkMethod(in.Method)
 	if err != nil {
 		return "", err
@@ -107,7 +111,8 @@ func (s *Service) merge(ctx context.Context, who auth.Principal, r repos.Repo, n
 		if err != nil {
 			return "", fmt.Errorf("protection status: %w", err)
 		}
-		if !st.Mergeable() {
+		bypass := allowBypass && st.AdminsBypass && r.Permission >= authz.PermAdmin
+		if !st.Mergeable() && !bypass {
 			reasons := make([]string, 0, len(st.Violations))
 			for _, v := range st.Violations {
 				reasons = append(reasons, v.Message)
@@ -457,7 +462,7 @@ func (s *Service) tryAutoMerge(ctx context.Context, repoID, pullID uuid.UUID) {
 		return
 	}
 	_, err = s.merge(ctx, who, r, p.Number, MergeInput{Method: p.AutoMergeMethod, Title: p.AutoMergeTitle,
-		Message: p.AutoMergeMessage, SHA: p.HeadSha, DeleteBranch: p.AutoMergeDelete})
+		Message: p.AutoMergeMessage, SHA: p.HeadSha, DeleteBranch: p.AutoMergeDelete}, false)
 	switch {
 	case err == nil:
 	case errors.Is(err, ErrNotMergeable), errors.Is(err, ErrConflict):

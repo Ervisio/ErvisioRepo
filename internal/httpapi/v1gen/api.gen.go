@@ -7353,6 +7353,9 @@ type ServerInterface interface {
 	// RemoveIssueCommentReaction Remove the caller's reaction
 	// (DELETE /repos/{owner}/{name}/issues/comments/{commentId}/reactions/{content})
 	RemoveIssueCommentReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID, content string)
+	// DeleteIssue Delete an issue
+	// (DELETE /repos/{owner}/{name}/issues/{number})
+	DeleteIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64)
 	// GetIssue An issue
 	// (GET /repos/{owner}/{name}/issues/{number})
 	GetIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64)
@@ -8910,6 +8913,12 @@ func (_ Unimplemented) AddIssueCommentReaction(w http.ResponseWriter, r *http.Re
 // RemoveIssueCommentReaction Remove the caller's reaction
 // (DELETE /repos/{owner}/{name}/issues/comments/{commentId}/reactions/{content})
 func (_ Unimplemented) RemoveIssueCommentReaction(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, commentId openapi_types.UUID, content string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteIssue Delete an issue
+// (DELETE /repos/{owner}/{name}/issues/{number})
+func (_ Unimplemented) DeleteIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -18527,6 +18536,58 @@ func (siw *ServerInterfaceWrapper) RemoveIssueCommentReaction(w http.ResponseWri
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteIssue operation middleware
+func (siw *ServerInterfaceWrapper) DeleteIssue(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteIssue(w, r, owner, name, number)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetIssue operation middleware
 func (siw *ServerInterfaceWrapper) GetIssue(w http.ResponseWriter, r *http.Request) {
 
@@ -25350,6 +25411,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/repos/{owner}/{name}/issues", wrapper.CreateIssue)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/issues/{number}", wrapper.DeleteIssue)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/issues/{number}", wrapper.GetIssue)
@@ -42554,6 +42618,102 @@ func (response RemoveIssueCommentReactiondefaultApplicationProblemPlusJSONRespon
 	return err
 }
 
+type DeleteIssueRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Number int64     `json:"number"`
+}
+
+type DeleteIssueResponseObject interface {
+	VisitDeleteIssueResponse(w http.ResponseWriter) error
+}
+
+type DeleteIssue204Response struct {
+}
+
+func (response DeleteIssue204Response) VisitDeleteIssueResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteIssue307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteIssue307ApplicationProblemPlusJSONResponse) VisitDeleteIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssue400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteIssue400ApplicationProblemPlusJSONResponse) VisitDeleteIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssue403ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteIssue403ApplicationProblemPlusJSONResponse) VisitDeleteIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssue404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteIssue404ApplicationProblemPlusJSONResponse) VisitDeleteIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteIssuedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteIssuedefaultApplicationProblemPlusJSONResponse) VisitDeleteIssueResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetIssueRequestObject struct {
 	Owner  RepoOwner `json:"owner"`
 	Name   RepoName  `json:"name"`
@@ -54542,6 +54702,9 @@ type StrictServerInterface interface {
 	// RemoveIssueCommentReaction Remove the caller's reaction
 	// (DELETE /repos/{owner}/{name}/issues/comments/{commentId}/reactions/{content})
 	RemoveIssueCommentReaction(ctx context.Context, request RemoveIssueCommentReactionRequestObject) (RemoveIssueCommentReactionResponseObject, error)
+	// DeleteIssue Delete an issue
+	// (DELETE /repos/{owner}/{name}/issues/{number})
+	DeleteIssue(ctx context.Context, request DeleteIssueRequestObject) (DeleteIssueResponseObject, error)
 	// GetIssue An issue
 	// (GET /repos/{owner}/{name}/issues/{number})
 	GetIssue(ctx context.Context, request GetIssueRequestObject) (GetIssueResponseObject, error)
@@ -60578,6 +60741,34 @@ func (sh *strictHandler) RemoveIssueCommentReaction(w http.ResponseWriter, r *ht
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RemoveIssueCommentReactionResponseObject); ok {
 		if err := validResponse.VisitRemoveIssueCommentReactionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteIssue operation middleware
+func (sh *strictHandler) DeleteIssue(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, number int64) {
+	var request DeleteIssueRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Number = number
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteIssue(ctx, request.(DeleteIssueRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteIssue")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteIssueResponseObject); ok {
+		if err := validResponse.VisitDeleteIssueResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

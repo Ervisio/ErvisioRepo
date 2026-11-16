@@ -32,6 +32,7 @@ type Issues interface {
 	Get(ctx context.Context, who auth.Principal, owner, name string, number int64) (issues.Issue, error)
 	Create(ctx context.Context, who auth.Principal, owner, name string, in issues.CreateInput) (issues.Issue, error)
 	Update(ctx context.Context, who auth.Principal, owner, name string, number int64, in issues.UpdateInput) (issues.Issue, error)
+	Delete(ctx context.Context, who auth.Principal, owner, name string, number int64, c identity.Client) error
 	Lock(ctx context.Context, who auth.Principal, owner, name string, number int64, reason string, c identity.Client) (issues.Issue, error)
 	Unlock(ctx context.Context, who auth.Principal, owner, name string, number int64, c identity.Client) (issues.Issue, error)
 	ListEdits(ctx context.Context, who auth.Principal, owner, name string, number int64, offset, limit int) ([]issues.BodyEdit, error)
@@ -111,6 +112,7 @@ type issueResponse interface {
 	v1gen.RemoveIssueCommentReactionResponseObject
 	v1gen.GetIssueResponseObject
 	v1gen.UpdateIssueResponseObject
+	v1gen.DeleteIssueResponseObject
 	v1gen.ListIssueCommentsResponseObject
 	v1gen.CreateIssueCommentResponseObject
 	v1gen.ListIssueEditsResponseObject
@@ -365,6 +367,16 @@ func (s *v1Server) UpdateIssue(ctx context.Context, req v1gen.UpdateIssueRequest
 		return issuesFail(err, http.MethodPatch, numSuffix(req.Number, ""))
 	}
 	return v1gen.UpdateIssue200JSONResponse(issueDTO(i)), nil
+}
+
+func (s *v1Server) DeleteIssue(ctx context.Context, req v1gen.DeleteIssueRequestObject) (v1gen.DeleteIssueResponseObject, error) {
+	if s.issues == nil {
+		return errIssuesUnavailable, nil
+	}
+	if err := s.issues.Delete(ctx, principal(ctx), req.Owner, req.Name, req.Number, clientOf(ctx)); err != nil {
+		return issuesFail(err, http.MethodDelete, numSuffix(req.Number, ""))
+	}
+	return v1gen.DeleteIssue204Response{}, nil
 }
 
 func (s *v1Server) LockIssue(ctx context.Context, req v1gen.LockIssueRequestObject) (v1gen.LockIssueResponseObject, error) {
@@ -918,6 +930,7 @@ func (p problemResponse) VisitRemoveIssueCommentReactionResponse(w http.Response
 }
 func (p problemResponse) VisitGetIssueResponse(w http.ResponseWriter) error    { return p.write(w) }
 func (p problemResponse) VisitUpdateIssueResponse(w http.ResponseWriter) error { return p.write(w) }
+func (p problemResponse) VisitDeleteIssueResponse(w http.ResponseWriter) error { return p.write(w) }
 func (p problemResponse) VisitListIssueCommentsResponse(w http.ResponseWriter) error {
 	return p.write(w)
 }
@@ -977,6 +990,7 @@ func (m movedResponse) VisitRemoveIssueCommentReactionResponse(w http.ResponseWr
 }
 func (m movedResponse) VisitGetIssueResponse(w http.ResponseWriter) error          { return m.write(w) }
 func (m movedResponse) VisitUpdateIssueResponse(w http.ResponseWriter) error       { return m.write(w) }
+func (m movedResponse) VisitDeleteIssueResponse(w http.ResponseWriter) error       { return m.write(w) }
 func (m movedResponse) VisitListIssueCommentsResponse(w http.ResponseWriter) error { return m.write(w) }
 func (m movedResponse) VisitCreateIssueCommentResponse(w http.ResponseWriter) error {
 	return m.write(w)

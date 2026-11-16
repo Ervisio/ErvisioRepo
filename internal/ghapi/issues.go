@@ -460,6 +460,53 @@ func (c *call) applyIssue(n int64, in issues.UpdateInput) error {
 	return c.ok(http.StatusOK, c.issueObj(i))
 }
 
+// lockBody is the body of PUT /issues/{n}/lock.
+type lockBody struct {
+	LockReason json.RawMessage `json:"lock_reason"`
+}
+
+// lockIssue locks the conversation of an issue or pull request. GitHub
+// answers 204 with no body.
+func (c *call) lockIssue() error {
+	if err := c.write(); err != nil {
+		return err
+	}
+	n, err := c.number()
+	if err != nil {
+		return err
+	}
+	var b lockBody
+	if err := c.decode(&b); err != nil {
+		return err
+	}
+	reason, err := rawString(b.LockReason)
+	if err != nil {
+		return err
+	}
+	why := ""
+	if reason != nil {
+		why = *reason
+	}
+	if _, err := c.s.d.Issues.Lock(c.ctx, c.who, c.owner, c.repo, n, why, c.client()); err != nil {
+		return err
+	}
+	return c.noContent()
+}
+
+func (c *call) unlockIssue() error {
+	if err := c.write(); err != nil {
+		return err
+	}
+	n, err := c.number()
+	if err != nil {
+		return err
+	}
+	if _, err := c.s.d.Issues.Unlock(c.ctx, c.who, c.owner, c.repo, n, c.client()); err != nil {
+		return err
+	}
+	return c.noContent()
+}
+
 // ---- issue comments ----
 
 type ghComment struct {

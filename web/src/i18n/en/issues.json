@@ -66,6 +66,10 @@
   "new.submit": "Create issue",
   "detail.openedBy": "Opened by {user}",
   "detail.closedBy": "Closed by {user}",
+  "detail.delete": "Delete issue",
+  "detail.deleteTitle": "Delete this issue?",
+  "detail.deleteBody": "Issue #{number} and all its comments will be permanently deleted. This cannot be undone.",
+  "detail.deleteConfirm": "Delete issue",
   "detail.more": "More actions",
   "detail.side": "Status and details"
 }

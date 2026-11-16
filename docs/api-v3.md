@@ -108,7 +108,7 @@ or `501`.
 | `GET .../pulls/{n}/commits` | yes | |
 | `GET .../pulls/{n}/files` | yes | Blob `sha` and `patch` from the merge base diff; `patch` is missing for binary files and over the diff limits. |
 | `GET .../pulls/{n}/merge` | yes | `204` merged, `404` not merged. |
-| `PUT .../pulls/{n}/merge` | yes | `merge_method` merge/squash/rebase, `commit_title`, `commit_message`, `sha`. Branch protection applies. |
+| `PUT .../pulls/{n}/merge` | yes | `merge_method` merge/squash/rebase, `commit_title`, `commit_message`, `sha`. Branch protection applies; a repository admin merges past the review and check requirements of a rule that has "admins bypass" set (auto-merge never bypasses). |
 | `GET/POST .../pulls/{n}/reviews` | partial | Comments in a review need `line` (and `side`/`start_line`); the legacy `position` is refused. |
 | `GET/DELETE .../pulls/{n}/reviews/{id}` | yes | Delete works on pending reviews only. |
 | `POST .../pulls/{n}/reviews/{id}/events` | yes | Submit a pending review. |
@@ -136,21 +136,23 @@ or `501`.
 | `GET /repos/{o}/{r}/assignees`, `GET .../assignees/{user}` | yes | Collaborators of the repository. |
 | `GET/POST /repos/{o}/{r}/labels`, `GET/PATCH/DELETE .../labels/{name}` | yes | `new_name` renames. |
 | `GET/POST /repos/{o}/{r}/milestones`, `GET/PATCH/DELETE .../milestones/{n}` | yes | The milestone `number` equals its numeric `id`. |
-| Issue events, timeline, reactions endpoints, lock | no | Reaction counts are included in issue and comment objects. |
+| `PUT/DELETE .../issues/{n}/lock` | yes | `lock_reason` `off-topic`, `too heated`, `resolved` or `spam`. Needs triage permission; also works on pull request numbers. `204`. |
+| Issue events, timeline, reactions endpoints | no | Reaction counts are included in issue and comment objects. |
 
 ### Releases
 
 | Endpoint | Status | Notes |
 |---|---|---|
 | `GET /repos/{o}/{r}/releases` | yes | Drafts only for users who can manage the repository. |
-| `POST /repos/{o}/{r}/releases` | partial | `tag_name`, `target_commitish`, `name`, `body`, `draft`, `prerelease`. `generate_release_notes` is refused; `make_latest` is ignored. |
-| `GET .../releases/latest`, `GET .../releases/tags/{tag}` | yes | |
+| `POST /repos/{o}/{r}/releases` | partial | `tag_name`, `target_commitish`, `name`, `body`, `draft`, `prerelease`. `generate_release_notes: true` fills an empty `name` and `body` from the generated notes; `make_latest` (`true`, `false`, `legacy`) pins or excludes the release from "latest". |
+| `GET .../releases/latest`, `GET .../releases/tags/{tag}` | yes | `latest` honours `make_latest`: a pinned release wins, `make_latest: false` ones are skipped, otherwise the newest published non-prerelease. |
 | `GET/PATCH/DELETE .../releases/{id}` | yes | |
 | `GET .../releases/{id}/assets` | yes | |
 | `POST {public_url}/api/uploads/repos/{o}/{r}/releases/{id}/assets?name=&label=` | yes | The `upload_url` of a release. Raw body, `Content-Length` required (`411`). Also accepted under `/api/v3`. |
 | `GET .../releases/assets/{id}` | yes | JSON, or the file with `Accept: application/octet-stream` (single `Range` supported). |
 | `PATCH/DELETE .../releases/assets/{id}` | yes | `name`, `label`. |
-| `POST .../releases/generate-notes` | no | |
+| `POST .../releases/generate-notes` | partial | `tag_name`, `target_commitish`, `previous_tag_name` (default: the previous tag by date) answer `{name, body}`: a "What's Changed" list (pull request title, `@author`, link) and a "Full Changelog" compare line. `configuration_file_path` is ignored. |
+| `PATCH .../releases/{id}` `make_latest` | yes | As on create. |
 
 ### Statuses and checks
 
@@ -239,7 +241,8 @@ the same services and permission checks as `/api/v3`. Global ids are the
   `addPullRequestReview`, `enablePullRequestAutoMerge`,
   `disablePullRequestAutoMerge`, `addLabelsToLabelable`,
   `removeLabelsFromLabelable`, `addAssigneesToAssignable`,
-  `removeAssigneesFromAssignable`.
+  `removeAssigneesFromAssignable`, `lockLockable` and `unlockLockable` (with `LockReason`), `deleteIssue` (repository admins only).
+- **Required checks**: `CheckRun.isRequired` and `StatusContext.isRequired` take `pullRequestNumber` and are true when the context is a required status check of the branch protection rule on the pull request base branch.
 
 Reading needs a token with `repo:read`, mutations need `repo:write`. Every
 authenticated answer under `/api` carries `X-OAuth-Scopes` with the classic

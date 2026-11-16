@@ -21,6 +21,21 @@ func (q *Queries) BumpReleaseAssetDownloads(ctx context.Context, id uuid.UUID) e
 	return err
 }
 
+const clearOtherLatestReleases = `-- name: ClearOtherLatestReleases :exec
+UPDATE releases SET make_latest = NULL WHERE repo_id = $1 AND id <> $2 AND make_latest IS TRUE
+`
+
+type ClearOtherLatestReleasesParams struct {
+	RepoID uuid.UUID
+	ID     uuid.UUID
+}
+
+// Only one release of a repository can be flagged as latest.
+func (q *Queries) ClearOtherLatestReleases(ctx context.Context, arg ClearOtherLatestReleasesParams) error {
+	_, err := q.db.Exec(ctx, clearOtherLatestReleases, arg.RepoID, arg.ID)
+	return err
+}
+
 const deleteRelease = `-- name: DeleteRelease :execrows
 DELETE FROM releases WHERE id = $1 AND repo_id = $2
 `
@@ -57,13 +72,14 @@ func (q *Queries) DeleteReleaseAsset(ctx context.Context, arg DeleteReleaseAsset
 }
 
 const getLatestRelease = `-- name: GetLatestRelease :one
-SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at FROM releases
-WHERE repo_id = $1 AND NOT draft AND NOT prerelease
-ORDER BY published_at DESC NULLS LAST, id DESC
+SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at, make_latest FROM releases
+WHERE repo_id = $1 AND NOT draft AND NOT prerelease AND make_latest IS DISTINCT FROM false
+ORDER BY (make_latest IS TRUE) DESC, published_at DESC NULLS LAST, id DESC
 LIMIT 1
 `
 
-// The newest published release that is not a draft or a prerelease.
+// The release flagged as latest, else the newest published release that is
+// not a draft or a prerelease (and not excluded with make_latest = false).
 func (q *Queries) GetLatestRelease(ctx context.Context, repoID uuid.UUID) (Release, error) {
 	row := q.db.QueryRow(ctx, getLatestRelease, repoID)
 	var i Release
@@ -81,12 +97,13 @@ func (q *Queries) GetLatestRelease(ctx context.Context, repoID uuid.UUID) (Relea
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PublishedAt,
+		&i.MakeLatest,
 	)
 	return i, err
 }
 
 const getRelease = `-- name: GetRelease :one
-SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at FROM releases WHERE id = $1 AND repo_id = $2
+SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at, make_latest FROM releases WHERE id = $1 AND repo_id = $2
 `
 
 type GetReleaseParams struct {
@@ -111,6 +128,7 @@ func (q *Queries) GetRelease(ctx context.Context, arg GetReleaseParams) (Release
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PublishedAt,
+		&i.MakeLatest,
 	)
 	return i, err
 }
@@ -148,7 +166,7 @@ func (q *Queries) GetReleaseAsset(ctx context.Context, arg GetReleaseAssetParams
 }
 
 const getReleaseForUpdate = `-- name: GetReleaseForUpdate :one
-SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at FROM releases WHERE id = $1 AND repo_id = $2 FOR UPDATE
+SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at, make_latest FROM releases WHERE id = $1 AND repo_id = $2 FOR UPDATE
 `
 
 type GetReleaseForUpdateParams struct {
@@ -173,15 +191,16 @@ func (q *Queries) GetReleaseForUpdate(ctx context.Context, arg GetReleaseForUpda
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PublishedAt,
+		&i.MakeLatest,
 	)
 	return i, err
 }
 
 const insertRelease = `-- name: InsertRelease :one
 
-INSERT INTO releases (id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, published_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-RETURNING id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at
+INSERT INTO releases (id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, published_at, make_latest)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+RETURNING id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at, make_latest
 `
 
 type InsertReleaseParams struct {
@@ -196,6 +215,7 @@ type InsertReleaseParams struct {
 	CommitSha   string
 	AuthorID    uuid.NullUUID
 	PublishedAt pgtype.Timestamptz
+	MakeLatest  pgtype.Bool
 }
 
 // Releases and their assets (PLAN §4.2). The asset bytes live in the storage
@@ -213,6 +233,7 @@ func (q *Queries) InsertRelease(ctx context.Context, arg InsertReleaseParams) (R
 		arg.CommitSha,
 		arg.AuthorID,
 		arg.PublishedAt,
+		arg.MakeLatest,
 	)
 	var i Release
 	err := row.Scan(
@@ -229,6 +250,7 @@ func (q *Queries) InsertRelease(ctx context.Context, arg InsertReleaseParams) (R
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PublishedAt,
+		&i.MakeLatest,
 	)
 	return i, err
 }
@@ -285,6 +307,49 @@ func (q *Queries) InsertReleaseAsset(ctx context.Context, arg InsertReleaseAsset
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const listMergedPullsByCommit = `-- name: ListMergedPullsByCommit :many
+SELECT i.number, i.title, COALESCE(n.name, '')::text AS author
+FROM pull_requests pr
+JOIN issues i ON i.id = pr.issue_id
+LEFT JOIN namespaces n ON n.id = i.author_id
+WHERE pr.repo_id = $1 AND pr.merged_at IS NOT NULL
+  AND (pr.merge_commit_sha = ANY($2::text[]) OR pr.head_sha = ANY($2::text[]))
+ORDER BY pr.merged_at, i.number
+`
+
+type ListMergedPullsByCommitParams struct {
+	RepoID uuid.UUID
+	Shas   []string
+}
+
+type ListMergedPullsByCommitRow struct {
+	Number int64
+	Title  string
+	Author string
+}
+
+// Pull requests merged by (or whose head is) one of the given commits, in
+// merge order; used to write release notes.
+func (q *Queries) ListMergedPullsByCommit(ctx context.Context, arg ListMergedPullsByCommitParams) ([]ListMergedPullsByCommitRow, error) {
+	rows, err := q.db.Query(ctx, listMergedPullsByCommit, arg.RepoID, arg.Shas)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListMergedPullsByCommitRow{}
+	for rows.Next() {
+		var i ListMergedPullsByCommitRow
+		if err := rows.Scan(&i.Number, &i.Title, &i.Author); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listOrphanReleaseObjects = `-- name: ListOrphanReleaseObjects :many
@@ -371,7 +436,7 @@ func (q *Queries) ListReleaseAssets(ctx context.Context, releaseIds []uuid.UUID)
 }
 
 const listReleases = `-- name: ListReleases :many
-SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at FROM releases
+SELECT id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at, make_latest FROM releases
 WHERE repo_id = $1
   AND ($2::bool OR NOT draft)
   AND ($3::text = '' OR tag = $3::text)
@@ -417,6 +482,7 @@ func (q *Queries) ListReleases(ctx context.Context, arg ListReleasesParams) ([]R
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.PublishedAt,
+			&i.MakeLatest,
 		); err != nil {
 			return nil, err
 		}
@@ -512,9 +578,9 @@ func (q *Queries) SumRepoReleaseAssetBytes(ctx context.Context, repoID uuid.UUID
 
 const updateRelease = `-- name: UpdateRelease :one
 UPDATE releases SET tag = $1, name = $2, body = $3, draft = $4, prerelease = $5,
-    target = $6, commit_sha = $7, published_at = $8, updated_at = now()
-WHERE id = $9 AND repo_id = $10
-RETURNING id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at
+    target = $6, commit_sha = $7, published_at = $8, make_latest = $9, updated_at = now()
+WHERE id = $10 AND repo_id = $11
+RETURNING id, repo_id, tag, name, body, draft, prerelease, target, commit_sha, author_id, created_at, updated_at, published_at, make_latest
 `
 
 type UpdateReleaseParams struct {
@@ -526,6 +592,7 @@ type UpdateReleaseParams struct {
 	Target      string
 	CommitSha   string
 	PublishedAt pgtype.Timestamptz
+	MakeLatest  pgtype.Bool
 	ID          uuid.UUID
 	RepoID      uuid.UUID
 }
@@ -540,6 +607,7 @@ func (q *Queries) UpdateRelease(ctx context.Context, arg UpdateReleaseParams) (R
 		arg.Target,
 		arg.CommitSha,
 		arg.PublishedAt,
+		arg.MakeLatest,
 		arg.ID,
 		arg.RepoID,
 	)
@@ -558,6 +626,7 @@ func (q *Queries) UpdateRelease(ctx context.Context, arg UpdateReleaseParams) (R
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PublishedAt,
+		&i.MakeLatest,
 	)
 	return i, err
 }

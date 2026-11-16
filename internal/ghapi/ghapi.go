@@ -244,6 +244,8 @@ func (s *Server) routes(r chi.Router) {
 		r.Post("/issues", s.h((*call).createIssue))
 		r.Get("/issues/{number}", s.h((*call).getIssue))
 		r.Patch("/issues/{number}", s.h((*call).updateIssue))
+		r.Put("/issues/{number}/lock", s.h((*call).lockIssue))
+		r.Delete("/issues/{number}/lock", s.h((*call).unlockIssue))
 		r.Get("/issues/{number}/comments", s.h((*call).listIssueComments))
 		r.Post("/issues/{number}/comments", s.h((*call).createIssueComment))
 		r.Get("/issues/comments/{id}", s.h((*call).getIssueComment))
@@ -295,6 +297,7 @@ func (s *Server) routes(r chi.Router) {
 
 		r.Get("/releases", s.h((*call).listReleases))
 		r.Post("/releases", s.h((*call).createRelease))
+		r.Post("/releases/generate-notes", s.h((*call).generateReleaseNotes))
 		r.Get("/releases/latest", s.h((*call).latestRelease))
 		r.Get("/releases/tags/*", s.h((*call).releaseByTag))
 		r.Get("/releases/{id}", s.h((*call).getRelease))

@@ -908,6 +908,7 @@ type Release struct {
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
 	PublishedAt pgtype.Timestamptz
+	MakeLatest  pgtype.Bool
 }
 
 type ReleaseAsset struct {
