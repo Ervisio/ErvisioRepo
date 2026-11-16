@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "./http.ts";
 import { api } from "./client.ts";
+import type { Repo } from "./repos.ts";
 import type { components } from "./schema";
 
 export type StorageStatus = components["schemas"]["StorageStatus"];
@@ -121,5 +122,14 @@ export function usePutAvatarStorage() {
   return useMutation({
     mutationFn: (input: AvatarStorageInput) => request<AvatarStorage>("PUT", "/admin/storage/avatars", input),
     onSuccess: (v) => qc.setQueryData([...STORAGE_KEY, "avatars"], v),
+  });
+}
+
+/** Repositories matching a name fragment (GET /search/repos); instance admins see all of them, private ones included. Idle until the query is not empty. */
+export function useRepoSearch(q: string) {
+  return useQuery({
+    queryKey: ["admin", "storage", "repos", q],
+    enabled: q !== "",
+    queryFn: () => request<Repo[]>("GET", `/search/repos?q=${encodeURIComponent(q)}&limit=20`),
   });
 }

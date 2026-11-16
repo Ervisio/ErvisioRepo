@@ -6,6 +6,7 @@ import {
 import { useT } from "../i18n/useT.ts";
 import { AdminPane } from "./admin/AdminFrame.tsx";
 import { AvatarStorageCard } from "./admin/AvatarStorageCard.tsx";
+import { RepoTieringCard } from "./admin/RepoTieringCard.tsx";
 import { StoragePolicyDialog } from "./admin/StoragePolicyDialog.tsx";
 import { StorageTargetDialog } from "./admin/StorageTargetDialog.tsx";
 import { TestResult } from "./admin/StorageTestResult.tsx";
@@ -307,6 +308,8 @@ export function AdminStorage() {
           </Table>
         </Card>
       )}
+
+      <RepoTieringCard />
 
       <AvatarStorageCard />
 

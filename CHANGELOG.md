@@ -16,6 +16,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - App webhooks: the subscribed events of the installed repositories, filtered by the accepted permissions, with the `installation` object and the `X-GitHub-Hook-Installation-Target-Type`/`-ID` headers, plus `installation` (`created`, `deleted`, `suspend`, `unsuspend`, `new_permissions_accepted`) and `installation_repositories` (`added`, `removed`) events; recent deliveries and redelivery on the App page.
 - v1 API: `/app-catalog`, `/user/apps`, `/orgs/{org}/apps`, `/apps/{slug}` (+ `/keys`, `/installations`, `/install-targets`, `/deliveries`), `/user/app-installations`, `/orgs/{org}/app-installations`, `/app-installations/{id}` (+ `/suspended`, `/permissions`).
 
+### Changed
+
+- Repository storage controls moved from repository settings to Admin > Storage (a "Repositories" card: search, pin, unpin, evict).
+
 ## [1.11.0] - 2026-11-16
 
 ### Added
