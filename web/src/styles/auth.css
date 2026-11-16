@@ -49,6 +49,27 @@
 .acc-toggle { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
 .acc-area { width: 100%; resize: vertical; height: auto; }
 
+/* ---------- OAuth apps and consent (round 013 A) ---------- */
+.oa-logo { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-ctl); background: var(--acc-fill); color: var(--on-accent); font-weight: 700; font-size: 14px; object-fit: cover; overflow: hidden; }
+.oa-logo-sm { width: 20px; height: 20px; font-size: 10px; }
+.oa-logo-lg { width: 48px; height: 48px; font-size: 20px; border-radius: var(--r-card); }
+.oa-logo-xl { width: 56px; height: 56px; font-size: 24px; border-radius: var(--r-card); }
+.oa-name { font-weight: 600; color: var(--acc-text, var(--hue)); overflow-wrap: anywhere; }
+.oa-name:hover { text-decoration: underline; }
+.oa-head { display: flex; align-items: center; gap: 12px; }
+.oa-form { display: flex; flex-direction: column; gap: 40px; min-width: 0; }
+.st-main > .oa-form:first-child > .st-sec:first-child > .st-sh h2 { font-size: 24px; }
+.oa-consent { max-width: 560px; display: flex; flex-direction: column; gap: 14px; }
+.oa-consent-h { display: flex; align-items: center; gap: 14px; }
+.oa-consent-h h1 { margin: 0; font-size: 22px; }
+.oa-consent-h .auth-sub { margin: 2px 0 0; }
+.oa-consent-d { margin: 0; color: var(--ink2); font-size: 13.5px; }
+.oa-consent-who { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-ctl); font-size: 13.5px; }
+.oa-consent-who p { margin: 0; }
+.oa-consent-t { margin: 0; font-size: 14px; font-weight: 600; }
+.oa-consent-s { margin: 0; padding-left: 18px; font-size: 13.5px; display: flex; flex-direction: column; gap: 4px; }
+.oa-consent .auth-sub, .oa-consent .auth-foot { margin: 0; }
+
 @media (max-width: 600px) {
   .auth { align-items: start; padding-top: 32px; }
   .auth-card { padding: 22px 18px; }

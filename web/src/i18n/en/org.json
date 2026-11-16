@@ -103,5 +103,7 @@
   "danger.deleteTitle": "Delete {name}?",
   "danger.deleteDialogHint": "All repositories, teams and memberships of this organization are deleted for good.",
   "danger.deleteConfirm": "Delete for good",
-  "danger.deleted": "Organization deleted"
+  "danger.deleted": "Organization deleted",
+  "tab.oauth-apps": "OAuth Apps",
+  "settings.group.developer": "Developer settings"
 }

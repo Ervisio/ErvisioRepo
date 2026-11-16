@@ -13,6 +13,7 @@ import { Register } from "./pages/auth/Register.tsx";
 import { TwoFactor } from "./pages/auth/TwoFactor.tsx";
 import { VerifyEmail } from "./pages/auth/VerifyEmail.tsx";
 import { DeviceLogin } from "./pages/auth/DeviceLogin.tsx";
+import { OAuthAuthorize } from "./pages/auth/OAuthAuthorize.tsx";
 import { Catalog } from "./pages/Catalog.tsx";
 import { Home } from "./pages/Home.tsx";
 import { OrgPage } from "./pages/Org.tsx";
@@ -85,6 +86,8 @@ const deviceRoute = createRoute({
   validateSearch: (s: Record<string, unknown>): { user_code?: string } => ({ user_code: str(s.user_code) }),
   component: () => guard(<DeviceLogin userCode={deviceRoute.useSearch().user_code} />),
 });
+// OAuth web flow consent (GitHub's /login/oauth/authorize query); the page signs anonymous visitors in itself.
+const oauthAuthorizeRoute = createRoute({ getParentRoute: () => bareRoute, path: "/login/oauth/authorize", component: OAuthAuthorize });
 const registerRoute = createRoute({ getParentRoute: () => bareRoute, path: "/register", validateSearch: (s: Record<string, unknown>): { invite?: string } => ({ invite: str(s.invite) }), component: () => <Register invite={registerRoute.useSearch().invite} /> });
 const verifyRoute = createRoute({ getParentRoute: () => bareRoute, path: "/verify-email", validateSearch: tokenSearch, component: () => <VerifyEmail token={verifyRoute.useSearch().token} /> });
 const forgotRoute = createRoute({ getParentRoute: () => bareRoute, path: "/forgot-password", component: ForgotPassword });
@@ -153,22 +156,22 @@ const adminSettingsRoute = createRoute({
 const settingsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/settings",
-  validateSearch: (s: Record<string, unknown>): { section?: AccountSection; oidc_error?: string } => ({ section: accountSections.find((x) => x === s.section), ...oidcSearch(s) }),
+  validateSearch: (s: Record<string, unknown>): { section?: AccountSection; app?: string; oidc_error?: string } => ({ section: accountSections.find((x) => x === s.section), app: str(s.app), ...oidcSearch(s) }),
   component: function AccountRoute() {
     const s = settingsRoute.useSearch();
-    return guard(<Account section={s.section} oidcError={s.oidc_error} />);
+    return guard(<Account section={s.section} app={s.app} oidcError={s.oidc_error} />);
   },
 });
 const orgInviteRoute = createRoute({ getParentRoute: () => shellRoute, path: "/org-invite", validateSearch: tokenSearch, component: () => guard(<OrgInviteAccept token={orgInviteRoute.useSearch().token} />) });
-const orgTabValues: OrgTab[] = ["repos", "members", "teams", "invites", "hooks", "secrets", "variables", "runners", "settings"];
+const orgTabValues: OrgTab[] = ["repos", "members", "teams", "invites", "hooks", "secrets", "variables", "runners", "oauth-apps", "settings"];
 const orgRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/orgs/$org",
-  validateSearch: (s: Record<string, unknown>): { tab?: OrgTab } => ({ tab: orgTabValues.find((v) => v === s.tab) }),
+  validateSearch: (s: Record<string, unknown>): { tab?: OrgTab; app?: string } => ({ tab: orgTabValues.find((v) => v === s.tab), app: str(s.app) }),
   component: function OrgRoute() {
-    const tab = orgRoute.useSearch().tab;
+    const { tab, app } = orgRoute.useSearch();
     const navigate = orgRoute.useNavigate();
-    return guard(<OrgPage name={orgRoute.useParams().org} tab={tab ?? "repos"} onTab={(v) => void navigate({ search: { tab: v === "repos" ? undefined : v } })} />);
+    return guard(<OrgPage name={orgRoute.useParams().org} tab={tab ?? "repos"} app={app} onTab={(v) => void navigate({ search: { tab: v === "repos" ? undefined : v } })} />);
   },
 });
 const orgsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/orgs", component: () => guard(<OrgsPage />) });
@@ -431,7 +434,7 @@ const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui
 
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
-    bareRoute.addChildren([loginRoute, twoFactorRoute, deviceRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
+    bareRoute.addChildren([loginRoute, twoFactorRoute, deviceRoute, oauthAuthorizeRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
     shellRoute.addChildren([homeRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute, exploreRoute, profileRoute,
       repoRoute,
       issuesRoute,

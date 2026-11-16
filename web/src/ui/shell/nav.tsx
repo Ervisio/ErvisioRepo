@@ -97,7 +97,7 @@ export function repoSub(pathname: string): string {
 }
 
 /* Organization context: the org page tabs, opened with ?tab=. */
-export type OrgTab = "repos" | "members" | "teams" | "invites" | "hooks" | "secrets" | "variables" | "runners" | "settings";
+export type OrgTab = "repos" | "members" | "teams" | "invites" | "hooks" | "secrets" | "variables" | "runners" | "oauth-apps" | "settings";
 export type OrgNavItem = { tab: OrgTab; icon: IconName; section: Section };
 
 export function orgTabs(canManage: boolean, isOwner: boolean): OrgNavItem[] {
@@ -106,12 +106,12 @@ export function orgTabs(canManage: boolean, isOwner: boolean): OrgNavItem[] {
     { tab: "members", icon: "users", section: "pr" },
     { tab: "teams", icon: "users", section: "pr" },
     ...(canManage ? [{ tab: "invites" as const, icon: "plus" as const, section: "pr" as const }] : []),
-    // Webhooks, secrets, variables and runners live under Settings, in its own sub-navigation.
+    // Webhooks, secrets, variables, runners and OAuth apps live under Settings, in its own sub-navigation.
     ...(isOwner ? [{ tab: "settings" as const, icon: "gear" as const, section: "issue" as const }] : []),
   ];
 }
 
-const orgSettingsTabs = ["settings", "hooks", "secrets", "variables", "runners"] as const;
+const orgSettingsTabs = ["settings", "hooks", "secrets", "variables", "runners", "oauth-apps"] as const;
 export type OrgSettingsTab = (typeof orgSettingsTabs)[number];
 export const isOrgSettingsTab = (tab: string): tab is OrgSettingsTab => (orgSettingsTabs as readonly string[]).includes(tab);
 

@@ -156,6 +156,14 @@ Riferimento visivo: `design/mock/direzione-a.html` e lo screenshot approvato in 
   - Barra laterale Informazioni: riga "N stelle". Persone che seguono e fork non hanno ancora un conteggio nell'API e non compaiono.
   - Profilo: il README del repository pubblico `utente/utente` sta in un box sopra i repository, con "utente / README.md" e matita per il proprietario; se manca, solo il proprietario vede una card tratteggiata "Presentati con un README" che crea repository e README.md.
 
+- **App e bot (2026-11-16).** Round `013-app-e-bot`, variante A "GitHub fedele".
+  - Impostazioni sviluppatore dentro il frame delle impostazioni: gruppo "Sviluppatore" nella sottonav con App, OAuth App e Token personali.
+  - Modulo di registrazione a campi in colonna (etichetta, controllo), titoli di sezione su filetto, pulsante primario in fondo.
+  - Permessi (per le App, A2): box bordato con una riga per permesso e segmentato a tre vie Nessuno / Lettura / Scrittura. Eventi come chip.
+  - Installazione e consenso: card centrata con logo 56 px (quadrato con iniziale se manca), "di proprietario", account, permessi in parole, Autorizza primario e Annulla.
+  - Elenco `/apps`: righe separate da filetti con logo 48 px, nome, proprietario, descrizione, installazioni e "Installa". Pagina di configurazione di Claude (A3) nelle impostazioni dell'org.
+  - A1 implementa: OAuth App personali e di org (elenco, registrazione, pagina dell'app con client ID, secret mostrati una volta, modifica, eliminazione), "Applicazioni" autorizzate con revoca, pagina di consenso `/login/oauth/authorize`, impostazione `security.app_registration`. "App" resta un segnaposto fino ad A2.
+
 ## Implementazione (web/src/ui)
 
 - Kit sopra primitive Radix: Button, Input, Select, Dialog, Menu, Tabs, Table, Badge, Toast, EmptyState, più Card e Icon. Lo stile è nostro, solo da token (`web/src/ui/ui.css`).

@@ -421,5 +421,10 @@
   "enum.console": "Console",
   "enum.foglio": "Foglio",
   "enum.corsie": "Corsie",
-  "user.bot": "Account bot: è gestito da Ervisio, nessuno può accedere con questo account e non si può modificare né sospendere."
+  "user.bot": "Account bot: è gestito da Ervisio, nessuno può accedere con questo account e non si può modificare né sospendere.",
+  "set.security.app_registration": "Registrazione delle app",
+  "set.security.app_registration.d": "Chi può registrare OAuth App e App (vale per entrambe).",
+  "enum.everyone": "Tutti: account personali e organizzazioni",
+  "enum.org_owners": "Solo i proprietari delle organizzazioni",
+  "enum.admins": "Solo gli amministratori dell'istanza"
 }

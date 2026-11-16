@@ -11,6 +11,7 @@ export type SettingFormat = "duration" | "size";
 const enums: Record<string, readonly string[]> = {
   "security.registration": ["open", "invite", "closed"],
   "security.user_directory": ["shared", "instance"],
+  "security.app_registration": ["everyone", "org_owners", "admins"],
   "log.level": ["debug", "info", "warn", "error"],
   "log.format": ["json", "text"],
   "mail.tls": ["starttls", "tls", "none"],

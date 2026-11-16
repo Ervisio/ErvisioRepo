@@ -66,6 +66,9 @@ import { CreateRepoDialog, RepoRows } from "./repos/RepoList.tsx";
 import { Entries, Runners } from "./actions/Settings.tsx";
 import { Webhooks } from "./settings/Webhooks.tsx";
 import { Async, formatDate, Secret, useNotify } from "./account/common.tsx";
+import { canRegisterApps } from "../api/oauth.ts";
+import { useMeta } from "../api/useMeta.ts";
+import { OAuthAppsSection, type AppsNav, type AppTarget } from "./oauth/OAuthApps.tsx";
 import { isOrgSettingsTab, orgTabs, type OrgSettingsTab, type OrgTab } from "../ui/shell/nav.tsx";
 
 const roles: OrgRole[] = ["owner", "admin", "member"];
@@ -498,12 +501,21 @@ function Settings({ org }: { org: Org }) {
 }
 
 /** Settings-type tabs share one SettingsLayout; the sidebar shows them as a single entry. */
-function OrgSettings({ org, tab }: { org: Org; tab: OrgSettingsTab }) {
+function OrgSettings({ org, tab, app }: { org: Org; tab: OrgSettingsTab; app?: string }) {
   const t = useT("org");
+  const navigate = useNavigate();
+  const meta = useMeta().data;
+  const instanceAdmin = useSession().data?.role === "admin";
+  const appSearch = (to: AppTarget) => ({ tab: "oauth-apps" as const, app: to.kind === "list" ? undefined : to.kind === "new" ? "new" : to.clientId });
+  const appsNav: AppsNav = {
+    link: (to, props) => <Link to="/orgs/$org" params={{ org: org.name }} search={appSearch(to)} className={props.className}>{props.children}</Link>,
+    go: (to) => void navigate({ to: "/orgs/$org", params: { org: org.name }, search: appSearch(to) }),
+  };
   const scope = { kind: "org" as const, org: org.name };
   const item = (id: OrgSettingsTab, icon: SettingsNavItem["icon"]): SettingsNavItem => ({ id, icon, label: t(id === "settings" ? "settings.general" : `tab.${id}`) });
   const groups: SettingsNavGroup[] = [
     { title: t("settings.group.org"), items: [item("settings", "gear"), item("hooks", "bell")] },
+    { title: t("settings.group.developer"), items: [item("oauth-apps", "cpu")] },
     { title: t("settings.group.actions"), items: [item("secrets", "lock"), item("variables", "code"), item("runners", "cpu")] },
   ];
   return (
@@ -518,12 +530,15 @@ function OrgSettings({ org, tab }: { org: Org; tab: OrgSettingsTab }) {
       {tab === "secrets" && <Entries scope={scope} kind="secrets" />}
       {tab === "variables" && <Entries scope={scope} kind="variables" />}
       {tab === "runners" && <Runners scope={scope} />}
+      {tab === "oauth-apps" && (
+        <OAuthAppsSection owner={{ kind: "org", org: org.name }} app={app} nav={appsNav} canRegister={canRegisterApps(meta?.appRegistration, "org", instanceAdmin)} />
+      )}
     </SettingsLayout>
   );
 }
 
 /** Organization page: members, teams and invitations. Owners can manage; others read. */
-export function OrgPage({ name, tab, onTab }: { name: string; tab: OrgTab; onTab: (tab: OrgTab) => void }) {
+export function OrgPage({ name, tab, app, onTab }: { name: string; tab: OrgTab; app?: string; onTab: (tab: OrgTab) => void }) {
   const t = useT("org");
   const tc = useT("common");
   const org = useOrg(name);
@@ -555,7 +570,7 @@ export function OrgPage({ name, tab, onTab }: { name: string; tab: OrgTab; onTab
   if (settingsTab) {
     return (
       <Page section="pr" title={o.displayName || o.name} subtitle={`@${o.name}`} compact>
-        <OrgSettings org={o} tab={settingsTab} />
+        <OrgSettings org={o} tab={settingsTab} app={app} />
       </Page>
     );
   }

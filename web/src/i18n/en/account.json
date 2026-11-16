@@ -177,5 +177,9 @@
   "layout.console": "Console",
   "layout.foglio": "Sheet",
   "layout.corsie": "Lanes",
-  "appearance.saved": "Appearance saved"
+  "appearance.saved": "Appearance saved",
+  "tab.applications": "Applications",
+  "tab.apps": "Apps",
+  "tab.oauth-apps": "OAuth Apps",
+  "group.developer": "Developer settings"
 }

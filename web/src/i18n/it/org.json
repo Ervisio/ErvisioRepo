@@ -103,5 +103,7 @@
   "danger.deleteTitle": "Eliminare {name}?",
   "danger.deleteDialogHint": "Tutti i repository, i team e le iscrizioni di questa organizzazione vengono eliminati definitivamente.",
   "danger.deleteConfirm": "Elimina definitivamente",
-  "danger.deleted": "Organizzazione eliminata"
+  "danger.deleted": "Organizzazione eliminata",
+  "tab.oauth-apps": "OAuth App",
+  "settings.group.developer": "Impostazioni sviluppatore"
 }

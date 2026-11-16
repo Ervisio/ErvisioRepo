@@ -421,5 +421,10 @@
   "enum.console": "Console",
   "enum.foglio": "Sheet",
   "enum.corsie": "Lanes",
-  "user.bot": "Bot account: managed by Ervisio, nobody can sign in as it, and it cannot be changed or suspended."
+  "user.bot": "Bot account: managed by Ervisio, nobody can sign in as it, and it cannot be changed or suspended.",
+  "set.security.app_registration": "App registration",
+  "set.security.app_registration.d": "Who can register OAuth apps and Apps (covers both).",
+  "enum.everyone": "Everyone: personal accounts and organizations",
+  "enum.org_owners": "Organization owners only",
+  "enum.admins": "Instance administrators only"
 }
