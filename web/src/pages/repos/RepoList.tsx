@@ -1,37 +1,82 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { useMyOrgs, useSession } from "../../api/identity.ts";
 import { useCreateRepo, useForkRepo, type Repo, type Visibility } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, Button, Card, Dialog, Input, Select } from "../../ui/index.ts";
+import { Button, Dialog, Input, Select } from "../../ui/index.ts";
+import { formatBytes, When } from "../code/common.tsx";
 import { PinButton } from "./PinButton.tsx";
 import { Async, useNotify } from "../account/common.tsx";
 import type { UseQueryResult } from "@tanstack/react-query";
 
 export const visibilities: Visibility[] = ["private", "internal", "public"];
 
-/** Repository rows of an owner, each linking to the repository page. */
-export function RepoRows({ query }: { query: UseQueryResult<Repo[]> }) {
+type TypeFilter = "all" | Visibility;
+type SortKey = "updated" | "name";
+
+/** One repository in GitHub style: name, visibility, description, last update and size, an optional pin. */
+export function RepoRow({ repo: r, showOwner, pin = true }: { repo: Repo; showOwner?: boolean; pin?: boolean }) {
   const t = useT("repos");
   return (
-    <Async query={query} empty={t("list.empty")}>
-      {(rows) =>
-        rows.map((r) => (
-          <div key={r.id} className="ui-row acc-wrap">
-            <div className="acc-grow">
-              <div className="acc-title">
-                <Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }}>
-                  <b>{r.fullName}</b>
-                </Link>
-                <Badge tone={r.visibility === "public" ? "ok" : "neutral"}>{t(`visibility.${r.visibility}`)}</Badge>
-              </div>
-              {r.description && <div className="ui-note">{r.description}</div>}
-            </div>
-            <PinButton owner={r.owner} name={r.name} compact />
-          </div>
-        ))
-      }
-    </Async>
+    <li className="rl-row">
+      <div className="rl-main">
+        <h3 className="rl-h">
+          <Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="rl-name">
+            {showOwner ? `${r.owner} / ${r.name}` : r.name}
+          </Link>
+          <span className="rl-vis">{t(`visibility.${r.visibility}`)}</span>
+        </h3>
+        {r.description && <p className="rl-desc">{r.description}</p>}
+        <p className="rl-meta">
+          <span>{t("list.updated")} <When iso={r.updatedAt} /></span>
+          {r.sizeBytes > 0 && <span>{formatBytes(r.sizeBytes)}</span>}
+        </p>
+      </div>
+      {pin && <PinButton owner={r.owner} name={r.name} compact />}
+    </li>
+  );
+}
+
+/** Repository list with GitHub's filter bar: find by name, type and sort, all on the loaded page. */
+export function RepoRows({ query, showOwner, action }: { query: UseQueryResult<Repo[]>; showOwner?: boolean; action?: ReactNode }) {
+  const t = useT("repos");
+  const [q, setQ] = useState("");
+  const [type, setType] = useState<TypeFilter>("all");
+  const [sort, setSort] = useState<SortKey>("updated");
+  const needle = q.trim().toLowerCase();
+  return (
+    <div className="rl">
+      <div className="rl-bar" role="search">
+        <Input className="rl-find" label={t("list.find")} hideLabel type="search" placeholder={t("list.find")} value={q} onChange={(e) => setQ(e.target.value)} />
+        <Select
+          label={t("list.type")}
+          hideLabel
+          value={type}
+          onValueChange={(v) => setType(v as TypeFilter)}
+          options={[{ value: "all", label: t("list.type.all") }, ...visibilities.map((v) => ({ value: v, label: t(`visibility.${v}`) }))]}
+        />
+        <Select
+          label={t("explore.sort")}
+          hideLabel
+          value={sort}
+          onValueChange={(v) => setSort(v === "name" ? "name" : "updated")}
+          options={[{ value: "updated", label: t("explore.sort.updated") }, { value: "name", label: t("explore.sort.name") }]}
+        />
+        {action}
+      </div>
+      <Async query={query} empty={t("list.empty")}>
+        {(rows) => {
+          const shown = rows
+            .filter((r) => (type === "all" || r.visibility === type) && (!needle || `${r.name} ${r.description}`.toLowerCase().includes(needle)))
+            .sort((x, y) => (sort === "name" ? x.name.localeCompare(y.name) : y.updatedAt.localeCompare(x.updatedAt)));
+          return shown.length === 0 ? (
+            <p className="ui-note rl-none">{t("explore.noMatch")}</p>
+          ) : (
+            <ul className="rl-list">{shown.map((r) => <RepoRow key={r.id} repo={r} showOwner={showOwner} />)}</ul>
+          );
+        }}
+      </Async>
+    </div>
   );
 }
 
@@ -82,14 +127,9 @@ export function CreateRepoDialog({ org, open: openProp, onOpenChange }: { org?: 
   );
 }
 
-/** The repositories of the signed-in user. */
+/** The repositories of the signed-in user, with their owner since organizations are included. */
 export function MyRepos({ repos }: { repos: UseQueryResult<Repo[]> }) {
-  const t = useT("repos");
-  return (
-    <Card title={t("list.title")} actions={<CreateRepoDialog />}>
-      <RepoRows query={repos} />
-    </Card>
-  );
+  return <RepoRows query={repos} showOwner action={<CreateRepoDialog />} />;
 }
 
 /** Fork dialog: the copy goes to the signed-in user or to an organization they manage. */

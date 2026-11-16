@@ -2514,6 +2514,27 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /users/{username}:
+    parameters:
+      - $ref: "#/components/parameters/Username"
+    get:
+      operationId: getUserProfile
+      tags: [repos]
+      summary: Public profile of a user
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
   /users/{username}/repos:
     parameters:
       - $ref: "#/components/parameters/Username"
@@ -11229,6 +11250,14 @@ components:
         username: {type: string}
         displayName: {type: string}
         avatarUrl: {type: string, description: Absolute https URL of the avatar; empty when unset}
+    UserProfile:
+      type: object
+      required: [username, displayName, avatarUrl, createdAt]
+      properties:
+        username: {type: string}
+        displayName: {type: string}
+        avatarUrl: {type: string, description: Absolute https URL of the avatar; empty when unset}
+        createdAt: {type: string, format: date-time}
     RepoCollaborator:
       type: object
       required: [username, displayName, permission, since]

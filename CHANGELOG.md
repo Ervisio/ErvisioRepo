@@ -6,8 +6,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Public user profiles at `/{username}` (also reachable signed out) with the user's repositories, and a "Your profile" entry in the user menu. New endpoint `GET /users/{username}` (`UserProfile`: username, display name, avatar, join date); unknown, organization and suspended names answer 404.
+
 ### Changed
 
+- Repository lists (organization, my repositories, profile, Explore) follow GitHub: filter bar with find, type and sort, and rows with visibility, description, last update and size. The organization page gets a GitHub-style header and a side column with people and teams.
 - Settings pages (account, repository, organization, instance admin) follow GitHub's layout: grouped side menu with an accent bar, open sections titled on a rule, stacked fields, bordered lists and tables, and a danger zone in a red-bordered box.
 
 ### Fixed

@@ -404,6 +404,35 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUs
 	return i, err
 }
 
+const getUserProfileByUsername = `-- name: GetUserProfileByUsername :one
+SELECT n.name AS username, u.display_name, u.avatar_url, u.suspended_at, u.created_at
+FROM users u
+JOIN namespaces n ON n.id = u.id
+WHERE n.name_lower = lower($1::text)
+`
+
+type GetUserProfileByUsernameRow struct {
+	Username    string
+	DisplayName string
+	AvatarUrl   string
+	SuspendedAt pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+}
+
+// Public profile fields of a user account (organizations have no users row).
+func (q *Queries) GetUserProfileByUsername(ctx context.Context, username string) (GetUserProfileByUsernameRow, error) {
+	row := q.db.QueryRow(ctx, getUserProfileByUsername, username)
+	var i GetUserProfileByUsernameRow
+	err := row.Scan(
+		&i.Username,
+		&i.DisplayName,
+		&i.AvatarUrl,
+		&i.SuspendedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getValidInvite = `-- name: GetValidInvite :one
 SELECT id, email FROM invites
 WHERE token_hash = $1 AND used_at IS NULL AND expires_at > now()

@@ -41,6 +41,7 @@ export type Permission = S["Permission"];
 export type Org = S["Org"];
 export type OrgMember = S["OrgMember"];
 export type Team = S["Team"];
+export type UserProfile = S["UserProfile"];
 export type OrgInvite = S["OrgInvite"];
 export type AuditEntry = S["AuditEntry"];
 export type AuditPage = S["AuditPage"];
@@ -150,6 +151,9 @@ export const acceptOrgInvite = (token: string) => request<S["OrgInviteAccepted"]
 export const useOrg = (org: string) => useQuery({ queryKey: ["orgs", org], queryFn: () => request<Org>("GET", `/orgs/${enc(org)}`) });
 export const useUpdateOrg = (org: string) =>
   useInvalidating<S["OrgUpdate"], Org>([["orgs", org]], (b) => request("PATCH", `/orgs/${enc(org)}`, b));
+/** Public profile of a user; works signed out. */
+export const useUserProfile = (username: string) =>
+  useQuery({ queryKey: ["users", username, "profile"], retry: false, queryFn: () => request<UserProfile>("GET", `/users/${enc(username)}`) });
 export const useOrgMembers = (org: string) =>
   useQuery({ queryKey: ["orgs", org, "members"], queryFn: () => request<OrgMember[]>("GET", `/orgs/${enc(org)}/members`) });
 export const useOrgTeams = (org: string) =>

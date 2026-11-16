@@ -144,6 +144,11 @@ Riferimento visivo: `design/mock/direzione-a.html` e lo screenshot approvato in 
   - Liste e tabelle in un box bordato con righe separate da filetti; zona pericolosa = titolo normale sopra un box bordato `--err`.
   - Sotto i 900 px la sottonav diventa una fila di pillole scorrevole.
 
+- **Profilo, org e liste (2026-11-16).** Round `011-profilo-org-liste`, variante A "GitHub classico".
+  - Liste di repository (org, I miei repo, profilo, Esplora): barra filtri (trova, tipo, ordinamento) sopra righe separate da filetti; nome in `--acc-text` 600 16 px, pillola di visibilità, descrizione, "Aggiornato" e dimensione.
+  - Organizzazione: testata con avatar quadrato 96 px, nome e badge, descrizione, filetto sotto; nel tab Repository colonna laterale da 296 px con persone e team.
+  - Profilo utente `/{username}`: avatar tondo 296 px, nome, login e "Modifica profilo" a sinistra, repository a destra. Pubblico anche senza login.
+
 ## Implementazione (web/src/ui)
 
 - Kit sopra primitive Radix: Button, Input, Select, Dialog, Menu, Tabs, Table, Badge, Toast, EmptyState, più Card e Icon. Lo stile è nostro, solo da token (`web/src/ui/ui.css`).

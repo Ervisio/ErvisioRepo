@@ -2,6 +2,10 @@
   "page.title": "Repository",
   "list.title": "Repository",
   "list.empty": "Ancora nessun repository",
+  "list.updated": "Aggiornato",
+  "list.find": "Trova un repository…",
+  "list.type": "Tipo",
+  "list.type.all": "Tutti",
   "error": "Impossibile caricare il repository",
   "visibility.private": "Privato",
   "visibility.internal": "Interno",
@@ -163,5 +167,9 @@
   "explore.sort.name": "Nome",
   "explore.empty": "Ancora nessun repository pubblico.",
   "explore.noMatch": "Nessun repository corrisponde alla ricerca.",
-  "explore.count": "{count} repository"
+  "explore.count": "{count} repository",
+  "profile.notFound": "Nessun utente con questo nome",
+  "profile.tryOrg": "Apri come organizzazione",
+  "profile.edit": "Modifica profilo",
+  "profile.joined": "Iscritto il {date}"
 }

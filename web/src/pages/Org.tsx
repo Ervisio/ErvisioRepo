@@ -59,6 +59,7 @@ import {
   type SettingsNavItem,
 } from "../ui/index.ts";
 import { useLayout } from "../ui/shell/layout.ts";
+import { Avatar } from "../ui/shell/ConsoleShell.tsx";
 import { useOwnerRepos } from "../api/repos.ts";
 import { orgHooks } from "../api/settings.ts";
 import { CreateRepoDialog, RepoRows } from "./repos/RepoList.tsx";
@@ -374,13 +375,54 @@ function Invites({ org, canManage }: { org: string; canManage: boolean }) {
   );
 }
 
-function OrgRepos({ org }: { org: string }) {
-  const t = useT("org");
+function OrgRepos({ org, canCreate }: { org: string; canCreate: boolean }) {
   const repos = useOwnerRepos(org, "org");
+  return <RepoRows query={repos} action={canCreate ? <CreateRepoDialog org={org} /> : undefined} />;
+}
+
+/** GitHub-style organization header: square avatar, name with badges, description. */
+function OrgHead({ org }: { org: Org }) {
+  const t = useT("org");
   return (
-    <Card title={t("list.title")} actions={<CreateRepoDialog org={org} />}>
-      <RepoRows query={repos} />
-    </Card>
+    <header className="oh">
+      <span className="oh-av" aria-hidden="true">{(org.displayName || org.name).slice(0, 1).toUpperCase()}</span>
+      <div className="oh-m">
+        <p className="oh-name">
+          {org.displayName || org.name}
+          {org.verified && <Badge tone="ok">{t("verified")}</Badge>}
+          {org.role && <Badge>{t(`role.${org.role}`)}</Badge>}
+        </p>
+        <p className="oh-login">@{org.name}</p>
+        {org.description && <p className="oh-desc">{org.description}</p>}
+      </div>
+    </header>
+  );
+}
+
+/** Side column of the repositories tab: people and teams at a glance. */
+function OrgAside({ org }: { org: string }) {
+  const t = useT("org");
+  const members = useOrgMembers(org);
+  const teams = useOrgTeams(org);
+  return (
+    <>
+      {members.data && members.data.length > 0 && (
+        <section className="oh-side">
+          <h2>{t("members.title")}</h2>
+          <ul className="oh-people">
+            {members.data.slice(0, 24).map((m) => (
+              <li key={m.username} title={m.displayName || m.username}><Avatar user={{ username: m.username, avatarUrl: "" }} size="lg" /></li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {teams.data && teams.data.length > 0 && (
+        <section className="oh-side">
+          <h2>{t("teams.title")}</h2>
+          <p className="ui-note">{teams.data.map((x) => x.name).join(" · ")}</p>
+        </section>
+      )}
+    </>
   );
 }
 
@@ -510,33 +552,31 @@ export function OrgPage({ name, tab, onTab }: { name: string; tab: OrgTab; onTab
   const canManage = isOwner || o.role === "admin";
   const settingsTab = isOrgSettingsTab(tab) && isOwner ? tab : undefined;
   const current = settingsTab ? "settings" : orgTabs(canManage, isOwner).some((it) => it.tab === tab) ? tab : "repos";
+  if (settingsTab) {
+    return (
+      <Page section="pr" title={o.displayName || o.name} subtitle={`@${o.name}`} compact>
+        <OrgSettings org={o} tab={settingsTab} />
+      </Page>
+    );
+  }
   return (
-    <Page
-      section="pr"
-      title={o.displayName || o.name}
-      subtitle={`@${o.name}`}
-      compact={settingsTab !== undefined}
-      actions={
-        <>
-          {o.verified && <Badge tone="ok">{t("verified")}</Badge>}
-          {o.role && <Badge>{t(`role.${o.role}`)}</Badge>}
-        </>
-      }
-    >
-      {o.description && <p className="acc-desc">{o.description}</p>}
-      <Tabs value={current} onValueChange={(v) => onTab(v as OrgTab)}>
-        {/* The console sidebar already lists these sections. */}
-        {layout !== "console" && (
-          <TabsList aria-label={t("tabs")}>
-            {orgTabs(canManage, isOwner).map((it) => <TabsTrigger key={it.tab} value={it.tab}>{t(`tab.${it.tab}`)}</TabsTrigger>)}
-          </TabsList>
-        )}
-        <TabsContent value="repos"><OrgRepos org={o.name} /></TabsContent>
-        <TabsContent value="members"><Members org={o.name} canManage={canManage} /></TabsContent>
-        <TabsContent value="teams"><Teams org={o.name} canManage={canManage} /></TabsContent>
-        {canManage && <TabsContent value="invites"><Invites org={o.name} canManage={canManage} /></TabsContent>}
-        {settingsTab && <TabsContent value="settings"><OrgSettings org={o} tab={settingsTab} /></TabsContent>}
-      </Tabs>
+    <Page section="pr" title={o.displayName || o.name} quiet>
+      <OrgHead org={o} />
+      <div className={current === "repos" ? "oh-grid" : undefined}>
+        <Tabs value={current} onValueChange={(v) => onTab(v as OrgTab)}>
+          {/* The console sidebar already lists these sections. */}
+          {layout !== "console" && (
+            <TabsList aria-label={t("tabs")}>
+              {orgTabs(canManage, isOwner).map((it) => <TabsTrigger key={it.tab} value={it.tab}>{t(`tab.${it.tab}`)}</TabsTrigger>)}
+            </TabsList>
+          )}
+          <TabsContent value="repos"><OrgRepos org={o.name} canCreate={o.role !== undefined || instanceAdmin} /></TabsContent>
+          <TabsContent value="members"><Members org={o.name} canManage={canManage} /></TabsContent>
+          <TabsContent value="teams"><Teams org={o.name} canManage={canManage} /></TabsContent>
+          {canManage && <TabsContent value="invites"><Invites org={o.name} canManage={canManage} /></TabsContent>}
+        </Tabs>
+        {current === "repos" && <aside className="oh-aside"><OrgAside org={o.name} /></aside>}
+      </div>
     </Page>
   );
 }

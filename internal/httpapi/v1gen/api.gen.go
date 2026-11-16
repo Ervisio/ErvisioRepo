@@ -5314,6 +5314,15 @@ type UserPreferencesUpdateLayout string
 // UserPreferencesUpdateTheme defines model for UserPreferencesUpdate.Theme.
 type UserPreferencesUpdateTheme string
 
+// UserProfile defines model for UserProfile.
+type UserProfile struct {
+	// AvatarUrl Absolute https URL of the avatar; empty when unset
+	AvatarUrl   string    `json:"avatarUrl"`
+	CreatedAt   time.Time `json:"createdAt"`
+	DisplayName string    `json:"displayName"`
+	Username    string    `json:"username"`
+}
+
 // UserSummary defines model for UserSummary.
 type UserSummary struct {
 	// AvatarUrl Absolute https URL of the avatar; empty when unset
@@ -7446,6 +7455,9 @@ type ServerInterface interface {
 	// RevokeAccessToken Revoke a personal access token
 	// (DELETE /user/tokens/{id})
 	RevokeAccessToken(w http.ResponseWriter, r *http.Request, id CredentialID)
+	// GetUserProfile Public profile of a user
+	// (GET /users/{username})
+	GetUserProfile(w http.ResponseWriter, r *http.Request, username Username)
 	// ListUserRepos Repositories of a user the caller can see
 	// (GET /users/{username}/repos)
 	ListUserRepos(w http.ResponseWriter, r *http.Request, username Username, params ListUserReposParams)
@@ -9291,6 +9303,12 @@ func (_ Unimplemented) CreateAccessToken(w http.ResponseWriter, r *http.Request)
 // RevokeAccessToken Revoke a personal access token
 // (DELETE /user/tokens/{id})
 func (_ Unimplemented) RevokeAccessToken(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetUserProfile Public profile of a user
+// (GET /users/{username})
+func (_ Unimplemented) GetUserProfile(w http.ResponseWriter, r *http.Request, username Username) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -23776,6 +23794,40 @@ func (siw *ServerInterfaceWrapper) RevokeAccessToken(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// GetUserProfile operation middleware
+func (siw *ServerInterfaceWrapper) GetUserProfile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserProfile(w, r, username)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListUserRepos operation middleware
 func (siw *ServerInterfaceWrapper) ListUserRepos(w http.ResponseWriter, r *http.Request) {
 
@@ -24279,6 +24331,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/explore/repos", wrapper.ExploreRepos)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/users/{username}", wrapper.GetUserProfile)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/users/{username}/repos", wrapper.ListUserRepos)
@@ -51708,6 +51763,61 @@ func (response RevokeAccessTokendefaultApplicationProblemPlusJSONResponse) Visit
 	return err
 }
 
+type GetUserProfileRequestObject struct {
+	Username Username `json:"username"`
+}
+
+type GetUserProfileResponseObject interface {
+	VisitGetUserProfileResponse(w http.ResponseWriter) error
+}
+
+type GetUserProfile200JSONResponse UserProfile
+
+func (response GetUserProfile200JSONResponse) VisitGetUserProfileResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUserProfile404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserProfile404ApplicationProblemPlusJSONResponse) VisitGetUserProfileResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUserProfiledefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetUserProfiledefaultApplicationProblemPlusJSONResponse) VisitGetUserProfileResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListUserReposRequestObject struct {
 	Username Username `json:"username"`
 	Params   ListUserReposParams
@@ -52722,6 +52832,9 @@ type StrictServerInterface interface {
 	// RevokeAccessToken Revoke a personal access token
 	// (DELETE /user/tokens/{id})
 	RevokeAccessToken(ctx context.Context, request RevokeAccessTokenRequestObject) (RevokeAccessTokenResponseObject, error)
+	// GetUserProfile Public profile of a user
+	// (GET /users/{username})
+	GetUserProfile(ctx context.Context, request GetUserProfileRequestObject) (GetUserProfileResponseObject, error)
 	// ListUserRepos Repositories of a user the caller can see
 	// (GET /users/{username}/repos)
 	ListUserRepos(ctx context.Context, request ListUserReposRequestObject) (ListUserReposResponseObject, error)
@@ -61664,6 +61777,32 @@ func (sh *strictHandler) RevokeAccessToken(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RevokeAccessTokenResponseObject); ok {
 		if err := validResponse.VisitRevokeAccessTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUserProfile operation middleware
+func (sh *strictHandler) GetUserProfile(w http.ResponseWriter, r *http.Request, username Username) {
+	var request GetUserProfileRequestObject
+
+	request.Username = username
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserProfile(ctx, request.(GetUserProfileRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserProfile")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUserProfileResponseObject); ok {
+		if err := validResponse.VisitGetUserProfileResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

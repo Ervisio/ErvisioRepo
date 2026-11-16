@@ -58,6 +58,7 @@
   "bell.unread": "Notifications, {count} unread",
   "user.menu": "Account menu",
   "user.settings": "Settings",
+  "user.profile": "Your profile",
   "user.repos": "Your repositories",
   "user.orgs": "Your organizations",
   "user.signOut": "Sign out",

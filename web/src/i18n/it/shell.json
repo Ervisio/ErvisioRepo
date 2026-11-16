@@ -58,6 +58,7 @@
   "bell.unread": "Notifiche, {count} non lette",
   "user.menu": "Menu account",
   "user.settings": "Impostazioni",
+  "user.profile": "Il tuo profilo",
   "user.repos": "I tuoi repository",
   "user.orgs": "Le tue organizzazioni",
   "user.signOut": "Esci",

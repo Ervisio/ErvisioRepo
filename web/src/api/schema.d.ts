@@ -1669,6 +1669,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/{username}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        /** Public profile of a user */
+        get: operations["getUserProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/{username}/repos": {
         parameters: {
             query?: never;
@@ -6443,6 +6462,14 @@ export interface components {
             /** @description Absolute https URL of the avatar; empty when unset */
             avatarUrl: string;
         };
+        UserProfile: {
+            username: string;
+            displayName: string;
+            /** @description Absolute https URL of the avatar; empty when unset */
+            avatarUrl: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
         RepoCollaborator: {
             username: string;
             displayName: string;
@@ -10481,6 +10508,30 @@ export interface operations {
                 };
             };
             400: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getUserProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfile"];
+                };
+            };
+            404: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

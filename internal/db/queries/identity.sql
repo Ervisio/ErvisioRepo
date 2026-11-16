@@ -158,3 +158,10 @@ WHERE u.suspended_at IS NULL
     AND (n.name_lower LIKE @pattern::text OR lower(u.display_name) LIKE @pattern::text)
 ORDER BY (n.name_lower = @exact::text) DESC, (n.name_lower LIKE @pattern::text) DESC, n.name_lower
 LIMIT @lim;
+
+-- name: GetUserProfileByUsername :one
+-- Public profile fields of a user account (organizations have no users row).
+SELECT n.name AS username, u.display_name, u.avatar_url, u.suspended_at, u.created_at
+FROM users u
+JOIN namespaces n ON n.id = u.id
+WHERE n.name_lower = lower(sqlc.arg(username)::text);

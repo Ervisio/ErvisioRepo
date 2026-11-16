@@ -338,6 +338,8 @@ type Querier interface {
 	GetUserIDByEmail(ctx context.Context, address string) (uuid.UUID, error)
 	GetUserOIDCLink(ctx context.Context, arg GetUserOIDCLinkParams) (GetUserOIDCLinkRow, error)
 	GetUserPreferences(ctx context.Context, userID uuid.UUID) (UserPreference, error)
+	// Public profile fields of a user account (organizations have no users row).
+	GetUserProfileByUsername(ctx context.Context, username string) (GetUserProfileByUsernameRow, error)
 	GetValidInvite(ctx context.Context, tokenHash []byte) (GetValidInviteRow, error)
 	GetWebAuthnHandle(ctx context.Context, userID uuid.UUID) ([]byte, error)
 	GetWebhook(ctx context.Context, id uuid.UUID) (Webhook, error)

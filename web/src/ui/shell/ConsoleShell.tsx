@@ -297,6 +297,9 @@ function UserMenu({ user, trigger }: { user: User; trigger: ReactNode }) {
         </span>
       </div>
       <MenuItem asChild>
+        <Link to="/$owner" params={{ owner: user.username }}><Icon name="user" />{t("user.profile")}</Link>
+      </MenuItem>
+      <MenuItem asChild>
         <Link to="/repos"><Icon name="book" />{t("user.repos")}</Link>
       </MenuItem>
       <MenuItem asChild>

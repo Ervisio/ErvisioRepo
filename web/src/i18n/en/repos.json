@@ -2,6 +2,10 @@
   "page.title": "Repositories",
   "list.title": "Repositories",
   "list.empty": "No repositories yet",
+  "list.updated": "Updated",
+  "list.find": "Find a repository…",
+  "list.type": "Type",
+  "list.type.all": "All",
   "error": "Could not load the repository",
   "visibility.private": "Private",
   "visibility.internal": "Internal",
@@ -163,5 +167,9 @@
   "explore.sort.name": "Name",
   "explore.empty": "No public repositories yet.",
   "explore.noMatch": "No repositories match your search.",
-  "explore.count": "{count} repositories"
+  "explore.count": "{count} repositories",
+  "profile.notFound": "No user with this name",
+  "profile.tryOrg": "Open as organization",
+  "profile.edit": "Edit profile",
+  "profile.joined": "Joined {date}"
 }

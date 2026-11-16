@@ -25,6 +25,7 @@ import { TreePage } from "./pages/code/TreePage.tsx";
 import { ReleaseFormPage, ReleasePage, ReleasesPage } from "./pages/releases/ReleasesPages.tsx";
 import { ExplorePage } from "./pages/repos/ExplorePage.tsx";
 import { MyReposPage } from "./pages/repos/MyReposPage.tsx";
+import { ProfilePage } from "./pages/repos/ProfilePage.tsx";
 import { RepoSettings, repoSettingsSections, type RepoSettingsSection } from "./pages/repos/RepoSettings.tsx";
 import { IssuePage, IssuesPage, NewIssuePage, type IssueSearch } from "./pages/issues/IssuesPages.tsx";
 import { NotificationsPage, type InboxSearch } from "./pages/notifications/NotificationsPage.tsx";
@@ -168,6 +169,11 @@ const exploreRoute = createRoute({
   path: "/explore",
   validateSearch: (s: Record<string, unknown>): { q?: string; sort?: "name"; page?: number } => ({ q: str(s.q), sort: s.sort === "name" ? "name" : undefined, ...pageSearch(s) }),
   component: () => <ExplorePage search={exploreRoute.useSearch()} />,
+});
+const profileRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner",
+  component: () => <ProfilePage username={profileRoute.useParams().owner} />,
 });
 const reposRoute = createRoute({ getParentRoute: () => shellRoute, path: "/repos", component: () => guard(<MyReposPage />) });
 type RefPath = { ref?: string; path?: string };
@@ -418,7 +424,7 @@ const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
     bareRoute.addChildren([loginRoute, twoFactorRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
-    shellRoute.addChildren([homeRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute, exploreRoute,
+    shellRoute.addChildren([homeRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, reposRoute, exploreRoute, profileRoute,
       repoRoute,
       issuesRoute,
       issueNewRoute,

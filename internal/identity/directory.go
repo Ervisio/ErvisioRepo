@@ -2,11 +2,14 @@ package identity
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/config"
@@ -68,4 +71,30 @@ func (s *Service) SearchUsers(ctx context.Context, who auth.Principal, query str
 func likePrefix(p string) string {
 	r := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 	return r.Replace(p) + "%"
+}
+
+// Profile is the public view of a user account.
+type Profile struct {
+	Username    string
+	DisplayName string
+	AvatarURL   string
+	CreatedAt   time.Time
+}
+
+// UserProfile returns the public profile of the named user, or
+// ErrNotFound when the name is unknown, belongs to an organization or the
+// account is suspended.
+func (s *Service) UserProfile(ctx context.Context, username string) (Profile, error) {
+	row, err := s.q.GetUserProfileByUsername(ctx, username)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Profile{}, ErrNotFound
+	}
+	if err != nil {
+		return Profile{}, fmt.Errorf("get user profile: %w", err)
+	}
+	if row.SuspendedAt.Valid {
+		return Profile{}, ErrNotFound
+	}
+	return Profile{Username: row.Username, DisplayName: row.DisplayName, AvatarURL: row.AvatarUrl,
+		CreatedAt: row.CreatedAt.Time}, nil
 }

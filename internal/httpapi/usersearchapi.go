@@ -2,12 +2,14 @@ package httpapi
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+	"github.com/Ervisio/ErvisioRepo/internal/identity"
 )
 
 func (p problemResponse) VisitSearchUsersResponse(w http.ResponseWriter) error { return p.write(w) }
@@ -50,4 +52,23 @@ func (s *v1Server) SearchUsers(ctx context.Context, req v1gen.SearchUsersRequest
 			AvatarUrl: u.AvatarURL})
 	}
 	return out, nil
+}
+
+func (p problemResponse) VisitGetUserProfileResponse(w http.ResponseWriter) error { return p.write(w) }
+
+// GetUserProfile serves the public profile page of a user; signed-out
+// visitors may call it.
+func (s *v1Server) GetUserProfile(ctx context.Context, req v1gen.GetUserProfileRequestObject) (v1gen.GetUserProfileResponseObject, error) {
+	if s.identity == nil {
+		return errIdentityUnavailable, nil
+	}
+	pr, err := s.identity.UserProfile(ctx, req.Username)
+	if errors.Is(err, identity.ErrNotFound) {
+		return problemResponse{status: http.StatusNotFound, detail: "not found"}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.GetUserProfile200JSONResponse{Username: pr.Username, DisplayName: pr.DisplayName,
+		AvatarUrl: pr.AvatarURL, CreatedAt: pr.CreatedAt}, nil
 }
