@@ -30,6 +30,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - `storageState` of the public `Repo` schema is the real state only for instance admins; every other caller gets `hot` (storage is instance infrastructure). `sizeBytes` stays public.
 - The hot tier budget of git repositories is the local target budget less the cache shares of every data type cached on it (before: less the git `cache_share` only).
 
+### Fixed
+
+- Git push over HTTPS and SSH failed on every repository ("the remote end hung up unexpectedly"): the server passed `--strict`, which only `git upload-pack` accepts, to `git receive-pack`. A git command that fails before writing anything now answers 500 instead of an empty 200.
+
 ## [1.11.0] - 2026-11-16
 
 ### Added

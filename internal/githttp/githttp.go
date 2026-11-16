@@ -378,6 +378,11 @@ func (h *Handler) run(w http.ResponseWriter, r *http.Request, req request, repo 
 	log := h.o.Log.With("service", string(req.service), "repo", repo.FullName(), "user", who.Username,
 		"advertise", req.advertise, "duration", time.Since(start).Round(time.Millisecond))
 	switch {
+	case err == nil && code != 0 && !out.Wrote():
+		// git failed before writing anything: an empty 200 would make the
+		// client report "the remote end hung up unexpectedly".
+		log.ErrorContext(ctx, "git http request failed", "code", code)
+		textError(w, http.StatusInternalServerError, "internal error")
 	case err == nil:
 		log.InfoContext(ctx, "git http request", "code", code)
 		if !out.Wrote() {

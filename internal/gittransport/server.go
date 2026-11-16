@@ -222,7 +222,10 @@ func (s *Server) args(req *Request, path string) []string {
 	}
 	args = append(args, req.Service.subcommand())
 	if req.Service != UploadArchive {
-		args = append(args, "--strict")
+		// Only upload-pack knows --strict: receive-pack exits with a usage error.
+		if req.Service == UploadPack {
+			args = append(args, "--strict")
+		}
 		if req.StatelessRPC {
 			args = append(args, "--stateless-rpc")
 		}
