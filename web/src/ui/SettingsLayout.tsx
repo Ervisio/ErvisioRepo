@@ -6,9 +6,9 @@ import { Dialog, DialogClose } from "./Dialog.tsx";
 import { Icon, type IconName } from "./Icon.tsx";
 import { Input } from "./Input.tsx";
 
-// Settings layout: one sub-navigation of grouped sections (with a search box only when it is long),
-// sections as bordered boxes with a header strip, two-column rows with a dirty marker, a sticky save
-// bar while there are pending changes, and a danger zone.
+// Settings layout, GitHub style: one sub-navigation of grouped sections (with a search box only when
+// it is long), open sections titled on a rule, stacked fields with a dirty marker, a sticky save bar
+// while there are pending changes, and a danger zone.
 // Used by account, repository and organization settings.
 
 /** `warn` is an accessible label for a small warning dot next to the item. */
@@ -75,7 +75,7 @@ export function SettingsLayout({ label, groups, active, renderLink, children }: 
   );
 }
 
-/** One settings section: a bordered box with a header strip (title, optional hint) over its rows or cards. */
+/** One settings section: a title on a rule (optional hint and actions) over its rows or cards. The first one reads as the page title. */
 export function SettingsSection({ title, description, actions, children }: {
   title: string;
   description?: ReactNode;
@@ -102,7 +102,7 @@ export function SettingsCard({ children }: { children: ReactNode }) {
 }
 
 /**
- * Label and description on the left, control on the right. `dirty` marks a pending change and
+ * Label and description above the control (beside it for a toggle). `dirty` marks a pending change and
  * `was` shows the saved value next to it.
  */
 export function SettingRow({ label, description, dirty, was, htmlFor, children }: {

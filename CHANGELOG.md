@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Settings pages (account, repository, organization, instance admin) follow GitHub's layout: grouped side menu with an accent bar, open sections titled on a rule, stacked fields, bordered lists and tables, and a danger zone in a red-bordered box.
+
 ### Fixed
 
 - Public repositories can be browsed without signing in: code, history, branches, tags, compare, code search, releases, issues, pull requests and Actions runs no longer redirect anonymous visitors to the login page. A missing or private repository asks them to sign in instead. Write pages (edit, new file, new issue, release form, settings) still require a session.

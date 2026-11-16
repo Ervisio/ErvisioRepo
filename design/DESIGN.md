@@ -137,6 +137,13 @@ Riferimento visivo: `design/mock/direzione-a.html` e lo screenshot approvato in 
   - Testo: corpo 14,5 px con interlinea 1,65; codice e controlli a 1,5. Titoli 600, h1 a 30 px.
   - Contrasto: logo, avatar, Clona e sottolineatura dei tab usano `--acc-fill` con `--on-accent` (in chiaro il fill è scurito).
 
+- **Impostazioni stile GitHub (2026-11-16).** Round `010-impostazioni-github`, variante A "GitHub classico". Sostituisce l'aspetto del round 005 (box con striscia e righe a due colonne); restano sottonav a gruppi, ricerca, marcatore dei campi modificati, barra di salvataggio e blocchi da config.toml.
+  - Sottonav da 240 px: gruppi separati da un filetto, voce attiva su `--raise` in 600 con barretta `--acc-fill` da 4 px a sinistra.
+  - Sezioni aperte, senza box: titolo 20 px peso 400 su un filetto `--line`; la prima sezione fa da titolo di pagina a 24 px.
+  - Campi in colonna (etichetta, descrizione, controllo) larghi al massimo 520 px; i toggle stanno a sinistra dell'etichetta. Controlli da 32 px, 44 px con puntatore coarse.
+  - Liste e tabelle in un box bordato con righe separate da filetti; zona pericolosa = titolo normale sopra un box bordato `--err`.
+  - Sotto i 900 px la sottonav diventa una fila di pillole scorrevole.
+
 ## Implementazione (web/src/ui)
 
 - Kit sopra primitive Radix: Button, Input, Select, Dialog, Menu, Tabs, Table, Badge, Toast, EmptyState, più Card e Icon. Lo stile è nostro, solo da token (`web/src/ui/ui.css`).
