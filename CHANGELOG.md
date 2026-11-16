@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.14.3] - 2026-11-16
+
+### Fixed
+
+- S3 storage: an endpoint entered as a bucket URL (`https://<bucket>.s3.<region>.amazonaws.com` or `https://<host>/<bucket>`) no longer doubles the bucket; listing failed with `NoSuchKey` (404) in the connection test. The bucket is stripped from such endpoints.
+
 ## [1.14.2] - 2026-11-16
 
 ### Fixed

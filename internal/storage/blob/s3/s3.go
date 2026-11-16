@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -105,7 +106,7 @@ func New(o Options) (*Store, error) {
 		ResponseChecksumValidation: aws.ResponseChecksumValidationWhenRequired,
 	}
 	if o.Endpoint != "" {
-		so.BaseEndpoint = aws.String(o.Endpoint)
+		so.BaseEndpoint = aws.String(serviceEndpoint(o.Endpoint, o.Bucket))
 	}
 	if o.AccessKeyID != "" {
 		so.Credentials = aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(o.AccessKeyID, o.SecretAccessKey, o.SessionToken))
@@ -518,4 +519,22 @@ func (s *Store) mapErr(op, key string, err error) error {
 		}
 	}
 	return fmt.Errorf("s3 %s: %s %s: %w", s.opts.Name, op, key, err)
+}
+
+// serviceEndpoint strips the bucket from an endpoint copied as a bucket
+// URL ("https://<bucket>.s3.<region>.amazonaws.com" or ".../<bucket>"):
+// the SDK adds the bucket itself, and a doubled bucket turns a listing
+// into a lookup of the key "<bucket>/" (NoSuchKey).
+func serviceEndpoint(endpoint, bucket string) string {
+	u, err := url.Parse(strings.TrimSpace(endpoint))
+	if err != nil || u.Host == "" || bucket == "" {
+		return endpoint
+	}
+	if host, ok := strings.CutPrefix(u.Host, bucket+"."); ok && strings.Contains(host, ".") {
+		u.Host = host
+	}
+	if p := strings.Trim(u.Path, "/"); p == bucket || strings.HasPrefix(p, bucket+"/") {
+		u.Path = ""
+	}
+	return strings.TrimSuffix(u.String(), "/")
 }
