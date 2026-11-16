@@ -2084,6 +2084,24 @@ func (e UserPreferencesUpdateTheme) Valid() bool {
 	}
 }
 
+// Defines values for UserProfileKind.
+const (
+	UserProfileKindBot  UserProfileKind = "bot"
+	UserProfileKindUser UserProfileKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the UserProfileKind enum.
+func (e UserProfileKind) Valid() bool {
+	switch e {
+	case UserProfileKindBot:
+		return true
+	case UserProfileKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Visibility.
 const (
 	Internal Visibility = "internal"
@@ -2843,6 +2861,9 @@ type AdminUser struct {
 	Email  *string            `json:"email,omitempty"`
 	Has2fa bool               `json:"has2fa"`
 	Id     openapi_types.UUID `json:"id"`
+
+	// IsBot A bot account (login ending in "[bot]"); bots cannot sign in and cannot be changed
+	IsBot bool `json:"isBot"`
 
 	// LastActivity Last use of a session
 	LastActivity *time.Time    `json:"lastActivity,omitempty"`
@@ -5521,11 +5542,20 @@ type UserPreferencesUpdateTheme string
 // UserProfile defines model for UserProfile.
 type UserProfile struct {
 	// AvatarUrl Absolute https URL of the avatar; empty when unset
-	AvatarUrl   string    `json:"avatarUrl"`
-	CreatedAt   time.Time `json:"createdAt"`
-	DisplayName string    `json:"displayName"`
-	Username    string    `json:"username"`
+	AvatarUrl string    `json:"avatarUrl"`
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Description What the bot does; empty for users
+	Description *string `json:"description,omitempty"`
+	DisplayName string  `json:"displayName"`
+
+	// Kind A bot is an automation account (login ending in "[bot]") nobody can sign in as
+	Kind     UserProfileKind `json:"kind"`
+	Username string          `json:"username"`
 }
+
+// UserProfileKind A bot is an automation account (login ending in "[bot]") nobody can sign in as
+type UserProfileKind string
 
 // UserSummary defines model for UserSummary.
 type UserSummary struct {
@@ -27527,6 +27557,20 @@ func (response ResetAdminUser2fa404ApplicationProblemPlusJSONResponse) VisitRese
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResetAdminUser2fa409ApplicationProblemPlusJSONResponse Problem
+
+func (response ResetAdminUser2fa409ApplicationProblemPlusJSONResponse) VisitResetAdminUser2faResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
 	_, err := buf.WriteTo(w)
 	return err
 }

@@ -205,6 +205,23 @@ dal percorso del workflow; al suo posto funziona anche il nome del file.
 | `GET/PUT/DELETE .../actions/secrets[/{name}]` | sì | `PUT` accetta `encrypted_value` (sealed box libsodium per la chiave pubblica) e `key_id`. Richiede il permesso sulle impostazioni del repository. |
 | `GET/POST .../actions/variables`, `GET/PATCH/DELETE .../actions/variables/{name}` | sì | `PATCH` può rinominare. |
 
+### Account bot
+
+I bot sono utenti il cui login finisce in `[bot]`: i bot di sistema
+`ervisio-sync[bot]` (sincronizzazione GitHub) e `ervisio-actions[bot]` (job
+token dei workflow), e in seguito i bot delle App. Gli oggetti utente dei bot
+hanno `"type": "Bot"` (anche il `sender` dei webhook) e GraphQL li restituisce
+come `Bot` (un `Actor`). I commit fatti da un bot usano l'indirizzo
+`<id>+<login>@users.noreply.<host>`, che le liste dei commit e dei contributori
+riportano al bot. I bot non possono accedere, non hanno repository, non
+possono essere collaboratori e non compaiono nella ricerca utenti; lo
+`UserProfile` v1 ha `kind` (`user` o `bot`) e `description`.
+
+Un job token di workflow (`GITHUB_TOKEN`) può scrivere sul proprio repository
+attraverso questa API (issue, commenti, pull request, release, stati, check,
+contenuti) se il workflow ha `contents: write`; le modifiche sono attribuite a
+`ervisio-actions[bot]` e non avviano workflow.
+
 ### Non disponibili
 
 Ricerca nei commit, gist, notifiche, eventi, package, project, deployment,

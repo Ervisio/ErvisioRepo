@@ -112,10 +112,10 @@ func (s *Service) react(ctx context.Context, who auth.Principal, r repos.Repo, t
 		return nil, err
 	}
 	if _, err := s.q.InsertIssueReaction(ctx, dbgen.InsertIssueReactionParams{ID: id, IssueID: t.issue.ID,
-		CommentID: nullID(t.comment), UserID: who.UserID, Content: content}); err != nil {
+		CommentID: nullID(t.comment), UserID: who.Actor(), Content: content}); err != nil {
 		return nil, fmt.Errorf("add reaction: %w", err)
 	}
-	return s.groups(ctx, who.UserID, t)
+	return s.groups(ctx, who.Actor(), t)
 }
 
 func (s *Service) unreact(ctx context.Context, who auth.Principal, t reactionTarget, content string) ([]ReactionGroup, error) {
@@ -123,10 +123,10 @@ func (s *Service) unreact(ctx context.Context, who auth.Principal, t reactionTar
 		return nil, err
 	}
 	if _, err := s.q.DeleteIssueReaction(ctx, dbgen.DeleteIssueReactionParams{IssueID: t.issue.ID, CommentID: nullID(t.comment),
-		UserID: who.UserID, Content: content}); err != nil {
+		UserID: who.Actor(), Content: content}); err != nil {
 		return nil, fmt.Errorf("remove reaction: %w", err)
 	}
-	return s.groups(ctx, who.UserID, t)
+	return s.groups(ctx, who.Actor(), t)
 }
 
 // ListIssueReactions returns the reactions to an issue (content filters).

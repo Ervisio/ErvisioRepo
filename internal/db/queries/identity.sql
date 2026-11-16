@@ -6,7 +6,9 @@
 SELECT pg_advisory_xact_lock(hashtextextended('erepo.register', 0));
 
 -- name: CountUsers :one
-SELECT count(*) FROM users;
+-- Human accounts: bots do not count (the first registered user still
+-- becomes the instance admin).
+SELECT count(*) FROM users u JOIN namespaces n ON n.id = u.id WHERE n.kind <> 'bot';
 
 -- name: NamespaceTaken :one
 SELECT EXISTS (SELECT 1 FROM namespaces WHERE name_lower = lower(sqlc.arg(name)::text));
@@ -29,14 +31,15 @@ WHERE id = $1;
 
 -- name: GetUserByID :one
 SELECT u.id, n.name AS username, u.display_name, u.avatar_url, u.role, u.locale, u.suspended_at, u.created_at,
-       e.id AS email_id, e.address AS email, e.verified_at AS email_verified_at
+       e.id AS email_id, e.address AS email, e.verified_at AS email_verified_at, (n.kind = 'bot')::boolean AS is_bot
 FROM users u
 JOIN namespaces n ON n.id = u.id
 LEFT JOIN emails e ON e.user_id = u.id AND e.is_primary
 WHERE u.id = $1;
 
 -- name: GetUserByUsername :one
-SELECT u.id, n.name AS username, u.display_name, u.role, u.locale, u.suspended_at, u.created_at
+SELECT u.id, n.name AS username, u.display_name, u.role, u.locale, u.suspended_at, u.created_at,
+       (n.kind = 'bot')::boolean AS is_bot
 FROM users u
 JOIN namespaces n ON n.id = u.id
 WHERE n.name_lower = lower(sqlc.arg(username)::text);
@@ -44,7 +47,7 @@ WHERE n.name_lower = lower(sqlc.arg(username)::text);
 -- name: GetLoginByUsername :one
 -- Credentials for a login by username; the email is the primary address.
 SELECT u.id, n.name AS username, u.role, u.locale, u.suspended_at,
-       p.hash AS password_hash, e.id AS email_id, e.verified_at AS email_verified_at
+       p.hash AS password_hash, e.id AS email_id, e.verified_at AS email_verified_at, (n.kind = 'bot')::boolean AS is_bot
 FROM users u
 JOIN namespaces n ON n.id = u.id
 LEFT JOIN passwords p ON p.user_id = u.id
@@ -153,7 +156,7 @@ WITH visible AS (
 SELECT u.id, n.name AS username, u.display_name, u.avatar_url
 FROM users u
 JOIN namespaces n ON n.id = u.id
-WHERE u.suspended_at IS NULL
+WHERE u.suspended_at IS NULL AND n.kind <> 'bot'
     AND (@instance::boolean OR u.id IN (SELECT v.user_id FROM visible v))
     AND (n.name_lower LIKE @pattern::text OR lower(u.display_name) LIKE @pattern::text)
 ORDER BY (n.name_lower = @exact::text) DESC, (n.name_lower LIKE @pattern::text) DESC, n.name_lower
@@ -161,7 +164,10 @@ LIMIT @lim;
 
 -- name: GetUserProfileByUsername :one
 -- Public profile fields of a user account (organizations have no users row).
-SELECT n.name AS username, u.display_name, u.avatar_url, u.suspended_at, u.created_at
+-- kind is "user" or "bot"; description is the description of a bot.
+SELECT n.name AS username, n.kind, u.display_name, u.avatar_url, u.suspended_at, u.created_at,
+       COALESCE(b.description, '')::text AS description
 FROM users u
 JOIN namespaces n ON n.id = u.id
+LEFT JOIN bots b ON b.user_id = u.id
 WHERE n.name_lower = lower(sqlc.arg(username)::text);

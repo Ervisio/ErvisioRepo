@@ -6,7 +6,7 @@ import { useUserActivity, useUserIssues, useUserPins, useUserRuns, type Activity
 import { useMyRepos } from "../api/repos.ts";
 import { useStorageStatus } from "../api/useStorage.ts";
 import { useT } from "../i18n/useT.ts";
-import { Badge, Button, Icon, Input, Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/index.ts";
+import { Badge, BotMark, Button, Icon, Input, Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/index.ts";
 import { When } from "./code/common.tsx";
 import { CreateRepoDialog } from "./repos/RepoList.tsx";
 
@@ -245,7 +245,7 @@ function Activity() {
               // No actor means the server itself did it: the GitHub sync or an import.
               <Link key={a.id} {...activityLink(a)} className="hm-line">
                 <span>
-                  {a.actor ? <b>{a.actor}</b> : <><b>ErvisioSync</b> <Badge>{t("dash.act.bot")}</Badge></>} {actionText(a)} <b>{a.fullName}</b>
+                  {a.actor ? <><b>{a.actor}</b> <BotMark login={a.actor} /></> : <><b>ErvisioSync</b> <Badge>{t("dash.act.bot")}</Badge></>} {actionText(a)} <b>{a.fullName}</b>
                 </span>
                 <When iso={a.createdAt} />
               </Link>

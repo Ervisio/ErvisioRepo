@@ -1,4 +1,5 @@
 export { Badge, type BadgeTone } from "./Badge.tsx";
+export { BotMark, isBotLogin } from "./BotMark.tsx";
 export { Button, type ButtonProps } from "./Button.tsx";
 export { Card } from "./Card.tsx";
 export { Dialog, DialogClose } from "./Dialog.tsx";

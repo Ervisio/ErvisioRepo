@@ -4,7 +4,7 @@ import { RUNS_PER_PAGE, useDispatch, useRuns, useWorkflows, type ActionsRun, typ
 import { canWrite } from "../../api/code.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, Button, Dialog, DialogClose, EmptyState, Icon, Input, Select } from "../../ui/index.ts";
+import { Badge, BotMark, Button, Dialog, DialogClose, EmptyState, Icon, Input, Select } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { Gate, Pager, RepoFrame, shortSha, When } from "../code/common.tsx";
 import { branchOf, duration, StatusIcon } from "./common.tsx";
@@ -111,7 +111,7 @@ function RunRow({ repo, run: r }: { repo: Repo; run: ActionsRun }) {
           <span>{r.event}</span>
           <code className="ax-tag">{branchOf(r.ref)}</code>
           <Link to="/$owner/$name/commit/$sha" params={{ owner, name, sha: r.sha }} className="ui-mono">{shortSha(r.sha)}</Link>
-          <span>{r.triggerActor || r.actor}</span>
+          <span>{r.triggerActor || r.actor} <BotMark login={r.triggerActor || r.actor} /></span>
           {r.attempt > 1 && <span>{t("run.attempt", { n: r.attempt })}</span>}
           {r.needsApproval && <Badge tone="warn">{t("run.needsApproval")}</Badge>}
           {r.fork && <Badge>{t("run.fork")}</Badge>}

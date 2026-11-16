@@ -10,8 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
+	"github.com/Ervisio/ErvisioRepo/internal/bots"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/git"
 	"github.com/Ervisio/ErvisioRepo/internal/githooks"
@@ -173,7 +172,8 @@ func (s *Service) updateRefsAs(ctx context.Context, l *gitstore.Lease, edits []e
 	var sess *githooks.Session
 	if h := s.hooks.Load(); h != nil {
 		var err error
-		if sess, err = h.Begin(ctx, l, uuid.Nil, protocol); err != nil {
+		// The writes of the sync are attributed to ervisio-sync[bot].
+		if sess, err = h.Begin(ctx, l, bots.SyncID, protocol); err != nil {
 			return fmt.Errorf("hook session: %w", err)
 		}
 		defer sess.Close()

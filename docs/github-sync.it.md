@@ -37,6 +37,21 @@ repository anche per loro, come per un push:
   quindi qui nulla gira due volte. GitHub esegue comunque la sua copia dei
   workflow su GitHub.
 
+## Bot come autore
+
+Le scritture della sincronizzazione (fetch di mirror, sync e import) sono
+fatte dal bot di sistema `ervisio-sync[bot]` (nome visualizzato «Ervisio
+Sync»): feed attività, notifiche e `sender` dei webhook lo mostrano con il
+badge «bot», e l'API REST lo restituisce con `"type": "Bot"`. Nessuno può
+accedere come bot. Le attività registrate prima della versione 1.11 non hanno
+autore e restano mostrate come «ErvisioSync». Issue, pull request e commenti
+importati il cui autore GitHub non ha un account locale restano come prima
+(nessun autore locale, il login GitHub resta come testo).
+
+I job token dei workflow agiscono come `ervisio-actions[bot]` («Ervisio
+Actions»): commenti, issue, release, stati, check run e push fatti con il token
+sono attribuiti a lui, e nessuno di questi avvia un workflow.
+
 ## Import di variabili, secret ed esecuzioni
 
 Impostazioni > Secret (o Variabili) mostra **Importa da GitHub** su un

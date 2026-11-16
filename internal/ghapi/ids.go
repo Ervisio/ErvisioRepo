@@ -28,7 +28,7 @@ type ids struct {
 // namespace is a user or an organization.
 type namespace struct {
 	ID   uuid.UUID
-	Kind string // "user" or "org"
+	Kind string // "user", "org" or "bot"
 	Name string
 }
 

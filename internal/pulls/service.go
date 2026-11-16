@@ -312,7 +312,7 @@ func (s *Service) writer(ctx context.Context, who auth.Principal, owner, name st
 	if err != nil {
 		return repos.Repo{}, err
 	}
-	if who.UserID == uuid.Nil {
+	if !who.WritesTo(r.ID) {
 		return repos.Repo{}, ErrForbidden
 	}
 	return r, nil

@@ -69,6 +69,10 @@ func (s *v1Server) GetUserProfile(ctx context.Context, req v1gen.GetUserProfileR
 	if err != nil {
 		return nil, err
 	}
-	return v1gen.GetUserProfile200JSONResponse{Username: pr.Username, DisplayName: pr.DisplayName,
-		AvatarUrl: pr.AvatarURL, CreatedAt: pr.CreatedAt}, nil
+	out := v1gen.GetUserProfile200JSONResponse{Username: pr.Username, Kind: v1gen.UserProfileKind(pr.Kind),
+		DisplayName: pr.DisplayName, AvatarUrl: pr.AvatarURL, CreatedAt: pr.CreatedAt}
+	if pr.Description != "" {
+		out.Description = &pr.Description
+	}
+	return out, nil
 }

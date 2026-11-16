@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ADMIN_PAGE_SIZE, USER_ROLES, useAdminUsers, type AdminUser, type UserRole } from "../../api/admin.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, Button, Card, EmptyState, Input, Select, Table, TableBody, TableHead, Td, Th, Tr } from "../../ui/index.ts";
+import { Badge, BotMark, Button, Card, EmptyState, Input, Select, Table, TableBody, TableHead, Td, Th, Tr } from "../../ui/index.ts";
 import { formatDate } from "../account/common.tsx";
 import { AdminPane } from "./AdminFrame.tsx";
 
@@ -86,7 +86,7 @@ export function AdminUsers({ search, onSearch }: { search: UsersSearch; onSearch
                   <Tr key={u.id}>
                     <Td>
                       <Link to="/admin/users/$login" params={{ login: u.username }} className="adm-user">
-                        <b>{u.username}</b>
+                        <b>{u.username} <BotMark login={u.username} /></b>
                         <span className="ui-note">{[u.displayName && u.displayName !== u.username ? u.displayName : "", u.email ?? ""].filter(Boolean).join(" · ")}</span>
                       </Link>
                     </Td>

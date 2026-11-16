@@ -14,7 +14,7 @@ import (
 
 const adminGetUser = `-- name: AdminGetUser :one
 SELECT u.id, n.name AS username, u.display_name, u.role, u.suspended_at, u.created_at,
-       COALESCE(e.address, '')::text AS email,
+       COALESCE(e.address, '')::text AS email, (n.kind = 'bot')::boolean AS is_bot,
        (EXISTS (SELECT 1 FROM mfa_totp t WHERE t.user_id = u.id AND t.confirmed_at IS NOT NULL)
         OR EXISTS (SELECT 1 FROM webauthn_credentials w WHERE w.user_id = u.id))::boolean AS has_2fa,
        (SELECT max(s.last_seen_at) FROM sessions s WHERE s.user_id = u.id)::timestamptz AS last_activity
@@ -32,6 +32,7 @@ type AdminGetUserRow struct {
 	SuspendedAt  pgtype.Timestamptz
 	CreatedAt    pgtype.Timestamptz
 	Email        string
+	IsBot        bool
 	Has2fa       bool
 	LastActivity pgtype.Timestamptz
 }
@@ -47,6 +48,7 @@ func (q *Queries) AdminGetUser(ctx context.Context, username string) (AdminGetUs
 		&i.SuspendedAt,
 		&i.CreatedAt,
 		&i.Email,
+		&i.IsBot,
 		&i.Has2fa,
 		&i.LastActivity,
 	)
@@ -112,7 +114,7 @@ func (q *Queries) AdminListInvites(ctx context.Context, arg AdminListInvitesPara
 
 const adminListUsers = `-- name: AdminListUsers :many
 SELECT u.id, n.name AS username, u.display_name, u.role, u.suspended_at, u.created_at,
-       COALESCE(e.address, '')::text AS email,
+       COALESCE(e.address, '')::text AS email, (n.kind = 'bot')::boolean AS is_bot,
        (EXISTS (SELECT 1 FROM mfa_totp t WHERE t.user_id = u.id AND t.confirmed_at IS NOT NULL)
         OR EXISTS (SELECT 1 FROM webauthn_credentials w WHERE w.user_id = u.id))::boolean AS has_2fa,
        (SELECT max(s.last_seen_at) FROM sessions s WHERE s.user_id = u.id)::timestamptz AS last_activity,
@@ -146,6 +148,7 @@ type AdminListUsersRow struct {
 	SuspendedAt  pgtype.Timestamptz
 	CreatedAt    pgtype.Timestamptz
 	Email        string
+	IsBot        bool
 	Has2fa       bool
 	LastActivity pgtype.Timestamptz
 	Total        int64
@@ -177,6 +180,7 @@ func (q *Queries) AdminListUsers(ctx context.Context, arg AdminListUsersParams) 
 			&i.SuspendedAt,
 			&i.CreatedAt,
 			&i.Email,
+			&i.IsBot,
 			&i.Has2fa,
 			&i.LastActivity,
 			&i.Total,

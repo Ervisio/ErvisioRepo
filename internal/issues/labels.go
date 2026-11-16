@@ -115,7 +115,7 @@ func (s *Service) CreateLabel(ctx context.Context, who auth.Principal, owner, na
 		if err != nil {
 			return fmt.Errorf("insert label: %w", err)
 		}
-		if err := s.emit(ctx, q, events.KindLabel, "created", r.ID, who.UserID, row.ID, EventPayload{Label: row.Name}); err != nil {
+		if err := s.emit(ctx, q, events.KindLabel, "created", r.ID, who.Actor(), row.ID, EventPayload{Label: row.Name}); err != nil {
 			return err
 		}
 		return audit.Record(ctx, q, s.auditEvent(who, ActionLabelCreated, r, "label", row.ID, c, map[string]any{"name": row.Name}))
@@ -166,7 +166,7 @@ func (s *Service) UpdateLabel(ctx context.Context, who auth.Principal, owner, na
 		if err != nil {
 			return fmt.Errorf("update label: %w", err)
 		}
-		if err := s.emit(ctx, q, events.KindLabel, "edited", r.ID, who.UserID, row.ID, EventPayload{Label: row.Name}); err != nil {
+		if err := s.emit(ctx, q, events.KindLabel, "edited", r.ID, who.Actor(), row.ID, EventPayload{Label: row.Name}); err != nil {
 			return err
 		}
 		return audit.Record(ctx, q, s.auditEvent(who, ActionLabelUpdated, r, "label", row.ID, c,
@@ -196,7 +196,7 @@ func (s *Service) DeleteLabel(ctx context.Context, who auth.Principal, owner, na
 		if n == 0 {
 			return ErrLabelNotFound
 		}
-		if err := s.emit(ctx, q, events.KindLabel, "deleted", r.ID, who.UserID, cur.ID, EventPayload{Label: cur.Name}); err != nil {
+		if err := s.emit(ctx, q, events.KindLabel, "deleted", r.ID, who.Actor(), cur.ID, EventPayload{Label: cur.Name}); err != nil {
 			return err
 		}
 		return audit.Record(ctx, q, s.auditEvent(who, ActionLabelDeleted, r, "label", cur.ID, c, map[string]any{"name": cur.Name}))

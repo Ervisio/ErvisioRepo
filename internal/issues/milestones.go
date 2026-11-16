@@ -134,7 +134,7 @@ func (s *Service) CreateMilestone(ctx context.Context, who auth.Principal, owner
 		if err != nil {
 			return fmt.Errorf("insert milestone: %w", err)
 		}
-		if err := s.emit(ctx, q, events.KindMilestone, "created", r.ID, who.UserID, row.ID, EventPayload{Milestone: row.Title}); err != nil {
+		if err := s.emit(ctx, q, events.KindMilestone, "created", r.ID, who.Actor(), row.ID, EventPayload{Milestone: row.Title}); err != nil {
 			return err
 		}
 		return audit.Record(ctx, q, s.auditEvent(who, ActionMilestoneCreated, r, "milestone", row.ID, c, map[string]any{"title": row.Title}))
@@ -201,7 +201,7 @@ func (s *Service) UpdateMilestone(ctx context.Context, who auth.Principal, owner
 		if err != nil {
 			return fmt.Errorf("update milestone: %w", err)
 		}
-		if err := s.emit(ctx, q, events.KindMilestone, action, r.ID, who.UserID, row.ID, EventPayload{Milestone: row.Title, State: row.State}); err != nil {
+		if err := s.emit(ctx, q, events.KindMilestone, action, r.ID, who.Actor(), row.ID, EventPayload{Milestone: row.Title, State: row.State}); err != nil {
 			return err
 		}
 		return audit.Record(ctx, q, s.auditEvent(who, ActionMilestoneUpdated, r, "milestone", row.ID, c,
@@ -231,7 +231,7 @@ func (s *Service) DeleteMilestone(ctx context.Context, who auth.Principal, owner
 		if n == 0 {
 			return ErrMilestoneNotFound
 		}
-		if err := s.emit(ctx, q, events.KindMilestone, "deleted", r.ID, who.UserID, id, EventPayload{Milestone: cur.Title}); err != nil {
+		if err := s.emit(ctx, q, events.KindMilestone, "deleted", r.ID, who.Actor(), id, EventPayload{Milestone: cur.Title}); err != nil {
 			return err
 		}
 		return audit.Record(ctx, q, s.auditEvent(who, ActionMilestoneDeleted, r, "milestone", id, c, map[string]any{"title": cur.Title}))

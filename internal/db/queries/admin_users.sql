@@ -3,7 +3,7 @@
 -- display name or any email address (case-insensitive substring); role and
 -- suspended filter when set. total is the count before paging.
 SELECT u.id, n.name AS username, u.display_name, u.role, u.suspended_at, u.created_at,
-       COALESCE(e.address, '')::text AS email,
+       COALESCE(e.address, '')::text AS email, (n.kind = 'bot')::boolean AS is_bot,
        (EXISTS (SELECT 1 FROM mfa_totp t WHERE t.user_id = u.id AND t.confirmed_at IS NOT NULL)
         OR EXISTS (SELECT 1 FROM webauthn_credentials w WHERE w.user_id = u.id))::boolean AS has_2fa,
        (SELECT max(s.last_seen_at) FROM sessions s WHERE s.user_id = u.id)::timestamptz AS last_activity,
@@ -22,7 +22,7 @@ LIMIT sqlc.arg(lim) OFFSET sqlc.arg(off);
 
 -- name: AdminGetUser :one
 SELECT u.id, n.name AS username, u.display_name, u.role, u.suspended_at, u.created_at,
-       COALESCE(e.address, '')::text AS email,
+       COALESCE(e.address, '')::text AS email, (n.kind = 'bot')::boolean AS is_bot,
        (EXISTS (SELECT 1 FROM mfa_totp t WHERE t.user_id = u.id AND t.confirmed_at IS NOT NULL)
         OR EXISTS (SELECT 1 FROM webauthn_credentials w WHERE w.user_id = u.id))::boolean AS has_2fa,
        (SELECT max(s.last_seen_at) FROM sessions s WHERE s.user_id = u.id)::timestamptz AS last_activity

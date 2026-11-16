@@ -180,7 +180,7 @@ func (s *Service) Get(ctx context.Context, who auth.Principal, owner, name strin
 	if err != nil {
 		return Pull{}, err
 	}
-	return s.one(ctx, who.UserID, r, i, p)
+	return s.one(ctx, who.Actor(), r, i, p)
 }
 
 // List returns the pull requests of owner/name.
@@ -260,7 +260,7 @@ func (s *Service) List(ctx context.Context, who auth.Principal, owner, name stri
 			prs[p.IssueID] = p
 		}
 	}
-	return s.hydrate(ctx, who.UserID, r, rows, prs)
+	return s.hydrate(ctx, who.Actor(), r, rows, prs)
 }
 
 // ---- create ----
@@ -404,7 +404,7 @@ func (s *Service) Create(ctx context.Context, who auth.Principal, owner, name st
 			return err
 		}
 		row, err = q.InsertIssue(ctx, dbgen.InsertIssueParams{ID: id, RepoID: base.ID, Number: n, Kind: issues.KindPull,
-			Title: title, Body: in.Body, AuthorID: nullID(who.UserID)})
+			Title: title, Body: in.Body, AuthorID: nullID(who.Actor())})
 		if err != nil {
 			return fmt.Errorf("insert issue: %w", err)
 		}
@@ -420,19 +420,19 @@ func (s *Service) Create(ctx context.Context, who auth.Principal, owner, name st
 		if err := s.recordRefs(ctx, q, base, who, row, uuid.Nil, in.Body); err != nil {
 			return err
 		}
-		return s.emitPull(ctx, q, "opened", who.UserID, row, pr, nil)
+		return s.emitPull(ctx, q, "opened", who.Actor(), row, pr, nil)
 	})
 	if err != nil {
 		return Pull{}, err
 	}
-	s.log.InfoContext(ctx, "pull request opened", "repo", base.ID, "number", pr.Number, "user", who.UserID)
-	if np, err := s.refresh(ctx, bl, who.UserID, pr); err != nil {
+	s.log.InfoContext(ctx, "pull request opened", "repo", base.ID, "number", pr.Number, "user", who.Actor())
+	if np, err := s.refresh(ctx, bl, who.Actor(), pr); err != nil {
 		s.log.WarnContext(ctx, "pull request test merge failed", "repo", base.ID, "number", pr.Number, "err", err)
 	} else {
 		pr = np
 	}
 	bl.Release()
-	return s.one(ctx, who.UserID, base, row, pr)
+	return s.one(ctx, who.Actor(), base, row, pr)
 }
 
 // headTip resolves branch of the head repository into the base repository
@@ -479,7 +479,7 @@ func (s *Service) Update(ctx context.Context, who auth.Principal, owner, name st
 	if err != nil {
 		return Pull{}, err
 	}
-	author := i.AuthorID.Valid && i.AuthorID.UUID == who.UserID
+	author := i.AuthorID.Valid && i.AuthorID.UUID == who.Actor()
 	if !author && !canTriage(r) {
 		return Pull{}, ErrForbidden
 	}
@@ -505,7 +505,7 @@ func (s *Service) Update(ctx context.Context, who auth.Principal, owner, name st
 				return notFound(err, ErrNotFound, "lock pull request")
 			}
 			before := row.Body
-			if err := s.updateContent(ctx, q, who.UserID, &row, pr, in.Title, in.Body); err != nil {
+			if err := s.updateContent(ctx, q, who.Actor(), &row, pr, in.Title, in.Body); err != nil {
 				return err
 			}
 			if row.Body != before {
@@ -524,15 +524,15 @@ func (s *Service) Update(ctx context.Context, who auth.Principal, owner, name st
 				if pr.Draft {
 					action = "converted_to_draft"
 				}
-				if err := s.timeline(ctx, q, row, who.UserID, action, nil); err != nil {
+				if err := s.timeline(ctx, q, row, who.Actor(), action, nil); err != nil {
 					return err
 				}
-				if err := s.emitPull(ctx, q, action, who.UserID, row, pr, nil); err != nil {
+				if err := s.emitPull(ctx, q, action, who.Actor(), row, pr, nil); err != nil {
 					return err
 				}
 			}
 			if in.State != nil {
-				return s.setState(ctx, q, who.UserID, &row, pr, *in.State)
+				return s.setState(ctx, q, who.Actor(), &row, pr, *in.State)
 			}
 			return nil
 		})
@@ -544,7 +544,7 @@ func (s *Service) Update(ctx context.Context, who auth.Principal, owner, name st
 	if err != nil {
 		return Pull{}, err
 	}
-	return s.one(ctx, who.UserID, r, i, p)
+	return s.one(ctx, who.Actor(), r, i, p)
 }
 
 func (s *Service) updateContent(ctx context.Context, q *dbgen.Queries, actor uuid.UUID, row *dbgen.Issue, pr dbgen.PullRequest, title, body *string) error {
@@ -676,15 +676,15 @@ func (s *Service) retarget(ctx context.Context, who auth.Principal, r repos.Repo
 			return fmt.Errorf("set base: %w", err)
 		}
 		p = np
-		if err := s.timeline(ctx, q, i, who.UserID, "base_ref_changed", map[string]any{"from": before, "to": branch}); err != nil {
+		if err := s.timeline(ctx, q, i, who.Actor(), "base_ref_changed", map[string]any{"from": before, "to": branch}); err != nil {
 			return err
 		}
-		return s.emitPull(ctx, q, "edited", who.UserID, i, np, func(pl *events.PullPayload) { pl.Before = before })
+		return s.emitPull(ctx, q, "edited", who.Actor(), i, np, func(pl *events.PullPayload) { pl.Before = before })
 	})
 	if err != nil {
 		return err
 	}
-	if _, err := s.refresh(ctx, l, who.UserID, p); err != nil {
+	if _, err := s.refresh(ctx, l, who.Actor(), p); err != nil {
 		s.log.WarnContext(ctx, "pull request test merge failed", "repo", r.ID, "number", p.Number, "err", err)
 	}
 	return nil

@@ -238,7 +238,7 @@ func (c *call) putContents() error {
 	}
 	repo := browseRepo(r)
 	res, err := c.s.d.Browse.Edit(c.ctx, repo, gitbrowse.Edit{Op: op, Path: p, Content: content, Branch: b.Branch,
-		ExpectedOID: b.SHA, Message: b.Message, AuthorID: c.who.UserID})
+		ExpectedOID: b.SHA, Message: b.Message, AuthorID: c.who.Actor()})
 	if err != nil {
 		if op == gitbrowse.OpCreate && errors.Is(err, gitbrowse.ErrConflict) {
 			return errf(http.StatusUnprocessableEntity, "Invalid request.\n\n\"sha\" wasn't supplied.")
@@ -273,7 +273,7 @@ func (c *call) deleteContents() error {
 		return errf(http.StatusUnprocessableEntity, "Invalid request.\n\n\"sha\" wasn't supplied.")
 	}
 	res, err := c.s.d.Browse.Edit(c.ctx, browseRepo(r), gitbrowse.Edit{Op: gitbrowse.OpDelete, Path: c.wildcard(),
-		Branch: b.Branch, ExpectedOID: b.SHA, Message: b.Message, AuthorID: c.who.UserID})
+		Branch: b.Branch, ExpectedOID: b.SHA, Message: b.Message, AuthorID: c.who.Actor()})
 	if err != nil {
 		return err
 	}

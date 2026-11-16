@@ -78,7 +78,7 @@ func (c *call) changeRef(ch gitbrowse.RefChange) (gitbrowse.RefChangeResult, err
 	if err != nil {
 		return gitbrowse.RefChangeResult{}, err
 	}
-	ch.ActorID = c.who.UserID
+	ch.ActorID = c.who.Actor()
 	res, err := c.s.d.Browse.UpdateRef(c.ctx, browseRepo(r), ch)
 	return res, refErr(err)
 }

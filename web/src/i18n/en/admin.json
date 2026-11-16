@@ -420,5 +420,6 @@
   "enum.none": "None",
   "enum.console": "Console",
   "enum.foglio": "Sheet",
-  "enum.corsie": "Lanes"
+  "enum.corsie": "Lanes",
+  "user.bot": "Bot account: managed by Ervisio, nobody can sign in as it, and it cannot be changed or suspended."
 }

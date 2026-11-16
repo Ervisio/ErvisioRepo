@@ -194,7 +194,7 @@ func (s *Service) recordRefs(ctx context.Context, q *dbgen.Queries, r repos.Repo
 	}
 	base := dbgen.InsertIssueReferenceParams{SourceKey: src.key(), SourceRepoID: src.repoID(),
 		SourceIssueID: nullID(src.issue.ID), SourceCommentID: nullID(src.comment), SourceCommit: src.commit,
-		ActorID: nullID(who.UserID)}
+		ActorID: nullID(who.Actor())}
 	for _, ref := range refs {
 		p := base
 		id, err := newID()
@@ -241,10 +241,10 @@ func (s *Service) recordRefs(ctx context.Context, q *dbgen.Queries, r repos.Repo
 			continue
 		}
 		if src.commit != "" {
-			err = s.event(ctx, q, *target, who.UserID, "referenced", uuid.Nil,
+			err = s.event(ctx, q, *target, who.Actor(), "referenced", uuid.Nil,
 				map[string]any{"repo_id": src.repo, "commit": src.commit})
 		} else {
-			err = s.event(ctx, q, *target, who.UserID, "cross-referenced", uuid.Nil,
+			err = s.event(ctx, q, *target, who.Actor(), "cross-referenced", uuid.Nil,
 				map[string]any{"source_repo_id": src.issue.RepoID, "source_issue_id": src.issue.ID, "source_comment_id": nullID(src.comment)})
 		}
 		if err != nil {

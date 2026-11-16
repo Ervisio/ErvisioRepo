@@ -113,7 +113,7 @@ func (s *Service) copyRefs(ctx context.Context, who auth.Principal, parent, fork
 			pooled = false
 		}
 	}
-	sess, env, done, err := s.session(ctx, dst, who.UserID, "web")
+	sess, env, done, err := s.session(ctx, dst, who.Actor(), "web")
 	if err != nil {
 		return err
 	}
@@ -253,7 +253,7 @@ func (s *Service) MergeUpstream(ctx context.Context, who auth.Principal, owner, 
 	if tip == upstream {
 		return res, nil
 	}
-	sess, env, done, err := s.session(ctx, dst, who.UserID, "web")
+	sess, env, done, err := s.session(ctx, dst, who.Actor(), "web")
 	if err != nil {
 		return res, err
 	}

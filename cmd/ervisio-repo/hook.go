@@ -117,7 +117,7 @@ type transportHooks struct {
 // HookEnv implements gittransport.Hooks. The transport holds the Write
 // lease of the repository while git runs.
 func (h transportHooks) HookEnv(ctx context.Context, p gittransport.Push) ([]string, func(), error) {
-	sess, err := h.srv.BeginPath(ctx, p.Repo.ID, h.tier.HotPath(p.Repo.ID), p.Pusher.UserID, p.Transport)
+	sess, err := h.srv.BeginPath(ctx, p.Repo.ID, h.tier.HotPath(p.Repo.ID), p.Pusher.Actor(), p.Transport)
 	if err != nil {
 		return nil, nil, err
 	}

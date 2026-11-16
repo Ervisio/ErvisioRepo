@@ -185,7 +185,7 @@ func (s *Service) auditEvent(who auth.Principal, action string, r repos.Repo, re
 		data = map[string]any{}
 	}
 	data["repo"] = r.FullName()
-	return audit.Event{Actor: who.UserID, Action: action, TargetType: "release", TargetID: rel.String(), IP: c.IP, Data: data, OrgID: org}
+	return audit.Event{Actor: who.Actor(), Action: action, TargetType: "release", TargetID: rel.String(), IP: c.IP, Data: data, OrgID: org}
 }
 
 func tsPtr(t pgtype.Timestamptz) *time.Time {
@@ -418,7 +418,7 @@ func (s *Service) Create(ctx context.Context, who auth.Principal, owner, name st
 		var err error
 		row, err = q.InsertRelease(ctx, dbgen.InsertReleaseParams{ID: id, RepoID: r.ID, Tag: in.Tag, Name: in.Name, Body: in.Body,
 			Draft: in.Draft, Prerelease: in.Prerelease, Target: in.Target, CommitSha: sha,
-			AuthorID: uuid.NullUUID{UUID: who.UserID, Valid: who.UserID != uuid.Nil}, PublishedAt: published, MakeLatest: latest})
+			AuthorID: nullUser(who.Actor()), PublishedAt: published, MakeLatest: latest})
 		if isUnique(err) {
 			return ErrTagTaken
 		}
@@ -759,7 +759,7 @@ func (s *Service) UploadAsset(ctx context.Context, who auth.Principal, owner, na
 	if err != nil {
 		return Asset{}, err
 	}
-	row, err := s.storeAsset(ctx, r.OwnerID, r.ID, rel.ID, in, assetType(in.Name, in.ContentType), cl, nullUser(who.UserID),
+	row, err := s.storeAsset(ctx, r.OwnerID, r.ID, rel.ID, in, assetType(in.Name, in.ContentType), cl, nullUser(who.Actor()),
 		func(q *dbgen.Queries, row dbgen.ReleaseAsset) error {
 			return audit.Record(ctx, q, s.auditEvent(who, ActionAssetAdded, r, rel.ID, c,
 				map[string]any{"asset": in.Name, "size": row.Size}))
@@ -989,7 +989,7 @@ func (s *Service) emit(ctx context.Context, q *dbgen.Queries, who auth.Principal
 		return nil
 	}
 	err := events.Emit(ctx, q, events.Event{Kind: events.KindRelease, Action: action, RepoID: repoID,
-		ActorID: who.UserID, SubjectID: row.ID}, map[string]any{"tag": row.Tag, "name": row.Name, "prerelease": row.Prerelease})
+		ActorID: who.Actor(), SubjectID: row.ID}, map[string]any{"tag": row.Tag, "name": row.Name, "prerelease": row.Prerelease})
 	if err != nil {
 		return fmt.Errorf("emit release event: %w", err)
 	}

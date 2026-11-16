@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -426,6 +427,14 @@ func (s *Service) identity(ctx context.Context, userID uuid.UUID) ([]string, err
 		name = u.Username
 	}
 	email := u.Username + "@" + s.o.NoReplyDomain
+	if u.IsBot {
+		// GitHub's bot address: <numeric id>+<login>@<no-reply domain>.
+		n, err := s.apiID(ctx, u.ID)
+		if err != nil {
+			return nil, err
+		}
+		email = strconv.FormatInt(n, 10) + "+" + u.Username + "@" + s.o.NoReplyDomain
+	}
 	if u.Email.Valid && u.EmailVerifiedAt.Valid {
 		if e := identClean(u.Email.String); e != "" {
 			email = e
@@ -435,6 +444,22 @@ func (s *Service) identity(ctx context.Context, userID uuid.UUID) ([]string, err
 		"GIT_AUTHOR_NAME=" + name, "GIT_AUTHOR_EMAIL=" + email,
 		"GIT_COMMITTER_NAME=" + name, "GIT_COMMITTER_EMAIL=" + email,
 	}, nil
+}
+
+// apiID is the numeric id of the GitHub-compatible API of id (ghapi_ids),
+// assigned on first use.
+func (s *Service) apiID(ctx context.Context, id uuid.UUID) (int64, error) {
+	if err := s.q.AssignGitHubAPIIDs(ctx, []uuid.UUID{id}); err != nil {
+		return 0, fmt.Errorf("assign api id: %w", err)
+	}
+	rows, err := s.q.ListGitHubAPIIDs(ctx, []uuid.UUID{id})
+	if err != nil {
+		return 0, fmt.Errorf("get api id: %w", err)
+	}
+	if len(rows) == 0 {
+		return 0, errors.New("get api id: missing")
+	}
+	return rows[0].ID, nil
 }
 
 // identClean drops the characters git does not accept in an identity.

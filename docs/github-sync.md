@@ -33,6 +33,21 @@ to run the workflows of the repository for them, like a push:
   Ervisio to GitHub (backup, sync) create nothing locally, so nothing runs
   twice here. GitHub still runs its own copy of the workflows on GitHub.
 
+## Bot actor
+
+The writes of the sync (mirror, sync and import fetches) are made by the
+system bot `ervisio-sync[bot]` (display name "Ervisio Sync"): the activity
+feed, notifications and webhook `sender` show it with a "bot" badge, and
+the REST API returns it with `"type": "Bot"`. Bots cannot sign in. Activity
+recorded before version 1.11 has no actor and still shows as "ErvisioSync".
+Imported issues, pull requests and comments whose GitHub author has no local
+account keep their current behaviour (no local author, the GitHub login is
+kept as text).
+
+Workflow job tokens act as `ervisio-actions[bot]` ("Ervisio Actions"): the
+comments, issues, releases, statuses, check runs and pushes they make are
+attributed to it, and none of them starts a workflow.
+
 ## Import of variables, secrets and runs
 
 Settings > Secrets (or Variables) shows **Import from GitHub** on a linked or

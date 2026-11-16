@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
+	"github.com/Ervisio/ErvisioRepo/internal/bots"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
 	"github.com/Ervisio/ErvisioRepo/internal/runnerapi/runnerv1"
@@ -626,8 +627,7 @@ func (s *Service) LookupJobToken(ctx context.Context, token string) (auth.Princi
 	case "read":
 		scopes = append(scopes, auth.ScopeReadPackages)
 	}
-	name := "ervisio-actions[bot]"
-	return auth.Principal{Username: name, Role: auth.RoleUser, Method: auth.MethodToken, Scopes: scopes,
+	return auth.Principal{Username: bots.ActionsLogin, Role: auth.RoleUser, Method: auth.MethodToken, Scopes: scopes,
 		Grant: grant}, nil
 }
 

@@ -175,5 +175,7 @@
   "profile.readmeTitle": "Introduce yourself with a README",
   "profile.readmeHint": "Create the public repository {repo}: its README.md will appear here, at the top of your profile.",
   "profile.readmeCreate": "Create profile README",
-  "profile.readmeSeed": "# Hi, I'm {name}\n"
+  "profile.readmeSeed": "# Hi, I'm {name}\n",
+  "profile.botTitle": "Bot account",
+  "profile.botHint": "An automation account of this instance: it signs the work of a system service or an App. Nobody can sign in as a bot, and bots own no repositories."
 }

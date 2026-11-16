@@ -420,5 +420,6 @@
   "enum.none": "Nessuna",
   "enum.console": "Console",
   "enum.foglio": "Foglio",
-  "enum.corsie": "Corsie"
+  "enum.corsie": "Corsie",
+  "user.bot": "Account bot: è gestito da Ervisio, nessuno può accedere con questo account e non si può modificare né sospendere."
 }

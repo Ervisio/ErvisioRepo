@@ -394,6 +394,9 @@ func (s *Service) StartSession(ctx context.Context, userID uuid.UUID, oldToken s
 	if err != nil {
 		return LoginResult{}, fmt.Errorf("get user: %w", err)
 	}
+	if row.IsBot {
+		return LoginResult{}, ErrInvalidCredentials // nobody signs in as a bot
+	}
 	if row.SuspendedAt.Valid {
 		return LoginResult{}, ErrSuspended
 	}
@@ -460,6 +463,7 @@ type loginRow struct {
 	PasswordHash    pgtype.Text
 	EmailID         uuid.NullUUID
 	EmailVerifiedAt pgtype.Timestamptz
+	IsBot           bool
 }
 
 func (s *Service) lookupLogin(ctx context.Context, login string) (loginRow, bool, error) {
@@ -471,17 +475,20 @@ func (s *Service) lookupLogin(ctx context.Context, login string) (loginRow, bool
 		var row dbgen.GetLoginByEmailRow
 		row, err = s.q.GetLoginByEmail(ctx, login)
 		r = loginRow{row.ID, row.Username, row.Role, row.SuspendedAt, row.PasswordHash,
-			uuid.NullUUID{UUID: row.EmailID, Valid: err == nil}, row.EmailVerifiedAt}
+			uuid.NullUUID{UUID: row.EmailID, Valid: err == nil}, row.EmailVerifiedAt, false}
 	} else {
 		var row dbgen.GetLoginByUsernameRow
 		row, err = s.q.GetLoginByUsername(ctx, login)
-		r = loginRow{row.ID, row.Username, row.Role, row.SuspendedAt, row.PasswordHash, row.EmailID, row.EmailVerifiedAt}
+		r = loginRow{row.ID, row.Username, row.Role, row.SuspendedAt, row.PasswordHash, row.EmailID, row.EmailVerifiedAt, row.IsBot}
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		return loginRow{}, false, nil
 	}
 	if err != nil {
 		return loginRow{}, false, fmt.Errorf("lookup login: %w", err)
+	}
+	if r.IsBot {
+		return loginRow{}, false, nil // nobody signs in as a bot
 	}
 	return r, true, nil
 }

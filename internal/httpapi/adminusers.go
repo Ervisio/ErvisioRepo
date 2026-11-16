@@ -61,7 +61,7 @@ func adminProblem(err error) (problemResponse, bool) {
 	switch {
 	case errors.Is(err, identity.ErrNotFound):
 		return problemResponse{status: http.StatusNotFound, detail: "no such user"}, true
-	case errors.Is(err, identity.ErrSelfChange), errors.Is(err, identity.ErrLastAdmin):
+	case errors.Is(err, identity.ErrSelfChange), errors.Is(err, identity.ErrLastAdmin), errors.Is(err, identity.ErrBotAccount):
 		return problemResponse{status: http.StatusConflict, detail: err.Error()}, true
 	case errors.Is(err, identity.ErrInvalidRole):
 		return badRequest(err.Error()), true
@@ -72,7 +72,7 @@ func adminProblem(err error) (problemResponse, bool) {
 func adminUserDTO(u identity.AdminUser) v1gen.AdminUser {
 	out := v1gen.AdminUser{
 		Id: u.ID, Username: u.Username, DisplayName: u.DisplayName, Role: v1gen.AdminUserRole(u.Role),
-		SuspendedAt: u.SuspendedAt, Has2fa: u.Has2FA, CreatedAt: u.CreatedAt, LastActivity: u.LastActivity,
+		IsBot: u.IsBot, SuspendedAt: u.SuspendedAt, Has2fa: u.Has2FA, CreatedAt: u.CreatedAt, LastActivity: u.LastActivity,
 	}
 	if u.Email != "" {
 		out.Email = &u.Email

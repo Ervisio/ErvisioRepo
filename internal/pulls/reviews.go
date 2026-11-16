@@ -116,7 +116,7 @@ func (s *Service) ListReviews(ctx context.Context, who auth.Principal, owner, na
 		return nil, err
 	}
 	off, lim := pageArgs(offset, limit)
-	rows, err := s.q.ListPullReviews(ctx, dbgen.ListPullReviewsParams{PullID: p.IssueID, ViewerID: nullID(who.UserID), Off: off, Lim: lim})
+	rows, err := s.q.ListPullReviews(ctx, dbgen.ListPullReviewsParams{PullID: p.IssueID, ViewerID: nullID(who.Actor()), Off: off, Lim: lim})
 	if err != nil {
 		return nil, fmt.Errorf("list reviews: %w", err)
 	}
@@ -129,7 +129,7 @@ func (s *Service) loadReview(ctx context.Context, who auth.Principal, p dbgen.Pu
 	if err != nil {
 		return dbgen.PullReview{}, notFound(err, ErrReviewNotFound, "get review")
 	}
-	if rv.State == ReviewPending && (who.UserID == uuid.Nil || rv.ReviewerID.UUID != who.UserID) {
+	if rv.State == ReviewPending && (who.Actor() == uuid.Nil || rv.ReviewerID.UUID != who.Actor()) {
 		return dbgen.PullReview{}, ErrReviewNotFound
 	}
 	return rv, nil
@@ -220,7 +220,7 @@ func (s *Service) CreateReview(ctx context.Context, who auth.Principal, owner, n
 	if len(in.Comments) > MaxReviewComments {
 		return Review{}, invalid("a review has at most %d comments", MaxReviewComments)
 	}
-	author := i.AuthorID.Valid && i.AuthorID.UUID == who.UserID
+	author := i.AuthorID.Valid && i.AuthorID.UUID == who.Actor()
 	if author && (state == ReviewApproved || state == ReviewChangesRequested) {
 		return Review{}, invalid("you cannot approve or request changes on your own pull request")
 	}
@@ -242,7 +242,7 @@ func (s *Service) CreateReview(ctx context.Context, who auth.Principal, owner, n
 		}
 		drafts = append(drafts, arg)
 	}
-	if _, err := s.q.GetPendingPullReview(ctx, dbgen.GetPendingPullReviewParams{PullID: p.IssueID, ReviewerID: nullID(who.UserID)}); err == nil {
+	if _, err := s.q.GetPendingPullReview(ctx, dbgen.GetPendingPullReviewParams{PullID: p.IssueID, ReviewerID: nullID(who.Actor())}); err == nil {
 		return Review{}, fmt.Errorf("%w: you already have a pending review", ErrConflict)
 	} else if !errors.Is(err, pgx.ErrNoRows) {
 		return Review{}, fmt.Errorf("get pending review: %w", err)
@@ -253,7 +253,7 @@ func (s *Service) CreateReview(ctx context.Context, who auth.Principal, owner, n
 		if err != nil {
 			return err
 		}
-		arg := dbgen.InsertPullReviewParams{ID: id, PullID: p.IssueID, RepoID: r.ID, ReviewerID: nullID(who.UserID),
+		arg := dbgen.InsertPullReviewParams{ID: id, PullID: p.IssueID, RepoID: r.ID, ReviewerID: nullID(who.Actor()),
 			State: state, Body: in.Body, CommitSha: commit}
 		if state != ReviewPending {
 			arg.SubmittedAt = ts(s.o.Now())
@@ -269,7 +269,7 @@ func (s *Service) CreateReview(ctx context.Context, who auth.Principal, owner, n
 			if d.ID, err = newID(); err != nil {
 				return err
 			}
-			d.ReviewID, d.AuthorID = nullID(rv.ID), nullID(who.UserID)
+			d.ReviewID, d.AuthorID = nullID(rv.ID), nullID(who.Actor())
 			if _, err := q.InsertPullReviewComment(ctx, d); err != nil {
 				return fmt.Errorf("insert review comment: %w", err)
 			}
@@ -277,7 +277,7 @@ func (s *Service) CreateReview(ctx context.Context, who auth.Principal, owner, n
 		if state == ReviewPending {
 			return nil
 		}
-		return s.submitted(ctx, q, who.UserID, i, p, rv)
+		return s.submitted(ctx, q, who.Actor(), i, p, rv)
 	})
 	if err != nil {
 		return Review{}, err
@@ -305,7 +305,7 @@ func (s *Service) SubmitReview(ctx context.Context, who auth.Principal, owner, n
 	if rv.State != ReviewPending {
 		return Review{}, fmt.Errorf("%w: the review is already submitted", ErrConflict)
 	}
-	if i.AuthorID.Valid && i.AuthorID.UUID == who.UserID && state != ReviewCommented {
+	if i.AuthorID.Valid && i.AuthorID.UUID == who.Actor() && state != ReviewCommented {
 		return Review{}, invalid("you cannot approve or request changes on your own pull request")
 	}
 	if (p.MergedAt.Valid || i.State != issues.StateOpen) && state != ReviewCommented {
@@ -329,7 +329,7 @@ func (s *Service) SubmitReview(ctx context.Context, who auth.Principal, owner, n
 			return notFound(err, ErrConflict, "submit review")
 		}
 		rv = nr
-		return s.submitted(ctx, q, who.UserID, i, p, nr)
+		return s.submitted(ctx, q, who.Actor(), i, p, nr)
 	})
 	if err != nil {
 		return Review{}, err
@@ -393,15 +393,15 @@ func (s *Service) DismissReview(ctx context.Context, who auth.Principal, owner, 
 		return Review{}, fmt.Errorf("%w: only approvals and change requests can be dismissed", ErrConflict)
 	}
 	err = s.tx(ctx, func(q *dbgen.Queries) error {
-		nr, err := q.DismissPullReview(ctx, dbgen.DismissPullReviewParams{DismissedBy: nullID(who.UserID), DismissMessage: message, ID: rv.ID})
+		nr, err := q.DismissPullReview(ctx, dbgen.DismissPullReviewParams{DismissedBy: nullID(who.Actor()), DismissMessage: message, ID: rv.ID})
 		if err != nil {
 			return fmt.Errorf("dismiss review: %w", err)
 		}
 		rv = nr
-		if err := s.timeline(ctx, q, i, who.UserID, "review_dismissed", map[string]any{"review": rv.ID.String(), "message": message}); err != nil {
+		if err := s.timeline(ctx, q, i, who.Actor(), "review_dismissed", map[string]any{"review": rv.ID.String(), "message": message}); err != nil {
 			return err
 		}
-		return s.emitReview(ctx, q, "dismissed", who.UserID, p, nr)
+		return s.emitReview(ctx, q, "dismissed", who.Actor(), p, nr)
 	})
 	if err != nil {
 		return Review{}, err
@@ -430,7 +430,7 @@ func (s *Service) changeReviewers(ctx context.Context, who auth.Principal, owner
 	if err != nil {
 		return Pull{}, err
 	}
-	if !canTriage(r) && !isUser(i.AuthorID, who.UserID) {
+	if !canTriage(r) && !isUser(i.AuthorID, who.Actor()) {
 		return Pull{}, ErrForbidden
 	}
 	if len(reviewers) > MaxReviewers {
@@ -494,11 +494,11 @@ func (s *Service) changeReviewers(ctx context.Context, who auth.Principal, owner
 			if n == 0 {
 				continue
 			}
-			if err := s.timeline(ctx, q, i, who.UserID, action, map[string]any{"reviewer": u.Name}); err != nil {
+			if err := s.timeline(ctx, q, i, who.Actor(), action, map[string]any{"reviewer": u.Name}); err != nil {
 				return err
 			}
 			reviewer := u.ID
-			if err := s.emitPull(ctx, q, action, who.UserID, i, p, func(pl *events.PullPayload) { pl.Reviewer = &reviewer }); err != nil {
+			if err := s.emitPull(ctx, q, action, who.Actor(), i, p, func(pl *events.PullPayload) { pl.Reviewer = &reviewer }); err != nil {
 				return err
 			}
 		}
@@ -507,5 +507,5 @@ func (s *Service) changeReviewers(ctx context.Context, who auth.Principal, owner
 	if err != nil {
 		return Pull{}, err
 	}
-	return s.one(ctx, who.UserID, r, i, p)
+	return s.one(ctx, who.Actor(), r, i, p)
 }

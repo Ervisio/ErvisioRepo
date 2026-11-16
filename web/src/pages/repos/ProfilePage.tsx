@@ -5,7 +5,7 @@ import { useSession, useUserProfile } from "../../api/identity.ts";
 import { ApiError } from "../../api/http.ts";
 import { useCreateRepo, useOwnerRepos, useRepo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, EmptyState, Icon, Page } from "../../ui/index.ts";
+import { BotMark, Button, EmptyState, Icon, Page } from "../../ui/index.ts";
 import { formatDate, useNotify } from "../account/common.tsx";
 import { Readme } from "../code/Readme.tsx";
 import { RepoRows } from "./RepoList.tsx";
@@ -41,6 +41,7 @@ export function ProfilePage({ username }: { username: string }) {
     );
   }
   const u = profile.data;
+  const bot = u.kind === "bot";
   return (
     <Page section="code" title={u.displayName || u.username} quiet>
       <div className="up">
@@ -51,15 +52,22 @@ export function ProfilePage({ username }: { username: string }) {
             <span className="up-av" aria-hidden="true">{u.username.slice(0, 1).toUpperCase()}</span>
           )}
           <p className="up-name">{u.displayName || u.username}</p>
-          <p className="up-login">{u.username}</p>
+          <p className="up-login">{u.username} <BotMark login={u.username} /></p>
+          {bot && u.description && <p className="up-meta">{u.description}</p>}
           {me === u.username && <Link to="/settings" className="ui-btn ui-btn-secondary">{t("profile.edit")}</Link>}
           <p className="up-meta">{t("profile.joined", { date: formatDate(u.createdAt) })}</p>
         </aside>
-        <div>
-          <ProfileReadme username={u.username} displayName={u.displayName || u.username} own={me === u.username} />
-          <h2 className="up-h2">{t("list.title")}</h2>
-          <RepoRows query={repos} />
-        </div>
+        {bot ? (
+          <div>
+            <EmptyState icon="info" title={t("profile.botTitle")} description={t("profile.botHint")} />
+          </div>
+        ) : (
+          <div>
+            <ProfileReadme username={u.username} displayName={u.displayName || u.username} own={me === u.username} />
+            <h2 className="up-h2">{t("list.title")}</h2>
+            <RepoRows query={repos} />
+          </div>
+        )}
       </div>
     </Page>
   );

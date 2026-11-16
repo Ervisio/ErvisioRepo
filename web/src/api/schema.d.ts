@@ -332,8 +332,9 @@ export interface paths {
         /**
          * Change the role or suspension of a user
          * @description Instance admins only. Suspending revokes every session and token of
-         *     the user. An admin cannot demote or suspend itself, and the last
-         *     active admin cannot be demoted or suspended (409).
+         *     the user. An admin cannot demote or suspend itself, the last
+         *     active admin cannot be demoted or suspended, and bot accounts
+         *     cannot be changed (409).
          */
         patch: operations["updateAdminUser"];
         trace?: never;
@@ -6297,6 +6298,8 @@ export interface components {
             id: string;
             username: string;
             displayName: string;
+            /** @description A bot account (login ending in "[bot]"); bots cannot sign in and cannot be changed */
+            isBot: boolean;
             /** @description Primary address */
             email?: string;
             /** @enum {string} */
@@ -6870,6 +6873,13 @@ export interface components {
         };
         UserProfile: {
             username: string;
+            /**
+             * @description A bot is an automation account (login ending in "[bot]") nobody can sign in as
+             * @enum {string}
+             */
+            kind: "user" | "bot";
+            /** @description What the bot does; empty for users */
+            description?: string;
             displayName: string;
             /** @description Absolute https URL of the avatar; empty when unset */
             avatarUrl: string;
@@ -8805,6 +8815,7 @@ export interface operations {
                 content?: never;
             };
             404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

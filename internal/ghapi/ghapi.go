@@ -463,9 +463,11 @@ func (c *call) client() identity.Client {
 // read checks the token scope of a read of repository data.
 func (c *call) read() error { return c.scope(auth.ScopeReadRepo) }
 
-// write checks that the caller is signed in with the repo:write scope.
+// write checks that the caller is signed in, or an Actions job token
+// (acting as ervisio-actions[bot] on its own repository only: the services
+// see it as anonymous elsewhere), with the repo:write scope.
 func (c *call) write() error {
-	if c.who.UserID == uuid.Nil {
+	if c.who.UserID == uuid.Nil && c.who.Grant == nil {
 		return errAuth
 	}
 	return c.scope(auth.ScopeWriteRepo)

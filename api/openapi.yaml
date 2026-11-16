@@ -523,8 +523,9 @@ paths:
       summary: Change the role or suspension of a user
       description: |
         Instance admins only. Suspending revokes every session and token of
-        the user. An admin cannot demote or suspend itself, and the last
-        active admin cannot be demoted or suspended (409).
+        the user. An admin cannot demote or suspend itself, the last
+        active admin cannot be demoted or suspended, and bot accounts
+        cannot be changed (409).
       security:
         - session: [admin]
       requestBody:
@@ -566,6 +567,8 @@ paths:
         "204":
           description: Second factors removed
         "404":
+          $ref: "#/components/responses/Problem"
+        "409":
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
@@ -10855,7 +10858,7 @@ components:
           description: When set, only this address can use the invitation
     AdminUser:
       type: object
-      required: [id, username, displayName, role, has2fa, createdAt]
+      required: [id, username, displayName, role, has2fa, isBot, createdAt]
       properties:
         id:
           type: string
@@ -10864,6 +10867,9 @@ components:
           type: string
         displayName:
           type: string
+        isBot:
+          type: boolean
+          description: A bot account (login ending in "[bot]"); bots cannot sign in and cannot be changed
         email:
           type: string
           description: Primary address
@@ -11873,9 +11879,14 @@ components:
         avatarUrl: {type: string, description: Absolute https URL of the avatar; empty when unset}
     UserProfile:
       type: object
-      required: [username, displayName, avatarUrl, createdAt]
+      required: [username, kind, displayName, avatarUrl, createdAt]
       properties:
         username: {type: string}
+        kind:
+          type: string
+          enum: [user, bot]
+          description: A bot is an automation account (login ending in "[bot]") nobody can sign in as
+        description: {type: string, description: What the bot does; empty for users}
         displayName: {type: string}
         avatarUrl: {type: string, description: Absolute https URL of the avatar; empty when unset}
         createdAt: {type: string, format: date-time}

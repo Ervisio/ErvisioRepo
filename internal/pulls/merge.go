@@ -121,7 +121,7 @@ func (s *Service) merge(ctx context.Context, who auth.Principal, r repos.Repo, n
 		}
 	}
 
-	merger, err := s.o.Browse.Identity(ctx, who.UserID)
+	merger, err := s.o.Browse.Identity(ctx, who.Actor())
 	if err != nil {
 		return "", fmt.Errorf("merger identity: %w", err)
 	}
@@ -177,7 +177,7 @@ func (s *Service) merge(ctx context.Context, who auth.Principal, r repos.Repo, n
 		}
 	}
 
-	sess, env, done, err := s.session(ctx, l, who.UserID, protection.ProtocolMerge)
+	sess, env, done, err := s.session(ctx, l, who.Actor(), protection.ProtocolMerge)
 	if err != nil {
 		return "", err
 	}
@@ -195,24 +195,24 @@ func (s *Service) merge(ctx context.Context, who auth.Principal, r repos.Repo, n
 	}
 
 	err = s.tx(ctx, func(q *dbgen.Queries) error {
-		np, err := q.SetPullMerged(ctx, dbgen.SetPullMergedParams{MergedBy: nullID(who.UserID), MergeCommitSha: commit,
+		np, err := q.SetPullMerged(ctx, dbgen.SetPullMergedParams{MergedBy: nullID(who.Actor()), MergeCommitSha: commit,
 			MergeMethod: method, IssueID: p.IssueID})
 		if err != nil {
 			return fmt.Errorf("record merge: %w", err)
 		}
 		row, err := q.SetIssueState(ctx, dbgen.SetIssueStateParams{ID: i.ID, State: issues.StateClosed,
-			StateReason: issues.ReasonCompleted, ClosedAt: ts(s.o.Now()), ClosedBy: nullID(who.UserID)})
+			StateReason: issues.ReasonCompleted, ClosedAt: ts(s.o.Now()), ClosedBy: nullID(who.Actor())})
 		if err != nil {
 			return fmt.Errorf("close pull request: %w", err)
 		}
-		if err := s.timeline(ctx, q, row, who.UserID, "merged", map[string]any{"commit": commit, "method": method, "base": p.BaseRef}); err != nil {
+		if err := s.timeline(ctx, q, row, who.Actor(), "merged", map[string]any{"commit": commit, "method": method, "base": p.BaseRef}); err != nil {
 			return err
 		}
 		extra := func(pl *events.PullPayload) { pl.MergeCommit, pl.MergeMethod = commit, method }
-		if err := s.emitPull(ctx, q, "closed", who.UserID, row, np, extra); err != nil {
+		if err := s.emitPull(ctx, q, "closed", who.Actor(), row, np, extra); err != nil {
 			return err
 		}
-		return s.emitPull(ctx, q, "merged", who.UserID, row, np, extra)
+		return s.emitPull(ctx, q, "merged", who.Actor(), row, np, extra)
 	})
 	if err != nil {
 		// The branch already moved: report the merge, log the bookkeeping.
@@ -220,11 +220,11 @@ func (s *Service) merge(ctx context.Context, who auth.Principal, r repos.Repo, n
 		return commit, nil
 	}
 	l.Release()
-	s.log.InfoContext(ctx, "pull request merged", "repo", r.ID, "number", p.Number, "method", method, "commit", commit, "user", who.UserID)
+	s.log.InfoContext(ctx, "pull request merged", "repo", r.ID, "number", p.Number, "method", method, "commit", commit, "user", who.Actor())
 
 	if p.BaseRef == r.DefaultBranch && s.o.Issues != nil {
 		text := i.Title + "\n" + i.Body + "\n" + message
-		if _, err := s.o.Issues.CloseFromText(ctx, r.ID, who.UserID, text, issues.CloseSource{Pull: p.Number}); err != nil {
+		if _, err := s.o.Issues.CloseFromText(ctx, r.ID, who.Actor(), text, issues.CloseSource{Pull: p.Number}); err != nil {
 			s.log.WarnContext(ctx, "closing referenced issues failed", "repo", r.ID, "number", p.Number, "err", err)
 		}
 	}
@@ -321,7 +321,7 @@ func (s *Service) deleteHead(ctx context.Context, who auth.Principal, base repos
 	if others, err := s.q.OpenPullsByBase(ctx, dbgen.OpenPullsByBaseParams{RepoID: hr.ID, BaseRef: p.HeadRef}); err != nil || len(others) > 0 {
 		return
 	}
-	if err := s.deleteBranch(ctx, who.UserID, hr.ID, p.HeadRef, p.HeadSha); err != nil {
+	if err := s.deleteBranch(ctx, who.Actor(), hr.ID, p.HeadRef, p.HeadSha); err != nil {
 		s.log.WarnContext(ctx, "deleting the head branch failed", "repo", base.ID, "number", p.Number, "err", err)
 	}
 }
@@ -376,16 +376,16 @@ func (s *Service) EnableAutoMerge(ctx context.Context, who auth.Principal, owner
 		return Pull{}, fmt.Errorf("%w: the pull request is not open", ErrConflict)
 	}
 	err = s.tx(ctx, func(q *dbgen.Queries) error {
-		np, err := q.SetPullAutoMerge(ctx, dbgen.SetPullAutoMergeParams{AutoMergeMethod: method, AutoMergeBy: nullID(who.UserID),
+		np, err := q.SetPullAutoMerge(ctx, dbgen.SetPullAutoMergeParams{AutoMergeMethod: method, AutoMergeBy: nullID(who.Actor()),
 			AutoMergeTitle: in.Title, AutoMergeMessage: in.Message, AutoMergeDelete: in.DeleteBranch, IssueID: p.IssueID})
 		if err != nil {
 			return fmt.Errorf("enable auto-merge: %w", err)
 		}
 		p = np
-		if err := s.timeline(ctx, q, i, who.UserID, "auto_merge_enabled", map[string]any{"method": method}); err != nil {
+		if err := s.timeline(ctx, q, i, who.Actor(), "auto_merge_enabled", map[string]any{"method": method}); err != nil {
 			return err
 		}
-		return s.emitPull(ctx, q, "auto_merge_enabled", who.UserID, i, np, nil)
+		return s.emitPull(ctx, q, "auto_merge_enabled", who.Actor(), i, np, nil)
 	})
 	if err != nil {
 		return Pull{}, err
@@ -395,7 +395,7 @@ func (s *Service) EnableAutoMerge(ctx context.Context, who auth.Principal, owner
 	if err != nil {
 		return Pull{}, err
 	}
-	return s.one(ctx, who.UserID, r, i, p)
+	return s.one(ctx, who.Actor(), r, i, p)
 }
 
 // DisableAutoMerge cancels a pending auto-merge.
@@ -408,11 +408,11 @@ func (s *Service) DisableAutoMerge(ctx context.Context, who auth.Principal, owne
 	if err != nil {
 		return Pull{}, err
 	}
-	if !canMerge(r) && !isUser(p.AutoMergeBy, who.UserID) {
+	if !canMerge(r) && !isUser(p.AutoMergeBy, who.Actor()) {
 		return Pull{}, ErrForbidden
 	}
 	if p.AutoMergeMethod != "" {
-		if err := s.clearAutoMerge(ctx, who.UserID, i, p); err != nil {
+		if err := s.clearAutoMerge(ctx, who.Actor(), i, p); err != nil {
 			return Pull{}, err
 		}
 	}
@@ -420,7 +420,7 @@ func (s *Service) DisableAutoMerge(ctx context.Context, who auth.Principal, owne
 	if err != nil {
 		return Pull{}, err
 	}
-	return s.one(ctx, who.UserID, r, i, p)
+	return s.one(ctx, who.Actor(), r, i, p)
 }
 
 func (s *Service) clearAutoMerge(ctx context.Context, actor uuid.UUID, i dbgen.Issue, p dbgen.PullRequest) error {

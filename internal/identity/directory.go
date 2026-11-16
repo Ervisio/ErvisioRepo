@@ -75,7 +75,10 @@ func likePrefix(p string) string {
 
 // Profile is the public view of a user account.
 type Profile struct {
-	Username    string
+	Username string
+	// Kind is "user" or "bot"; Description is what a bot does.
+	Kind        string
+	Description string
 	DisplayName string
 	AvatarURL   string
 	CreatedAt   time.Time
@@ -95,6 +98,6 @@ func (s *Service) UserProfile(ctx context.Context, username string) (Profile, er
 	if row.SuspendedAt.Valid {
 		return Profile{}, ErrNotFound
 	}
-	return Profile{Username: row.Username, DisplayName: row.DisplayName, AvatarURL: row.AvatarUrl,
-		CreatedAt: row.CreatedAt.Time}, nil
+	return Profile{Username: row.Username, Kind: row.Kind, Description: row.Description, DisplayName: row.DisplayName,
+		AvatarURL: row.AvatarUrl, CreatedAt: row.CreatedAt.Time}, nil
 }

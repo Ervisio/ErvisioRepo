@@ -11,7 +11,7 @@ import {
 import { canWrite } from "../../api/code.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, Button, EmptyState } from "../../ui/index.ts";
+import { Badge, BotMark, Button, EmptyState } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { Gate, RepoFrame, shortSha, When } from "../code/common.tsx";
 import { branchOf, duration, isActive, runState, StatusIcon, StatusPill } from "./common.tsx";
@@ -109,7 +109,7 @@ function RunHeader({ repo, run: r }: { repo: Repo; run: ActionsRun }) {
         <StatusPill status={r.status} conclusion={r.conclusion} />
         <span>{t("run.eventOn", { event: r.eventAction ? `${r.event} · ${r.eventAction}` : r.event, branch: branchOf(r.ref) })}</span>
         <Link to="/$owner/$name/commit/$sha" params={{ owner, name, sha: r.sha }} className="ax-sha">{shortSha(r.sha)}</Link>
-        <span>{t("run.startedBy", { actor: r.triggerActor || r.actor })} <When iso={r.startedAt ?? r.createdAt} /></span>
+        <span>{t("run.startedBy", { actor: r.triggerActor || r.actor })} <BotMark login={r.triggerActor || r.actor} /> <When iso={r.startedAt ?? r.createdAt} /></span>
         {duration(r.startedAt, r.completedAt) && <span>{duration(r.startedAt, r.completedAt)}</span>}
         {r.attempt > 1 && <span>{t("run.attempt", { n: r.attempt })}</span>}
       </p>

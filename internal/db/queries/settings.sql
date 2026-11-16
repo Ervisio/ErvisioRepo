@@ -14,5 +14,5 @@ ON CONFLICT (key) DO NOTHING;
 -- name: InstanceCounts :one
 -- Totals shown by the Ervisio plugin's status page.
 SELECT (SELECT count(*) FROM repos)::bigint AS repos,
-       (SELECT count(*) FROM users)::bigint AS users,
+       (SELECT count(*) FROM namespaces WHERE kind = 'user')::bigint AS users,
        (SELECT count(*) FROM orgs)::bigint  AS orgs;

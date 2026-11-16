@@ -113,12 +113,12 @@ func (s *Service) ListComments(ctx context.Context, who auth.Principal, owner, n
 		}
 	}
 	off, lim := pageArgs(offset, limit)
-	rows, err := s.q.ListPullReviewComments(ctx, dbgen.ListPullReviewCommentsParams{PullID: p.IssueID, ViewerID: nullID(who.UserID),
+	rows, err := s.q.ListPullReviewComments(ctx, dbgen.ListPullReviewCommentsParams{PullID: p.IssueID, ViewerID: nullID(who.Actor()),
 		ReviewID: reviewID, Off: off, Lim: lim})
 	if err != nil {
 		return nil, fmt.Errorf("list review comments: %w", err)
 	}
-	return s.comments(ctx, who.UserID, p.IssueID, rows)
+	return s.comments(ctx, who.Actor(), p.IssueID, rows)
 }
 
 // loadComment returns a review comment of repository r the caller can see,
@@ -133,7 +133,7 @@ func (s *Service) loadComment(ctx context.Context, who auth.Principal, r repos.R
 		if err != nil {
 			return c, dbgen.Issue{}, dbgen.PullRequest{}, notFound(err, ErrCommentNotFound, "get review")
 		}
-		if rv.State == ReviewPending && (who.UserID == uuid.Nil || rv.ReviewerID.UUID != who.UserID) {
+		if rv.State == ReviewPending && (who.Actor() == uuid.Nil || rv.ReviewerID.UUID != who.Actor()) {
 			return c, dbgen.Issue{}, dbgen.PullRequest{}, ErrCommentNotFound
 		}
 	}
@@ -158,7 +158,7 @@ func (s *Service) GetComment(ctx context.Context, who auth.Principal, owner, nam
 	if err != nil {
 		return Comment{}, err
 	}
-	return s.comment(ctx, who.UserID, c)
+	return s.comment(ctx, who.Actor(), c)
 }
 
 // ---- anchoring ----
@@ -413,7 +413,7 @@ func (s *Service) CreateComment(ctx context.Context, who auth.Principal, owner, 
 	}
 	var c dbgen.PullReviewComment
 	err = s.tx(ctx, func(q *dbgen.Queries) error {
-		rv, err := q.GetPendingPullReview(ctx, dbgen.GetPendingPullReviewParams{PullID: p.IssueID, ReviewerID: nullID(who.UserID)})
+		rv, err := q.GetPendingPullReview(ctx, dbgen.GetPendingPullReviewParams{PullID: p.IssueID, ReviewerID: nullID(who.Actor())})
 		switch {
 		case err == nil:
 			arg.ReviewID = nullID(rv.ID)
@@ -423,7 +423,7 @@ func (s *Service) CreateComment(ctx context.Context, who auth.Principal, owner, 
 		if arg.ID, err = newID(); err != nil {
 			return err
 		}
-		arg.AuthorID = nullID(who.UserID)
+		arg.AuthorID = nullID(who.Actor())
 		if c, err = q.InsertPullReviewComment(ctx, arg); err != nil {
 			return fmt.Errorf("insert review comment: %w", err)
 		}
@@ -433,12 +433,12 @@ func (s *Service) CreateComment(ctx context.Context, who auth.Principal, owner, 
 		if err := s.recordRefs(ctx, q, r, who, i, c.ID, c.Body); err != nil {
 			return err
 		}
-		return s.emitComment(ctx, q, "created", who.UserID, p, c)
+		return s.emitComment(ctx, q, "created", who.Actor(), p, c)
 	})
 	if err != nil {
 		return Comment{}, err
 	}
-	return s.comment(ctx, who.UserID, c)
+	return s.comment(ctx, who.Actor(), c)
 }
 
 // UpdateComment edits the body of the caller's review comment.
@@ -451,7 +451,7 @@ func (s *Service) UpdateComment(ctx context.Context, who auth.Principal, owner, 
 	if err != nil {
 		return Comment{}, err
 	}
-	if !c.AuthorID.Valid || c.AuthorID.UUID != who.UserID {
+	if !c.AuthorID.Valid || c.AuthorID.UUID != who.Actor() {
 		return Comment{}, ErrForbidden
 	}
 	if i.Locked && !canTriage(r) {
@@ -474,12 +474,12 @@ func (s *Service) UpdateComment(ctx context.Context, who auth.Principal, owner, 
 				return nil
 			}
 		}
-		return s.emitComment(ctx, q, "edited", who.UserID, p, c)
+		return s.emitComment(ctx, q, "edited", who.Actor(), p, c)
 	})
 	if err != nil {
 		return Comment{}, err
 	}
-	return s.comment(ctx, who.UserID, c)
+	return s.comment(ctx, who.Actor(), c)
 }
 
 // DeleteComment deletes a review comment (with its replies when it starts
@@ -493,7 +493,7 @@ func (s *Service) DeleteComment(ctx context.Context, who auth.Principal, owner, 
 	if err != nil {
 		return err
 	}
-	if !canTriage(r) && (!c.AuthorID.Valid || c.AuthorID.UUID != who.UserID) {
+	if !canTriage(r) && (!c.AuthorID.Valid || c.AuthorID.UUID != who.Actor()) {
 		return ErrForbidden
 	}
 	return s.tx(ctx, func(q *dbgen.Queries) error {
@@ -504,7 +504,7 @@ func (s *Service) DeleteComment(ctx context.Context, who auth.Principal, owner, 
 		if n == 0 {
 			return ErrCommentNotFound
 		}
-		return s.emitComment(ctx, q, "deleted", who.UserID, p, c)
+		return s.emitComment(ctx, q, "deleted", who.Actor(), p, c)
 	})
 }
 
@@ -519,7 +519,7 @@ func (s *Service) ResolveThread(ctx context.Context, who auth.Principal, owner, 
 	if err != nil {
 		return Comment{}, err
 	}
-	if !canTriage(r) && !isUser(i.AuthorID, who.UserID) && !isUser(c.AuthorID, who.UserID) {
+	if !canTriage(r) && !isUser(i.AuthorID, who.Actor()) && !isUser(c.AuthorID, who.Actor()) {
 		return Comment{}, ErrForbidden
 	}
 	root := c.ID
@@ -528,7 +528,7 @@ func (s *Service) ResolveThread(ctx context.Context, who auth.Principal, owner, 
 	}
 	arg := dbgen.SetPullThreadResolvedParams{PullID: c.PullID, RootID: root}
 	if resolved {
-		arg.ResolvedAt, arg.ResolvedBy = ts(s.o.Now()), nullID(who.UserID)
+		arg.ResolvedAt, arg.ResolvedBy = ts(s.o.Now()), nullID(who.Actor())
 	}
 	if _, err := s.q.SetPullThreadResolved(ctx, arg); err != nil {
 		return Comment{}, fmt.Errorf("resolve thread: %w", err)
@@ -537,7 +537,7 @@ func (s *Service) ResolveThread(ctx context.Context, who auth.Principal, owner, 
 	if err != nil {
 		return Comment{}, notFound(err, ErrCommentNotFound, "get review comment")
 	}
-	return s.comment(ctx, who.UserID, nc)
+	return s.comment(ctx, who.Actor(), nc)
 }
 
 // ---- suggestions ----
@@ -635,7 +635,7 @@ func (s *Service) ApplySuggestion(ctx context.Context, who auth.Principal, owner
 		next += "\n"
 	}
 	res, err := s.o.Browse.Edit(ctx, gitRepo(hr), gitbrowse.Edit{Op: gitbrowse.OpUpdate, Path: c.Path, Content: []byte(next),
-		Branch: p.HeadRef, ExpectedOID: blob.OID, Message: message, AuthorID: who.UserID})
+		Branch: p.HeadRef, ExpectedOID: blob.OID, Message: message, AuthorID: who.Actor()})
 	if err != nil {
 		return "", fmt.Errorf("apply suggestion: %w", err)
 	}

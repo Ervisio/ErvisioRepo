@@ -84,5 +84,6 @@
   "settings.leave.description": "Your unsaved changes on this page will be lost.",
   "settings.leave.stay": "Stay",
   "settings.leave.go": "Leave and discard",
-  "confirm.type": "Type {text} to confirm"
+  "confirm.type": "Type {text} to confirm",
+  "bot.badge": "bot"
 }

@@ -73,9 +73,11 @@ func (q *Queries) ConsumeOneTimeToken(ctx context.Context, arg ConsumeOneTimeTok
 }
 
 const countUsers = `-- name: CountUsers :one
-SELECT count(*) FROM users
+SELECT count(*) FROM users u JOIN namespaces n ON n.id = u.id WHERE n.kind <> 'bot'
 `
 
+// Human accounts: bots do not count (the first registered user still
+// becomes the instance admin).
 func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, countUsers)
 	var count int64
@@ -231,7 +233,7 @@ func (q *Queries) GetLoginByEmail(ctx context.Context, address string) (GetLogin
 
 const getLoginByUsername = `-- name: GetLoginByUsername :one
 SELECT u.id, n.name AS username, u.role, u.locale, u.suspended_at,
-       p.hash AS password_hash, e.id AS email_id, e.verified_at AS email_verified_at
+       p.hash AS password_hash, e.id AS email_id, e.verified_at AS email_verified_at, (n.kind = 'bot')::boolean AS is_bot
 FROM users u
 JOIN namespaces n ON n.id = u.id
 LEFT JOIN passwords p ON p.user_id = u.id
@@ -248,6 +250,7 @@ type GetLoginByUsernameRow struct {
 	PasswordHash    pgtype.Text
 	EmailID         uuid.NullUUID
 	EmailVerifiedAt pgtype.Timestamptz
+	IsBot           bool
 }
 
 // Credentials for a login by username; the email is the primary address.
@@ -263,6 +266,7 @@ func (q *Queries) GetLoginByUsername(ctx context.Context, username string) (GetL
 		&i.PasswordHash,
 		&i.EmailID,
 		&i.EmailVerifiedAt,
+		&i.IsBot,
 	)
 	return i, err
 }
@@ -332,7 +336,7 @@ func (q *Queries) GetOrgMemberRole(ctx context.Context, arg GetOrgMemberRolePara
 
 const getUserByID = `-- name: GetUserByID :one
 SELECT u.id, n.name AS username, u.display_name, u.avatar_url, u.role, u.locale, u.suspended_at, u.created_at,
-       e.id AS email_id, e.address AS email, e.verified_at AS email_verified_at
+       e.id AS email_id, e.address AS email, e.verified_at AS email_verified_at, (n.kind = 'bot')::boolean AS is_bot
 FROM users u
 JOIN namespaces n ON n.id = u.id
 LEFT JOIN emails e ON e.user_id = u.id AND e.is_primary
@@ -351,6 +355,7 @@ type GetUserByIDRow struct {
 	EmailID         uuid.NullUUID
 	Email           pgtype.Text
 	EmailVerifiedAt pgtype.Timestamptz
+	IsBot           bool
 }
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error) {
@@ -368,12 +373,14 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 		&i.EmailID,
 		&i.Email,
 		&i.EmailVerifiedAt,
+		&i.IsBot,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT u.id, n.name AS username, u.display_name, u.role, u.locale, u.suspended_at, u.created_at
+SELECT u.id, n.name AS username, u.display_name, u.role, u.locale, u.suspended_at, u.created_at,
+       (n.kind = 'bot')::boolean AS is_bot
 FROM users u
 JOIN namespaces n ON n.id = u.id
 WHERE n.name_lower = lower($1::text)
@@ -387,6 +394,7 @@ type GetUserByUsernameRow struct {
 	Locale      string
 	SuspendedAt pgtype.Timestamptz
 	CreatedAt   pgtype.Timestamptz
+	IsBot       bool
 }
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error) {
@@ -400,35 +408,43 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUs
 		&i.Locale,
 		&i.SuspendedAt,
 		&i.CreatedAt,
+		&i.IsBot,
 	)
 	return i, err
 }
 
 const getUserProfileByUsername = `-- name: GetUserProfileByUsername :one
-SELECT n.name AS username, u.display_name, u.avatar_url, u.suspended_at, u.created_at
+SELECT n.name AS username, n.kind, u.display_name, u.avatar_url, u.suspended_at, u.created_at,
+       COALESCE(b.description, '')::text AS description
 FROM users u
 JOIN namespaces n ON n.id = u.id
+LEFT JOIN bots b ON b.user_id = u.id
 WHERE n.name_lower = lower($1::text)
 `
 
 type GetUserProfileByUsernameRow struct {
 	Username    string
+	Kind        string
 	DisplayName string
 	AvatarUrl   string
 	SuspendedAt pgtype.Timestamptz
 	CreatedAt   pgtype.Timestamptz
+	Description string
 }
 
 // Public profile fields of a user account (organizations have no users row).
+// kind is "user" or "bot"; description is the description of a bot.
 func (q *Queries) GetUserProfileByUsername(ctx context.Context, username string) (GetUserProfileByUsernameRow, error) {
 	row := q.db.QueryRow(ctx, getUserProfileByUsername, username)
 	var i GetUserProfileByUsernameRow
 	err := row.Scan(
 		&i.Username,
+		&i.Kind,
 		&i.DisplayName,
 		&i.AvatarUrl,
 		&i.SuspendedAt,
 		&i.CreatedAt,
+		&i.Description,
 	)
 	return i, err
 }
@@ -614,7 +630,7 @@ WITH visible AS (
 SELECT u.id, n.name AS username, u.display_name, u.avatar_url
 FROM users u
 JOIN namespaces n ON n.id = u.id
-WHERE u.suspended_at IS NULL
+WHERE u.suspended_at IS NULL AND n.kind <> 'bot'
     AND ($1::boolean OR u.id IN (SELECT v.user_id FROM visible v))
     AND (n.name_lower LIKE $2::text OR lower(u.display_name) LIKE $2::text)
 ORDER BY (n.name_lower = $3::text) DESC, (n.name_lower LIKE $2::text) DESC, n.name_lower

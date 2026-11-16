@@ -65,12 +65,12 @@ func (s *Service) CreateStatus(ctx context.Context, who auth.Principal, owner, n
 		}
 		row, err = q.InsertCommitStatus(ctx, dbgen.InsertCommitStatusParams{ID: id, RepoID: r.ID, Sha: sha,
 			State: in.State, Context: in.Context, Description: in.Description, TargetUrl: in.TargetURL,
-			CreatorID: nullID(who.UserID)})
+			CreatorID: nullID(who.Actor())})
 		if err != nil {
 			return fmt.Errorf("insert status: %w", err)
 		}
 		return events.Emit(ctx, q, events.Event{Kind: events.KindStatus, Action: "created", RepoID: r.ID,
-			ActorID: who.UserID, SubjectID: id}, events.StatusPayload{ID: id, SHA: sha, Context: in.Context,
+			ActorID: who.Actor(), SubjectID: id}, events.StatusPayload{ID: id, SHA: sha, Context: in.Context,
 			State: in.State, Description: in.Description, TargetURL: in.TargetURL, CreatedAt: row.CreatedAt.Time})
 	})
 	if err != nil {

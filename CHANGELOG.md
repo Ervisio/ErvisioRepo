@@ -6,6 +6,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- System bot accounts (apps plan A0): users whose namespace kind is `bot` and whose login ends in `[bot]` (a suffix normal names cannot have), with a `bots` table (`description`, nullable `app_id` for the App bots of phase A2). Migration 00290 creates `ervisio-sync[bot]` ("Ervisio Sync") and `ervisio-actions[bot]` ("Ervisio Actions"); `ervisio-sync` and `ervisio-actions` become reserved names. Bots cannot sign in (password, SSO, passkeys and sessions all refuse them), do not count as users for the first-admin rule and the instance counts, are left out of user search, own no repositories and cannot be collaborators. Admin > Users lists them with a "bot" badge, read-only (changes answer 409).
+- The GitHub sync writes as `ervisio-sync[bot]` instead of an empty actor: activity, notifications and webhook senders show the bot. Synced pushes still start workflows only with "Run Actions on synced pushes", as before.
+- Workflow job tokens act as `ervisio-actions[bot]`: they can now write on their own repository through `/api/v3` (issues, comments, pull requests, releases, statuses, check runs, contents and refs, with `contents: write`), and their pushes, comments, releases and statuses are attributed to the bot. Events of the bot never start workflows (loop protection unchanged).
+- Bots in the APIs: REST v3 and webhook user objects have `"type": "Bot"`, GraphQL returns `Bot` (implements `Actor`), v1 `UserProfile` has `kind` (`user` | `bot`) and `description`, `AdminUser` has `isBot`. Bot commits use `<id>+<login>@users.noreply.<host>`, mapped back to the bot in contributor lists.
+- UI: "bot" badge next to bot names in the activity feed, issue and pull request timelines and comments, workflow run actors, Admin > Users and the profile page, which shows the bot description instead of repositories. Old activity rows without an actor still show "ErvisioSync".
+
 ## [1.10.1] - 2026-11-16
 
 ### Fixed

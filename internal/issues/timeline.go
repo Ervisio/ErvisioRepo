@@ -131,7 +131,7 @@ func (s *Service) ListTimeline(ctx context.Context, who auth.Principal, owner, n
 		if err != nil {
 			return nil, fmt.Errorf("timeline comments: %w", err)
 		}
-		hc, err := s.hydrateComments(ctx, who.UserID, cs)
+		hc, err := s.hydrateComments(ctx, who.Actor(), cs)
 		if err != nil {
 			return nil, err
 		}

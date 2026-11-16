@@ -20,7 +20,7 @@ import { useRepoSubscription, useSetRepoSubscription, useSetSubjectSubscription,
 import { useSession, useUserSearch } from "../../api/identity.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, Icon, Input, Menu, MenuItem, MenuLabel, MenuSeparator } from "../../ui/index.ts";
+import { BotMark, Button, Icon, Input, Menu, MenuItem, MenuLabel, MenuSeparator } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { Gate, shortSha, When } from "../code/common.tsx";
 import { Body, CommentBox, Composer, EventRow, IconTrigger, LabelChip, Meter, Reactions, SideBlock, SideDetails, Avatar, type WorkState } from "./common.tsx";
@@ -104,6 +104,7 @@ function CommentItem({ repo, issue, c, me }: { repo: Repo; issue: Issue; c: Issu
       head={
         <>
           <b>{c.author}</b>
+          <BotMark login={c.author} />
           <When iso={c.createdAt} />
           {c.author === issue.author && <span className="wk-tag">{t("comment.authorTag")}</span>}
           {c.editedAt && <span className="ui-note">{t("comment.edited")}</span>}
@@ -122,7 +123,7 @@ function CommentItem({ repo, issue, c, me }: { repo: Repo; issue: Issue; c: Issu
 
 function EventItem({ e }: { e: TimelineEvent }) {
   const t = useT("work");
-  const who = <b>{e.actor}</b>;
+  const who = <><b>{e.actor}</b> <BotMark login={e.actor} /></>;
   const when = <When iso={e.createdAt} />;
   let icon: Parameters<typeof EventRow>[0]["icon"] = "info";
   let tone: WorkState | undefined;
@@ -263,6 +264,7 @@ export function Conversation({ repo, issue, extra = [], onState, stateBusy, canC
         head={
           <>
             <b>{issue.author}</b>
+            <BotMark login={issue.author} />
             <When iso={issue.createdAt} />
             <span className="wk-tag">{t("comment.authorTag")}</span>
             {issue.editedAt && <span className="ui-note">{t("comment.edited")}</span>}

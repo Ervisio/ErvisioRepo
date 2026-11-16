@@ -38,7 +38,7 @@ func (q *Queries) InsertSettingIfAbsent(ctx context.Context, arg InsertSettingIf
 
 const instanceCounts = `-- name: InstanceCounts :one
 SELECT (SELECT count(*) FROM repos)::bigint AS repos,
-       (SELECT count(*) FROM users)::bigint AS users,
+       (SELECT count(*) FROM namespaces WHERE kind = 'user')::bigint AS users,
        (SELECT count(*) FROM orgs)::bigint  AS orgs
 `
 

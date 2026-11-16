@@ -35,7 +35,7 @@ func init() {
 		organization organizations owner packages postmaster privacy pulls raw readyz register
 		registry repo repos root security settings signin signout signup site static status
 		staff support system team teams terms undefined user users verify-email reset-password
-		webmaster www ervisio ervisio-repo erepo`) {
+		webmaster www ervisio ervisio-repo erepo ervisio-sync ervisio-actions`) {
 		reserved[n] = struct{}{}
 	}
 }

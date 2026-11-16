@@ -127,7 +127,7 @@ func (s *Service) UploadAttachment(ctx context.Context, who auth.Principal, owne
 		refund()
 		return Attachment{}, fmt.Errorf("store attachment: %w", err)
 	}
-	row, err := s.q.InsertIssueAttachment(ctx, dbgen.InsertIssueAttachmentParams{ID: id, RepoID: r.ID, UploaderID: nullID(who.UserID),
+	row, err := s.q.InsertIssueAttachment(ctx, dbgen.InsertIssueAttachmentParams{ID: id, RepoID: r.ID, UploaderID: nullID(who.Actor()),
 		Name: in.Name, ContentType: ctype, Size: obj.Size, Sha256: obj.SHA256, StoragePolicy: cl.Name(), StorageKey: key})
 	if err != nil {
 		refund()
@@ -194,7 +194,7 @@ func (s *Service) DeleteAttachment(ctx context.Context, who auth.Principal, owne
 		if err != nil {
 			return notFound(err, ErrAttachmentGone, "get attachment")
 		}
-		if (!cur.UploaderID.Valid || cur.UploaderID.UUID != who.UserID) && !canTriage(r) {
+		if (!cur.UploaderID.Valid || cur.UploaderID.UUID != who.Actor()) && !canTriage(r) {
 			return ErrForbidden
 		}
 		if a, err = q.DeleteIssueAttachment(ctx, dbgen.DeleteIssueAttachmentParams{ID: id, RepoID: r.ID}); err != nil {

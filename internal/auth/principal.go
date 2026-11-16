@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+
+	"github.com/Ervisio/ErvisioRepo/internal/bots"
 )
 
 // Instance roles (PLAN §5.3).
@@ -59,6 +61,27 @@ func (p Principal) HasScope(scope string) bool {
 		return slices.Contains(p.Scopes, res+":write")
 	}
 	return false
+}
+
+// Actor is the account a change made by the caller is attributed to: the
+// caller itself, or ervisio-actions[bot] for an Actions job token (whose
+// UserID stays uuid.Nil, so that it is anonymous outside its repository).
+func (p Principal) Actor() uuid.UUID {
+	if p.Grant != nil {
+		return bots.ActionsID
+	}
+	return p.UserID
+}
+
+// WritesTo reports whether the caller may make signed-in changes (issues,
+// comments, pull requests) on repository repoID: any signed-in user, or an
+// Actions job token on its own repository. The repository permission is
+// checked separately.
+func (p Principal) WritesTo(repoID uuid.UUID) bool {
+	if p.Grant != nil {
+		return p.Grant.RepoID == repoID && p.Grant.Permission != "none"
+	}
+	return p.UserID != uuid.Nil
 }
 
 // IsAdmin reports whether the caller is an instance admin.

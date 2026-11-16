@@ -24,6 +24,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/audit"
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
+	"github.com/Ervisio/ErvisioRepo/internal/bots"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/git"
 	"github.com/Ervisio/ErvisioRepo/internal/gitstore"
@@ -312,8 +313,8 @@ func (s *Service) namespace(ctx context.Context, q *dbgen.Queries, who auth.Prin
 // namespace, organization members in the organization, instance admins
 // anywhere.
 func (ns namespace) canCreate(who auth.Principal) bool {
-	if who.UserID == uuid.Nil || who.Role == auth.RoleRestricted {
-		return false
+	if who.UserID == uuid.Nil || who.Role == auth.RoleRestricted || ns.kind == bots.Kind {
+		return false // bots own no repositories
 	}
 	if who.IsAdmin() {
 		return true
@@ -861,6 +862,9 @@ func (s *Service) SetCollaborator(ctx context.Context, who auth.Principal, owner
 		}
 		if r.OwnerKind == "user" && u.ID == r.OwnerID {
 			return invalid("the owner already has full access")
+		}
+		if u.IsBot {
+			return invalid("bots cannot be collaborators")
 		}
 		if err := q.UpsertRepoCollaborator(ctx, dbgen.UpsertRepoCollaboratorParams{RepoID: r.ID, UserID: u.ID,
 			Permission: p.String(), AddedBy: uuid.NullUUID{UUID: who.UserID, Valid: who.UserID != uuid.Nil}}); err != nil {

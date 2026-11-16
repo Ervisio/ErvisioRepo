@@ -741,13 +741,14 @@ func (q *Queries) WebhookRelease(ctx context.Context, id uuid.UUID) (Release, er
 }
 
 const webhookUser = `-- name: WebhookUser :one
-SELECT n.id, n.name, u.display_name, u.avatar_url, u.role FROM namespaces n JOIN users u ON u.id = n.id
+SELECT n.id, n.name, n.kind, u.display_name, u.avatar_url, u.role FROM namespaces n JOIN users u ON u.id = n.id
 WHERE n.id = $1
 `
 
 type WebhookUserRow struct {
 	ID          uuid.UUID
 	Name        string
+	Kind        string
 	DisplayName string
 	AvatarUrl   string
 	Role        string
@@ -759,6 +760,7 @@ func (q *Queries) WebhookUser(ctx context.Context, id uuid.UUID) (WebhookUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Kind,
 		&i.DisplayName,
 		&i.AvatarUrl,
 		&i.Role,

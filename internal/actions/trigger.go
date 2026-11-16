@@ -16,6 +16,7 @@ import (
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
+	"github.com/Ervisio/ErvisioRepo/internal/bots"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/events"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
@@ -43,9 +44,9 @@ func (s *Service) EventHandler() events.Handler {
 
 // SyncBot is the actor of the runs started by the pushes of a GitHub sync
 // link that runs Actions on synced pushes.
-const SyncBot = "ervisio-sync[bot]"
+const SyncBot = bots.SyncLogin
 
-// systemActor returns the bot an actorless event runs as: SyncBot for the
+// systemActor returns the bot a system event runs as: SyncBot for the
 // pushes of a GitHub sync link with Actions on (events.OriginSync), ""
 // for every other one.
 func systemActor(ev events.Event) string {
@@ -64,11 +65,17 @@ func (s *Service) handleEvent(ctx context.Context, ev events.Event) error {
 		return nil
 	}
 	bot := ""
-	if ev.ActorID == uuid.Nil {
-		// Events of Actions itself (job tokens, check runs) and of the
-		// system never start workflows: no loops. The one exception is
-		// the pushes of a GitHub sync link with Actions on: written by
-		// the sync, never by a workflow token.
+	switch ev.ActorID {
+	case bots.ActionsID:
+		// Events of Actions itself (job tokens: comments, pushes,
+		// releases, statuses) never start workflows: no loops.
+		return nil
+	case uuid.Nil, bots.SyncID:
+		// Nor do the system events (check runs, workflow_run, rows
+		// written before the bots existed) and the writes of the
+		// GitHub sync. The one exception is the pushes of a sync link
+		// with Actions on (events.OriginSync): written by the sync,
+		// never by a workflow token.
 		if bot = systemActor(ev); bot == "" {
 			return nil
 		}

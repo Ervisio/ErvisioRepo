@@ -24,7 +24,7 @@ Scelte fatte:
 | Installazione | Collegamento App ↔ utente/org, con tutti i repo o una selezione | — |
 | Token user-to-server | Token di un'App che agisce per un utente (permessi App ∩ permessi utente) | OAuth web/device flow dell'App |
 
-## Fase A0 — Bot di sistema
+## Fase A0 — Bot di sistema (fatto)
 
 Dati:
 - `namespaces.kind` accetta `bot`;

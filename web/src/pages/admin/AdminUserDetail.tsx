@@ -4,7 +4,7 @@ import { USER_ROLES, useAdminUser, useResetUser2fa, useUpdateAdminUser, type Use
 import { ApiError } from "../../api/http.ts";
 import { useSession } from "../../api/identity.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, Button, ConfirmDialog, DangerRow, DangerZone, EmptyState, Icon, Select, SettingRow, SettingsCard, SettingsSection } from "../../ui/index.ts";
+import { Badge, BotMark, Button, ConfirmDialog, DangerRow, DangerZone, EmptyState, Icon, Select, SettingRow, SettingsCard, SettingsSection } from "../../ui/index.ts";
 import { formatDate, useNotify } from "../account/common.tsx";
 import { AdminPane } from "./AdminFrame.tsx";
 import { roleTone, UserStatus } from "./AdminUsers.tsx";
@@ -80,10 +80,12 @@ export function AdminUserDetail({ login }: { login: string }) {
   return (
     <AdminPane title={u.username} subtitle={t("user.subtitle")} actions={back}>
       <p className="adm-badges">
+        <BotMark login={u.username} />
         <Badge tone={roleTone(u.role)}>{t(`users.role.${u.role}`)}</Badge>
         <UserStatus user={u} />
       </p>
       {self && <p className="ui-note" role="status">{t("user.self")}</p>}
+      {u.isBot && <p className="ui-note" role="status">{t("user.bot")}</p>}
       <SettingsSection title={t("user.account")}>
         <SettingsCard>
           <dl className="adm-kv">
@@ -93,6 +95,7 @@ export function AdminUserDetail({ login }: { login: string }) {
           </dl>
         </SettingsCard>
       </SettingsSection>
+      {!u.isBot && <>
       <SettingsSection title={t("user.access")}>
         <SettingsCard>
           <SettingRow label={t("user.role.title")} description={t("user.role.hint")} dirty={chosen !== u.role} was={t(`users.role.${u.role}`)}>
@@ -161,6 +164,7 @@ export function AdminUserDetail({ login }: { login: string }) {
           }
         />
       </DangerZone>
+      </>}
     </AdminPane>
   );
 }

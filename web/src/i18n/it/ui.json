@@ -84,5 +84,6 @@
   "settings.leave.description": "Le modifiche non salvate in questa pagina andranno perse.",
   "settings.leave.stay": "Resta",
   "settings.leave.go": "Esci e scarta",
-  "confirm.type": "Scrivi {text} per confermare"
+  "confirm.type": "Scrivi {text} per confermare",
+  "bot.badge": "bot"
 }

@@ -95,6 +95,10 @@ func (s *Service) contributorUser(ctx context.Context, email string) (username, 
 	}
 	var u dbgen.GetUserByIDRow
 	if local, ok := strings.CutSuffix(email, "@"+strings.ToLower(s.o.NoReplyDomain)); ok {
+		// A bot address is <numeric id>+<login>: usernames have no "+".
+		if _, login, ok := strings.Cut(local, "+"); ok {
+			local = login
+		}
 		byName, err := s.q.GetUserByUsername(ctx, local)
 		if err != nil {
 			s.logLookup(ctx, err)

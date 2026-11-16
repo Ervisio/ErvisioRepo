@@ -21,6 +21,7 @@ var (
 	ErrSelfChange  = errors.New("administrators cannot demote or suspend themselves")
 	ErrLastAdmin   = errors.New("the instance must keep at least one active administrator")
 	ErrInvalidRole = errors.New("invalid role")
+	ErrBotAccount  = errors.New("bot accounts cannot be changed")
 )
 
 // Instance roles.
@@ -37,6 +38,7 @@ type AdminUser struct {
 	DisplayName  string
 	Email        string
 	Role         string
+	IsBot        bool
 	SuspendedAt  *time.Time
 	Has2FA       bool
 	CreatedAt    time.Time
@@ -114,7 +116,7 @@ func (s *Service) AdminListUsers(ctx context.Context, f AdminUserFilter) ([]Admi
 	for _, r := range rows {
 		total = r.Total
 		out = append(out, AdminUser{ID: r.ID, Username: r.Username, DisplayName: r.DisplayName, Email: r.Email,
-			Role: r.Role, SuspendedAt: timePtr(r.SuspendedAt), Has2FA: r.Has2fa, CreatedAt: r.CreatedAt.Time,
+			Role: r.Role, IsBot: r.IsBot, SuspendedAt: timePtr(r.SuspendedAt), Has2FA: r.Has2fa, CreatedAt: r.CreatedAt.Time,
 			LastActivity: timePtr(r.LastActivity)})
 	}
 	return out, total, nil
@@ -130,7 +132,7 @@ func (s *Service) AdminGetUser(ctx context.Context, username string) (AdminUser,
 		return AdminUser{}, fmt.Errorf("get user: %w", err)
 	}
 	return AdminUser{ID: r.ID, Username: r.Username, DisplayName: r.DisplayName, Email: r.Email,
-		Role: r.Role, SuspendedAt: timePtr(r.SuspendedAt), Has2FA: r.Has2fa, CreatedAt: r.CreatedAt.Time,
+		Role: r.Role, IsBot: r.IsBot, SuspendedAt: timePtr(r.SuspendedAt), Has2FA: r.Has2fa, CreatedAt: r.CreatedAt.Time,
 		LastActivity: timePtr(r.LastActivity)}, nil
 }
 
@@ -151,6 +153,9 @@ func (s *Service) AdminUpdateUser(ctx context.Context, actor uuid.UUID, username
 		}
 		if err != nil {
 			return fmt.Errorf("get user: %w", err)
+		}
+		if u.IsBot {
+			return ErrBotAccount
 		}
 		demote := in.Role != nil && u.Role == RoleAdmin && *in.Role != RoleAdmin
 		suspend := in.Suspended != nil && *in.Suspended && !u.SuspendedAt.Valid
@@ -230,6 +235,9 @@ func (s *Service) AdminReset2FA(ctx context.Context, actor uuid.UUID, username s
 		}
 		if err != nil {
 			return fmt.Errorf("get user: %w", err)
+		}
+		if u.IsBot {
+			return ErrBotAccount
 		}
 		if _, err := q.DeleteTOTP(ctx, u.ID); err != nil {
 			return fmt.Errorf("delete totp: %w", err)

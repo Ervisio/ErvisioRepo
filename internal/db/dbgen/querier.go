@@ -109,6 +109,8 @@ type Querier interface {
 	CountUserPins(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserSSHKeys(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserTokens(ctx context.Context, userID uuid.UUID) (int64, error)
+	// Human accounts: bots do not count (the first registered user still
+	// becomes the instance admin).
 	CountUsers(ctx context.Context) (int64, error)
 	CountWebAuthnCredentials(ctx context.Context, userID uuid.UUID) (int64, error)
 	// ---- artifacts ----
@@ -358,6 +360,7 @@ type Querier interface {
 	GetUserOIDCLink(ctx context.Context, arg GetUserOIDCLinkParams) (GetUserOIDCLinkRow, error)
 	GetUserPreferences(ctx context.Context, userID uuid.UUID) (UserPreference, error)
 	// Public profile fields of a user account (organizations have no users row).
+	// kind is "user" or "bot"; description is the description of a bot.
 	GetUserProfileByUsername(ctx context.Context, username string) (GetUserProfileByUsernameRow, error)
 	GetValidInvite(ctx context.Context, tokenHash []byte) (GetValidInviteRow, error)
 	GetWebAuthnHandle(ctx context.Context, userID uuid.UUID) ([]byte, error)

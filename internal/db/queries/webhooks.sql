@@ -83,7 +83,7 @@ WHERE n.name_lower = lower(@name::text);
 SELECT id, name, kind FROM namespaces WHERE id = $1;
 
 -- name: WebhookUser :one
-SELECT n.id, n.name, u.display_name, u.avatar_url, u.role FROM namespaces n JOIN users u ON u.id = n.id
+SELECT n.id, n.name, n.kind, u.display_name, u.avatar_url, u.role FROM namespaces n JOIN users u ON u.id = n.id
 WHERE n.id = $1;
 
 -- name: WebhookIssue :one

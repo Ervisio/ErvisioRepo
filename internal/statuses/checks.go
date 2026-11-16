@@ -202,10 +202,10 @@ func (s *Service) CreateCheckRun(ctx context.Context, who auth.Principal, owner,
 		if _, err := q.InsertCheckRun(ctx, dbgen.InsertCheckRunParams{ID: runID, SuiteID: suite.ID, RepoID: r.ID,
 			HeadSha: sha, Name: in.Name, Status: in.Status, Conclusion: in.Conclusion, ExternalID: in.ExternalID,
 			DetailsUrl: in.DetailsURL, OutputTitle: out.Title, OutputSummary: out.Summary, OutputText: out.Text,
-			Annotations: ann, CreatorID: nullID(who.UserID), StartedAt: pgTime(started), CompletedAt: pgTime(completed)}); err != nil {
+			Annotations: ann, CreatorID: nullID(who.Actor()), StartedAt: pgTime(started), CompletedAt: pgTime(completed)}); err != nil {
 			return fmt.Errorf("insert check run: %w", err)
 		}
-		suite, err = s.refreshSuite(ctx, q, suite, who.UserID)
+		suite, err = s.refreshSuite(ctx, q, suite, who.Actor())
 		if err != nil {
 			return err
 		}
@@ -213,11 +213,11 @@ func (s *Service) CreateCheckRun(ctx context.Context, who auth.Principal, owner,
 		if err != nil {
 			return fmt.Errorf("get check run: %w", err)
 		}
-		if err := s.emitRun(ctx, q, "created", run, suite, who.UserID); err != nil {
+		if err := s.emitRun(ctx, q, "created", run, suite, who.Actor()); err != nil {
 			return err
 		}
 		if run.Status == StatusCompleted {
-			return s.emitRun(ctx, q, "completed", run, suite, who.UserID)
+			return s.emitRun(ctx, q, "completed", run, suite, who.Actor())
 		}
 		return nil
 	})
@@ -278,7 +278,7 @@ func (s *Service) UpdateCheckRun(ctx context.Context, who auth.Principal, owner,
 		if err := q.UpdateCheckRun(ctx, next); err != nil {
 			return fmt.Errorf("update check run: %w", err)
 		}
-		suite, err = s.refreshSuite(ctx, q, suite, who.UserID)
+		suite, err = s.refreshSuite(ctx, q, suite, who.Actor())
 		if err != nil {
 			return err
 		}
@@ -289,7 +289,7 @@ func (s *Service) UpdateCheckRun(ctx context.Context, who auth.Principal, owner,
 		if err != nil {
 			return fmt.Errorf("get check run: %w", err)
 		}
-		return s.emitRun(ctx, q, "completed", run, suite, who.UserID)
+		return s.emitRun(ctx, q, "completed", run, suite, who.Actor())
 	})
 	if err != nil {
 		return CheckRun{}, err

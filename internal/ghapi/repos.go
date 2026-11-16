@@ -11,6 +11,7 @@ import (
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
+	"github.com/Ervisio/ErvisioRepo/internal/bots"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/repoinit"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
@@ -43,8 +44,11 @@ type ghUser struct {
 // userObj builds the user object of the namespace id/kind/name.
 func (c *call) userObj(id uuid.UUID, kind, name string) *ghUser {
 	typ, node, api := "User", "User", c.s.api+"/users/"+esc(name)
-	if kind == "org" {
+	switch kind {
+	case "org":
 		typ, node = "Organization", "Organization"
+	case bots.Kind:
+		typ, node = "Bot", "Bot"
 	}
 	return &ghUser{
 		Login: name, ID: c.ids.of(id), NodeID: nodeID(node, id),

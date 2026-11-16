@@ -7,10 +7,12 @@ import (
 // Interfaces and unions the object types belong to, for type conditions
 // of fragments (`... on Node`, `... on PullRequest`).
 var (
-	nodeIs       = []string{"Node"}
-	actorIs      = []string{"Node", "Actor", "RepositoryOwner", "UniformResourceLocatable", "ProfileOwner"}
-	userIs       = append(append([]string{}, actorIs...), "Assignee", "RequestedReviewer", "Reactor", "ReactingUser", "SearchResultItem")
-	orgIs        = append(append([]string{}, actorIs...), "SearchResultItem")
+	nodeIs  = []string{"Node"}
+	actorIs = []string{"Node", "Actor", "RepositoryOwner", "UniformResourceLocatable", "ProfileOwner"}
+	userIs  = append(append([]string{}, actorIs...), "Assignee", "RequestedReviewer", "Reactor", "ReactingUser", "SearchResultItem")
+	orgIs   = append(append([]string{}, actorIs...), "SearchResultItem")
+	// A Bot (GitHub's type for app accounts) is an Actor, not an owner.
+	botIs        = []string{"Node", "Actor", "UniformResourceLocatable"}
 	issueLikeIs  = []string{"Node", "IssueOrPullRequest", "SearchResultItem", "Comment", "Closable", "Labelable", "Assignable", "Reactable", "Updatable", "UpdatableComment", "UniformResourceLocatable", "Subscribable", "Lockable", "Deletable", "ProjectV2Owner"}
 	repositoryIs = []string{"Node", "RepositoryInfo", "UniformResourceLocatable", "Starrable", "PinnableItem", "SearchResultItem", "Subscribable", "ProjectV2Recent"}
 	commentIs    = []string{"Node", "Comment", "Reactable", "Updatable", "UpdatableComment", "Deletable", "Minimizable", "IssueTimelineItems", "PullRequestTimelineItems"}
@@ -75,6 +77,7 @@ func buildSchema() *schema {
 	add("Mutation", mutationFields())
 
 	add("User", userFields(), userIs...)
+	add("Bot", userFields(), botIs...)
 	add("Organization", orgFields(), orgIs...)
 	add("Repository", repositoryFields(), repositoryIs...)
 	add("Ref", refFields(), nodeIs...)

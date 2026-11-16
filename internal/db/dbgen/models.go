@@ -283,6 +283,13 @@ type AuditLog struct {
 	OrgID      uuid.NullUUID
 }
 
+type Bot struct {
+	UserID      uuid.UUID
+	AppID       uuid.NullUUID
+	Description string
+	CreatedAt   pgtype.Timestamptz
+}
+
 type BranchProtection struct {
 	ID                      uuid.UUID
 	RepoID                  uuid.UUID

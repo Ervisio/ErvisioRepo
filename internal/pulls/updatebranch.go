@@ -113,7 +113,7 @@ func (s *Service) UpdateBranch(ctx context.Context, who auth.Principal, owner, n
 	if mb == baseSHA {
 		return "", fmt.Errorf("%w: the head branch is already up to date with %s", ErrConflict, p.BaseRef)
 	}
-	ident, err := s.o.Browse.Identity(ctx, who.UserID)
+	ident, err := s.o.Browse.Identity(ctx, who.Actor())
 	if err != nil {
 		return "", fmt.Errorf("committer identity: %w", err)
 	}
@@ -137,7 +137,7 @@ func (s *Service) UpdateBranch(ctx context.Context, who auth.Principal, owner, n
 		}
 	}
 
-	sess, env, done, err := s.session(ctx, hl, who.UserID, "web")
+	sess, env, done, err := s.session(ctx, hl, who.Actor(), "web")
 	if err != nil {
 		return "", err
 	}
@@ -153,6 +153,6 @@ func (s *Service) UpdateBranch(ctx context.Context, who auth.Principal, owner, n
 		}
 		return "", fmt.Errorf("%w: the head branch moved, retry", ErrConflict)
 	}
-	s.log.InfoContext(ctx, "pull request branch updated", "repo", r.ID, "number", p.Number, "method", method, "commit", commit, "user", who.UserID)
+	s.log.InfoContext(ctx, "pull request branch updated", "repo", r.ID, "number", p.Number, "method", method, "commit", commit, "user", who.Actor())
 	return commit, nil
 }

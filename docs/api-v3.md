@@ -203,6 +203,23 @@ its place.
 | `GET/PUT/DELETE .../actions/secrets[/{name}]` | yes | `PUT` takes `encrypted_value` (libsodium sealed box for the public key) and `key_id`. Needs the repository settings permission. |
 | `GET/POST .../actions/variables`, `GET/PATCH/DELETE .../actions/variables/{name}` | yes | `PATCH` can rename. |
 
+### Bot accounts
+
+Bots are users whose login ends in `[bot]`: the system bots
+`ervisio-sync[bot]` (GitHub sync) and `ervisio-actions[bot]` (workflow job
+tokens), and later the bots of Apps. User objects of bots have
+`"type": "Bot"` (webhook `sender` too) and GraphQL returns them as `Bot`
+(an `Actor`). Commits made by a bot use the address
+`<id>+<login>@users.noreply.<host>`, which the commit and contributor lists
+map back to the bot. Bots cannot sign in, own no repositories, cannot be
+collaborators and are left out of user search; the v1 `UserProfile` has
+`kind` (`user` or `bot`) and `description`.
+
+A workflow job token (`GITHUB_TOKEN`) can write on its own repository
+through this API (issues, comments, pull requests, releases, statuses,
+checks, contents) when the workflow has `contents: write`; the changes are
+attributed to `ervisio-actions[bot]` and start no workflow.
+
 ### Not available
 
 Commit search, gists, notifications, events, packages, projects,

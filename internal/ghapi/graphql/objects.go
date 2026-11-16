@@ -11,6 +11,7 @@ import (
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/authz"
+	"github.com/Ervisio/ErvisioRepo/internal/bots"
 	"github.com/Ervisio/ErvisioRepo/internal/issues"
 	"github.com/Ervisio/ErvisioRepo/internal/orgs"
 	"github.com/Ervisio/ErvisioRepo/internal/pulls"
@@ -34,12 +35,22 @@ type userV struct {
 	id   uuid.UUID
 }
 
-// userObj is the User object of the user called name; nil for no name.
+// userObj is the User object of the user called name, or the Bot object
+// of a bot account (login ending in "[bot]"); nil for no name.
 func userObj(name string) any {
 	if name == "" {
 		return nil
 	}
-	return obj{"User", &userV{name: name}}
+	return obj{actorType(name), &userV{name: name}}
+}
+
+// actorType is the GraphQL type of the account called name: Bot for the
+// logins only bots can have, User otherwise.
+func actorType(name string) string {
+	if bots.IsLogin(name) {
+		return "Bot"
+	}
+	return "User"
 }
 
 // ownerObj is the RepositoryOwner object of a namespace.
@@ -47,7 +58,7 @@ func ownerObj(id uuid.UUID, kind, name string) any {
 	if kind == "org" {
 		return obj{"Organization", &orgV{name: name, id: id}}
 	}
-	return obj{"User", &userV{name: name, id: id}}
+	return obj{actorType(name), &userV{name: name, id: id}}
 }
 
 // ownerByName is the RepositoryOwner called name, nil when unknown.

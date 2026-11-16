@@ -88,7 +88,7 @@ func (s *Service) Get(ctx context.Context, who auth.Principal, owner, name strin
 	if err != nil {
 		return Issue{}, err
 	}
-	return s.hydrateOne(ctx, who.UserID, i)
+	return s.hydrateOne(ctx, who.Actor(), i)
 }
 
 // List searches the issues (not pull requests) of owner/name.
@@ -118,7 +118,7 @@ func (s *Service) ListPage(ctx context.Context, who auth.Principal, owner, name 
 	if more {
 		rows = rows[:lim]
 	}
-	out, err := s.hydrate(ctx, who.UserID, rows)
+	out, err := s.hydrate(ctx, who.Actor(), rows)
 	return out, more, err
 }
 
@@ -381,34 +381,34 @@ func (s *Service) Create(ctx context.Context, who auth.Principal, owner, name st
 			mid = nullID(milestone.ID)
 		}
 		row, err = q.InsertIssue(ctx, dbgen.InsertIssueParams{ID: id, RepoID: r.ID, Number: n, Kind: KindIssue, Title: title,
-			Body: in.Body, AuthorID: nullID(who.UserID), MilestoneID: mid})
+			Body: in.Body, AuthorID: nullID(who.Actor()), MilestoneID: mid})
 		if err != nil {
 			return fmt.Errorf("insert issue: %w", err)
 		}
 		for _, l := range labels {
-			if err := s.addLabel(ctx, q, row, who.UserID, l); err != nil {
+			if err := s.addLabel(ctx, q, row, who.Actor(), l); err != nil {
 				return err
 			}
 		}
 		for _, u := range assignees {
-			if err := s.addAssignee(ctx, q, row, who.UserID, u.ID); err != nil {
+			if err := s.addAssignee(ctx, q, row, who.Actor(), u.ID); err != nil {
 				return err
 			}
 		}
 		if milestone != nil {
-			if err := s.event(ctx, q, row, who.UserID, "milestoned", uuid.Nil, map[string]any{"title": milestone.Title}); err != nil {
+			if err := s.event(ctx, q, row, who.Actor(), "milestoned", uuid.Nil, map[string]any{"title": milestone.Title}); err != nil {
 				return err
 			}
 		}
 		if err := s.recordRefs(ctx, q, r, who, refSource{issue: row}, in.Body); err != nil {
 			return err
 		}
-		return s.emit(ctx, q, events.KindIssue, "opened", r.ID, who.UserID, row.ID, issuePayload(row))
+		return s.emit(ctx, q, events.KindIssue, "opened", r.ID, who.Actor(), row.ID, issuePayload(row))
 	})
 	if err != nil {
 		return Issue{}, err
 	}
-	return s.hydrateOne(ctx, who.UserID, row)
+	return s.hydrateOne(ctx, who.Actor(), row)
 }
 
 func (s *Service) addLabel(ctx context.Context, q *dbgen.Queries, i dbgen.Issue, actor uuid.UUID, l dbgen.Label) error {
@@ -539,7 +539,7 @@ func (s *Service) Update(ctx context.Context, who auth.Principal, owner, name st
 		if err != nil {
 			return err
 		}
-		author := cur.AuthorID.Valid && cur.AuthorID.UUID == who.UserID
+		author := cur.AuthorID.Valid && cur.AuthorID.UUID == who.Actor()
 		if (in.Title != nil || in.Body != nil || in.State != nil) && !author && !triage {
 			return ErrForbidden
 		}
@@ -552,22 +552,22 @@ func (s *Service) Update(ctx context.Context, who auth.Principal, owner, name st
 			if in.StateReason != nil {
 				reason = *in.StateReason
 			}
-			if err := s.setState(ctx, q, who.UserID, &row, *in.State, reason, nil); err != nil {
+			if err := s.setState(ctx, q, who.Actor(), &row, *in.State, reason, nil); err != nil {
 				return err
 			}
 		}
 		if in.Labels != nil {
-			if err := s.replaceLabels(ctx, q, row, who.UserID, labels); err != nil {
+			if err := s.replaceLabels(ctx, q, row, who.Actor(), labels); err != nil {
 				return err
 			}
 		}
 		if in.Assignees != nil {
-			if err := s.replaceAssignees(ctx, q, row, who.UserID, assignees); err != nil {
+			if err := s.replaceAssignees(ctx, q, row, who.Actor(), assignees); err != nil {
 				return err
 			}
 		}
 		if in.MilestoneID != nil {
-			if err := s.setMilestone(ctx, q, who.UserID, &row, milestone); err != nil {
+			if err := s.setMilestone(ctx, q, who.Actor(), &row, milestone); err != nil {
 				return err
 			}
 		}
@@ -576,7 +576,7 @@ func (s *Service) Update(ctx context.Context, who auth.Principal, owner, name st
 	if err != nil {
 		return Issue{}, err
 	}
-	return s.hydrateOne(ctx, who.UserID, row)
+	return s.hydrateOne(ctx, who.Actor(), row)
 }
 
 func (s *Service) updateContent(ctx context.Context, q *dbgen.Queries, r repos.Repo, who auth.Principal, row *dbgen.Issue,
@@ -598,11 +598,11 @@ func (s *Service) updateContent(ctx context.Context, q *dbgen.Queries, r repos.R
 		if err != nil {
 			return err
 		}
-		if err := q.InsertIssueEdit(ctx, dbgen.InsertIssueEditParams{ID: id, IssueID: cur.ID, EditorID: nullID(who.UserID),
+		if err := q.InsertIssueEdit(ctx, dbgen.InsertIssueEditParams{ID: id, IssueID: cur.ID, EditorID: nullID(who.Actor()),
 			Body: cur.Body}); err != nil {
 			return fmt.Errorf("record issue edit: %w", err)
 		}
-		editedAt, editedBy = ts(s.o.Now()), nullID(who.UserID)
+		editedAt, editedBy = ts(s.o.Now()), nullID(who.Actor())
 	}
 	updated, err := q.UpdateIssueContent(ctx, dbgen.UpdateIssueContentParams{ID: cur.ID, Title: newTitle, Body: newBody,
 		EditedAt: editedAt, EditedBy: editedBy})
@@ -610,7 +610,7 @@ func (s *Service) updateContent(ctx context.Context, q *dbgen.Queries, r repos.R
 		return fmt.Errorf("update issue: %w", err)
 	}
 	if newTitle != cur.Title {
-		if err := s.event(ctx, q, updated, who.UserID, "renamed", uuid.Nil, map[string]any{"from": cur.Title, "to": newTitle}); err != nil {
+		if err := s.event(ctx, q, updated, who.Actor(), "renamed", uuid.Nil, map[string]any{"from": cur.Title, "to": newTitle}); err != nil {
 			return err
 		}
 	}
@@ -620,7 +620,7 @@ func (s *Service) updateContent(ctx context.Context, q *dbgen.Queries, r repos.R
 		}
 	}
 	*row = updated
-	return s.emit(ctx, q, events.KindIssue, "edited", updated.RepoID, who.UserID, updated.ID, issuePayload(updated))
+	return s.emit(ctx, q, events.KindIssue, "edited", updated.RepoID, who.Actor(), updated.ID, issuePayload(updated))
 }
 
 // setState closes or reopens row. reason applies to a close: completed
@@ -808,10 +808,10 @@ func (s *Service) setLock(ctx context.Context, who auth.Principal, owner, name s
 		if locked {
 			ev, action, data = "locked", ActionIssueLocked, map[string]any{"reason": reason}
 		}
-		if err := s.event(ctx, q, row, who.UserID, ev, uuid.Nil, data); err != nil {
+		if err := s.event(ctx, q, row, who.Actor(), ev, uuid.Nil, data); err != nil {
 			return err
 		}
-		if err := s.emit(ctx, q, events.KindIssue, ev, r.ID, who.UserID, row.ID, issuePayload(row)); err != nil {
+		if err := s.emit(ctx, q, events.KindIssue, ev, r.ID, who.Actor(), row.ID, issuePayload(row)); err != nil {
 			return err
 		}
 		return audit.Record(ctx, q, s.auditEvent(who, action, r, "issue", row.ID, c,
@@ -820,7 +820,7 @@ func (s *Service) setLock(ctx context.Context, who auth.Principal, owner, name s
 	if err != nil {
 		return Issue{}, err
 	}
-	return s.hydrateOne(ctx, who.UserID, row)
+	return s.hydrateOne(ctx, who.Actor(), row)
 }
 
 // Delete removes an issue for good (repository admins only, as on GitHub).
@@ -848,7 +848,7 @@ func (s *Service) Delete(ctx context.Context, who auth.Principal, owner, name st
 		if n == 0 {
 			return ErrNotFound
 		}
-		if err := s.emit(ctx, q, events.KindIssue, "deleted", r.ID, who.UserID, cur.ID, issuePayload(cur)); err != nil {
+		if err := s.emit(ctx, q, events.KindIssue, "deleted", r.ID, who.Actor(), cur.ID, issuePayload(cur)); err != nil {
 			return err
 		}
 		return audit.Record(ctx, q, s.auditEvent(who, ActionIssueDeleted, r, "issue", cur.ID, c,

@@ -105,9 +105,13 @@ func (b *builder) user(id uuid.UUID) (any, error) {
 	case err != nil:
 		return nil, fmt.Errorf("webhook user: %w", err)
 	default:
+		typ := "User"
+		if row.Kind == "bot" {
+			typ = "Bot"
+		}
 		u = obj{"login": row.Name, "id": numID(row.ID), "node_id": row.ID.String(), "name": nonEmpty(row.DisplayName),
 			"avatar_url": row.AvatarUrl, "html_url": b.url(url.PathEscape(row.Name)),
-			"url": b.url("api", "v1", "users", url.PathEscape(row.Name)), "type": "User", "site_admin": row.Role == "admin"}
+			"url": b.url("api", "v1", "users", url.PathEscape(row.Name)), "type": typ, "site_admin": row.Role == "admin"}
 	}
 	b.users[id] = u
 	return u, nil
