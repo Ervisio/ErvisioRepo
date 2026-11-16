@@ -12,6 +12,27 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countHotCacheRepos = `-- name: CountHotCacheRepos :one
+SELECT count(*)::bigint AS total
+FROM repos r
+JOIN namespaces n ON n.id = r.owner_id
+WHERE ($1::boolean OR r.storage_state <> 'cold')
+  AND ($2::text = ''
+       OR (n.name_lower || '/' || r.name_lower) LIKE '%' || $2::text || '%' ESCAPE '\')
+`
+
+type CountHotCacheReposParams struct {
+	AllStates bool
+	Pattern   string
+}
+
+func (q *Queries) CountHotCacheRepos(ctx context.Context, arg CountHotCacheReposParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countHotCacheRepos, arg.AllStates, arg.Pattern)
+	var total int64
+	err := row.Scan(&total)
+	return total, err
+}
+
 const forceRepoStorageState = `-- name: ForceRepoStorageState :exec
 UPDATE repos SET storage_state = $1, state_changed_at = now()
 WHERE id = $2
@@ -28,6 +49,27 @@ func (q *Queries) ForceRepoStorageState(ctx context.Context, arg ForceRepoStorag
 	return err
 }
 
+const hotRepoStats = `-- name: HotRepoStats :one
+SELECT count(*)::bigint AS repos,
+       count(*) FILTER (WHERE pinned)::bigint AS pinned,
+       COALESCE(sum(size_bytes), 0)::bigint AS bytes
+FROM repos WHERE storage_state = 'hot'
+`
+
+type HotRepoStatsRow struct {
+	Repos  int64
+	Pinned int64
+	Bytes  int64
+}
+
+// Hot repositories, how many are pinned and the bytes they hold.
+func (q *Queries) HotRepoStats(ctx context.Context) (HotRepoStatsRow, error) {
+	row := q.db.QueryRow(ctx, hotRepoStats)
+	var i HotRepoStatsRow
+	err := row.Scan(&i.Repos, &i.Pinned, &i.Bytes)
+	return i, err
+}
+
 const hotRepoUsage = `-- name: HotRepoUsage :one
 
 SELECT COALESCE(sum(size_bytes), 0)::bigint AS used
@@ -41,6 +83,70 @@ func (q *Queries) HotRepoUsage(ctx context.Context) (int64, error) {
 	var used int64
 	err := row.Scan(&used)
 	return used, err
+}
+
+const listHotCacheRepos = `-- name: ListHotCacheRepos :many
+SELECT r.id, n.name AS owner_name, r.name, r.storage_state, r.pinned, r.size_bytes, r.last_access_at
+FROM repos r
+JOIN namespaces n ON n.id = r.owner_id
+WHERE ($1::boolean OR r.storage_state <> 'cold')
+  AND ($2::text = ''
+       OR (n.name_lower || '/' || r.name_lower) LIKE '%' || $2::text || '%' ESCAPE '\')
+ORDER BY r.last_access_at DESC, r.id
+LIMIT $4 OFFSET $3
+`
+
+type ListHotCacheReposParams struct {
+	AllStates bool
+	Pattern   string
+	Off       int32
+	Lim       int32
+}
+
+type ListHotCacheReposRow struct {
+	ID           uuid.UUID
+	OwnerName    string
+	Name         string
+	StorageState string
+	Pinned       bool
+	SizeBytes    int64
+	LastAccessAt pgtype.Timestamptz
+}
+
+// Repositories on the local disk (hot, hydrating or evicting), or every
+// repository when all_states is set, most recently used first; pattern is
+// a lowercase LIKE fragment of owner/name (metacharacters escaped).
+func (q *Queries) ListHotCacheRepos(ctx context.Context, arg ListHotCacheReposParams) ([]ListHotCacheReposRow, error) {
+	rows, err := q.db.Query(ctx, listHotCacheRepos,
+		arg.AllStates,
+		arg.Pattern,
+		arg.Off,
+		arg.Lim,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListHotCacheReposRow{}
+	for rows.Next() {
+		var i ListHotCacheReposRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerName,
+			&i.Name,
+			&i.StorageState,
+			&i.Pinned,
+			&i.SizeBytes,
+			&i.LastAccessAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listHotUnpinnedRepos = `-- name: ListHotUnpinnedRepos :many

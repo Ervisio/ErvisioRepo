@@ -184,6 +184,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/storage/hot-cache": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Change the automatic hot cache of the instance
+         * @description Instance admins only. When enabled, recently used data of every data
+         *     type whose primary is remote stays on the local disk and moves back
+         *     to the remote storage after ttlSeconds without reads or writes
+         *     (0 uses the per data type defaults of hotCache.defaults). A data type
+         *     can set its own TTL, or disable its cache, in its policy. Values
+         *     equal to config.toml remove the override. The change applies after a
+         *     restart.
+         */
+        put: operations["putAdminStorageHotCache"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/storage/hot-repos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Repositories kept on the local disk, most recently used first
+         * @description Instance admins only. Lists the hot repositories (hot, hydrating or
+         *     evicting), or every repository with all=true, with the usage of the
+         *     hot tier. evictAt is when the idle TTL moves a repository back to the
+         *     remote storage; it is missing for pinned repositories and when there
+         *     is no TTL or no remote storage.
+         */
+        get: operations["listAdminHotRepos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/storage/avatars": {
         parameters: {
             query?: never;
@@ -7320,6 +7370,7 @@ export interface components {
             message: string;
         };
         StorageConfig: {
+            hotCache: components["schemas"]["StorageHotCache"];
             /** @description The stored configuration could not be applied at start and the server runs with config.toml only */
             fallback: boolean;
             /** @description Why the stored configuration was not applied. Never contains credentials. */
@@ -7383,7 +7434,22 @@ export interface components {
             /** @description The primary the server runs with now. Objects are stored under it, so it is the only one allowed while the policy holds objects. */
             runningPrimary: string;
             replicas: string[];
+            /** @description Configured cache, a local target or "none"; missing means the automatic hot cache */
             cache?: string;
+            /** @description Cache the next start uses; missing when the data type has none */
+            effectiveCache?: string;
+            /** @description The hot cache chose effectiveCache automatically */
+            cacheAuto: boolean;
+            /**
+             * Format: int64
+             * @description Idle time after which cached data moves back to the remote storage, as the next start uses it; 0 means never
+             */
+            cacheTtlSeconds: number;
+            /**
+             * Format: int64
+             * @description TTL set for this data type; 0 uses the hot cache setting
+             */
+            cacheTtlOverrideSeconds: number;
             filePrimary: string;
             fileReplicas: string[];
             fileCache?: string;
@@ -7446,7 +7512,91 @@ export interface components {
         StoragePolicyInput: {
             primary: string;
             replicas: string[];
+            /** @description A local target, "none" to disable the cache of this data type, or empty for the automatic hot cache */
             cache?: string;
+            /**
+             * Format: int64
+             * @description Idle TTL of this data type in seconds; 0 uses the hot cache setting. Missing keeps the value of config.toml.
+             */
+            cacheTtlSeconds?: number;
+        };
+        StorageHotCache: {
+            /** @description Data of remote targets is cached on the local disk automatically */
+            enabled: boolean;
+            /**
+             * Format: int64
+             * @description Idle time after which data moves back to the remote storage; 0 uses defaults
+             */
+            ttlSeconds: number;
+            /** @enum {string} */
+            source: "file" | "database";
+            /** @description Idle TTL in seconds per data type used when ttlSeconds is 0 */
+            defaults: {
+                [key: string]: number;
+            };
+        };
+        StorageHotCacheInput: {
+            enabled: boolean;
+            /**
+             * Format: int64
+             * @description 0 for the per data type defaults, otherwise at least 3600
+             */
+            ttlSeconds: number;
+        };
+        HotRepoPage: {
+            items: components["schemas"]["HotRepo"][];
+            /** Format: int64 */
+            total: number;
+            summary: components["schemas"]["HotRepoSummary"];
+        };
+        HotRepo: {
+            /** Format: uuid */
+            id: string;
+            owner: string;
+            name: string;
+            fullName: string;
+            /** @enum {string} */
+            state: "hot" | "cold" | "hydrating" | "evicting" | "degraded";
+            pinned: boolean;
+            /** Format: int64 */
+            sizeBytes: number;
+            /**
+             * Format: date-time
+             * @description Last read or write (fetch, clone, push, browsing), recorded at most once a minute
+             */
+            lastAccessAt: string;
+            /**
+             * Format: date-time
+             * @description When the idle TTL moves the repository to the remote storage
+             */
+            evictAt?: string;
+        };
+        HotRepoSummary: {
+            /**
+             * Format: int64
+             * @description Hot repositories
+             */
+            repos: number;
+            /** Format: int64 */
+            pinned: number;
+            /** Format: int64 */
+            bytes: number;
+            /**
+             * Format: int64
+             * @description Space of the hot repositories in bytes, 0 means no limit
+             */
+            budget: number;
+            /** Format: double */
+            highWatermark: number;
+            /** Format: double */
+            lowWatermark: number;
+            /**
+             * Format: int64
+             * @description Idle TTL of the repositories, 0 means none
+             */
+            ttlSeconds: number;
+            /** @description A remote storage holds the repositories, so idle ones can leave the local disk */
+            remote: boolean;
         };
         AvatarStorage: {
             /** @description Chosen target; empty means the local storage */
@@ -7624,7 +7774,9 @@ export interface components {
             visibility: components["schemas"]["Visibility"];
             defaultBranch: string;
             /**
-             * @description Where the git data is; cold repositories are restored on first access.
+             * @description Where the git data is; cold repositories are restored on first
+             *     access. Storage is instance infrastructure: only instance admins
+             *     see the real state, other callers always get "hot".
              * @enum {string}
              */
             storageState: "hot" | "cold" | "hydrating" | "evicting" | "degraded";
@@ -9346,6 +9498,69 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ValidationProblem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    putAdminStorageHotCache: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorageHotCacheInput"];
+            };
+        };
+        responses: {
+            /** @description The storage configuration after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageConfig"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            /** @description Invalid TTL */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ValidationProblem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listAdminHotRepos: {
+        parameters: {
+            query?: {
+                /** @description Case-insensitive substring of owner/name */
+                q?: string;
+                /** @description Also list repositories that are only on the remote storage */
+                all?: boolean;
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of repositories with the hot tier usage */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HotRepoPage"];
                 };
             };
             default: components["responses"]["Problem"];

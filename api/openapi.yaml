@@ -294,6 +294,80 @@ paths:
                 $ref: "#/components/schemas/ValidationProblem"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/storage/hot-cache:
+    put:
+      operationId: putAdminStorageHotCache
+      tags: [admin]
+      summary: Change the automatic hot cache of the instance
+      description: |
+        Instance admins only. When enabled, recently used data of every data
+        type whose primary is remote stays on the local disk and moves back
+        to the remote storage after ttlSeconds without reads or writes
+        (0 uses the per data type defaults of hotCache.defaults). A data type
+        can set its own TTL, or disable its cache, in its policy. Values
+        equal to config.toml remove the override. The change applies after a
+        restart.
+      security:
+        - session: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StorageHotCacheInput"
+      responses:
+        "200":
+          description: The storage configuration after the change
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageConfig"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "422":
+          description: Invalid TTL
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ValidationProblem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/storage/hot-repos:
+    get:
+      operationId: listAdminHotRepos
+      tags: [admin]
+      summary: Repositories kept on the local disk, most recently used first
+      description: |
+        Instance admins only. Lists the hot repositories (hot, hydrating or
+        evicting), or every repository with all=true, with the usage of the
+        hot tier. evictAt is when the idle TTL moves a repository back to the
+        remote storage; it is missing for pinned repositories and when there
+        is no TTL or no remote storage.
+      security:
+        - session: [admin]
+      parameters:
+        - name: q
+          in: query
+          description: Case-insensitive substring of owner/name
+          schema:
+            type: string
+            maxLength: 200
+        - name: all
+          in: query
+          description: Also list repositories that are only on the remote storage
+          schema:
+            type: boolean
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: A page of repositories with the hot tier usage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HotRepoPage"
+        default:
+          $ref: "#/components/responses/Problem"
   /admin/storage/avatars:
     get:
       operationId: getAdminAvatarStorage
@@ -12489,8 +12563,10 @@ components:
           type: string
     StorageConfig:
       type: object
-      required: [targets, policies, secretsAvailable, restartRequired, fallback]
+      required: [targets, policies, hotCache, secretsAvailable, restartRequired, fallback]
       properties:
+        hotCache:
+          $ref: "#/components/schemas/StorageHotCache"
         fallback:
           type: boolean
           description: The stored configuration could not be applied at start and the server runs with config.toml only
@@ -12583,7 +12659,7 @@ components:
           description: The target holds objects, so its location and account fields cannot change (credentials can still be replaced)
     StoragePolicyConfig:
       type: object
-      required: [name, source, primary, runningPrimary, replicas, filePrimary, fileReplicas, objects, primaryLocked, restartPending]
+      required: [name, source, primary, runningPrimary, replicas, cacheAuto, cacheTtlSeconds, cacheTtlOverrideSeconds, filePrimary, fileReplicas, objects, primaryLocked, restartPending]
       properties:
         name:
           type: string
@@ -12601,6 +12677,21 @@ components:
             type: string
         cache:
           type: string
+          description: Configured cache, a local target or "none"; missing means the automatic hot cache
+        effectiveCache:
+          type: string
+          description: Cache the next start uses; missing when the data type has none
+        cacheAuto:
+          type: boolean
+          description: The hot cache chose effectiveCache automatically
+        cacheTtlSeconds:
+          type: integer
+          format: int64
+          description: Idle time after which cached data moves back to the remote storage, as the next start uses it; 0 means never
+        cacheTtlOverrideSeconds:
+          type: integer
+          format: int64
+          description: TTL set for this data type; 0 uses the hot cache setting
         filePrimary:
           type: string
         fileReplicas:
@@ -12733,6 +12824,116 @@ components:
         cache:
           type: string
           maxLength: 63
+          description: A local target, "none" to disable the cache of this data type, or empty for the automatic hot cache
+        cacheTtlSeconds:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Idle TTL of this data type in seconds; 0 uses the hot cache setting. Missing keeps the value of config.toml.
+    StorageHotCache:
+      type: object
+      required: [enabled, ttlSeconds, source, defaults]
+      properties:
+        enabled:
+          type: boolean
+          description: Data of remote targets is cached on the local disk automatically
+        ttlSeconds:
+          type: integer
+          format: int64
+          description: Idle time after which data moves back to the remote storage; 0 uses defaults
+        source:
+          type: string
+          enum: [file, database]
+        defaults:
+          type: object
+          description: Idle TTL in seconds per data type used when ttlSeconds is 0
+          additionalProperties:
+            type: integer
+            format: int64
+    StorageHotCacheInput:
+      type: object
+      required: [enabled, ttlSeconds]
+      properties:
+        enabled:
+          type: boolean
+        ttlSeconds:
+          type: integer
+          format: int64
+          minimum: 0
+          description: 0 for the per data type defaults, otherwise at least 3600
+    HotRepoPage:
+      type: object
+      required: [items, total, summary]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/HotRepo"
+        total:
+          type: integer
+          format: int64
+        summary:
+          $ref: "#/components/schemas/HotRepoSummary"
+    HotRepo:
+      type: object
+      required: [id, owner, name, fullName, state, pinned, sizeBytes, lastAccessAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner:
+          type: string
+        name:
+          type: string
+        fullName:
+          type: string
+        state:
+          type: string
+          enum: [hot, cold, hydrating, evicting, degraded]
+        pinned:
+          type: boolean
+        sizeBytes:
+          type: integer
+          format: int64
+        lastAccessAt:
+          type: string
+          format: date-time
+          description: Last read or write (fetch, clone, push, browsing), recorded at most once a minute
+        evictAt:
+          type: string
+          format: date-time
+          description: When the idle TTL moves the repository to the remote storage
+    HotRepoSummary:
+      type: object
+      required: [repos, pinned, bytes, budget, highWatermark, lowWatermark, ttlSeconds, remote]
+      properties:
+        repos:
+          type: integer
+          format: int64
+          description: Hot repositories
+        pinned:
+          type: integer
+          format: int64
+        bytes:
+          type: integer
+          format: int64
+        budget:
+          type: integer
+          format: int64
+          description: Space of the hot repositories in bytes, 0 means no limit
+        highWatermark:
+          type: number
+          format: double
+        lowWatermark:
+          type: number
+          format: double
+        ttlSeconds:
+          type: integer
+          format: int64
+          description: Idle TTL of the repositories, 0 means none
+        remote:
+          type: boolean
+          description: A remote storage holds the repositories, so idle ones can leave the local disk
     AvatarStorage:
       type: object
       required: [target, publicUrl, localTarget, targets]
@@ -13032,7 +13233,10 @@ components:
         storageState:
           type: string
           enum: [hot, cold, hydrating, evicting, degraded]
-          description: Where the git data is; cold repositories are restored on first access.
+          description: |
+            Where the git data is; cold repositories are restored on first
+            access. Storage is instance infrastructure: only instance admins
+            see the real state, other callers always get "hot".
         sizeBytes:
           type: integer
           format: int64

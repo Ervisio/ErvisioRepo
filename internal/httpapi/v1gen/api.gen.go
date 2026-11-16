@@ -848,6 +848,33 @@ func (e GitHubSyncResolveResolution) Valid() bool {
 	}
 }
 
+// Defines values for HotRepoState.
+const (
+	HotRepoStateCold      HotRepoState = "cold"
+	HotRepoStateDegraded  HotRepoState = "degraded"
+	HotRepoStateEvicting  HotRepoState = "evicting"
+	HotRepoStateHot       HotRepoState = "hot"
+	HotRepoStateHydrating HotRepoState = "hydrating"
+)
+
+// Valid indicates whether the value is a known member of the HotRepoState enum.
+func (e HotRepoState) Valid() bool {
+	switch e {
+	case HotRepoStateCold:
+		return true
+	case HotRepoStateDegraded:
+		return true
+	case HotRepoStateEvicting:
+		return true
+	case HotRepoStateHot:
+		return true
+	case HotRepoStateHydrating:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for InstanceSettingSource.
 const (
 	InstanceSettingSourceDb      InstanceSettingSource = "db"
@@ -1775,6 +1802,24 @@ func (e StorageCheckStepName) Valid() bool {
 	case StorageCheckStepNameRange:
 		return true
 	case StorageCheckStepNameStat:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StorageHotCacheSource.
+const (
+	StorageHotCacheSourceDatabase StorageHotCacheSource = "database"
+	StorageHotCacheSourceFile     StorageHotCacheSource = "file"
+)
+
+// Valid indicates whether the value is a known member of the StorageHotCacheSource enum.
+func (e StorageHotCacheSource) Valid() bool {
+	switch e {
+	case StorageHotCacheSourceDatabase:
+		return true
+	case StorageHotCacheSourceFile:
 		return true
 	default:
 		return false
@@ -4084,6 +4129,51 @@ type GpgKeyCreate struct {
 	ArmoredKey string `json:"armoredKey"`
 }
 
+// HotRepo defines model for HotRepo.
+type HotRepo struct {
+	// EvictAt When the idle TTL moves the repository to the remote storage
+	EvictAt  *time.Time         `json:"evictAt,omitempty"`
+	FullName string             `json:"fullName"`
+	Id       openapi_types.UUID `json:"id"`
+
+	// LastAccessAt Last read or write (fetch, clone, push, browsing), recorded at most once a minute
+	LastAccessAt time.Time    `json:"lastAccessAt"`
+	Name         string       `json:"name"`
+	Owner        string       `json:"owner"`
+	Pinned       bool         `json:"pinned"`
+	SizeBytes    int64        `json:"sizeBytes"`
+	State        HotRepoState `json:"state"`
+}
+
+// HotRepoState defines model for HotRepo.State.
+type HotRepoState string
+
+// HotRepoPage defines model for HotRepoPage.
+type HotRepoPage struct {
+	Items   []HotRepo      `json:"items"`
+	Summary HotRepoSummary `json:"summary"`
+	Total   int64          `json:"total"`
+}
+
+// HotRepoSummary defines model for HotRepoSummary.
+type HotRepoSummary struct {
+	// Budget Space of the hot repositories in bytes, 0 means no limit
+	Budget        int64   `json:"budget"`
+	Bytes         int64   `json:"bytes"`
+	HighWatermark float64 `json:"highWatermark"`
+	LowWatermark  float64 `json:"lowWatermark"`
+	Pinned        int64   `json:"pinned"`
+
+	// Remote A remote storage holds the repositories, so idle ones can leave the local disk
+	Remote bool `json:"remote"`
+
+	// Repos Hot repositories
+	Repos int64 `json:"repos"`
+
+	// TtlSeconds Idle TTL of the repositories, 0 means none
+	TtlSeconds int64 `json:"ttlSeconds"`
+}
+
 // InstanceSetting defines model for InstanceSetting.
 type InstanceSetting struct {
 	// FileValue Value from config.toml, the environment or the default, without the override
@@ -5303,7 +5393,9 @@ type Repo struct {
 	// StarsCount Number of users who starred the repository
 	StarsCount int `json:"starsCount"`
 
-	// StorageState Where the git data is; cold repositories are restored on first access.
+	// StorageState Where the git data is; cold repositories are restored on first
+	// access. Storage is instance infrastructure: only instance admins
+	// see the real state, other callers always get "hot".
 	StorageState RepoStorageState `json:"storageState"`
 	UpdatedAt    time.Time        `json:"updatedAt"`
 	Visibility   Visibility       `json:"visibility"`
@@ -5312,7 +5404,9 @@ type Repo struct {
 // RepoOwnerKind defines model for Repo.OwnerKind.
 type RepoOwnerKind string
 
-// RepoStorageState Where the git data is; cold repositories are restored on first access.
+// RepoStorageState Where the git data is; cold repositories are restored on first
+// access. Storage is instance infrastructure: only instance admins
+// see the real state, other callers always get "hot".
 type RepoStorageState string
 
 // RepoCollaborator defines model for RepoCollaborator.
@@ -5525,6 +5619,7 @@ type StorageConfig struct {
 
 	// FallbackCause Why the stored configuration was not applied. Never contains credentials.
 	FallbackCause *string               `json:"fallbackCause,omitempty"`
+	HotCache      StorageHotCache       `json:"hotCache"`
 	Policies      []StoragePolicyConfig `json:"policies"`
 
 	// RestartRequired Saved changes apply the next time the server starts
@@ -5555,6 +5650,30 @@ type StorageHostKeys struct {
 	KnownHosts string `json:"knownHosts"`
 }
 
+// StorageHotCache defines model for StorageHotCache.
+type StorageHotCache struct {
+	// Defaults Idle TTL in seconds per data type used when ttlSeconds is 0
+	Defaults map[string]int64 `json:"defaults"`
+
+	// Enabled Data of remote targets is cached on the local disk automatically
+	Enabled bool                  `json:"enabled"`
+	Source  StorageHotCacheSource `json:"source"`
+
+	// TtlSeconds Idle time after which data moves back to the remote storage; 0 uses defaults
+	TtlSeconds int64 `json:"ttlSeconds"`
+}
+
+// StorageHotCacheSource defines model for StorageHotCache.Source.
+type StorageHotCacheSource string
+
+// StorageHotCacheInput defines model for StorageHotCacheInput.
+type StorageHotCacheInput struct {
+	Enabled bool `json:"enabled"`
+
+	// TtlSeconds 0 for the per data type defaults, otherwise at least 3600
+	TtlSeconds int64 `json:"ttlSeconds"`
+}
+
 // StoragePolicy defines model for StoragePolicy.
 type StoragePolicy struct {
 	Bytes           int64   `json:"bytes"`
@@ -5576,13 +5695,26 @@ type StoragePolicy struct {
 
 // StoragePolicyConfig defines model for StoragePolicyConfig.
 type StoragePolicyConfig struct {
-	Cache        *string  `json:"cache,omitempty"`
-	FileCache    *string  `json:"fileCache,omitempty"`
-	FilePrimary  string   `json:"filePrimary"`
-	FileReplicas []string `json:"fileReplicas"`
-	Name         string   `json:"name"`
-	Objects      int64    `json:"objects"`
-	Primary      string   `json:"primary"`
+	// Cache Configured cache, a local target or "none"; missing means the automatic hot cache
+	Cache *string `json:"cache,omitempty"`
+
+	// CacheAuto The hot cache chose effectiveCache automatically
+	CacheAuto bool `json:"cacheAuto"`
+
+	// CacheTtlOverrideSeconds TTL set for this data type; 0 uses the hot cache setting
+	CacheTtlOverrideSeconds int64 `json:"cacheTtlOverrideSeconds"`
+
+	// CacheTtlSeconds Idle time after which cached data moves back to the remote storage, as the next start uses it; 0 means never
+	CacheTtlSeconds int64 `json:"cacheTtlSeconds"`
+
+	// EffectiveCache Cache the next start uses; missing when the data type has none
+	EffectiveCache *string  `json:"effectiveCache,omitempty"`
+	FileCache      *string  `json:"fileCache,omitempty"`
+	FilePrimary    string   `json:"filePrimary"`
+	FileReplicas   []string `json:"fileReplicas"`
+	Name           string   `json:"name"`
+	Objects        int64    `json:"objects"`
+	Primary        string   `json:"primary"`
 
 	// PrimaryLocked The policy holds objects, so its primary cannot change
 	PrimaryLocked  bool     `json:"primaryLocked"`
@@ -5599,9 +5731,13 @@ type StoragePolicyConfigSource string
 
 // StoragePolicyInput defines model for StoragePolicyInput.
 type StoragePolicyInput struct {
-	Cache    *string  `json:"cache,omitempty"`
-	Primary  string   `json:"primary"`
-	Replicas []string `json:"replicas"`
+	// Cache A local target, "none" to disable the cache of this data type, or empty for the automatic hot cache
+	Cache *string `json:"cache,omitempty"`
+
+	// CacheTtlSeconds Idle TTL of this data type in seconds; 0 uses the hot cache setting. Missing keeps the value of config.toml.
+	CacheTtlSeconds *int64   `json:"cacheTtlSeconds,omitempty"`
+	Primary         string   `json:"primary"`
+	Replicas        []string `json:"replicas"`
 }
 
 // StorageSecretsInput Write-only credentials, sealed with the master key. Never returned.
@@ -6363,6 +6499,17 @@ type ListAdminInvitesParams struct {
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListAdminHotReposParams defines parameters for ListAdminHotRepos.
+type ListAdminHotReposParams struct {
+	// Q Case-insensitive substring of owner/name
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+
+	// All Also list repositories that are only on the remote storage
+	All    *bool       `form:"all,omitempty" json:"all,omitempty"`
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListAdminUsersParams defines parameters for ListAdminUsers.
 type ListAdminUsersParams struct {
 	// Q Case-insensitive substring of the username, display name or an email address
@@ -7004,6 +7151,9 @@ type PutAdminAvatarStorageJSONRequestBody = AvatarStorageInput
 // ScanAdminStorageHostKeysJSONRequestBody defines body for ScanAdminStorageHostKeys for application/json ContentType.
 type ScanAdminStorageHostKeysJSONRequestBody = StorageHostKeyScan
 
+// PutAdminStorageHotCacheJSONRequestBody defines body for PutAdminStorageHotCache for application/json ContentType.
+type PutAdminStorageHotCacheJSONRequestBody = StorageHotCacheInput
+
 // PutAdminStoragePolicyJSONRequestBody defines body for PutAdminStoragePolicy for application/json ContentType.
 type PutAdminStoragePolicyJSONRequestBody = StoragePolicyInput
 
@@ -7393,6 +7543,12 @@ type ServerInterface interface {
 	// ScanAdminStorageHostKeys Read the SSH host keys of an SFTP server
 	// (POST /admin/storage/host-keys)
 	ScanAdminStorageHostKeys(w http.ResponseWriter, r *http.Request)
+	// PutAdminStorageHotCache Change the automatic hot cache of the instance
+	// (PUT /admin/storage/hot-cache)
+	PutAdminStorageHotCache(w http.ResponseWriter, r *http.Request)
+	// ListAdminHotRepos Repositories kept on the local disk, most recently used first
+	// (GET /admin/storage/hot-repos)
+	ListAdminHotRepos(w http.ResponseWriter, r *http.Request, params ListAdminHotReposParams)
 	// PutAdminStoragePolicy Change where a data type is stored
 	// (PUT /admin/storage/policies/{policy})
 	PutAdminStoragePolicy(w http.ResponseWriter, r *http.Request, policy string)
@@ -8530,6 +8686,18 @@ func (_ Unimplemented) GetAdminStorageConfig(w http.ResponseWriter, r *http.Requ
 // ScanAdminStorageHostKeys Read the SSH host keys of an SFTP server
 // (POST /admin/storage/host-keys)
 func (_ Unimplemented) ScanAdminStorageHostKeys(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PutAdminStorageHotCache Change the automatic hot cache of the instance
+// (PUT /admin/storage/hot-cache)
+func (_ Unimplemented) PutAdminStorageHotCache(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListAdminHotRepos Repositories kept on the local disk, most recently used first
+// (GET /admin/storage/hot-repos)
+func (_ Unimplemented) ListAdminHotRepos(w http.ResponseWriter, r *http.Request, params ListAdminHotReposParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -11133,6 +11301,104 @@ func (siw *ServerInterfaceWrapper) ScanAdminStorageHostKeys(w http.ResponseWrite
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ScanAdminStorageHostKeys(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutAdminStorageHotCache operation middleware
+func (siw *ServerInterfaceWrapper) PutAdminStorageHotCache(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutAdminStorageHotCache(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAdminHotRepos operation middleware
+func (siw *ServerInterfaceWrapper) ListAdminHotRepos(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAdminHotReposParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "all" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "all", r.URL.Query(), &params.All, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "all"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "all", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAdminHotRepos(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -27109,6 +27375,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/admin/storage/policies/{policy}", wrapper.PutAdminStoragePolicy)
 	})
 	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/admin/storage/hot-cache", wrapper.PutAdminStorageHotCache)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/storage/hot-repos", wrapper.ListAdminHotRepos)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/admin/storage/avatars", wrapper.GetAdminAvatarStorage)
 	})
 	r.Group(func(r chi.Router) {
@@ -29165,6 +29437,114 @@ type ScanAdminStorageHostKeysdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response ScanAdminStorageHostKeysdefaultApplicationProblemPlusJSONResponse) VisitScanAdminStorageHostKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAdminStorageHotCacheRequestObject struct {
+	Body *PutAdminStorageHotCacheJSONRequestBody
+}
+
+type PutAdminStorageHotCacheResponseObject interface {
+	VisitPutAdminStorageHotCacheResponse(w http.ResponseWriter) error
+}
+
+type PutAdminStorageHotCache200JSONResponse StorageConfig
+
+func (response PutAdminStorageHotCache200JSONResponse) VisitPutAdminStorageHotCacheResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAdminStorageHotCache400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutAdminStorageHotCache400ApplicationProblemPlusJSONResponse) VisitPutAdminStorageHotCacheResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAdminStorageHotCache422ApplicationProblemPlusJSONResponse ValidationProblem
+
+func (response PutAdminStorageHotCache422ApplicationProblemPlusJSONResponse) VisitPutAdminStorageHotCacheResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAdminStorageHotCachedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PutAdminStorageHotCachedefaultApplicationProblemPlusJSONResponse) VisitPutAdminStorageHotCacheResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAdminHotReposRequestObject struct {
+	Params ListAdminHotReposParams
+}
+
+type ListAdminHotReposResponseObject interface {
+	VisitListAdminHotReposResponse(w http.ResponseWriter) error
+}
+
+type ListAdminHotRepos200JSONResponse HotRepoPage
+
+func (response ListAdminHotRepos200JSONResponse) VisitListAdminHotReposResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAdminHotReposdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListAdminHotReposdefaultApplicationProblemPlusJSONResponse) VisitListAdminHotReposResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -59139,6 +59519,12 @@ type StrictServerInterface interface {
 	// ScanAdminStorageHostKeys Read the SSH host keys of an SFTP server
 	// (POST /admin/storage/host-keys)
 	ScanAdminStorageHostKeys(ctx context.Context, request ScanAdminStorageHostKeysRequestObject) (ScanAdminStorageHostKeysResponseObject, error)
+	// PutAdminStorageHotCache Change the automatic hot cache of the instance
+	// (PUT /admin/storage/hot-cache)
+	PutAdminStorageHotCache(ctx context.Context, request PutAdminStorageHotCacheRequestObject) (PutAdminStorageHotCacheResponseObject, error)
+	// ListAdminHotRepos Repositories kept on the local disk, most recently used first
+	// (GET /admin/storage/hot-repos)
+	ListAdminHotRepos(ctx context.Context, request ListAdminHotReposRequestObject) (ListAdminHotReposResponseObject, error)
 	// PutAdminStoragePolicy Change where a data type is stored
 	// (PUT /admin/storage/policies/{policy})
 	PutAdminStoragePolicy(ctx context.Context, request PutAdminStoragePolicyRequestObject) (PutAdminStoragePolicyResponseObject, error)
@@ -60658,6 +61044,63 @@ func (sh *strictHandler) ScanAdminStorageHostKeys(w http.ResponseWriter, r *http
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ScanAdminStorageHostKeysResponseObject); ok {
 		if err := validResponse.VisitScanAdminStorageHostKeysResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutAdminStorageHotCache operation middleware
+func (sh *strictHandler) PutAdminStorageHotCache(w http.ResponseWriter, r *http.Request) {
+	var request PutAdminStorageHotCacheRequestObject
+
+	var body PutAdminStorageHotCacheJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutAdminStorageHotCache(ctx, request.(PutAdminStorageHotCacheRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutAdminStorageHotCache")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutAdminStorageHotCacheResponseObject); ok {
+		if err := validResponse.VisitPutAdminStorageHotCacheResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAdminHotRepos operation middleware
+func (sh *strictHandler) ListAdminHotRepos(w http.ResponseWriter, r *http.Request, params ListAdminHotReposParams) {
+	var request ListAdminHotReposRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAdminHotRepos(ctx, request.(ListAdminHotReposRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAdminHotRepos")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAdminHotReposResponseObject); ok {
+		if err := validResponse.VisitListAdminHotReposResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

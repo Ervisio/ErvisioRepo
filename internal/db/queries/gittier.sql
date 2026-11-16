@@ -45,3 +45,31 @@ UPDATE repos SET manifest_seq = sqlc.arg(seq)::bigint WHERE id = sqlc.arg(id);
 -- name: RepoJournalDirty :one
 -- True while the hot copy holds pushes not yet in the remote journal.
 SELECT (journal_dirty_since IS NOT NULL)::boolean AS dirty FROM repos WHERE id = $1;
+
+-- name: ListHotCacheRepos :many
+-- Repositories on the local disk (hot, hydrating or evicting), or every
+-- repository when all_states is set, most recently used first; pattern is
+-- a lowercase LIKE fragment of owner/name (metacharacters escaped).
+SELECT r.id, n.name AS owner_name, r.name, r.storage_state, r.pinned, r.size_bytes, r.last_access_at
+FROM repos r
+JOIN namespaces n ON n.id = r.owner_id
+WHERE (sqlc.arg(all_states)::boolean OR r.storage_state <> 'cold')
+  AND (sqlc.arg(pattern)::text = ''
+       OR (n.name_lower || '/' || r.name_lower) LIKE '%' || sqlc.arg(pattern)::text || '%' ESCAPE '\')
+ORDER BY r.last_access_at DESC, r.id
+LIMIT sqlc.arg(lim) OFFSET sqlc.arg(off);
+
+-- name: CountHotCacheRepos :one
+SELECT count(*)::bigint AS total
+FROM repos r
+JOIN namespaces n ON n.id = r.owner_id
+WHERE (sqlc.arg(all_states)::boolean OR r.storage_state <> 'cold')
+  AND (sqlc.arg(pattern)::text = ''
+       OR (n.name_lower || '/' || r.name_lower) LIKE '%' || sqlc.arg(pattern)::text || '%' ESCAPE '\');
+
+-- name: HotRepoStats :one
+-- Hot repositories, how many are pinned and the bytes they hold.
+SELECT count(*)::bigint AS repos,
+       count(*) FILTER (WHERE pinned)::bigint AS pinned,
+       COALESCE(sum(size_bytes), 0)::bigint AS bytes
+FROM repos WHERE storage_state = 'hot';

@@ -61,7 +61,7 @@ func (s *v1Server) ListUserStarred(ctx context.Context, req v1gen.ListUserStarre
 	}
 	out := make(v1gen.ListUserStarred200JSONResponse, 0, len(list))
 	for _, r := range list {
-		out = append(out, v1gen.StarredRepo{Repo: repoDTO(r.Repo), StarredAt: r.StarredAt})
+		out = append(out, v1gen.StarredRepo{Repo: repoDTO(ctx, r.Repo), StarredAt: r.StarredAt})
 	}
 	return out, nil
 }

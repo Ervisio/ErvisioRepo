@@ -24,6 +24,8 @@ type Tiering interface {
 	Resolve(ctx context.Context, owner, name string) (uuid.UUID, error)
 	SetPinned(ctx context.Context, actor uuid.UUID, ip string, id uuid.UUID, pinned bool) (gittier.RepoState, error)
 	Evict(ctx context.Context, actor uuid.UUID, ip string, id uuid.UUID) (gittier.RepoState, error)
+	HotRepos(ctx context.Context, f gittier.HotFilter) ([]gittier.HotRepo, int64, error)
+	HotSummary(ctx context.Context) (gittier.HotSummary, error)
 }
 
 // Hydration streams the hydration progress (satisfied by *gittier.Hydrator).
@@ -103,6 +105,36 @@ func (s *v1Server) EvictAdminRepo(ctx context.Context, req v1gen.EvictAdminRepoR
 		return v1gen.EvictAdminRepo409ApplicationProblemPlusJSONResponse(problem(http.StatusConflict, "repository is in use, retry later")), nil
 	}
 	return nil, err
+}
+
+func (s *v1Server) ListAdminHotRepos(ctx context.Context, req v1gen.ListAdminHotReposRequestObject) (v1gen.ListAdminHotReposResponseObject, error) {
+	if s.tiering == nil {
+		return v1gen.ListAdminHotReposdefaultApplicationProblemPlusJSONResponse{Body: errTieringUnavailable, StatusCode: http.StatusServiceUnavailable}, nil
+	}
+	p := req.Params
+	f := gittier.HotFilter{Query: deref(p.Q), All: deref(p.All)}
+	f.Offset, f.Limit = adminPage(p.Offset, p.Limit)
+	list, total, err := s.tiering.HotRepos(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	sum, err := s.tiering.HotSummary(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := v1gen.HotRepoPage{Items: make([]v1gen.HotRepo, 0, len(list)), Total: total, Summary: v1gen.HotRepoSummary{
+		Repos: sum.Repos, Pinned: sum.Pinned, Bytes: sum.Bytes, Budget: sum.Budget,
+		HighWatermark: sum.High, LowWatermark: sum.Low, TtlSeconds: int64(sum.TTL.Seconds()), Remote: sum.Remote,
+	}}
+	for _, r := range list {
+		h := v1gen.HotRepo{Id: r.ID, Owner: r.Owner, Name: r.Name, FullName: r.Owner + "/" + r.Name,
+			State: v1gen.HotRepoState(r.State), Pinned: r.Pinned, SizeBytes: r.SizeBytes, LastAccessAt: r.LastAccess}
+		if !r.EvictAt.IsZero() {
+			h.EvictAt = &r.EvictAt
+		}
+		out.Items = append(out.Items, h)
+	}
+	return v1gen.ListAdminHotRepos200JSONResponse(out), nil
 }
 
 // hydrationPath is the SSE endpoint of the hydration progress. It is

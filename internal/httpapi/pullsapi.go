@@ -556,7 +556,7 @@ func (s *v1Server) CreateFork(ctx context.Context, req v1gen.CreateForkRequestOb
 	if err != nil {
 		return pullsFail(err, http.MethodPost, "/forks")
 	}
-	return v1gen.CreateFork201JSONResponse(repoDTO(r)), nil
+	return v1gen.CreateFork201JSONResponse(repoDTO(ctx, r)), nil
 }
 
 func (s *v1Server) MergeUpstream(ctx context.Context, req v1gen.MergeUpstreamRequestObject) (v1gen.MergeUpstreamResponseObject, error) {

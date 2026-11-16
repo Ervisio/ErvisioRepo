@@ -90,6 +90,7 @@ type Querier interface {
 	CountCommitStatuses(ctx context.Context, arg CountCommitStatusesParams) (int64, error)
 	CountExploreRepos(ctx context.Context, pattern string) (int64, error)
 	CountGitHubConnectionLinks(ctx context.Context, connectionID uuid.UUID) (int64, error)
+	CountHotCacheRepos(ctx context.Context, arg CountHotCacheReposParams) (int64, error)
 	// Repositories (existing or not yet collected) that reference an object.
 	CountLFSObjectRefs(ctx context.Context, oid string) (int64, error)
 	CountOAuthAppSecrets(ctx context.Context, appID uuid.UUID) (int64, error)
@@ -410,6 +411,8 @@ type Querier interface {
 	GetWebAuthnHandle(ctx context.Context, userID uuid.UUID) ([]byte, error)
 	GetWebhook(ctx context.Context, id uuid.UUID) (Webhook, error)
 	GetWebhookDelivery(ctx context.Context, id uuid.UUID) (WebhookDelivery, error)
+	// Hot repositories, how many are pinned and the bytes they hold.
+	HotRepoStats(ctx context.Context) (HotRepoStatsRow, error)
 	// Hydration, eviction, prewarm and restore of the hot tier (PLAN §4.3, §4.5).
 	// Bytes held by the hot repositories, as recorded in repos.size_bytes.
 	HotRepoUsage(ctx context.Context) (int64, error)
@@ -639,6 +642,10 @@ type Querier interface {
 	ListGitHubSyncRefs(ctx context.Context, linkID uuid.UUID) ([]GithubSyncRef, error)
 	// Tokens of a grant, newest first.
 	ListGrantTokenIDs(ctx context.Context, grantID uuid.NullUUID) ([]uuid.UUID, error)
+	// Repositories on the local disk (hot, hydrating or evicting), or every
+	// repository when all_states is set, most recently used first; pattern is
+	// a lowercase LIKE fragment of owner/name (metacharacters escaped).
+	ListHotCacheRepos(ctx context.Context, arg ListHotCacheReposParams) ([]ListHotCacheReposRow, error)
 	// Watermark eviction candidates; the caller weights age by size.
 	ListHotUnpinnedRepos(ctx context.Context, lim int32) ([]ListHotUnpinnedReposRow, error)
 	ListInstallationGrants(ctx context.Context, appID uuid.UUID) ([]ListInstallationGrantsRow, error)

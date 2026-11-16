@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -20,6 +21,7 @@ type StorageConfig interface {
 	PutTarget(ctx context.Context, actor uuid.UUID, ip, name string, in storagecfg.TargetInput) (storagecfg.View, error)
 	DeleteTarget(ctx context.Context, actor uuid.UUID, ip, name string) (storagecfg.View, error)
 	PutPolicy(ctx context.Context, actor uuid.UUID, ip, policy string, in storagecfg.PolicyInput) (storagecfg.View, error)
+	PutHotCache(ctx context.Context, actor uuid.UUID, ip string, in storagecfg.HotCacheInput) (storagecfg.View, error)
 	Test(ctx context.Context, in storagecfg.TargetInput) (tier.CheckResult, error)
 	ScanHostKeys(ctx context.Context, host string, port int) ([]tier.HostKey, error)
 }
@@ -104,6 +106,10 @@ func (s *v1Server) PutAdminStoragePolicy(ctx context.Context, req v1gen.PutAdmin
 	if req.Body.Cache != nil {
 		in.Cache = *req.Body.Cache
 	}
+	if req.Body.CacheTtlSeconds != nil {
+		ttl := time.Duration(*req.Body.CacheTtlSeconds) * time.Second
+		in.CacheTTL = &ttl
+	}
 	v, err := s.storageCfg.PutPolicy(ctx, principal(ctx).UserID, clientOf(ctx).IP, req.Policy, in)
 	var verr *storagecfg.ValidationError
 	switch {
@@ -115,6 +121,25 @@ func (s *v1Server) PutAdminStoragePolicy(ctx context.Context, req v1gen.PutAdmin
 		return nil, err
 	}
 	return v1gen.PutAdminStoragePolicy200JSONResponse(storageConfigDTO(v)), nil
+}
+
+func (s *v1Server) PutAdminStorageHotCache(ctx context.Context, req v1gen.PutAdminStorageHotCacheRequestObject) (v1gen.PutAdminStorageHotCacheResponseObject, error) {
+	if s.storageCfg == nil {
+		return errStorageCfgUnavailable, nil
+	}
+	if req.Body == nil {
+		return badRequest("a hot cache setting is required"), nil
+	}
+	in := storagecfg.HotCacheInput{Enabled: req.Body.Enabled, TTL: time.Duration(req.Body.TtlSeconds) * time.Second}
+	v, err := s.storageCfg.PutHotCache(ctx, principal(ctx).UserID, clientOf(ctx).IP, in)
+	var verr *storagecfg.ValidationError
+	switch {
+	case errors.As(err, &verr):
+		return v1gen.PutAdminStorageHotCache422ApplicationProblemPlusJSONResponse(storageProblem(verr)), nil
+	case err != nil:
+		return nil, err
+	}
+	return v1gen.PutAdminStorageHotCache200JSONResponse(storageConfigDTO(v)), nil
 }
 
 func (s *v1Server) TestAdminStorageDraft(ctx context.Context, req v1gen.TestAdminStorageDraftRequestObject) (v1gen.TestAdminStorageDraftResponseObject, error) {
@@ -149,6 +174,9 @@ func (p problemResponse) VisitDeleteAdminStorageTargetResponse(w http.ResponseWr
 	return p.write(w)
 }
 func (p problemResponse) VisitPutAdminStoragePolicyResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (p problemResponse) VisitPutAdminStorageHotCacheResponse(w http.ResponseWriter) error {
 	return p.write(w)
 }
 func (p problemResponse) VisitTestAdminStorageDraftResponse(w http.ResponseWriter) error {
@@ -195,6 +223,11 @@ func storageConfigDTO(v storagecfg.View) v1gen.StorageConfig {
 		Policies:         make([]v1gen.StoragePolicyConfig, 0, len(v.Policies)),
 		SecretsAvailable: v.SecretsAvailable, RestartRequired: v.RestartRequired, Fallback: v.Fallback,
 		FallbackCause: optString(v.FallbackCause),
+		HotCache: v1gen.StorageHotCache{Enabled: v.HotCache.Enabled, TtlSeconds: int64(v.HotCache.TTL.Seconds()),
+			Source: v1gen.StorageHotCacheSource(v.HotCache.Source), Defaults: make(map[string]int64, len(v.HotCache.Defaults))},
+	}
+	for name, d := range v.HotCache.Defaults {
+		out.HotCache.Defaults[name] = int64(d.Seconds())
 	}
 	for _, t := range v.Targets {
 		out.Targets = append(out.Targets, v1gen.StorageTargetConfig{
@@ -213,6 +246,8 @@ func storageConfigDTO(v storagecfg.View) v1gen.StorageConfig {
 		out.Policies = append(out.Policies, v1gen.StoragePolicyConfig{
 			Name: p.Name, Source: v1gen.StoragePolicyConfigSource(p.Source),
 			Primary: p.Primary, RunningPrimary: p.RunningPrimary, Replicas: p.Replicas, Cache: optString(p.Cache),
+			EffectiveCache: optString(p.EffectiveCache), CacheAuto: p.CacheAuto,
+			CacheTtlSeconds: int64(p.CacheTTL.Seconds()), CacheTtlOverrideSeconds: int64(p.CacheTTLOverride.Seconds()),
 			FilePrimary: p.FilePrimary, FileReplicas: p.FileReplicas, FileCache: optString(p.FileCache),
 			Objects: p.Objects, PrimaryLocked: p.PrimaryLocked, RestartPending: p.RestartPending,
 		})

@@ -103,17 +103,24 @@ type repoResponse interface {
 	v1gen.ListUserStarredResponseObject
 }
 
-func repoDTO(r repos.Repo) v1gen.Repo {
+// repoDTO converts a repository for the caller. Storage is instance
+// infrastructure: only instance admins see the real storage state, every
+// other caller gets "hot".
+func repoDTO(ctx context.Context, r repos.Repo) v1gen.Repo {
+	state := v1gen.RepoStorageStateHot
+	if principal(ctx).IsAdmin() {
+		state = v1gen.RepoStorageState(r.StorageState)
+	}
 	return v1gen.Repo{Id: r.ID, Owner: r.Owner, OwnerKind: v1gen.RepoOwnerKind(r.OwnerKind), Name: r.Name,
 		FullName: r.FullName(), Description: r.Description, Visibility: v1gen.Visibility(r.Visibility),
-		DefaultBranch: r.DefaultBranch, StorageState: v1gen.RepoStorageState(r.StorageState), SizeBytes: r.SizeBytes,
+		DefaultBranch: r.DefaultBranch, StorageState: state, SizeBytes: r.SizeBytes,
 		StarsCount: r.StarsCount, Starred: r.Starred, Permission: v1gen.Permission(r.Permission.String()), CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt}
 }
 
-func repoList(list []repos.Repo) []v1gen.Repo {
+func repoList(ctx context.Context, list []repos.Repo) []v1gen.Repo {
 	out := make([]v1gen.Repo, 0, len(list))
 	for _, r := range list {
-		out = append(out, repoDTO(r))
+		out = append(out, repoDTO(ctx, r))
 	}
 	return out
 }
@@ -126,7 +133,7 @@ func (s *v1Server) reposOut(ctx context.Context, list []repos.Repo) ([]v1gen.Rep
 			return nil, err
 		}
 	}
-	return repoList(list), nil
+	return repoList(ctx, list), nil
 }
 
 // repoOut is reposOut for one repository.
@@ -198,7 +205,7 @@ func (s *v1Server) CreateUserRepo(ctx context.Context, req v1gen.CreateUserRepoR
 	if err != nil {
 		return reposFail(err, http.MethodPost, "")
 	}
-	return v1gen.CreateUserRepo201JSONResponse(repoDTO(r)), nil
+	return v1gen.CreateUserRepo201JSONResponse(repoDTO(ctx, r)), nil
 }
 
 func (s *v1Server) ListUserRepos(ctx context.Context, req v1gen.ListUserReposRequestObject) (v1gen.ListUserReposResponseObject, error) {
@@ -244,7 +251,7 @@ func (s *v1Server) CreateOrgRepo(ctx context.Context, req v1gen.CreateOrgRepoReq
 	if err != nil {
 		return reposFail(err, http.MethodPost, "")
 	}
-	return v1gen.CreateOrgRepo201JSONResponse(repoDTO(r)), nil
+	return v1gen.CreateOrgRepo201JSONResponse(repoDTO(ctx, r)), nil
 }
 
 func (s *v1Server) GetRepo(ctx context.Context, req v1gen.GetRepoRequestObject) (v1gen.GetRepoResponseObject, error) {
