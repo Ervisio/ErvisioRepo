@@ -12,6 +12,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Avatars set to an external https URL load: the Content-Security-Policy allowed only same-origin images.
 - Repository tabs: Code no longer stays highlighted on Issues, Pull requests or Actions.
 - Contributors in the repository sidebar link to their profile.
+- An avatar URL that does not load shows the initials instead of a broken image.
 - Home activity: events with no user behind them (GitHub sync, imports) show "ErvisioSync" with a bot badge instead of "Someone".
 
 ## [1.9.0] - 2026-11-16

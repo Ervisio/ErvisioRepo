@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useSession, useUserProfile } from "../../api/identity.ts";
 import { ApiError } from "../../api/http.ts";
 import { useOwnerRepos } from "../../api/repos.ts";
@@ -14,6 +15,7 @@ export function ProfilePage({ username }: { username: string }) {
   const profile = useUserProfile(username);
   const repos = useOwnerRepos(username, "user");
   const me = useSession().data?.username;
+  const [broken, setBroken] = useState("");
 
   if (profile.isPending) {
     return (
@@ -41,7 +43,11 @@ export function ProfilePage({ username }: { username: string }) {
     <Page section="code" title={u.displayName || u.username} quiet>
       <div className="up">
         <aside className="up-card">
-          {u.avatarUrl ? <img className="up-av" src={u.avatarUrl} alt="" /> : <span className="up-av" aria-hidden="true">{u.username.slice(0, 1).toUpperCase()}</span>}
+          {u.avatarUrl && broken !== u.avatarUrl ? (
+            <img className="up-av" src={u.avatarUrl} alt="" onError={() => setBroken(u.avatarUrl)} />
+          ) : (
+            <span className="up-av" aria-hidden="true">{u.username.slice(0, 1).toUpperCase()}</span>
+          )}
           <p className="up-name">{u.displayName || u.username}</p>
           <p className="up-login">{u.username}</p>
           {me === u.username && <Link to="/settings" className="ui-btn ui-btn-secondary">{t("profile.edit")}</Link>}

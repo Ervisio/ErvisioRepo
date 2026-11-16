@@ -272,7 +272,9 @@ function OrgTabs({ org, admin }: { org: string; admin: boolean }) {
 
 export function Avatar({ user, size }: { user: Pick<User, "username" | "avatarUrl">; size?: "md" | "lg" | "xl" }) {
   const cls = size ? `tb-av ${size}` : "tb-av";
-  if (user.avatarUrl) return <img className={cls} src={user.avatarUrl} alt="" />;
+  // A URL that does not load (gone, not an image, blocked) falls back to the initials.
+  const [broken, setBroken] = useState("");
+  if (user.avatarUrl && broken !== user.avatarUrl) return <img className={cls} src={user.avatarUrl} alt="" onError={() => setBroken(user.avatarUrl ?? "")} />;
   return <span className={cls} aria-hidden="true">{initials(user.username)}</span>;
 }
 
