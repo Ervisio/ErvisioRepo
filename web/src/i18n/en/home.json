@@ -32,7 +32,7 @@
   "dash.empty.review_requested": "No review is waiting for you.",
   "dash.empty.failed": "No failed runs. Nice.",
   "dash.loadError": "Could not load this list.",
-  "dash.act.someone": "Someone",
+  "dash.act.bot": "bot",
   "dash.act.push.pushed": "pushed to",
   "dash.act.issue.opened": "opened an issue in",
   "dash.act.issue.closed": "closed an issue in",

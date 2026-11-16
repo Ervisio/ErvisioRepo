@@ -6,7 +6,7 @@ import { useUserActivity, useUserIssues, useUserPins, useUserRuns, type Activity
 import { useMyRepos } from "../api/repos.ts";
 import { useStorageStatus } from "../api/useStorage.ts";
 import { useT } from "../i18n/useT.ts";
-import { Button, Icon, Input, Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/index.ts";
+import { Badge, Button, Icon, Input, Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/index.ts";
 import { When } from "./code/common.tsx";
 import { CreateRepoDialog } from "./repos/RepoList.tsx";
 
@@ -242,9 +242,10 @@ function Activity() {
           <section key={g.key} aria-label={g.label}>
             <h3 className="hm-day">{g.label}</h3>
             {g.rows.map((a) => (
+              // No actor means the server itself did it: the GitHub sync or an import.
               <Link key={a.id} {...activityLink(a)} className="hm-line">
                 <span>
-                  <b>{a.actor || t("dash.act.someone")}</b> {actionText(a)} <b>{a.fullName}</b>
+                  {a.actor ? <b>{a.actor}</b> : <><b>ErvisioSync</b> <Badge>{t("dash.act.bot")}</Badge></>} {actionText(a)} <b>{a.fullName}</b>
                 </span>
                 <When iso={a.createdAt} />
               </Link>

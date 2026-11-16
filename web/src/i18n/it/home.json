@@ -32,7 +32,7 @@
   "dash.empty.review_requested": "Nessuna revisione ti sta aspettando.",
   "dash.empty.failed": "Nessuna esecuzione fallita. Bene così.",
   "dash.loadError": "Impossibile caricare questo elenco.",
-  "dash.act.someone": "Qualcuno",
+  "dash.act.bot": "bot",
   "dash.act.push.pushed": "ha fatto push su",
   "dash.act.issue.opened": "ha aperto una issue in",
   "dash.act.issue.closed": "ha chiuso una issue in",
