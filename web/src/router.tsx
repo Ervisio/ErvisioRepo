@@ -181,7 +181,7 @@ const repoRoute = createRoute({
   component: function RepoHome() {
     const p = repoRoute.useParams();
     const s = repoRoute.useSearch();
-    return guard(<TreePage owner={p.owner} name={p.name} refName={s.ref} path={s.path} />);
+    return <TreePage owner={p.owner} name={p.name} refName={s.ref} path={s.path} />;
   },
 });
 const blobRoute = createRoute({
@@ -194,7 +194,7 @@ const blobRoute = createRoute({
   component: function Blob() {
     const p = blobRoute.useParams();
     const s = blobRoute.useSearch();
-    return guard(<BlobPage owner={p.owner} name={p.name} refName={s.ref} path={s.path ?? ""} view={s.view} />);
+    return <BlobPage owner={p.owner} name={p.name} refName={s.ref} path={s.path ?? ""} view={s.view} />;
   },
 });
 const commitsRoute = createRoute({
@@ -204,7 +204,7 @@ const commitsRoute = createRoute({
   component: function Commits() {
     const p = commitsRoute.useParams();
     const s = commitsRoute.useSearch();
-    return guard(<CommitsPage owner={p.owner} name={p.name} refName={s.ref} path={s.path} page={s.page} />);
+    return <CommitsPage owner={p.owner} name={p.name} refName={s.ref} path={s.path} page={s.page} />;
   },
 });
 const commitRoute = createRoute({
@@ -212,7 +212,7 @@ const commitRoute = createRoute({
   path: "/$owner/$name/commit/$sha",
   component: function Commit() {
     const p = commitRoute.useParams();
-    return guard(<CommitPage owner={p.owner} name={p.name} sha={p.sha} />);
+    return <CommitPage owner={p.owner} name={p.name} sha={p.sha} />;
   },
 });
 const branchesRoute = createRoute({
@@ -221,7 +221,7 @@ const branchesRoute = createRoute({
   validateSearch: pageSearch,
   component: function Branches() {
     const p = branchesRoute.useParams();
-    return guard(<BranchesPage owner={p.owner} name={p.name} page={branchesRoute.useSearch().page} />);
+    return <BranchesPage owner={p.owner} name={p.name} page={branchesRoute.useSearch().page} />;
   },
 });
 const tagsRoute = createRoute({
@@ -230,7 +230,7 @@ const tagsRoute = createRoute({
   validateSearch: pageSearch,
   component: function Tags() {
     const p = tagsRoute.useParams();
-    return guard(<TagsPage owner={p.owner} name={p.name} page={tagsRoute.useSearch().page} />);
+    return <TagsPage owner={p.owner} name={p.name} page={tagsRoute.useSearch().page} />;
   },
 });
 const compareRoute = createRoute({
@@ -240,7 +240,7 @@ const compareRoute = createRoute({
   component: function Compare() {
     const p = compareRoute.useParams();
     const s = compareRoute.useSearch();
-    return guard(<ComparePage owner={p.owner} name={p.name} base={s.base} head={s.head} />);
+    return <ComparePage owner={p.owner} name={p.name} base={s.base} head={s.head} />;
   },
 });
 const codeSearchRoute = createRoute({
@@ -255,7 +255,7 @@ const codeSearchRoute = createRoute({
   }),
   component: function CodeSearch() {
     const p = codeSearchRoute.useParams();
-    return guard(<SearchPage owner={p.owner} name={p.name} params={codeSearchRoute.useSearch()} />);
+    return <SearchPage owner={p.owner} name={p.name} params={codeSearchRoute.useSearch()} />;
   },
 });
 const editRoute = createRoute({
@@ -284,7 +284,7 @@ const releasesRoute = createRoute({
   validateSearch: pageSearch,
   component: function Releases() {
     const p = releasesRoute.useParams();
-    return guard(<ReleasesPage owner={p.owner} name={p.name} page={releasesRoute.useSearch().page} />);
+    return <ReleasesPage owner={p.owner} name={p.name} page={releasesRoute.useSearch().page} />;
   },
 });
 const releaseNewRoute = createRoute({
@@ -300,7 +300,7 @@ const releaseRoute = createRoute({
   path: "/$owner/$name/releases/$id",
   component: function ReleaseOne() {
     const p = releaseRoute.useParams();
-    return guard(<ReleasePage owner={p.owner} name={p.name} id={p.id} />);
+    return <ReleasePage owner={p.owner} name={p.name} id={p.id} />;
   },
 });
 const releaseEditRoute = createRoute({
@@ -328,7 +328,7 @@ const issuesRoute = createRoute({
   }),
   component: function Issues() {
     const p = issuesRoute.useParams();
-    return guard(<IssuesPage owner={p.owner} name={p.name} search={issuesRoute.useSearch()} />);
+    return <IssuesPage owner={p.owner} name={p.name} search={issuesRoute.useSearch()} />;
   },
 });
 const issueNewRoute = createRoute({
@@ -344,7 +344,7 @@ const issueRoute = createRoute({
   path: "/$owner/$name/issues/$number",
   component: function IssueOne() {
     const p = issueRoute.useParams();
-    return guard(<IssuePage owner={p.owner} name={p.name} number={Number(p.number)} />);
+    return <IssuePage owner={p.owner} name={p.name} number={Number(p.number)} />;
   },
 });
 const pullStates = ["closed", "merged", "all"] as const;
@@ -363,7 +363,7 @@ const pullsRoute = createRoute({
   }),
   component: function Pulls() {
     const p = pullsRoute.useParams();
-    return guard(<PullsPage owner={p.owner} name={p.name} search={pullsRoute.useSearch()} />);
+    return <PullsPage owner={p.owner} name={p.name} search={pullsRoute.useSearch()} />;
   },
 });
 const pullTabs = ["commits", "files"] as const;
@@ -374,7 +374,7 @@ const pullRoute = createRoute({
   component: function PullOne() {
     const p = pullRoute.useParams();
     const s = pullRoute.useSearch();
-    return guard(<PullPage owner={p.owner} name={p.name} number={Number(p.number)} tab={s.tab} page={s.page} />);
+    return <PullPage owner={p.owner} name={p.name} number={Number(p.number)} tab={s.tab} page={s.page} />;
   },
 });
 const inboxFilters = ["participating", "all"] as const;
@@ -400,7 +400,7 @@ const actionsRoute = createRoute({
   validateSearch: (s: Record<string, unknown>): RunsSearch => ({ workflow: str(s.workflow), event: str(s.event), status: str(s.status), branch: str(s.branch), page: num(s.page) }),
   component: function Actions() {
     const p = actionsRoute.useParams();
-    return guard(<RunsPage owner={p.owner} name={p.name} search={actionsRoute.useSearch()} />);
+    return <RunsPage owner={p.owner} name={p.name} search={actionsRoute.useSearch()} />;
   },
 });
 const actionRunRoute = createRoute({
@@ -409,7 +409,7 @@ const actionRunRoute = createRoute({
   validateSearch: (s: Record<string, unknown>): { job?: string } => ({ job: str(s.job) }),
   component: function ActionRun() {
     const p = actionRunRoute.useParams();
-    return guard(<RunPage owner={p.owner} name={p.name} runId={p.runId} job={actionRunRoute.useSearch().job} />);
+    return <RunPage owner={p.owner} name={p.name} runId={p.runId} job={actionRunRoute.useSearch().job} />;
   },
 });
 // Component catalog for the design kit (Fase UI).

@@ -47,7 +47,7 @@ func overlayCmd(ctx context.Context, args []string, stdout, stderr io.Writer) er
 	q := dbgen.New(pool)
 
 	doc, err := storagecfg.Load(ctx, q)
-	if err != nil && !(sub == "clear" && *force && errors.Is(err, storagecfg.ErrCorrupt)) {
+	if err != nil && (sub != "clear" || !*force || !errors.Is(err, storagecfg.ErrCorrupt)) {
 		return err
 	}
 	counts, err := q.StorageObjectCountsByTarget(ctx)

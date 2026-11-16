@@ -158,7 +158,7 @@ type storageBoot struct {
 	stored   storagecfg.Doc
 	fallback bool
 	cause    string
-	key  []byte         // the master key, nil when there is no key file
+	key      []byte // the master key, nil when there is no key file
 }
 
 // openStorage merges the storage overlay of the web admin over the file

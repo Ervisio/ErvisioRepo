@@ -1,8 +1,9 @@
 import type { UseQueryResult } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { archiveUrl, isHydrating, useBranches, useTags } from "../../api/code.ts";
 import { ApiError } from "../../api/http.ts";
+import { isUnauthenticated, useSession } from "../../api/identity.ts";
 import { useRepo, type Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Badge, Button, EmptyState, Icon, Menu, MenuItem, MenuLabel, MenuSeparator, Page } from "../../ui/index.ts";
@@ -33,7 +34,7 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
   if (repo.isPending || repo.isError) {
     return (
       <Page section={section} title={title} quiet={layout === "console"}>
-        <Gate query={repo}>{() => null}</Gate>
+        <Gate query={repo} notFound={<SignInToView />}>{() => null}</Gate>
       </Page>
     );
   }
@@ -97,6 +98,32 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
 }
 
 /** Loading, "repository is being prepared", error and not-found states around a query. */
+/** A missing repository seen by an anonymous caller: it may be private, so offer to sign in. */
+function SignInToView() {
+  const t = useT("code");
+  const tc = useT("common");
+  const problem = useProblemText();
+  const session = useSession();
+  const next = useLocation({ select: (l) => l.pathname + (l.searchStr ?? "") });
+  if (session.data !== undefined) {
+    return (
+      <div role="alert">
+        <EmptyState icon="alert" title={t("state.notFound")} />
+      </div>
+    );
+  }
+  if (session.isPending) return <p role="status" className="ui-note acc-pad">{tc("state.loading")}</p>;
+  if (session.isError && !isUnauthenticated(session.error)) return <EmptyState icon="alert" title={t("state.error")} description={problem(session.error)} />;
+  return (
+    <EmptyState
+      icon="lock"
+      title={t("state.signInTitle")}
+      description={t("state.signInBody")}
+      action={<Link to="/login" search={{ next }} className="ui-btn ui-btn-primary">{t("state.signIn")}</Link>}
+    />
+  );
+}
+
 export function Gate<T>({ query, notFound, children }: {
   query: UseQueryResult<T>;
   notFound?: ReactNode;

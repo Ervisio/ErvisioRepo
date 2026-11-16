@@ -493,7 +493,7 @@ export function NotifyBlock({ repo, number }: { repo: Repo; number?: number }) {
   const ref = { owner: repo.owner, name: repo.name, number: n };
   const subject = useSubjectSubscription(ref, signedIn && Number.isInteger(n) && n > 0);
   const setSubject = useSetSubjectSubscription(ref);
-  const sub = useRepoSubscription(repo.owner, repo.name);
+  const sub = useRepoSubscription(repo.owner, repo.name, signedIn);
   const set = useSetRepoSubscription(repo.owner, repo.name);
   if (!signedIn) return null;
   const levels: RepoSubscription["level"][] = ["watching", "participating", "ignoring"];

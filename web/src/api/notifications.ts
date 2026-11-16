@@ -90,10 +90,11 @@ export const useNotificationSettings = () =>
 export const useSaveNotificationSettings = () =>
   useNotifMutation<NotificationSettings, NotificationSettings>((b) => request("PUT", "/notifications/settings", b));
 
-export const useRepoSubscription = (owner: string, name: string) =>
+export const useRepoSubscription = (owner: string, name: string, enabled = true) =>
   useQuery({
     queryKey: ["repos", owner, name, "subscription"],
     queryFn: () => request<RepoSubscription>("GET", `${repoBase(owner, name)}/subscription`),
+    enabled,
     retry: false,
   });
 export function useSetRepoSubscription(owner: string, name: string) {

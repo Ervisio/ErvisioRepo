@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Public repositories can be browsed without signing in: code, history, branches, tags, compare, code search, releases, issues, pull requests and Actions runs no longer redirect anonymous visitors to the login page. A missing or private repository asks them to sign in instead. Write pages (edit, new file, new issue, release form, settings) still require a session.
+
 ## [1.6.0] - 2026-11-16
 
 ### Added

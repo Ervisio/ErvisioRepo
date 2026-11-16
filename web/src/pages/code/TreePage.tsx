@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { canWrite, useTree, type Tree, type TreeEntry } from "../../api/code.ts";
+import { useSession } from "../../api/identity.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { archiveUrl } from "../../api/code.ts";
@@ -103,6 +104,7 @@ function RepoMore({ repo, refName, path }: { repo: Repo; refName: string; path: 
   const pin = usePinToggle(owner, name);
   const [forking, setForking] = useState(false);
   const writable = canWrite(repo.permission);
+  const signedIn = useSession().data !== undefined;
   return (
     <>
       <Menu
@@ -138,9 +140,11 @@ function RepoMore({ repo, refName, path }: { repo: Repo; refName: string; path: 
             {pin.label}
           </MenuItem>
         )}
-        <MenuItem icon="branch" onSelect={() => setForking(true)}>
-          {tr("fork.button")}
-        </MenuItem>
+        {signedIn && (
+          <MenuItem icon="branch" onSelect={() => setForking(true)}>
+            {tr("fork.button")}
+          </MenuItem>
+        )}
         {repo.permission === "admin" && (
           <>
             <MenuSeparator />
