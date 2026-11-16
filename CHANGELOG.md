@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-16
+
 ### Added
 
 - Public user profiles at `/{username}` (also reachable signed out) with the user's repositories, and a "Your profile" entry in the user menu. New endpoint `GET /users/{username}` (`UserProfile`: username, display name, avatar, join date); unknown, organization and suspended names answer 404.
