@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-11-17
+
 ### Added
 
 - Runner self-update from the admin panel: Admin > Runners shows "Update available" on runners older than the server, an Update item in the ⋯ menu and Update all in the header (POST /admin/actions/runners/{runnerId}/update, POST /admin/actions/runners/update, audit action `actions.runner_update`, migration 00370). The request travels in the Declare/Heartbeat answers (runner.proto `RunnerUpdate`); the runner stops taking jobs, lets the running ones finish, downloads `ervisio-runner_<ver>_<os>_<arch>` from the GitHub release, checks it against the release checksums file like install.sh and restarts on it (unix: staged in `<data dir>/bin` and exec'd, also at every start, since `/usr/local/bin` is read-only for the service; Windows: replaces the executable and exits so the scheduled task restarts it). Failures come back in the heartbeat and show as "Update failed". The built-in runner, runners in containers, ephemeral runners and runners older than this release are not updated this way (they need one `install.sh --upgrade` or a new image). Organization and repository runner pages show the indicator only.
