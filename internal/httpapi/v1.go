@@ -11,9 +11,11 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/avatars"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/dashboard"
+	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/ghsync"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+	"github.com/Ervisio/ErvisioRepo/internal/monitor"
 	"github.com/Ervisio/ErvisioRepo/internal/notify"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
 	"github.com/Ervisio/ErvisioRepo/internal/webhooks"
@@ -62,6 +64,11 @@ type v1Server struct {
 	avatars *avatars.Service
 	// apps serves the App registration and installation endpoints; nil answers 503.
 	apps *apps.Service
+	// db, jobs, monitor and mailHost feed the admin overview; nil parts are left out.
+	db       dbgen.DBTX
+	jobs     JobsStatus
+	monitor  *monitor.Monitor
+	mailHost string
 }
 
 var _ v1gen.StrictServerInterface = (*v1Server)(nil)

@@ -23,6 +23,50 @@ func (q *Queries) ActionsRunnerHasJobs(ctx context.Context, runnerID uuid.UUID) 
 	return exists, err
 }
 
+const adminActionsJobBuckets = `-- name: AdminActionsJobBuckets :many
+SELECT floor(extract(epoch FROM j.completed_at - $1::timestamptz) / $2::int)::int AS bucket,
+       count(*) FILTER (WHERE j.conclusion = 'success')::bigint AS success,
+       count(*) FILTER (WHERE j.conclusion IN ('failure', 'timed_out'))::bigint AS failure
+FROM actions_jobs j
+WHERE j.status = 'completed' AND j.completed_at >= $1::timestamptz
+GROUP BY 1
+ORDER BY 1
+`
+
+type AdminActionsJobBucketsParams struct {
+	Since       pgtype.Timestamptz
+	StepSeconds int32
+}
+
+type AdminActionsJobBucketsRow struct {
+	Bucket  int32
+	Success int64
+	Failure int64
+}
+
+// Completed jobs since @since per bucket of @step_seconds (bucket 0 starts at
+// @since), for the admin overview chart. Failed and timed out jobs count as
+// failures; cancelled and skipped jobs are left out.
+func (q *Queries) AdminActionsJobBuckets(ctx context.Context, arg AdminActionsJobBucketsParams) ([]AdminActionsJobBucketsRow, error) {
+	rows, err := q.db.Query(ctx, adminActionsJobBuckets, arg.Since, arg.StepSeconds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []AdminActionsJobBucketsRow{}
+	for rows.Next() {
+		var i AdminActionsJobBucketsRow
+		if err := rows.Scan(&i.Bucket, &i.Success, &i.Failure); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const approveActionsJob = `-- name: ApproveActionsJob :exec
 UPDATE actions_jobs SET approved_by = $1, approved_at = now(), updated_at = now() WHERE id = $2
 `
@@ -311,6 +355,17 @@ func (q *Queries) CountActionsRuns(ctx context.Context, arg CountActionsRunsPara
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const countQueuedActionsJobs = `-- name: CountQueuedActionsJobs :one
+SELECT count(*)::bigint FROM actions_jobs WHERE status = 'queued'
+`
+
+func (q *Queries) CountQueuedActionsJobs(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countQueuedActionsJobs)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const decideActionsRunnerDevice = `-- name: DecideActionsRunnerDevice :exec

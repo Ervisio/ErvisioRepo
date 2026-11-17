@@ -601,3 +601,18 @@ WHERE repo_id = @repo_id AND scope IN ('repo', 'environment');
 -- name: ListActionsRepoVariableKeys :many
 SELECT environment, name FROM actions_variables
 WHERE repo_id = @repo_id AND scope IN ('repo', 'environment');
+
+-- name: AdminActionsJobBuckets :many
+-- Completed jobs since @since per bucket of @step_seconds (bucket 0 starts at
+-- @since), for the admin overview chart. Failed and timed out jobs count as
+-- failures; cancelled and skipped jobs are left out.
+SELECT floor(extract(epoch FROM j.completed_at - sqlc.arg(since)::timestamptz) / sqlc.arg(step_seconds)::int)::int AS bucket,
+       count(*) FILTER (WHERE j.conclusion = 'success')::bigint AS success,
+       count(*) FILTER (WHERE j.conclusion IN ('failure', 'timed_out'))::bigint AS failure
+FROM actions_jobs j
+WHERE j.status = 'completed' AND j.completed_at >= sqlc.arg(since)::timestamptz
+GROUP BY 1
+ORDER BY 1;
+
+-- name: CountQueuedActionsJobs :one
+SELECT count(*)::bigint FROM actions_jobs WHERE status = 'queued';

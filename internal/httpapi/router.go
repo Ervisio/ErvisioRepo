@@ -30,6 +30,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/ghsync"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+	"github.com/Ervisio/ErvisioRepo/internal/monitor"
 	"github.com/Ervisio/ErvisioRepo/internal/notify"
 	"github.com/Ervisio/ErvisioRepo/internal/runnerinstall"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
@@ -145,6 +146,12 @@ type Deps struct {
 	// ActionsArtifacts lists and serves workflow artifacts in /api/v3; nil
 	// answers empty lists.
 	ActionsArtifacts ghapi.Artifacts
+	// Monitor counts requests and keeps the disk samples of the admin
+	// overview; nil leaves its charts empty.
+	Monitor *monitor.Monitor
+	// MailHost is the SMTP relay shown in the admin overview; empty when
+	// mail is off.
+	MailHost string
 }
 
 // NewRouter builds the root handler.
@@ -169,6 +176,9 @@ func NewRouter(d Deps) http.Handler {
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID, accessLog(d.Log), recoverer(d.Log), securityHeaders, metrics.middleware, jobAPIAlias)
+	if d.Monitor != nil {
+		r.Use(countRequests(d.Monitor))
+	}
 
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -342,6 +352,11 @@ func mountV1(r chi.Router, d Deps) {
 	srv.storageCfg = d.StorageCfg
 	srv.avatars = d.Avatars
 	srv.apps = d.Apps
+	srv.db, _ = d.DB.(dbgen.DBTX)
+	srv.monitor, srv.mailHost = d.Monitor, d.MailHost
+	if d.Jobs != nil {
+		srv.jobs = d.Jobs
+	}
 	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())

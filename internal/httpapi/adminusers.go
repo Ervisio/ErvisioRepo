@@ -18,6 +18,7 @@ import (
 // (satisfied by *identity.Service).
 type AdminIdentity interface {
 	AdminListUsers(ctx context.Context, f identity.AdminUserFilter) ([]identity.AdminUser, int64, error)
+	AdminCountUsers(ctx context.Context) (identity.AdminUserCounts, error)
 	AdminGetUser(ctx context.Context, username string) (identity.AdminUser, error)
 	AdminUpdateUser(ctx context.Context, actor uuid.UUID, username string, in identity.AdminUserUpdate, c identity.Client) (identity.AdminUser, error)
 	AdminReset2FA(ctx context.Context, actor uuid.UUID, username string, c identity.Client) error
@@ -102,7 +103,7 @@ func (s *v1Server) ListAdminUsers(ctx context.Context, req v1gen.ListAdminUsersR
 		return errAdminUnavailable, nil
 	}
 	p := req.Params
-	f := identity.AdminUserFilter{Suspended: p.Suspended}
+	f := identity.AdminUserFilter{Suspended: p.Suspended, Bot: p.Bot, TwoFactor: p.TwoFactor}
 	f.Offset, f.Limit = adminPage(p.Offset, p.Limit)
 	if p.Q != nil {
 		f.Search = *p.Q
@@ -117,7 +118,13 @@ func (s *v1Server) ListAdminUsers(ctx context.Context, req v1gen.ListAdminUsersR
 	if err != nil {
 		return nil, err
 	}
-	out := v1gen.AdminUserPage{Items: make([]v1gen.AdminUser, 0, len(users)), Total: total}
+	c, err := a.AdminCountUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := v1gen.AdminUserPage{Items: make([]v1gen.AdminUser, 0, len(users)), Total: total, Counts: v1gen.AdminUserCounts{
+		All: c.All, Admins: c.Admins, Suspended: c.Suspended, Without2fa: c.Without2FA, Bots: c.Bots,
+	}}
 	for _, u := range users {
 		out.Items = append(out.Items, adminUserDTO(u))
 	}

@@ -55,6 +55,26 @@ func (q *Queries) AdminGetUser(ctx context.Context, username string) (AdminGetUs
 	return i, err
 }
 
+const adminInstanceCounts = `-- name: AdminInstanceCounts :one
+SELECT (SELECT count(*) FROM users)::bigint AS users,
+       (SELECT count(*) FROM orgs)::bigint AS orgs,
+       (SELECT count(*) FROM invites WHERE used_at IS NULL AND expires_at > now())::bigint AS invites
+`
+
+type AdminInstanceCountsRow struct {
+	Users   int64
+	Orgs    int64
+	Invites int64
+}
+
+// Totals shown in the admin navigation.
+func (q *Queries) AdminInstanceCounts(ctx context.Context) (AdminInstanceCountsRow, error) {
+	row := q.db.QueryRow(ctx, adminInstanceCounts)
+	var i AdminInstanceCountsRow
+	err := row.Scan(&i.Users, &i.Orgs, &i.Invites)
+	return i, err
+}
+
 const adminListInvites = `-- name: AdminListInvites :many
 SELECT i.id, i.email, i.expires_at, i.used_at, i.created_at,
        COALESCE(cn.name, '')::text AS created_by, COALESCE(un.name, '')::text AS used_by,
@@ -128,14 +148,20 @@ WHERE ($1::text = ''
        OR EXISTS (SELECT 1 FROM emails x WHERE x.user_id = u.id AND lower(x.address) LIKE '%' || $1 || '%'))
   AND ($2::text = '' OR u.role = $2)
   AND ($3::boolean IS NULL OR (u.suspended_at IS NOT NULL) = $3)
+  AND ($4::boolean IS NULL OR (n.kind = 'bot') = $4)
+  AND ($5::boolean IS NULL OR
+       (EXISTS (SELECT 1 FROM mfa_totp t WHERE t.user_id = u.id AND t.confirmed_at IS NOT NULL)
+        OR EXISTS (SELECT 1 FROM webauthn_credentials w WHERE w.user_id = u.id)) = $5)
 ORDER BY u.created_at DESC, u.id
-LIMIT $5 OFFSET $4
+LIMIT $7 OFFSET $6
 `
 
 type AdminListUsersParams struct {
 	Search    string
 	Role      string
 	Suspended pgtype.Bool
+	Bot       pgtype.Bool
+	TwoFactor pgtype.Bool
 	Off       int32
 	Lim       int32
 }
@@ -162,6 +188,8 @@ func (q *Queries) AdminListUsers(ctx context.Context, arg AdminListUsersParams) 
 		arg.Search,
 		arg.Role,
 		arg.Suspended,
+		arg.Bot,
+		arg.TwoFactor,
 		arg.Off,
 		arg.Lim,
 	)
@@ -195,12 +223,57 @@ func (q *Queries) AdminListUsers(ctx context.Context, arg AdminListUsersParams) 
 	return items, nil
 }
 
+const adminUserCounts = `-- name: AdminUserCounts :one
+SELECT count(*)::bigint AS all_users,
+       count(*) FILTER (WHERE u.role = 'admin')::bigint AS admins,
+       count(*) FILTER (WHERE u.suspended_at IS NOT NULL)::bigint AS suspended,
+       count(*) FILTER (WHERE n.kind <> 'bot'
+         AND NOT EXISTS (SELECT 1 FROM mfa_totp t WHERE t.user_id = u.id AND t.confirmed_at IS NOT NULL)
+         AND NOT EXISTS (SELECT 1 FROM webauthn_credentials w WHERE w.user_id = u.id))::bigint AS without_2fa,
+       count(*) FILTER (WHERE n.kind = 'bot')::bigint AS bots
+FROM users u
+JOIN namespaces n ON n.id = u.id
+`
+
+type AdminUserCountsRow struct {
+	AllUsers   int64
+	Admins     int64
+	Suspended  int64
+	Without2fa int64
+	Bots       int64
+}
+
+// Unfiltered counts behind the filter shortcuts of the admin user list.
+func (q *Queries) AdminUserCounts(ctx context.Context) (AdminUserCountsRow, error) {
+	row := q.db.QueryRow(ctx, adminUserCounts)
+	var i AdminUserCountsRow
+	err := row.Scan(
+		&i.AllUsers,
+		&i.Admins,
+		&i.Suspended,
+		&i.Without2fa,
+		&i.Bots,
+	)
+	return i, err
+}
+
 const countActiveAdmins = `-- name: CountActiveAdmins :one
 SELECT count(*)::bigint FROM users WHERE role = 'admin' AND suspended_at IS NULL
 `
 
 func (q *Queries) CountActiveAdmins(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, countActiveAdmins)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const databaseSize = `-- name: DatabaseSize :one
+SELECT pg_database_size(current_database())::bigint
+`
+
+func (q *Queries) DatabaseSize(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, databaseSize)
 	var column_1 int64
 	err := row.Scan(&column_1)
 	return column_1, err

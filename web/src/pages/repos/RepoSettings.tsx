@@ -9,17 +9,19 @@ import {
   DangerZone,
   EmptyState,
   Input,
+  OptionCards,
   Page,
   SaveBar,
-  Select,
   SettingRow,
   SettingsCard,
+  SettingsGrid,
   SettingsLayout,
   SettingsSection,
   useDraft,
   type SettingsNavGroup,
   type SettingsNavItem,
 } from "../../ui/index.ts";
+import { useLayout } from "../../ui/shell/layout.ts";
 import { useNotify } from "../account/common.tsx";
 import { repoHooks } from "../../api/settings.ts";
 import { Entries, Environments, GitHubActionsImport } from "../actions/Settings.tsx";
@@ -32,6 +34,8 @@ import { BranchProtections, TagRules } from "./RulesSettings.tsx";
 
 export const repoSettingsSections = ["collaborators", "labels", "milestones", "protection", "tags", "hooks", "github", "secrets", "variables", "environments", "runners"] as const;
 export type RepoSettingsSection = (typeof repoSettingsSections)[number];
+
+const visibilityIcon: Record<Visibility, SettingsNavItem["icon"]> = { public: "globe", internal: "users", private: "lock" };
 
 function General({ repo }: { repo: Repo }) {
   const t = useT("repos");
@@ -58,14 +62,21 @@ function General({ repo }: { repo: Repo }) {
   return (
     <SettingsSection title={t("settings.general")}>
       <SettingsCard>
-        <SettingRow label={t("create.name")} description={t("settings.renameHint")} dirty={draft.isDirty("name")} was={draft.initial.name}>
-          <Input label={t("create.name")} hideLabel required maxLength={100} mono autoComplete="off" value={v.name} onChange={(e) => draft.set("name", e.target.value)} />
-        </SettingRow>
+        <SettingsGrid>
+          <SettingRow label={t("create.name")} description={t("settings.renameHint")} dirty={draft.isDirty("name")} was={draft.initial.name}>
+            <Input label={t("create.name")} hideLabel required maxLength={100} mono autoComplete="off" value={v.name} onChange={(e) => draft.set("name", e.target.value)} />
+          </SettingRow>
+        </SettingsGrid>
         <SettingRow label={t("create.descriptionLabel")} dirty={draft.isDirty("description")} was={draft.initial.description}>
           <Input label={t("create.descriptionLabel")} hideLabel maxLength={350} value={v.description} onChange={(e) => draft.set("description", e.target.value)} />
         </SettingRow>
-        <SettingRow label={t("create.visibility")} description={t(`visibility.${v.visibility}.hint`)} dirty={draft.isDirty("visibility")} was={t(`visibility.${draft.initial.visibility}`)}>
-          <Select label={t("create.visibility")} hideLabel value={v.visibility} onValueChange={(x) => draft.set("visibility", x as Visibility)} options={visibilities.map((x) => ({ value: x, label: t(`visibility.${x}`) }))} />
+        <SettingRow label={t("create.visibility")} dirty={draft.isDirty("visibility")} was={t(`visibility.${draft.initial.visibility}`)}>
+          <OptionCards
+            label={t("create.visibility")}
+            value={v.visibility}
+            onChange={(x) => draft.set("visibility", x)}
+            options={visibilities.map((x) => ({ value: x, label: t(`visibility.${x}`), description: t(`visibility.${x}.hint`), icon: visibilityIcon[x] }))}
+          />
         </SettingRow>
       </SettingsCard>
       <SaveBar draft={draft} labels={{ name: t("create.name"), description: t("create.descriptionLabel"), visibility: t("create.visibility") }} onSave={save} saving={update.isPending} />
@@ -155,6 +166,7 @@ export function RepoSettings({ owner, name, section }: { owner: string; name: st
   const tc = useT("common");
   const repo = useRepo(owner, name);
   const groups = useGroups();
+  const layout = useLayout();
   const title = `${owner}/${name}`;
 
   if (repo.isPending) {
@@ -176,7 +188,7 @@ export function RepoSettings({ owner, name, section }: { owner: string; name: st
   const r = repo.data;
   const scope = { kind: "repo" as const, owner: r.owner, name: r.name };
   return (
-    <Page section="code" title={t("settings.title")} subtitle={r.fullName} compact>
+    <Page section="code" title={t("settings.title")} subtitle={r.fullName} compact={layout !== "console"} quiet={layout === "console"}>
       {r.permission === "admin" ? (
         <SettingsLayout
           label={t("settings.sections")}

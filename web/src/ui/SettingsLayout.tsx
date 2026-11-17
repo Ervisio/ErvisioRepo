@@ -6,13 +6,15 @@ import { Dialog, DialogClose } from "./Dialog.tsx";
 import { Icon, type IconName } from "./Icon.tsx";
 import { Input } from "./Input.tsx";
 
-// Settings layout, GitHub style: one sub-navigation of grouped sections (with a search box only when
-// it is long), open sections titled on a rule, stacked fields with a dirty marker, a sticky save bar
-// while there are pending changes, and a danger zone.
-// Used by account, repository and organization settings.
+// Settings layout (round 026 A): an optional header (avatar, name, scope, link), one sticky sub-navigation
+// of grouped sections (with a search box only when it is long), open sections titled on a rule, fields
+// with a dirty marker, the save row at the end of each section, option cards and a danger zone.
+// Used by account, repository, organization and instance settings.
 
-/** `warn` is an accessible label for a small warning dot next to the item. */
-export type SettingsNavItem = { id: string; label: string; icon: IconName; keywords?: string; danger?: boolean; warn?: string };
+/** `count` is a short text at the end of the item (a total, or a warning when `warn` is set). */
+export type SettingsNavItem = { id: string; label: string; icon: IconName; keywords?: string; danger?: boolean; count?: string; warn?: boolean };
+/** Who the settings belong to, above the menu. */
+export type SettingsHeader = { avatar: ReactNode; name: string; label: string; action?: ReactNode };
 export type SettingsNavGroup = { title: string; items: SettingsNavItem[] };
 // The router marks a link active on its own (by path prefix and search subset) and overrides aria-current, so links must match exactly.
 export type SettingsLinkProps = { className: string; "aria-current"?: "page"; activeOptions: { exact: true }; children: ReactNode };
@@ -24,11 +26,14 @@ export type SettingsLinkProps = { className: string; "aria-current"?: "page"; ac
 /** The search box only pays off on long menus. */
 const SEARCH_MIN_ITEMS = 13;
 
-export function SettingsLayout({ label, groups, active, renderLink, children }: {
+export function SettingsLayout({ label, groups, active, renderLink, header, wide, children }: {
   label: string;
   groups: SettingsNavGroup[];
   active: string;
   renderLink: (item: SettingsNavItem, props: SettingsLinkProps) => ReactNode;
+  header?: SettingsHeader;
+  /** Lets the content use the whole width (dashboards and tables) instead of the 780 px column. */
+  wide?: boolean;
   children: ReactNode;
 }) {
   const t = useT("ui");
@@ -39,7 +44,17 @@ export function SettingsLayout({ label, groups, active, renderLink, children }: 
     .filter((g) => g.items.length > 0);
   const searchable = groups.reduce((n, g) => n + g.items.length, 0) >= SEARCH_MIN_ITEMS;
   return (
-    <div className="st">
+    <div className={wide ? "st st-wide" : "st"}>
+      {header && (
+        <header className="st-ph">
+          {header.avatar}
+          <div className="st-ph-t">
+            <b>{header.name}</b>
+            <span>{header.label}</span>
+          </div>
+          {header.action && <div className="st-ph-a">{header.action}</div>}
+        </header>
+      )}
       <nav className="st-sub" aria-label={label}>
         {searchable && (
           <div className="st-q">
@@ -48,8 +63,8 @@ export function SettingsLayout({ label, groups, active, renderLink, children }: 
           </div>
         )}
         {shown.map((g) => (
-          <div key={g.title} className="st-grp" role="group" aria-label={g.title}>
-            <span className="st-gt" aria-hidden="true">{g.title}</span>
+          <div key={g.title || g.items[0]?.id} className="st-grp" role="group" aria-label={g.title || label}>
+            {g.title && <span className="st-gt" aria-hidden="true">{g.title}</span>}
             {g.items.map((it) => (
               <span key={it.id} className="st-li-w">
                 {renderLink(it, {
@@ -60,7 +75,7 @@ export function SettingsLayout({ label, groups, active, renderLink, children }: 
                     <>
                       <Icon name={it.icon} />
                       <span>{it.label}</span>
-                      {it.warn && <span className="st-warn" role="img" aria-label={it.warn} />}
+                      {it.count && <span className={it.warn ? "st-cnt st-cnt-w" : "st-cnt"}>{it.count}</span>}
                     </>
                   ),
                 })}
@@ -99,6 +114,36 @@ export function SettingsSection({ title, description, actions, children }: {
 /** Groups setting rows inside a section. */
 export function SettingsCard({ children }: { children: ReactNode }) {
   return <div className="st-card">{children}</div>;
+}
+
+/** Two columns of fields (one under 720 px). */
+export function SettingsGrid({ children }: { children: ReactNode }) {
+  return <div className="st-grid">{children}</div>;
+}
+
+export type OptionCard<V extends string> = { value: V; label: string; description?: string; icon?: IconName };
+
+/** A choice among a few options shown side by side as cards (native radios, so arrows move the choice). */
+export function OptionCards<V extends string>({ label, value, options, onChange, disabled }: {
+  label: string;
+  value: V;
+  options: OptionCard<V>[];
+  onChange: (value: V) => void;
+  disabled?: boolean;
+}) {
+  const name = useId();
+  return (
+    <div className="st-opts" role="radiogroup" aria-label={label}>
+      {options.map((o) => (
+        <label key={o.value} className="st-opt">
+          <input type="radio" name={name} value={o.value} checked={o.value === value} disabled={disabled} onChange={() => onChange(o.value)} />
+          {o.icon && <Icon name={o.icon} />}
+          <span className="st-opt-l">{o.label}</span>
+          {o.description && <small>{o.description}</small>}
+        </label>
+      ))}
+    </div>
+  );
 }
 
 /**
@@ -189,8 +234,9 @@ export function useDraft<T extends Record<string, unknown>>(start: T): Draft<T> 
 }
 
 /**
- * Sticky, opaque bar shown only while the draft has changes, with Discard and Save. It also
- * warns before leaving the page (in-app navigation and browser unload) with unsaved changes.
+ * Save row at the end of a section: the primary button (enabled once something changed), Discard and the
+ * list of pending changes. It also warns before leaving the page (in-app navigation and browser unload)
+ * with unsaved changes.
  */
 export function SaveBar<T extends Record<string, unknown>>({ draft, labels, onSave, saving }: {
   draft: Draft<T>;
@@ -208,16 +254,18 @@ export function SaveBar<T extends Record<string, unknown>>({ draft, labels, onSa
   });
   return (
     <>
-      {count > 0 && (
-        <div className="st-bar" role="region" aria-labelledby={id}>
-          <div className="st-bar-t">
-            <b id={id}>{t(count === 1 ? "settings.unsaved.one" : "settings.unsaved.other", { count })}</b>
-            <span className="ui-note">{draft.dirty.map((k) => labels[k] ?? String(k)).join(", ")}</span>
-          </div>
-          <Button variant="ghost" onClick={draft.discard} disabled={saving}>{t("settings.discard")}</Button>
-          <Button variant="primary" onClick={onSave} disabled={saving}>{saving ? t("settings.saving") : t("settings.save")}</Button>
-        </div>
-      )}
+      <div className="st-save" role="group" aria-labelledby={id}>
+        <Button variant="primary" onClick={onSave} disabled={saving || count === 0}>{saving ? t("settings.saving") : t("settings.save")}</Button>
+        {count > 0 && <Button variant="ghost" onClick={draft.discard} disabled={saving}>{t("settings.discard")}</Button>}
+        <span className="st-save-t" id={id} aria-live="polite">
+          {count > 0 && (
+            <>
+              <b>{t(count === 1 ? "settings.unsaved.one" : "settings.unsaved.other", { count })}</b>
+              <span className="ui-note">{draft.dirty.map((k) => labels[k] ?? String(k)).join(", ")}</span>
+            </>
+          )}
+        </span>
+      </div>
       <Dialog
         open={blocker.status === "blocked"}
         onOpenChange={(o) => { if (!o) blocker.reset?.(); }}

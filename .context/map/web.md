@@ -115,3 +115,9 @@ Related:
 - Explore `?view=orgs|users` (orgs = useMyOrgs, users = /search/users, signed in only), `sort=stars`; aside most starred + orgs. My repos `?view=personal|orgs|stars` (`.px-*`).
 - Pins on profiles reuse the dashboard pins (user_pinned_repos): there is no separate profile pin list.
 
+## Settings and admin (2026-11-17, rounds 026 A / 028 a)
+- `SettingsLayout` takes `header` (avatar, name, label, action) and `wide` (admin: no 780 px cap, `.tb-main` 1320 px). Nav items have `count` (+ `warn`); an empty group title renders no heading. `SaveBar` is now an inline save row at the end of the section (button disabled until dirty; leave guard unchanged). New `SettingsGrid`, `OptionCards` (native radios, `.st-opt`).
+- Admin menu (AdminFrame): Settings = generalSections (server, registration, git, actions, webhooks, appearance) shown as a `ui-seg` in AdminSettings; Authentication and Email are separate entries. Counts come from `useAdminOverview("24h")`.
+- Overview (pages/AdminOverview.tsx, admin/Charts.tsx, `.ao-*` in styles/admin.css): GET /admin/overview (internal/httpapi/adminoverview.go). Requests and disk history live in memory (internal/monitor, fed by the router middleware and serve.go's SampleDisk every 10 min) and reset on restart. Users `.au-*`, storage chains/destinations `.as-*`.
+- Omitted: admin Organizations and Jobs and queue pages (no API), Documentation button, cache "Empty" action, org people list in settings (members live in the org page tabs), repo "Features" and merge-method sections (no API).
+

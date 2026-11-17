@@ -69,13 +69,17 @@ func storageStatusDTO(st tier.Status) v1gen.StorageStatus {
 		if roles == nil {
 			roles = []string{}
 		}
-		out.Targets = append(out.Targets, v1gen.StorageTarget{
+		tgt := v1gen.StorageTarget{
 			Name: t.Name, Kind: v1gen.StorageTargetKind(t.Kind), Encrypted: t.Encrypted, Roles: roles,
 			Caps: v1gen.StorageCaps{
 				Range: t.Caps.Range, Presign: t.Caps.Presign, Multipart: t.Caps.Multipart,
 				AtomicRename: t.Caps.AtomicRename, ConditionalPut: t.Caps.ConditionalPut, MaxConns: t.Caps.MaxConns,
 			},
-		})
+		}
+		if t.Disk != nil {
+			tgt.Disk = &v1gen.StorageDisk{Used: t.Disk.Used, Total: t.Disk.Total}
+		}
+		out.Targets = append(out.Targets, tgt)
 	}
 	for _, p := range st.Policies {
 		replicas := p.Replicas

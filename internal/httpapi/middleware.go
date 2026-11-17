@@ -10,6 +10,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/Ervisio/ErvisioRepo/internal/monitor"
 )
 
 // contentSecurityPolicy allows only same-origin resources and no framing.
@@ -45,6 +47,16 @@ func recoverer(log *slog.Logger) func(http.Handler) http.Handler {
 					"panic", rec, "stack", string(debug.Stack()))
 				writeProblem(w, http.StatusInternalServerError, "")
 			}()
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// countRequests feeds the request rate of the admin overview.
+func countRequests(m *monitor.Monitor) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			m.CountRequest()
 			next.ServeHTTP(w, r)
 		})
 	}

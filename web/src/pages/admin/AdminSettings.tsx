@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useInstanceSettings, useUpdateInstanceSettings, type InstanceSetting, type InstanceSettings } from "../../api/admin.ts";
 import { ApiError } from "../../api/http.ts";
@@ -5,7 +6,7 @@ import { useT } from "../../i18n/useT.ts";
 import { Badge, Button, EmptyState, Icon, Input, SaveBar, Select, SettingRow, SettingsCard, Toggle, useDraft, type BadgeTone } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { AdminPane } from "./AdminFrame.tsx";
-import { enumValues, formatOf, sectionOf, type SettingSection } from "./settingsCatalog.ts";
+import { enumValues, formatOf, generalSections, sectionOf, type SettingSection } from "./settingsCatalog.ts";
 
 type DraftValue = string | boolean;
 type Values = Record<string, DraftValue>;
@@ -61,6 +62,7 @@ function SettingsForm({ data, section }: { data: InstanceSettings; section: Sett
   const byKey = new Map(data.settings.map((s) => [s.key, s]));
   const shown = data.settings.filter((s) => sectionOf(s.key) === section);
   const label = (key: string) => t(`set.${key}`);
+  const general = (generalSections as readonly string[]).includes(section);
 
   function change(key: string, v: DraftValue) {
     draft.set(key, v);
@@ -98,7 +100,17 @@ function SettingsForm({ data, section }: { data: InstanceSettings; section: Sett
   }
 
   return (
-    <AdminPane title={t(`section.${section}`)} subtitle={t(`section.${section}.hint`)}>
+    <AdminPane title={general ? t("nav.settings") : t(`section.${section}`)} subtitle={general ? undefined : t(`section.${section}.hint`)}>
+      {general && (
+        <nav className="ui-seg" aria-label={t("settings.sections")}>
+          {generalSections.map((g) => (
+            <Link key={g} to="/admin/settings/$section" params={{ section: g }} className="ui-segi" aria-current={g === section ? "page" : undefined} activeOptions={{ exact: true }}>
+              {t(`section.${g}`)}
+            </Link>
+          ))}
+        </nav>
+      )}
+      {general && <p className="ui-note">{t(`section.${section}.hint`)}</p>}
       {data.restartRequired && (
         <div className="adm-notice" role="status">
           <Icon name="alert" />

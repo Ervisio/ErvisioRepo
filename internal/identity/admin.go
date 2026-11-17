@@ -50,6 +50,8 @@ type AdminUserFilter struct {
 	Search    string
 	Role      string // "" for any
 	Suspended *bool  // nil for any
+	Bot       *bool  // nil for any
+	TwoFactor *bool  // nil for any
 	Offset    int
 	Limit     int
 }
@@ -104,9 +106,7 @@ func (s *Service) AdminListUsers(ctx context.Context, f AdminUserFilter) ([]Admi
 		return nil, 0, ErrInvalidRole
 	}
 	p := dbgen.AdminListUsersParams{Search: likePattern(f.Search), Role: f.Role, Off: clamp32(f.Offset), Lim: clamp32(f.Limit)}
-	if f.Suspended != nil {
-		p.Suspended = pgtype.Bool{Bool: *f.Suspended, Valid: true}
-	}
+	p.Suspended, p.Bot, p.TwoFactor = optBool(f.Suspended), optBool(f.Bot), optBool(f.TwoFactor)
 	rows, err := s.q.AdminListUsers(ctx, p)
 	if err != nil {
 		return nil, 0, fmt.Errorf("list users: %w", err)
@@ -120,6 +120,27 @@ func (s *Service) AdminListUsers(ctx context.Context, f AdminUserFilter) ([]Admi
 			LastActivity: timePtr(r.LastActivity)})
 	}
 	return out, total, nil
+}
+
+func optBool(b *bool) pgtype.Bool {
+	if b == nil {
+		return pgtype.Bool{}
+	}
+	return pgtype.Bool{Bool: *b, Valid: true}
+}
+
+// AdminUserCounts are the unfiltered totals behind the user list shortcuts.
+type AdminUserCounts struct {
+	All, Admins, Suspended, Without2FA, Bots int64
+}
+
+// AdminCountUsers returns the totals for the filter shortcuts of the user list.
+func (s *Service) AdminCountUsers(ctx context.Context) (AdminUserCounts, error) {
+	r, err := s.q.AdminUserCounts(ctx)
+	if err != nil {
+		return AdminUserCounts{}, fmt.Errorf("count users: %w", err)
+	}
+	return AdminUserCounts{All: r.AllUsers, Admins: r.Admins, Suspended: r.Suspended, Without2FA: r.Without2fa, Bots: r.Bots}, nil
 }
 
 // AdminGetUser returns one account by username.

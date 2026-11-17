@@ -69,6 +69,8 @@ type TargetStatus struct {
 	Encrypted bool
 	Roles     []string // "primary:<policy>", "replica:<policy>", "cache:<policy>"
 	Caps      blob.Caps
+	// Disk is set for local targets whose file system could be read.
+	Disk *DiskUsage
 }
 
 // PolicyStatus describes one data type for the admin page.
@@ -108,14 +110,17 @@ func (t *Tier) Status(ctx context.Context) (Status, error) {
 			roles[c.cache.name] = append(roles[c.cache.name], "cache:"+name)
 		}
 	}
+	disks := t.targetDisks()
 	for _, tgt := range t.Targets() {
 		r := roles[tgt.Name]
 		if r == nil {
 			r = []string{}
 		}
-		st.Targets = append(st.Targets, TargetStatus{
-			Name: tgt.Name, Kind: tgt.Kind, Encrypted: tgt.Encrypted, Roles: r, Caps: tgt.Store.Caps(),
-		})
+		ts := TargetStatus{Name: tgt.Name, Kind: tgt.Kind, Encrypted: tgt.Encrypted, Roles: r, Caps: tgt.Store.Caps()}
+		if d, ok := disks[tgt.Name]; ok {
+			ts.Disk = &d
+		}
+		st.Targets = append(st.Targets, ts)
 	}
 
 	stats, err := t.q.StorageObjectStats(ctx)

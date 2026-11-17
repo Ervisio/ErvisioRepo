@@ -15,13 +15,28 @@ export const ADMIN_PAGE_SIZE = 30;
 
 const enc = encodeURIComponent;
 
-export type UserFilter = { q?: string; role?: UserRole; suspended?: boolean; page: number };
+export type AdminOverview = S["AdminOverview"];
+export type AdminService = S["AdminService"];
+export type OverviewRange = AdminOverview["range"];
+
+/** Health, activity charts and counts of the instance; refreshed every minute. */
+export const useAdminOverview = (range: OverviewRange) =>
+  useQuery({
+    queryKey: ["admin", "overview", range],
+    placeholderData: keepPreviousData,
+    refetchInterval: 60_000,
+    queryFn: () => request<AdminOverview>("GET", `/admin/overview?range=${range}`),
+  });
+
+export type UserFilter = { q?: string; role?: UserRole; suspended?: boolean; twoFactor?: boolean; bot?: boolean; page: number };
 
 export function useAdminUsers(f: UserFilter) {
   const q = new URLSearchParams({ limit: String(ADMIN_PAGE_SIZE), offset: String((f.page - 1) * ADMIN_PAGE_SIZE) });
   if (f.q) q.set("q", f.q);
   if (f.role) q.set("role", f.role);
   if (f.suspended !== undefined) q.set("suspended", String(f.suspended));
+  if (f.twoFactor !== undefined) q.set("twoFactor", String(f.twoFactor));
+  if (f.bot !== undefined) q.set("bot", String(f.bot));
   return useQuery({
     queryKey: ["admin", "users", "list", f],
     placeholderData: keepPreviousData,
@@ -37,6 +52,16 @@ export function useUpdateAdminUser(login: string) {
   return useMutation({
     mutationFn: (b: AdminUserUpdate) => request<AdminUser>("PATCH", `/admin/users/${enc(login)}`, b),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "users"] }),
+  });
+}
+
+/** Applies one change to several accounts, one request each; settles when all are done. */
+export function useBulkUpdateAdminUsers() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ logins, change }: { logins: string[]; change: AdminUserUpdate }) =>
+      Promise.allSettled(logins.map((l) => request<AdminUser>("PATCH", `/admin/users/${enc(l)}`, change))),
+    onSettled: () => qc.invalidateQueries({ queryKey: ["admin", "users"] }),
   });
 }
 

@@ -3,6 +3,7 @@ import { useSession } from "../../api/identity.ts";
 import { canRegisterApps } from "../../api/oauth.ts";
 import { useMeta } from "../../api/useMeta.ts";
 import { useT } from "../../i18n/useT.ts";
+import { Avatar } from "../../ui/shell/ConsoleShell.tsx";
 import { Page, SettingsLayout, type SettingsNavGroup, type SettingsNavItem } from "../../ui/index.ts";
 import { Appearance } from "./Appearance.tsx";
 import { Emails } from "./Emails.tsx";
@@ -52,9 +53,15 @@ export function Account({ section, app, installation, oidcError }: { section?: A
     { title: t("group.developer"), items: [item("apps", "grid"), item("oauth-apps", "cpu"), item("tokens", "lock")] },
   ];
   return (
-    <Page section="issue" title={t("title")} subtitle={`@${user.username}`} compact>
+    <Page section="issue" title={t("title")} quiet>
       <SettingsLayout
         label={t("tabs")}
+        header={{
+          avatar: <Avatar user={user} />,
+          name: user.displayName || user.username,
+          label: t("header.personal"),
+          action: <Link to="/$owner" params={{ owner: user.username }} className="ui-btn ui-btn-secondary">{t("header.profile")}</Link>,
+        }}
         groups={groups}
         active={active ?? "profile"}
         renderLink={(it, props) => <Link to="/settings" search={{ section: it.id === "profile" ? undefined : (it.id as AccountSection) }} {...props} />}

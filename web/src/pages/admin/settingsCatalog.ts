@@ -4,6 +4,8 @@
 
 export const settingSections = ["auth", "registration", "email", "git", "actions", "webhooks", "appearance", "server"] as const;
 export type SettingSection = (typeof settingSections)[number];
+/** Sections reached through the "Settings" entry; auth and email have their own. */
+export const generalSections = ["server", "registration", "git", "actions", "webhooks", "appearance"] as const satisfies readonly SettingSection[];
 export const isSettingSection = (s: string): s is SettingSection => (settingSections as readonly string[]).includes(s);
 
 export type SettingFormat = "duration" | "size";

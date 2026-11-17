@@ -38,6 +38,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/issues"
 	"github.com/Ervisio/ErvisioRepo/internal/jobs"
 	"github.com/Ervisio/ErvisioRepo/internal/mail"
+	"github.com/Ervisio/ErvisioRepo/internal/monitor"
 	"github.com/Ervisio/ErvisioRepo/internal/notify"
 	"github.com/Ervisio/ErvisioRepo/internal/orgs"
 	"github.com/Ervisio/ErvisioRepo/internal/pluginapi"
@@ -238,10 +239,21 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	if !web.HasIndex() {
 		log.Warn("web UI not embedded; run `make web` before building the server")
 	}
+	mon := monitor.New()
+	go mon.SampleDisk(ctx, func() (int64, int64, bool) {
+		_, d, ok := storage.LocalDisk()
+		return d.Used, d.Total, ok
+	})
+	mailHost := ""
+	if cfg.Mail.Enabled {
+		mailHost = cfg.Mail.Host
+	}
 	deps := httpapi.Deps{
-		Log:  log,
-		DB:   pool,
-		Jobs: runner,
+		Log:      log,
+		DB:       pool,
+		Jobs:     runner,
+		Monitor:  mon,
+		MailHost: mailHost,
 		Meta: httpapi.Meta{
 			Version:         info.Version,
 			Commit:          info.Commit,
