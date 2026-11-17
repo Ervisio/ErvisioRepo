@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.16.2] - 2026-11-17
+
 ### Added
 
 - Hovercards: hovering or focusing any link to a user, an organization or a repository shows a card (avatar, name, bio, place, organizations; organization description; repository image, description, stars, last update).
