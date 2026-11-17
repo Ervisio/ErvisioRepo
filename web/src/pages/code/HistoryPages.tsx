@@ -1,13 +1,13 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { archiveUrl, canWrite, useBranches, useCommit, useCommitLog, useTags, type Branch, type GitCommit } from "../../api/code.ts";
+import { archiveUrl, canWrite, useBranches, useCommit, useCommitLog, useTags, type Branch, type CommitUser, type GitCommit } from "../../api/code.ts";
 import { useSession } from "../../api/identity.ts";
 import { usePulls, type PullRequest } from "../../api/pulls.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Button, EmptyState, Icon, Menu, MenuItem, MenuSeparator } from "../../ui/index.ts";
 import { DiffView, filePath } from "../../ui/code/DiffView.tsx";
-import { CopyButton, Crumb, dayLabel, Gate, Initial, Pager, RefSwitcher, RepoFrame, shortSha, When } from "./common.tsx";
+import { AuthorAvatar, AuthorName, CopyButton, Crumb, dayLabel, Gate, Pager, RefSwitcher, RepoFrame, shortSha, When } from "./common.tsx";
 
 /** Branch heads and tags of the first ref pages, by commit sha (labels on commit rows). */
 export type RefLabel = { name: string; tag: boolean };
@@ -26,18 +26,28 @@ function useRefLabels(owner: string, name: string): Map<string, RefLabel[]> {
 }
 
 /** One commit row (round 020): avatar, title, author and time, refs, short sha, copy, browse. */
-export function CommitRow({ repo, c, refs }: { repo: Repo; c: { sha: string; summary: string; author: string; date: string }; refs?: RefLabel[] }) {
+export function CommitRow({ repo, c, refs }: { repo: Repo; c: { sha: string; summary: string; message?: string; author: string; user?: CommitUser; date: string }; refs?: RefLabel[] }) {
   const t = useT("code");
+  const [open, setOpen] = useState(false);
+  const body = c.message ? c.message.slice(c.summary.length).trim() : "";
   const { owner, name } = repo;
   return (
     <li className="cm-row">
-      <Initial name={c.author} size={36} />
+      <AuthorAvatar name={c.author} user={c.user} size={36} />
       <span className="cm-t">
-        <Link className="cm-ttl" to="/$owner/$name/commit/$sha" params={{ owner, name, sha: c.sha }}>
-          {c.summary}
-        </Link>
+        <span className="cm-l1">
+          <Link className="cm-ttl" to="/$owner/$name/commit/$sha" params={{ owner, name, sha: c.sha }}>
+            {c.summary}
+          </Link>
+          {body && (
+            <button type="button" className="cm-xb" aria-expanded={open} title={open ? t("commits.hideBody") : t("commits.showBody")} aria-label={open ? t("commits.hideBody") : t("commits.showBody")} onClick={() => setOpen((o) => !o)}>
+              …
+            </button>
+          )}
+        </span>
+        {open && <span className="cm-body">{body}</span>}
         <span className="cm-mt">
-          <b>{c.author}</b> · <When iso={c.date} />
+          <AuthorName name={c.author} user={c.user} /> · <When iso={c.date} />
           {refs?.map((r) => (
             <span key={`${r.tag ? "t" : "b"}-${r.name}`} className={r.tag ? "ui-chip ui-chip-ok ui-mono" : "ui-chip ui-chip-acc ui-mono"}>
               {r.name}
@@ -133,7 +143,7 @@ function CommitsBody({ repo, refName, path }: { repo: Repo; refName: string; pat
                   <h2 className="cm-day">{day}</h2>
                   <ul className="rp-list">
                     {cs.map((c) => (
-                      <CommitRow key={c.sha} repo={repo} c={{ sha: c.sha, summary: c.summary, author: c.author.name, date: c.author.date }} refs={refs.get(c.sha)} />
+                      <CommitRow key={c.sha} repo={repo} c={{ sha: c.sha, summary: c.summary, message: c.message, author: c.author.name, user: c.author.user, date: c.author.date }} refs={refs.get(c.sha)} />
                     ))}
                   </ul>
                 </li>
@@ -178,12 +188,12 @@ function CommitBody({ repo, sha }: { repo: Repo; sha: string }) {
             diff={diff}
             header={
               <header className="cd-h">
-                <Initial name={c.author.name} size={44} />
+                <AuthorAvatar name={c.author.name} user={c.author.user} size={44} />
                 <div className="cd-t">
                   <h1>{c.summary}</h1>
                   {body && <p className="cd-body">{body}</p>}
                   <div className="cd-mt">
-                    <b title={c.author.email}>{c.author.name}</b>
+                    <AuthorName name={c.author.name} user={c.author.user} title={c.author.email} />
                     <When iso={c.author.date} />
                     {committer && <span>{t("commit.committedBy", { name: c.committer.name })}</span>}
                     <span className="cd-sha">

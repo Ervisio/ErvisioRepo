@@ -110,7 +110,9 @@ function Palette({ scope, onClose }: { scope?: SearchScope; onClose: () => void 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()} title={t("search.title")}>
       <div className="pl">
-        <input
+        <label className="pl-in">
+          <Icon name="search" />
+          <input
           className="ui-input"
           type="search"
           role="combobox"
@@ -126,7 +128,8 @@ function Palette({ scope, onClose }: { scope?: SearchScope; onClose: () => void 
             setActive(0);
           }}
           onKeyDown={onKey}
-        />
+          />
+        </label>
         <ul id={listId} role="listbox" className="pl-list" aria-label={t("search.results")}>
           {items.map((o, i) => (
             <li
@@ -154,10 +157,15 @@ function Palette({ scope, onClose }: { scope?: SearchScope; onClose: () => void 
           ))}
         </ul>
         {status && (
-          <p className="ui-note" role="status">
+          <p className="pl-st" role="status">
             {status}
           </p>
         )}
+        <p className="pl-keys" aria-hidden="true">
+          <span><kbd>↑</kbd><kbd>↓</kbd> {t("search.keyMove")}</span>
+          <span><kbd>↵</kbd> {t("search.keyOpen")}</span>
+          <span><kbd>Esc</kbd> {t("search.keyClose")}</span>
+        </p>
       </div>
     </Dialog>
   );

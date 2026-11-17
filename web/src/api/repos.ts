@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { request } from "./http.ts";
+import { request, uploadBlob } from "./http.ts";
 import type { components } from "./schema";
 
 // Repositories. Types come from the generated schema (api/openapi.yaml).
@@ -42,6 +42,11 @@ export const useForkRepo = (owner: string, name: string) =>
   useRepoMutation<S["ForkCreate"], Repo>((b) => request("POST", `${repoPath(owner, name)}/forks`, b));
 export const useDeleteRepo = (owner: string, name: string) =>
   useRepoMutation<void, void>(() => request("DELETE", repoPath(owner, name)));
+/** Uploads (PUT) or removes (DELETE) the image of a repository. */
+export const useUploadRepoAvatar = (owner: string, name: string) =>
+  useRepoMutation<File, Repo>((file) => uploadBlob<Repo>("PUT", `${repoPath(owner, name)}/avatar`, file));
+export const useDeleteRepoAvatar = (owner: string, name: string) =>
+  useRepoMutation<void, Repo>(() => request("DELETE", `${repoPath(owner, name)}/avatar`));
 
 /** Stars or unstars a repository; the cached repository shows the change before the server answers. */
 export function useStar(owner: string, name: string) {

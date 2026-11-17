@@ -20,7 +20,7 @@
   "search.title": "Cerca repository",
   "search.placeholder": "Nome del repository…",
   "search.results": "Repository",
-  "search.hint": "Scrivi per cercare; ↑ ↓ per spostarti, Invio per aprire.",
+  "search.hint": "Scrivi il nome di un repository o di un proprietario.",
   "search.loading": "Ricerca…",
   "search.none": "Nessun repository trovato",
   "search.error": "Ricerca non riuscita",
@@ -71,5 +71,8 @@
   "nav.dashboard": "Dashboard",
   "new.button": "Nuovo",
   "search.pill": "Cerca o vai a…",
-  "search.pillRepo": "Cerca in {repo} o vai a…"
+  "search.pillRepo": "Cerca in {repo} o vai a…",
+  "search.keyMove": "spostati",
+  "search.keyOpen": "apri",
+  "search.keyClose": "chiudi"
 }

@@ -104,9 +104,10 @@ func (s *v1Server) GetUserProfile(ctx context.Context, req v1gen.GetUserProfileR
 		if err != nil {
 			return nil, err
 		}
+		orgs = identity.OrderOrgs(orgs, d.OrgOrder)
 		list := make([]v1gen.OrgSummary, 0, len(orgs))
 		for _, o := range orgs {
-			list = append(list, v1gen.OrgSummary{Name: o.Name, DisplayName: o.DisplayName})
+			list = append(list, v1gen.OrgSummary{Name: o.Name, DisplayName: o.DisplayName, AvatarUrl: o.AvatarURL})
 		}
 		out.Orgs = &list
 	}
@@ -132,8 +133,9 @@ func failOr[R any](fail *problemResponse, err error) (R, error) {
 }
 
 func detailsDTO(d identity.ProfileDetails) v1gen.ProfileDetails {
+	order := d.OrgOrder
 	return v1gen.ProfileDetails{Bio: d.Bio, Company: d.Company, Location: d.Location, Website: d.Website,
-		SocialLinks: d.SocialLinks, Timezone: d.Timezone, PublicEmail: d.PublicEmail}
+		SocialLinks: d.SocialLinks, Timezone: d.Timezone, PublicEmail: d.PublicEmail, OrgOrder: &order}
 }
 
 func (s *v1Server) GetProfileDetails(ctx context.Context, _ v1gen.GetProfileDetailsRequestObject) (v1gen.GetProfileDetailsResponseObject, error) {
@@ -167,7 +169,7 @@ func (s *v1Server) UpdateProfileDetails(ctx context.Context, req v1gen.UpdatePro
 	b := req.Body
 	d, err := ps.UpdateProfileDetails(ctx, p.UserID, identity.ProfileDetails{Bio: b.Bio, Company: b.Company,
 		Location: b.Location, Website: b.Website, SocialLinks: b.SocialLinks, Timezone: b.Timezone,
-		PublicEmail: b.PublicEmail}, clientOf(ctx))
+		PublicEmail: b.PublicEmail, OrgOrder: deref(b.OrgOrder)}, clientOf(ctx))
 	if pr, ok := accountProblem(err); ok {
 		return pr, nil
 	}
@@ -278,6 +280,12 @@ func (s *v1Server) ListOrgLanguages(ctx context.Context, req v1gen.ListOrgLangua
 		}
 		return nil, err
 	}
+	return v1gen.ListOrgLanguages200JSONResponse(s.sumLanguages(ctx, list)), nil
+}
+
+// sumLanguages sums the language breakdown of the most recently updated hot
+// repositories of list; cold ones are skipped so that nothing is restored.
+func (s *v1Server) sumLanguages(ctx context.Context, list []repos.Repo) v1gen.OrgLanguages {
 	list = slices.DeleteFunc(list, func(r repos.Repo) bool { return r.StorageState != "hot" || r.SizeBytes == 0 })
 	slices.SortFunc(list, func(a, b repos.Repo) int { return b.UpdatedAt.Compare(a.UpdatedAt) })
 	list = list[:min(len(list), orgLanguageRepos)]
@@ -292,7 +300,7 @@ func (s *v1Server) ListOrgLanguages(ctx context.Context, req v1gen.ListOrgLangua
 		res, err := s.browse.Languages(ctx, gitRepo(r), "")
 		if err != nil {
 			// One busy or broken repository should not hide the others.
-			slog.DebugContext(ctx, "org languages: skip repository", "repo", r.FullName(), "err", err)
+			slog.DebugContext(ctx, "languages: skip repository", "repo", r.FullName(), "err", err)
 			continue
 		}
 		for i, l := range res.Items {
@@ -319,7 +327,7 @@ func (s *v1Server) ListOrgLanguages(ctx context.Context, req v1gen.ListOrgLangua
 		}
 		return cmp.Or(cmp.Compare(b.Bytes, a.Bytes), cmp.Compare(a.Name, b.Name))
 	})
-	return v1gen.ListOrgLanguages200JSONResponse(out), nil
+	return out
 }
 
 func boolInt(b bool) int {

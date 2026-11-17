@@ -64,6 +64,110 @@ func (q *Queries) CountRepoWeeklyActivity(ctx context.Context, arg CountRepoWeek
 	return items, nil
 }
 
+const countUserActivityHours = `-- name: CountUserActivityHours :many
+SELECT extract(hour FROM e.created_at AT TIME ZONE $1::text)::int AS hour, count(*) AS events
+FROM activity_events e
+WHERE e.actor_id = $2::uuid
+  AND e.created_at >= $3::timestamptz
+  AND repo_readable(e.repo_id, $4::uuid, $5::boolean, $6::boolean)
+GROUP BY 1
+ORDER BY 1
+`
+
+type CountUserActivityHoursParams struct {
+	Tz       string
+	Actor    uuid.UUID
+	Since    pgtype.Timestamptz
+	Viewer   uuid.UUID
+	AllRepos bool
+	Internal bool
+}
+
+type CountUserActivityHoursRow struct {
+	Hour   int32
+	Events int64
+}
+
+// Events of one actor since since per hour of the day in time zone tz, readable repositories only.
+func (q *Queries) CountUserActivityHours(ctx context.Context, arg CountUserActivityHoursParams) ([]CountUserActivityHoursRow, error) {
+	rows, err := q.db.Query(ctx, countUserActivityHours,
+		arg.Tz,
+		arg.Actor,
+		arg.Since,
+		arg.Viewer,
+		arg.AllRepos,
+		arg.Internal,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountUserActivityHoursRow{}
+	for rows.Next() {
+		var i CountUserActivityHoursRow
+		if err := rows.Scan(&i.Hour, &i.Events); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const countUserActivityKinds = `-- name: CountUserActivityKinds :many
+SELECT e.kind, e.action, count(*) AS events
+FROM activity_events e
+WHERE e.actor_id = $1::uuid
+  AND e.created_at >= $2::timestamptz AND e.created_at < $3::timestamptz
+  AND repo_readable(e.repo_id, $4::uuid, $5::boolean, $6::boolean)
+GROUP BY 1, 2
+`
+
+type CountUserActivityKindsParams struct {
+	Actor    uuid.UUID
+	Since    pgtype.Timestamptz
+	Until    pgtype.Timestamptz
+	Viewer   uuid.UUID
+	AllRepos bool
+	Internal bool
+}
+
+type CountUserActivityKindsRow struct {
+	Kind   string
+	Action string
+	Events int64
+}
+
+// Events of one actor by kind and action in [since, until), readable repositories only.
+func (q *Queries) CountUserActivityKinds(ctx context.Context, arg CountUserActivityKindsParams) ([]CountUserActivityKindsRow, error) {
+	rows, err := q.db.Query(ctx, countUserActivityKinds,
+		arg.Actor,
+		arg.Since,
+		arg.Until,
+		arg.Viewer,
+		arg.AllRepos,
+		arg.Internal,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountUserActivityKindsRow{}
+	for rows.Next() {
+		var i CountUserActivityKindsRow
+		if err := rows.Scan(&i.Kind, &i.Action, &i.Events); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countUserContributions = `-- name: CountUserContributions :many
 SELECT (e.created_at AT TIME ZONE 'UTC')::date AS day, count(*) AS events
 FROM activity_events e
@@ -118,7 +222,7 @@ func (q *Queries) CountUserContributions(ctx context.Context, arg CountUserContr
 
 const getUserProfileDetails = `-- name: GetUserProfileDetails :one
 
-SELECT p.bio, p.company, p.location, p.website, p.social_links, p.timezone,
+SELECT p.bio, p.company, p.location, p.website, p.social_links, p.timezone, p.org_order,
        COALESCE(e.address, '')::text AS public_email
 FROM user_profiles p
 LEFT JOIN emails e ON e.id = p.public_email_id AND e.verified_at IS NOT NULL
@@ -132,6 +236,7 @@ type GetUserProfileDetailsRow struct {
 	Website     string
 	SocialLinks []string
 	Timezone    string
+	OrgOrder    []string
 	PublicEmail string
 }
 
@@ -149,6 +254,7 @@ func (q *Queries) GetUserProfileDetails(ctx context.Context, userID uuid.UUID) (
 		&i.Website,
 		&i.SocialLinks,
 		&i.Timezone,
+		&i.OrgOrder,
 		&i.PublicEmail,
 	)
 	return i, err
@@ -320,7 +426,7 @@ func (q *Queries) ListUserContributionYears(ctx context.Context, arg ListUserCon
 }
 
 const listVisibleUserOrgs = `-- name: ListVisibleUserOrgs :many
-SELECT n.name, o.display_name
+SELECT n.name, o.display_name, o.avatar_url
 FROM org_members m
 JOIN orgs o ON o.id = m.org_id
 JOIN namespaces n ON n.id = o.id
@@ -339,6 +445,7 @@ type ListVisibleUserOrgsParams struct {
 type ListVisibleUserOrgsRow struct {
 	Name        string
 	DisplayName string
+	AvatarUrl   string
 }
 
 // Organizations of a user that the viewer can see: the viewer is a member
@@ -352,7 +459,7 @@ func (q *Queries) ListVisibleUserOrgs(ctx context.Context, arg ListVisibleUserOr
 	items := []ListVisibleUserOrgsRow{}
 	for rows.Next() {
 		var i ListVisibleUserOrgsRow
-		if err := rows.Scan(&i.Name, &i.DisplayName); err != nil {
+		if err := rows.Scan(&i.Name, &i.DisplayName, &i.AvatarUrl); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -364,11 +471,11 @@ func (q *Queries) ListVisibleUserOrgs(ctx context.Context, arg ListVisibleUserOr
 }
 
 const upsertUserProfileDetails = `-- name: UpsertUserProfileDetails :exec
-INSERT INTO user_profiles (user_id, bio, company, location, website, social_links, timezone, public_email_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO user_profiles (user_id, bio, company, location, website, social_links, timezone, public_email_id, org_order)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 ON CONFLICT (user_id) DO UPDATE SET bio = EXCLUDED.bio, company = EXCLUDED.company, location = EXCLUDED.location,
     website = EXCLUDED.website, social_links = EXCLUDED.social_links, timezone = EXCLUDED.timezone,
-    public_email_id = EXCLUDED.public_email_id, updated_at = now()
+    public_email_id = EXCLUDED.public_email_id, org_order = EXCLUDED.org_order, updated_at = now()
 `
 
 type UpsertUserProfileDetailsParams struct {
@@ -380,6 +487,7 @@ type UpsertUserProfileDetailsParams struct {
 	SocialLinks   []string
 	Timezone      string
 	PublicEmailID uuid.NullUUID
+	OrgOrder      []string
 }
 
 func (q *Queries) UpsertUserProfileDetails(ctx context.Context, arg UpsertUserProfileDetailsParams) error {
@@ -392,6 +500,7 @@ func (q *Queries) UpsertUserProfileDetails(ctx context.Context, arg UpsertUserPr
 		arg.SocialLinks,
 		arg.Timezone,
 		arg.PublicEmailID,
+		arg.OrgOrder,
 	)
 	return err
 }

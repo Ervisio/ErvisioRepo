@@ -196,6 +196,7 @@ func (c *call) orgObj(name string) error {
 	out := c.org(o.ID, o.Name, o.Description)
 	out.Name, out.HTMLURL, out.Type = strp(o.DisplayName), c.s.base+"/"+esc(o.Name), "Organization"
 	out.IsVerified, out.CreatedAt, out.UpdatedAt = o.Verified, ts(o.CreatedAt), ts(o.UpdatedAt)
+	out.AvatarURL = o.AvatarURL
 	return c.ok(http.StatusOK, out)
 }
 
@@ -222,6 +223,7 @@ func (c *call) myOrgs() error {
 	out := make([]ghOrg, len(page))
 	for i, o := range page {
 		out[i] = c.org(o.ID, o.Name, o.Description)
+		out[i].AvatarURL = o.AvatarURL
 	}
 	c.link(p, more)
 	return c.ok(http.StatusOK, out)
@@ -326,6 +328,8 @@ func (c *call) repoObj(r repos.Repo) *ghRepo {
 		PushedAt: ts(r.UpdatedAt), CreatedAt: ts(r.CreatedAt), UpdatedAt: ts(r.UpdatedAt),
 		AllowMergeCommit: true, AllowSquashMerge: true, AllowRebaseMerge: true,
 	}
+	// Set only when the caller loaded owner avatars (repos.Service.MarkOwnerAvatars).
+	g.Owner.AvatarURL = r.OwnerAvatarURL
 	f := c.forkFacts(r.ID)
 	g.Fork, g.ForksCount, g.Forks = f.IsFork, f.Forks, f.Forks
 	if c.who.UserID != uuid.Nil {

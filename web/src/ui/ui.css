@@ -55,6 +55,10 @@
   background: var(--sunk); color: var(--ink); outline: 1px solid var(--raise);
 }
 .ui-pop-viewport { display: flex; flex-direction: column; gap: 2px; }
+.ui-pop-sel { display: flex; flex-direction: column; max-height: min(380px, var(--radix-select-content-available-height, 380px)); }
+.ui-pop-sel .ui-pop-viewport { min-height: 0; }
+.ui-pop-scroll { display: grid; place-items: center; height: 22px; flex: none; color: var(--ink3); cursor: default; }
+.ui-pop-scroll .ui-icon { width: 14px; height: 14px; }
 .ui-item {
   position: relative; display: flex; align-items: center; gap: 9px; min-height: 36px; padding: 0 12px; border-radius: 10px;
   font: 600 13.5px var(--font); color: var(--ink2); cursor: pointer; user-select: none; outline: none;

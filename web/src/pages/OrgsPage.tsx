@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useMyOrgs } from "../api/identity.ts";
 import { useT } from "../i18n/useT.ts";
 import { Button, Page } from "../ui/index.ts";
+import { AvatarImg } from "../ui/AvatarImg.tsx";
 import { Async } from "./account/common.tsx";
 import { CreateOrgDialog } from "./account/CreateOrgDialog.tsx";
 
@@ -20,7 +21,7 @@ export function OrgsPage() {
               {rows.map((o) => (
                 <li key={o.name}>
                   <Link to="/orgs/$org" params={{ org: o.name }} className="ui-li">
-                    <span className="px-org px-sm" aria-hidden="true">{(o.displayName || o.name).slice(0, 1).toUpperCase()}</span>
+                    <AvatarImg src={o.avatarUrl} className="px-org px-sm">{(o.displayName || o.name).slice(0, 1).toUpperCase()}</AvatarImg>
                     <span className="px-n">
                       <b>{o.displayName || o.name}</b>
                       {o.description && <span className="px-d">{o.description}</span>}

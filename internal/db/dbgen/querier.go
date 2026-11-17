@@ -127,6 +127,10 @@ type Querier interface {
 	CountTeamsInOrg(ctx context.Context, arg CountTeamsInOrgParams) (int64, error)
 	CountUnreadNotifications(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserActionsRuns(ctx context.Context, arg CountUserActionsRunsParams) (int64, error)
+	// Events of one actor since since per hour of the day in time zone tz, readable repositories only.
+	CountUserActivityHours(ctx context.Context, arg CountUserActivityHoursParams) ([]CountUserActivityHoursRow, error)
+	// Events of one actor by kind and action in [since, until), readable repositories only.
+	CountUserActivityKinds(ctx context.Context, arg CountUserActivityKindsParams) ([]CountUserActivityKindsRow, error)
 	// Events of one actor per UTC day in [since, until), readable repositories only.
 	CountUserContributions(ctx context.Context, arg CountUserContributionsParams) ([]CountUserContributionsRow, error)
 	CountUserEmails(ctx context.Context, userID uuid.UUID) (int64, error)
@@ -637,6 +641,8 @@ type Querier interface {
 	ListActiveActionsJobsInGroup(ctx context.Context, arg ListActiveActionsJobsInGroupParams) ([]ActionsJob, error)
 	// Runs of a concurrency group that are not completed, oldest first.
 	ListActiveActionsRunsInGroup(ctx context.Context, arg ListActiveActionsRunsInGroupParams) ([]ActionsRun, error)
+	// Active users by lower-case username (no-reply commit addresses).
+	ListActiveUsersByNames(ctx context.Context, names []string) ([]ListActiveUsersByNamesRow, error)
 	// Newest first events of one actor in the readable repositories.
 	ListActorActivity(ctx context.Context, arg ListActorActivityParams) ([]ListActorActivityRow, error)
 	ListAppInstallations(ctx context.Context, arg ListAppInstallationsParams) ([]ListAppInstallationsRow, error)
@@ -713,6 +719,8 @@ type Querier interface {
 	ListMilestones(ctx context.Context, arg ListMilestonesParams) ([]ListMilestonesRow, error)
 	// Rows charged to a namespace that no longer owns the repository (transfer).
 	ListMischargedLFSObjects(ctx context.Context, maxRows int32) ([]ListMischargedLFSObjectsRow, error)
+	// Avatar URL of each user or organization of ids (empty when unset).
+	ListNamespaceAvatars(ctx context.Context, ids []uuid.UUID) ([]ListNamespaceAvatarsRow, error)
 	// Users and organizations by name, for the user objects of /api/v3.
 	ListNamespacesByName(ctx context.Context, names []string) ([]ListNamespacesByNameRow, error)
 	// Threads per repository matching the inbox filters (as in
@@ -831,6 +839,9 @@ type Querier interface {
 	ListUserTeamRepoPermissions(ctx context.Context, arg ListUserTeamRepoPermissionsParams) ([]string, error)
 	ListUserTokens(ctx context.Context, userID uuid.UUID) ([]ListUserTokensRow, error)
 	ListUserVerifiedEmails(ctx context.Context, userID uuid.UUID) ([]string, error)
+	// Active users owning one of the verified addresses (lower case), to link
+	// commit authors to accounts. Only the username and avatar leave the server.
+	ListUsersByVerifiedEmails(ctx context.Context, emails []string) ([]ListUsersByVerifiedEmailsRow, error)
 	// Running jobs whose runner is gone or silent since before.
 	ListVanishedActionsJobs(ctx context.Context, before pgtype.Timestamptz) ([]ListVanishedActionsJobsRow, error)
 	// Organizations of a user that the viewer can see: the viewer is a member
@@ -1024,6 +1035,7 @@ type Querier interface {
 	SetIssueState(ctx context.Context, arg SetIssueStateParams) (Issue, error)
 	SetLFSObjectCharge(ctx context.Context, arg SetLFSObjectChargeParams) (int64, error)
 	SetMFAChallengeWebAuthn(ctx context.Context, arg SetMFAChallengeWebAuthnParams) (int64, error)
+	SetOrgAvatar(ctx context.Context, arg SetOrgAvatarParams) error
 	// Replaces the token of a pending invitation (sending again invalidates the
 	// previous link) and extends its expiry.
 	SetOrgInviteToken(ctx context.Context, arg SetOrgInviteTokenParams) (int64, error)
@@ -1040,6 +1052,7 @@ type Querier interface {
 	SetPullThreadResolved(ctx context.Context, arg SetPullThreadResolvedParams) (int64, error)
 	SetQuotaDefault(ctx context.Context, arg SetQuotaDefaultParams) (int64, error)
 	SetQuotaOverride(ctx context.Context, arg SetQuotaOverrideParams) error
+	SetRepoAvatar(ctx context.Context, arg SetRepoAvatarParams) error
 	// Records the manifest sequence after a successful CAS save.
 	SetRepoManifestSeq(ctx context.Context, arg SetRepoManifestSeqParams) error
 	SetRepoPinned(ctx context.Context, arg SetRepoPinnedParams) error

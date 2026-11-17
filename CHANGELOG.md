@@ -9,6 +9,24 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Runner self-update from the admin panel: Admin > Runners shows "Update available" on runners older than the server, an Update item in the ⋯ menu and Update all in the header (POST /admin/actions/runners/{runnerId}/update, POST /admin/actions/runners/update, audit action `actions.runner_update`, migration 00370). The request travels in the Declare/Heartbeat answers (runner.proto `RunnerUpdate`); the runner stops taking jobs, lets the running ones finish, downloads `ervisio-runner_<ver>_<os>_<arch>` from the GitHub release, checks it against the release checksums file like install.sh and restarts on it (unix: staged in `<data dir>/bin` and exec'd, also at every start, since `/usr/local/bin` is read-only for the service; Windows: replaces the executable and exits so the scheduled task restarts it). Failures come back in the heartbeat and show as "Update failed". The built-in runner, runners in containers, ephemeral runners and runners older than this release are not updated this way (they need one `install.sh --upgrade` or a new image). Organization and repository runner pages show the indicator only.
+- Profile cards: `GET /users/{username}/cards/{stats|languages|streak|activity|hours}.svg` (themes `dark`, `light`, `neon`, `hideBorder`), self-contained SVGs of public data for profile READMEs; docs in `docs/profile-cards.md` / `.it.md`.
+- Organization avatars: `PUT`/`DELETE /orgs/{org}/avatar` (owners and admins), `avatarUrl` on organizations, upload in organization settings and shown wherever organizations appear (migration 00390).
+- Repository images: `PUT`/`DELETE /repos/{owner}/{name}/avatar` (repository admins), `avatarUrl` and `ownerAvatarUrl` on repositories, an Image row in Settings › General, shown in the repository header and lists (migration 00390).
+- Profile: users choose the order of their organizations (`orgOrder` on profile details, drag and drop in Settings › Profile, migration 00400).
+- Commit authors are linked to accounts by verified email or the no-reply address: avatar and profile link in commit lists, commit page, compare, pull request commits, last-commit lines and blame; `user` on commit author/committer, `authorUser` on commit summaries, `login`/`avatar_url` in the GitHub-compatible API. Only username and avatar are exposed.
+- Profile social links show a brand icon and a handle (X, Instagram, YouTube, TikTok, Twitch, Discord, GitHub, GitLab, LinkedIn, Facebook, Reddit, Telegram, Spotify, Bluesky, Threads, Patreon, Ko-fi, Steam).
+- Commit rows get a "…" toggle that shows the commit description.
+
+### Changed
+
+- Markdown (READMEs, issues, pull requests, releases) renders GitHub-style raw HTML through a strict allowlist: `align`/`valign`, sized images, linked badges, tables, `<details>`, `<picture>`, `<sub>`/`<sup>`, entities; external `https:` images load with no referrer.
+- Search palette: wider, opens near the top, search icon, ellipsized results and key hints.
+- Time zone picker shows the current GMT offset of each zone.
+
+### Fixed
+
+- Icons lost their size when a page passed an extra class (huge icons in the pull request views).
+- Long select menus (time zones) could not scroll: they are capped to the available height with scroll buttons.
 
 ## [1.15.0] - 2026-11-17
 

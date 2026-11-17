@@ -590,6 +590,77 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) error {
 	return err
 }
 
+const listActiveUsersByNames = `-- name: ListActiveUsersByNames :many
+SELECT n.name_lower::text AS name_lower, n.name AS username, u.avatar_url
+FROM users u
+JOIN namespaces n ON n.id = u.id
+WHERE n.name_lower = ANY($1::text[]) AND u.suspended_at IS NULL
+`
+
+type ListActiveUsersByNamesRow struct {
+	NameLower string
+	Username  string
+	AvatarUrl string
+}
+
+// Active users by lower-case username (no-reply commit addresses).
+func (q *Queries) ListActiveUsersByNames(ctx context.Context, names []string) ([]ListActiveUsersByNamesRow, error) {
+	rows, err := q.db.Query(ctx, listActiveUsersByNames, names)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListActiveUsersByNamesRow{}
+	for rows.Next() {
+		var i ListActiveUsersByNamesRow
+		if err := rows.Scan(&i.NameLower, &i.Username, &i.AvatarUrl); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersByVerifiedEmails = `-- name: ListUsersByVerifiedEmails :many
+SELECT e.address_lower::text AS email, n.name AS username, u.avatar_url
+FROM emails e
+JOIN users u ON u.id = e.user_id
+JOIN namespaces n ON n.id = u.id
+WHERE e.address_lower = ANY($1::text[])
+  AND e.verified_at IS NOT NULL AND u.suspended_at IS NULL
+`
+
+type ListUsersByVerifiedEmailsRow struct {
+	Email     string
+	Username  string
+	AvatarUrl string
+}
+
+// Active users owning one of the verified addresses (lower case), to link
+// commit authors to accounts. Only the username and avatar leave the server.
+func (q *Queries) ListUsersByVerifiedEmails(ctx context.Context, emails []string) ([]ListUsersByVerifiedEmailsRow, error) {
+	rows, err := q.db.Query(ctx, listUsersByVerifiedEmails, emails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListUsersByVerifiedEmailsRow{}
+	for rows.Next() {
+		var i ListUsersByVerifiedEmailsRow
+		if err := rows.Scan(&i.Email, &i.Username, &i.AvatarUrl); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markEmailVerified = `-- name: MarkEmailVerified :execrows
 UPDATE emails SET verified_at = now() WHERE id = $1 AND user_id = $2 AND verified_at IS NULL
 `

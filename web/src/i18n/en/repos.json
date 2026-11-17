@@ -214,5 +214,12 @@
   "mine.all": "All",
   "mine.personal": "Personal",
   "mine.orgs": "Organizations",
-  "mine.stars": "Stars"
+  "mine.stars": "Stars",
+  "settings.image": "Image",
+  "settings.image.hint": "PNG, JPEG or GIF up to 2 MiB, cropped to a square. Shown next to the name in the header and in repository lists.",
+  "settings.image.upload": "Upload image",
+  "settings.image.uploading": "Uploading…",
+  "settings.image.remove": "Remove",
+  "settings.image.uploaded": "Image updated",
+  "settings.image.removed": "Image removed"
 }

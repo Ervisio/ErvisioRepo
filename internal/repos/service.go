@@ -75,8 +75,12 @@ type Repo struct {
 	StorageState  string
 	SizeBytes     int64
 	StarsCount    int
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	// AvatarURL is the repository image; OwnerAvatarURL the avatar of the
+	// owner, set only by MarkOwnerAvatars. Both are empty when unset.
+	AvatarURL      string
+	OwnerAvatarURL string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 	// Permission is the caller's effective permission (at least PermRead).
 	Permission authz.Permission
 	// Starred tells whether the caller starred the repository; only set by
@@ -164,7 +168,7 @@ func New(o Options) *Service {
 func repoFrom(r dbgen.Repo, owner, kind string, p authz.Permission) Repo {
 	return Repo{ID: r.ID, OwnerID: r.OwnerID, Owner: owner, OwnerKind: kind, Name: r.Name, Description: r.Description,
 		Visibility: authz.Visibility(r.Visibility), DefaultBranch: r.DefaultBranch, StorageState: r.StorageState,
-		SizeBytes: r.SizeBytes, StarsCount: int(r.StarsCount), CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time, Permission: p}
+		SizeBytes: r.SizeBytes, StarsCount: int(r.StarsCount), AvatarURL: r.AvatarUrl, CreatedAt: r.CreatedAt.Time, UpdatedAt: r.UpdatedAt.Time, Permission: p}
 }
 
 // Facts loads what the permission of who on repo depends on.

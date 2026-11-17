@@ -106,8 +106,10 @@ type Org struct {
 	BasePermission string
 	Require2FA     bool
 	Verified       bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	// AvatarURL is the URL of the organization image; empty when unset.
+	AvatarURL string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	// Role is the caller's role (empty for an instance admin who is not a member).
 	Role authz.OrgRole
 }
@@ -115,7 +117,7 @@ type Org struct {
 func orgFrom(r dbgen.GetOrgDetailsRow, role authz.OrgRole) Org {
 	return Org{ID: r.ID, Name: r.Name, DisplayName: r.DisplayName, Description: r.Description,
 		BasePermission: r.BasePermission, Require2FA: r.Require2fa, Verified: r.VerifiedAt.Valid, CreatedAt: r.CreatedAt.Time,
-		UpdatedAt: r.UpdatedAt.Time, Role: role}
+		UpdatedAt: r.UpdatedAt.Time, AvatarURL: r.AvatarUrl, Role: role}
 }
 
 // Member is a member of an organization or a team.
@@ -247,6 +249,45 @@ func (s *Service) GetOrg(ctx context.Context, who auth.Principal, name string) (
 	return orgFrom(sc.org, sc.actor.Role), nil
 }
 
+// AuthorizeManage returns the organization if the caller may change its
+// settings (owners and admins), ErrForbidden or ErrNotFound otherwise.
+func (s *Service) AuthorizeManage(ctx context.Context, who auth.Principal, name string) (Org, error) {
+	sc, err := s.load(ctx, s.q, who, name)
+	if err != nil {
+		return Org{}, err
+	}
+	if !sc.actor.CanManage() {
+		return Org{}, ErrForbidden
+	}
+	return orgFrom(sc.org, sc.actor.Role), nil
+}
+
+// SetAvatar records avatarURL (stored by internal/avatars; empty removes it)
+// as the image of the organization. Owners and admins only.
+func (s *Service) SetAvatar(ctx context.Context, who auth.Principal, name, avatarURL string, c identity.Client) (Org, error) {
+	var out Org
+	err := s.tx(ctx, func(q *dbgen.Queries) error {
+		sc, err := s.load(ctx, q, who, name)
+		if err != nil {
+			return err
+		}
+		if !sc.actor.CanManage() {
+			return ErrForbidden
+		}
+		if err := q.SetOrgAvatar(ctx, dbgen.SetOrgAvatarParams{ID: sc.org.ID, AvatarUrl: avatarURL}); err != nil {
+			return fmt.Errorf("set org avatar: %w", err)
+		}
+		o, err := q.GetOrgDetails(ctx, name)
+		if err != nil {
+			return fmt.Errorf("get org: %w", err)
+		}
+		out = orgFrom(o, sc.actor.Role)
+		return audit.Record(ctx, q, sc.event(audit.ActionOrgUpdated, "org", o.ID.String(), c,
+			map[string]any{"fields": []string{"avatar_url"}}))
+	})
+	return out, err
+}
+
 // ListMyOrgs returns the organizations the caller is a member of.
 func (s *Service) ListMyOrgs(ctx context.Context, who auth.Principal) ([]Org, error) {
 	rows, err := s.q.ListUserOrgs(ctx, who.UserID)
@@ -257,7 +298,7 @@ func (s *Service) ListMyOrgs(ctx context.Context, who auth.Principal) ([]Org, er
 	for _, r := range rows {
 		out = append(out, orgFrom(dbgen.GetOrgDetailsRow{ID: r.ID, Name: r.Name, DisplayName: r.DisplayName,
 			Description: r.Description, BasePermission: r.BasePermission, Require2fa: r.Require2fa, VerifiedAt: r.VerifiedAt,
-			CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt}, authz.OrgRole(r.Role)))
+			CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt, AvatarUrl: r.AvatarUrl}, authz.OrgRole(r.Role)))
 	}
 	return out, nil
 }

@@ -224,6 +224,20 @@ func (s *Service) store(st Settings) (*tier.Target, error) {
 // Upload normalizes the image read from r, stores it and makes it the avatar
 // of the user. It returns the new avatar URL.
 func (s *Service) Upload(ctx context.Context, userID uuid.UUID, ip string, r io.Reader) (string, error) {
+	u, err := s.Store(ctx, r)
+	if err != nil {
+		return "", err
+	}
+	if err := s.setAvatar(ctx, userID, ip, u, actionUploaded); err != nil {
+		return "", err
+	}
+	return u, nil
+}
+
+// Store normalizes the image read from r and stores it, without assigning
+// it to anyone; it returns the URL that serves it. Organization and
+// repository avatars use it, their owners record the URL.
+func (s *Service) Store(ctx context.Context, r io.Reader) (string, error) {
 	data, err := io.ReadAll(io.LimitReader(r, MaxUploadBytes+1))
 	if err != nil {
 		return "", fmt.Errorf("read avatar: %w", err)
@@ -258,12 +272,8 @@ func (s *Service) Upload(ctx context.Context, userID uuid.UUID, ip string, r io.
 	if base == "" {
 		base = s.opt.ServerURL
 	}
-	u := base + "/" + key
-	if err := s.setAvatar(ctx, userID, ip, u, actionUploaded); err != nil {
-		return "", err
-	}
-	s.opt.Log.InfoContext(ctx, "avatar uploaded", "user", userID, "target", tgt.Name, "file", name)
-	return u, nil
+	s.opt.Log.InfoContext(ctx, "avatar stored", "target", tgt.Name, "file", name)
+	return base + "/" + key, nil
 }
 
 // Remove clears the avatar of the user. The stored image stays: its URL is

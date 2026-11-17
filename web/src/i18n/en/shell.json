@@ -20,7 +20,7 @@
   "search.title": "Search repositories",
   "search.placeholder": "Repository name…",
   "search.results": "Repositories",
-  "search.hint": "Type to search; ↑ ↓ to move, Enter to open.",
+  "search.hint": "Type the name of a repository or an owner.",
   "search.loading": "Searching…",
   "search.none": "No repositories found",
   "search.error": "Search failed",
@@ -71,5 +71,8 @@
   "nav.dashboard": "Dashboard",
   "new.button": "New",
   "search.pill": "Search or jump to…",
-  "search.pillRepo": "Search in {repo} or jump to…"
+  "search.pillRepo": "Search in {repo} or jump to…",
+  "search.keyMove": "move",
+  "search.keyOpen": "open",
+  "search.keyClose": "close"
 }

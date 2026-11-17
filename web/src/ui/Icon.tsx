@@ -59,10 +59,10 @@ const paths = {
 
 export type IconName = keyof typeof paths;
 
-export function Icon({ name, ...rest }: { name: IconName } & Omit<SVGProps<SVGSVGElement>, "name">) {
+export function Icon({ name, className, ...rest }: { name: IconName } & Omit<SVGProps<SVGSVGElement>, "name">) {
   return (
     <svg
-      className="ui-icon"
+      className={!className ? "ui-icon" : /(^|\s)ui-icon(\s|$)/.test(className) ? className : `ui-icon ${className}`}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

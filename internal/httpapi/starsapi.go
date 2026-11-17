@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+	"github.com/Ervisio/ErvisioRepo/internal/repos"
 )
 
 func (s *v1Server) StarRepo(ctx context.Context, req v1gen.StarRepoRequestObject) (v1gen.StarRepoResponseObject, error) {
@@ -59,9 +60,16 @@ func (s *v1Server) ListUserStarred(ctx context.Context, req v1gen.ListUserStarre
 	if err != nil {
 		return reposFail(err, http.MethodGet, "")
 	}
+	starred := make([]repos.Repo, len(list))
+	for i, r := range list {
+		starred[i] = r.Repo
+	}
+	if err := s.repos.MarkOwnerAvatars(ctx, starred); err != nil {
+		return nil, err
+	}
 	out := make(v1gen.ListUserStarred200JSONResponse, 0, len(list))
-	for _, r := range list {
-		out = append(out, v1gen.StarredRepo{Repo: repoDTO(ctx, r.Repo), StarredAt: r.StarredAt})
+	for i, r := range list {
+		out = append(out, v1gen.StarredRepo{Repo: repoDTO(ctx, starred[i]), StarredAt: r.StarredAt})
 	}
 	return out, nil
 }

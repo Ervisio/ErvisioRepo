@@ -351,10 +351,7 @@ func (c *call) listPullCommits() error {
 	if err != nil {
 		return err
 	}
-	out := make([]ghCommit, len(list))
-	for i, cm := range list {
-		out[i] = c.commitObj(cm)
-	}
+	out := c.commitObjs(list)
 	c.link(p, more)
 	return c.ok(http.StatusOK, out)
 }

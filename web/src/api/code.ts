@@ -11,6 +11,7 @@ export type TreeEntry = S["TreeEntry"];
 export type BlobFile = S["BlobFile"];
 export type Blame = S["Blame"];
 export type GitCommit = S["GitCommit"];
+export type CommitUser = S["CommitUser"];
 export type CommitPage = S["CommitPage"];
 export type CommitDetail = S["CommitDetail"];
 export type Diff = S["Diff"];

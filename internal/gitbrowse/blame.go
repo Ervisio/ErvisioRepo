@@ -104,6 +104,8 @@ func parseBlame(out []byte) ([]string, []BlameRange) {
 		switch k {
 		case "author":
 			cur.Author = v
+		case "author-mail":
+			cur.AuthorEmail = strings.Trim(v, "<>")
 		case "author-time":
 			cur.Date = unixTime(v)
 		case "summary":

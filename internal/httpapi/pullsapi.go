@@ -185,7 +185,7 @@ func (s *v1Server) ListPullCommits(ctx context.Context, req v1gen.ListPullCommit
 	if err != nil {
 		return pullsFail(err, http.MethodGet, pullSuffix(req.Number, "/commits"))
 	}
-	return v1gen.ListPullCommits200JSONResponse{HasMore: more, Items: commitsDTO(list)}, nil
+	return v1gen.ListPullCommits200JSONResponse{HasMore: more, Items: s.linkCommits(ctx, commitsDTO(list))}, nil
 }
 
 func (s *v1Server) ListPullFiles(ctx context.Context, req v1gen.ListPullFilesRequestObject) (v1gen.ListPullFilesResponseObject, error) {
@@ -556,7 +556,11 @@ func (s *v1Server) CreateFork(ctx context.Context, req v1gen.CreateForkRequestOb
 	if err != nil {
 		return pullsFail(err, http.MethodPost, "/forks")
 	}
-	return v1gen.CreateFork201JSONResponse(repoDTO(ctx, r)), nil
+	out, err := s.repoOut(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.CreateFork201JSONResponse(out), nil
 }
 
 func (s *v1Server) MergeUpstream(ctx context.Context, req v1gen.MergeUpstreamRequestObject) (v1gen.MergeUpstreamResponseObject, error) {

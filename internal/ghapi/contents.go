@@ -354,8 +354,8 @@ type ghCommit struct {
 	URL         string       `json:"url"`
 	HTMLURL     string       `json:"html_url"`
 	CommentsURL string       `json:"comments_url"`
-	// Author and Committer would be accounts matched by email; the API
-	// does not resolve them.
+	// Author and Committer are the accounts of the commit addresses
+	// (verified or no-reply), null when none matches (commitObjs).
 	Author    *ghUser    `json:"author"`
 	Committer *ghUser    `json:"committer"`
 	Parents   []ghParent `json:"parents"`
@@ -372,6 +372,43 @@ func (c *call) commitObj(cm gitbrowse.Commit) ghCommit {
 		URL: c.commitAPI(cm.SHA), HTMLURL: c.commitHTML(cm.SHA), CommentsURL: c.commitAPI(cm.SHA) + "/comments",
 		Parents: c.parents(cm.Parents),
 	}
+}
+
+// commitObjs builds the commit objects of list with their author and
+// committer accounts, resolved in one lookup.
+func (c *call) commitObjs(list []gitbrowse.Commit) []ghCommit {
+	out := make([]ghCommit, len(list))
+	emails := make([]string, 0, 2*len(list))
+	for i, cm := range list {
+		out[i] = c.commitObj(cm)
+		emails = append(emails, cm.Author.Email, cm.Committer.Email)
+	}
+	acc, err := c.s.d.Browse.Authors(c.ctx, emails)
+	if err != nil || len(acc) == 0 {
+		return out
+	}
+	names := make([]string, 0, len(acc))
+	for _, a := range acc {
+		names = append(names, a.Username)
+	}
+	c.ids.prefetchUsers(names...)
+	account := func(email string) *ghUser {
+		a, ok := acc[strings.ToLower(strings.TrimSpace(email))]
+		if !ok {
+			return nil
+		}
+		ns := c.ids.user(a.Username)
+		if ns == nil {
+			return nil
+		}
+		u := c.userObj(ns.ID, ns.Kind, ns.Name)
+		u.AvatarURL = a.AvatarURL
+		return u
+	}
+	for i, cm := range list {
+		out[i].Author, out[i].Committer = account(cm.Author.Email), account(cm.Committer.Email)
+	}
+	return out
 }
 
 type ghFile struct {
@@ -419,10 +456,7 @@ func (c *call) listCommits() error {
 	if err != nil {
 		return err
 	}
-	out := make([]ghCommit, len(page.Commits))
-	for i, cm := range page.Commits {
-		out[i] = c.commitObj(cm)
-	}
+	out := c.commitObjs(page.Commits)
 	c.link(p, page.HasMore)
 	return c.ok(http.StatusOK, out)
 }
@@ -436,7 +470,7 @@ func (c *call) getCommit() error {
 	if err != nil {
 		return err
 	}
-	out := c.commitObj(d.Commit)
+	out := c.commitObjs([]gitbrowse.Commit{d.Commit})[0]
 	out.Stats = &ghStats{Total: d.Diff.Additions + d.Diff.Deletions, Additions: d.Diff.Additions,
 		Deletions: d.Diff.Deletions}
 	out.Files = make([]ghFile, 0, len(d.Diff.Files))
@@ -507,7 +541,7 @@ func (c *call) getBranch() error {
 	}
 	self := c.repoAPI() + "/branches/" + escPath(name)
 	return c.ok(http.StatusOK, map[string]any{
-		"name": name, "commit": c.commitObj(page.Commits[0]), "protected": false,
+		"name": name, "commit": c.commitObjs(page.Commits[:1])[0], "protected": false,
 		"protection":     map[string]any{"enabled": false, "required_status_checks": map[string]any{"enforcement_level": "off", "contexts": []string{}, "checks": []string{}}},
 		"protection_url": self + "/protection",
 		"_links":         map[string]string{"self": self, "html": c.treeHTML(name, "")},

@@ -79,6 +79,44 @@ func (s *Service) Contributions(ctx context.Context, who auth.Principal, user uu
 	return cal, nil
 }
 
+// KindCounts counts the events of user in [since, until) by kind and action,
+// keyed "kind/action" (e.g. "issue/opened"), in the repositories who can read.
+func (s *Service) KindCounts(ctx context.Context, who auth.Principal, user uuid.UUID, since, until time.Time) (map[string]int64, error) {
+	sc := scopeOf(who)
+	rows, err := s.q.CountUserActivityKinds(ctx, dbgen.CountUserActivityKindsParams{Actor: user,
+		Since: pgtype.Timestamptz{Time: since, Valid: true}, Until: pgtype.Timestamptz{Time: until, Valid: true},
+		Viewer: sc.viewer, AllRepos: sc.allRepos, Internal: sc.internal})
+	if err != nil {
+		return nil, fmt.Errorf("count activity kinds: %w", err)
+	}
+	out := make(map[string]int64, len(rows))
+	for _, r := range rows {
+		out[r.Kind+"/"+r.Action] += r.Events
+	}
+	return out, nil
+}
+
+// HourCounts counts the events of user since since per hour of the day in
+// the IANA time zone tz, in the repositories who can read.
+func (s *Service) HourCounts(ctx context.Context, who auth.Principal, user uuid.UUID, since time.Time, tz string) ([24]int64, error) {
+	var out [24]int64
+	if _, err := time.LoadLocation(tz); err != nil {
+		return out, invalid("unknown time zone")
+	}
+	sc := scopeOf(who)
+	rows, err := s.q.CountUserActivityHours(ctx, dbgen.CountUserActivityHoursParams{Actor: user, Tz: tz,
+		Since: pgtype.Timestamptz{Time: since, Valid: true}, Viewer: sc.viewer, AllRepos: sc.allRepos, Internal: sc.internal})
+	if err != nil {
+		return out, fmt.Errorf("count activity hours: %w", err)
+	}
+	for _, r := range rows {
+		if r.Hour >= 0 && r.Hour < 24 {
+			out[r.Hour] += r.Events
+		}
+	}
+	return out, nil
+}
+
 // UserActivity lists the newest events of user in the repositories who can read.
 func (s *Service) UserActivity(ctx context.Context, who auth.Principal, user uuid.UUID, offset, limit int) ([]Item, error) {
 	sc := scopeOf(who)

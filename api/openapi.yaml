@@ -2989,6 +2989,61 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /orgs/{org}/avatar:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    put:
+      operationId: uploadOrgAvatar
+      tags: [orgs]
+      summary: Upload the avatar image of an organization
+      description: |
+        Same body, limits and processing as PUT /user/avatar (PNG, JPEG or
+        GIF, at most 2 MiB and 4096x4096 pixels, stored as a 460x460 PNG
+        under a content-addressed name). Owners and admins of the organization.
+      requestBody:
+        required: true
+        content:
+          image/*:
+            schema: {type: string, format: binary}
+      responses:
+        "200":
+          description: Updated an organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Org"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "413":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteOrgAvatar
+      tags: [orgs]
+      summary: Remove the avatar image of an organization
+      description: Clears avatarUrl. Stored images are kept, their URLs are immutable. Owners and admins of the organization.
+      responses:
+        "200":
+          description: Updated an organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Org"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
   /orgs/{org}/languages:
     parameters:
       - $ref: "#/components/parameters/OrgName"
@@ -3848,6 +3903,56 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /users/{username}/cards/{card}.svg:
+    parameters:
+      - $ref: "#/components/parameters/Username"
+      - name: card
+        in: path
+        required: true
+        description: |
+          stats (repositories, stars, contributions, pushes, pull requests,
+          issues), languages (top languages by bytes of the public
+          repositories), streak (current and longest contribution streak),
+          activity (contribution calendar of the last 53 weeks) or hours
+          (contributions per hour of the day, in the profile time zone).
+        schema:
+          type: string
+          enum: [stats, languages, streak, activity, hours]
+    get:
+      operationId: getUserCard
+      tags: [repos]
+      summary: SVG profile card of a user, to embed in a README
+      description: |
+        Always computed as a signed-out visitor sees the user (public
+        repositories only), so the image is the same for everyone and can be
+        cached by shared caches for 30 minutes.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: theme
+          in: query
+          schema:
+            type: string
+            enum: [dark, light, neon]
+            default: dark
+        - name: hideBorder
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Card
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
   /explore/activity:
     get:
       operationId: listReposWeeklyActivity
@@ -4018,6 +4123,68 @@ paths:
         "403":
           $ref: "#/components/responses/Problem"
         "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/avatar:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    put:
+      operationId: uploadRepoAvatar
+      tags: [repos]
+      summary: Upload the avatar image of a repository
+      description: |
+        Same body, limits and processing as PUT /user/avatar (PNG, JPEG or
+        GIF, at most 2 MiB and 4096x4096 pixels, stored as a 460x460 PNG
+        under a content-addressed name). Admins of the repository.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          image/*:
+            schema: {type: string, format: binary}
+      responses:
+        "200":
+          description: Updated a repository
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repo"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "413":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteRepoAvatar
+      tags: [repos]
+      summary: Remove the avatar image of a repository
+      description: Clears avatarUrl. Stored images are kept, their URLs are immutable. Admins of the repository.
+      security:
+        - session: []
+        - token: [repo:write]
+      responses:
+        "200":
+          description: Updated a repository
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repo"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
@@ -13952,7 +14119,7 @@ components:
     Repo:
       type: object
       required: [id, owner, ownerKind, name, fullName, description, visibility, defaultBranch, storageState,
-        sizeBytes, starsCount, starred, permission, createdAt, updatedAt]
+        sizeBytes, starsCount, starred, permission, avatarUrl, ownerAvatarUrl, createdAt, updatedAt]
       properties:
         id:
           type: string
@@ -13989,6 +14156,12 @@ components:
         starred:
           type: boolean
           description: Whether the caller starred the repository; false when anonymous
+        avatarUrl:
+          type: string
+          description: Absolute https URL of the repository image; empty when unset
+        ownerAvatarUrl:
+          type: string
+          description: Absolute https URL of the avatar of the owner (user or organization); empty when unset
         openIssuesCount:
           type: integer
           format: int64
@@ -14110,10 +14283,11 @@ components:
             $ref: "#/components/schemas/OrgSummary"
     OrgSummary:
       type: object
-      required: [name, displayName]
+      required: [name, displayName, avatarUrl]
       properties:
         name: {type: string}
         displayName: {type: string}
+        avatarUrl: {type: string, description: Absolute https URL of the avatar image; empty when unset}
     ProfileDetails:
       type: object
       required: [bio, company, location, website, socialLinks, timezone, publicEmail]
@@ -14137,6 +14311,14 @@ components:
           type: string
           maxLength: 254
           description: A verified address of the account shown on the profile, or empty
+        orgOrder:
+          type: array
+          maxItems: 100
+          description: |
+            Names of organizations in the order the profile shows them; the
+            others follow alphabetically. Only organizations the user belongs
+            to are kept. Omitted in an update, the saved order stays.
+          items: {type: string, maxLength: 39}
     ContributionCalendar:
       type: object
       required: [from, to, total, days, years]
@@ -14217,7 +14399,7 @@ components:
       enum: [none, read, triage, write, maintain, admin]
     Org:
       type: object
-      required: [id, name, displayName, description, basePermission, require2fa, verified, createdAt, updatedAt]
+      required: [id, name, displayName, description, basePermission, require2fa, verified, avatarUrl, createdAt, updatedAt]
       properties:
         id:
           type: string
@@ -14237,6 +14419,9 @@ components:
           type: boolean
         role:
           $ref: "#/components/schemas/OrgRole"
+        avatarUrl:
+          type: string
+          description: Absolute https URL of the avatar image; empty when unset
         createdAt:
           type: string
           format: date-time
@@ -14523,6 +14708,16 @@ components:
         kind: {type: string, enum: [branch, tag, commit]}
         name: {type: string, description: Full ref name; empty for a commit id}
         commit: {type: string, description: Full commit id}
+    CommitUser:
+      type: object
+      description: |
+        The account a commit address belongs to: a verified address of the
+        user or the no-reply address of a web edit. Only the username and
+        avatar are given, never the user's addresses.
+      required: [username, avatarUrl]
+      properties:
+        username: {type: string}
+        avatarUrl: {type: string, description: Absolute https URL of the avatar; empty when unset}
     GitPerson:
       type: object
       required: [name, email, date]
@@ -14530,6 +14725,7 @@ components:
         name: {type: string}
         email: {type: string}
         date: {type: string, format: date-time}
+        user: {$ref: "#/components/schemas/CommitUser"}
     GitCommit:
       type: object
       required: [sha, parents, author, committer, summary, message]
@@ -14550,6 +14746,7 @@ components:
         summary: {type: string}
         author: {type: string, description: Author name}
         date: {type: string, format: date-time}
+        authorUser: {$ref: "#/components/schemas/CommitUser"}
     TreeEntry:
       type: object
       required: [name, path, type, mode, oid, size]

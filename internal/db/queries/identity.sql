@@ -171,3 +171,20 @@ FROM users u
 JOIN namespaces n ON n.id = u.id
 LEFT JOIN bots b ON b.user_id = u.id
 WHERE n.name_lower = lower(sqlc.arg(username)::text);
+
+-- name: ListUsersByVerifiedEmails :many
+-- Active users owning one of the verified addresses (lower case), to link
+-- commit authors to accounts. Only the username and avatar leave the server.
+SELECT e.address_lower::text AS email, n.name AS username, u.avatar_url
+FROM emails e
+JOIN users u ON u.id = e.user_id
+JOIN namespaces n ON n.id = u.id
+WHERE e.address_lower = ANY(sqlc.arg(emails)::text[])
+  AND e.verified_at IS NOT NULL AND u.suspended_at IS NULL;
+
+-- name: ListActiveUsersByNames :many
+-- Active users by lower-case username (no-reply commit addresses).
+SELECT n.name_lower::text AS name_lower, n.name AS username, u.avatar_url
+FROM users u
+JOIN namespaces n ON n.id = u.id
+WHERE n.name_lower = ANY(sqlc.arg(names)::text[]) AND u.suspended_at IS NULL;

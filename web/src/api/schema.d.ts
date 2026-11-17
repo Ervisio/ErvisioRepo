@@ -1988,6 +1988,34 @@ export interface paths {
         patch: operations["updateOrg"];
         trace?: never;
     };
+    "/orgs/{org}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Upload the avatar image of an organization
+         * @description Same body, limits and processing as PUT /user/avatar (PNG, JPEG or
+         *     GIF, at most 2 MiB and 4096x4096 pixels, stored as a 460x460 PNG
+         *     under a content-addressed name). Owners and admins of the organization.
+         */
+        put: operations["uploadOrgAvatar"];
+        post?: never;
+        /**
+         * Remove the avatar image of an organization
+         * @description Clears avatarUrl. Stored images are kept, their URLs are immutable. Owners and admins of the organization.
+         */
+        delete: operations["deleteOrgAvatar"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/orgs/{org}/languages": {
         parameters: {
             query?: never;
@@ -2563,6 +2591,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/{username}/cards/{card}.svg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+                /**
+                 * @description stats (repositories, stars, contributions, pushes, pull requests,
+                 *     issues), languages (top languages by bytes of the public
+                 *     repositories), streak (current and longest contribution streak),
+                 *     activity (contribution calendar of the last 53 weeks) or hours
+                 *     (contributions per hour of the day, in the profile time zone).
+                 */
+                card: "stats" | "languages" | "streak" | "activity" | "hours";
+            };
+            cookie?: never;
+        };
+        /**
+         * SVG profile card of a user, to embed in a README
+         * @description Always computed as a signed-out visitor sees the user (public
+         *     repositories only), so the image is the same for everyone and can be
+         *     cached by shared caches for 30 minutes.
+         */
+        get: operations["getUserCard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/explore/activity": {
         parameters: {
             query?: never;
@@ -2640,6 +2700,36 @@ export interface paths {
          *     need admin. A rename keeps the old path as a redirect.
          */
         patch: operations["updateRepo"];
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Upload the avatar image of a repository
+         * @description Same body, limits and processing as PUT /user/avatar (PNG, JPEG or
+         *     GIF, at most 2 MiB and 4096x4096 pixels, stored as a 460x460 PNG
+         *     under a content-addressed name). Admins of the repository.
+         */
+        put: operations["uploadRepoAvatar"];
+        post?: never;
+        /**
+         * Remove the avatar image of a repository
+         * @description Clears avatarUrl. Stored images are kept, their URLs are immutable. Admins of the repository.
+         */
+        delete: operations["deleteRepoAvatar"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/repos/{owner}/{name}/transfer": {
@@ -8351,6 +8441,10 @@ export interface components {
             starsCount: number;
             /** @description Whether the caller starred the repository; false when anonymous */
             starred: boolean;
+            /** @description Absolute https URL of the repository image; empty when unset */
+            avatarUrl: string;
+            /** @description Absolute https URL of the avatar of the owner (user or organization); empty when unset */
+            ownerAvatarUrl: string;
             /**
              * Format: int64
              * @description Open issues; only set by getRepo
@@ -8439,6 +8533,8 @@ export interface components {
         OrgSummary: {
             name: string;
             displayName: string;
+            /** @description Absolute https URL of the avatar image; empty when unset */
+            avatarUrl: string;
         };
         ProfileDetails: {
             bio: string;
@@ -8451,6 +8547,12 @@ export interface components {
             timezone: string;
             /** @description A verified address of the account shown on the profile, or empty */
             publicEmail: string;
+            /**
+             * @description Names of organizations in the order the profile shows them; the
+             *     others follow alphabetically. Only organizations the user belongs
+             *     to are kept. Omitted in an update, the saved order stays.
+             */
+            orgOrder?: string[];
         };
         ContributionCalendar: {
             /**
@@ -8523,6 +8625,8 @@ export interface components {
             require2fa: boolean;
             verified: boolean;
             role?: components["schemas"]["OrgRole"];
+            /** @description Absolute https URL of the avatar image; empty when unset */
+            avatarUrl: string;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -8716,11 +8820,22 @@ export interface components {
             /** @description Full commit id */
             commit: string;
         };
+        /**
+         * @description The account a commit address belongs to: a verified address of the
+         *     user or the no-reply address of a web edit. Only the username and
+         *     avatar are given, never the user's addresses.
+         */
+        CommitUser: {
+            username: string;
+            /** @description Absolute https URL of the avatar; empty when unset */
+            avatarUrl: string;
+        };
         GitPerson: {
             name: string;
             email: string;
             /** Format: date-time */
             date: string;
+            user?: components["schemas"]["CommitUser"];
         };
         GitCommit: {
             sha: string;
@@ -8737,6 +8852,7 @@ export interface components {
             author: string;
             /** Format: date-time */
             date: string;
+            authorUser?: components["schemas"]["CommitUser"];
         };
         TreeEntry: {
             name: string;
@@ -13108,6 +13224,64 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    uploadOrgAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/*": string;
+            };
+        };
+        responses: {
+            /** @description Updated an organization */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Org"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteOrgAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Updated an organization */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Org"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
     listOrgLanguages: {
         parameters: {
             query?: never;
@@ -14037,6 +14211,41 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    getUserCard: {
+        parameters: {
+            query?: {
+                theme?: "dark" | "light" | "neon";
+                hideBorder?: boolean;
+            };
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+                /**
+                 * @description stats (repositories, stars, contributions, pushes, pull requests,
+                 *     issues), languages (top languages by bytes of the public
+                 *     repositories), streak (current and longest contribution streak),
+                 *     activity (contribution calendar of the last 53 weeks) or hours
+                 *     (contributions per hour of the day, in the profile time zone).
+                 */
+                card: "stats" | "languages" | "streak" | "activity" | "hours";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Card */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/svg+xml": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
     listReposWeeklyActivity: {
         parameters: {
             query: {
@@ -14204,6 +14413,68 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    uploadRepoAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/*": string;
+            };
+        };
+        responses: {
+            /** @description Updated a repository */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteRepoAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Updated a repository */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

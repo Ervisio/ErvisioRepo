@@ -23,6 +23,9 @@ type Repos interface {
 	GetByID(ctx context.Context, who auth.Principal, id uuid.UUID) (repos.Repo, error)
 	Create(ctx context.Context, who auth.Principal, in repos.CreateInput, c identity.Client) (repos.Repo, error)
 	ListOwner(ctx context.Context, who auth.Principal, owner string, offset, limit int) ([]repos.Repo, error)
+	AuthorizeAdmin(ctx context.Context, who auth.Principal, owner, name string) (repos.Repo, error)
+	SetAvatar(ctx context.Context, who auth.Principal, owner, name, avatarURL string, c identity.Client) (repos.Repo, error)
+	MarkOwnerAvatars(ctx context.Context, list []repos.Repo) error
 	ListMine(ctx context.Context, who auth.Principal, offset, limit int) ([]repos.Repo, error)
 	Update(ctx context.Context, who auth.Principal, owner, name string, in repos.UpdateInput, c identity.Client) (repos.Repo, error)
 	Transfer(ctx context.Context, who auth.Principal, owner, name string, in repos.TransferInput, c identity.Client) (repos.Repo, error)
@@ -101,6 +104,8 @@ type repoResponse interface {
 	v1gen.UnstarRepoResponseObject
 	v1gen.ListStargazersResponseObject
 	v1gen.ListUserStarredResponseObject
+	v1gen.UploadRepoAvatarResponseObject
+	v1gen.DeleteRepoAvatarResponseObject
 }
 
 // repoDTO converts a repository for the caller. Storage is instance
@@ -114,7 +119,8 @@ func repoDTO(ctx context.Context, r repos.Repo) v1gen.Repo {
 	return v1gen.Repo{Id: r.ID, Owner: r.Owner, OwnerKind: v1gen.RepoOwnerKind(r.OwnerKind), Name: r.Name,
 		FullName: r.FullName(), Description: r.Description, Visibility: v1gen.Visibility(r.Visibility),
 		DefaultBranch: r.DefaultBranch, StorageState: state, SizeBytes: r.SizeBytes,
-		StarsCount: r.StarsCount, Starred: r.Starred, Permission: v1gen.Permission(r.Permission.String()), CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt}
+		StarsCount: r.StarsCount, Starred: r.Starred, Permission: v1gen.Permission(r.Permission.String()),
+		AvatarUrl: r.AvatarURL, OwnerAvatarUrl: r.OwnerAvatarURL, CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt}
 }
 
 func repoList(ctx context.Context, list []repos.Repo) []v1gen.Repo {
@@ -130,6 +136,9 @@ func repoList(ctx context.Context, list []repos.Repo) []v1gen.Repo {
 func (s *v1Server) reposOut(ctx context.Context, list []repos.Repo) ([]v1gen.Repo, error) {
 	if s.repos != nil {
 		if err := s.repos.MarkStarred(ctx, principal(ctx), list); err != nil {
+			return nil, err
+		}
+		if err := s.repos.MarkOwnerAvatars(ctx, list); err != nil {
 			return nil, err
 		}
 	}
@@ -205,7 +214,11 @@ func (s *v1Server) CreateUserRepo(ctx context.Context, req v1gen.CreateUserRepoR
 	if err != nil {
 		return reposFail(err, http.MethodPost, "")
 	}
-	return v1gen.CreateUserRepo201JSONResponse(repoDTO(ctx, r)), nil
+	out, err := s.repoOut(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.CreateUserRepo201JSONResponse(out), nil
 }
 
 func (s *v1Server) ListUserRepos(ctx context.Context, req v1gen.ListUserReposRequestObject) (v1gen.ListUserReposResponseObject, error) {
@@ -251,7 +264,11 @@ func (s *v1Server) CreateOrgRepo(ctx context.Context, req v1gen.CreateOrgRepoReq
 	if err != nil {
 		return reposFail(err, http.MethodPost, "")
 	}
-	return v1gen.CreateOrgRepo201JSONResponse(repoDTO(ctx, r)), nil
+	out, err := s.repoOut(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	return v1gen.CreateOrgRepo201JSONResponse(out), nil
 }
 
 func (s *v1Server) GetRepo(ctx context.Context, req v1gen.GetRepoRequestObject) (v1gen.GetRepoResponseObject, error) {
@@ -379,8 +396,14 @@ func (s *v1Server) RemoveRepoCollaborator(ctx context.Context, req v1gen.RemoveR
 
 // Visit methods let problemResponse and movedResponse answer every
 // repository operation.
-func (p problemResponse) VisitGetRepoResponse(w http.ResponseWriter) error        { return p.write(w) }
-func (p problemResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error     { return p.write(w) }
+func (p problemResponse) VisitGetRepoResponse(w http.ResponseWriter) error    { return p.write(w) }
+func (p problemResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error { return p.write(w) }
+func (p problemResponse) VisitUploadRepoAvatarResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (p problemResponse) VisitDeleteRepoAvatarResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
 func (p problemResponse) VisitDeleteRepoResponse(w http.ResponseWriter) error     { return p.write(w) }
 func (p problemResponse) VisitTransferRepoResponse(w http.ResponseWriter) error   { return p.write(w) }
 func (p problemResponse) VisitListMyReposResponse(w http.ResponseWriter) error    { return p.write(w) }
@@ -398,8 +421,14 @@ func (p problemResponse) VisitListRepoCollaboratorsResponse(w http.ResponseWrite
 	return p.write(w)
 }
 
-func (m movedResponse) VisitGetRepoResponse(w http.ResponseWriter) error        { return m.write(w) }
-func (m movedResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error     { return m.write(w) }
+func (m movedResponse) VisitGetRepoResponse(w http.ResponseWriter) error    { return m.write(w) }
+func (m movedResponse) VisitUpdateRepoResponse(w http.ResponseWriter) error { return m.write(w) }
+func (m movedResponse) VisitUploadRepoAvatarResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (m movedResponse) VisitDeleteRepoAvatarResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
 func (m movedResponse) VisitDeleteRepoResponse(w http.ResponseWriter) error     { return m.write(w) }
 func (m movedResponse) VisitTransferRepoResponse(w http.ResponseWriter) error   { return m.write(w) }
 func (m movedResponse) VisitListMyReposResponse(w http.ResponseWriter) error    { return m.write(w) }

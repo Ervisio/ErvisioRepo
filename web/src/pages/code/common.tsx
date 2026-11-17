@@ -1,13 +1,14 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { isHydrating, useBranches, useTags } from "../../api/code.ts";
+import { isHydrating, useBranches, useTags, type CommitUser } from "../../api/code.ts";
 import { ApiError } from "../../api/http.ts";
 import { isUnauthenticated, useSession } from "../../api/identity.ts";
 import { useRepo, type Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Badge, Button, EmptyState, Icon, Menu, MenuItem, MenuLabel, MenuSeparator, Page } from "../../ui/index.ts";
 import { useLayout } from "../../ui/shell/layout.ts";
+import { AvatarImg } from "../../ui/AvatarImg.tsx";
 import type { Section } from "../../ui/shell/nav.tsx";
 import { useNotify } from "../account/common.tsx";
 import { useProblemText } from "../auth/useProblemText.ts";
@@ -282,6 +283,31 @@ export function Initial({ name, size = 20 }: { name: string; size?: number }) {
     <span className="cx-av" style={{ width: size, height: size, fontSize: Math.round(size * 0.42) }} aria-hidden="true">
       {(name.trim()[0] ?? "?").toUpperCase()}
     </span>
+  );
+}
+
+/**
+ * Avatar of a commit author: the linked account's image (a link to the
+ * profile) when the commit address belongs to a user, the initial otherwise.
+ */
+export function AuthorAvatar({ name, user, size = 20 }: { name: string; user?: CommitUser; size?: number }) {
+  if (!user) return <Initial name={name} size={size} />;
+  return (
+    <Link to="/$owner" params={{ owner: user.username }} title={user.username} aria-hidden="true" tabIndex={-1} style={{ display: "inline-flex", flex: "none" }}>
+      <AvatarImg src={user.avatarUrl} size={size} radius="50%">
+        <Initial name={name} size={size} />
+      </AvatarImg>
+    </Link>
+  );
+}
+
+/** Name of a commit author as written in the commit; a link to the profile, with the username as tooltip, when linked. */
+export function AuthorName({ name, user, title }: { name: string; user?: CommitUser; title?: string }) {
+  if (!user) return <b title={title}>{name}</b>;
+  return (
+    <Link to="/$owner" params={{ owner: user.username }} title={user.username}>
+      <b>{name}</b>
+    </Link>
   );
 }
 

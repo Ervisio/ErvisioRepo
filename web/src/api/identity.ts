@@ -151,6 +151,19 @@ export const acceptOrgInvite = (token: string) => request<S["OrgInviteAccepted"]
 export const useOrg = (org: string) => useQuery({ queryKey: ["orgs", org], queryFn: () => request<Org>("GET", `/orgs/${enc(org)}`) });
 export const useUpdateOrg = (org: string) =>
   useInvalidating<S["OrgUpdate"], Org>([["orgs", org]], (b) => request("PATCH", `/orgs/${enc(org)}`, b));
+/** Uploads (PUT) or removes (DELETE) the image of an organization; orgs and repositories show it at once. */
+export function useOrgAvatar(org: string) {
+  const qc = useQueryClient();
+  const done = (o: Org) => {
+    qc.setQueryData(["orgs", org], o);
+    void qc.invalidateQueries({ queryKey: ["orgs"] });
+    void qc.invalidateQueries({ queryKey: ["repos"] });
+    void qc.invalidateQueries({ queryKey: ["users"] });
+  };
+  const upload = useMutation({ mutationFn: (file: File) => uploadBlob<Org>("PUT", `/orgs/${enc(org)}/avatar`, file), onSuccess: done });
+  const remove = useMutation({ mutationFn: () => request<Org>("DELETE", `/orgs/${enc(org)}/avatar`), onSuccess: done });
+  return { upload, remove };
+}
 /** Public profile of a user; works signed out. */
 export const useUserProfile = (username: string) =>
   useQuery({ queryKey: ["users", username, "profile"], retry: false, queryFn: () => request<UserProfile>("GET", `/users/${enc(username)}`) });

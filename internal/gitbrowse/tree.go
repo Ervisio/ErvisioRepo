@@ -43,6 +43,9 @@ type CommitSummary struct {
 	Summary string
 	Author  string
 	Date    time.Time
+	// AuthorEmail links the author to an account (Authors); the API does
+	// not return it.
+	AuthorEmail string
 }
 
 // Tree is a directory listing.
@@ -188,7 +191,7 @@ func (s *Service) walkLastCommits(ctx context.Context, rp, commit, dir string, e
 	found := make(map[string]CommitSummary, len(want))
 	ctx, cancel := context.WithTimeout(ctx, lastCommitBudget)
 	defer cancel()
-	args := []string{"log", "-z", "--name-only", "--no-renames", "--format=format:\x01%H\x02%at\x02%an\x02%s",
+	args := []string{"log", "-z", "--name-only", "--no-renames", "--format=format:\x01%H\x02%at\x02%an\x02%ae\x02%s",
 		"--max-count=" + strconv.Itoa(lastCommitCommits), commit, "--"}
 	if dir != "" {
 		args = append(args, dir)
@@ -211,11 +214,11 @@ func (s *Service) walkLastCommits(ctx context.Context, rp, commit, dir string, e
 		tok := strings.TrimLeft(sc.Text(), "\n")
 		if strings.HasPrefix(tok, "\x01") {
 			hdr, file, _ := strings.Cut(tok[1:], "\n")
-			f := strings.SplitN(hdr, "\x02", 4)
-			if len(f) != 4 {
+			f := strings.SplitN(hdr, "\x02", 5)
+			if len(f) != 5 {
 				continue
 			}
-			cur = CommitSummary{SHA: f[0], Date: unixTime(f[1]), Author: f[2], Summary: f[3]}
+			cur = CommitSummary{SHA: f[0], Date: unixTime(f[1]), Author: f[2], AuthorEmail: f[3], Summary: f[4]}
 			tok = file
 		}
 		if tok == "" || cur.SHA == "" {

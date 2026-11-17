@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useDeleteRepo, useRepo, useTransferRepo, useUpdateRepo, type Repo, type Visibility } from "../../api/repos.ts";
+import { useDeleteRepo, useDeleteRepoAvatar, useRepo, useTransferRepo, useUpdateRepo, useUploadRepoAvatar, type Repo, type Visibility } from "../../api/repos.ts";
+import { AvatarImg } from "../../ui/AvatarImg.tsx";
+import { ImagePicker } from "../settings/ImagePicker.tsx";
 import { useT } from "../../i18n/useT.ts";
 import {
   Button,
@@ -42,6 +44,8 @@ function General({ repo }: { repo: Repo }) {
   const notify = useNotify();
   const navigate = useNavigate();
   const update = useUpdateRepo(repo.owner, repo.name);
+  const upload = useUploadRepoAvatar(repo.owner, repo.name);
+  const removeImage = useDeleteRepoAvatar(repo.owner, repo.name);
   const draft = useDraft({ name: repo.name, description: repo.description, visibility: repo.visibility as Visibility });
   const v = draft.value;
 
@@ -62,6 +66,17 @@ function General({ repo }: { repo: Repo }) {
   return (
     <SettingsSection title={t("settings.general")}>
       <SettingsCard>
+        <SettingRow label={t("settings.image")} description={t("settings.image.hint")}>
+          <ImagePicker
+            preview={<AvatarImg src={repo.avatarUrl} className="st-ph-org">{repo.name.slice(0, 1).toUpperCase()}</AvatarImg>}
+            hasImage={!!repo.avatarUrl}
+            uploading={upload.isPending}
+            busy={upload.isPending || removeImage.isPending}
+            onPick={(f) => upload.mutate(f, { onSuccess: () => notify.ok(t("settings.image.uploaded")), onError: notify.fail })}
+            onRemove={() => removeImage.mutate(undefined, { onSuccess: () => notify.ok(t("settings.image.removed")), onError: notify.fail })}
+            labels={{ upload: t("settings.image.upload"), uploading: t("settings.image.uploading"), remove: t("settings.image.remove") }}
+          />
+        </SettingRow>
         <SettingsGrid>
           <SettingRow label={t("create.name")} description={t("settings.renameHint")} dirty={draft.isDirty("name")} was={draft.initial.name}>
             <Input label={t("create.name")} hideLabel required maxLength={100} mono autoComplete="off" value={v.name} onChange={(e) => draft.set("name", e.target.value)} />

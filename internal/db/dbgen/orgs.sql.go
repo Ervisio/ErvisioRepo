@@ -55,7 +55,8 @@ func (q *Queries) DeleteOrgNamespace(ctx context.Context, id uuid.UUID) (int64, 
 
 const getOrgDetails = `-- name: GetOrgDetails :one
 
-SELECT o.id, n.name, o.display_name, o.description, o.base_permission, o.require_2fa, o.verified_at, o.created_at, o.updated_at
+SELECT o.id, n.name, o.display_name, o.description, o.base_permission, o.require_2fa, o.verified_at, o.created_at, o.updated_at,
+       o.avatar_url
 FROM orgs o
 JOIN namespaces n ON n.id = o.id
 WHERE n.name_lower = lower($1::text)
@@ -71,6 +72,7 @@ type GetOrgDetailsRow struct {
 	VerifiedAt     pgtype.Timestamptz
 	CreatedAt      pgtype.Timestamptz
 	UpdatedAt      pgtype.Timestamptz
+	AvatarUrl      string
 }
 
 // Organizations and their members (InsertOrg, GetOrgByName, UpsertOrgMember
@@ -88,6 +90,7 @@ func (q *Queries) GetOrgDetails(ctx context.Context, name string) (GetOrgDetails
 		&i.VerifiedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.AvatarUrl,
 	)
 	return i, err
 }
@@ -156,7 +159,7 @@ func (q *Queries) ListOrgMembers(ctx context.Context, orgID uuid.UUID) ([]ListOr
 
 const listUserOrgs = `-- name: ListUserOrgs :many
 SELECT o.id, n.name, o.display_name, o.description, o.base_permission, o.require_2fa, o.verified_at, o.created_at, o.updated_at,
-       m.role
+       o.avatar_url, m.role
 FROM org_members m
 JOIN orgs o ON o.id = m.org_id
 JOIN namespaces n ON n.id = o.id
@@ -174,6 +177,7 @@ type ListUserOrgsRow struct {
 	VerifiedAt     pgtype.Timestamptz
 	CreatedAt      pgtype.Timestamptz
 	UpdatedAt      pgtype.Timestamptz
+	AvatarUrl      string
 	Role           string
 }
 
@@ -196,6 +200,7 @@ func (q *Queries) ListUserOrgs(ctx context.Context, userID uuid.UUID) ([]ListUse
 			&i.VerifiedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.AvatarUrl,
 			&i.Role,
 		); err != nil {
 			return nil, err
@@ -216,6 +221,20 @@ SELECT pg_advisory_xact_lock(hashtextextended('erepo.org_members:' || $1::uuid::
 // so that the last-owner check cannot race.
 func (q *Queries) LockOrgMembers(ctx context.Context, orgID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, lockOrgMembers, orgID)
+	return err
+}
+
+const setOrgAvatar = `-- name: SetOrgAvatar :exec
+UPDATE orgs SET avatar_url = $2, updated_at = now() WHERE id = $1
+`
+
+type SetOrgAvatarParams struct {
+	ID        uuid.UUID
+	AvatarUrl string
+}
+
+func (q *Queries) SetOrgAvatar(ctx context.Context, arg SetOrgAvatarParams) error {
+	_, err := q.db.Exec(ctx, setOrgAvatar, arg.ID, arg.AvatarUrl)
 	return err
 }
 

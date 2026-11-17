@@ -249,5 +249,7 @@
   "search.noExt": "senza estensione",
   "search.paths": "Cartelle",
   "search.fileMatches.one": "{count} corrispondenza",
-  "search.fileMatches.other": "{count} corrispondenze"
+  "search.fileMatches.other": "{count} corrispondenze",
+  "commits.showBody": "Mostra la descrizione del commit",
+  "commits.hideBody": "Nascondi la descrizione del commit"
 }

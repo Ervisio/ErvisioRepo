@@ -108,6 +108,8 @@ type Service struct {
 	owned bool
 	cache *lastCommitCache
 	log   *slog.Logger
+	// authors caches the accounts of commit addresses (Authors).
+	authors authorCache
 }
 
 // New builds a Service.
@@ -148,7 +150,7 @@ func New(o Options) (*Service, error) {
 	if o.Log == nil {
 		o.Log = slog.New(slog.DiscardHandler)
 	}
-	s := &Service{o: o, cat: o.CatFile, cache: newLastCommitCache(512), log: o.Log}
+	s := &Service{o: o, cat: o.CatFile, cache: newLastCommitCache(512), log: o.Log, authors: authorCache{m: map[string]authorEntry{}}}
 	if o.DB != nil {
 		s.q = dbgen.New(o.DB)
 	}

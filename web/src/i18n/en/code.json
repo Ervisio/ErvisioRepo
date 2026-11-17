@@ -249,5 +249,7 @@
   "search.noExt": "no extension",
   "search.paths": "Folders",
   "search.fileMatches.one": "{count} match",
-  "search.fileMatches.other": "{count} matches"
+  "search.fileMatches.other": "{count} matches",
+  "commits.showBody": "Show the commit description",
+  "commits.hideBody": "Hide the commit description"
 }

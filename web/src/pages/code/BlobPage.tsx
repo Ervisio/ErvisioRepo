@@ -10,7 +10,7 @@ import { CodeView } from "../../ui/code/CodeView.tsx";
 import { highlight, type Token } from "../../ui/code/highlight.ts";
 import { useNotify } from "../account/common.tsx";
 import { CommitFields, emptyTarget, targetBody } from "./CommitForm.tsx";
-import { CopyButton, Crumb, dirOf, formatBytes, Gate, RepoFrame, shortSha, When } from "./common.tsx";
+import { AuthorName, CopyButton, Crumb, dirOf, formatBytes, Gate, RepoFrame, shortSha, When } from "./common.tsx";
 import { CodeLayout } from "./FileTree.tsx";
 import { LastCommit } from "./TreePage.tsx";
 import { isMarkdown, useInAppLinks, useMarkdownContext } from "./Readme.tsx";
@@ -85,7 +85,7 @@ function FileCommit({ repo, refName, path }: { repo: Repo; refName: string; path
   const log = useCommits(repo.owner, repo.name, refName, path, 0);
   const c = log.data?.commits[0];
   if (!c) return null;
-  return <LastCommit repo={repo} commit={{ sha: c.sha, summary: c.summary, author: c.author.name, date: c.author.date }} refName={refName} path={path} />;
+  return <LastCommit repo={repo} commit={{ sha: c.sha, summary: c.summary, author: c.author.name, authorUser: c.author.user, date: c.author.date }} refName={refName} path={path} />;
 }
 
 /** Surface with the latest commit, then the code area: toolbar (view, meta, Raw, copy, download, edit, more) over the content. */
@@ -258,7 +258,9 @@ function BlameLines({ repo, blame, path, label }: { repo: Repo; blame: Blame; pa
             <Link to="/$owner/$name/commit/$sha" params={{ owner: repo.owner, name: repo.name, sha: r.commit.sha }} title={r.commit.summary}>
               {shortSha(r.commit.sha)}
             </Link>
-            <span className="cv-ann-who">{r.commit.author}</span>
+            <span className="cv-ann-who">
+              <AuthorName name={r.commit.author} user={r.commit.authorUser} />
+            </span>
             <When iso={r.commit.date} />
           </>
         );

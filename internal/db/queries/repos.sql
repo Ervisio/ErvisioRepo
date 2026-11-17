@@ -178,3 +178,14 @@ SELECT pg_try_advisory_lock(hashtextextended('erepo.repo:' || sqlc.arg(repo_id):
 
 -- name: UnlockRepoSession :one
 SELECT pg_advisory_unlock(hashtextextended('erepo.repo:' || sqlc.arg(repo_id)::uuid::text, 0))::bool AS unlocked;
+
+-- name: SetRepoAvatar :exec
+UPDATE repos SET avatar_url = $2 WHERE id = $1;
+
+-- name: ListNamespaceAvatars :many
+-- Avatar URL of each user or organization of ids (empty when unset).
+SELECT n.id, COALESCE(NULLIF(u.avatar_url, ''), o.avatar_url, '')::text AS avatar_url
+FROM namespaces n
+LEFT JOIN users u ON u.id = n.id
+LEFT JOIN orgs o ON o.id = n.id
+WHERE n.id = ANY(sqlc.arg(ids)::uuid[]);

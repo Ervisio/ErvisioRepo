@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 	// Time zone names are validated without relying on the host zoneinfo.
@@ -27,6 +28,7 @@ const (
 	maxProfileURL  = 255
 	maxSocialLinks = 4
 	maxTimezone    = 64
+	maxOrgOrder    = 100
 )
 
 // ProfileDetails are the public details of a profile: bio, company,
@@ -39,13 +41,16 @@ type ProfileDetails struct {
 	SocialLinks []string
 	Timezone    string
 	PublicEmail string
+	// OrgOrder lists organization names in the order the profile shows
+	// them. In UpdateProfileDetails nil keeps the saved order.
+	OrgOrder []string
 }
 
 // ProfileDetails returns the saved details of a user (zero when never saved).
 func (s *Service) ProfileDetails(ctx context.Context, userID uuid.UUID) (ProfileDetails, error) {
 	row, err := s.q.GetUserProfileDetails(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return ProfileDetails{SocialLinks: []string{}}, nil
+		return ProfileDetails{SocialLinks: []string{}, OrgOrder: []string{}}, nil
 	}
 	if err != nil {
 		return ProfileDetails{}, fmt.Errorf("get profile details: %w", err)
@@ -54,8 +59,12 @@ func (s *Service) ProfileDetails(ctx context.Context, userID uuid.UUID) (Profile
 	if links == nil {
 		links = []string{}
 	}
+	order := row.OrgOrder
+	if order == nil {
+		order = []string{}
+	}
 	return ProfileDetails{Bio: row.Bio, Company: row.Company, Location: row.Location, Website: row.Website,
-		SocialLinks: links, Timezone: row.Timezone, PublicEmail: row.PublicEmail}, nil
+		SocialLinks: links, Timezone: row.Timezone, PublicEmail: row.PublicEmail, OrgOrder: order}, nil
 }
 
 // UpdateProfileDetails validates and saves the details. The public email
@@ -94,6 +103,10 @@ func (s *Service) UpdateProfileDetails(ctx context.Context, userID uuid.UUID, in
 			return ProfileDetails{}, fmt.Errorf("%w: unknown time zone", ErrInvalidProfile)
 		}
 	}
+	order, err := s.orgOrder(ctx, userID, in.OrgOrder)
+	if err != nil {
+		return ProfileDetails{}, err
+	}
 	var emailID uuid.NullUUID
 	if d.PublicEmail != "" {
 		id, err := s.q.GetVerifiedEmailID(ctx, dbgen.GetVerifiedEmailIDParams{UserID: userID, Address: d.PublicEmail})
@@ -105,10 +118,10 @@ func (s *Service) UpdateProfileDetails(ctx context.Context, userID uuid.UUID, in
 		}
 		emailID = uuid.NullUUID{UUID: id, Valid: true}
 	}
-	err := s.tx(ctx, func(q *dbgen.Queries) error {
+	err = s.tx(ctx, func(q *dbgen.Queries) error {
 		err := q.UpsertUserProfileDetails(ctx, dbgen.UpsertUserProfileDetailsParams{UserID: userID, Bio: d.Bio,
 			Company: d.Company, Location: d.Location, Website: d.Website, SocialLinks: d.SocialLinks,
-			Timezone: d.Timezone, PublicEmailID: emailID})
+			Timezone: d.Timezone, PublicEmailID: emailID, OrgOrder: order})
 		if err != nil {
 			return fmt.Errorf("save profile details: %w", err)
 		}
@@ -119,6 +132,64 @@ func (s *Service) UpdateProfileDetails(ctx context.Context, userID uuid.UUID, in
 		return ProfileDetails{}, err
 	}
 	return s.ProfileDetails(ctx, userID)
+}
+
+// orgOrder cleans the organization order of an update: the organizations of
+// the user in the given order, with their exact names, each once. nil keeps
+// the saved order.
+func (s *Service) orgOrder(ctx context.Context, userID uuid.UUID, in []string) ([]string, error) {
+	if in == nil {
+		saved, err := s.ProfileDetails(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+		return saved.OrgOrder, nil
+	}
+	if len(in) > maxOrgOrder {
+		return nil, fmt.Errorf("%w: at most %d organizations in the order", ErrInvalidProfile, maxOrgOrder)
+	}
+	rows, err := s.q.ListUserOrgs(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("list orgs: %w", err)
+	}
+	names := make(map[string]string, len(rows))
+	for _, r := range rows {
+		names[strings.ToLower(r.Name)] = r.Name
+	}
+	out := []string{}
+	seen := map[string]bool{}
+	for _, n := range in {
+		k := strings.ToLower(strings.TrimSpace(n))
+		if name, ok := names[k]; ok && !seen[k] {
+			seen[k] = true
+			out = append(out, name)
+		}
+	}
+	return out, nil
+}
+
+// OrderOrgs puts the organizations named in order first, in that order; the
+// others keep their order after them.
+func OrderOrgs(list []OrgSummary, order []string) []OrgSummary {
+	rank := make(map[string]int, len(order))
+	for i, n := range order {
+		rank[strings.ToLower(n)] = i
+	}
+	out := slices.Clone(list)
+	slices.SortStableFunc(out, func(a, b OrgSummary) int {
+		ra, okA := rank[strings.ToLower(a.Name)]
+		rb, okB := rank[strings.ToLower(b.Name)]
+		switch {
+		case okA && okB:
+			return ra - rb
+		case okA:
+			return -1
+		case okB:
+			return 1
+		}
+		return 0
+	})
+	return out
 }
 
 // webURL reports whether v is an absolute http or https URL without credentials.

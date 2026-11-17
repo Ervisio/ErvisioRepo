@@ -116,5 +116,12 @@
   "members.all": "All {count} members",
   "invites.short": "Invite",
   "languages.title": "Top languages",
-  "languages.other": "Other"
+  "languages.other": "Other",
+  "settings.image": "Image",
+  "settings.image.hint": "PNG, JPEG or GIF up to 2 MiB, cropped to a square. Shown on the organization page and next to its repositories.",
+  "settings.image.upload": "Upload image",
+  "settings.image.uploading": "Uploading…",
+  "settings.image.remove": "Remove",
+  "settings.image.uploaded": "Image updated",
+  "settings.image.removed": "Image removed"
 }

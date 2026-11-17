@@ -16,6 +16,7 @@ import {
   useSetMemberRole,
   useSetTeamMember,
   useTeamMembers,
+  useOrgAvatar,
   useUpdateOrg,
   useUpdateTeam,
   type Org,
@@ -61,6 +62,8 @@ import {
 } from "../ui/index.ts";
 import { useLayout } from "../ui/shell/layout.ts";
 import { Avatar } from "../ui/shell/ConsoleShell.tsx";
+import { AvatarImg } from "../ui/AvatarImg.tsx";
+import { ImagePicker } from "./settings/ImagePicker.tsx";
 import { useOwnerRepos } from "../api/repos.ts";
 import { orgHooks } from "../api/settings.ts";
 import { CreateRepoDialog, popular, RepoCards, RepoRows, type RepoLanguages } from "./repos/RepoList.tsx";
@@ -412,7 +415,7 @@ function OrgHead({ org, isOwner, canCreate, onTab }: { org: Org; isOwner: boolea
   const members = useOrgMembers(org.name);
   return (
     <header className="oh">
-      <span className="oh-av" aria-hidden="true">{(org.displayName || org.name).slice(0, 1).toUpperCase()}</span>
+      <AvatarImg src={org.avatarUrl} className="oh-av">{(org.displayName || org.name).slice(0, 1).toUpperCase()}</AvatarImg>
       <div className="oh-m">
         <p className="oh-name">{org.displayName || org.name}</p>
         {org.description && <p className="oh-desc">{org.description}</p>}
@@ -510,6 +513,7 @@ function Settings({ org }: { org: Org }) {
   const navigate = useNavigate();
   const update = useUpdateOrg(org.name);
   const del = useDeleteOrg(org.name);
+  const avatar = useOrgAvatar(org.name);
   const draft = useDraft({ displayName: org.displayName, description: org.description, basePermission: org.basePermission as Permission, require2fa: org.require2fa });
   const v = draft.value;
   const permLabel = (p: Permission) => t(`permission.${p}`);
@@ -523,6 +527,17 @@ function Settings({ org }: { org: Org }) {
     <>
       <SettingsSection title={t("settings.title")}>
         <SettingsCard>
+          <SettingRow label={t("settings.image")} description={t("settings.image.hint")}>
+            <ImagePicker
+              preview={<AvatarImg src={org.avatarUrl} className="st-ph-org">{(org.displayName || org.name).slice(0, 1).toUpperCase()}</AvatarImg>}
+              hasImage={!!org.avatarUrl}
+              uploading={avatar.upload.isPending}
+              busy={avatar.upload.isPending || avatar.remove.isPending}
+              onPick={(f) => avatar.upload.mutate(f, { onSuccess: () => notify.ok(t("settings.image.uploaded")), onError: notify.fail })}
+              onRemove={() => avatar.remove.mutate(undefined, { onSuccess: () => notify.ok(t("settings.image.removed")), onError: notify.fail })}
+              labels={{ upload: t("settings.image.upload"), uploading: t("settings.image.uploading"), remove: t("settings.image.remove") }}
+            />
+          </SettingRow>
           <SettingRow label={t("settings.displayName")} dirty={draft.isDirty("displayName")} was={draft.initial.displayName}>
             <Input label={t("settings.displayName")} hideLabel maxLength={80} value={v.displayName} onChange={(e) => draft.set("displayName", e.target.value)} />
           </SettingRow>
@@ -609,7 +624,7 @@ function OrgSettings({ org, tab, app, installation }: { org: Org; tab: OrgSettin
       groups={groups}
       active={tab}
       header={{
-        avatar: <span className="st-ph-org" aria-hidden="true">{(org.displayName || org.name).slice(0, 1).toUpperCase()}</span>,
+        avatar: <AvatarImg src={org.avatarUrl} className="st-ph-org">{(org.displayName || org.name).slice(0, 1).toUpperCase()}</AvatarImg>,
         name: org.displayName || org.name,
         label: t("settings.header"),
         action: <Link to="/orgs/$org" params={{ org: org.name }} className="ui-btn ui-btn-secondary">{t("settings.toOrg")}</Link>,

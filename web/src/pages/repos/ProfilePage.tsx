@@ -12,7 +12,9 @@ import { formatDate, useNotify } from "../account/common.tsx";
 import { When } from "../code/common.tsx";
 import { Readme } from "../code/Readme.tsx";
 import { popular, RepoCards, RepoRows } from "./RepoList.tsx";
+import { AvatarImg } from "../../ui/AvatarImg.tsx";
 import type { UseQueryResult } from "@tanstack/react-query";
+import { socialLink, socialNames, SocialIcon } from "../../lib/social.tsx";
 
 export type ProfileTab = "repositories" | "stars";
 
@@ -126,7 +128,15 @@ function ProfileCard({ user: u, own }: { user: UserProfile; own: boolean }) {
         {u.timezone && <LocalTime zone={u.timezone} />}
         {u.website && <li><Icon name="link" /><a href={u.website} rel="nofollow noopener noreferrer" target="_blank">{host(u.website)}</a></li>}
         {u.publicEmail && <li><Icon name="mail" /><a href={`mailto:${u.publicEmail}`}>{u.publicEmail}</a></li>}
-        {u.socialLinks?.map((l) => <li key={l}><Icon name="globe" /><a href={l} rel="nofollow noopener noreferrer me" target="_blank">{host(l)}</a></li>)}
+        {u.socialLinks?.map((l) => {
+          const s = socialLink(l);
+          return (
+            <li key={l} className="up-social">
+              <SocialIcon id={s.id} />
+              <a href={l} rel="nofollow noopener noreferrer me" target="_blank" title={socialNames[s.id] || host(l)}>{s.text}</a>
+            </li>
+          );
+        })}
         <li><Icon name="calendar" />{t("profile.joined", { date: formatDate(u.createdAt) })}</li>
       </ul>
       {u.orgs && u.orgs.length > 0 && (
@@ -136,7 +146,7 @@ function ProfileCard({ user: u, own }: { user: UserProfile; own: boolean }) {
             {u.orgs.map((o) => (
               <li key={o.name}>
                 <Link to="/orgs/$org" params={{ org: o.name }} className="up-org" title={o.displayName || o.name} aria-label={o.displayName || o.name}>
-                  {(o.displayName || o.name).slice(0, 1).toUpperCase()}
+                  {o.avatarUrl ? <AvatarImg src={o.avatarUrl} fill>{(o.displayName || o.name).slice(0, 1).toUpperCase()}</AvatarImg> : (o.displayName || o.name).slice(0, 1).toUpperCase()}
                 </Link>
               </li>
             ))}

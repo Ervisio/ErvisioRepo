@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { canWrite, useTree, type Tree, type TreeEntry } from "../../api/code.ts";
+import { canWrite, useTree, type CommitUser, type Tree, type TreeEntry } from "../../api/code.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Button, Card, EmptyState, Icon, Menu, MenuItem, MenuSeparator } from "../../ui/index.ts";
 import { useLayout } from "../../ui/shell/layout.ts";
 import { EmptyRepoCard } from "../repos/RepoPage.tsx";
-import { Crumb, dirOf, Gate, Initial, RefSwitcher, RepoFrame, shortSha, When } from "./common.tsx";
+import { AuthorAvatar, AuthorName, Crumb, dirOf, Gate, RefSwitcher, RepoFrame, shortSha, When } from "./common.tsx";
 import { CodeLayout } from "./FileTree.tsx";
 import { Readme } from "./Readme.tsx";
 import { CloneMenu } from "./RepoHead.tsx";
@@ -224,14 +224,14 @@ function FileBox({ repo, tree, refName, path }: { repo: Repo; tree: Tree; refNam
 }
 
 /** Strip with the latest commit of a folder or file: author, message, sha, time, History. */
-export function LastCommit({ repo, commit: c, refName, path }: { repo: Repo; commit: { sha: string; summary: string; author: string; date: string }; refName: string; path: string }) {
+export function LastCommit({ repo, commit: c, refName, path }: { repo: Repo; commit: { sha: string; summary: string; author: string; authorUser?: CommitUser; date: string }; refName: string; path: string }) {
   const t = useT("code");
   const { owner, name } = repo;
   return (
     <div className="ui-box-h rp-lc">
-      <Initial name={c.author} size={22} />
+      <AuthorAvatar name={c.author} user={c.authorUser} size={22} />
       <span className="rp-lcm">
-        <b>{c.author}</b>
+        <AuthorName name={c.author} user={c.authorUser} />
         <Link to="/$owner/$name/commit/$sha" params={{ owner, name, sha: c.sha }}>
           {c.summary}
         </Link>
@@ -281,7 +281,7 @@ function TreeList({ repo, tree, refName, path }: { repo: Repo; tree: Tree; refNa
       {last && (
         <div className="rp-last">
           <Icon name="commit" />
-          <b>{last.author}</b>
+          <AuthorName name={last.author} user={last.authorUser} />
           <Link className="rp-last-msg" to="/$owner/$name/commit/$sha" params={{ owner, name, sha: last.sha }}>
             {last.summary}
           </Link>

@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
+	"log/slog"
 	"mime"
 	"net/http"
 	"net/url"
@@ -147,10 +148,18 @@ func (s *v1Server) GetTree(ctx context.Context, req v1gen.GetTreeRequestObject) 
 	if t.Readme != "" {
 		out.Readme = &t.Readme
 	}
+	var emails []string
+	for _, e := range t.Entries {
+		if e.LastCommit != nil {
+			emails = append(emails, e.LastCommit.AuthorEmail)
+		}
+	}
+	acc := s.commitAccounts(ctx, emails)
 	for _, e := range t.Entries {
 		te := v1gen.TreeEntry{Name: e.Name, Path: e.Path, Type: v1gen.TreeEntryType(e.Type), Mode: e.Mode, Oid: e.OID, Size: e.Size}
 		if e.LastCommit != nil {
 			cs := summaryDTO(*e.LastCommit)
+			cs.AuthorUser = commitUser(acc, e.LastCommit.AuthorEmail)
 			te.LastCommit = &cs
 		}
 		out.Entries = append(out.Entries, te)
@@ -198,8 +207,15 @@ func (s *v1Server) GetBlame(ctx context.Context, req v1gen.GetBlameRequestObject
 	if out.Lines == nil {
 		out.Lines = []string{}
 	}
+	emails := make([]string, 0, len(b.Ranges))
 	for _, r := range b.Ranges {
-		out.Ranges = append(out.Ranges, v1gen.BlameRange{Commit: summaryDTO(r.Commit), StartLine: r.StartLine, Lines: r.Lines})
+		emails = append(emails, r.Commit.AuthorEmail)
+	}
+	acc := s.commitAccounts(ctx, emails)
+	for _, r := range b.Ranges {
+		cs := summaryDTO(r.Commit)
+		cs.AuthorUser = commitUser(acc, r.Commit.AuthorEmail)
+		out.Ranges = append(out.Ranges, v1gen.BlameRange{Commit: cs, StartLine: r.StartLine, Lines: r.Lines})
 	}
 	return v1gen.GetBlame200JSONResponse(out), nil
 }
@@ -215,7 +231,7 @@ func (s *v1Server) ListCommits(ctx context.Context, req v1gen.ListCommitsRequest
 	if err != nil {
 		return browseFail(err, http.MethodGet, suffix)
 	}
-	return v1gen.ListCommits200JSONResponse(v1gen.CommitPage{Ref: resolvedDTO(p.Ref), Commits: commitsDTO(p.Commits), HasMore: p.HasMore}), nil
+	return v1gen.ListCommits200JSONResponse(v1gen.CommitPage{Ref: resolvedDTO(p.Ref), Commits: s.linkCommits(ctx, commitsDTO(p.Commits)), HasMore: p.HasMore}), nil
 }
 
 func (s *v1Server) ListContributors(ctx context.Context, req v1gen.ListContributorsRequestObject) (v1gen.ListContributorsResponseObject, error) {
@@ -269,7 +285,7 @@ func (s *v1Server) GetCommit(ctx context.Context, req v1gen.GetCommitRequestObje
 	if err != nil {
 		return browseFail(err, http.MethodGet, suffix)
 	}
-	return v1gen.GetCommit200JSONResponse(v1gen.CommitDetail{Commit: commitDTO(c.Commit), Diff: diffDTO(c.Diff)}), nil
+	return v1gen.GetCommit200JSONResponse(v1gen.CommitDetail{Commit: s.linkCommits(ctx, []v1gen.GitCommit{commitDTO(c.Commit)})[0], Diff: diffDTO(c.Diff)}), nil
 }
 
 func (s *v1Server) ListBranches(ctx context.Context, req v1gen.ListBranchesRequestObject) (v1gen.ListBranchesResponseObject, error) {
@@ -323,7 +339,7 @@ func (s *v1Server) CompareRefs(ctx context.Context, req v1gen.CompareRefsRequest
 		return browseFail(err, http.MethodGet, suffix)
 	}
 	return v1gen.CompareRefs200JSONResponse(v1gen.Comparison{Base: resolvedDTO(c.Base), Head: resolvedDTO(c.Head),
-		MergeBase: c.MergeBase, Ahead: c.Ahead, Behind: c.Behind, Commits: commitsDTO(c.Commits),
+		MergeBase: c.MergeBase, Ahead: c.Ahead, Behind: c.Behind, Commits: s.linkCommits(ctx, commitsDTO(c.Commits)),
 		CommitsTruncated: c.CommitsTruncated, Diff: diffDTO(c.Diff)}), nil
 }
 
@@ -416,6 +432,42 @@ func commitDTO(c gitbrowse.Commit) v1gen.GitCommit {
 	}
 	return v1gen.GitCommit{Sha: c.SHA, Parents: parents, Author: personDTO(c.Author), Committer: personDTO(c.Committer),
 		Summary: c.Summary, Message: c.Message}
+}
+
+// commitAccounts finds the accounts of commit addresses in one lookup. A
+// failure only leaves the authors unlinked.
+func (s *v1Server) commitAccounts(ctx context.Context, emails []string) map[string]gitbrowse.Account {
+	if s.browse == nil || len(emails) == 0 {
+		return nil
+	}
+	acc, err := s.browse.Authors(ctx, emails)
+	if err != nil {
+		slog.WarnContext(ctx, "link commit authors", "err", err)
+	}
+	return acc
+}
+
+// commitUser is the account of email, or nil.
+func commitUser(acc map[string]gitbrowse.Account, email string) *v1gen.CommitUser {
+	a, ok := acc[strings.ToLower(strings.TrimSpace(email))]
+	if !ok {
+		return nil
+	}
+	return &v1gen.CommitUser{Username: a.Username, AvatarUrl: a.AvatarURL}
+}
+
+// linkCommits sets author.user and committer.user of list and returns it.
+func (s *v1Server) linkCommits(ctx context.Context, list []v1gen.GitCommit) []v1gen.GitCommit {
+	emails := make([]string, 0, 2*len(list))
+	for _, c := range list {
+		emails = append(emails, c.Author.Email, c.Committer.Email)
+	}
+	acc := s.commitAccounts(ctx, emails)
+	for i := range list {
+		list[i].Author.User = commitUser(acc, list[i].Author.Email)
+		list[i].Committer.User = commitUser(acc, list[i].Committer.Email)
+	}
+	return list
 }
 
 func commitsDTO(list []gitbrowse.Commit) []v1gen.GitCommit {

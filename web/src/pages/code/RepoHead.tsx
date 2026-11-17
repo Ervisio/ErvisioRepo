@@ -1,7 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { archiveUrl } from "../../api/code.ts";
-import { useSession, useUserProfile } from "../../api/identity.ts";
+import { useSession } from "../../api/identity.ts";
 import { useRepoSubscription, useSetRepoSubscription, type RepoSubscription } from "../../api/notifications.ts";
 import { useStar, type Repo } from "../../api/repos.ts";
 import { useMeta } from "../../api/useMeta.ts";
@@ -9,6 +9,7 @@ import { currentLocale } from "../../i18n/locale.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Button, Icon, Menu, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuSeparator, type IconName } from "../../ui/index.ts";
 import { Avatar } from "../../ui/shell/ConsoleShell.tsx";
+import { AvatarImg, RepoImage } from "../../ui/AvatarImg.tsx";
 import { useNotify } from "../account/common.tsx";
 import { usePinToggle } from "../repos/PinButton.tsx";
 import { ForkDialog } from "../repos/RepoList.tsx";
@@ -47,6 +48,7 @@ export function RepoHead({ repo }: { repo: Repo }) {
         )}
         <span className="rh-sep" aria-hidden="true">/</span>
         <Link to="/$owner/$name" params={{ owner: repo.owner, name: repo.name }}>
+          <RepoImage src={repo.avatarUrl} size={22} />
           <b>{repo.name}</b>
         </Link>
       </div>
@@ -63,16 +65,11 @@ export function RepoHead({ repo }: { repo: Repo }) {
 
 function OwnerAvatar({ repo }: { repo: Repo }) {
   if (repo.ownerKind === "org") {
-    return <span className="rh-av rh-org" aria-hidden="true">{repo.owner.slice(0, 1).toUpperCase()}</span>;
+    return <AvatarImg src={repo.ownerAvatarUrl} className="rh-av rh-org">{repo.owner.slice(0, 1).toUpperCase()}</AvatarImg>;
   }
-  return <UserAvatar username={repo.owner} />;
-}
-
-function UserAvatar({ username }: { username: string }) {
-  const p = useUserProfile(username);
   return (
     <span className="rh-av" aria-hidden="true">
-      <Avatar user={{ username, avatarUrl: p.data?.avatarUrl ?? "" }} />
+      <Avatar user={{ username: repo.owner, avatarUrl: repo.ownerAvatarUrl }} />
     </span>
   );
 }

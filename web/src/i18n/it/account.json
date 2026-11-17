@@ -200,5 +200,10 @@
   "details.email": "Email pubblica",
   "details.email.hint": "Uno dei tuoi indirizzi verificati.",
   "details.hidden": "Non mostrare",
-  "details.saved": "Profilo pubblico salvato"
+  "details.saved": "Profilo pubblico salvato",
+  "details.orgOrder": "Ordine delle organizzazioni",
+  "details.orgOrder.hint": "Ordine delle organizzazioni sul tuo profilo. Trascinale o usa le frecce.",
+  "details.orgOrder.up": "Sposta {name} in alto",
+  "details.orgOrder.down": "Sposta {name} in basso",
+  "details.orgOrder.none": "Non fai parte di nessuna organizzazione."
 }

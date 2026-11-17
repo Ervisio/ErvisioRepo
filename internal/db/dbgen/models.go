@@ -931,6 +931,7 @@ type Org struct {
 	UpdatedAt      pgtype.Timestamptz
 	Require2fa     bool
 	BasePermission string
+	AvatarUrl      string
 }
 
 type OrgInvite struct {
@@ -1102,6 +1103,7 @@ type Repo struct {
 	JournalDirtySince      pgtype.Timestamptz
 	PushesSinceMaintenance int32
 	StarsCount             int32
+	AvatarUrl              string
 }
 
 type RepoCollaborator struct {
@@ -1286,6 +1288,7 @@ type UserProfile struct {
 	Timezone      string
 	PublicEmailID uuid.NullUUID
 	UpdatedAt     pgtype.Timestamptz
+	OrgOrder      []string
 }
 
 type WebauthnCredential struct {

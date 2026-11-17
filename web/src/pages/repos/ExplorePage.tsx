@@ -8,6 +8,7 @@ import { useWeeklyActivity } from "../../api/profile.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Button, EmptyState, Input, Page, Select } from "../../ui/index.ts";
 import { Avatar } from "../../ui/shell/ConsoleShell.tsx";
+import { AvatarImg } from "../../ui/AvatarImg.tsx";
 import { Pager } from "../code/common.tsx";
 import { RepoRow } from "./RepoList.tsx";
 
@@ -118,7 +119,7 @@ function OrgResults({ q }: { q?: string }) {
     <ul className="rl-list">
       {rows.map((o) => (
         <li key={o.name} className="rl-row px-who">
-          <span className="px-org" aria-hidden="true">{(o.displayName || o.name).slice(0, 1).toUpperCase()}</span>
+          <AvatarImg src={o.avatarUrl} className="px-org">{(o.displayName || o.name).slice(0, 1).toUpperCase()}</AvatarImg>
           <div className="rl-main">
             <h3 className="rl-h">
               <Link to="/orgs/$org" params={{ org: o.name }} className="rl-name">{o.displayName || o.name}</Link>
@@ -183,7 +184,7 @@ function ExploreAside() {
             {starred.map((r) => (
               <li key={r.id}>
                 <Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="ui-li">
-                  <span className="px-org px-sm" aria-hidden="true">{r.owner.slice(0, 1).toUpperCase()}</span>
+                  <AvatarImg src={r.avatarUrl || r.ownerAvatarUrl} className="px-org px-sm">{r.owner.slice(0, 1).toUpperCase()}</AvatarImg>
                   <span className="px-n">{r.fullName}</span>
                   <span className="ui-tm">★ {r.starsCount}</span>
                 </Link>
@@ -199,7 +200,7 @@ function ExploreAside() {
             {mine.map((o) => (
               <li key={o.name}>
                 <Link to="/orgs/$org" params={{ org: o.name }} className="ui-li">
-                  <span className="px-org px-sm" aria-hidden="true">{(o.displayName || o.name).slice(0, 1).toUpperCase()}</span>
+                  <AvatarImg src={o.avatarUrl} className="px-org px-sm">{(o.displayName || o.name).slice(0, 1).toUpperCase()}</AvatarImg>
                   <span className="px-n">{o.displayName || o.name}</span>
                 </Link>
               </li>

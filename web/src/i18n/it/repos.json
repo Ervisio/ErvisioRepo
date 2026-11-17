@@ -214,5 +214,12 @@
   "mine.all": "Tutti",
   "mine.personal": "Personali",
   "mine.orgs": "Organizzazioni",
-  "mine.stars": "Stelle"
+  "mine.stars": "Stelle",
+  "settings.image": "Immagine",
+  "settings.image.hint": "PNG, JPEG o GIF fino a 2 MiB, ritagliata a quadrato. Compare accanto al nome nell'intestazione e negli elenchi dei repository.",
+  "settings.image.upload": "Carica immagine",
+  "settings.image.uploading": "Caricamento…",
+  "settings.image.remove": "Rimuovi",
+  "settings.image.uploaded": "Immagine aggiornata",
+  "settings.image.removed": "Immagine rimossa"
 }

@@ -200,5 +200,10 @@
   "details.email": "Public email",
   "details.email.hint": "One of your verified addresses.",
   "details.hidden": "Don't show",
-  "details.saved": "Public profile saved"
+  "details.saved": "Public profile saved",
+  "details.orgOrder": "Organizations order",
+  "details.orgOrder.hint": "Order of the organizations on your profile. Drag them, or use the arrows.",
+  "details.orgOrder.up": "Move {name} up",
+  "details.orgOrder.down": "Move {name} down",
+  "details.orgOrder.none": "You are not a member of any organization."
 }

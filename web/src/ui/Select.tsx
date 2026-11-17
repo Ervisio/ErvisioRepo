@@ -30,7 +30,10 @@ export function Select({ label, value, onValueChange, options, placeholder, disa
           </RSelect.Icon>
         </RSelect.Trigger>
         <RSelect.Portal>
-          <RSelect.Content className="ui-pop" position="popper" sideOffset={6}>
+          <RSelect.Content className="ui-pop ui-pop-sel" position="popper" sideOffset={6}>
+            <RSelect.ScrollUpButton className="ui-pop-scroll">
+              <Icon name="down" style={{ transform: "rotate(180deg)" }} />
+            </RSelect.ScrollUpButton>
             <RSelect.Viewport className="ui-pop-viewport" nonce={cspNonce()}>
               {options.map((o) => (
                 <RSelect.Item key={o.value} value={o.value} className="ui-item">
@@ -41,6 +44,9 @@ export function Select({ label, value, onValueChange, options, placeholder, disa
                 </RSelect.Item>
               ))}
             </RSelect.Viewport>
+            <RSelect.ScrollDownButton className="ui-pop-scroll">
+              <Icon name="down" />
+            </RSelect.ScrollDownButton>
           </RSelect.Content>
         </RSelect.Portal>
       </RSelect.Root>

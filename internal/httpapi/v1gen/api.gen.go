@@ -2828,6 +2828,27 @@ func (e ListUserIssuesParamsState) Valid() bool {
 	}
 }
 
+// Defines values for GetUserCardParamsTheme.
+const (
+	GetUserCardParamsThemeDark  GetUserCardParamsTheme = "dark"
+	GetUserCardParamsThemeLight GetUserCardParamsTheme = "light"
+	GetUserCardParamsThemeNeon  GetUserCardParamsTheme = "neon"
+)
+
+// Valid indicates whether the value is a known member of the GetUserCardParamsTheme enum.
+func (e GetUserCardParamsTheme) Valid() bool {
+	switch e {
+	case GetUserCardParamsThemeDark:
+		return true
+	case GetUserCardParamsThemeLight:
+		return true
+	case GetUserCardParamsThemeNeon:
+		return true
+	default:
+		return false
+	}
+}
+
 // AccessToken defines model for AccessToken.
 type AccessToken struct {
 	CreatedAt time.Time `json:"createdAt"`
@@ -4046,6 +4067,15 @@ type CommitStatusCreate struct {
 // CommitStatusCreateState defines model for CommitStatusCreate.State.
 type CommitStatusCreateState string
 
+// CommitUser The account a commit address belongs to: a verified address of the
+// user or the no-reply address of a web edit. Only the username and
+// avatar are given, never the user's addresses.
+type CommitUser struct {
+	// AvatarUrl Absolute https URL of the avatar; empty when unset
+	AvatarUrl string `json:"avatarUrl"`
+	Username  string `json:"username"`
+}
+
 // Comparison defines model for Comparison.
 type Comparison struct {
 	Ahead            int         `json:"ahead"`
@@ -4282,10 +4312,15 @@ type GitCommit struct {
 // GitCommitSummary defines model for GitCommitSummary.
 type GitCommitSummary struct {
 	// Author Author name
-	Author  string    `json:"author"`
-	Date    time.Time `json:"date"`
-	Sha     string    `json:"sha"`
-	Summary string    `json:"summary"`
+	Author string `json:"author"`
+
+	// AuthorUser The account a commit address belongs to: a verified address of the
+	// user or the no-reply address of a web edit. Only the username and
+	// avatar are given, never the user's addresses.
+	AuthorUser *CommitUser `json:"authorUser,omitempty"`
+	Date       time.Time   `json:"date"`
+	Sha        string      `json:"sha"`
+	Summary    string      `json:"summary"`
 }
 
 // GitHubConnection defines model for GitHubConnection.
@@ -4492,6 +4527,11 @@ type GitPerson struct {
 	Date  time.Time `json:"date"`
 	Email string    `json:"email"`
 	Name  string    `json:"name"`
+
+	// User The account a commit address belongs to: a verified address of the
+	// user or the no-reply address of a web edit. Only the username and
+	// avatar are given, never the user's addresses.
+	User *CommitUser `json:"user,omitempty"`
 }
 
 // GitTag defines model for GitTag.
@@ -5142,6 +5182,8 @@ type OidcRedirect struct {
 
 // Org defines model for Org.
 type Org struct {
+	// AvatarUrl Absolute https URL of the avatar image; empty when unset
+	AvatarUrl      string             `json:"avatarUrl"`
 	BasePermission Permission         `json:"basePermission"`
 	CreatedAt      time.Time          `json:"createdAt"`
 	Description    string             `json:"description"`
@@ -5218,6 +5260,8 @@ type OrgRoleRequest struct {
 
 // OrgSummary defines model for OrgSummary.
 type OrgSummary struct {
+	// AvatarUrl Absolute https URL of the avatar image; empty when unset
+	AvatarUrl   string `json:"avatarUrl"`
 	DisplayName string `json:"displayName"`
 	Name        string `json:"name"`
 }
@@ -5283,6 +5327,11 @@ type ProfileDetails struct {
 	Bio      string `json:"bio"`
 	Company  string `json:"company"`
 	Location string `json:"location"`
+
+	// OrgOrder Names of organizations in the order the profile shows them; the
+	// others follow alphabetically. Only organizations the user belongs
+	// to are kept. Omitted in an update, the saved order stays.
+	OrgOrder *[]string `json:"orgOrder,omitempty"`
 
 	// PublicEmail A verified address of the account shown on the profile, or empty
 	PublicEmail string   `json:"publicEmail"`
@@ -5802,6 +5851,8 @@ type ReleaseUpdate struct {
 
 // Repo defines model for Repo.
 type Repo struct {
+	// AvatarUrl Absolute https URL of the repository image; empty when unset
+	AvatarUrl     string    `json:"avatarUrl"`
 	CreatedAt     time.Time `json:"createdAt"`
 	DefaultBranch string    `json:"defaultBranch"`
 	Description   string    `json:"description"`
@@ -5815,8 +5866,11 @@ type Repo struct {
 	OpenIssuesCount *int64 `json:"openIssuesCount,omitempty"`
 
 	// OpenPullsCount Open pull requests; only set by getRepo
-	OpenPullsCount *int64        `json:"openPullsCount,omitempty"`
-	Owner          string        `json:"owner"`
+	OpenPullsCount *int64 `json:"openPullsCount,omitempty"`
+	Owner          string `json:"owner"`
+
+	// OwnerAvatarUrl Absolute https URL of the avatar of the owner (user or organization); empty when unset
+	OwnerAvatarUrl string        `json:"ownerAvatarUrl"`
 	OwnerKind      RepoOwnerKind `json:"ownerKind"`
 	Permission     Permission    `json:"permission"`
 	SizeBytes      int64         `json:"sizeBytes"`
@@ -7629,6 +7683,15 @@ type ListProfileActivityParams struct {
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// GetUserCardParams defines parameters for GetUserCard.
+type GetUserCardParams struct {
+	Theme      *GetUserCardParamsTheme `form:"theme,omitempty" json:"theme,omitempty"`
+	HideBorder *bool                   `form:"hideBorder,omitempty" json:"hideBorder,omitempty"`
+}
+
+// GetUserCardParamsTheme defines parameters for GetUserCard.
+type GetUserCardParamsTheme string
+
 // GetUserContributionsParams defines parameters for GetUserContributions.
 type GetUserContributionsParams struct {
 	Year *int `form:"year,omitempty" json:"year,omitempty"`
@@ -8374,6 +8437,12 @@ type ServerInterface interface {
 	// ListOrgAudit Audit log of an organization, newest first
 	// (GET /orgs/{org}/audit)
 	ListOrgAudit(w http.ResponseWriter, r *http.Request, org OrgName, params ListOrgAuditParams)
+	// DeleteOrgAvatar Remove the avatar image of an organization
+	// (DELETE /orgs/{org}/avatar)
+	DeleteOrgAvatar(w http.ResponseWriter, r *http.Request, org OrgName)
+	// UploadOrgAvatar Upload the avatar image of an organization
+	// (PUT /orgs/{org}/avatar)
+	UploadOrgAvatar(w http.ResponseWriter, r *http.Request, org OrgName)
 	// ListOrgWebhooks Webhooks of the organization
 	// (GET /orgs/{org}/hooks)
 	ListOrgWebhooks(w http.ResponseWriter, r *http.Request, org OrgName)
@@ -8554,6 +8623,12 @@ type ServerInterface interface {
 	// DispatchActionsWorkflow Start a workflow_dispatch run
 	// (POST /repos/{owner}/{name}/actions/workflows/{workflow}/dispatches)
 	DispatchActionsWorkflow(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, workflow ActionsWorkflowParam)
+	// DeleteRepoAvatar Remove the avatar image of a repository
+	// (DELETE /repos/{owner}/{name}/avatar)
+	DeleteRepoAvatar(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// UploadRepoAvatar Upload the avatar image of a repository
+	// (PUT /repos/{owner}/{name}/avatar)
+	UploadRepoAvatar(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
 	// GetBlame Line authorship of a text file
 	// (GET /repos/{owner}/{name}/blame)
 	GetBlame(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params GetBlameParams)
@@ -9133,6 +9208,9 @@ type ServerInterface interface {
 	// ListProfileActivity Recent activity of a user in the repositories the caller can read
 	// (GET /users/{username}/activity)
 	ListProfileActivity(w http.ResponseWriter, r *http.Request, username Username, params ListProfileActivityParams)
+	// GetUserCard SVG profile card of a user, to embed in a README
+	// (GET /users/{username}/cards/{card}.svg)
+	GetUserCard(w http.ResponseWriter, r *http.Request, username Username, card string, params GetUserCardParams)
 	// GetUserContributions Contribution calendar of a user
 	// (GET /users/{username}/contributions)
 	GetUserContributions(w http.ResponseWriter, r *http.Request, username Username, params GetUserContributionsParams)
@@ -9874,6 +9952,18 @@ func (_ Unimplemented) ListOrgAudit(w http.ResponseWriter, r *http.Request, org 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// DeleteOrgAvatar Remove the avatar image of an organization
+// (DELETE /orgs/{org}/avatar)
+func (_ Unimplemented) DeleteOrgAvatar(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UploadOrgAvatar Upload the avatar image of an organization
+// (PUT /orgs/{org}/avatar)
+func (_ Unimplemented) UploadOrgAvatar(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListOrgWebhooks Webhooks of the organization
 // (GET /orgs/{org}/hooks)
 func (_ Unimplemented) ListOrgWebhooks(w http.ResponseWriter, r *http.Request, org OrgName) {
@@ -10231,6 +10321,18 @@ func (_ Unimplemented) GetActionsBadge(w http.ResponseWriter, r *http.Request, o
 // DispatchActionsWorkflow Start a workflow_dispatch run
 // (POST /repos/{owner}/{name}/actions/workflows/{workflow}/dispatches)
 func (_ Unimplemented) DispatchActionsWorkflow(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, workflow ActionsWorkflowParam) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteRepoAvatar Remove the avatar image of a repository
+// (DELETE /repos/{owner}/{name}/avatar)
+func (_ Unimplemented) DeleteRepoAvatar(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UploadRepoAvatar Upload the avatar image of a repository
+// (PUT /repos/{owner}/{name}/avatar)
+func (_ Unimplemented) UploadRepoAvatar(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -11389,6 +11491,12 @@ func (_ Unimplemented) GetUserProfile(w http.ResponseWriter, r *http.Request, us
 // ListProfileActivity Recent activity of a user in the repositories the caller can read
 // (GET /users/{username}/activity)
 func (_ Unimplemented) ListProfileActivity(w http.ResponseWriter, r *http.Request, username Username, params ListProfileActivityParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetUserCard SVG profile card of a user, to embed in a README
+// (GET /users/{username}/cards/{card}.svg)
+func (_ Unimplemented) GetUserCard(w http.ResponseWriter, r *http.Request, username Username, card string, params GetUserCardParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -15429,6 +15537,70 @@ func (siw *ServerInterfaceWrapper) ListOrgAudit(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteOrgAvatar operation middleware
+func (siw *ServerInterfaceWrapper) DeleteOrgAvatar(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteOrgAvatar(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UploadOrgAvatar operation middleware
+func (siw *ServerInterfaceWrapper) UploadOrgAvatar(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UploadOrgAvatar(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListOrgWebhooks operation middleware
 func (siw *ServerInterfaceWrapper) ListOrgWebhooks(w http.ResponseWriter, r *http.Request) {
 
@@ -18345,6 +18517,92 @@ func (siw *ServerInterfaceWrapper) DispatchActionsWorkflow(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DispatchActionsWorkflow(w, r, owner, name, workflow)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteRepoAvatar operation middleware
+func (siw *ServerInterfaceWrapper) DeleteRepoAvatar(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteRepoAvatar(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UploadRepoAvatar operation middleware
+func (siw *ServerInterfaceWrapper) UploadRepoAvatar(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UploadRepoAvatar(w, r, owner, name)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -28235,6 +28493,78 @@ func (siw *ServerInterfaceWrapper) ListProfileActivity(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// GetUserCard operation middleware
+func (siw *ServerInterfaceWrapper) GetUserCard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "card" -------------
+	var card string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "card", chi.URLParam(r, "card"), &card, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "card", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUserCardParams
+
+	// ------------- Optional query parameter "theme" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "theme", r.URL.Query(), &params.Theme, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "theme"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "theme", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "hideBorder" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "hideBorder", r.URL.Query(), &params.HideBorder, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "hideBorder"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hideBorder", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserCard(w, r, username, card, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetUserContributions operation middleware
 func (siw *ServerInterfaceWrapper) GetUserContributions(w http.ResponseWriter, r *http.Request) {
 
@@ -28950,6 +29280,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Patch(options.BaseURL+"/orgs/{org}", wrapper.UpdateOrg)
 	})
 	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/orgs/{org}/avatar", wrapper.DeleteOrgAvatar)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/orgs/{org}/avatar", wrapper.UploadOrgAvatar)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/orgs/{org}/languages", wrapper.ListOrgLanguages)
 	})
 	r.Group(func(r chi.Router) {
@@ -29055,6 +29391,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/users/{username}/contributions", wrapper.GetUserContributions)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/users/{username}/cards/{card}.svg", wrapper.GetUserCard)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/explore/activity", wrapper.ListReposWeeklyActivity)
 	})
 	r.Group(func(r chi.Router) {
@@ -29071,6 +29410,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/repos/{owner}/{name}", wrapper.UpdateRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/avatar", wrapper.DeleteRepoAvatar)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/avatar", wrapper.UploadRepoAvatar)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/repos/{owner}/{name}/transfer", wrapper.TransferRepo)
@@ -38472,6 +38817,202 @@ func (response ListOrgAuditdefaultApplicationProblemPlusJSONResponse) VisitListO
 	return err
 }
 
+type DeleteOrgAvatarRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type DeleteOrgAvatarResponseObject interface {
+	VisitDeleteOrgAvatarResponse(w http.ResponseWriter) error
+}
+
+type DeleteOrgAvatar200JSONResponse Org
+
+func (response DeleteOrgAvatar200JSONResponse) VisitDeleteOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgAvatar403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteOrgAvatar403ApplicationProblemPlusJSONResponse) VisitDeleteOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgAvatar404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteOrgAvatar404ApplicationProblemPlusJSONResponse) VisitDeleteOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgAvatar503ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteOrgAvatar503ApplicationProblemPlusJSONResponse) VisitDeleteOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOrgAvatardefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteOrgAvatardefaultApplicationProblemPlusJSONResponse) VisitDeleteOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadOrgAvatarRequestObject struct {
+	Org         OrgName `json:"org"`
+	ContentType string
+	Body        io.Reader
+}
+
+type UploadOrgAvatarResponseObject interface {
+	VisitUploadOrgAvatarResponse(w http.ResponseWriter) error
+}
+
+type UploadOrgAvatar200JSONResponse Org
+
+func (response UploadOrgAvatar200JSONResponse) VisitUploadOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadOrgAvatar400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UploadOrgAvatar400ApplicationProblemPlusJSONResponse) VisitUploadOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadOrgAvatar403ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadOrgAvatar403ApplicationProblemPlusJSONResponse) VisitUploadOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadOrgAvatar404ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadOrgAvatar404ApplicationProblemPlusJSONResponse) VisitUploadOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadOrgAvatar413ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadOrgAvatar413ApplicationProblemPlusJSONResponse) VisitUploadOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(413)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadOrgAvatar503ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadOrgAvatar503ApplicationProblemPlusJSONResponse) VisitUploadOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadOrgAvatardefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UploadOrgAvatardefaultApplicationProblemPlusJSONResponse) VisitUploadOrgAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListOrgWebhooksRequestObject struct {
 	Org OrgName `json:"org"`
 }
@@ -44089,6 +44630,204 @@ type DispatchActionsWorkflowdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response DispatchActionsWorkflowdefaultApplicationProblemPlusJSONResponse) VisitDispatchActionsWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoAvatarRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type DeleteRepoAvatarResponseObject interface {
+	VisitDeleteRepoAvatarResponse(w http.ResponseWriter) error
+}
+
+type DeleteRepoAvatar200JSONResponse Repo
+
+func (response DeleteRepoAvatar200JSONResponse) VisitDeleteRepoAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoAvatar403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteRepoAvatar403ApplicationProblemPlusJSONResponse) VisitDeleteRepoAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoAvatar404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteRepoAvatar404ApplicationProblemPlusJSONResponse) VisitDeleteRepoAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoAvatar503ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteRepoAvatar503ApplicationProblemPlusJSONResponse) VisitDeleteRepoAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRepoAvatardefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeleteRepoAvatardefaultApplicationProblemPlusJSONResponse) VisitDeleteRepoAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadRepoAvatarRequestObject struct {
+	Owner       RepoOwner `json:"owner"`
+	Name        RepoName  `json:"name"`
+	ContentType string
+	Body        io.Reader
+}
+
+type UploadRepoAvatarResponseObject interface {
+	VisitUploadRepoAvatarResponse(w http.ResponseWriter) error
+}
+
+type UploadRepoAvatar200JSONResponse Repo
+
+func (response UploadRepoAvatar200JSONResponse) VisitUploadRepoAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadRepoAvatar400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UploadRepoAvatar400ApplicationProblemPlusJSONResponse) VisitUploadRepoAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadRepoAvatar403ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadRepoAvatar403ApplicationProblemPlusJSONResponse) VisitUploadRepoAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadRepoAvatar404ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadRepoAvatar404ApplicationProblemPlusJSONResponse) VisitUploadRepoAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadRepoAvatar413ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadRepoAvatar413ApplicationProblemPlusJSONResponse) VisitUploadRepoAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(413)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadRepoAvatar503ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadRepoAvatar503ApplicationProblemPlusJSONResponse) VisitUploadRepoAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadRepoAvatardefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UploadRepoAvatardefaultApplicationProblemPlusJSONResponse) VisitUploadRepoAvatarResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -61639,6 +62378,69 @@ func (response ListProfileActivitydefaultApplicationProblemPlusJSONResponse) Vis
 	return err
 }
 
+type GetUserCardRequestObject struct {
+	Username Username `json:"username"`
+	Card     string   `json:"card"`
+	Params   GetUserCardParams
+}
+
+type GetUserCardResponseObject interface {
+	VisitGetUserCardResponse(w http.ResponseWriter) error
+}
+
+type GetUserCard200ImagesvgXmlResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GetUserCard200ImagesvgXmlResponse) VisitGetUserCardResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "image/svg+xml")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetUserCard404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserCard404ApplicationProblemPlusJSONResponse) VisitGetUserCardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUserCarddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetUserCarddefaultApplicationProblemPlusJSONResponse) VisitGetUserCardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetUserContributionsRequestObject struct {
 	Username Username `json:"username"`
 	Params   GetUserContributionsParams
@@ -62262,6 +63064,12 @@ type StrictServerInterface interface {
 	// ListOrgAudit Audit log of an organization, newest first
 	// (GET /orgs/{org}/audit)
 	ListOrgAudit(ctx context.Context, request ListOrgAuditRequestObject) (ListOrgAuditResponseObject, error)
+	// DeleteOrgAvatar Remove the avatar image of an organization
+	// (DELETE /orgs/{org}/avatar)
+	DeleteOrgAvatar(ctx context.Context, request DeleteOrgAvatarRequestObject) (DeleteOrgAvatarResponseObject, error)
+	// UploadOrgAvatar Upload the avatar image of an organization
+	// (PUT /orgs/{org}/avatar)
+	UploadOrgAvatar(ctx context.Context, request UploadOrgAvatarRequestObject) (UploadOrgAvatarResponseObject, error)
 	// ListOrgWebhooks Webhooks of the organization
 	// (GET /orgs/{org}/hooks)
 	ListOrgWebhooks(ctx context.Context, request ListOrgWebhooksRequestObject) (ListOrgWebhooksResponseObject, error)
@@ -62442,6 +63250,12 @@ type StrictServerInterface interface {
 	// DispatchActionsWorkflow Start a workflow_dispatch run
 	// (POST /repos/{owner}/{name}/actions/workflows/{workflow}/dispatches)
 	DispatchActionsWorkflow(ctx context.Context, request DispatchActionsWorkflowRequestObject) (DispatchActionsWorkflowResponseObject, error)
+	// DeleteRepoAvatar Remove the avatar image of a repository
+	// (DELETE /repos/{owner}/{name}/avatar)
+	DeleteRepoAvatar(ctx context.Context, request DeleteRepoAvatarRequestObject) (DeleteRepoAvatarResponseObject, error)
+	// UploadRepoAvatar Upload the avatar image of a repository
+	// (PUT /repos/{owner}/{name}/avatar)
+	UploadRepoAvatar(ctx context.Context, request UploadRepoAvatarRequestObject) (UploadRepoAvatarResponseObject, error)
 	// GetBlame Line authorship of a text file
 	// (GET /repos/{owner}/{name}/blame)
 	GetBlame(ctx context.Context, request GetBlameRequestObject) (GetBlameResponseObject, error)
@@ -63021,6 +63835,9 @@ type StrictServerInterface interface {
 	// ListProfileActivity Recent activity of a user in the repositories the caller can read
 	// (GET /users/{username}/activity)
 	ListProfileActivity(ctx context.Context, request ListProfileActivityRequestObject) (ListProfileActivityResponseObject, error)
+	// GetUserCard SVG profile card of a user, to embed in a README
+	// (GET /users/{username}/cards/{card}.svg)
+	GetUserCard(ctx context.Context, request GetUserCardRequestObject) (GetUserCardResponseObject, error)
 	// GetUserContributions Contribution calendar of a user
 	// (GET /users/{username}/contributions)
 	GetUserContributions(ctx context.Context, request GetUserContributionsRequestObject) (GetUserContributionsResponseObject, error)
@@ -66413,6 +67230,61 @@ func (sh *strictHandler) ListOrgAudit(w http.ResponseWriter, r *http.Request, or
 	}
 }
 
+// DeleteOrgAvatar operation middleware
+func (sh *strictHandler) DeleteOrgAvatar(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request DeleteOrgAvatarRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteOrgAvatar(ctx, request.(DeleteOrgAvatarRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteOrgAvatar")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteOrgAvatarResponseObject); ok {
+		if err := validResponse.VisitDeleteOrgAvatarResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UploadOrgAvatar operation middleware
+func (sh *strictHandler) UploadOrgAvatar(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request UploadOrgAvatarRequestObject
+
+	request.Org = org
+	request.ContentType = r.Header.Get("Content-Type")
+
+	request.Body = r.Body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UploadOrgAvatar(ctx, request.(UploadOrgAvatarRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UploadOrgAvatar")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UploadOrgAvatarResponseObject); ok {
+		if err := validResponse.VisitUploadOrgAvatarResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListOrgWebhooks operation middleware
 func (sh *strictHandler) ListOrgWebhooks(w http.ResponseWriter, r *http.Request, org OrgName) {
 	var request ListOrgWebhooksRequestObject
@@ -68170,6 +69042,63 @@ func (sh *strictHandler) DispatchActionsWorkflow(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DispatchActionsWorkflowResponseObject); ok {
 		if err := validResponse.VisitDispatchActionsWorkflowResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteRepoAvatar operation middleware
+func (sh *strictHandler) DeleteRepoAvatar(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request DeleteRepoAvatarRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteRepoAvatar(ctx, request.(DeleteRepoAvatarRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteRepoAvatar")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteRepoAvatarResponseObject); ok {
+		if err := validResponse.VisitDeleteRepoAvatarResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UploadRepoAvatar operation middleware
+func (sh *strictHandler) UploadRepoAvatar(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request UploadRepoAvatarRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.ContentType = r.Header.Get("Content-Type")
+
+	request.Body = r.Body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UploadRepoAvatar(ctx, request.(UploadRepoAvatarRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UploadRepoAvatar")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UploadRepoAvatarResponseObject); ok {
+		if err := validResponse.VisitUploadRepoAvatarResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -73848,6 +74777,34 @@ func (sh *strictHandler) ListProfileActivity(w http.ResponseWriter, r *http.Requ
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListProfileActivityResponseObject); ok {
 		if err := validResponse.VisitListProfileActivityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUserCard operation middleware
+func (sh *strictHandler) GetUserCard(w http.ResponseWriter, r *http.Request, username Username, card string, params GetUserCardParams) {
+	var request GetUserCardRequestObject
+
+	request.Username = username
+	request.Card = card
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserCard(ctx, request.(GetUserCardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserCard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUserCardResponseObject); ok {
+		if err := validResponse.VisitGetUserCardResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

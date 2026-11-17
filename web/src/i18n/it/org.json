@@ -116,5 +116,12 @@
   "members.all": "Tutti i {count} membri",
   "invites.short": "Invita",
   "languages.title": "Linguaggi principali",
-  "languages.other": "Altro"
+  "languages.other": "Altro",
+  "settings.image": "Immagine",
+  "settings.image.hint": "PNG, JPEG o GIF fino a 2 MiB, ritagliata a quadrato. Compare nella pagina dell'organizzazione e accanto ai suoi repository.",
+  "settings.image.upload": "Carica immagine",
+  "settings.image.uploading": "Caricamento…",
+  "settings.image.remove": "Rimuovi",
+  "settings.image.uploaded": "Immagine aggiornata",
+  "settings.image.removed": "Immagine rimossa"
 }

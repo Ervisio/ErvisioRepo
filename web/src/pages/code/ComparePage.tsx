@@ -59,7 +59,7 @@ function CompareBody({ repo, base, head }: { repo: Repo; base: string; head: str
                   ) : (
                     <ul className="rp-list">
                       {c.commits.map((x) => (
-                        <CommitRow key={x.sha} repo={repo} c={{ sha: x.sha, summary: x.summary, author: x.author.name, date: x.author.date }} />
+                        <CommitRow key={x.sha} repo={repo} c={{ sha: x.sha, summary: x.summary, message: x.message, author: x.author.name, user: x.author.user, date: x.author.date }} />
                       ))}
                     </ul>
                   )}

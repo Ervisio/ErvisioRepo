@@ -20,6 +20,8 @@ import (
 type Orgs interface {
 	CreateOrg(ctx context.Context, who auth.Principal, in orgs.CreateOrgInput, c identity.Client) (orgs.Org, error)
 	GetOrg(ctx context.Context, who auth.Principal, name string) (orgs.Org, error)
+	AuthorizeManage(ctx context.Context, who auth.Principal, name string) (orgs.Org, error)
+	SetAvatar(ctx context.Context, who auth.Principal, name, avatarURL string, c identity.Client) (orgs.Org, error)
 	ListMyOrgs(ctx context.Context, who auth.Principal) ([]orgs.Org, error)
 	UpdateOrg(ctx context.Context, who auth.Principal, name string, in orgs.UpdateOrgInput, c identity.Client) (orgs.Org, error)
 	DeleteOrg(ctx context.Context, who auth.Principal, name string, c identity.Client) error
@@ -78,7 +80,7 @@ func orgDTO(o orgs.Org) v1gen.Org {
 	out := v1gen.Org{
 		Id: o.ID, Name: o.Name, DisplayName: o.DisplayName, Description: o.Description,
 		BasePermission: v1gen.Permission(o.BasePermission), Require2fa: o.Require2FA, Verified: o.Verified,
-		CreatedAt: o.CreatedAt, UpdatedAt: o.UpdatedAt,
+		AvatarUrl: o.AvatarURL, CreatedAt: o.CreatedAt, UpdatedAt: o.UpdatedAt,
 	}
 	if o.Role != "" {
 		r := v1gen.OrgRole(o.Role)

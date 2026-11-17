@@ -8,6 +8,7 @@ import { useStorageStatus } from "../api/useStorage.ts";
 import { useT } from "../i18n/useT.ts";
 import { Badge, BotMark, Icon, Input, type IconName } from "../ui/index.ts";
 import { formatBytes, When } from "./code/common.tsx";
+import { AvatarImg } from "../ui/AvatarImg.tsx";
 import { CreateRepoDialog } from "./repos/RepoList.tsx";
 import { Avatar } from "./work/common.tsx";
 
@@ -246,7 +247,15 @@ function Repos() {
               {rows.map((r) => (
                 <li key={r.fullName}>
                   <Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="db-repo">
-                    <span className={r.ownerKind === "org" ? "db-ra org" : "db-ra"}><Avatar user={r.owner} size={20} /></span>
+                    <span className={r.ownerKind === "org" ? "db-ra org" : "db-ra"}>
+                      {r.avatarUrl || r.ownerAvatarUrl ? (
+                        <AvatarImg src={r.avatarUrl || r.ownerAvatarUrl} size={20} radius={r.avatarUrl || r.ownerKind === "org" ? 5 : "50%"}>
+                          <Avatar user={r.owner} size={20} />
+                        </AvatarImg>
+                      ) : (
+                        <Avatar user={r.owner} size={20} />
+                      )}
+                    </span>
                     <b>{r.fullName}</b>
                     {r.visibility !== "public" && <Icon name="lock" />}
                     {pinnedNames.has(r.fullName) && (

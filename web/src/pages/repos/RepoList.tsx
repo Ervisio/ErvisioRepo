@@ -5,6 +5,7 @@ import { useWeeklyActivity } from "../../api/profile.ts";
 import { useCreateRepo, useForkRepo, useStar, type Repo, type Visibility } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Button, Dialog, Icon, Input, Select } from "../../ui/index.ts";
+import { RepoImage } from "../../ui/AvatarImg.tsx";
 import { formatBytes, When } from "../code/common.tsx";
 import { PinButton } from "./PinButton.tsx";
 import { Async, useNotify } from "../account/common.tsx";
@@ -64,6 +65,7 @@ export function RepoRow({ repo: r, showOwner, pin = true, lang, weeks }: { repo:
       <div className="rl-main">
         <h3 className="rl-h">
           <Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="rl-name">
+            <RepoImage src={r.avatarUrl} />
             {showOwner && <span className="rl-o">{r.owner} / </span>}
             {r.name}
           </Link>
@@ -103,7 +105,7 @@ export function RepoCards({ repos, showOwner, languages }: { repos: Repo[]; show
         return (
           <li key={r.id} className="rl-pin">
             <p className="rl-pin-n">
-              <Icon name="book" />
+              {r.avatarUrl ? <RepoImage src={r.avatarUrl} size={16} /> : <Icon name="book" />}
               <Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="rl-name">
                 {showOwner ? r.fullName : r.name}
               </Link>

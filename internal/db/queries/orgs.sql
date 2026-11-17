@@ -2,7 +2,8 @@
 -- and GetOrgMemberRole are in identity.sql).
 
 -- name: GetOrgDetails :one
-SELECT o.id, n.name, o.display_name, o.description, o.base_permission, o.require_2fa, o.verified_at, o.created_at, o.updated_at
+SELECT o.id, n.name, o.display_name, o.description, o.base_permission, o.require_2fa, o.verified_at, o.created_at, o.updated_at,
+       o.avatar_url
 FROM orgs o
 JOIN namespaces n ON n.id = o.id
 WHERE n.name_lower = lower(sqlc.arg(name)::text);
@@ -11,13 +12,16 @@ WHERE n.name_lower = lower(sqlc.arg(name)::text);
 UPDATE orgs SET display_name = $2, description = $3, base_permission = $4, require_2fa = $5, updated_at = now()
 WHERE id = $1;
 
+-- name: SetOrgAvatar :exec
+UPDATE orgs SET avatar_url = $2, updated_at = now() WHERE id = $1;
+
 -- name: DeleteOrgNamespace :execrows
 -- Deletes the organization with its namespace, members, teams and invites.
 DELETE FROM namespaces WHERE id = $1 AND kind = 'org';
 
 -- name: ListUserOrgs :many
 SELECT o.id, n.name, o.display_name, o.description, o.base_permission, o.require_2fa, o.verified_at, o.created_at, o.updated_at,
-       m.role
+       o.avatar_url, m.role
 FROM org_members m
 JOIN orgs o ON o.id = m.org_id
 JOIN namespaces n ON n.id = o.id

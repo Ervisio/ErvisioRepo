@@ -114,6 +114,7 @@ func (s *Service) UserProfile(ctx context.Context, username string) (Profile, er
 type OrgSummary struct {
 	Name        string
 	DisplayName string
+	AvatarURL   string
 }
 
 // VisibleOrgs lists the organizations of user that who can see: those who
@@ -129,7 +130,7 @@ func (s *Service) VisibleOrgs(ctx context.Context, who auth.Principal, user uuid
 	}
 	out := make([]OrgSummary, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, OrgSummary{Name: r.Name, DisplayName: r.DisplayName})
+		out = append(out, OrgSummary{Name: r.Name, DisplayName: r.DisplayName, AvatarURL: r.AvatarUrl})
 	}
 	return out, nil
 }
