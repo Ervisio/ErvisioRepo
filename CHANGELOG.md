@@ -11,6 +11,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Web, Console layout (redesign phase 1, soft surfaces): two-row header with site menu, owner / repository breadcrumb, centred search pill (⌘K), New, notification dot and avatar; repository and organization tabs with icons on a second row (Releases and Settings promoted to tabs, the rest under More). Kit controls and containers use layered surfaces instead of rings.
 - Dashboard: four tiles (review requests, assigned issues, your open pull requests, failed runs) that pick the queue below, activity feed, repositories and an instance block for admins.
 - Notifications: mail-style list (Inbox / Review / Assigned / All, text filter) with a preview of the issue or pull request (state, description) and Done, Unsubscribe, Open.
+- Actions: workflow sidebar with a Management link to runners, runs in a soft box with event/status filters; run page with a job column (Summary, jobs, workflow file), job card with expandable steps, one log search and timestamps toggle for the whole job, dark log with groups and errors highlighted.
+- Runners (admin, organization, repository): summary pills (online, jobs running, offline, free slots) and a dense table with status chips, label chips, CPU / RAM / GPU values over bars (warn above 70 %, error above 90 %); the expanded row shows version, disk, load, heartbeat, system and the jobs running now.
+- Releases: Releases / Tags switch, the latest release as a hero with its assets, source archives and a download button for the visitor's platform, other releases in a table; detail with a sticky panel (tag, commit with copy, branch, compare with the previous release, subscribe, assets, upload, delete); new/edit form in two columns with Write / Preview notes, drag-and-drop assets uploaded after saving, Publish release and Save draft.
 
 ## [1.14.4] - 2026-11-16
 

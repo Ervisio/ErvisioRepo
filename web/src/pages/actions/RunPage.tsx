@@ -11,7 +11,8 @@ import {
 import { canWrite } from "../../api/code.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, BotMark, Button, EmptyState } from "../../ui/index.ts";
+import { BotMark, Button, EmptyState, Icon } from "../../ui/index.ts";
+import { Avatar } from "../work/common.tsx";
 import { useNotify } from "../account/common.tsx";
 import { Gate, RepoFrame, shortSha, When } from "../code/common.tsx";
 import { branchOf, duration, isActive, runState, StatusIcon, StatusPill } from "./common.tsx";
@@ -51,15 +52,16 @@ function RunDetail({ repo, runId, job }: { repo: Repo; runId: string; job?: stri
           <RunHeader repo={repo} run={r} />
           <Gate query={jobs}>
             {(list) => {
-              const sel = pick(list, job);
-              if (list.length === 0) return <p className="ui-note acc-pad">{t("jobs.none")}</p>;
+              const summary = job === SUMMARY || list.length === 0;
+              const sel = summary ? undefined : pick(list, job);
               return (
                 <div className="ax-grid">
-                  <div className="ax-aside">
-                    <JobList jobs={list} selected={sel?.id} onSelect={select} />
-                    <RunDetails repo={repo} run={r} />
-                  </div>
-                  {sel && <JobLog key={sel.id} owner={owner} name={name} job={sel} actions={<JobActions repo={repo} job={sel} />} />}
+                  <JobNav repo={repo} run={r} jobs={list} selected={sel?.id ?? SUMMARY} onSelect={select} />
+                  {sel ? (
+                    <JobLog key={sel.id} owner={owner} name={name} job={sel} actions={<JobActions repo={repo} job={sel} />} />
+                  ) : (
+                    <RunSummary repo={repo} run={r} jobs={list} onSelect={select} />
+                  )}
                 </div>
               );
             }}
@@ -69,6 +71,9 @@ function RunDetail({ repo, runId, job }: { repo: Repo; runId: string; job?: stri
     </Gate>
   );
 }
+
+/** Value of the `job` search param that shows the run summary instead of a job. */
+const SUMMARY = "summary";
 
 function RunHeader({ repo, run: r }: { repo: Repo; run: ActionsRun }) {
   const t = useT("actions");
@@ -81,39 +86,39 @@ function RunHeader({ repo, run: r }: { repo: Repo; run: ActionsRun }) {
   const act = (m: typeof rerun, done: string) => m.mutate(undefined, { onSuccess: () => notify.ok(done), onError: notify.fail });
   const active = isActive(r.status);
   const wasFailed = ["failure", "timed_out"].includes(runState(r.status, r.conclusion));
-  const rerunBtn = (primary: boolean) => (
-    <Button variant={primary ? "primary" : "secondary"} icon="play" disabled={rerun.isPending} onClick={() => act(rerun, t("run.rerunDone"))}>{t("run.rerun")}</Button>
-  );
+  const actor = r.triggerActor || r.actor;
+  const took = duration(r.startedAt, r.completedAt);
 
   return (
     <header className="ax-head">
-      <nav className="ax-bc" aria-label={t("run.breadcrumb")}>
-        <Link to="/$owner/$name/actions" params={{ owner, name }}>{t("run.actions")}</Link>
-        <span aria-hidden="true">/</span>
-        <Link to="/$owner/$name/actions" params={{ owner, name }} search={{ workflow: r.workflowPath }}>{r.workflowName || r.workflowPath}</Link>
-      </nav>
       <div className="ax-tr">
         <h2 className="ax-h1">
-          {r.title || r.workflowName}
-          <span className="ax-num">#{r.runNumber}</span>
+          {r.title || r.workflowName}{" "}
+          <Link className="ax-num" to="/$owner/$name/actions" params={{ owner, name }} search={{ workflow: r.workflowPath }}>
+            {r.workflowName || r.workflowPath} #{r.runNumber}
+          </Link>
         </h2>
         {writer && (
           <div className="ax-acts">
             {r.needsApproval && <Button variant="primary" icon="check" disabled={approve.isPending} onClick={() => act(approve, t("run.approved"))}>{t("run.approve")}</Button>}
             {active && !r.needsApproval && <Button className="ax-cancel" icon="x" disabled={cancel.isPending} onClick={() => act(cancel, t("run.cancelled"))}>{t("run.cancel")}</Button>}
-            {!active && rerunBtn(wasFailed)}
+            {!active && <Button variant={wasFailed ? "primary" : "secondary"} icon="play" disabled={rerun.isPending} onClick={() => act(rerun, t("run.rerunDone"))}>{t("run.rerun")}</Button>}
           </div>
         )}
       </div>
       <p className="ax-meta">
         <StatusPill status={r.status} conclusion={r.conclusion} />
-        <span>{t("run.eventOn", { event: r.eventAction ? `${r.event} · ${r.eventAction}` : r.event, branch: branchOf(r.ref) })}</span>
+        <span className="ax-who">
+          <Avatar user={actor} size={18} />
+          {t("run.triggered", { actor, event: r.eventAction ? `${r.event} · ${r.eventAction}` : r.event })} <BotMark login={actor} />
+        </span>
+        <code className="ax-ref">{branchOf(r.ref)}</code>
         <Link to="/$owner/$name/commit/$sha" params={{ owner, name, sha: r.sha }} className="ax-sha">{shortSha(r.sha)}</Link>
-        <span>{t("run.startedBy", { actor: r.triggerActor || r.actor })} <BotMark login={r.triggerActor || r.actor} /> <When iso={r.startedAt ?? r.createdAt} /></span>
-        {duration(r.startedAt, r.completedAt) && <span>{duration(r.startedAt, r.completedAt)}</span>}
-        {r.attempt > 1 && <span>{t("run.attempt", { n: r.attempt })}</span>}
+        <span>· <When iso={r.startedAt ?? r.createdAt} /></span>
+        {took && <span>· {t("run.took", { duration: took })}</span>}
+        {r.attempt > 1 && <span>· {t("run.attempt", { n: r.attempt })}</span>}
       </p>
-      {r.fork && <Badge tone="warn">{t("run.forkNote")}</Badge>}
+      {r.fork && <p className="ax-forknote">{t("run.forkNote")}</p>}
     </header>
   );
 }
@@ -140,55 +145,78 @@ function JobActions({ repo, job }: { repo: Repo; job?: ActionsJob }) {
       {isActive(job.status) && !job.cancelRequested && (
         <Button size="sm" icon="x" disabled={cancel.isPending} onClick={() => cancel.mutate(job.id, opts(t("job.cancelled")))}>{t("job.cancel")}</Button>
       )}
-      {job.cancelRequested && isActive(job.status) && <Badge tone="warn">{t("job.cancelling")}</Badge>}
+      {job.cancelRequested && isActive(job.status) && <span className="ui-chip ui-chip-warn">{t("job.cancelling")}</span>}
     </div>
   );
 }
 
-function JobList({ jobs, selected, onSelect }: { jobs: ActionsJob[]; selected?: string; onSelect: (id: string) => void }) {
+/** Job column: Summary, the jobs with state and duration, then the workflow file. */
+function JobNav({ repo, run: r, jobs, selected, onSelect }: { repo: Repo; run: ActionsRun; jobs: ActionsJob[]; selected: string; onSelect: (id: string) => void }) {
   const t = useT("actions");
-  const names = new Map(jobs.map((j) => [j.key, j.name]));
   return (
-    <section className="ax-box ax-jobs" aria-label={t("jobs.title")}>
-      <h2 className="ax-bh">{t("jobs.title")}</h2>
-      <ul className="ax-jl">
-        {jobs.map((j) => {
-          const needs = j.needs.map((n) => names.get(n) ?? n).join(", ");
-          return (
-            <li key={j.id}>
-              <button type="button" className="ax-job" aria-current={j.id === selected ? "true" : undefined} onClick={() => onSelect(j.id)}>
-                <StatusIcon status={j.status} conclusion={j.conclusion} bare />
-                <span className="ax-jn">{j.name}</span>
-                <span className="ax-jd">{duration(j.startedAt, j.completedAt)}</span>
-                <span className="ax-js">
-                  {t(`state.${runState(j.status, j.conclusion)}`)}
-                  {needs && ` · ${t("job.needs", { jobs: needs })}`}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+    <nav className="ax-jn" aria-label={t("jobs.title")}>
+      <button type="button" className="ax-ni" aria-current={selected === SUMMARY ? "page" : undefined} onClick={() => onSelect(SUMMARY)}>
+        <Icon name="home" />
+        {t("run.summary")}
+      </button>
+      <h3>{t("jobs.title")}</h3>
+      {jobs.map((j) => (
+        <button key={j.id} type="button" className="ax-ni" aria-current={j.id === selected ? "page" : undefined} onClick={() => onSelect(j.id)}>
+          <StatusIcon status={j.status} conclusion={j.conclusion} bare />
+          <span className="ax-ell">{j.name}</span>
+          <span className="ui-tm">{duration(j.startedAt, j.completedAt)}</span>
+        </button>
+      ))}
+      {jobs.length === 0 && <p className="ui-note ax-nnote">{t("jobs.none")}</p>}
+      <h3>{t("run.detailsNav")}</h3>
+      <Link className="ax-ni" to="/$owner/$name/blob" params={{ owner: repo.owner, name: repo.name }} search={{ ref: r.sha, path: r.workflowPath }}>
+        <Icon name="file" />
+        {t("run.workflowFile")}
+      </Link>
+    </nav>
   );
 }
 
-function RunDetails({ repo, run: r }: { repo: Repo; run: ActionsRun }) {
+function RunSummary({ repo, run: r, jobs, onSelect }: { repo: Repo; run: ActionsRun; jobs: ActionsJob[]; onSelect: (id: string) => void }) {
   const t = useT("actions");
   const { owner, name } = repo;
+  const names = new Map(jobs.map((j) => [j.key, j.name]));
   return (
-    <section className="ax-box ax-details" aria-label={t("run.details")}>
-      <h2 className="ax-bh">{t("run.details")}</h2>
-      <dl className="ax-dl">
-        <dt>{t("run.workflow")}</dt>
-        <dd>{r.workflowName || r.workflowPath}</dd>
-        <dt>{t("run.event")}</dt>
-        <dd>{r.event}</dd>
-        <dt>{t("run.ref")}</dt>
-        <dd><code>{branchOf(r.ref)}</code></dd>
-        <dt>{t("run.commit")}</dt>
-        <dd><Link to="/$owner/$name/commit/$sha" params={{ owner, name, sha: r.sha }}><code>{shortSha(r.sha)}</code></Link></dd>
-      </dl>
+    <section className="ui-box ax-jc" aria-label={t("run.summary")}>
+      <div className="ax-jh">
+        <h2 className="ax-jt">{t("run.summary")}</h2>
+      </div>
+      <div className="ui-in ax-sum-in">
+        <dl className="ax-dl">
+          <dt>{t("run.workflow")}</dt>
+          <dd>{r.workflowName || r.workflowPath}</dd>
+          <dt>{t("run.event")}</dt>
+          <dd>{r.eventAction ? `${r.event} · ${r.eventAction}` : r.event}</dd>
+          <dt>{t("run.ref")}</dt>
+          <dd><code className="ax-ref">{branchOf(r.ref)}</code></dd>
+          <dt>{t("run.commit")}</dt>
+          <dd><Link to="/$owner/$name/commit/$sha" params={{ owner, name, sha: r.sha }} className="ui-mono">{shortSha(r.sha)}</Link></dd>
+          <dt>{t("runners.status")}</dt>
+          <dd><StatusPill status={r.status} conclusion={r.conclusion} /></dd>
+        </dl>
+        {jobs.length > 0 && (
+          <ul className="ax-sjobs">
+            {jobs.map((j) => {
+              const needs = j.needs.map((n) => names.get(n) ?? n).join(", ");
+              return (
+                <li key={j.id}>
+                  <button type="button" className="ui-li" onClick={() => onSelect(j.id)}>
+                    <StatusIcon status={j.status} conclusion={j.conclusion} bare />
+                    <span className="ax-ell">{j.name}</span>
+                    {needs && <span className="ui-tm">{t("job.needs", { jobs: needs })}</span>}
+                    <span className="ui-tm ax-push">{duration(j.startedAt, j.completedAt)}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </section>
   );
 }

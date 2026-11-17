@@ -4,9 +4,9 @@ import { RUNS_PER_PAGE, useDispatch, useRuns, useWorkflows, type ActionsRun, typ
 import { canWrite } from "../../api/code.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, BotMark, Button, Dialog, DialogClose, EmptyState, Icon, Input, Select } from "../../ui/index.ts";
+import { BotMark, Button, Dialog, DialogClose, EmptyState, Icon, Input, Select } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
-import { Gate, Pager, RepoFrame, shortSha, When } from "../code/common.tsx";
+import { Gate, Pager, RepoFrame, When } from "../code/common.tsx";
 import { branchOf, duration, StatusIcon } from "./common.tsx";
 
 export type RunsSearch = RunFilter;
@@ -22,6 +22,35 @@ export function RunsPage({ owner, name, search }: { owner: string; name: string;
   );
 }
 
+/** Workflow sidebar (round 023 A): all workflows, one entry per workflow, then the management links. */
+function WorkflowNav({ repo, search, go }: { repo: Repo; search: RunsSearch; go: (patch: Partial<RunsSearch>) => void }) {
+  const t = useT("actions");
+  const workflows = useWorkflows(repo.owner, repo.name);
+  return (
+    <nav className="ax-nav" aria-label={t("workflows.label")}>
+      <h2>{t("run.actions")}</h2>
+      <button type="button" className="ax-ni" aria-current={!search.workflow ? "page" : undefined} onClick={() => go({ workflow: undefined })}>
+        {t("workflows.all")}
+      </button>
+      {workflows.data?.map((w) => (
+        <button key={w.path} type="button" className="ax-ni" aria-current={w.path === search.workflow ? "page" : undefined} title={w.path} onClick={() => go({ workflow: w.path })}>
+          <span className="ax-ell">{w.name || w.path}</span>
+        </button>
+      ))}
+      {workflows.isSuccess && workflows.data.length === 0 && <p className="ui-note ax-nnote">{t("workflows.none")}</p>}
+      {repo.permission === "admin" && (
+        <>
+          <h3>{t("nav.manage")}</h3>
+          <Link className="ax-ni" to="/$owner/$name/settings" params={{ owner: repo.owner, name: repo.name }} search={{ section: "runners" }}>
+            <Icon name="cpu" />
+            {t("runners.title")}
+          </Link>
+        </>
+      )}
+    </nav>
+  );
+}
+
 function Runs({ repo, search }: { repo: Repo; search: RunsSearch }) {
   const t = useT("actions");
   const { owner, name } = repo;
@@ -34,56 +63,48 @@ function Runs({ repo, search }: { repo: Repo; search: RunsSearch }) {
 
   return (
     <div className="ax-layout">
-      <nav className="ax-side" aria-label={t("workflows.label")}>
-        <h2 className="ax-side-h">{t("workflows.title")}</h2>
-        <button type="button" className="ax-side-i" aria-current={!search.workflow ? "page" : undefined} onClick={() => go({ workflow: undefined })}>
-          <Icon name="layers" />
-          {t("workflows.all")}
-        </button>
-        {workflows.data?.map((w) => (
-          <button key={w.path} type="button" className="ax-side-i" aria-current={w.path === search.workflow ? "page" : undefined} title={w.path} onClick={() => go({ workflow: w.path })}>
-            <Icon name="play" />
-            <span>{w.name || w.path}</span>
-          </button>
-        ))}
-        {workflows.isSuccess && workflows.data.length === 0 && <p className="ui-note ax-side-note">{t("workflows.none")}</p>}
-      </nav>
+      <WorkflowNav repo={repo} search={search} go={go} />
       <div className="ax-main">
-        <div className="rp-bar">
-          <h2 className="ax-h2">{current ? current.name || current.path : t("runs.title")}</h2>
-          {runs.data && <span className="ax-count">{t("runs.count", { count: runs.data.totalCount })}</span>}
-          <span className="acc-grow" />
+        <div className="ax-lh">
+          <h2 className="ax-h2">{current ? current.name || current.path : t("workflows.all")}</h2>
           {current && canWrite(repo.permission) && <DispatchDialog repo={repo} workflow={current} />}
         </div>
         <form
-          className="ax-filters"
+          className="ax-find"
           onSubmit={(e) => {
             e.preventDefault();
             const v = new FormData(e.currentTarget).get("branch");
             go({ branch: typeof v === "string" && v.trim() ? v.trim() : undefined });
           }}
         >
-          <Select label={t("filter.event")} value={search.event ?? "_"} onValueChange={(v) => go({ event: v === "_" ? undefined : v })} options={[{ value: "_", label: t("filter.any") }, ...events.map((e) => ({ value: e, label: e }))]} />
-          <Select label={t("filter.status")} value={search.status ?? "_"} onValueChange={(v) => go({ status: v === "_" ? undefined : v })} options={[{ value: "_", label: t("filter.any") }, ...statuses.map((s) => ({ value: s, label: t(`filterStatus.${s}`) }))]} />
-          <Input label={t("filter.branch")} name="branch" mono defaultValue={search.branch ?? ""} key={search.branch ?? ""} />
+          <Input label={t("filter.branch")} hideLabel name="branch" mono placeholder={t("filter.branchPlaceholder")} defaultValue={search.branch ?? ""} key={search.branch ?? ""} />
           <Button type="submit" icon="search">{t("filter.apply")}</Button>
         </form>
-        <Gate query={runs}>
-          {(list) =>
-            list.runs.length === 0 ? (
-              <EmptyState icon="play" title={t("runs.empty")} description={t("runs.emptyHint")} />
-            ) : (
-              <>
-                <ul className="ax-rows">
+        <section className="ui-box" aria-label={t("runs.title")}>
+          <div className="ax-bxh">
+            <b>{runs.data ? t("runs.count", { count: runs.data.totalCount }) : t("runs.title")}</b>
+            <Select label={t("filter.event")} hideLabel className="ax-flt" value={search.event ?? "_"} onValueChange={(v) => go({ event: v === "_" ? undefined : v })} options={[{ value: "_", label: t("filter.event") }, ...events.map((e) => ({ value: e, label: e }))]} />
+            <Select label={t("filter.status")} hideLabel className="ax-flt" value={search.status ?? "_"} onValueChange={(v) => go({ status: v === "_" ? undefined : v })} options={[{ value: "_", label: t("filter.status") }, ...statuses.map((s) => ({ value: s, label: t(`filterStatus.${s}`) }))]} />
+          </div>
+          <Gate query={runs}>
+            {(list) =>
+              list.runs.length === 0 ? (
+                <div className="ui-in">
+                  <EmptyState icon="play" title={t("runs.empty")} description={t("runs.emptyHint")} />
+                </div>
+              ) : (
+                <ul className="ui-in ax-rows">
                   {list.runs.map((r) => (
                     <RunRow key={r.id} repo={repo} run={r} />
                   ))}
                 </ul>
-                <Pager page={search.page ?? 1} hasMore={(search.page ?? 1) * RUNS_PER_PAGE < list.totalCount} onPage={(n) => go({ page: n > 1 ? n : undefined })} />
-              </>
-            )
-          }
-        </Gate>
+              )
+            }
+          </Gate>
+        </section>
+        {runs.data && runs.data.runs.length > 0 && (
+          <Pager page={search.page ?? 1} hasMore={(search.page ?? 1) * RUNS_PER_PAGE < runs.data.totalCount} onPage={(n) => go({ page: n > 1 ? n : undefined })} />
+        )}
       </div>
     </div>
   );
@@ -92,35 +113,29 @@ function Runs({ repo, search }: { repo: Repo; search: RunsSearch }) {
 function RunRow({ repo, run: r }: { repo: Repo; run: ActionsRun }) {
   const t = useT("actions");
   const { owner, name } = repo;
+  const actor = r.triggerActor || r.actor;
+  const title = r.title || r.workflowName;
   return (
-    <li className="ax-row">
-      <StatusIcon status={r.status} conclusion={r.conclusion} />
-      <span className="ax-row-main">
+    <li className="ax-rr">
+      <StatusIcon status={r.status} conclusion={r.conclusion} bare />
+      <span className="ax-rr-m">
         {r.external ? (
-          <a href={r.htmlUrl} target="_blank" rel="noreferrer" className="ax-row-title" title={t("run.onGitHub")}>
-            {r.title || r.workflowName}
-          </a>
+          <a href={r.htmlUrl} target="_blank" rel="noreferrer" className="ax-rr-t" title={t("run.onGitHub")}>{title}</a>
         ) : (
-          <Link to="/$owner/$name/actions/runs/$runId" params={{ owner, name, runId: r.id }} className="ax-row-title">
-            {r.title || r.workflowName}
-          </Link>
+          <Link to="/$owner/$name/actions/runs/$runId" params={{ owner, name, runId: r.id }} className="ax-rr-t">{title}</Link>
         )}
-        <span className="ax-row-meta">
-          <span>{r.workflowName || r.workflowPath}</span>
-          <span>#{r.runNumber}</span>
-          <span>{r.event}</span>
-          <code className="ax-tag">{branchOf(r.ref)}</code>
-          <Link to="/$owner/$name/commit/$sha" params={{ owner, name, sha: r.sha }} className="ui-mono">{shortSha(r.sha)}</Link>
-          <span>{r.triggerActor || r.actor} <BotMark login={r.triggerActor || r.actor} /></span>
-          {r.attempt > 1 && <span>{t("run.attempt", { n: r.attempt })}</span>}
-          {r.needsApproval && <Badge tone="warn">{t("run.needsApproval")}</Badge>}
-          {r.fork && <Badge>{t("run.fork")}</Badge>}
-          {r.external && <Badge tone="info">{t("run.github")}</Badge>}
+        <span className="ax-rr-s">
+          <b>{r.workflowName || r.workflowPath}</b> #{r.runNumber}: {t("run.byLine", { event: r.event, actor })} <BotMark login={actor} />
+          {r.attempt > 1 && <> · {t("run.attempt", { n: r.attempt })}</>}
+          {r.needsApproval && <> <span className="ui-chip ui-chip-warn">{t("run.needsApproval")}</span></>}
+          {r.fork && <> <span className="ui-chip">{t("run.fork")}</span></>}
+          {r.external && <> <span className="ui-chip ui-chip-acc">{t("run.github")}</span></>}
         </span>
       </span>
-      <span className="ax-row-time">
-        <When iso={r.createdAt} />
-        <span>{duration(r.startedAt, r.completedAt)}</span>
+      <span className="ax-rr-ref"><code className="ax-ref">{branchOf(r.ref)}</code></span>
+      <span className="ax-rr-tm">
+        <span className="ui-tm"><When iso={r.createdAt} /></span>
+        <span className="ui-tm">{duration(r.startedAt, r.completedAt)}</span>
       </span>
     </li>
   );

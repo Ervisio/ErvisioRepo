@@ -47,7 +47,7 @@ export function StatusIcon({ status, conclusion, bare }: { status: string; concl
   const s = runState(status, conclusion);
   return (
     <span className={`ax-si ax-${tones[s]}${bare ? " ax-bare" : ""}`} role="img" aria-label={t(`state.${s}`)} title={t(`state.${s}`)}>
-      <Icon name={icons[s]} />
+      {bare && s === "in_progress" ? <span className="ax-spin" aria-hidden="true" /> : <Icon name={icons[s]} />}
     </span>
   );
 }

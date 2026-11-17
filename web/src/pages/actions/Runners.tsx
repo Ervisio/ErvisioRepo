@@ -11,7 +11,7 @@ import {
 } from "../../api/actions.ts";
 import { useMeta } from "../../api/useMeta.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, Button, Dialog, EmptyState, Input, Menu, MenuItem, SettingsSection, Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/index.ts";
+import { Button, Dialog, EmptyState, Input, Menu, MenuItem, SettingsSection, Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/index.ts";
 import { Async, formatDate, Secret, useNotify } from "../account/common.tsx";
 import { formatBytes, When } from "../code/common.tsx";
 import { duration } from "./common.tsx";
@@ -33,27 +33,29 @@ function gpuPct(m: RunnerMetrics): number | undefined {
   return vals.length ? Math.max(...vals) : undefined;
 }
 
-function StatusDot({ runner }: { runner: ActionsRunner }) {
+/** Status as a chip (text carries the meaning; the tone only supports it). Offline adds how long ago. */
+function StatusChip({ runner: r }: { runner: ActionsRunner }) {
   const t = useT("actions");
-  const label = t(`runners.st.${runner.status}`);
+  const tone = r.status === "busy" || r.status === "online" ? "ui-chip-warn" : r.status === "idle" ? "ui-chip-ok" : r.status === "paused" ? "ui-chip-acc" : "";
   return (
-    <span className={`rn-dot rn-dot-${runner.status}`} title={label}>
-      <span className="sr-only">{label}</span>
+    <span className={`ui-chip ${tone}`.trim()}>
+      {t(`runners.st.${r.status}`)}
+      {r.status === "offline" && r.lastSeenAt && <> · <When iso={r.lastSeenAt} /></>}
     </span>
   );
 }
 
-/** Percentage with a thin bar; warn from 75 %, error from 90 %. */
-function Meter({ value }: { value?: number }) {
-  if (value === undefined) return <span className="rn-none">—</span>;
+/** Value above a thin bar: accent, warn above 70 %, error above 90 % (round 023 A). */
+function Meter({ value, text }: { value?: number; text?: string }) {
+  if (value === undefined) return <span className="ui-tm">—</span>;
   const v = Math.min(100, Math.max(0, value));
   return (
-    <div className="rn-m">
-      <span className="rn-num">{Math.round(v)}%</span>
+    <span className="rn-m">
+      <span className="rn-num">{text ?? `${Math.round(v)}%`}</span>
       <span className="rn-bar" aria-hidden="true">
-        <i className={v >= 90 ? "rn-cr" : v >= 75 ? "rn-hi" : undefined} style={{ width: `${v}%` }} />
+        <i className={v > 90 ? "rn-cr" : v > 70 ? "rn-hi" : undefined} style={{ width: `${v}%` }} />
       </span>
-    </div>
+    </span>
   );
 }
 
@@ -88,30 +90,10 @@ export function Runners({ scope }: { scope: ActionsScope }) {
       }
     >
       {rows.length > 0 && <Summary rows={rows} />}
-      {instance && rows.length > 0 && (
-        <div className="rn-bi">
-          {builtin ? (
-            <>
-              <StatusDot runner={builtin} />
-              <span className="rn-bi-t">
-                <b>{t("runners.builtin")}</b>
-                <span className="rn-dim">
-                  {" · "}
-                  {t(`runners.st.${builtin.status}`)}
-                  {builtin.labels.length > 0 && <> · <span className="ui-mono">{builtin.labels.map(labelName).join(", ")}</span></>}
-                  {builtin.version && <> · v{builtin.version}</>}
-                </span>
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="rn-dot rn-dot-offline" aria-hidden="true" />
-              <span className="rn-bi-t">
-                <b>{t("runners.builtin")}</b> <span className="rn-dim">· {t("runners.builtinNone")}</span>
-              </span>
-            </>
-          )}
-        </div>
+      {instance && rows.length > 0 && !builtin && (
+        <p className="rn-bi">
+          <b>{t("runners.builtin")}</b> <span className="rn-dim">· {t("runners.builtinNone")}</span>
+        </p>
       )}
       {list.isSuccess && rows.length === 0 ? (
         <Empty instance={instance} onNew={openNew} />
@@ -132,16 +114,20 @@ export function Runners({ scope }: { scope: ActionsScope }) {
   );
 }
 
+/** Summary pills: online, running jobs, offline and free slots. */
 function Summary({ rows }: { rows: ActionsRunner[] }) {
   const t = useT("actions");
-  const online = rows.filter((r) => r.status !== "offline" && r.status !== "paused").length;
+  const live = rows.filter((r) => r.status !== "offline");
+  const offline = rows.length - live.length;
   const running = rows.reduce((n, r) => n + r.running, 0);
-  const capacity = rows.reduce((n, r) => n + r.capacity, 0);
+  const capacity = live.reduce((n, r) => n + r.capacity, 0);
+  const busy = live.reduce((n, r) => n + Math.min(r.running, r.capacity), 0);
   return (
     <p className="rn-sum">
-      <span><b>{rows.length}</b> {t("runners.sum.runners")}</span>
-      <span><span className="rn-dot rn-dot-idle" aria-hidden="true" /> <b>{online}</b> {t("runners.sum.online")}</span>
-      {capacity > 0 && <span><b>{running} / {capacity}</b> {t("runners.sum.slots")}</span>}
+      <span><i className="rn-dot rn-dot-ok" aria-hidden="true" /><b>{live.length}</b> {t("runners.sum.online")}</span>
+      <span><i className="rn-dot rn-dot-busy" aria-hidden="true" /><b>{running}</b> {t("runners.sum.running")}</span>
+      {offline > 0 && <span><i className="rn-dot" aria-hidden="true" /><b>{offline}</b> {t("runners.sum.offline")}</span>}
+      {capacity > 0 && <span>{t("runners.sum.free")} <b>{t("runners.sum.of", { n: capacity - busy, total: capacity })}</b></span>}
     </p>
   );
 }
@@ -174,16 +160,16 @@ function RunnerTable({ scope, rows }: { scope: ActionsScope; rows: ActionsRunner
   const mine = scopeId(scope);
 
   return (
-    <div className="rn-wrap">
+    <div className="ui-box rn-wrap" role="region" aria-label={t("runners.title")} tabIndex={0}>
       <table className="rn-t">
         <thead>
           <tr>
             <th scope="col">{t("runners.col.runner")}</th>
+            <th scope="col">{t("runners.status")}</th>
             <th scope="col">CPU</th>
             <th scope="col">RAM</th>
             <th scope="col">GPU</th>
             <th scope="col">{t("runners.jobs")}</th>
-            <th scope="col">{t("runners.seen")}</th>
             <th scope="col"><span className="sr-only">{t("cfg.actions")}</span></th>
           </tr>
         </thead>
@@ -191,34 +177,36 @@ function RunnerTable({ scope, rows }: { scope: ActionsScope; rows: ActionsRunner
           {rows.map((r) => {
             const expanded = open.has(r.id);
             const m = r.status === "offline" ? undefined : r.metrics;
-            const sys = [r.metrics?.os, r.metrics?.arch, r.metrics?.hostname].filter(Boolean).join(" · ");
+            const gpu = m && gpuPct(m);
             const cls = [expanded ? "rn-open" : "", r.status === "offline" ? "rn-off" : ""].filter(Boolean).join(" ");
             return (
               <Fragment key={r.id}>
                 <tr className={cls || undefined} onClick={() => toggle(r.id)}>
-                  <td>
-                    <div className="rn-n">
-                      <StatusDot runner={r} />
-                      <div>
-                        <button type="button" className="rn-name" aria-expanded={expanded} onClick={(e) => { e.stopPropagation(); toggle(r.id); }}>
-                          {r.name}
-                        </button>
-                        {r.ephemeral && <> <Badge>{t("runners.ephemeral")}</Badge></>}
-                        {sys && <span className="rn-dim rn-sys">{sys}</span>}
-                      </div>
-                    </div>
-                  </td>
+                  <th scope="row">
+                    <button type="button" className="rn-name" aria-expanded={expanded} aria-controls={`rn-x-${r.id}`} onClick={(e) => { e.stopPropagation(); toggle(r.id); }}>
+                      {r.name}
+                    </button>
+                    <span className="rn-labs">
+                      {r.ephemeral && <span className="ui-chip ui-chip-acc">{t("runners.ephemeral")}</span>}
+                      {r.labels.map((l) => <span key={l} className="ui-chip" title={l}>{labelName(l)}</span>)}
+                    </span>
+                  </th>
+                  <td><StatusChip runner={r} /></td>
                   <td><Meter value={m?.cpuPercent} /></td>
-                  <td><Meter value={m && pct(m.memoryUsedBytes, m.memoryTotalBytes)} /></td>
-                  <td><Meter value={m && gpuPct(m)} /></td>
-                  <td className="rn-num">{r.capacity > 0 ? `${r.running} / ${r.capacity}` : r.running}</td>
-                  <td className="rn-dim">{r.lastSeenAt ? <When iso={r.lastSeenAt} /> : "—"}</td>
+                  <td>
+                    <Meter
+                      value={m && pct(m.memoryUsedBytes, m.memoryTotalBytes)}
+                      text={m?.memoryUsedBytes !== undefined && m.memoryTotalBytes ? `${formatBytes(m.memoryUsedBytes)} / ${formatBytes(m.memoryTotalBytes)}` : undefined}
+                    />
+                  </td>
+                  <td><Meter value={gpu} text={m && gpu !== undefined ? `${m.gpus[0]?.name ?? "GPU"} · ${Math.round(gpu)}%` : undefined} /></td>
+                  <td className="rn-num ui-tm">{r.capacity > 0 ? `${r.running} / ${r.capacity}` : r.running}</td>
                   <td className="rn-act">
                     {r.scope.toLowerCase() === mine && <RowMenu scope={scope} runner={r} />}
                   </td>
                 </tr>
                 {expanded && (
-                  <tr className="rn-x">
+                  <tr className="rn-x" id={`rn-x-${r.id}`}>
                     <td colSpan={7}>
                       <Details runner={r} />
                     </td>
@@ -262,66 +250,41 @@ function RowMenu({ scope, runner: r }: { scope: ActionsScope; runner: ActionsRun
   );
 }
 
+/** Expanded row: version, disk, load, heartbeat and system, then the jobs running now. */
 function Details({ runner: r }: { runner: ActionsRunner }) {
   const t = useT("actions");
   const m = r.metrics;
-  const disk = m && pct(m.diskUsedBytes, m.diskTotalBytes);
-  const cpu = m && [m.cpuCount > 0 ? t("runners.d.cores", { n: m.cpuCount }) : "", m.load1 !== undefined ? t("runners.d.load", { n: m.load1.toFixed(1) }) : ""].filter(Boolean).join(" · ");
+  const sys = [m?.os, m?.arch, m?.cpuCount ? t("runners.d.cores", { n: m.cpuCount }) : "", m?.hostname].filter(Boolean).join(" · ");
   return (
-    <div className="rn-xg">
-      <div>
-        <span className="rn-k">{t("runners.d.jobs")}</span>
-        {r.jobs.length === 0 ? (
-          <p className="ui-note rn-nojob">{t("runners.d.noJobs")}</p>
-        ) : (
-          <ul className="rn-jobs">
-            {r.jobs.map((j) => <JobRow key={j.id} job={j} />)}
-          </ul>
-        )}
-      </div>
-      <div>
-        <span className="rn-k">{t("runners.d.title")}</span>
-        <dl className="rn-dl">
-          {m?.memoryUsedBytes !== undefined && m.memoryTotalBytes ? (
-            <>
-              <dt>RAM</dt>
-              <dd className="rn-num">{formatBytes(m.memoryUsedBytes)} / {formatBytes(m.memoryTotalBytes)}</dd>
-            </>
-          ) : null}
-          {cpu ? (
-            <>
-              <dt>CPU</dt>
-              <dd>{cpu}</dd>
-            </>
-          ) : null}
-          {disk !== undefined && (
-            <>
-              <dt>{t("runners.d.disk")}</dt>
-              <dd className="rn-num">{t("runners.d.diskUsed", { n: Math.round(disk) })}</dd>
-            </>
-          )}
-          {m?.gpus.map((g, i) => (
-            <Fragment key={`${g.name}-${i}`}>
-              <dt>GPU</dt>
-              <dd>
-                {g.name}
-                {g.memoryUsedBytes !== undefined && g.memoryTotalBytes ? <span className="rn-num"> · {formatBytes(g.memoryUsedBytes)} / {formatBytes(g.memoryTotalBytes)}</span> : null}
-              </dd>
-            </Fragment>
-          ))}
-          {r.labels.length > 0 && (
-            <>
-              <dt>{t("runners.labels")}</dt>
-              <dd>{r.labels.map((l) => <span key={l} className="rn-lab" title={l}>{labelName(l)}</span>)}</dd>
-            </>
-          )}
-          <dt>{t("runners.version")}</dt>
-          <dd>
-            {r.version || "—"} · {r.scope === "instance" ? t("runners.d.instance") : <span className="ui-mono">{r.scope}</span>}
-          </dd>
-        </dl>
-        {!m && <p className="ui-note">{t("runners.d.noMetrics")}</p>}
-      </div>
+    <div className="rn-xp">
+      <dl className="rn-kv">
+        <div><dt>{t("runners.version")}</dt><dd>{r.version ? `v${r.version.replace(/^v/, "")}` : "—"}</dd></div>
+        <div>
+          <dt>{t("runners.d.disk")}</dt>
+          <dd className="rn-num">{m?.diskUsedBytes !== undefined && m.diskTotalBytes ? `${formatBytes(m.diskUsedBytes)} / ${formatBytes(m.diskTotalBytes)}` : "—"}</dd>
+        </div>
+        <div><dt>{t("runners.d.loadTitle")}</dt><dd className="rn-num">{m?.load1 !== undefined ? m.load1.toFixed(1) : "—"}</dd></div>
+        <div><dt>{t("runners.d.heartbeat")}</dt><dd>{r.lastSeenAt ? <When iso={r.lastSeenAt} /> : "—"}</dd></div>
+        {sys && <div><dt>{t("runners.d.system")}</dt><dd>{sys}</dd></div>}
+        {m?.gpus.map((g, i) => (
+          <div key={`${g.name}-${i}`}>
+            <dt>GPU</dt>
+            <dd>
+              {g.name}
+              {g.memoryUsedBytes !== undefined && g.memoryTotalBytes ? <span className="rn-num"> · {formatBytes(g.memoryUsedBytes)} / {formatBytes(g.memoryTotalBytes)}</span> : null}
+            </dd>
+          </div>
+        ))}
+        <div><dt>{t("runners.scope")}</dt><dd>{r.scope === "instance" ? t("runners.d.instance") : <span className="ui-mono">{r.scope}</span>}</dd></div>
+      </dl>
+      {r.jobs.length > 0 ? (
+        <ul className="rn-jobs" aria-label={t("runners.d.jobs")}>
+          {r.jobs.map((j) => <JobRow key={j.id} job={j} />)}
+        </ul>
+      ) : (
+        <p className="ui-note rn-nojob">{t("runners.d.noJobs")}</p>
+      )}
+      {!m && <p className="ui-note rn-nojob">{t("runners.d.noMetrics")}</p>}
     </div>
   );
 }
@@ -329,21 +292,17 @@ function Details({ runner: r }: { runner: ActionsRunner }) {
 function JobRow({ job: j }: { job: RunnerJob }) {
   const t = useT("actions");
   const repo = j.repository;
-  const sub = repo && [repo.fullName, [j.workflowName, j.runNumber !== undefined ? `#${j.runNumber}` : ""].filter(Boolean).join(" ")].filter(Boolean).join(" · ");
+  const title = [j.workflowName, j.runNumber !== undefined ? `#${j.runNumber}` : "", j.name].filter(Boolean).join(" · ") || t("runners.d.job");
   return (
     <li className="rn-job">
-      <span className="rn-dot rn-dot-busy" aria-hidden="true" />
-      <div className="rn-job-m">
-        {j.visible && repo && j.runId ? (
-          <Link to="/$owner/$name/actions/runs/$runId" params={{ owner: repo.owner, name: repo.name, runId: j.runId }}>
-            <b>{j.name || t("runners.d.job")}</b>
-          </Link>
-        ) : (
-          <b>{j.visible ? j.name || t("runners.d.job") : t("runners.d.private")}</b>
-        )}
-        {j.visible && sub && <span className="rn-dim">{sub}</span>}
-      </div>
-      {j.startedAt && <span className="rn-dim rn-num">{duration(j.startedAt)}</span>}
+      <span className="ax-spin" aria-hidden="true" />
+      {j.visible && repo && j.runId ? (
+        <Link to="/$owner/$name/actions/runs/$runId" params={{ owner: repo.owner, name: repo.name, runId: j.runId }} className="rn-job-t">{title}</Link>
+      ) : (
+        <b className="rn-job-t">{j.visible ? title : t("runners.d.private")}</b>
+      )}
+      {j.visible && repo && <code className="ax-ref">{repo.fullName}</code>}
+      {j.startedAt && <span className="ui-tm rn-push">{t("runners.d.since", { duration: duration(j.startedAt) })}</span>}
     </li>
   );
 }

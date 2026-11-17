@@ -244,5 +244,21 @@
   "approve.approvedBody": "The runner will finish installing in a few seconds.",
   "approve.denied": "Request denied",
   "approve.deniedBody": "The runner was not registered.",
-  "approve.home": "Back to home"
+  "approve.home": "Back to home",
+  "filter.branchPlaceholder": "Filter runs by branch",
+  "nav.manage": "Management",
+  "run.byLine": "{event} by {actor}",
+  "run.triggered": "{actor} triggered via {event}",
+  "run.took": "took {duration}",
+  "run.summary": "Summary",
+  "run.detailsNav": "Details",
+  "run.workflowFile": "Workflow file",
+  "runners.sum.running": "jobs running",
+  "runners.sum.offline": "offline",
+  "runners.sum.free": "Free slots",
+  "runners.sum.of": "{n} of {total}",
+  "runners.d.loadTitle": "Load (1 min)",
+  "runners.d.heartbeat": "Heartbeat",
+  "runners.d.system": "System",
+  "runners.d.since": "for {duration}"
 }
