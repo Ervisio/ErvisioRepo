@@ -303,3 +303,11 @@ WHERE so.policy = ANY(@policies::text[])
   AND NOT EXISTS (SELECT 1 FROM issue_attachments a WHERE a.storage_policy || '/' || a.storage_key = so.key)
 ORDER BY so.created_at
 LIMIT @lim;
+
+-- name: CountOpenWork :one
+-- Open issues and open pull requests of a repository (repository tab counts).
+SELECT
+  count(*) FILTER (WHERE kind = 'issue')::bigint AS issues,
+  count(*) FILTER (WHERE kind = 'pull')::bigint AS pulls
+FROM issues
+WHERE repo_id = @repo_id AND state = 'open';

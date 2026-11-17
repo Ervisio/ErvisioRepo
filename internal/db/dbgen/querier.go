@@ -97,6 +97,8 @@ type Querier interface {
 	CountOAuthAppSecrets(ctx context.Context, appID uuid.UUID) (int64, error)
 	CountOAuthAppUsers(ctx context.Context, appID uuid.UUID) (int64, error)
 	CountOAuthAppsByOwner(ctx context.Context, ownerID uuid.NullUUID) (int64, error)
+	// Open issues and open pull requests of a repository (repository tab counts).
+	CountOpenWork(ctx context.Context, repoID uuid.UUID) (CountOpenWorkRow, error)
 	CountOrgOwners(ctx context.Context, orgID uuid.UUID) (int64, error)
 	CountOrgWebhooks(ctx context.Context, orgID uuid.NullUUID) (int64, error)
 	CountOwnerRepos(ctx context.Context, ownerID uuid.UUID) (int64, error)

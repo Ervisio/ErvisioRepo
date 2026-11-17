@@ -1,11 +1,10 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { REACTION_EMOJI, REACTIONS, uploadAttachment, type Label, type ReactionGroup } from "../../api/issues.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Markdown } from "../../lib/markdown.tsx";
 import { Button, Icon, Menu, MenuItem, type ButtonProps, type IconName } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { useInAppLinks, useMarkdownContext } from "../code/Readme.tsx";
-import { listLayouts, setListLayout, useListLayout, type ListLayout } from "./layout.ts";
 
 /* Colour contrast: label chips and avatars pick black or white text, whichever reads best. */
 
@@ -46,10 +45,11 @@ function hslToHex(h: number, s: number, l: number): string {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
+/** Label pill: the label colour at 18% behind text mixed from it, with a 40% ring (DESIGN 2026-11-17). */
 export function LabelChip({ label }: { label: Pick<Label, "name" | "color" | "description"> }) {
-  const bg = parseHex(label.color) ? `#${label.color.replace(/^#/, "")}` : "#3a3a40";
+  const c = parseHex(label.color) ? `#${label.color.replace(/^#/, "")}` : "#8b949e";
   return (
-    <span className="wk-label" style={{ background: bg, color: textOn(bg) }} title={label.description || undefined}>
+    <span className="wk-label" style={{ "--c": c } as CSSProperties} title={label.description || undefined}>
       {label.name}
     </span>
   );
@@ -81,168 +81,121 @@ export function StateIcon({ kind, state, label }: { kind: "issue" | "pull"; stat
   );
 }
 
-/** Filled state pill; `kind` adds the state icon (detail headers). */
+/** Filled state pill (kit .ui-state); `kind` adds the state icon (detail headers). */
 export function StatePill({ state, label, kind }: { state: WorkState; label: string; kind?: "issue" | "pull" }) {
   return (
-    <span className={`wk-pill wk-state-${state}`}>
+    <span className={state === "open" ? "ui-state" : `ui-state ui-state-${state}`}>
       {kind && <Icon name={stateIconName(kind, state)} />}
       {label}
     </span>
   );
 }
 
-/* Layout switch shown in the list headers. */
+/* List pages (DESIGN 2026-11-17): saved views on the left, title row, search and filter chips, one-line rows. */
 
-export function ListLayoutSwitch() {
-  const t = useT("work");
-  const layout = useListLayout();
-  const icons: Record<ListLayout, IconName> = { a: "menu", b: "layers", c: "grid" };
+/** Frame of the issue and pull request lists. `views` holds `.wk-vw-a` links (aria-current on the active one). */
+export function ListFrame({ views, viewsLabel, title, count, actions, toolbar, children }: {
+  views: ReactNode;
+  viewsLabel: string;
+  title: string;
+  count?: string;
+  actions?: ReactNode;
+  toolbar: ReactNode;
+  children: ReactNode;
+}) {
   return (
-    <div className="ui-tablist wk-switch" role="group" aria-label={t("layout.label")}>
-      {listLayouts.map((l) => (
-        <button
-          key={l}
-          type="button"
-          className="ui-tab"
-          data-state={l === layout ? "active" : "inactive"}
-          aria-pressed={l === layout}
-          title={t(`layout.${l}.hint`)}
-          onClick={() => setListLayout(l)}
-        >
-          <Icon name={icons[l]} />
-          <span className="wk-switch-txt">{t(`layout.${l}`)}</span>
+    <div className="wk-lg">
+      <nav className="wk-vw" aria-label={viewsLabel}>
+        {views}
+      </nav>
+      <div className="wk-lmain">
+        <div className="wk-lh">
+          <h2>{title}</h2>
+          {count && <span className="ui-tm">{count}</span>}
+          {actions && <span className="wk-lh-r">{actions}</span>}
+        </div>
+        <div className="wk-fb">{toolbar}</div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Search field of a list toolbar; submits on Enter. */
+export function ListSearch({ label, placeholder, initial, onSearch }: { label: string; placeholder: string; initial: string; onSearch: (q: string) => void }) {
+  const [q, setQ] = useState(initial);
+  return (
+    <form
+      className="wk-search"
+      role="search"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSearch(q.trim());
+      }}
+    >
+      <Icon name="search" />
+      <input className="wk-search-in" type="search" aria-label={label} placeholder={placeholder} value={q} onChange={(e) => setQ(e.target.value)} />
+    </form>
+  );
+}
+
+/** Filter chip of a list toolbar: opens a menu of choices; `value` names the active one. */
+export function FilterChip({ label, value, children }: { label: string; value?: string; children: ReactNode }) {
+  return (
+    <Menu
+      label={label}
+      trigger={
+        <button type="button" className="wk-ch" data-on={value ? "" : undefined}>
+          {label}
+          {value && <b>{value}</b>}
+          <Icon name="down" />
         </button>
+      }
+    >
+      {children}
+    </Menu>
+  );
+}
+
+/** Rows of a list, optionally under group headings (milestones). */
+export function RowGroups<T>({ groups, label, getKey, row }: {
+  groups: { key: string; title?: ReactNode; items: T[] }[];
+  label: string;
+  getKey: (x: T) => string;
+  row: (x: T) => ReactNode;
+}) {
+  return (
+    <div className="wk-rows" aria-label={label} role="group">
+      {groups.map((g) => (
+        <section key={g.key} className="wk-rgroup">
+          {g.title && (
+            <h3 className="wk-grp">
+              {g.title}
+              <span className="ui-tm">{g.items.length}</span>
+            </h3>
+          )}
+          <ul className="wk-list">
+            {g.items.map((x) => (
+              <li key={getKey(x)}>{row(x)}</li>
+            ))}
+          </ul>
+        </section>
       ))}
     </div>
   );
 }
 
-const typing = (el: EventTarget | null) =>
-  el instanceof HTMLElement && (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName));
-
-/**
- * One list in the three layouts. A renders dense rows, B two-line rows next to a filter column,
- * C a selectable list with a preview pane (j/k move, o or Enter opens, / focuses the search).
- */
-export function WorkList<T>({ layout, items, getKey, row, preview, onOpen, filters, label, searchId, empty }: {
-  layout: ListLayout;
-  items: T[];
-  getKey: (x: T) => string;
-  row: (x: T, layout: ListLayout) => ReactNode;
-  preview?: (x: T) => ReactNode;
-  onOpen: (x: T) => void;
-  filters?: ReactNode;
-  label: string;
-  searchId?: string;
-  empty: ReactNode;
-}) {
-  const t = useT("work");
-  const [sel, setSel] = useState(0);
-  const idx = Math.max(0, Math.min(sel, items.length - 1));
-  const current = items[idx];
-  const split = layout === "c" && preview !== undefined;
-  const listRef = useRef<HTMLUListElement>(null);
-
-  // Global shortcuts for the split view; ignored while typing in a field.
-  const state = useRef({ items, idx, onOpen });
-  useEffect(() => {
-    state.current = { items, idx, onOpen };
-  });
-  useEffect(() => {
-    if (!split) return;
-    function onKey(e: globalThis.KeyboardEvent) {
-      if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target)) return;
-      const s = state.current;
-      if (e.key === "j" || e.key === "k") {
-        e.preventDefault();
-        const next = Math.max(0, Math.min(s.idx + (e.key === "j" ? 1 : -1), s.items.length - 1));
-        setSel(next);
-        listRef.current?.querySelectorAll<HTMLElement>("[data-wk-item]")[next]?.focus();
-      } else if (e.key === "o") {
-        const x = s.items[s.idx];
-        if (x !== undefined) s.onOpen(x);
-      } else if (e.key === "/" && searchId) {
-        e.preventDefault();
-        document.getElementById(searchId)?.focus();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [split, searchId]);
-
-  const list =
-    items.length === 0 ? (
-      empty
-    ) : split ? (
-      <ul className="wk-list wk-list-c" aria-label={label} ref={listRef}>
-        {items.map((x, i) => (
-          <li key={getKey(x)}>
-            <button
-              type="button"
-              data-wk-item
-              className="wk-ci"
-              aria-current={i === idx ? "true" : undefined}
-              onClick={() => setSel(i)}
-              onDoubleClick={() => onOpen(x)}
-              onKeyDown={(e: KeyboardEvent) => {
-                if (e.key === "Enter") onOpen(x);
-              }}
-            >
-              {row(x, "c")}
-            </button>
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <ul className={`wk-list wk-list-${layout === "b" ? "b" : "a"}`} aria-label={label}>
-        {items.map((x) => (
-          <li key={getKey(x)}>{row(x, layout === "b" ? "b" : "a")}</li>
-        ))}
-      </ul>
-    );
-
-  if (split) {
-    return (
-      <div className="wk-split">
-        <div className="wk-split-list">
-          {list}
-          <p className="ui-note wk-keys">{t("keys.hint")}</p>
-        </div>
-        <aside className="wk-pv" aria-label={t("preview.label")}>
-          {current !== undefined ? preview(current) : <p className="ui-note">{t("preview.none")}</p>}
-        </aside>
-      </div>
-    );
-  }
-  if (layout === "b" && filters) {
-    return (
-      <div className="wk-lay-b">
-        <aside className="wk-filters" aria-label={t("filters.label")}>
-          {filters}
-        </aside>
-        <div>{list}</div>
-      </div>
-    );
-  }
-  return list;
-}
-
-/** A link-like button group used in the filter column (layout B). */
-export function FilterGroup({ title, children }: { title: string; children: ReactNode }) {
+/** One list row: state icon, #number, title link (stretched over the row), tags, comments, people. */
+export function WorkRow({ icon, number, link, tags, side, people }: { icon: ReactNode; number: number; link: ReactNode; tags?: ReactNode; side?: ReactNode; people?: ReactNode }) {
   return (
-    <div className="wk-fgroup">
-      <h4>{title}</h4>
-      {children}
+    <div className="wk-ir">
+      {icon}
+      <span className="wk-ir-n">#{number}</span>
+      {link}
+      <span className="wk-ir-l">{tags}</span>
+      <span className="wk-ir-c">{side}</span>
+      <span className="wk-ir-c">{people}</span>
     </div>
-  );
-}
-
-export function FilterItem({ active, onClick, children, count }: { active: boolean; onClick: () => void; children: ReactNode; count?: number }) {
-  return (
-    <button type="button" className="wk-fitem" aria-pressed={active} onClick={onClick}>
-      <span className="acc-grow">{children}</span>
-      {count !== undefined && <span className="wk-count">{count}</span>}
-    </button>
   );
 }
 
@@ -270,8 +223,49 @@ export function Body({ owner, name, refName, source }: { owner: string; name: st
   );
 }
 
-/** Markdown editor with write and preview tabs and file attachments. */
-export function Composer({ owner, name, refName, value, onChange, label, placeholder, rows = 6, autoFocus, children }: {
+/** Markdown formatting buttons of the composer: one tab stop, arrow keys move between them. */
+function FormatBar({ onWrap }: { onWrap: (before: string, after: string) => void }) {
+  const t = useT("work");
+  const [active, setActive] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const items: { key: string; before: string; after: string; glyph: ReactNode }[] = [
+    { key: "bold", before: "**", after: "**", glyph: <b>B</b> },
+    { key: "italic", before: "_", after: "_", glyph: <i>I</i> },
+    { key: "code", before: "`", after: "`", glyph: <span className="ui-mono">&lt;&gt;</span> },
+    { key: "link", before: "[", after: "](url)", glyph: <Icon name="link" /> },
+  ];
+  function onKey(e: KeyboardEvent) {
+    const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    const to = e.key === "Home" ? 0 : e.key === "End" ? items.length - 1 : step ? (active + step + items.length) % items.length : -1;
+    if (to < 0) return;
+    e.preventDefault();
+    setActive(to);
+    ref.current?.querySelectorAll<HTMLButtonElement>("button")[to]?.focus();
+  }
+  return (
+    <div className="wk-tbar" role="toolbar" aria-label={t("composer.format")} ref={ref} onKeyDown={onKey}>
+      {items.map((x, i) => (
+        <button
+          key={x.key}
+          type="button"
+          tabIndex={i === active ? 0 : -1}
+          aria-label={t(`composer.fmt.${x.key}`)}
+          title={t(`composer.fmt.${x.key}`)}
+          onFocus={() => setActive(i)}
+          onClick={() => onWrap(x.before, x.after)}
+        >
+          {x.glyph}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Markdown editor in a soft surface: text on --bg, then write/preview, formatting, attachments and the
+ * caller's buttons. `before` goes inside the text area box (new issue title), `extra` under it (chips).
+ */
+export function Composer({ owner, name, refName, value, onChange, label, placeholder, rows = 4, autoFocus, before, extra, className, children }: {
   owner: string;
   name: string;
   refName: string;
@@ -281,6 +275,9 @@ export function Composer({ owner, name, refName, value, onChange, label, placeho
   placeholder?: string;
   rows?: number;
   autoFocus?: boolean;
+  before?: ReactNode;
+  extra?: ReactNode;
+  className?: string;
   children?: ReactNode;
 }) {
   const t = useT("work");
@@ -289,6 +286,7 @@ export function Composer({ owner, name, refName, value, onChange, label, placeho
   const [tab, setTab] = useState<"write" | "preview">("write");
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const areaRef = useRef<HTMLTextAreaElement>(null);
 
   async function attach(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -309,51 +307,63 @@ export function Composer({ owner, name, refName, value, onChange, label, placeho
     }
   }
 
+  function wrap(open: string, close: string) {
+    const el = areaRef.current;
+    if (!el) return;
+    const { selectionStart: from, selectionEnd: to } = el;
+    const picked = value.slice(from, to);
+    onChange(value.slice(0, from) + open + picked + close + value.slice(to));
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(from + open.length, from + open.length + picked.length);
+    });
+  }
+
   return (
-    <div className="wk-composer">
-      <div className="wk-composer-bar">
-        <div className="ui-tablist" role="tablist" aria-label={label}>
+    <div className={className ? `wk-cps ${className}` : "wk-cps"}>
+      <div className="wk-cps-in">
+        {before}
+        {tab === "write" ? (
+          <>
+            <label htmlFor={id} className="wk-sr">
+              {label}
+            </label>
+            <textarea
+              id={id}
+              ref={areaRef}
+              className="wk-ta"
+              rows={rows}
+              placeholder={placeholder ?? t("composer.placeholder")}
+              value={value}
+              autoFocus={autoFocus}
+              onChange={(e) => onChange(e.target.value)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                if (e.dataTransfer.files.length === 0) return;
+                e.preventDefault();
+                void attach(e.dataTransfer.files);
+              }}
+            />
+          </>
+        ) : (
+          <div className="wk-preview">
+            <Body owner={owner} name={name} refName={refName} source={value} />
+          </div>
+        )}
+      </div>
+      {extra}
+      <div className="wk-cps-ft">
+        <div className="ui-seg wk-cps-seg" role="group" aria-label={t("composer.mode")}>
           {(["write", "preview"] as const).map((x) => (
-            <button key={x} type="button" role="tab" className="ui-tab" aria-selected={tab === x} data-state={tab === x ? "active" : "inactive"} onClick={() => setTab(x)}>
+            <button key={x} type="button" className="ui-segi" aria-pressed={tab === x} onClick={() => setTab(x)}>
               {t(`composer.${x}`)}
             </button>
           ))}
         </div>
-        <span className="wk-grow" />
+        {tab === "write" && <FormatBar onWrap={wrap} />}
         <input ref={fileRef} type="file" multiple hidden onChange={(e) => void attach(e.target.files)} />
-        <Button size="sm" variant="ghost" icon="upload" disabled={busy} onClick={() => fileRef.current?.click()}>
-          {busy ? t("composer.uploading") : t("composer.attach")}
-        </Button>
-      </div>
-      {tab === "write" ? (
-        <>
-          <label htmlFor={id} className="wk-sr">
-            {label}
-          </label>
-          <textarea
-            id={id}
-            className="ui-input acc-area wk-textarea"
-            rows={rows}
-            placeholder={placeholder ?? t("composer.placeholder")}
-            value={value}
-            autoFocus={autoFocus}
-            onChange={(e) => onChange(e.target.value)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              if (e.dataTransfer.files.length === 0) return;
-              e.preventDefault();
-              void attach(e.dataTransfer.files);
-            }}
-          />
-        </>
-      ) : (
-        <div className="wk-preview">
-          <Body owner={owner} name={name} refName={refName} source={value} />
-        </div>
-      )}
-      <div className="wk-composer-foot">
-        <p className="ui-note wk-composer-hint">{tab === "write" ? t("composer.hint") : ""}</p>
-        {children && <div className="acc-actions wk-composer-actions">{children}</div>}
+        <IconTrigger icon="upload" label={busy ? t("composer.uploading") : t("composer.attach")} disabled={busy} onClick={() => fileRef.current?.click()} />
+        {children && <div className="wk-cps-act">{children}</div>}
       </div>
     </div>
   );
@@ -401,17 +411,17 @@ export function Reactions({ groups, disabled, onToggle }: { groups: ReactionGrou
   );
 }
 
-/** Comment card: quiet header (avatar, then whatever `head` holds), body and optional footer. */
-export function CommentBox({ author, head, children, footer }: { author: string; head: ReactNode; children: ReactNode; footer?: ReactNode }) {
+/** Post of a conversation: avatar, header line (`head`), body and optional footer, no card (DESIGN 2026-11-17). */
+export function CommentBox({ author, head, children, footer, compact }: { author: string; head: ReactNode; children: ReactNode; footer?: ReactNode; compact?: boolean }) {
   return (
-    <div className="wk-cm">
-      <div className="wk-cm-head">
-        <Avatar user={author} size={20} />
-        {head}
+    <article className={compact ? "wk-post wk-post-sm" : "wk-post"}>
+      <Avatar user={author} size={compact ? 24 : 32} />
+      <div className="wk-post-m">
+        <div className="wk-post-h">{head}</div>
+        <div className="wk-post-b">{children}</div>
+        {footer}
       </div>
-      <div className="wk-cm-body">{children}</div>
-      {footer}
-    </div>
+    </article>
   );
 }
 
@@ -432,26 +442,23 @@ export function IconTrigger({ icon, label, ...rest }: { icon: IconName; label: s
   return <Button {...rest} variant="ghost" size="sm" icon={icon} className="wk-ib" aria-label={label} title={label} />;
 }
 
-/** Metadata group of the right column: title, one edit affordance, content. */
+/** Key/value row of the Properties panel: key, value, one edit affordance. */
 export function SideBlock({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="wk-g">
-      <div className="wk-side-h">
-        <h3>{title}</h3>
-        {action}
-      </div>
-      <div className="wk-side-c">{children}</div>
+    <section className="wk-prow">
+      <h3 className="wk-prow-k">{title}</h3>
+      <div className="wk-prow-v">{children}</div>
+      {action && <span className="wk-prow-a">{action}</span>}
     </section>
   );
 }
 
-/** First box of the right column. */
+/** Status card at the top of the Properties panel (pull request readiness and merge). */
 export function StatusBox({ children }: { children: ReactNode }) {
   const t = useT("work");
   return (
-    <section className="wk-box wk-status" aria-label={t("side.status")}>
-      <div className="wk-box-h">{t("side.status")}</div>
-      <div className="wk-box-b">{children}</div>
+    <section className="wk-stc" aria-label={t("side.status")}>
+      {children}
     </section>
   );
 }

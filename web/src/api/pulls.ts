@@ -110,6 +110,8 @@ function usePullMutation<V, R>(owner: string, name: string, fn: (v: V) => Promis
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["pulls", owner, name] });
       await qc.invalidateQueries({ queryKey: ["issues", owner, name] });
+      // Open counts of the repository tabs.
+      void qc.invalidateQueries({ queryKey: ["repos", "one", owner, name] });
     },
   });
 }

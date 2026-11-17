@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { canWrite } from "../../api/code.ts";
 import { useSession } from "../../api/identity.ts";
 import {
@@ -19,11 +19,11 @@ import {
 } from "../../api/pulls.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, Button, Card, Dialog, DialogClose, Input, Select } from "../../ui/index.ts";
+import { Badge, Button, Dialog, DialogClose, Input, Select } from "../../ui/index.ts";
 import { DiffView, filePath } from "../../ui/code/DiffView.tsx";
 import { useNotify } from "../account/common.tsx";
 import { Gate, When } from "../code/common.tsx";
-import { Body, CommentBox, Composer } from "../work/common.tsx";
+import { Body, CommentBox, Composer, IconTrigger } from "../work/common.tsx";
 
 type Thread = { root: PullReviewComment; replies: PullReviewComment[] };
 type Side = "LEFT" | "RIGHT";
@@ -60,7 +60,11 @@ function threadsOf(comments: PullReviewComment[]): Map<string, Thread[]> {
 
 const anchor = (path: string) => `wk-th-${path.replace(/[^A-Za-z0-9_-]/g, "_")}`;
 
-export function PullFiles({ repo, pr }: { repo: Repo; pr: PullRequest }) {
+/**
+ * "Files changed": the shared diff layout (file column + one card per file, ui/code/DiffView) under the pull
+ * request header, review controls in its bar, and the review threads grouped by file below the diff.
+ */
+export function PullFiles({ repo, pr, header }: { repo: Repo; pr: PullRequest; header: ReactNode }) {
   const t = useT("pulls");
   const me = useSession().data?.username;
   const diff = usePullDiff(repo.owner, repo.name, pr.issue.number);
@@ -79,59 +83,65 @@ export function PullFiles({ repo, pr }: { repo: Repo; pr: PullRequest }) {
   }
 
   return (
-    <Gate query={diff}>
-      {(d) => {
-        const paths = d.files.map(filePath);
-        return (
-          <div className="wk-files-tab">
-            <div className="rp-bar">
-              {pending && (
-                <span className="ui-note">
-                  <Badge tone="warn">{t("review.pendingBadge")}</Badge> {t("review.pendingCount", { count: pendingCount })}
-                </span>
-              )}
-              <span className="acc-grow" />
-              {canComment && <SubmitReview repo={repo} pr={pr} pendingId={pending?.id} me={me} />}
-            </div>
-            <DiffView
-              diff={d}
-              fileActions={(f) => {
-                const p = filePath(f);
-                const n = byPath.get(p)?.length ?? 0;
-                return (
+    <div className="wk-pfiles cd-page">
+      {!diff.data && header}
+      <Gate query={diff}>
+        {(d) => {
+          const paths = d.files.map(filePath);
+          return (
+            <>
+              <DiffView
+                diff={d}
+                header={header}
+                toolbar={
                   <>
-                    {n > 0 && (
-                      <a className="wk-linkbtn" href={`#${anchor(p)}`}>
-                        {t("files.threads", { count: n })}
-                      </a>
+                    {pending && (
+                      <span className="ui-chip ui-chip-warn" title={t("review.pendingCount", { count: pendingCount })}>
+                        {t("review.pendingBadge")} · {pendingCount}
+                      </span>
                     )}
-                    {canComment && (
-                      <Button size="sm" variant="ghost" icon="comment" onClick={() => startComment(p)}>
-                        {t("files.comment")}
-                      </Button>
-                    )}
+                    {canComment && <SubmitReview repo={repo} pr={pr} pendingId={pending?.id} me={me} />}
                   </>
-                );
-              }}
-            />
-            <Card title={t("files.reviewComments")} className="wk-threads">
-              {compose !== undefined && (
-                <NewComment repo={repo} pr={pr} paths={paths} path={compose} pending={pending !== undefined} onDone={() => setCompose(undefined)} />
-              )}
-              {byPath.size === 0 && compose === undefined && <p className="ui-note acc-pad">{t("files.noComments")}</p>}
-              {Array.from(byPath.entries()).map(([path, threads]) => (
-                <section key={path} id={anchor(path)} className="wk-th-file">
-                  <h4 className="ui-mono">{path}</h4>
-                  {threads.map((th) => (
-                    <ThreadView key={th.root.id} repo={repo} pr={pr} th={th} me={me} canComment={canComment} />
+                }
+                fileActions={(f) => {
+                  const p = filePath(f);
+                  const n = byPath.get(p)?.length ?? 0;
+                  return (
+                    <>
+                      {n > 0 && (
+                        <a className="wk-linkbtn" href={`#${anchor(p)}`}>
+                          {t("files.threads", { count: n })}
+                        </a>
+                      )}
+                      {canComment && <IconTrigger icon="comment" label={t("files.comment")} onClick={() => startComment(p)} />}
+                    </>
+                  );
+                }}
+              />
+              <section className="ui-box wk-threads" aria-label={t("files.reviewComments")}>
+                <div className="ui-box-h">
+                  <b>{t("files.reviewComments")}</b>
+                </div>
+                <div className="ui-in">
+                  {compose !== undefined && (
+                    <NewComment repo={repo} pr={pr} paths={paths} path={compose} pending={pending !== undefined} onDone={() => setCompose(undefined)} />
+                  )}
+                  {byPath.size === 0 && compose === undefined && <p className="ui-note acc-pad">{t("files.noComments")}</p>}
+                  {Array.from(byPath.entries()).map(([path, threads]) => (
+                    <section key={path} id={anchor(path)} className="wk-th-file">
+                      <h4 className="ui-mono">{path}</h4>
+                      {threads.map((th) => (
+                        <ThreadView key={th.root.id} repo={repo} pr={pr} th={th} me={me} canComment={canComment} />
+                      ))}
+                    </section>
                   ))}
-                </section>
-              ))}
-            </Card>
-          </div>
-        );
-      }}
-    </Gate>
+                </div>
+              </section>
+            </>
+          );
+        }}
+      </Gate>
+    </div>
   );
 }
 
@@ -263,6 +273,7 @@ function ReviewComment({ repo, pr, c, me, canApply }: { repo: Repo; pr: PullRequ
   const suggestion = suggestionOf(c.body);
   return (
     <CommentBox
+      compact
       author={c.author}
       head={
         <>

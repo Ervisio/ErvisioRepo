@@ -873,3 +873,13 @@ func (s *Service) ListEdits(ctx context.Context, who auth.Principal, owner, name
 	}
 	return s.edits(ctx, rows)
 }
+
+// OpenCounts returns the open issues and open pull requests of a repository.
+// The caller has already checked read access to it.
+func (s *Service) OpenCounts(ctx context.Context, repoID uuid.UUID) (issues, pulls int64, err error) {
+	row, err := s.q.CountOpenWork(ctx, repoID)
+	if err != nil {
+		return 0, 0, fmt.Errorf("count open work: %w", err)
+	}
+	return row.Issues, row.Pulls, nil
+}

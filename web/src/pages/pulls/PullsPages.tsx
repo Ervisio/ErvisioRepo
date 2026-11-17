@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { canWrite, useBranches } from "../../api/code.ts";
 import { useSession } from "../../api/identity.ts";
 import { useCollaborators } from "../../api/issues.ts";
@@ -13,6 +13,7 @@ import {
   useMergeability,
   usePull,
   usePullCommits,
+  usePullFiles,
   usePulls,
   useRequestReviewers,
   useReviews,
@@ -28,14 +29,13 @@ import {
 } from "../../api/pulls.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, Dialog, DialogClose, EmptyState, Icon, Input, Menu, MenuItem, MenuLabel, Select } from "../../ui/index.ts";
+import { Button, Dialog, DialogClose, EmptyState, Icon, Input, Menu, MenuItem, MenuLabel, Select, type IconName } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { CommitRow } from "../code/HistoryPages.tsx";
-import { Gate, Pager, RepoFrame, shortSha, When } from "../code/common.tsx";
-import { DetailLayout, StepNav, WorkHeader } from "../issues/IssuesPages.tsx";
-import { Avatar, Body, CommentBox, Composer, EventRow, FilterGroup, FilterItem, IconTrigger, LabelChip, ListLayoutSwitch, SideBlock, StateIcon, StatePill, StatusBox, WorkList, type WorkState } from "../work/common.tsx";
+import { CopyButton, Gate, Pager, RepoFrame, shortSha, When } from "../code/common.tsx";
+import { DetailLayout, WorkHeader } from "../issues/IssuesPages.tsx";
+import { Avatar, Body, CommentBox, Composer, EventRow, FilterChip, IconTrigger, LabelChip, ListFrame, ListSearch, RowGroups, SideBlock, StateIcon, StatePill, StatusBox, WorkRow, type WorkState } from "../work/common.tsx";
 import { canTriage, Conversation, IssueMeta, type TimelineExtra } from "../work/Conversation.tsx";
-import { saveListOrder, useListLayout, type ListLayout } from "../work/layout.ts";
 import { PullFiles } from "./PullFiles.tsx";
 
 export type PullSearch = {
@@ -48,7 +48,7 @@ export type PullSearch = {
   compare?: boolean;
   page?: number;
 };
-export type PullTab = "commits" | "files";
+export type PullTab = "commits" | "checks" | "files";
 
 export const pullState = (p: PullRequest): WorkState => (p.state === "merged" ? "merged" : p.state === "closed" ? "closed" : p.draft ? "draft" : "open");
 
@@ -56,17 +56,18 @@ export const pullState = (p: PullRequest): WorkState => (p.state === "merged" ? 
 
 export function PullsPage({ owner, name, search }: { owner: string; name: string; search: PullSearch }) {
   return (
-    <RepoFrame owner={owner} name={name} tab="pulls" section="pr">
+    <RepoFrame owner={owner} name={name} tab="pulls" section="pr" head={false}>
       {(repo) => <PullList repo={repo} search={search} />}
     </RepoFrame>
   );
 }
 
+type PullView = { id: "open" | "reviewRequested" | "created" | "merged" | "closed"; icon: IconName; search: PullSearch };
+
 function PullList({ repo, search }: { repo: Repo; search: PullSearch }) {
   const t = useT("pulls");
   const { owner, name } = repo;
   const navigate = useNavigate();
-  const layout = useListLayout();
   const me = useSession().data?.username;
   const page = search.page ?? 1;
   const filter: PullFilter = {
@@ -80,231 +81,123 @@ function PullList({ repo, search }: { repo: Repo; search: PullSearch }) {
   };
   const list = usePulls(owner, name, filter);
   const branches = useBranches(owner, name, 0, 100);
-  const [q, setQ] = useState(search.q ?? "");
 
   const go = (patch: Partial<PullSearch>) =>
     void navigate({ to: "/$owner/$name/pulls", params: { owner, name }, search: { ...search, page: undefined, ...patch } });
-
-  const numbers = list.data?.items.map((p) => p.issue.number).join(",");
-  useEffect(() => {
-    if (numbers !== undefined) saveListOrder("pulls", owner, name, numbers ? numbers.split(",").map(Number) : []);
-  }, [numbers, owner, name]);
-
-  const open = (p: PullRequest) => void navigate({ to: "/$owner/$name/pulls/$number", params: { owner, name, number: String(p.issue.number) } });
   const branchNames = (branches.data?.items ?? []).map((b) => b.name);
 
-  const filters = (
-    <>
-      <FilterGroup title={t("filters.views")}>
-        <FilterItem active={!search.author && !search.reviewRequested} onClick={() => go({ author: undefined, reviewRequested: undefined })}>
-          {t("view.all")}
-        </FilterItem>
-        {me && (
-          <FilterItem active={search.author === me} onClick={() => go({ author: me, reviewRequested: undefined })}>
-            {t("view.created")}
-          </FilterItem>
-        )}
-        {me && (
-          <FilterItem active={search.reviewRequested === me} onClick={() => go({ reviewRequested: me, author: undefined })}>
-            {t("view.reviewRequested")}
-          </FilterItem>
-        )}
-      </FilterGroup>
-      <FilterGroup title={t("filters.base")}>
-        <FilterItem active={!search.base} onClick={() => go({ base: undefined })}>
-          {t("filters.anyBase")}
-        </FilterItem>
-        {branchNames.map((b) => (
-          <FilterItem key={b} active={search.base === b} onClick={() => go({ base: b })}>
-            <span className="ui-mono">{b}</span>
-          </FilterItem>
-        ))}
-      </FilterGroup>
-    </>
-  );
+  const views: PullView[] = [
+    { id: "open", icon: "pr", search: {} },
+    ...(me
+      ? ([
+          { id: "reviewRequested", icon: "eye", search: { reviewRequested: me } },
+          { id: "created", icon: "plus", search: { author: me } },
+        ] as PullView[])
+      : []),
+    { id: "merged", icon: "pr", search: { state: "merged" } },
+    { id: "closed", icon: "x", search: { state: "closed" } },
+  ];
+  const current = views.find((v) => search.state === v.search.state && search.author === v.search.author && search.reviewRequested === v.search.reviewRequested);
+  const plain = current?.id === "open" && !search.q && !search.base;
 
   return (
-    <>
-      <div className="rp-bar wk-bar">
-        <div className="ui-tablist" role="group" aria-label={t("list.stateFilter")}>
-          {(["open", "closed", "merged", "all"] as const).map((s) => {
-            const active = (search.state ?? "open") === s;
-            return (
-              <button key={s} type="button" className="ui-tab" data-state={active ? "active" : "inactive"} aria-pressed={active} onClick={() => go({ state: s === "open" ? undefined : s })}>
-                {t(`list.${s}`)}
-              </button>
-            );
-          })}
-        </div>
-        <form
-          className="wk-search"
-          role="search"
-          onSubmit={(e) => {
-            e.preventDefault();
-            go({ q: q.trim() || undefined });
-          }}
+    <ListFrame
+      viewsLabel={t("filters.views")}
+      views={views.map((v) => (
+        <Link
+          key={v.id}
+          className="wk-vw-a"
+          to="/$owner/$name/pulls"
+          params={{ owner, name }}
+          search={{ ...v.search, base: search.base }}
+          aria-current={current === v ? "page" : undefined}
         >
-          <Icon name="search" />
-          <input className="ui-input" type="search" aria-label={t("list.search")} placeholder={t("list.searchPlaceholder")} value={q} onChange={(e) => setQ(e.target.value)} />
-        </form>
-        {layout !== "b" && (
-          <Select
-            label={t("list.base")}
-            className="wk-fsel"
-            value={search.base ?? "-"}
-            onValueChange={(v) => go({ base: v === "-" ? undefined : v })}
-            options={[{ value: "-", label: t("filters.anyBase") }, ...branchNames.map((b) => ({ value: b, label: b }))]}
-          />
-        )}
-        <Select
-          label={t("list.sort")}
-          className="wk-fsel"
-          value={search.sort ?? "created"}
-          onValueChange={(v) => go({ sort: v === "updated" ? "updated" : undefined })}
-          options={(["created", "updated"] as const).map((s) => ({ value: s, label: t(`sort.${s}`) }))}
-        />
-        <span className="acc-grow" />
-        <ListLayoutSwitch />
-        {me && canWrite(repo.permission) && (
-          <NewPullDialog repo={repo} branches={branchNames} open={search.compare === true} onOpenChange={(o) => go({ compare: o ? true : undefined })} />
-        )}
-      </div>
-      <Gate query={list}>
-        {(res) => (
-          <>
-            <WorkList
-              layout={layout}
-              items={res.items}
-              getKey={(p) => p.issue.id}
-              label={t("list.aria")}
-              filters={filters}
-              onOpen={open}
-              empty={<EmptyState icon="pr" title={t("list.empty")} description={t("list.emptyHint")} />}
-              row={(p, l) => <PullRow repo={repo} pr={p} layout={l} />}
-              preview={(p) => <PullPreview repo={repo} pr={p} />}
-            />
-            <Pager page={page} hasMore={res.hasMore} onPage={(n) => go({ ...search, page: n > 1 ? n : undefined })} />
-          </>
-        )}
-      </Gate>
-    </>
-  );
-}
-
-function PullRow({ repo, pr, layout }: { repo: Repo; pr: PullRequest; layout: ListLayout }) {
-  const t = useT("pulls");
-  const i = pr.issue;
-  const state = pullState(pr);
-  const icon = <StateIcon kind="pull" state={state} label={t(`state.${state}`)} />;
-  const meta = (
-    <span className="wk-meta">
-      <span>#{i.number}</span>
-      <span>{pr.state === "merged" ? t("row.merged", { user: pr.mergedBy || i.author }) : t("row.opened", { user: i.author })}</span>
-      <When iso={pr.state === "merged" && pr.mergedAt ? pr.mergedAt : i.createdAt} />
-      <span className="ui-mono wk-meta-br">{t("row.branches", { head: pr.head.ref, base: pr.base.ref })}</span>
-    </span>
-  );
-  const labels = i.labels.length > 0 && (
-    <span className="wk-labels">
-      {i.labels.map((l) => (
-        <LabelChip key={l.id} label={l} />
-      ))}
-    </span>
-  );
-  const comments = (
-    <span className="wk-cnt" aria-label={t("row.comments", { count: i.commentCount })}>
-      {i.commentCount > 0 && (
-        <>
-          <Icon name="comment" />
-          {i.commentCount}
-        </>
-      )}
-    </span>
-  );
-  const people = (
-    <span className="wk-avatars" aria-label={pr.requestedReviewers.length ? t("row.reviewers", { users: pr.requestedReviewers.join(", ") }) : undefined}>
-      {pr.requestedReviewers.slice(0, 3).map((u) => (
-        <span key={u} title={u}>
-          <Avatar user={u} size={20} />
-        </span>
-      ))}
-    </span>
-  );
-  if (layout === "c") {
-    return (
-      <span className="wk-ci-in">
-        {icon}
-        <span className="wk-ci-main">
-          <span className="wk-title">{i.title}</span>
-          <span className="wk-meta">
-            <span>#{i.number}</span>
-            <When iso={i.updatedAt} />
-          </span>
-        </span>
-        {comments}
-      </span>
-    );
-  }
-  const link = (
-    <Link className="wk-title" to="/$owner/$name/pulls/$number" params={{ owner: repo.owner, name: repo.name, number: String(i.number) }}>
-      {i.title}
-    </Link>
-  );
-  if (layout === "b") {
-    return (
-      <div className="wk-rb">
-        {icon}
-        <div className="wk-rb-main">
-          <div className="wk-rb-l1">
-            {link}
-            {labels}
-          </div>
-          {meta}
-        </div>
-        <div className="wk-rb-side">
-          {people}
-          {comments}
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="wk-ra">
-      {icon}
-      <div className="wk-ra-main">
-        {link}
-        {labels}
-        {meta}
-      </div>
-      {people}
-      {comments}
-      <When iso={i.updatedAt} />
-    </div>
-  );
-}
-
-function PullPreview({ repo, pr }: { repo: Repo; pr: PullRequest }) {
-  const t = useT("pulls");
-  const i = pr.issue;
-  const state = pullState(pr);
-  return (
-    <div className="wk-pv-in">
-      <div className="wk-pv-head">
-        <StatePill state={state} label={t(`state.${state}`)} />
-        <span className="ui-note">#{i.number}</span>
-        <span className="acc-grow" />
-        <Link to="/$owner/$name/pulls/$number" params={{ owner: repo.owner, name: repo.name, number: String(i.number) }}>
-          <Button size="sm">{t("preview.open")}</Button>
+          <Icon name={v.icon} className={v.id === "merged" ? "ui-st-merged" : undefined} />
+          {t(`view.${v.id}`)}
+          {v.id === "open" && !!repo.openPullsCount && <span className="wk-vw-c">{repo.openPullsCount}</span>}
         </Link>
-      </div>
-      <h3 className="wk-pv-title">{i.title}</h3>
-      <p className="wk-meta">
-        <span>{t("row.opened", { user: i.author })}</span>
-        <When iso={i.createdAt} />
-        <span className="ui-mono">{t("row.branches", { head: pr.head.ref, base: pr.base.ref })}</span>
-      </p>
-      <Body owner={repo.owner} name={repo.name} refName={repo.defaultBranch} source={i.body} />
-    </div>
+      ))}
+      title={current ? t(`view.${current.id}`) : t("list.aria")}
+      count={plain && repo.openPullsCount !== undefined ? t("list.count", { count: repo.openPullsCount }) : undefined}
+      actions={
+        me &&
+        canWrite(repo.permission) && <NewPullDialog repo={repo} branches={branchNames} open={search.compare === true} onOpenChange={(o) => go({ compare: o ? true : undefined })} />
+      }
+      toolbar={
+        <>
+          <ListSearch key={search.q ?? ""} label={t("list.search")} placeholder={t("list.searchPlaceholder")} initial={search.q ?? ""} onSearch={(q) => go({ q: q || undefined })} />
+          <FilterChip label={t("list.base")} value={search.base}>
+            <MenuItem icon={!search.base ? "check" : undefined} onSelect={() => go({ base: undefined })}>
+              {t("filters.anyBase")}
+            </MenuItem>
+            {branchNames.map((b) => (
+              <MenuItem key={b} icon={search.base === b ? "check" : undefined} onSelect={() => go({ base: b })}>
+                <span className="ui-mono">{b}</span>
+              </MenuItem>
+            ))}
+          </FilterChip>
+          <FilterChip label={t("list.sort")} value={t(`sort.${search.sort ?? "created"}`)}>
+            {(["created", "updated"] as const).map((x) => (
+              <MenuItem key={x} icon={(search.sort ?? "created") === x ? "check" : undefined} onSelect={() => go({ sort: x === "updated" ? "updated" : undefined })}>
+                {t(`sort.${x}`)}
+              </MenuItem>
+            ))}
+          </FilterChip>
+        </>
+      }
+    >
+      <Gate query={list}>
+        {(res) =>
+          res.items.length === 0 ? (
+            <EmptyState icon="pr" title={t("list.empty")} description={t("list.emptyHint")} />
+          ) : (
+            <>
+              <RowGroups label={t("list.aria")} groups={[{ key: "all", items: res.items }]} getKey={(p) => p.issue.id} row={(p) => <PullRow repo={repo} pr={p} />} />
+              <Pager page={page} hasMore={res.hasMore} onPage={(n) => go({ page: n > 1 ? n : undefined })} />
+            </>
+          )
+        }
+      </Gate>
+    </ListFrame>
+  );
+}
+
+function PullRow({ repo, pr }: { repo: Repo; pr: PullRequest }) {
+  const t = useT("pulls");
+  const i = pr.issue;
+  const state = pullState(pr);
+  return (
+    <WorkRow
+      icon={<StateIcon kind="pull" state={state} label={t(`state.${state}`)} />}
+      number={i.number}
+      link={
+        <Link className="wk-ir-t" to="/$owner/$name/pulls/$number" params={{ owner: repo.owner, name: repo.name, number: String(i.number) }}>
+          {i.title}
+        </Link>
+      }
+      tags={
+        <>
+          {i.labels.map((l) => (
+            <LabelChip key={l.id} label={l} />
+          ))}
+          {pr.draft && pr.state === "open" && <span className="ui-chip">{t("state.draft")}</span>}
+          {!pr.draft && pr.state === "open" && pr.requestedReviewers.length > 0 && <span className="ui-chip ui-chip-rev">{t("row.reviewRequested")}</span>}
+        </>
+      }
+      side={
+        i.commentCount > 0 && (
+          <span className="wk-cnt" aria-label={t("row.comments", { count: i.commentCount })}>
+            <Icon name="comment" />
+            {i.commentCount}
+          </span>
+        )
+      }
+      people={
+        <span title={i.author}>
+          <Avatar user={i.author} size={20} />
+        </span>
+      }
+    />
   );
 }
 
@@ -383,7 +276,7 @@ function NewPullDialog({ repo, branches, open, onOpenChange }: { repo: Repo; bra
 
 export function PullPage({ owner, name, number, tab, page }: { owner: string; name: string; number: number; tab?: PullTab; page?: number }) {
   return (
-    <RepoFrame owner={owner} name={name} tab="pulls" section="pr">
+    <RepoFrame owner={owner} name={name} tab="pulls" section="pr" head={false}>
       {(repo) => <PullLoader repo={repo} number={number} tab={tab} page={page ?? 1} />}
     </RepoFrame>
   );
@@ -403,85 +296,137 @@ function PullDetail({ repo, pr, tab, page }: { repo: Repo; pr: PullRequest; tab?
   const t = useT("pulls");
   const notify = useNotify();
   const me = useSession().data?.username;
-  const layout = useListLayout();
   const update = useUpdatePull(repo.owner, repo.name, pr.issue.number);
   const i = pr.issue;
-  const state = pullState(pr);
   const canEdit = (me !== undefined && me === i.author) || canWrite(repo.permission);
   const canDraft = canEdit && pr.state === "open";
   const toggleDraft = () => update.mutate({ draft: !pr.draft }, { onError: notify.fail });
-  const params = { owner: repo.owner, name: repo.name, number: String(i.number) };
   const merged = pr.state === "merged";
-
-  const tabs = (
-    <nav className="wk-subtabs" aria-label={t("detail.tabs")}>
-      <Link className="wk-subtab" activeOptions={{ exact: true, includeSearch: true }} to="/$owner/$name/pulls/$number" params={params} search={{}} aria-current={tab === undefined ? "page" : undefined}>
-        {t("tab.conversation")}
-        <span className="wk-count">{i.commentCount}</span>
-      </Link>
-      <Link className="wk-subtab" activeOptions={{ exact: true, includeSearch: true }} to="/$owner/$name/pulls/$number" params={params} search={{ tab: "commits" }} aria-current={tab === "commits" ? "page" : undefined}>
-        {t("tab.commits")}
-      </Link>
-      <Link className="wk-subtab" activeOptions={{ exact: true, includeSearch: true }} to="/$owner/$name/pulls/$number" params={params} search={{ tab: "files" }} aria-current={tab === "files" ? "page" : undefined}>
-        {t("tab.files")}
-      </Link>
-    </nav>
-  );
 
   const header = (
     <WorkHeader
+      kind="pulls"
+      repo={repo}
       title={i.title}
       number={i.number}
       canEdit={canEdit && !merged}
       saving={update.isPending}
       onRename={(title) => update.mutate({ title }, { onError: notify.fail })}
-      pill={<StatePill kind="pull" state={state} label={t(`state.${state}`)} />}
-      meta={
-        <span className="wk-meta">
-          <b>{merged ? pr.mergedBy : i.author}</b>
-          <span>{t(merged ? "detail.merged" : "detail.wants")}</span>
-          <code className="wk-br">{pr.head.ref}</code>
-          <span>{t("detail.into")}</span>
-          <code className="wk-br">{pr.base.ref}</code>
-          <When iso={merged && pr.mergedAt ? pr.mergedAt : i.createdAt} />
-        </span>
-      }
-      menu={
-        canDraft && (
-          <MenuItem icon="edit" onSelect={toggleDraft}>
-            {pr.draft ? t("detail.ready") : t("detail.toDraft")}
-          </MenuItem>
-        )
-      }
-      tabs={tabs}
+      meta={<PullMeta repo={repo} pr={pr} />}
+      tabs={<PullTabs repo={repo} pr={pr} tab={tab} />}
     />
   );
 
+  if (tab === "files") return <PullFiles repo={repo} pr={pr} header={<div className="wk-detail">{header}</div>} />;
   if (tab !== undefined) {
     return (
       <div className="wk-detail">
-        {layout === "c" && <StepNav kind="pulls" repo={repo} number={i.number} />}
         {header}
-        {tab === "commits" ? <PullCommits repo={repo} pr={pr} page={page} /> : <PullFiles repo={repo} pr={pr} />}
+        {tab === "commits" ? <PullCommits repo={repo} pr={pr} page={page} /> : <PullChecks repo={repo} pr={pr} />}
       </div>
     );
   }
 
   return (
     <DetailLayout
-      kind="pulls"
-      repo={repo}
-      number={i.number}
       header={header}
       sidebar={
         <>
           <MergeStatus repo={repo} pr={pr} onReady={canDraft ? toggleDraft : undefined} />
-          <IssueMeta repo={repo} issue={i} reviewers={pr.requestedReviewers.length} before={<ReviewersBlock repo={repo} pr={pr} />} />
+          <IssueMeta
+            repo={repo}
+            issue={i}
+            reviewers={pr.requestedReviewers.length}
+            before={<ReviewersBlock repo={repo} pr={pr} />}
+            openedLabel={t("side.openedBy")}
+            menu={
+              canDraft && (
+                <MenuItem icon="edit" onSelect={toggleDraft}>
+                  {pr.draft ? t("detail.ready") : t("detail.toDraft")}
+                </MenuItem>
+              )
+            }
+          />
         </>
       }
     >
       <PullConversation repo={repo} pr={pr} canEdit={canEdit} />
     </DetailLayout>
+  );
+}
+
+/** "X wants to merge into base from head", the branch copy button and the Code menu. */
+function PullMeta({ repo, pr }: { repo: Repo; pr: PullRequest }) {
+  const t = useT("pulls");
+  const ta = useT("account");
+  const notify = useNotify();
+  const i = pr.issue;
+  const merged = pr.state === "merged";
+  const state = pullState(pr);
+  const [headOwner, headName] = pr.head.repo ? pr.head.repo.split("/") : [repo.owner, repo.name];
+  const checkout = `git fetch origin ${pr.head.ref} && git switch ${pr.head.ref}`;
+  return (
+    <>
+      <StatePill kind="pull" state={state} label={t(`state.${state}`)} />
+      <span className="wk-dh-who">
+        <b>{merged ? pr.mergedBy : i.author}</b> {t(merged ? "detail.mergedInto" : "detail.wantsInto")} <code className="wk-ref">{pr.base.ref}</code> {t("detail.from")}{" "}
+        <code className="wk-ref">{pr.head.repo && pr.head.repo !== `${repo.owner}/${repo.name}` ? `${pr.head.repo}:${pr.head.ref}` : pr.head.ref}</code>
+      </span>
+      <CopyButton value={pr.head.ref} label={t("detail.copyBranch")} className="wk-ib" />
+      <span className="wk-dh-r">
+        <Menu
+          align="end"
+          label={t("detail.code")}
+          trigger={
+            <Button icon="code">
+              {t("detail.code")}
+              <Icon name="down" />
+            </Button>
+          }
+        >
+          {headOwner && headName && (
+            <MenuItem icon="folder" asChild>
+              <Link to="/$owner/$name" params={{ owner: headOwner, name: headName }} search={{ ref: pr.head.ref }}>
+                {t("detail.browse")}
+              </Link>
+            </MenuItem>
+          )}
+          <MenuItem icon="terminal" onSelect={() => void navigator.clipboard.writeText(checkout).then(() => notify.ok(ta("copied")), (e: unknown) => notify.fail(e))}>
+            {t("detail.copyCheckout")}
+          </MenuItem>
+        </Menu>
+      </span>
+    </>
+  );
+}
+
+/** Conversation / Commits / Checks / Files changed, with counts where the data is at hand. */
+function PullTabs({ repo, pr, tab }: { repo: Repo; pr: PullRequest; tab?: PullTab }) {
+  const t = useT("pulls");
+  const i = pr.issue;
+  const params = { owner: repo.owner, name: repo.name, number: String(i.number) };
+  const commits = usePullCommits(repo.owner, repo.name, i.number, 1);
+  const files = usePullFiles(repo.owner, repo.name, i.number);
+  const status = useHeadStatus(repo.owner, repo.name, pr.head.sha);
+  const checks = useHeadChecks(repo.owner, repo.name, pr.head.sha);
+  const nChecks = status.data && checks.data ? status.data.statuses.length + checks.data.checkRuns.length : undefined;
+  const nCommits = commits.data ? (commits.data.hasMore ? `${commits.data.items.length}+` : commits.data.items.length) : undefined;
+  const tabs: { id?: PullTab; icon: IconName; label: string; count?: number | string }[] = [
+    { icon: "comment", label: t("tab.conversation"), count: i.commentCount },
+    { id: "commits", icon: "commit", label: t("tab.commits"), count: nCommits },
+    { id: "checks", icon: "check", label: t("tab.checks"), count: nChecks },
+    { id: "files", icon: "file", label: t("tab.files"), count: files.data?.length },
+  ];
+  return (
+    <nav className="wk-prt" aria-label={t("detail.tabs")}>
+      {tabs.map((x) => (
+        <Link key={x.id ?? "conversation"} to="/$owner/$name/pulls/$number" params={params} search={x.id ? { tab: x.id } : {}} aria-current={tab === x.id ? "page" : undefined}>
+          <Icon name={x.icon} />
+          {x.label}
+          {x.count !== undefined && <span className="ui-n">{x.count}</span>}
+        </Link>
+      ))}
+    </nav>
   );
 }
 
@@ -492,11 +437,12 @@ function PullConversation({ repo, pr, canEdit }: { repo: Repo; pr: PullRequest; 
   const reviews = useReviews(repo.owner, repo.name, pr.issue.number);
   const extra: TimelineExtra[] = (reviews.data ?? [])
     .filter((r) => r.state !== "pending")
-    .map((r) => ({ key: `review-${r.id}`, at: r.submittedAt ?? r.createdAt, node: <ReviewItem repo={repo} pr={pr} r={r} /> }));
+    .map((r) => ({ key: `review-${r.id}`, at: r.submittedAt ?? r.createdAt, kind: r.body ? "post" : "event", node: <ReviewItem repo={repo} pr={pr} r={r} /> }));
   if (pr.state === "merged" && pr.mergedAt) {
     extra.push({
       key: "merged",
       at: pr.mergedAt,
+      kind: "event",
       node: (
         <EventRow icon="pr" tone="merged">
           {t("ev.merged", { user: pr.mergedBy, commit: shortSha(pr.mergeCommit), base: pr.base.ref })}
@@ -527,6 +473,9 @@ const reviewIcon: Record<PullReview["state"], { icon: "check" | "alert" | "book"
   pending: { icon: "clock" },
 };
 
+const verdictChip: Partial<Record<PullReview["state"], string>> = { approved: "ui-chip ui-chip-ok", changes_requested: "ui-chip ui-chip-err", dismissed: "ui-chip" };
+
+/** A review: a post with a verdict chip when it has a summary, an event row otherwise. */
 function ReviewItem({ repo, pr, r }: { repo: Repo; pr: PullRequest; r: PullReview }) {
   const t = useT("pulls");
   const notify = useNotify();
@@ -535,50 +484,68 @@ function ReviewItem({ repo, pr, r }: { repo: Repo; pr: PullRequest; r: PullRevie
   const [open, setOpen] = useState(false);
   const canDismiss = canWrite(repo.permission) && (r.state === "approved" || r.state === "changes_requested");
   const ic = reviewIcon[r.state];
-  return (
-    <div className="wk-review">
+  const dismissDialog = canDismiss && (
+    <Dialog
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <button type="button" className="wk-linkbtn">
+          {t("review.dismiss")}
+        </button>
+      }
+      title={t("review.dismissTitle")}
+      description={t("review.dismissHint")}
+    >
+      <form
+        className="acc-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          dismiss.mutate({ id: r.id, message: message.trim() }, { onSuccess: () => setOpen(false), onError: notify.fail });
+        }}
+      >
+        <Input label={t("review.dismissMessage")} required value={message} onChange={(e) => setMessage(e.target.value)} />
+        <div className="acc-actions">
+          <DialogClose asChild>
+            <Button variant="ghost">{t("action.cancel")}</Button>
+          </DialogClose>
+          <Button type="submit" variant="danger" disabled={dismiss.isPending || !message.trim()}>
+            {t("review.dismissConfirm")}
+          </Button>
+        </div>
+      </form>
+    </Dialog>
+  );
+  const notes = (
+    <>
+      {r.state === "dismissed" && r.dismissedBy && <span className="ui-note"> {t("review.dismissedBy", { user: r.dismissedBy })}</span>}
+      {r.dismissMessage && <span className="ui-note"> {t("review.dismissReason", { message: r.dismissMessage })}</span>}
+    </>
+  );
+  if (!r.body) {
+    return (
       <EventRow icon={ic.icon} tone={ic.tone}>
         <b>{r.reviewer}</b> {t(`review.${r.state}`)} <When iso={r.submittedAt ?? r.createdAt} />
-        {r.state === "dismissed" && r.dismissedBy && <span className="ui-note"> {t("review.dismissedBy", { user: r.dismissedBy })}</span>}
-        {canDismiss && (
-          <Dialog
-            open={open}
-            onOpenChange={setOpen}
-            trigger={
-              <button type="button" className="wk-linkbtn">
-                {t("review.dismiss")}
-              </button>
-            }
-            title={t("review.dismissTitle")}
-            description={t("review.dismissHint")}
-          >
-            <form
-              className="acc-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                dismiss.mutate({ id: r.id, message: message.trim() }, { onSuccess: () => setOpen(false), onError: notify.fail });
-              }}
-            >
-              <Input label={t("review.dismissMessage")} required value={message} onChange={(e) => setMessage(e.target.value)} />
-              <div className="acc-actions">
-                <DialogClose asChild>
-                  <Button variant="ghost">{t("action.cancel")}</Button>
-                </DialogClose>
-                <Button type="submit" variant="danger" disabled={dismiss.isPending || !message.trim()}>
-                  {t("review.dismissConfirm")}
-                </Button>
-              </div>
-            </form>
-          </Dialog>
-        )}
+        {notes}
+        {dismissDialog}
       </EventRow>
-      {r.body && (
-        <CommentBox author={r.reviewer} head={<b>{r.reviewer}</b>}>
-          <Body owner={repo.owner} name={repo.name} refName={pr.head.ref} source={r.body} />
-        </CommentBox>
-      )}
-      {r.dismissMessage && <p className="ui-note wk-review-note">{t("review.dismissReason", { message: r.dismissMessage })}</p>}
-    </div>
+    );
+  }
+  return (
+    <CommentBox
+      author={r.reviewer}
+      head={
+        <>
+          <b>{r.reviewer}</b>
+          <span className={verdictChip[r.state] ?? "ui-chip"}>{t(`review.chip.${r.state}`)}</span>
+          <When iso={r.submittedAt ?? r.createdAt} />
+          {notes}
+          <span className="wk-grow" />
+          {dismissDialog}
+        </>
+      }
+    >
+      <Body owner={repo.owner} name={repo.name} refName={pr.head.ref} source={r.body} />
+    </CommentBox>
   );
 }
 
@@ -619,7 +586,7 @@ function ReviewersBlock({ repo, pr }: { repo: Repo; pr: PullRequest }) {
       }
     >
       {names.length === 0 ? (
-        <p className="ui-note">{t("side.noReviewers")}</p>
+        <span className="wk-prow-none">{t("side.noReviewers")}</span>
       ) : (
         <ul className="wk-people">
           {names.map((u) => {
@@ -629,9 +596,8 @@ function ReviewersBlock({ repo, pr }: { repo: Repo; pr: PullRequest }) {
                 <Avatar user={u} size={20} />
                 {u}
                 <span className="acc-grow" />
-                <span className={`wk-verdict wk-verdict-${r?.state ?? "pending"}`}>
+                <span className={`wk-verdict wk-verdict-${r?.state ?? "pending"}`} role="img" aria-label={r ? t(`review.${r.state}`) : t("side.awaiting")} title={r ? t(`review.${r.state}`) : t("side.awaiting")}>
                   <Icon name={r ? reviewIcon[r.state].icon : "clock"} />
-                  {r ? t(`review.${r.state}`) : t("side.awaiting")}
                 </span>
               </li>
             );
@@ -659,32 +625,47 @@ const statusTone = (s: string): "ok" | "warn" | "err" => (s === "success" ? "ok"
 const runTone = (r: CheckRun): "ok" | "warn" | "err" =>
   r.status !== "completed" ? "warn" : r.conclusion === "success" || r.conclusion === "neutral" || r.conclusion === "skipped" ? "ok" : "err";
 
-/** Commit statuses and latest check runs of the head commit, as rows of the readiness list. */
-function HeadChecks({ repo, sha }: { repo: Repo; sha: string }) {
+type CheckLine = { key: string; tone: "ok" | "warn" | "err"; name: string; detail: string; url: string };
+
+/** Commit statuses and latest check runs of the head commit as one list. */
+function useHeadLines(repo: Repo, sha: string): { lines: CheckLine[]; loading: boolean } {
   const t = useT("pulls");
   const status = useHeadStatus(repo.owner, repo.name, sha);
   const checks = useHeadChecks(repo.owner, repo.name, sha);
   const statuses: CommitStatus[] = status.data?.statuses ?? [];
   const runs = checks.data?.checkRuns ?? [];
-  const row = (key: string, tone: "ok" | "warn" | "err", name: string, detail: string, url: string) => (
-    <Check key={key} ok={tone === "ok"} tone={tone === "warn" ? "warn" : undefined}>
-      <b>{name}</b>
-      {detail && <span className="ui-note"> {detail}</span>}
-      {url && (
-        <a href={url} target="_blank" rel="noreferrer noopener">
-          {" "}
-          {t("checks.details")}
-        </a>
-      )}
-    </Check>
-  );
+  const lines: CheckLine[] = [
+    ...statuses.map((x) => ({ key: `s:${x.context}`, tone: statusTone(x.state), name: x.context, detail: x.description || t(`checks.state.${x.state}`), url: x.targetUrl })),
+    ...runs.map((r) => ({
+      key: `r:${r.id}`,
+      tone: runTone(r),
+      name: r.name,
+      detail: r.title || (r.status === "completed" ? t("checks.conclusion", { conclusion: r.conclusion }) : t(`checks.run.${r.status}`)),
+      url: r.detailsUrl,
+    })),
+  ];
+  return { lines, loading: status.isPending || checks.isPending };
+}
+
+const toneIcon = { ok: "check", warn: "clock", err: "x" } as const;
+
+function CheckRows({ lines, details }: { lines: CheckLine[]; details?: boolean }) {
+  const t = useT("pulls");
   return (
-    <>
-      {statuses.map((s) => row(`s:${s.context}`, statusTone(s.state), s.context, s.description || t(`checks.state.${s.state}`), s.targetUrl))}
-      {runs.map((r) =>
-        row(`r:${r.id}`, runTone(r), r.name, r.title || (r.status === "completed" ? t("checks.conclusion", { conclusion: r.conclusion }) : t(`checks.run.${r.status}`)), r.detailsUrl),
-      )}
-    </>
+    <ul className="wk-cks">
+      {lines.map((l) => (
+        <li key={l.key} className={`wk-ck wk-check-${l.tone}`}>
+          <Icon name={toneIcon[l.tone]} />
+          <b>{l.name}</b>
+          <span className="wk-ck-d">{l.detail}</span>
+          {details && l.url && (
+            <a href={l.url} target="_blank" rel="noreferrer noopener">
+              {t("checks.details")}
+            </a>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -715,6 +696,7 @@ function MergeStatus({ repo, pr, onReady }: { repo: Repo; pr: PullRequest; onRea
   const [method, setMethod] = useState<MergeMethod>(pr.autoMerge?.method ?? "merge");
   const [deleteBranch, setDeleteBranch] = useState(false);
   const [title, setTitle] = useState("");
+  const head = useHeadLines(repo, pr.head.sha);
 
   if (pr.state === "merged") {
     return (
@@ -753,8 +735,13 @@ function MergeStatus({ repo, pr, onReady }: { repo: Repo; pr: PullRequest; onRea
   const data = m.data;
   const ready = data?.canMerge === true && !pr.draft;
   const why = pr.draft ? undefined : !data ? t("merge.checking") : data.canMerge ? undefined : blockedBy(t, data);
+  const passed = head.lines.filter((l) => l.tone === "ok").length;
   return (
     <StatusBox>
+      <span className={ready ? "ui-state" : "ui-state ui-state-draft"}>
+        <Icon name="pr" />
+        {ready ? t("merge.ready") : pr.draft ? t("state.draft") : t("merge.notReady")}
+      </span>
       <ul className="wk-checks">
         {pr.draft && (
           <Check ok={false} tone="warn">
@@ -823,8 +810,13 @@ function MergeStatus({ repo, pr, onReady }: { repo: Repo; pr: PullRequest; onRea
             {v.commit && <code className="ui-mono"> {shortSha(v.commit)}</code>}
           </Check>
         ))}
-        <HeadChecks repo={repo} sha={pr.head.sha} />
+        {head.lines.length > 0 && (
+          <Check ok={passed === head.lines.length} tone={head.lines.some((l) => l.tone === "err") ? undefined : "warn"}>
+            {t("merge.checksCount", { passed, total: head.lines.length })}
+          </Check>
+        )}
       </ul>
+      {head.lines.length > 0 && <CheckRows lines={head.lines} />}
       {data?.rule && <p className="ui-note">{t("merge.rule", { rule: data.rule })}</p>}
       {pr.autoMerge && (
         <div className="ui-note wk-merge-auto">
@@ -842,7 +834,7 @@ function MergeStatus({ repo, pr, onReady }: { repo: Repo; pr: PullRequest; onRea
           <div className="wk-split">
             <Button
               variant="primary"
-              className="wk-split-main"
+              className="wk-split-main wk-merge"
               disabled={!ready || merge.isPending}
               onClick={() =>
                 merge.mutate(
@@ -853,7 +845,7 @@ function MergeStatus({ repo, pr, onReady }: { repo: Repo; pr: PullRequest; onRea
             >
               {t(`merge.do.${method}`)}
             </Button>
-            <Menu align="end" label={t("merge.method")} trigger={<Button variant="primary" className="wk-split-more" icon="down" aria-label={t("merge.method")} title={t("merge.method")} />}>
+            <Menu align="end" label={t("merge.method")} trigger={<Button variant="primary" className="wk-split-more wk-merge" icon="down" aria-label={t("merge.method")} title={t("merge.method")} />}>
               <MenuLabel>{t("merge.method")}</MenuLabel>
               {methods.map((x) => (
                 <MenuItem key={x} icon={x === method ? "check" : undefined} onSelect={() => setMethod(x)}>
@@ -862,6 +854,10 @@ function MergeStatus({ repo, pr, onReady }: { repo: Repo; pr: PullRequest; onRea
               ))}
             </Menu>
           </div>
+          <label className="acc-check wk-delbr">
+            <input type="checkbox" checked={deleteBranch} onChange={(e) => setDeleteBranch(e.target.checked)} />
+            {t("merge.deleteBranch", { head: pr.head.ref })}
+          </label>
           {why && (
             <p className="wk-why">
               <Icon name="clock" />
@@ -876,23 +872,40 @@ function MergeStatus({ repo, pr, onReady }: { repo: Repo; pr: PullRequest; onRea
               {t("merge.autoEnable")}
             </Button>
           )}
-          <details className="wk-opts">
-            <summary>{t("merge.options")}</summary>
-            <div className="wk-opts-b">
-              {method !== "rebase" && (
+          {method !== "rebase" && (
+            <details className="wk-opts">
+              <summary>{t("merge.options")}</summary>
+              <div className="wk-opts-b">
                 <Input label={t("merge.commitTitle")} placeholder={method === "squash" ? `${pr.issue.title} (#${pr.issue.number})` : t("merge.commitTitleHint")} value={title} onChange={(e) => setTitle(e.target.value)} />
-              )}
-              <label className="acc-check">
-                <input type="checkbox" checked={deleteBranch} onChange={(e) => setDeleteBranch(e.target.checked)} />
-                {t("merge.deleteBranch", { head: pr.head.ref })}
-              </label>
-            </div>
-          </details>
+              </div>
+            </details>
+          )}
         </>
       ) : (
         <p className="ui-note">{t("merge.noPermission")}</p>
       )}
     </StatusBox>
+  );
+}
+
+/* Checks. */
+
+function PullChecks({ repo, pr }: { repo: Repo; pr: PullRequest }) {
+  const t = useT("pulls");
+  const head = useHeadLines(repo, pr.head.sha);
+  if (head.loading) return <p className="ui-note acc-pad">{t("checks.loading")}</p>;
+  if (head.lines.length === 0) return <EmptyState icon="check" title={t("checks.empty")} description={t("checks.emptyHint", { sha: shortSha(pr.head.sha) })} />;
+  const passed = head.lines.filter((l) => l.tone === "ok").length;
+  return (
+    <section className="ui-box">
+      <div className="ui-box-h">
+        <b>{t("checks.summary", { passed, total: head.lines.length })}</b>
+        <span className="ui-mono ui-tm">{shortSha(pr.head.sha)}</span>
+      </div>
+      <div className="ui-in">
+        <CheckRows lines={head.lines} details />
+      </div>
+    </section>
   );
 }
 
@@ -909,7 +922,7 @@ function PullCommits({ repo, pr, page }: { repo: Repo; pr: PullRequest; page: nu
           <EmptyState icon="commit" title={t("commits.empty")} />
         ) : (
           <>
-            <ul className="rp-list">
+            <ul className="rp-list ui-box wk-commits">
               {res.items.map((c) => (
                 <CommitRow key={c.sha} repo={repo} c={{ sha: c.sha, summary: c.summary, author: c.author.name, date: c.author.date }} />
               ))}

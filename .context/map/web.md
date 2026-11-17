@@ -77,7 +77,7 @@ Related:
 - Reusable primitives (any area): `.ui-box` + `.ui-in` (surface box with inner --bg list), `.ui-box-h`, `.ui-li` row, `.ui-n` count, `.ui-chip` (+ -ok -err -warn -acc -rev), `.ui-seg`/`.ui-segi` (aria-pressed or aria-current), `.ui-sech` (section title + count + link), `.ui-state` (+ -merged -closed -draft), `.ui-udot`, `.ui-tm`, `.ui-st-*` icon colours.
 - Home (`.db-*`, 1340 px): tiles = useUserIssues review_requested / assigned issues / created prs + useUserRuns failure; activity; repos; Instance (admin: runners, jobs, storage bytes). Omitted for lack of data: repo issue/PR counts, "For you / Following", "changes requested", oldest review time.
 - Notifications (`.nt-*`, full width, 100dvh − 61px): views unread / review / assigned / all (`filter` search; review and assigned filter the loaded page by reason); preview fetches useIssue / usePull. Omitted: Saved (no API), checks list.
-- Tab counts: no open issue/PR/release counts in the API, so tabs show icons only.
+- Tab counts: Issues and Pull requests show `openIssuesCount` / `openPullsCount` (GET repo only; issue/PR mutations invalidate ["repos","one",owner,name]). No release count.
 
 ## Actions and releases redesign (2026-11-17, rounds 023 A and 024 B)
 - Runs (pages/actions/RunsPage.tsx, `.ax-*` in styles/actions.css): `.ax-nav` workflow column (+ "Management" → repo settings runners, admin only) and runs as `.ax-rr` rows inside `.ui-box` / `.ui-in`; event/status Selects sit in the box header, branch filter above.
@@ -95,3 +95,9 @@ Related:
 - History: `useCommitLog` (infinite) timeline `.cm-*`, `CommitRow` (also used by PRs) with ref chips from the first 100 branches/tags; branches/tags tables `.br-*`; search `.sr-*` with client facets (extension, top folder).
 - Omitted (no API): per-commit check status, new/delete branch, protected-branch lock, search over commits/issues/PRs, "Most relevant" sort, PR preselection after "new branch + PR" (lands on compare).
 
+## Issues and pull requests (2026-11-17, rounds 021 B / 022 B)
+- Lists (`ListFrame`, `ListSearch`, `FilterChip`, `RowGroups`, `WorkRow` in pages/work/common.tsx; `.wk-lg/.wk-vw/.wk-ir` in styles/work.css): views are links (`.wk-vw-a`, aria-current), issue labels below them, chips are kit Menus. Issues group by milestone on the loaded page (`group=none` turns it off). The old A/B/C list layouts, split preview and j/k step navigation are gone (layout.ts deleted).
+- Detail: `WorkHeader` (breadcrumb, 30 px title, rename) + `DetailLayout` (`.wk-dgrid`, sticky `.wk-props` panel 300 px, top 121 px). `CommentBox` is now a post (`.wk-post`, `compact` for review threads); `TimelineExtra` has `kind` and consecutive events render in one `.wk-evs` block. `SideBlock` = key/value row `.wk-prow`; editors are `AssigneesMenu` / `LabelsMenu` / `MilestoneMenu` (any trigger). `PropsFooter` replaces NotifyBlock (subscribe, copy link, ⋯ with lock/delete/draft). Repo watch level lives only in RepoHead now.
+- PR: `PullMeta` (state pill, refs, copy branch, Code menu), `PullTabs` with counts (commits page 1, files, statuses + check runs), `?tab=checks` = PullChecks, status card `.wk-stc` with `useHeadLines` + `CheckRows`, green `.wk-merge` split. Files changed = `DiffView` with `header` / `toolbar` inside `.cd-page`; review threads stay in a box under the diff (no inline threads).
+- Composer: soft box (`.wk-cps`), `before` / `extra` slots, write/preview `ui-seg`, `FormatBar` (role=toolbar, roving tabindex), textarea `field-sizing: content`.
+- Omitted (no API): view counts other than Open, label counts, PR checks N/M and review verdict in list rows, "Assigned to me" for PRs, linking a PR from the new issue form, inline diff threads, viewed-file tracking.

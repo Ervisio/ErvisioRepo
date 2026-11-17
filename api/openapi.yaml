@@ -3731,6 +3731,7 @@ paths:
       description: |
         Repositories the caller cannot read answer 404. The old path of a
         renamed or transferred repository answers 301 with the new location.
+        Only this operation fills openIssuesCount and openPullsCount.
       security:
         - session: [anonymous]
         - token: [repo:read]
@@ -13534,6 +13535,14 @@ components:
         starred:
           type: boolean
           description: Whether the caller starred the repository; false when anonymous
+        openIssuesCount:
+          type: integer
+          format: int64
+          description: Open issues; only set by getRepo
+        openPullsCount:
+          type: integer
+          format: int64
+          description: Open pull requests; only set by getRepo
         permission:
           $ref: "#/components/schemas/Permission"
         createdAt:

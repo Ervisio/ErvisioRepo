@@ -268,11 +268,14 @@ function RepoTabs({ owner, name, admin }: { owner: string; name: string; admin: 
   const sub = repoSub(usePathname());
   const { main, more, settings } = repoTabs(admin || repo?.permission === "admin");
   const current = more.find((it) => it.sub === sub);
+  // Open counts come only from GET /repos/{owner}/{name}; zero is not shown.
+  const counts: Record<string, number | undefined> = { issues: repo?.openIssuesCount, pulls: repo?.openPullsCount };
   const tab = (it: RepoNavItem) => (
     // The router marks a Link active by path prefix, which would keep Code lit everywhere: match exactly and let `sub` decide.
     <Link key={it.to} to={it.to} params={{ owner, name }} activeOptions={{ exact: true }} className="tb-tab" aria-current={sub === it.sub ? "page" : undefined}>
       <Icon name={it.icon} />
       {t(it.labelKey)}
+      {!!counts[it.sub] && <span className="ui-n">{counts[it.sub]}</span>}
     </Link>
   );
   return (

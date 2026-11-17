@@ -104,6 +104,27 @@ func (q *Queries) CommentReactionGroups(ctx context.Context, arg CommentReaction
 	return items, nil
 }
 
+const countOpenWork = `-- name: CountOpenWork :one
+SELECT
+  count(*) FILTER (WHERE kind = 'issue')::bigint AS issues,
+  count(*) FILTER (WHERE kind = 'pull')::bigint AS pulls
+FROM issues
+WHERE repo_id = $1 AND state = 'open'
+`
+
+type CountOpenWorkRow struct {
+	Issues int64
+	Pulls  int64
+}
+
+// Open issues and open pull requests of a repository (repository tab counts).
+func (q *Queries) CountOpenWork(ctx context.Context, repoID uuid.UUID) (CountOpenWorkRow, error) {
+	row := q.db.QueryRow(ctx, countOpenWork, repoID)
+	var i CountOpenWorkRow
+	err := row.Scan(&i.Issues, &i.Pulls)
+	return i, err
+}
+
 const deleteIssue = `-- name: DeleteIssue :execrows
 DELETE FROM issues WHERE id = $1 AND repo_id = $2 AND kind = 'issue'
 `

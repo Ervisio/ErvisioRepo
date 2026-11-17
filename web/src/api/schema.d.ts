@@ -2465,6 +2465,7 @@ export interface paths {
          * A repository
          * @description Repositories the caller cannot read answer 404. The old path of a
          *     renamed or transferred repository answers 301 with the new location.
+         *     Only this operation fills openIssuesCount and openPullsCount.
          */
         get: operations["getRepo"];
         put?: never;
@@ -8017,6 +8018,16 @@ export interface components {
             starsCount: number;
             /** @description Whether the caller starred the repository; false when anonymous */
             starred: boolean;
+            /**
+             * Format: int64
+             * @description Open issues; only set by getRepo
+             */
+            openIssuesCount?: number;
+            /**
+             * Format: int64
+             * @description Open pull requests; only set by getRepo
+             */
+            openPullsCount?: number;
             permission: components["schemas"]["Permission"];
             /** Format: date-time */
             createdAt: string;

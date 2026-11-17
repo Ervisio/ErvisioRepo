@@ -5539,13 +5539,19 @@ type Repo struct {
 	Description   string    `json:"description"`
 
 	// FullName owner/name
-	FullName   string             `json:"fullName"`
-	Id         openapi_types.UUID `json:"id"`
-	Name       string             `json:"name"`
-	Owner      string             `json:"owner"`
-	OwnerKind  RepoOwnerKind      `json:"ownerKind"`
-	Permission Permission         `json:"permission"`
-	SizeBytes  int64              `json:"sizeBytes"`
+	FullName string             `json:"fullName"`
+	Id       openapi_types.UUID `json:"id"`
+	Name     string             `json:"name"`
+
+	// OpenIssuesCount Open issues; only set by getRepo
+	OpenIssuesCount *int64 `json:"openIssuesCount,omitempty"`
+
+	// OpenPullsCount Open pull requests; only set by getRepo
+	OpenPullsCount *int64        `json:"openPullsCount,omitempty"`
+	Owner          string        `json:"owner"`
+	OwnerKind      RepoOwnerKind `json:"ownerKind"`
+	Permission     Permission    `json:"permission"`
+	SizeBytes      int64         `json:"sizeBytes"`
 
 	// Starred Whether the caller starred the repository; false when anonymous
 	Starred bool `json:"starred"`

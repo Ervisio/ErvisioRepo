@@ -366,6 +366,7 @@ const issuesRoute = createRoute({
     author: str(s.author),
     mentioned: str(s.mentioned),
     sort: s.sort === "updated" || s.sort === "comments" ? s.sort : undefined,
+    group: s.group === "none" ? "none" : undefined,
     page: num(s.page),
   }),
   component: function Issues() {
@@ -408,7 +409,7 @@ const pullsRoute = createRoute({
     return <PullsPage owner={p.owner} name={p.name} search={pullsRoute.useSearch()} />;
   },
 });
-const pullTabs = ["commits", "files"] as const;
+const pullTabs = ["commits", "checks", "files"] as const;
 const pullRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/$owner/$name/pulls/$number",

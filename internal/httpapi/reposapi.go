@@ -266,7 +266,20 @@ func (s *v1Server) GetRepo(ctx context.Context, req v1gen.GetRepoRequestObject) 
 	if err != nil {
 		return nil, err
 	}
+	if c, ok := s.issues.(openCounter); ok {
+		is, ps, err := c.OpenCounts(ctx, r.ID)
+		if err != nil {
+			return nil, err
+		}
+		out.OpenIssuesCount, out.OpenPullsCount = &is, &ps
+	}
 	return v1gen.GetRepo200JSONResponse(out), nil
+}
+
+// openCounter is the optional part of Issues that counts open issues and
+// pull requests for the repository tabs.
+type openCounter interface {
+	OpenCounts(ctx context.Context, repoID uuid.UUID) (issues, pulls int64, err error)
 }
 
 func (s *v1Server) UpdateRepo(ctx context.Context, req v1gen.UpdateRepoRequestObject) (v1gen.UpdateRepoResponseObject, error) {

@@ -16,19 +16,46 @@ import {
   type Milestone,
   type TimelineEvent,
 } from "../../api/issues.ts";
-import { useRepoSubscription, useSetRepoSubscription, useSetSubjectSubscription, useSubjectSubscription, type RepoSubscription } from "../../api/notifications.ts";
+import { useSetSubjectSubscription, useSubjectSubscription } from "../../api/notifications.ts";
 import { useSession, useUserSearch } from "../../api/identity.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
 import { BotMark, Button, Icon, Input, Menu, MenuItem, MenuLabel, MenuSeparator } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
-import { Gate, shortSha, When } from "../code/common.tsx";
-import { Body, CommentBox, Composer, EventRow, IconTrigger, LabelChip, Meter, Reactions, SideBlock, SideDetails, Avatar, type WorkState } from "./common.tsx";
+import { CopyButton, Gate, shortSha, When } from "../code/common.tsx";
+import { Avatar, Body, CommentBox, Composer, EventRow, IconTrigger, LabelChip, Reactions, SideBlock, SideDetails, type WorkState } from "./common.tsx";
 
 export const canTriage = (p: Repo["permission"] | undefined) => p === "triage" || p === "write" || p === "maintain" || p === "admin";
 
-/** An extra entry merged into the timeline by time (pull request reviews). */
-export type TimelineExtra = { key: string; at: string; node: ReactNode };
+/** An extra entry merged into the timeline by time (pull request reviews); consecutive events share one block. */
+export type TimelineExtra = { key: string; at: string; kind: "post" | "event"; node: ReactNode };
+
+/** Runs of consecutive events become one indented block between posts. */
+function groupEvents(items: TimelineExtra[]): ReactNode[] {
+  const out: ReactNode[] = [];
+  let run: TimelineExtra[] = [];
+  const flush = () => {
+    if (run.length === 0) return;
+    out.push(
+      <div key={`evs-${run[0]?.key}`} className="wk-evs">
+        {run.map((x) => (
+          <div key={x.key}>{x.node}</div>
+        ))}
+      </div>,
+    );
+    run = [];
+  };
+  for (const x of items) {
+    if (x.kind === "event") {
+      run.push(x);
+      continue;
+    }
+    flush();
+    out.push(<div key={x.key}>{x.node}</div>);
+  }
+  flush();
+  return out;
+}
 
 function EditableBody({ repo, author, body, canEdit, onSave, onDelete, saving, head, footer }: {
   repo: Repo;
@@ -281,21 +308,23 @@ export function Conversation({ repo, issue, extra = [], onState, stateBusy, canC
       <Gate query={timeline}>
         {(events) => {
           const items: TimelineExtra[] = [
-            ...events.map((e) => ({
-              key: e.id,
-              at: e.createdAt,
-              node: e.event === "commented" && e.comment ? <CommentItem repo={repo} issue={issue} c={e.comment} me={me} /> : <EventItem e={e} />,
-            })),
+            ...events.map((e): TimelineExtra =>
+              e.event === "commented" && e.comment
+                ? { key: e.id, at: e.createdAt, kind: "post", node: <CommentItem repo={repo} issue={issue} c={e.comment} me={me} /> }
+                : { key: e.id, at: e.createdAt, kind: "event", node: <EventItem e={e} /> },
+            ),
             ...extra,
           ].sort((a, b) => a.at.localeCompare(b.at));
-          return items.map((x) => <div key={x.key}>{x.node}</div>);
+          return groupEvents(items);
         }}
       </Gate>
       {issue.locked && (
-        <EventRow icon="lock">{issue.lockReason ? t("locked.reason", { reason: t(`lock.${issue.lockReason}`) }) : t("locked.plain")}</EventRow>
+        <div className="wk-evs">
+          <EventRow icon="lock">{issue.lockReason ? t("locked.reason", { reason: t(`lock.${issue.lockReason}`) }) : t("locked.plain")}</EventRow>
+        </div>
       )}
       {canComment ? (
-        <div className="wk-cm wk-cm-new">
+        <div className="wk-reply">
           <Composer owner={repo.owner} name={repo.name} refName={repo.defaultBranch} value={draft} onChange={setDraft} label={t("composer.label")}>
             {canClose &&
               (issue.state === "open" ? (
@@ -319,52 +348,103 @@ export function Conversation({ repo, issue, extra = [], onState, stateBusy, canC
   );
 }
 
-/* Metadata groups of the right column, shared by issues, pull requests and the new issue form. */
+/* Properties panel rows, shared by issues, pull requests and the new issue form. Each editor is a menu
+   that takes any trigger: the pencil of a row, or a chip of the new issue composer. */
 
 function toggle(list: string[], v: string): string[] {
   return list.includes(v) ? list.filter((x) => x !== v) : [...list, v];
 }
 
+export function AssigneesMenu({ repo, assignees, onChange, trigger, onSearch }: {
+  repo: Repo;
+  assignees: string[];
+  onChange: (assignees: string[]) => void;
+  trigger: ReactNode;
+  onSearch?: () => void;
+}) {
+  const t = useT("work");
+  const people = useCollaborators(repo.owner, repo.name, canTriage(repo.permission));
+  const me = useSession().data?.username;
+  const names = Array.from(new Set([...(people.data ?? []).map((p) => p.username), ...assignees, ...(me ? [me] : [])])).sort();
+  return (
+    <Menu align="end" label={t("side.editAssignees")} trigger={trigger}>
+      <MenuLabel>{t("side.assignTo")}</MenuLabel>
+      {names.map((u) => (
+        <MenuItem key={u} icon={assignees.includes(u) ? "check" : undefined} onSelect={() => onChange(toggle(assignees, u))}>
+          {u}
+        </MenuItem>
+      ))}
+      {onSearch && (
+        <>
+          <MenuSeparator />
+          <MenuItem icon="search" onSelect={onSearch}>
+            {t("side.searchPeople")}
+          </MenuItem>
+        </>
+      )}
+    </Menu>
+  );
+}
+
+export function LabelsMenu({ repo, selected, onChange, trigger }: { repo: Repo; selected: string[]; onChange: (names: string[]) => void; trigger: ReactNode }) {
+  const t = useT("work");
+  const labels = useLabels(repo.owner, repo.name);
+  return (
+    <Menu align="end" label={t("side.editLabels")} trigger={trigger}>
+      {(labels.data ?? []).length === 0 && <MenuLabel>{t("side.noRepoLabels")}</MenuLabel>}
+      {(labels.data ?? []).map((l) => (
+        <MenuItem key={l.id} icon={selected.includes(l.name) ? "check" : undefined} onSelect={() => onChange(toggle(selected, l.name))}>
+          <LabelChip label={l} />
+        </MenuItem>
+      ))}
+    </Menu>
+  );
+}
+
+export function MilestoneMenu({ repo, milestone: m, onChange, trigger }: { repo: Repo; milestone: Milestone | undefined; onChange: (id: string) => void; trigger: ReactNode }) {
+  const t = useT("work");
+  const milestones = useMilestones(repo.owner, repo.name);
+  return (
+    <Menu align="end" label={t("side.editMilestone")} trigger={trigger}>
+      <MenuItem icon={!m ? "check" : undefined} onSelect={() => onChange("")}>
+        {t("side.noMilestone")}
+      </MenuItem>
+      {(milestones.data ?? []).map((x) => (
+        <MenuItem key={x.id} icon={m?.id === x.id ? "check" : undefined} onSelect={() => onChange(x.id)}>
+          {x.title}
+        </MenuItem>
+      ))}
+    </Menu>
+  );
+}
+
 export function AssigneesGroup({ repo, assignees, busy, onChange }: { repo: Repo; assignees: string[]; busy: boolean; onChange: (assignees: string[]) => void }) {
   const t = useT("work");
   const triage = canTriage(repo.permission);
-  const people = useCollaborators(repo.owner, repo.name, triage);
   const me = useSession().data?.username;
-  const names = Array.from(new Set([...(people.data ?? []).map((p) => p.username), ...assignees, ...(me ? [me] : [])])).sort();
   const [searching, setSearching] = useState(false);
   return (
     <SideBlock
       title={t("side.assignees")}
       action={
         triage && (
-          <Menu align="end" trigger={<IconTrigger icon="edit" label={t("side.editAssignees")} />}>
-            <MenuLabel>{t("side.assignTo")}</MenuLabel>
-            {names.map((u) => (
-              <MenuItem key={u} icon={assignees.includes(u) ? "check" : undefined} onSelect={() => onChange(toggle(assignees, u))}>
-                {u}
-              </MenuItem>
-            ))}
-            <MenuSeparator />
-            <MenuItem icon="search" onSelect={() => setSearching(true)}>
-              {t("side.searchPeople")}
-            </MenuItem>
-          </Menu>
+          <AssigneesMenu repo={repo} assignees={assignees} onChange={onChange} onSearch={() => setSearching(true)} trigger={<IconTrigger icon="edit" label={t("side.editAssignees")} />} />
         )
       }
     >
       {searching && triage && <PeopleSearch repo={repo} selected={assignees} busy={busy} onToggle={(u) => onChange(toggle(assignees, u))} onClose={() => setSearching(false)} />}
       {assignees.length === 0 ? (
-        <p className="ui-note">
+        <span className="wk-prow-none">
           {t("side.noAssignees")}
           {triage && me && (
             <>
-              {" "}
+              {" · "}
               <button type="button" className="wk-linkbtn" onClick={() => onChange([...assignees, me])}>
                 {t("side.assignSelf")}
               </button>
             </>
           )}
-        </p>
+        </span>
       ) : (
         <ul className="wk-people">
           {assignees.map((u) => (
@@ -414,32 +494,19 @@ export function PeopleSearch({ repo, selected, busy, onToggle, onClose }: { repo
 export function LabelsGroup({ repo, selected, onChange }: { repo: Repo; selected: Label[]; onChange: (names: string[]) => void }) {
   const t = useT("work");
   const triage = canTriage(repo.permission);
-  const labels = useLabels(repo.owner, repo.name);
-  const current = selected.map((l) => l.name);
   return (
     <SideBlock
       title={t("side.labels")}
-      action={
-        triage && (
-          <Menu align="end" trigger={<IconTrigger icon="edit" label={t("side.editLabels")} />}>
-            {(labels.data ?? []).length === 0 && <MenuLabel>{t("side.noRepoLabels")}</MenuLabel>}
-            {(labels.data ?? []).map((l) => (
-              <MenuItem key={l.id} icon={current.includes(l.name) ? "check" : undefined} onSelect={() => onChange(toggle(current, l.name))}>
-                <LabelChip label={l} />
-              </MenuItem>
-            ))}
-          </Menu>
-        )
-      }
+      action={triage && <LabelsMenu repo={repo} selected={selected.map((l) => l.name)} onChange={onChange} trigger={<IconTrigger icon="edit" label={t("side.editLabels")} />} />}
     >
       {selected.length === 0 ? (
-        <p className="ui-note">{t("side.noLabels")}</p>
+        <span className="wk-prow-none">{t("side.noLabels")}</span>
       ) : (
-        <div className="wk-labels">
+        <span className="wk-labels">
           {selected.map((l) => (
             <LabelChip key={l.id} label={l} />
           ))}
-        </div>
+        </span>
       )}
     </SideBlock>
   );
@@ -448,45 +515,30 @@ export function LabelsGroup({ repo, selected, onChange }: { repo: Repo; selected
 export function MilestoneGroup({ repo, milestone: m, onChange }: { repo: Repo; milestone: Milestone | undefined; onChange: (id: string) => void }) {
   const t = useT("work");
   const triage = canTriage(repo.permission);
-  const milestones = useMilestones(repo.owner, repo.name);
+  const total = m ? m.openIssues + m.closedIssues : 0;
   return (
     <SideBlock
       title={t("side.milestone")}
-      action={
-        triage && (
-          <Menu align="end" trigger={<IconTrigger icon="edit" label={t("side.editMilestone")} />}>
-            <MenuItem icon={!m ? "check" : undefined} onSelect={() => onChange("")}>
-              {t("side.noMilestone")}
-            </MenuItem>
-            {(milestones.data ?? []).map((x) => (
-              <MenuItem key={x.id} icon={m?.id === x.id ? "check" : undefined} onSelect={() => onChange(x.id)}>
-                {x.title}
-              </MenuItem>
-            ))}
-          </Menu>
-        )
-      }
+      action={triage && <MilestoneMenu repo={repo} milestone={m} onChange={onChange} trigger={<IconTrigger icon="edit" label={t("side.editMilestone")} />} />}
     >
       {m ? (
-        <div className="wk-ms">
-          <div className="wk-ms-h">
-            <span>{m.title}</span>
-            <span className="ui-note">{t("side.msCount", { closed: m.closedIssues, total: m.openIssues + m.closedIssues })}</span>
-          </div>
-          <Meter open={m.openIssues} closed={m.closedIssues} label={t("side.progress", { title: m.title })} />
-        </div>
+        <span className="wk-ms" title={t("side.msCount", { closed: m.closedIssues, total })}>
+          <Icon name="clock" />
+          {m.title}
+          {total > 0 && <span className="ui-tm">{Math.round((m.closedIssues / total) * 100)}%</span>}
+        </span>
       ) : (
-        <p className="ui-note">{t("side.noMilestone")}</p>
+        <span className="wk-prow-none">{t("side.noMilestone")}</span>
       )}
     </SideBlock>
   );
 }
 
 /**
- * Subscription to this issue or pull request and the repository watch level, both reached from
- * the pencil menu. number defaults to the $number route parameter.
+ * Footer of the Properties panel: subscribe to this issue or pull request, copy its link, and the
+ * ⋯ menu (`menu` entries plus resetting an explicit subscription). number defaults to $number.
  */
-export function NotifyBlock({ repo, number }: { repo: Repo; number?: number }) {
+export function PropsFooter({ repo, number, menu }: { repo: Repo; number?: number; menu?: ReactNode }) {
   const t = useT("work");
   const notify = useNotify();
   const params: { number?: string } = useParams({ strict: false });
@@ -495,40 +547,32 @@ export function NotifyBlock({ repo, number }: { repo: Repo; number?: number }) {
   const ref = { owner: repo.owner, name: repo.name, number: n };
   const subject = useSubjectSubscription(ref, signedIn && Number.isInteger(n) && n > 0);
   const setSubject = useSetSubjectSubscription(ref);
-  const sub = useRepoSubscription(repo.owner, repo.name, signedIn);
-  const set = useSetRepoSubscription(repo.owner, repo.name);
-  if (!signedIn) return null;
-  const levels: RepoSubscription["level"][] = ["watching", "participating", "ignoring"];
   const subscribed = subject.data?.subscription.subscribed ?? false;
-  const level = sub.data?.level ?? "participating";
+  const explicit = subject.data?.subscription.explicit ?? false;
   return (
-    <SideBlock
-      title={t("side.notifications")}
-      action={
-        <Menu align="end" trigger={<IconTrigger icon="edit" label={t("side.editNotifications")} disabled={!subject.data} />}>
-          <MenuItem
-            icon="bell"
-            onSelect={() => setSubject.mutate(!subscribed, { onSuccess: (s) => notify.ok(t(s.subscription.subscribed ? "subject.subscribedOk" : "subject.unsubscribedOk")), onError: notify.fail })}
-          >
-            {t(subscribed ? "subject.unsubscribe" : "subject.subscribe")}
-          </MenuItem>
-          {subject.data?.subscription.explicit && (
+    <div className="wk-props-ft">
+      {signedIn && (
+        <Button
+          icon="bell"
+          className="wk-props-sub"
+          disabled={!subject.data || setSubject.isPending}
+          onClick={() => setSubject.mutate(!subscribed, { onSuccess: (s) => notify.ok(t(s.subscription.subscribed ? "subject.subscribedOk" : "subject.unsubscribedOk")), onError: notify.fail })}
+        >
+          {t(subscribed ? "subject.unsubscribe" : "subject.subscribe")}
+        </Button>
+      )}
+      <CopyButton value={`${window.location.origin}${window.location.pathname}`} label={t("side.copyLink")} className="wk-props-ib" />
+      {(menu || explicit) && (
+        <Menu align="end" label={t("side.more")} trigger={<Button icon="dots" className="wk-props-ib" aria-label={t("side.more")} title={t("side.more")} />}>
+          {explicit && (
             <MenuItem icon="x" onSelect={() => setSubject.mutate(null, { onError: notify.fail })}>
               {t("subject.reset")}
             </MenuItem>
           )}
-          <MenuSeparator />
-          <MenuLabel>{t("side.watchLabel")}</MenuLabel>
-          {levels.map((l) => (
-            <MenuItem key={l} icon={l === level ? "check" : undefined} onSelect={() => set.mutate(l, { onError: notify.fail })}>
-              {t(`watch.${l}`)}
-            </MenuItem>
-          ))}
+          {menu}
         </Menu>
-      }
-    >
-      <p className="ui-note">{subject.data ? t(subscribed ? "subject.subscribedHint" : "subject.unsubscribedHint") : ""}</p>
-    </SideBlock>
+      )}
+    </div>
   );
 }
 
@@ -537,14 +581,14 @@ export function ParticipantsBlock({ repo, issue }: { repo: Repo; issue: Issue })
   const timeline = useTimeline(repo.owner, repo.name, issue.number);
   const people = Array.from(new Set([issue.author, ...(timeline.data ?? []).filter((e) => e.event === "commented").map((e) => e.actor)]));
   return (
-    <SideBlock title={t("side.participants", { count: people.length })}>
-      <div className="wk-avatars">
+    <SideBlock title={t("side.participantsKey")}>
+      <span className="wk-avatars" aria-label={people.join(", ")}>
         {people.map((u) => (
           <span key={u} title={u}>
-            <Avatar user={u} size={24} />
+            <Avatar user={u} size={20} />
           </span>
         ))}
-      </div>
+      </span>
     </SideBlock>
   );
 }
@@ -560,8 +604,19 @@ export function detailsSummary(t: ReturnType<typeof useT>, d: { reviewers?: numb
   return parts.length > 0 ? parts.join(" · ") : t("side.sumNone");
 }
 
-/** Everything in the right column below the status box of an issue or pull request. */
-export function IssueMeta({ repo, issue, reviewers, before, linked }: { repo: Repo; issue: Issue; reviewers?: number; before?: ReactNode; linked?: ReactNode }) {
+/**
+ * The Properties rows of an issue or pull request (DESIGN 2026-11-17): `before` (state or reviewers),
+ * assignees, labels, milestone, `linked`, then opened by, participants and the footer.
+ */
+export function IssueMeta({ repo, issue, reviewers, before, linked, openedLabel, menu }: {
+  repo: Repo;
+  issue: Issue;
+  reviewers?: number;
+  before?: ReactNode;
+  linked?: ReactNode;
+  openedLabel: string;
+  menu?: ReactNode;
+}) {
   const t = useT("work");
   const notify = useNotify();
   const update = useUpdateIssue(repo.owner, repo.name, issue.number);
@@ -573,8 +628,16 @@ export function IssueMeta({ repo, issue, reviewers, before, linked }: { repo: Re
       <LabelsGroup repo={repo} selected={issue.labels} onChange={(labels) => update.mutate({ labels }, fail)} />
       <MilestoneGroup repo={repo} milestone={issue.milestone ?? undefined} onChange={(milestoneId) => update.mutate({ milestoneId }, fail)} />
       {linked}
-      <NotifyBlock repo={repo} number={issue.number} />
+      <hr className="wk-props-hr" />
+      <SideBlock title={openedLabel}>
+        <span className="wk-people-one">
+          <Avatar user={issue.author} size={20} />
+          {issue.author} · <When iso={issue.createdAt} />
+        </span>
+      </SideBlock>
       <ParticipantsBlock repo={repo} issue={issue} />
+      <hr className="wk-props-hr" />
+      <PropsFooter repo={repo} number={issue.number} menu={menu || undefined} />
     </SideDetails>
   );
 }
