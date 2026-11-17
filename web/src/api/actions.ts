@@ -19,6 +19,7 @@ export type ActionsEnvironment = S["ActionsEnvironment"];
 export type ActionsEnvironmentPut = S["ActionsEnvironmentPut"];
 export type ActionsRunner = S["ActionsRunner"];
 export type ActionsRegistrationToken = S["ActionsRegistrationToken"];
+export type ActionsRunnerUpdateAll = S["ActionsRunnerUpdateAll"];
 export type ActionsRunnerDevice = S["ActionsRunnerDevice"];
 export type ActionsRunnerDeviceDecision = S["ActionsRunnerDeviceDecision"];
 export type ActionsGitHubImport = S["ActionsGitHubImport"];
@@ -156,6 +157,22 @@ export function useSetRunnerPaused(s: ActionsScope) {
   return useMutation({
     mutationFn: ({ id, paused }: { id: string; paused: boolean }) => request<ActionsRunner>("PUT", `${scopeBase(s)}/runners/${enc(id)}/paused`, { paused }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["actions-cfg", scopeKey(s), "runners"] }),
+  });
+}
+
+/** Instance only (admin): ask one runner, or every outdated one, to update itself to the server version. */
+export function useUpdateRunner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => request<ActionsRunner>("POST", `/admin/actions/runners/${enc(id)}/update`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["actions-cfg", "instance", "runners"] }),
+  });
+}
+export function useUpdateAllRunners() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => request<ActionsRunnerUpdateAll>("POST", "/admin/actions/runners/update"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["actions-cfg", "instance", "runners"] }),
   });
 }
 

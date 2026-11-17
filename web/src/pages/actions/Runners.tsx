@@ -5,6 +5,8 @@ import {
   useRegistrationToken,
   useRunners,
   useSetRunnerPaused,
+  useUpdateAllRunners,
+  useUpdateRunner,
   type ActionsRegistrationToken,
   type ActionsRunner,
   type ActionsScope,
@@ -45,6 +47,57 @@ function StatusChip({ runner: r }: { runner: ActionsRunner }) {
   );
 }
 
+/** v-prefixed version for display. */
+const vv = (v: string) => `v${v.replace(/^v/, "")}`;
+
+/** Runners an admin can update now from the instance page. */
+const canUpdate = (r: ActionsRunner) => r.selfUpdate && r.updateAvailable && !r.updatePending && r.status !== "offline";
+
+/**
+ * Update state next to the labels: updating, last failure, or available
+ * (older than the server). The built-in runner follows the server image and
+ * shows nothing; a runner that cannot update itself says how to update it.
+ */
+function UpdateChip({ runner: r }: { runner: ActionsRunner }) {
+  const t = useT("actions");
+  const meta = useMeta();
+  if (r.name === BUILTIN_RUNNER && r.scope === "instance") return null;
+  if (r.updatePending) {
+    return <span className="ui-chip ui-chip-acc">{t("runners.upd.pending", { version: vv(r.updateVersion ?? "") })}</span>;
+  }
+  if (!r.updateAvailable) return null;
+  if (r.updateError) {
+    return <span className="ui-chip ui-chip-err" title={r.updateError}>{t("runners.upd.failed")}</span>;
+  }
+  const target = meta.data?.version ? vv(meta.data.version) : "";
+  const hint = r.selfUpdate ? t("runners.upd.availableHint", { version: target }) : t("runners.upd.manualHint");
+  return <span className="ui-chip ui-chip-warn" title={hint}>{t("runners.upd.available")}</span>;
+}
+
+/** Header button: ask every outdated online runner to update itself. */
+function UpdateAll({ rows }: { rows: ActionsRunner[] }) {
+  const t = useT("actions");
+  const notify = useNotify();
+  const all = useUpdateAllRunners();
+  const n = rows.filter(canUpdate).length;
+  if (n === 0) return null;
+  return (
+    <Button
+      size="sm"
+      icon="download"
+      disabled={all.isPending}
+      onClick={() =>
+        all.mutate(undefined, {
+          onSuccess: (res) => notify.ok(t("runners.upd.requestedAll", { n: res.requested, version: vv(res.version) })),
+          onError: notify.fail,
+        })
+      }
+    >
+      {t("runners.upd.all", { n })}
+    </Button>
+  );
+}
+
 /** Value above a thin bar: accent, warn above 70 %, error above 90 % (round 023 A). */
 function Meter({ value, text }: { value?: number; text?: string }) {
   if (value === undefined) return <span className="ui-tm">—</span>;
@@ -82,6 +135,7 @@ export function Runners({ scope }: { scope: ActionsScope }) {
       description={instance ? t("runners.hintInstance") : t("runners.hintScoped")}
       actions={
         <>
+          {instance && <UpdateAll rows={rows} />}
           <Button size="sm" onClick={() => setDialog("token")}>{t("runners.tokenAction")}</Button>
           <Button size="sm" variant={instance ? "primary" : "secondary"} icon="plus" onClick={openNew}>
             {t("runners.new")}
@@ -188,6 +242,7 @@ function RunnerTable({ scope, rows }: { scope: ActionsScope; rows: ActionsRunner
                     </button>
                     <span className="rn-labs">
                       {r.ephemeral && <span className="ui-chip ui-chip-acc">{t("runners.ephemeral")}</span>}
+                      <UpdateChip runner={r} />
                       {r.labels.map((l) => <span key={l} className="ui-chip" title={l}>{labelName(l)}</span>)}
                     </span>
                   </th>
@@ -227,6 +282,8 @@ function RowMenu({ scope, runner: r }: { scope: ActionsScope; runner: ActionsRun
   const notify = useNotify();
   const del = useDeleteRunner(scope);
   const pause = useSetRunnerPaused(scope);
+  const update = useUpdateRunner();
+  const meta = useMeta();
   const label = t("runners.menuOf", { name: r.name });
   return (
     <div onClick={(e) => e.stopPropagation()}>
@@ -242,6 +299,14 @@ function RowMenu({ scope, runner: r }: { scope: ActionsScope; runner: ActionsRun
         >
           {t(r.paused ? "runners.resume" : "runners.pause")}
         </MenuItem>
+        {scope.kind === "instance" && canUpdate(r) && (
+          <MenuItem
+            icon="download"
+            onSelect={() => update.mutate(r.id, { onSuccess: () => notify.ok(t("runners.upd.requested", { name: r.name })), onError: notify.fail })}
+          >
+            {meta.data?.version ? t("runners.upd.toVersion", { version: vv(meta.data.version) }) : t("runners.upd.action")}
+          </MenuItem>
+        )}
         <MenuItem icon="trash" danger onSelect={() => del.mutate(r.id, { onSuccess: () => notify.ok(t("runners.deleted")), onError: notify.fail })}>
           {t("runners.remove")}
         </MenuItem>
@@ -258,7 +323,8 @@ function Details({ runner: r }: { runner: ActionsRunner }) {
   return (
     <div className="rn-xp">
       <dl className="rn-kv">
-        <div><dt>{t("runners.version")}</dt><dd>{r.version ? `v${r.version.replace(/^v/, "")}` : "—"}</dd></div>
+        <div><dt>{t("runners.version")}</dt><dd>{r.version ? vv(r.version) : "—"}</dd></div>
+        {r.updateError && r.updateAvailable && <div><dt>{t("runners.upd.lastError")}</dt><dd>{r.updateError}</dd></div>}
         <div>
           <dt>{t("runners.d.disk")}</dt>
           <dd className="rn-num">{m?.diskUsedBytes !== undefined && m.diskTotalBytes ? `${formatBytes(m.diskUsedBytes)} / ${formatBytes(m.diskTotalBytes)}` : "—"}</dd>

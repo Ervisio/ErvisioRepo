@@ -80,6 +80,42 @@ func (s *v1Server) SetInstanceActionsRunnerPaused(ctx context.Context, req v1gen
 	return v1gen.SetInstanceActionsRunnerPaused200JSONResponse(actionsDTORunner(r)), nil
 }
 
+// UpdateInstanceActionsRunner asks one instance runner to update itself
+// to the server version.
+func (s *v1Server) UpdateInstanceActionsRunner(ctx context.Context, req v1gen.UpdateInstanceActionsRunnerRequestObject) (v1gen.UpdateInstanceActionsRunnerResponseObject, error) {
+	if s.actions == nil {
+		return errActionsUnavailable, nil
+	}
+	who := principal(ctx)
+	sc, err := s.actions.InstanceScope(who)
+	if err != nil {
+		return actionsFail(err, http.MethodPost, "")
+	}
+	r, err := s.actions.RequestRunnerUpdate(ctx, who, sc, req.RunnerId, clientOf(ctx).IP)
+	if err != nil {
+		return actionsFail(err, http.MethodPost, "")
+	}
+	return v1gen.UpdateInstanceActionsRunner202JSONResponse(actionsDTORunner(r)), nil
+}
+
+// UpdateInstanceActionsRunners asks every outdated online instance runner
+// to update itself.
+func (s *v1Server) UpdateInstanceActionsRunners(ctx context.Context, _ v1gen.UpdateInstanceActionsRunnersRequestObject) (v1gen.UpdateInstanceActionsRunnersResponseObject, error) {
+	if s.actions == nil {
+		return errActionsUnavailable, nil
+	}
+	who := principal(ctx)
+	sc, err := s.actions.InstanceScope(who)
+	if err != nil {
+		return actionsFail(err, http.MethodPost, "")
+	}
+	n, version, err := s.actions.RequestRunnerUpdates(ctx, who, sc, clientOf(ctx).IP)
+	if err != nil {
+		return actionsFail(err, http.MethodPost, "")
+	}
+	return v1gen.UpdateInstanceActionsRunners202JSONResponse{Requested: n, Version: version}, nil
+}
+
 // runnerDeviceFail maps the errors of the device approval.
 func runnerDeviceFail(err error) (actionsResponse, error) {
 	var lim *actions.ErrDeviceLimited

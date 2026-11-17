@@ -227,6 +227,22 @@ func (q *Queries) ClaimDueActionsSchedules(ctx context.Context) ([]ActionsSchedu
 	return items, nil
 }
 
+const clearActionsRunnerUpdate = `-- name: ClearActionsRunnerUpdate :exec
+UPDATE actions_runners SET update_version = '', update_requested_at = NULL, update_error = ''
+WHERE id = $1 AND update_version = $2
+`
+
+type ClearActionsRunnerUpdateParams struct {
+	ID      uuid.UUID
+	Version string
+}
+
+// The runner reports the target version: the update is done.
+func (q *Queries) ClearActionsRunnerUpdate(ctx context.Context, arg ClearActionsRunnerUpdateParams) error {
+	_, err := q.db.Exec(ctx, clearActionsRunnerUpdate, arg.ID, arg.Version)
+	return err
+}
+
 const completeActionsJob = `-- name: CompleteActionsJob :exec
 UPDATE actions_jobs
 SET status = 'completed', conclusion = $1, completed_at = now(), updated_at = now(),
@@ -404,18 +420,19 @@ func (q *Queries) DecideActionsRunnerDevice(ctx context.Context, arg DecideActio
 
 const declareActionsRunner = `-- name: DeclareActionsRunner :one
 UPDATE actions_runners
-SET version = $1, labels = $2, raw_labels = $3, capacity = $4, online = true,
-    last_seen_at = now(), updated_at = now()
-WHERE id = $5
-RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at
+SET version = $1, labels = $2, raw_labels = $3, capacity = $4, self_update = $5,
+    online = true, last_seen_at = now(), updated_at = now()
+WHERE id = $6
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update
 `
 
 type DeclareActionsRunnerParams struct {
-	Version   string
-	Labels    []string
-	RawLabels []string
-	Capacity  int32
-	ID        uuid.UUID
+	Version    string
+	Labels     []string
+	RawLabels  []string
+	Capacity   int32
+	SelfUpdate bool
+	ID         uuid.UUID
 }
 
 func (q *Queries) DeclareActionsRunner(ctx context.Context, arg DeclareActionsRunnerParams) (ActionsRunner, error) {
@@ -424,6 +441,7 @@ func (q *Queries) DeclareActionsRunner(ctx context.Context, arg DeclareActionsRu
 		arg.Labels,
 		arg.RawLabels,
 		arg.Capacity,
+		arg.SelfUpdate,
 		arg.ID,
 	)
 	var i ActionsRunner
@@ -447,6 +465,10 @@ func (q *Queries) DeclareActionsRunner(ctx context.Context, arg DeclareActionsRu
 		&i.Capacity,
 		&i.Metrics,
 		&i.MetricsAt,
+		&i.UpdateVersion,
+		&i.UpdateRequestedAt,
+		&i.UpdateError,
+		&i.SelfUpdate,
 	)
 	return i, err
 }
@@ -594,6 +616,23 @@ func (q *Queries) DeleteUsedEphemeralActionsRunners(ctx context.Context, before 
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const failActionsRunnerUpdate = `-- name: FailActionsRunnerUpdate :exec
+UPDATE actions_runners SET update_version = '', update_requested_at = NULL, update_error = $1
+WHERE id = $2 AND update_version = $3
+`
+
+type FailActionsRunnerUpdateParams struct {
+	Error   string
+	ID      uuid.UUID
+	Version string
+}
+
+// The runner could not update to the pending version.
+func (q *Queries) FailActionsRunnerUpdate(ctx context.Context, arg FailActionsRunnerUpdateParams) error {
+	_, err := q.db.Exec(ctx, failActionsRunnerUpdate, arg.Error, arg.ID, arg.Version)
+	return err
 }
 
 const getActionsEnvironment = `-- name: GetActionsEnvironment :one
@@ -891,7 +930,7 @@ func (q *Queries) GetActionsRunForUpdate(ctx context.Context, id uuid.UUID) (Act
 }
 
 const getActionsRunner = `-- name: GetActionsRunner :one
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at FROM actions_runners WHERE id = $1
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update FROM actions_runners WHERE id = $1
 `
 
 func (q *Queries) GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRunner, error) {
@@ -917,12 +956,16 @@ func (q *Queries) GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRu
 		&i.Capacity,
 		&i.Metrics,
 		&i.MetricsAt,
+		&i.UpdateVersion,
+		&i.UpdateRequestedAt,
+		&i.UpdateError,
+		&i.SelfUpdate,
 	)
 	return i, err
 }
 
 const getActionsRunnerByCredential = `-- name: GetActionsRunnerByCredential :one
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at FROM actions_runners WHERE credential_hash = $1
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update FROM actions_runners WHERE credential_hash = $1
 `
 
 func (q *Queries) GetActionsRunnerByCredential(ctx context.Context, credentialHash []byte) (ActionsRunner, error) {
@@ -948,6 +991,10 @@ func (q *Queries) GetActionsRunnerByCredential(ctx context.Context, credentialHa
 		&i.Capacity,
 		&i.Metrics,
 		&i.MetricsAt,
+		&i.UpdateVersion,
+		&i.UpdateRequestedAt,
+		&i.UpdateError,
+		&i.SelfUpdate,
 	)
 	return i, err
 }
@@ -1351,7 +1398,7 @@ INSERT INTO actions_runners (id, name, scope, owner_id, repo_id, labels, raw_lab
     credential_hash, online, last_seen_at, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
     $10, true, now(), $11)
-RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update
 `
 
 type InsertActionsRunnerParams struct {
@@ -1405,6 +1452,10 @@ func (q *Queries) InsertActionsRunner(ctx context.Context, arg InsertActionsRunn
 		&i.Capacity,
 		&i.Metrics,
 		&i.MetricsAt,
+		&i.UpdateVersion,
+		&i.UpdateRequestedAt,
+		&i.UpdateError,
+		&i.SelfUpdate,
 	)
 	return i, err
 }
@@ -1996,7 +2047,7 @@ func (q *Queries) ListActionsRunKeys(ctx context.Context, arg ListActionsRunKeys
 }
 
 const listActionsRunners = `-- name: ListActionsRunners :many
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at FROM actions_runners
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update FROM actions_runners
 WHERE scope = $1
   AND owner_id IS NOT DISTINCT FROM $2::uuid
   AND repo_id IS NOT DISTINCT FROM $3::uuid
@@ -2040,6 +2091,10 @@ func (q *Queries) ListActionsRunners(ctx context.Context, arg ListActionsRunners
 			&i.Capacity,
 			&i.Metrics,
 			&i.MetricsAt,
+			&i.UpdateVersion,
+			&i.UpdateRequestedAt,
+			&i.UpdateError,
+			&i.SelfUpdate,
 		); err != nil {
 			return nil, err
 		}
@@ -2052,7 +2107,7 @@ func (q *Queries) ListActionsRunners(ctx context.Context, arg ListActionsRunners
 }
 
 const listActionsRunnersForRepo = `-- name: ListActionsRunnersForRepo :many
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at FROM actions_runners
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update FROM actions_runners
 WHERE scope = 'instance' OR (scope = 'org' AND owner_id = $1) OR (scope = 'repo' AND repo_id = $2)
 ORDER BY scope, name, id
 `
@@ -2092,6 +2147,10 @@ func (q *Queries) ListActionsRunnersForRepo(ctx context.Context, arg ListActions
 			&i.Capacity,
 			&i.Metrics,
 			&i.MetricsAt,
+			&i.UpdateVersion,
+			&i.UpdateRequestedAt,
+			&i.UpdateError,
+			&i.SelfUpdate,
 		); err != nil {
 			return nil, err
 		}
@@ -3018,6 +3077,49 @@ func (q *Queries) RequestActionsJobCancel(ctx context.Context, id uuid.UUID) err
 	return err
 }
 
+const requestActionsRunnerUpdate = `-- name: RequestActionsRunnerUpdate :one
+UPDATE actions_runners
+SET update_version = $1, update_requested_at = now(), update_error = '', updated_at = now()
+WHERE id = $2
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update
+`
+
+type RequestActionsRunnerUpdateParams struct {
+	Version string
+	ID      uuid.UUID
+}
+
+func (q *Queries) RequestActionsRunnerUpdate(ctx context.Context, arg RequestActionsRunnerUpdateParams) (ActionsRunner, error) {
+	row := q.db.QueryRow(ctx, requestActionsRunnerUpdate, arg.Version, arg.ID)
+	var i ActionsRunner
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Scope,
+		&i.OwnerID,
+		&i.RepoID,
+		&i.Labels,
+		&i.RawLabels,
+		&i.Version,
+		&i.Ephemeral,
+		&i.CredentialHash,
+		&i.Online,
+		&i.LastSeenAt,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Paused,
+		&i.Capacity,
+		&i.Metrics,
+		&i.MetricsAt,
+		&i.UpdateVersion,
+		&i.UpdateRequestedAt,
+		&i.UpdateError,
+		&i.SelfUpdate,
+	)
+	return i, err
+}
+
 const saveActionsGitHubImport = `-- name: SaveActionsGitHubImport :exec
 INSERT INTO actions_github_imports (repo_id, secret_names, variables_imported, variables_skipped, runs_imported,
     last_error, imported_at, runs_synced_at)
@@ -3182,7 +3284,7 @@ func (q *Queries) SetActionsRunnerMetrics(ctx context.Context, arg SetActionsRun
 }
 
 const setActionsRunnerPaused = `-- name: SetActionsRunnerPaused :one
-UPDATE actions_runners SET paused = $1, updated_at = now() WHERE id = $2 RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at
+UPDATE actions_runners SET paused = $1, updated_at = now() WHERE id = $2 RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update
 `
 
 type SetActionsRunnerPausedParams struct {
@@ -3213,6 +3315,10 @@ func (q *Queries) SetActionsRunnerPaused(ctx context.Context, arg SetActionsRunn
 		&i.Capacity,
 		&i.Metrics,
 		&i.MetricsAt,
+		&i.UpdateVersion,
+		&i.UpdateRequestedAt,
+		&i.UpdateError,
+		&i.SelfUpdate,
 	)
 	return i, err
 }

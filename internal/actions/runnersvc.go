@@ -193,12 +193,14 @@ func (r *RunnerService) Declare(ctx context.Context, req *connect.Request[runner
 		return nil, err
 	}
 	rn, err = r.s.q.DeclareActionsRunner(ctx, dbgen.DeclareActionsRunnerParams{Version: req.Msg.GetVersion(),
-		Labels: labels, RawLabels: raw, Capacity: clampCapacity(req.Msg.GetCapacity()), ID: rn.ID})
+		Labels: labels, RawLabels: raw, Capacity: clampCapacity(req.Msg.GetCapacity()), SelfUpdate: req.Msg.GetSelfUpdate(),
+		ID: rn.ID})
 	if err != nil {
 		return nil, internalErr(r.s, "declare runner", err)
 	}
 	r.saveMetrics(ctx, rn.ID, req.Msg.GetMetrics())
-	return connect.NewResponse(&runnerv1.DeclareResponse{Runner: r.s.protoRunner(ctx, rn)}), nil
+	rn = r.declaredUpdate(ctx, rn)
+	return connect.NewResponse(&runnerv1.DeclareResponse{Runner: r.s.protoRunner(ctx, rn), Update: protoUpdate(rn)}), nil
 }
 
 // FetchTask hands the oldest matching queued job to the runner, waiting up
@@ -565,6 +567,7 @@ func (r *RunnerService) Heartbeat(ctx context.Context, req *connect.Request[runn
 		}
 	}
 	r.saveMetrics(ctx, rn.ID, req.Msg.GetMetrics())
+	rn = r.failedUpdate(ctx, rn, req.Msg)
 	ids := make([]uuid.UUID, 0, len(req.Msg.GetRunningTaskIds()))
 	var bad []string
 	for _, s := range req.Msg.GetRunningTaskIds() {
@@ -598,7 +601,7 @@ func (r *RunnerService) Heartbeat(ctx context.Context, req *connect.Request[runn
 	if out == nil {
 		out = []string{}
 	}
-	return connect.NewResponse(&runnerv1.HeartbeatResponse{CancelTaskIds: out, Paused: rn.Paused}), nil
+	return connect.NewResponse(&runnerv1.HeartbeatResponse{CancelTaskIds: out, Paused: rn.Paused, Update: protoUpdate(rn)}), nil
 }
 
 // clampCapacity bounds a capacity reported by a runner (0 = unknown).
@@ -696,12 +699,21 @@ type Runner struct {
 	Metrics *RunnerMetrics
 	// Jobs are the jobs running now, oldest first.
 	Jobs []RunnerJob
+	// UpdateAvailable: the runner is older than the server. UpdatePending:
+	// an update to UpdateVersion was requested. UpdateError is the last
+	// reported failure. SelfUpdate: the runner can update itself.
+	UpdateAvailable bool
+	UpdatePending   bool
+	UpdateVersion   string
+	UpdateError     string
+	SelfUpdate      bool
 }
 
 func (s *Service) runnerFrom(ctx context.Context, rn dbgen.ActionsRunner, running int) Runner {
 	out := Runner{ID: rn.ID, Name: rn.Name, Scope: s.runnerScope(ctx, rn.Scope, rn.OwnerID, rn.RepoID),
 		Labels: rn.RawLabels, Version: rn.Version, Ephemeral: rn.Ephemeral, CreatedAt: rn.CreatedAt.Time,
 		Busy: running > 0, Paused: rn.Paused, Running: running, Capacity: int(rn.Capacity), Metrics: runnerMetrics(rn)}
+	updateFields(&out, rn)
 	if rn.LastSeenAt.Valid {
 		t := rn.LastSeenAt.Time
 		out.LastSeenAt = &t

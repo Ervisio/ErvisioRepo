@@ -57,6 +57,8 @@ type Actions interface {
 	ListRepoRunners(ctx context.Context, who auth.Principal, sc actions.Scope) ([]actions.Runner, error)
 	DeleteRunner(ctx context.Context, sc actions.Scope, id uuid.UUID) error
 	SetRunnerPaused(ctx context.Context, who auth.Principal, sc actions.Scope, id uuid.UUID, paused bool, ip string) (actions.Runner, error)
+	RequestRunnerUpdate(ctx context.Context, who auth.Principal, sc actions.Scope, id uuid.UUID, ip string) (actions.Runner, error)
+	RequestRunnerUpdates(ctx context.Context, who auth.Principal, sc actions.Scope, ip string) (int, string, error)
 	LookupRunnerDevice(ctx context.Context, who auth.Principal, userCode, ip string) (actions.RunnerDevice, error)
 	DecideRunnerDevice(ctx context.Context, who auth.Principal, userCode string, d actions.RunnerDeviceDecision, ip string) error
 	CreateRegistrationToken(ctx context.Context, who auth.Principal, sc actions.Scope) (actions.RegistrationToken, error)
@@ -136,6 +138,8 @@ type actionsResponse interface {
 	v1gen.SetRepoActionsRunnerPausedResponseObject
 	v1gen.SetOrgActionsRunnerPausedResponseObject
 	v1gen.SetInstanceActionsRunnerPausedResponseObject
+	v1gen.UpdateInstanceActionsRunnerResponseObject
+	v1gen.UpdateInstanceActionsRunnersResponseObject
 	v1gen.GetActionsRunnerDeviceResponseObject
 	v1gen.DecideActionsRunnerDeviceResponseObject
 }
@@ -204,7 +208,8 @@ func actionsDTORunner(r actions.Runner) v1gen.ActionsRunner {
 		Ephemeral: r.Ephemeral, Online: r.Online, Busy: r.Busy, Paused: r.Paused,
 		Status: v1gen.ActionsRunnerStatus(r.Status), Running: r.Running, Capacity: r.Capacity,
 		LastSeenAt: r.LastSeenAt, CreatedAt: r.CreatedAt, Metrics: actionsDTORunnerMetrics(r.Metrics),
-		Jobs: mapList(r.Jobs, actionsDTORunnerJob)}
+		Jobs: mapList(r.Jobs, actionsDTORunnerJob), UpdateAvailable: r.UpdateAvailable, UpdatePending: r.UpdatePending,
+		UpdateVersion: optStr(r.UpdateVersion), UpdateError: optStr(r.UpdateError), SelfUpdate: r.SelfUpdate}
 }
 
 func actionsDTORunnerMetrics(m *actions.RunnerMetrics) *v1gen.ActionsRunnerMetrics {
@@ -1235,6 +1240,18 @@ func (p problemResponse) VisitSetOrgActionsRunnerPausedResponse(w http.ResponseW
 }
 func (p problemResponse) VisitSetInstanceActionsRunnerPausedResponse(w http.ResponseWriter) error {
 	return p.write(w)
+}
+func (p problemResponse) VisitUpdateInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (p problemResponse) VisitUpdateInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (m movedResponse) VisitUpdateInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (m movedResponse) VisitUpdateInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+	return m.write(w)
 }
 func (p problemResponse) VisitGetActionsRunnerDeviceResponse(w http.ResponseWriter) error {
 	return p.write(w)

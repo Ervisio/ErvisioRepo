@@ -3058,10 +3058,27 @@ type ActionsRunner struct {
 	// Scope instance, org:<name> or repo:<owner>/<name>
 	Scope string `json:"scope"`
 
+	// SelfUpdate The runner can update itself from the admin panel (false for the
+	// built-in runner, runners in containers, ephemeral runners and
+	// versions without self-update)
+	SelfUpdate bool `json:"selfUpdate"`
+
 	// Status offline (silent), paused, idle (no job), online (running jobs
 	// below capacity) or busy (every slot taken).
-	Status  ActionsRunnerStatus `json:"status"`
-	Version string              `json:"version"`
+	Status ActionsRunnerStatus `json:"status"`
+
+	// UpdateAvailable The runner runs an older version than the server
+	UpdateAvailable bool `json:"updateAvailable"`
+
+	// UpdateError Why the last requested update failed
+	UpdateError *string `json:"updateError,omitempty"`
+
+	// UpdatePending An update to updateVersion was requested and the runner has not reported it yet
+	UpdatePending bool `json:"updatePending"`
+
+	// UpdateVersion Target version of the pending update
+	UpdateVersion *string `json:"updateVersion,omitempty"`
+	Version       string  `json:"version"`
 }
 
 // ActionsRunnerStatus offline (silent), paused, idle (no job), online (running jobs
@@ -3175,6 +3192,15 @@ type ActionsRunnerMetrics struct {
 // ActionsRunnerPause defines model for ActionsRunnerPause.
 type ActionsRunnerPause struct {
 	Paused bool `json:"paused"`
+}
+
+// ActionsRunnerUpdateAll defines model for ActionsRunnerUpdateAll.
+type ActionsRunnerUpdateAll struct {
+	// Requested Runners asked to update
+	Requested int `json:"requested"`
+
+	// Version Target version (the server version)
+	Version string `json:"version"`
 }
 
 // ActionsSecret defines model for ActionsSecret.
@@ -8000,12 +8026,18 @@ type ServerInterface interface {
 	// CreateInstanceActionsRegistrationToken Create a runner registration token
 	// (POST /admin/actions/runners/registration-token)
 	CreateInstanceActionsRegistrationToken(w http.ResponseWriter, r *http.Request)
+	// UpdateInstanceActionsRunners Update every outdated self-hosted runner
+	// (POST /admin/actions/runners/update)
+	UpdateInstanceActionsRunners(w http.ResponseWriter, r *http.Request)
 	// DeleteInstanceActionsRunner Remove a self-hosted runner
 	// (DELETE /admin/actions/runners/{runnerId})
 	DeleteInstanceActionsRunner(w http.ResponseWriter, r *http.Request, runnerId ActionsRunnerId)
 	// SetInstanceActionsRunnerPaused Pause or resume a self-hosted runner
 	// (PUT /admin/actions/runners/{runnerId}/paused)
 	SetInstanceActionsRunnerPaused(w http.ResponseWriter, r *http.Request, runnerId ActionsRunnerId)
+	// UpdateInstanceActionsRunner Update a self-hosted runner to the server version
+	// (POST /admin/actions/runners/{runnerId}/update)
+	UpdateInstanceActionsRunner(w http.ResponseWriter, r *http.Request, runnerId ActionsRunnerId)
 	// ListAdminAudit Instance audit log, newest first
 	// (GET /admin/audit)
 	ListAdminAudit(w http.ResponseWriter, r *http.Request, params ListAdminAuditParams)
@@ -9146,6 +9178,12 @@ func (_ Unimplemented) CreateInstanceActionsRegistrationToken(w http.ResponseWri
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// UpdateInstanceActionsRunners Update every outdated self-hosted runner
+// (POST /admin/actions/runners/update)
+func (_ Unimplemented) UpdateInstanceActionsRunners(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // DeleteInstanceActionsRunner Remove a self-hosted runner
 // (DELETE /admin/actions/runners/{runnerId})
 func (_ Unimplemented) DeleteInstanceActionsRunner(w http.ResponseWriter, r *http.Request, runnerId ActionsRunnerId) {
@@ -9155,6 +9193,12 @@ func (_ Unimplemented) DeleteInstanceActionsRunner(w http.ResponseWriter, r *htt
 // SetInstanceActionsRunnerPaused Pause or resume a self-hosted runner
 // (PUT /admin/actions/runners/{runnerId}/paused)
 func (_ Unimplemented) SetInstanceActionsRunnerPaused(w http.ResponseWriter, r *http.Request, runnerId ActionsRunnerId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateInstanceActionsRunner Update a self-hosted runner to the server version
+// (POST /admin/actions/runners/{runnerId}/update)
+func (_ Unimplemented) UpdateInstanceActionsRunner(w http.ResponseWriter, r *http.Request, runnerId ActionsRunnerId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -11495,6 +11539,28 @@ func (siw *ServerInterfaceWrapper) CreateInstanceActionsRegistrationToken(w http
 	handler.ServeHTTP(w, r)
 }
 
+// UpdateInstanceActionsRunners operation middleware
+func (siw *ServerInterfaceWrapper) UpdateInstanceActionsRunners(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateInstanceActionsRunners(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteInstanceActionsRunner operation middleware
 func (siw *ServerInterfaceWrapper) DeleteInstanceActionsRunner(w http.ResponseWriter, r *http.Request) {
 
@@ -11554,6 +11620,40 @@ func (siw *ServerInterfaceWrapper) SetInstanceActionsRunnerPaused(w http.Respons
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SetInstanceActionsRunnerPaused(w, r, runnerId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateInstanceActionsRunner operation middleware
+func (siw *ServerInterfaceWrapper) UpdateInstanceActionsRunner(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "runnerId" -------------
+	var runnerId ActionsRunnerId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "runnerId", chi.URLParam(r, "runnerId"), &runnerId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runnerId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateInstanceActionsRunner(w, r, runnerId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -29600,6 +29700,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/admin/actions/runners/{runnerId}/paused", wrapper.SetInstanceActionsRunnerPaused)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/actions/runners/{runnerId}/update", wrapper.UpdateInstanceActionsRunner)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/actions/runners/update", wrapper.UpdateInstanceActionsRunners)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/admin/actions/runners/registration-token", wrapper.CreateInstanceActionsRegistrationToken)
 	})
 	r.Group(func(r chi.Router) {
@@ -30056,6 +30162,93 @@ func (response CreateInstanceActionsRegistrationTokendefaultApplicationProblemPl
 	return err
 }
 
+type UpdateInstanceActionsRunnersRequestObject struct {
+}
+
+type UpdateInstanceActionsRunnersResponseObject interface {
+	VisitUpdateInstanceActionsRunnersResponse(w http.ResponseWriter) error
+}
+
+type UpdateInstanceActionsRunners202JSONResponse ActionsRunnerUpdateAll
+
+func (response UpdateInstanceActionsRunners202JSONResponse) VisitUpdateInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceActionsRunners403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateInstanceActionsRunners403ApplicationProblemPlusJSONResponse) VisitUpdateInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceActionsRunners404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateInstanceActionsRunners404ApplicationProblemPlusJSONResponse) VisitUpdateInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceActionsRunners503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateInstanceActionsRunners503ApplicationProblemPlusJSONResponse) VisitUpdateInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceActionsRunnersdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateInstanceActionsRunnersdefaultApplicationProblemPlusJSONResponse) VisitUpdateInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type DeleteInstanceActionsRunnerRequestObject struct {
 	RunnerId ActionsRunnerId `json:"runnerId"`
 }
@@ -30216,6 +30409,108 @@ type SetInstanceActionsRunnerPauseddefaultApplicationProblemPlusJSONResponse str
 }
 
 func (response SetInstanceActionsRunnerPauseddefaultApplicationProblemPlusJSONResponse) VisitSetInstanceActionsRunnerPausedResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceActionsRunnerRequestObject struct {
+	RunnerId ActionsRunnerId `json:"runnerId"`
+}
+
+type UpdateInstanceActionsRunnerResponseObject interface {
+	VisitUpdateInstanceActionsRunnerResponse(w http.ResponseWriter) error
+}
+
+type UpdateInstanceActionsRunner202JSONResponse ActionsRunner
+
+func (response UpdateInstanceActionsRunner202JSONResponse) VisitUpdateInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceActionsRunner403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateInstanceActionsRunner403ApplicationProblemPlusJSONResponse) VisitUpdateInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceActionsRunner404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateInstanceActionsRunner404ApplicationProblemPlusJSONResponse) VisitUpdateInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceActionsRunner409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateInstanceActionsRunner409ApplicationProblemPlusJSONResponse) VisitUpdateInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceActionsRunner503ApplicationProblemPlusJSONResponse struct {
+	UnavailableApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateInstanceActionsRunner503ApplicationProblemPlusJSONResponse) VisitUpdateInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateInstanceActionsRunnerdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateInstanceActionsRunnerdefaultApplicationProblemPlusJSONResponse) VisitUpdateInstanceActionsRunnerResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -61619,12 +61914,18 @@ type StrictServerInterface interface {
 	// CreateInstanceActionsRegistrationToken Create a runner registration token
 	// (POST /admin/actions/runners/registration-token)
 	CreateInstanceActionsRegistrationToken(ctx context.Context, request CreateInstanceActionsRegistrationTokenRequestObject) (CreateInstanceActionsRegistrationTokenResponseObject, error)
+	// UpdateInstanceActionsRunners Update every outdated self-hosted runner
+	// (POST /admin/actions/runners/update)
+	UpdateInstanceActionsRunners(ctx context.Context, request UpdateInstanceActionsRunnersRequestObject) (UpdateInstanceActionsRunnersResponseObject, error)
 	// DeleteInstanceActionsRunner Remove a self-hosted runner
 	// (DELETE /admin/actions/runners/{runnerId})
 	DeleteInstanceActionsRunner(ctx context.Context, request DeleteInstanceActionsRunnerRequestObject) (DeleteInstanceActionsRunnerResponseObject, error)
 	// SetInstanceActionsRunnerPaused Pause or resume a self-hosted runner
 	// (PUT /admin/actions/runners/{runnerId}/paused)
 	SetInstanceActionsRunnerPaused(ctx context.Context, request SetInstanceActionsRunnerPausedRequestObject) (SetInstanceActionsRunnerPausedResponseObject, error)
+	// UpdateInstanceActionsRunner Update a self-hosted runner to the server version
+	// (POST /admin/actions/runners/{runnerId}/update)
+	UpdateInstanceActionsRunner(ctx context.Context, request UpdateInstanceActionsRunnerRequestObject) (UpdateInstanceActionsRunnerResponseObject, error)
 	// ListAdminAudit Instance audit log, newest first
 	// (GET /admin/audit)
 	ListAdminAudit(ctx context.Context, request ListAdminAuditRequestObject) (ListAdminAuditResponseObject, error)
@@ -62883,6 +63184,30 @@ func (sh *strictHandler) CreateInstanceActionsRegistrationToken(w http.ResponseW
 	}
 }
 
+// UpdateInstanceActionsRunners operation middleware
+func (sh *strictHandler) UpdateInstanceActionsRunners(w http.ResponseWriter, r *http.Request) {
+	var request UpdateInstanceActionsRunnersRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateInstanceActionsRunners(ctx, request.(UpdateInstanceActionsRunnersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateInstanceActionsRunners")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateInstanceActionsRunnersResponseObject); ok {
+		if err := validResponse.VisitUpdateInstanceActionsRunnersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeleteInstanceActionsRunner operation middleware
 func (sh *strictHandler) DeleteInstanceActionsRunner(w http.ResponseWriter, r *http.Request, runnerId ActionsRunnerId) {
 	var request DeleteInstanceActionsRunnerRequestObject
@@ -62935,6 +63260,32 @@ func (sh *strictHandler) SetInstanceActionsRunnerPaused(w http.ResponseWriter, r
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SetInstanceActionsRunnerPausedResponseObject); ok {
 		if err := validResponse.VisitSetInstanceActionsRunnerPausedResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateInstanceActionsRunner operation middleware
+func (sh *strictHandler) UpdateInstanceActionsRunner(w http.ResponseWriter, r *http.Request, runnerId ActionsRunnerId) {
+	var request UpdateInstanceActionsRunnerRequestObject
+
+	request.RunnerId = runnerId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateInstanceActionsRunner(ctx, request.(UpdateInstanceActionsRunnerRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateInstanceActionsRunner")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateInstanceActionsRunnerResponseObject); ok {
+		if err := validResponse.VisitUpdateInstanceActionsRunnerResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

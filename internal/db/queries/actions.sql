@@ -17,10 +17,26 @@ SELECT * FROM actions_runners WHERE credential_hash = @credential_hash;
 
 -- name: DeclareActionsRunner :one
 UPDATE actions_runners
-SET version = @version, labels = @labels, raw_labels = @raw_labels, capacity = @capacity, online = true,
-    last_seen_at = now(), updated_at = now()
+SET version = @version, labels = @labels, raw_labels = @raw_labels, capacity = @capacity, self_update = @self_update,
+    online = true, last_seen_at = now(), updated_at = now()
 WHERE id = @id
 RETURNING *;
+
+-- name: RequestActionsRunnerUpdate :one
+UPDATE actions_runners
+SET update_version = @version, update_requested_at = now(), update_error = '', updated_at = now()
+WHERE id = @id
+RETURNING *;
+
+-- name: ClearActionsRunnerUpdate :exec
+-- The runner reports the target version: the update is done.
+UPDATE actions_runners SET update_version = '', update_requested_at = NULL, update_error = ''
+WHERE id = @id AND update_version = @version;
+
+-- name: FailActionsRunnerUpdate :exec
+-- The runner could not update to the pending version.
+UPDATE actions_runners SET update_version = '', update_requested_at = NULL, update_error = @error
+WHERE id = @id AND update_version = @version;
 
 -- name: SetActionsRunnerCapacity :exec
 UPDATE actions_runners SET capacity = @capacity WHERE id = @id AND capacity <> @capacity;

@@ -10694,6 +10694,65 @@ paths:
           $ref: "#/components/responses/Unavailable"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/actions/runners/{runnerId}/update:
+    parameters:
+      - $ref: "#/components/parameters/ActionsRunnerId"
+    post:
+      operationId: updateInstanceActionsRunner
+      tags: [actions]
+      summary: Update a self-hosted runner to the server version
+      description: |
+        Asks the runner to update itself to the version of the server: it
+        stops taking jobs, lets the running ones finish, downloads and
+        verifies the release binary and restarts on it. 409 when the runner
+        cannot update itself (built-in runner, container, older runner) or
+        already runs the server version. Recorded in the audit log.
+      security:
+        - session: [admin]
+        - token: [admin]
+      responses:
+        "202":
+          description: The runner, with the update pending
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRunner"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/actions/runners/update:
+    post:
+      operationId: updateInstanceActionsRunners
+      tags: [actions]
+      summary: Update every outdated self-hosted runner
+      description: |
+        Requests the update of every online instance runner that runs an
+        older version than the server and can update itself.
+      security:
+        - session: [admin]
+        - token: [admin]
+      responses:
+        "202":
+          description: Number of runners asked to update
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRunnerUpdateAll"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
   /admin/actions/runners/registration-token:
     post:
       operationId: createInstanceActionsRegistrationToken
@@ -11528,7 +11587,7 @@ components:
     ActionsRunner:
       type: object
       required: [id, name, scope, labels, version, ephemeral, online, busy, paused, status, running, capacity, createdAt,
-        jobs]
+        jobs, updateAvailable, updatePending, selfUpdate]
       properties:
         id: {type: string, format: uuid}
         name: {type: string}
@@ -11557,6 +11616,24 @@ components:
           type: array
           description: Jobs running on the runner now, oldest first
           items: {$ref: '#/components/schemas/ActionsRunnerJob'}
+        updateAvailable: {type: boolean, description: The runner runs an older version than the server}
+        updatePending:
+          type: boolean
+          description: An update to updateVersion was requested and the runner has not reported it yet
+        updateVersion: {type: string, description: Target version of the pending update}
+        updateError: {type: string, description: Why the last requested update failed, as the runner reported it}
+        selfUpdate:
+          type: boolean
+          description: |
+            The runner can update itself from the admin panel (false for the
+            built-in runner, runners in containers, ephemeral runners and
+            versions without self-update)
+    ActionsRunnerUpdateAll:
+      type: object
+      required: [requested, version]
+      properties:
+        requested: {type: integer, description: Runners asked to update}
+        version: {type: string, description: Target version (the server version)}
     ActionsRunnerMetrics:
       type: object
       description: |

@@ -181,25 +181,29 @@ type ActionsRunNumber struct {
 }
 
 type ActionsRunner struct {
-	ID             uuid.UUID
-	Name           string
-	Scope          string
-	OwnerID        uuid.NullUUID
-	RepoID         uuid.NullUUID
-	Labels         []string
-	RawLabels      []string
-	Version        string
-	Ephemeral      bool
-	CredentialHash []byte
-	Online         bool
-	LastSeenAt     pgtype.Timestamptz
-	CreatedBy      uuid.NullUUID
-	CreatedAt      pgtype.Timestamptz
-	UpdatedAt      pgtype.Timestamptz
-	Paused         bool
-	Capacity       int32
-	Metrics        []byte
-	MetricsAt      pgtype.Timestamptz
+	ID                uuid.UUID
+	Name              string
+	Scope             string
+	OwnerID           uuid.NullUUID
+	RepoID            uuid.NullUUID
+	Labels            []string
+	RawLabels         []string
+	Version           string
+	Ephemeral         bool
+	CredentialHash    []byte
+	Online            bool
+	LastSeenAt        pgtype.Timestamptz
+	CreatedBy         uuid.NullUUID
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+	Paused            bool
+	Capacity          int32
+	Metrics           []byte
+	MetricsAt         pgtype.Timestamptz
+	UpdateVersion     string
+	UpdateRequestedAt pgtype.Timestamptz
+	UpdateError       string
+	SelfUpdate        bool
 }
 
 type ActionsRunnerDevice struct {

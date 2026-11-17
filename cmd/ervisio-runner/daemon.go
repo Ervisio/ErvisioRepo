@@ -35,6 +35,11 @@ func daemonCmd(ctx context.Context, args []string, stderr io.Writer) error {
 		return err
 	}
 	logger := newLogger(cfg.Log, stderr)
+	// A binary staged by a self-update takes over before anything else.
+	failedVer, handoffErr := runner.Handoff(cfg.Runner.StateFile, version(), logger)
+	if handoffErr != nil {
+		logger.Error("could not start the updated runner binary, running the installed one", "version", failedVer, "err", handoffErr)
+	}
 	st, err := loadOrRegister(ctx, cfg, logger)
 	if err != nil {
 		return err
@@ -43,7 +48,17 @@ func daemonCmd(ctx context.Context, args []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	return d.Run(ctx)
+	if handoffErr != nil {
+		d.ReportUpdateError(failedVer, handoffErr)
+	}
+	err = d.Run(ctx)
+	var re *runner.RestartError
+	if errors.As(err, &re) {
+		// Unix: exec the staged binary (same PID). Windows: exit non-zero
+		// so the scheduled task starts the replaced executable.
+		return runner.Restart(re)
+	}
+	return err
 }
 
 // ensureDaemonConfig writes a default configuration from the

@@ -6299,6 +6299,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/actions/runners/{runnerId}/update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Update a self-hosted runner to the server version
+         * @description Asks the runner to update itself to the version of the server: it
+         *     stops taking jobs, lets the running ones finish, downloads and
+         *     verifies the release binary and restarts on it. 409 when the runner
+         *     cannot update itself (built-in runner, container, older runner) or
+         *     already runs the server version. Recorded in the audit log.
+         */
+        post: operations["updateInstanceActionsRunner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/actions/runners/update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Update every outdated self-hosted runner
+         * @description Requests the update of every online instance runner that runs an
+         *     older version than the server and can update itself.
+         */
+        post: operations["updateInstanceActionsRunners"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/actions/runners/registration-token": {
         parameters: {
             query?: never;
@@ -6692,6 +6739,26 @@ export interface components {
             metrics?: components["schemas"]["ActionsRunnerMetrics"];
             /** @description Jobs running on the runner now, oldest first */
             jobs: components["schemas"]["ActionsRunnerJob"][];
+            /** @description The runner runs an older version than the server */
+            updateAvailable: boolean;
+            /** @description An update to updateVersion was requested and the runner has not reported it yet */
+            updatePending: boolean;
+            /** @description Target version of the pending update */
+            updateVersion?: string;
+            /** @description Why the last requested update failed */
+            updateError?: string;
+            /**
+             * @description The runner can update itself from the admin panel (false for the
+             *     built-in runner, runners in containers, ephemeral runners and
+             *     versions without self-update)
+             */
+            selfUpdate: boolean;
+        };
+        ActionsRunnerUpdateAll: {
+            /** @description Runners asked to update */
+            requested: number;
+            /** @description Target version (the server version) */
+            version: string;
         };
         /**
          * @description Latest resource usage reported by the runner (absent until it reports).
@@ -20685,6 +20752,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActionsRunner"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateInstanceActionsRunner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The runner, with the update pending */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunner"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateInstanceActionsRunners: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Number of runners asked to update */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunnerUpdateAll"];
                 };
             };
             403: components["responses"]["Problem"];

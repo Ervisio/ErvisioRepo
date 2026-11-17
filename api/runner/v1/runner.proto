@@ -80,10 +80,27 @@ message DeclareRequest {
   int32 capacity = 3;
   // metrics is the machine usage right now (best effort, may be unset).
   RunnerMetrics metrics = 4;
+  // self_update is true when the runner can replace its own binary on
+  // request (not in a container, not ephemeral).
+  bool self_update = 5;
 }
 
 message DeclareResponse {
   Runner runner = 1;
+  // update is set when an admin asked the runner to update itself.
+  RunnerUpdate update = 2;
+}
+
+// RunnerUpdate asks the runner to update itself: it stops taking jobs,
+// lets the running ones finish, downloads
+// <download_url>/ervisio-runner_<version>_<os>_<arch>.tar.gz (.zip on
+// Windows), checks it against
+// <download_url>/ervisio-runner_<version>_checksums.txt and restarts on it.
+message RunnerUpdate {
+  // version is the target version, x.y.z.
+  string version = 1;
+  // download_url is the https base URL of the release assets.
+  string download_url = 2;
 }
 
 message Runner {
@@ -208,6 +225,10 @@ message HeartbeatRequest {
   int32 capacity = 2;
   // metrics is the machine usage right now (best effort, may be unset).
   RunnerMetrics metrics = 3;
+  // update_error reports, once, why the requested update to
+  // update_error_version failed (short text, no secrets).
+  string update_error = 4;
+  string update_error_version = 5;
 }
 
 // RunnerMetrics is the resource usage of the runner machine, sent on
@@ -240,6 +261,8 @@ message HeartbeatResponse {
   repeated string cancel_task_ids = 1;
   // paused is true while an admin has paused the runner.
   bool paused = 2;
+  // update is set while an admin-requested update is pending.
+  RunnerUpdate update = 3;
 }
 
 message RequestDeviceRequest {

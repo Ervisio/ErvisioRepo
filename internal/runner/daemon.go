@@ -10,7 +10,9 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"sort"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
@@ -38,6 +40,20 @@ type Daemon struct {
 	mu      sync.Mutex
 	running map[string]context.CancelFunc
 	wg      sync.WaitGroup
+
+	// Self-update (update.go): selfUpdate is whether it is allowed,
+	// updating guards a single attempt, draining ends the poll loop once a
+	// binary is staged (restart; an in-flight fetch is never cut, it may
+	// carry a claimed job), and updateErr is reported once in the next
+	// heartbeat.
+	selfUpdate bool
+	updating   atomic.Bool
+	ctx        context.Context //nolint:containedctx // the daemon lifetime, for the update goroutine
+	draining   atomic.Bool
+	restart    *RestartError
+	updateErr  [2]string // version, text
+	failedVer  string    // hand-off failed at start (not retried)
+	failedErr  string
 }
 
 // NewDaemon prepares a daemon from the configuration and the state saved
@@ -61,14 +77,15 @@ func NewDaemon(cfg *config.Config, st *State, version string, logger *slog.Logge
 	client := NewClient(server, st.Credential, version, cfg.Server.InsecureTLS)
 	configureLogrus(cfg.Log.Level)
 	return &Daemon{
-		cfg:     cfg,
-		state:   st,
-		labels:  labels,
-		client:  client,
-		logger:  logger,
-		version: version,
-		metrics: newMetricsCollector(cfg.Runner.StateFile, logger),
-		running: map[string]context.CancelFunc{},
+		cfg:        cfg,
+		state:      st,
+		labels:     labels,
+		client:     client,
+		logger:     logger,
+		version:    version,
+		metrics:    newMetricsCollector(cfg.Runner.StateFile, logger),
+		running:    map[string]context.CancelFunc{},
+		selfUpdate: SelfUpdateSupported(st.Ephemeral),
 		exec: &executor{
 			cfg:     cfg,
 			labels:  labels,
@@ -101,6 +118,7 @@ func configureLogrus(level string) {
 // ephemeral runner, until its single job ends). On cancellation running
 // jobs get shutdown_timeout to finish before they are cancelled.
 func (d *Daemon) Run(ctx context.Context) error {
+	d.ctx = ctx
 	if err := d.declare(ctx); err != nil {
 		return err
 	}
@@ -120,6 +138,18 @@ func (d *Daemon) Run(ctx context.Context) error {
 
 	pollErr := d.pollLoop(ctx, jobsCtx)
 
+	if re := d.restartTarget(); re != nil && pollErr == nil && ctx.Err() == nil {
+		if n := d.runningCount(); n > 0 {
+			d.logger.Info("update staged: waiting for the running jobs before restarting", "count", n, "version", re.Version)
+		}
+		if d.waitJobs(ctx) {
+			stopHeartbeat()
+			<-hbDone
+			d.logger.Info("restarting on the updated binary", "version", re.Version)
+			return re
+		}
+	}
+
 	d.shutdown(cancelJobs)
 	stopHeartbeat()
 	<-hbDone
@@ -134,15 +164,17 @@ func (d *Daemon) declare(ctx context.Context) error {
 	wait := d.cfg.Runner.FetchInterval.D()
 	for {
 		resp, err := d.client.Declare(ctx, connect.NewRequest(&runnerv1.DeclareRequest{
-			Version:  d.version,
-			Labels:   d.labels.Wire(),
-			Capacity: int32(d.cfg.Runner.Capacity), //nolint:gosec // capacity is at most 64
-			Metrics:  d.metrics.collect(ctx),
+			Version:    d.version,
+			Labels:     d.labels.Wire(),
+			Capacity:   int32(d.cfg.Runner.Capacity), //nolint:gosec // capacity is at most 64
+			Metrics:    d.metrics.collect(ctx),
+			SelfUpdate: d.selfUpdate,
 		}))
 		if err == nil {
 			if r := resp.Msg.GetRunner(); r != nil {
 				d.logger.Info("runner declared", "id", r.GetId(), "scope", r.GetScope(), "paused", r.GetPaused())
 			}
+			d.requestUpdate(resp.Msg.GetUpdate())
 			return nil
 		}
 		if isAuthError(err) {
@@ -172,6 +204,10 @@ func (d *Daemon) pollLoop(ctx, jobsCtx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case slots <- struct{}{}:
+		}
+		if d.draining.Load() {
+			<-slots
+			return nil
 		}
 
 		task, version, err := d.fetch(ctx, tasksVersion)
@@ -312,19 +348,24 @@ func (d *Daemon) heartbeatLoop(ctx context.Context) {
 		case <-t.C:
 		}
 		metrics := d.metrics.collect(ctx)
+		failed := d.takeUpdateError()
 		hctx, cancel := context.WithTimeout(ctx, d.cfg.Runner.FetchTimeout.D())
 		resp, err := d.client.Heartbeat(hctx, connect.NewRequest(&runnerv1.HeartbeatRequest{
-			RunningTaskIds: d.runningIDs(),
-			Capacity:       int32(d.cfg.Runner.Capacity), //nolint:gosec // capacity is at most 64
-			Metrics:        metrics,
+			RunningTaskIds:     d.runningIDs(),
+			Capacity:           int32(d.cfg.Runner.Capacity), //nolint:gosec // capacity is at most 64
+			Metrics:            metrics,
+			UpdateErrorVersion: failed[0],
+			UpdateError:        failed[1],
 		}))
 		cancel()
 		if err != nil {
 			if ctx.Err() == nil {
 				d.logger.Warn("heartbeat failed", "err", err)
 			}
+			d.restoreUpdateError(failed)
 			continue
 		}
+		d.requestUpdate(resp.Msg.GetUpdate())
 		for _, id := range resp.Msg.GetCancelTaskIds() {
 			d.cancelTask(id)
 		}
@@ -382,5 +423,107 @@ func sleep(ctx context.Context, d time.Duration) bool {
 		return false
 	case <-t.C:
 		return true
+	}
+}
+
+// requestUpdate starts the update the server asked for, once.
+func (d *Daemon) requestUpdate(u *runnerv1.RunnerUpdate) {
+	if u == nil {
+		return
+	}
+	ver := strings.TrimPrefix(u.GetVersion(), "v")
+	if !newerVersion(ver, d.version) {
+		return
+	}
+	d.mu.Lock()
+	failed, why := d.failedVer == ver, d.failedErr
+	d.mu.Unlock()
+	if failed {
+		// The hand-off to this version already failed in this process:
+		// report it again instead of looping on download and restart.
+		d.failUpdate(ver, errors.New(why))
+		return
+	}
+	if !d.selfUpdate {
+		d.failUpdate(ver, errors.New("this runner cannot update itself (container or ephemeral runner)"))
+		return
+	}
+	if !d.updating.CompareAndSwap(false, true) {
+		return
+	}
+	d.logger.Info("update requested by the server", "from", d.version, "to", ver)
+	go func() {
+		staged, err := stageUpdate(d.ctx, u, d.cfg.Runner.StateFile, "ervisio-runner/"+d.version)
+		if err != nil {
+			d.failUpdate(ver, err)
+			d.updating.Store(false)
+			return
+		}
+		d.mu.Lock()
+		d.restart = &RestartError{Path: staged, Version: ver}
+		d.mu.Unlock()
+		d.logger.Info("update verified and staged: no new jobs are taken", "version", ver, "path", staged)
+		d.draining.Store(true)
+	}()
+}
+
+// ReportUpdateError records a failed update to version (e.g. a hand-off
+// at start that could not exec the staged binary); the next heartbeat
+// sends it and the daemon does not retry that version.
+func (d *Daemon) ReportUpdateError(version string, err error) {
+	ver := strings.TrimPrefix(version, "v")
+	d.mu.Lock()
+	d.failedVer, d.failedErr = ver, err.Error()
+	d.mu.Unlock()
+	d.failUpdate(ver, err)
+}
+
+func (d *Daemon) failUpdate(ver string, err error) {
+	if d.ctx != nil && d.ctx.Err() != nil {
+		return
+	}
+	d.logger.Error("self-update failed", "version", ver, "err", err)
+	d.mu.Lock()
+	d.updateErr = [2]string{ver, err.Error()}
+	d.mu.Unlock()
+}
+
+func (d *Daemon) takeUpdateError() [2]string {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	e := d.updateErr
+	d.updateErr = [2]string{}
+	return e
+}
+
+func (d *Daemon) restoreUpdateError(e [2]string) {
+	if e[0] == "" {
+		return
+	}
+	d.mu.Lock()
+	if d.updateErr[0] == "" {
+		d.updateErr = e
+	}
+	d.mu.Unlock()
+}
+
+func (d *Daemon) restartTarget() *RestartError {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.restart
+}
+
+// waitJobs waits for every running job; false when ctx ends first.
+func (d *Daemon) waitJobs(ctx context.Context) bool {
+	done := make(chan struct{})
+	go func() {
+		d.wg.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		return true
+	case <-ctx.Done():
+		return false
 	}
 }

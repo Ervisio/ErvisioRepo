@@ -67,6 +67,8 @@ type Querier interface {
 	// Undispatched events, oldest first, locked for the dispatching transaction
 	// (concurrent dispatchers skip each other's rows).
 	ClaimOutboxEvents(ctx context.Context, lim int32) ([]ClaimOutboxEventsRow, error)
+	// The runner reports the target version: the update is done.
+	ClearActionsRunnerUpdate(ctx context.Context, arg ClearActionsRunnerUpdateParams) error
 	// Only one release of a repository can be flagged as latest.
 	ClearOtherLatestReleases(ctx context.Context, arg ClearOtherLatestReleasesParams) error
 	ClearPrimaryEmail(ctx context.Context, userID uuid.UUID) error
@@ -259,6 +261,8 @@ type Querier interface {
 	// description fragment (LIKE metacharacters escaped). sort is updated, name
 	// or stars.
 	ExploreRepos(ctx context.Context, arg ExploreReposParams) ([]ExploreReposRow, error)
+	// The runner could not update to the pending version.
+	FailActionsRunnerUpdate(ctx context.Context, arg FailActionsRunnerUpdateParams) error
 	FailMFAChallenge(ctx context.Context, id uuid.UUID) (int32, error)
 	FinalizeActionsArtifact(ctx context.Context, id int64) (ActionsArtifact, error)
 	// The newest complete entry of a scope whose key matches pattern (LIKE,
@@ -950,6 +954,7 @@ type Querier interface {
 	// Repositories of an account by name (installation repository selection).
 	ReposByNames(ctx context.Context, arg ReposByNamesParams) ([]ReposByNamesRow, error)
 	RequestActionsJobCancel(ctx context.Context, id uuid.UUID) error
+	RequestActionsRunnerUpdate(ctx context.Context, arg RequestActionsRunnerUpdateParams) (ActionsRunner, error)
 	// ---- cache ----
 	// Reserves a cache entry. An existing entry is taken over only when it is
 	// an upload abandoned before stale_before; otherwise no row comes back.
