@@ -188,6 +188,81 @@ func (e AdminInviteStatus) Valid() bool {
 	}
 }
 
+// Defines values for AdminOverviewRange.
+const (
+	AdminOverviewRangeN24h AdminOverviewRange = "24h"
+	AdminOverviewRangeN7d  AdminOverviewRange = "7d"
+)
+
+// Valid indicates whether the value is a known member of the AdminOverviewRange enum.
+func (e AdminOverviewRange) Valid() bool {
+	switch e {
+	case AdminOverviewRangeN24h:
+		return true
+	case AdminOverviewRangeN7d:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminServiceId.
+const (
+	AdminServiceIdDatabase AdminServiceId = "database"
+	AdminServiceIdEmail    AdminServiceId = "email"
+	AdminServiceIdHotCache AdminServiceId = "hotCache"
+	AdminServiceIdJobs     AdminServiceId = "jobs"
+	AdminServiceIdRunners  AdminServiceId = "runners"
+	AdminServiceIdServer   AdminServiceId = "server"
+	AdminServiceIdStorage  AdminServiceId = "storage"
+)
+
+// Valid indicates whether the value is a known member of the AdminServiceId enum.
+func (e AdminServiceId) Valid() bool {
+	switch e {
+	case AdminServiceIdDatabase:
+		return true
+	case AdminServiceIdEmail:
+		return true
+	case AdminServiceIdHotCache:
+		return true
+	case AdminServiceIdJobs:
+		return true
+	case AdminServiceIdRunners:
+		return true
+	case AdminServiceIdServer:
+		return true
+	case AdminServiceIdStorage:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminServiceStatus.
+const (
+	AdminServiceStatusErr  AdminServiceStatus = "err"
+	AdminServiceStatusOff  AdminServiceStatus = "off"
+	AdminServiceStatusOk   AdminServiceStatus = "ok"
+	AdminServiceStatusWarn AdminServiceStatus = "warn"
+)
+
+// Valid indicates whether the value is a known member of the AdminServiceStatus enum.
+func (e AdminServiceStatus) Valid() bool {
+	switch e {
+	case AdminServiceStatusErr:
+		return true
+	case AdminServiceStatusOff:
+		return true
+	case AdminServiceStatusOk:
+		return true
+	case AdminServiceStatusWarn:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AdminUserRole.
 const (
 	AdminUserRoleAdmin      AdminUserRole = "admin"
@@ -2423,6 +2498,24 @@ func (e CheckStatusFilter) Valid() bool {
 	}
 }
 
+// Defines values for GetAdminOverviewParamsRange.
+const (
+	GetAdminOverviewParamsRangeN24h GetAdminOverviewParamsRange = "24h"
+	GetAdminOverviewParamsRangeN7d  GetAdminOverviewParamsRange = "7d"
+)
+
+// Valid indicates whether the value is a known member of the GetAdminOverviewParamsRange enum.
+func (e GetAdminOverviewParamsRange) Valid() bool {
+	switch e {
+	case GetAdminOverviewParamsRangeN24h:
+		return true
+	case GetAdminOverviewParamsRangeN7d:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListAdminUsersParamsRole.
 const (
 	ListAdminUsersParamsRoleAdmin      ListAdminUsersParamsRole = "admin"
@@ -3164,6 +3257,22 @@ type ActivityItem struct {
 // ActivityItemKind defines model for ActivityItem.Kind.
 type ActivityItemKind string
 
+// AdminCounts defines model for AdminCounts.
+type AdminCounts struct {
+	// Invites Pending invitations
+	Invites int64 `json:"invites"`
+	Orgs    int64 `json:"orgs"`
+	Runners int   `json:"runners"`
+	Users   int64 `json:"users"`
+}
+
+// AdminDiskSample defines model for AdminDiskSample.
+type AdminDiskSample struct {
+	At    time.Time `json:"at"`
+	Total int64     `json:"total"`
+	Used  int64     `json:"used"`
+}
+
 // AdminInvite defines model for AdminInvite.
 type AdminInvite struct {
 	CreatedAt time.Time `json:"createdAt"`
@@ -3189,6 +3298,71 @@ type AdminInvitePage struct {
 	Total int64         `json:"total"`
 }
 
+// AdminJobBucket defines model for AdminJobBucket.
+type AdminJobBucket struct {
+	// Failure Failed or timed out
+	Failure int64 `json:"failure"`
+	Success int64 `json:"success"`
+}
+
+// AdminOverview defines model for AdminOverview.
+type AdminOverview struct {
+	CheckedAt time.Time   `json:"checkedAt"`
+	Counts    AdminCounts `json:"counts"`
+
+	// Disk Samples of the local disk in the range, oldest first
+	Disk []AdminDiskSample `json:"disk"`
+
+	// DiskTarget Local storage target whose disk is sampled
+	DiskTarget *string `json:"diskTarget,omitempty"`
+
+	// Jobs Completed Actions jobs in each bucket, oldest first
+	Jobs  []AdminJobBucket   `json:"jobs"`
+	Range AdminOverviewRange `json:"range"`
+
+	// Requests Mean requests per minute in each bucket, oldest first
+	Requests []float64 `json:"requests"`
+
+	// RequestsNow Requests in the last full minute
+	RequestsNow int64          `json:"requestsNow"`
+	Services    []AdminService `json:"services"`
+
+	// Start Start of the first bucket of requests and jobs
+	Start time.Time `json:"start"`
+
+	// StepSeconds Width of one bucket
+	StepSeconds int `json:"stepSeconds"`
+}
+
+// AdminOverviewRange defines model for AdminOverview.Range.
+type AdminOverviewRange string
+
+// AdminService State of one subsystem; the fields set depend on the id
+type AdminService struct {
+	// Budget Hot cache budget, 0 when unlimited
+	Budget *int64 `json:"budget,omitempty"`
+
+	// Bytes Database size or hot cache usage
+	Bytes *int64 `json:"bytes,omitempty"`
+
+	// Host SMTP relay
+	Host          *string            `json:"host,omitempty"`
+	Id            AdminServiceId     `json:"id"`
+	Online        *int               `json:"online,omitempty"`
+	Queued        *int64             `json:"queued,omitempty"`
+	Status        AdminServiceStatus `json:"status"`
+	Total         *int               `json:"total,omitempty"`
+	UptimeSeconds *int64             `json:"uptimeSeconds,omitempty"`
+	Version       *string            `json:"version,omitempty"`
+	Warnings      *int               `json:"warnings,omitempty"`
+}
+
+// AdminServiceId defines model for AdminService.Id.
+type AdminServiceId string
+
+// AdminServiceStatus defines model for AdminService.Status.
+type AdminServiceStatus string
+
 // AdminUser defines model for AdminUser.
 type AdminUser struct {
 	CreatedAt   time.Time `json:"createdAt"`
@@ -3212,10 +3386,23 @@ type AdminUser struct {
 // AdminUserRole defines model for AdminUser.Role.
 type AdminUserRole string
 
+// AdminUserCounts Unfiltered counts for the filter shortcuts
+type AdminUserCounts struct {
+	Admins    int64 `json:"admins"`
+	All       int64 `json:"all"`
+	Bots      int64 `json:"bots"`
+	Suspended int64 `json:"suspended"`
+
+	// Without2fa People (not bots) without a second factor
+	Without2fa int64 `json:"without2fa"`
+}
+
 // AdminUserPage defines model for AdminUserPage.
 type AdminUserPage struct {
-	Items []AdminUser `json:"items"`
-	Total int64       `json:"total"`
+	// Counts Unfiltered counts for the filter shortcuts
+	Counts AdminUserCounts `json:"counts"`
+	Items  []AdminUser     `json:"items"`
+	Total  int64           `json:"total"`
 }
 
 // AdminUserUpdate defines model for AdminUserUpdate.
@@ -3843,6 +4030,28 @@ type Comparison struct {
 	Diff             Diff        `json:"diff"`
 	Head             ResolvedRef `json:"head"`
 	MergeBase        string      `json:"mergeBase"`
+}
+
+// ContributionCalendar defines model for ContributionCalendar.
+type ContributionCalendar struct {
+	// Days Days with at least one contribution, oldest first
+	Days []ContributionDay `json:"days"`
+
+	// From First day (UTC) of the range
+	From openapi_types.Date `json:"from"`
+
+	// To Last day (UTC) of the range
+	To    openapi_types.Date `json:"to"`
+	Total int64              `json:"total"`
+
+	// Years Years with contributions, newest first
+	Years []int `json:"years"`
+}
+
+// ContributionDay defines model for ContributionDay.
+type ContributionDay struct {
+	Count int64              `json:"count"`
+	Date  openapi_types.Date `json:"date"`
 }
 
 // Contributor defines model for Contributor.
@@ -4955,6 +5164,16 @@ type OrgInviteRequest struct {
 	Teams *[]string `json:"teams,omitempty"`
 }
 
+// OrgLanguages defines model for OrgLanguages.
+type OrgLanguages struct {
+	// Items Most bytes first
+	Items []Language `json:"items"`
+
+	// Repos Main language of each counted repository
+	Repos      []RepoLanguage `json:"repos"`
+	TotalBytes int64          `json:"totalBytes"`
+}
+
 // OrgMember defines model for OrgMember.
 type OrgMember struct {
 	DisplayName string    `json:"displayName"`
@@ -4969,6 +5188,12 @@ type OrgRole string
 // OrgRoleRequest defines model for OrgRoleRequest.
 type OrgRoleRequest struct {
 	Role OrgRole `json:"role"`
+}
+
+// OrgSummary defines model for OrgSummary.
+type OrgSummary struct {
+	DisplayName string `json:"displayName"`
+	Name        string `json:"name"`
 }
 
 // OrgUpdate defines model for OrgUpdate.
@@ -5025,6 +5250,23 @@ type Problem struct {
 	Status   int     `json:"status"`
 	Title    string  `json:"title"`
 	Type     string  `json:"type"`
+}
+
+// ProfileDetails defines model for ProfileDetails.
+type ProfileDetails struct {
+	Bio      string `json:"bio"`
+	Company  string `json:"company"`
+	Location string `json:"location"`
+
+	// PublicEmail A verified address of the account shown on the profile, or empty
+	PublicEmail string   `json:"publicEmail"`
+	SocialLinks []string `json:"socialLinks"`
+
+	// Timezone IANA time zone shown as local time, or empty to hide it
+	Timezone string `json:"timezone"`
+
+	// Website Absolute http(s) URL, or empty
+	Website string `json:"website"`
 }
 
 // ProfileUpdate defines model for ProfileUpdate.
@@ -5599,6 +5841,16 @@ type RepoCreate struct {
 	Visibility      *Visibility `json:"visibility,omitempty"`
 }
 
+// RepoLanguage defines model for RepoLanguage.
+type RepoLanguage struct {
+	// Color Colour as #rrggbb
+	Color    string `json:"color"`
+	Language string `json:"language"`
+
+	// Name Repository name
+	Name string `json:"name"`
+}
+
 // RepoPermissionRequest defines model for RepoPermissionRequest.
 type RepoPermissionRequest struct {
 	Permission RepoPermissionRequestPermission `json:"permission"`
@@ -5647,6 +5899,14 @@ type RepoUpdate struct {
 
 // RepoWatchLevel defines model for RepoWatchLevel.
 type RepoWatchLevel string
+
+// RepoWeeklyActivity defines model for RepoWeeklyActivity.
+type RepoWeeklyActivity struct {
+	RepoId openapi_types.UUID `json:"repoId"`
+
+	// Weeks Events per week, oldest first; the last item is the current week
+	Weeks []int64 `json:"weeks"`
+}
 
 // ResetPasswordRequest defines model for ResetPasswordRequest.
 type ResetPasswordRequest struct {
@@ -5796,6 +6056,12 @@ type StorageConfig struct {
 	Targets          []StorageTargetConfig `json:"targets"`
 }
 
+// StorageDisk Space of the file system of a local target
+type StorageDisk struct {
+	Total int64 `json:"total"`
+	Used  int64 `json:"used"`
+}
+
 // StorageHostKeyScan defines model for StorageHostKeyScan.
 type StorageHostKeyScan struct {
 	Host string `json:"host"`
@@ -5932,7 +6198,10 @@ type StorageStatus struct {
 
 // StorageTarget defines model for StorageTarget.
 type StorageTarget struct {
-	Caps      StorageCaps       `json:"caps"`
+	Caps StorageCaps `json:"caps"`
+
+	// Disk Space of the file system of a local target
+	Disk      *StorageDisk      `json:"disk,omitempty"`
 	Encrypted bool              `json:"encrypted"`
 	Kind      StorageTargetKind `json:"kind"`
 	Name      string            `json:"name"`
@@ -6338,15 +6607,30 @@ type UserPreferencesUpdateTheme string
 type UserProfile struct {
 	// AvatarUrl Absolute https URL of the avatar; empty when unset
 	AvatarUrl string    `json:"avatarUrl"`
+	Bio       *string   `json:"bio,omitempty"`
+	Company   *string   `json:"company,omitempty"`
 	CreatedAt time.Time `json:"createdAt"`
 
 	// Description What the bot does; empty for users
 	Description *string `json:"description,omitempty"`
 	DisplayName string  `json:"displayName"`
 
+	// InstanceAdmin The user administers this instance
+	InstanceAdmin *bool `json:"instanceAdmin,omitempty"`
+
 	// Kind A bot is an automation account (login ending in "[bot]") nobody can sign in as
 	Kind     UserProfileKind `json:"kind"`
-	Username string          `json:"username"`
+	Location *string         `json:"location,omitempty"`
+
+	// Orgs Organizations of the user that the caller can see
+	Orgs        *[]OrgSummary `json:"orgs,omitempty"`
+	PublicEmail *string       `json:"publicEmail,omitempty"`
+	SocialLinks *[]string     `json:"socialLinks,omitempty"`
+
+	// Timezone IANA time zone for the local time; absent when hidden
+	Timezone *string `json:"timezone,omitempty"`
+	Username string  `json:"username"`
+	Website  *string `json:"website,omitempty"`
 }
 
 // UserProfileKind A bot is an automation account (login ending in "[bot]") nobody can sign in as
@@ -6665,6 +6949,14 @@ type ListAdminInvitesParams struct {
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// GetAdminOverviewParams defines parameters for GetAdminOverview.
+type GetAdminOverviewParams struct {
+	Range *GetAdminOverviewParamsRange `form:"range,omitempty" json:"range,omitempty"`
+}
+
+// GetAdminOverviewParamsRange defines parameters for GetAdminOverview.
+type GetAdminOverviewParamsRange string
+
 // ListAdminHotReposParams defines parameters for ListAdminHotRepos.
 type ListAdminHotReposParams struct {
 	// Q Case-insensitive substring of owner/name
@@ -6682,8 +6974,14 @@ type ListAdminUsersParams struct {
 	Q         *string                   `form:"q,omitempty" json:"q,omitempty"`
 	Role      *ListAdminUsersParamsRole `form:"role,omitempty" json:"role,omitempty"`
 	Suspended *bool                     `form:"suspended,omitempty" json:"suspended,omitempty"`
-	Offset    *PageOffset               `form:"offset,omitempty" json:"offset,omitempty"`
-	Limit     *PageLimit                `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// TwoFactor Only users with (true) or without (false) a second factor
+	TwoFactor *bool `form:"twoFactor,omitempty" json:"twoFactor,omitempty"`
+
+	// Bot Only bot accounts (true) or only people (false)
+	Bot    *bool       `form:"bot,omitempty" json:"bot,omitempty"`
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ListAdminUsersParamsRole defines parameters for ListAdminUsers.
@@ -6693,6 +6991,12 @@ type ListAdminUsersParamsRole string
 type ListAppDeliveriesParams struct {
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListReposWeeklyActivityParams defines parameters for ListReposWeeklyActivity.
+type ListReposWeeklyActivityParams struct {
+	// Repo Repository IDs (repeatable, at most 100)
+	Repo []openapi_types.UUID `form:"repo" json:"repo"`
 }
 
 // ExploreReposParams defines parameters for ExploreRepos.
@@ -7293,6 +7597,17 @@ type ListMyReposParams struct {
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListProfileActivityParams defines parameters for ListProfileActivity.
+type ListProfileActivityParams struct {
+	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetUserContributionsParams defines parameters for GetUserContributions.
+type GetUserContributionsParams struct {
+	Year *int `form:"year,omitempty" json:"year,omitempty"`
+}
+
 // ListUserReposParams defines parameters for ListUserRepos.
 type ListUserReposParams struct {
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
@@ -7641,6 +7956,9 @@ type UpdateUserPreferencesJSONRequestBody = UserPreferencesUpdate
 // UpdateProfileJSONRequestBody defines body for UpdateProfile for application/json ContentType.
 type UpdateProfileJSONRequestBody = ProfileUpdate
 
+// UpdateProfileDetailsJSONRequestBody defines body for UpdateProfileDetails for application/json ContentType.
+type UpdateProfileDetailsJSONRequestBody = ProfileDetails
+
 // CreateUserRepoJSONRequestBody defines body for CreateUserRepo for application/json ContentType.
 type CreateUserRepoJSONRequestBody = RepoCreate
 
@@ -7700,6 +8018,9 @@ type ServerInterface interface {
 	// RevokeInvite Revoke an unused instance invitation
 	// (DELETE /admin/invites/{inviteId})
 	RevokeInvite(w http.ResponseWriter, r *http.Request, inviteId openapi_types.UUID)
+	// GetAdminOverview Health and activity of the instance
+	// (GET /admin/overview)
+	GetAdminOverview(w http.ResponseWriter, r *http.Request, params GetAdminOverviewParams)
 	// EvictAdminRepo Evict a hot repository to the remote tier now
 	// (POST /admin/repos/{owner}/{name}/evict)
 	EvictAdminRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
@@ -7868,6 +8189,9 @@ type ServerInterface interface {
 	// Register Create an account
 	// (POST /auth/register)
 	Register(w http.ResponseWriter, r *http.Request)
+	// ListReposWeeklyActivity Weekly activity of repositories, for the sparklines of repository lists
+	// (GET /explore/activity)
+	ListReposWeeklyActivity(w http.ResponseWriter, r *http.Request, params ListReposWeeklyActivityParams)
 	// ExploreRepos Public repositories
 	// (GET /explore/repos)
 	ExploreRepos(w http.ResponseWriter, r *http.Request, params ExploreReposParams)
@@ -8054,6 +8378,9 @@ type ServerInterface interface {
 	// RevokeOrgInvite Revoke a pending invitation
 	// (DELETE /orgs/{org}/invites/{id})
 	RevokeOrgInvite(w http.ResponseWriter, r *http.Request, org OrgName, id openapi_types.UUID)
+	// ListOrgLanguages Top languages of an organization
+	// (GET /orgs/{org}/languages)
+	ListOrgLanguages(w http.ResponseWriter, r *http.Request, org OrgName)
 	// ListOrgMembers Members of an organization
 	// (GET /orgs/{org}/members)
 	ListOrgMembers(w http.ResponseWriter, r *http.Request, org OrgName)
@@ -8714,6 +9041,12 @@ type ServerInterface interface {
 	// UpdateProfile Change display name, avatar and language
 	// (PATCH /user/profile)
 	UpdateProfile(w http.ResponseWriter, r *http.Request)
+	// GetProfileDetails Public profile details of the signed-in user
+	// (GET /user/profile/details)
+	GetProfileDetails(w http.ResponseWriter, r *http.Request)
+	// UpdateProfileDetails Change the public profile details
+	// (PUT /user/profile/details)
+	UpdateProfileDetails(w http.ResponseWriter, r *http.Request)
 	// ListMyRepos Repositories the caller reaches by ownership, membership or grant
 	// (GET /user/repos)
 	ListMyRepos(w http.ResponseWriter, r *http.Request, params ListMyReposParams)
@@ -8765,6 +9098,15 @@ type ServerInterface interface {
 	// GetUserProfile Public profile of a user
 	// (GET /users/{username})
 	GetUserProfile(w http.ResponseWriter, r *http.Request, username Username)
+	// ListProfileActivity Recent activity of a user in the repositories the caller can read
+	// (GET /users/{username}/activity)
+	ListProfileActivity(w http.ResponseWriter, r *http.Request, username Username, params ListProfileActivityParams)
+	// GetUserContributions Contribution calendar of a user
+	// (GET /users/{username}/contributions)
+	GetUserContributions(w http.ResponseWriter, r *http.Request, username Username, params GetUserContributionsParams)
+	// ListProfilePins Repositories pinned by a user that the caller can see
+	// (GET /users/{username}/pins)
+	ListProfilePins(w http.ResponseWriter, r *http.Request, username Username)
 	// ListUserRepos Repositories of a user the caller can see
 	// (GET /users/{username}/repos)
 	ListUserRepos(w http.ResponseWriter, r *http.Request, username Username, params ListUserReposParams)
@@ -8837,6 +9179,12 @@ func (_ Unimplemented) CreateInvite(w http.ResponseWriter, r *http.Request) {
 // RevokeInvite Revoke an unused instance invitation
 // (DELETE /admin/invites/{inviteId})
 func (_ Unimplemented) RevokeInvite(w http.ResponseWriter, r *http.Request, inviteId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetAdminOverview Health and activity of the instance
+// (GET /admin/overview)
+func (_ Unimplemented) GetAdminOverview(w http.ResponseWriter, r *http.Request, params GetAdminOverviewParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9173,6 +9521,12 @@ func (_ Unimplemented) ResetPassword(w http.ResponseWriter, r *http.Request) {
 // Register Create an account
 // (POST /auth/register)
 func (_ Unimplemented) Register(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListReposWeeklyActivity Weekly activity of repositories, for the sparklines of repository lists
+// (GET /explore/activity)
+func (_ Unimplemented) ListReposWeeklyActivity(w http.ResponseWriter, r *http.Request, params ListReposWeeklyActivityParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9545,6 +9899,12 @@ func (_ Unimplemented) CreateOrgInvite(w http.ResponseWriter, r *http.Request, o
 // RevokeOrgInvite Revoke a pending invitation
 // (DELETE /orgs/{org}/invites/{id})
 func (_ Unimplemented) RevokeOrgInvite(w http.ResponseWriter, r *http.Request, org OrgName, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListOrgLanguages Top languages of an organization
+// (GET /orgs/{org}/languages)
+func (_ Unimplemented) ListOrgLanguages(w http.ResponseWriter, r *http.Request, org OrgName) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -10868,6 +11228,18 @@ func (_ Unimplemented) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetProfileDetails Public profile details of the signed-in user
+// (GET /user/profile/details)
+func (_ Unimplemented) GetProfileDetails(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateProfileDetails Change the public profile details
+// (PUT /user/profile/details)
+func (_ Unimplemented) UpdateProfileDetails(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListMyRepos Repositories the caller reaches by ownership, membership or grant
 // (GET /user/repos)
 func (_ Unimplemented) ListMyRepos(w http.ResponseWriter, r *http.Request, params ListMyReposParams) {
@@ -10967,6 +11339,24 @@ func (_ Unimplemented) RevokeAccessToken(w http.ResponseWriter, r *http.Request,
 // GetUserProfile Public profile of a user
 // (GET /users/{username})
 func (_ Unimplemented) GetUserProfile(w http.ResponseWriter, r *http.Request, username Username) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListProfileActivity Recent activity of a user in the repositories the caller can read
+// (GET /users/{username}/activity)
+func (_ Unimplemented) ListProfileActivity(w http.ResponseWriter, r *http.Request, username Username, params ListProfileActivityParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetUserContributions Contribution calendar of a user
+// (GET /users/{username}/contributions)
+func (_ Unimplemented) GetUserContributions(w http.ResponseWriter, r *http.Request, username Username, params GetUserContributionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListProfilePins Repositories pinned by a user that the caller can see
+// (GET /users/{username}/pins)
+func (_ Unimplemented) ListProfilePins(w http.ResponseWriter, r *http.Request, username Username) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -11359,6 +11749,45 @@ func (siw *ServerInterfaceWrapper) RevokeInvite(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RevokeInvite(w, r, inviteId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAdminOverview operation middleware
+func (siw *ServerInterfaceWrapper) GetAdminOverview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAdminOverviewParams
+
+	// ------------- Optional query parameter "range" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "range", r.URL.Query(), &params.Range, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "range"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "range", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAdminOverview(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -11927,6 +12356,32 @@ func (siw *ServerInterfaceWrapper) ListAdminUsers(w http.ResponseWriter, r *http
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "suspended"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "suspended", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "twoFactor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "twoFactor", r.URL.Query(), &params.TwoFactor, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "twoFactor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "twoFactor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "bot" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "bot", r.URL.Query(), &params.Bot, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "bot"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "bot", Err: err})
 		}
 		return
 	}
@@ -12913,6 +13368,47 @@ func (siw *ServerInterfaceWrapper) Register(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Register(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListReposWeeklyActivity operation middleware
+func (siw *ServerInterfaceWrapper) ListReposWeeklyActivity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListReposWeeklyActivityParams
+
+	// ------------- Required query parameter "repo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "repo", r.URL.Query(), &params.Repo, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "repo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "repo", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListReposWeeklyActivity(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -15327,6 +15823,38 @@ func (siw *ServerInterfaceWrapper) RevokeOrgInvite(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RevokeOrgInvite(w, r, org, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOrgLanguages operation middleware
+func (siw *ServerInterfaceWrapper) ListOrgLanguages(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOrgLanguages(w, r, org)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -27076,6 +27604,48 @@ func (siw *ServerInterfaceWrapper) UpdateProfile(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// GetProfileDetails operation middleware
+func (siw *ServerInterfaceWrapper) GetProfileDetails(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"user:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetProfileDetails(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateProfileDetails operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProfileDetails(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProfileDetails(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListMyRepos operation middleware
 func (siw *ServerInterfaceWrapper) ListMyRepos(w http.ResponseWriter, r *http.Request) {
 
@@ -27502,6 +28072,153 @@ func (siw *ServerInterfaceWrapper) GetUserProfile(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// ListProfileActivity operation middleware
+func (siw *ServerInterfaceWrapper) ListProfileActivity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListProfileActivityParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProfileActivity(w, r, username, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetUserContributions operation middleware
+func (siw *ServerInterfaceWrapper) GetUserContributions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUserContributionsParams
+
+	// ------------- Optional query parameter "year" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "year", r.URL.Query(), &params.Year, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "year"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "year", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserContributions(w, r, username, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProfilePins operation middleware
+func (siw *ServerInterfaceWrapper) ListProfilePins(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "username" -------------
+	var username Username
+
+	err = runtime.BindStyledParameterWithOptions("simple", "username", chi.URLParam(r, "username"), &username, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "username", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProfilePins(w, r, username)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListUserRepos operation middleware
 func (siw *ServerInterfaceWrapper) ListUserRepos(w http.ResponseWriter, r *http.Request) {
 
@@ -27833,6 +28550,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Delete(options.BaseURL+"/admin/invites/{inviteId}", wrapper.RevokeInvite)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/overview", wrapper.GetAdminOverview)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/admin/settings", wrapper.GetInstanceSettings)
 	})
 	r.Group(func(r chi.Router) {
@@ -27864,6 +28584,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/user/profile", wrapper.UpdateProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/profile/details", wrapper.GetProfileDetails)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/user/profile/details", wrapper.UpdateProfileDetails)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/user/avatar", wrapper.DeleteAvatar)
@@ -28124,6 +28850,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Patch(options.BaseURL+"/orgs/{org}", wrapper.UpdateOrg)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/languages", wrapper.ListOrgLanguages)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/orgs/{org}/members", wrapper.ListOrgMembers)
 	})
 	r.Group(func(r chi.Router) {
@@ -28215,6 +28944,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/users/{username}/starred", wrapper.ListUserStarred)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/users/{username}/pins", wrapper.ListProfilePins)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/users/{username}/activity", wrapper.ListProfileActivity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/users/{username}/contributions", wrapper.GetUserContributions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/explore/activity", wrapper.ListReposWeeklyActivity)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/orgs/{org}/repos", wrapper.ListOrgRepos)
@@ -29657,6 +30398,45 @@ type RevokeInvitedefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response RevokeInvitedefaultApplicationProblemPlusJSONResponse) VisitRevokeInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAdminOverviewRequestObject struct {
+	Params GetAdminOverviewParams
+}
+
+type GetAdminOverviewResponseObject interface {
+	VisitGetAdminOverviewResponse(w http.ResponseWriter) error
+}
+
+type GetAdminOverview200JSONResponse AdminOverview
+
+func (response GetAdminOverview200JSONResponse) VisitGetAdminOverviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAdminOverviewdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetAdminOverviewdefaultApplicationProblemPlusJSONResponse) VisitGetAdminOverviewResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -33522,6 +34302,61 @@ type RegisterdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response RegisterdefaultApplicationProblemPlusJSONResponse) VisitRegisterResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListReposWeeklyActivityRequestObject struct {
+	Params ListReposWeeklyActivityParams
+}
+
+type ListReposWeeklyActivityResponseObject interface {
+	VisitListReposWeeklyActivityResponse(w http.ResponseWriter) error
+}
+
+type ListReposWeeklyActivity200JSONResponse []RepoWeeklyActivity
+
+func (response ListReposWeeklyActivity200JSONResponse) VisitListReposWeeklyActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListReposWeeklyActivity400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListReposWeeklyActivity400ApplicationProblemPlusJSONResponse) VisitListReposWeeklyActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListReposWeeklyActivitydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListReposWeeklyActivitydefaultApplicationProblemPlusJSONResponse) VisitListReposWeeklyActivityResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -38365,6 +39200,61 @@ type RevokeOrgInvitedefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response RevokeOrgInvitedefaultApplicationProblemPlusJSONResponse) VisitRevokeOrgInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgLanguagesRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type ListOrgLanguagesResponseObject interface {
+	VisitListOrgLanguagesResponse(w http.ResponseWriter) error
+}
+
+type ListOrgLanguages200JSONResponse OrgLanguages
+
+func (response ListOrgLanguages200JSONResponse) VisitListOrgLanguagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgLanguages404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOrgLanguages404ApplicationProblemPlusJSONResponse) VisitListOrgLanguagesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrgLanguagesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListOrgLanguagesdefaultApplicationProblemPlusJSONResponse) VisitListOrgLanguagesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -58909,6 +59799,129 @@ func (response UpdateProfiledefaultApplicationProblemPlusJSONResponse) VisitUpda
 	return err
 }
 
+type GetProfileDetailsRequestObject struct {
+}
+
+type GetProfileDetailsResponseObject interface {
+	VisitGetProfileDetailsResponse(w http.ResponseWriter) error
+}
+
+type GetProfileDetails200JSONResponse ProfileDetails
+
+func (response GetProfileDetails200JSONResponse) VisitGetProfileDetailsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetProfileDetails401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetProfileDetails401ApplicationProblemPlusJSONResponse) VisitGetProfileDetailsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetProfileDetailsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetProfileDetailsdefaultApplicationProblemPlusJSONResponse) VisitGetProfileDetailsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateProfileDetailsRequestObject struct {
+	Body *UpdateProfileDetailsJSONRequestBody
+}
+
+type UpdateProfileDetailsResponseObject interface {
+	VisitUpdateProfileDetailsResponse(w http.ResponseWriter) error
+}
+
+type UpdateProfileDetails200JSONResponse ProfileDetails
+
+func (response UpdateProfileDetails200JSONResponse) VisitUpdateProfileDetailsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateProfileDetails400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateProfileDetails400ApplicationProblemPlusJSONResponse) VisitUpdateProfileDetailsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateProfileDetails401ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateProfileDetails401ApplicationProblemPlusJSONResponse) VisitUpdateProfileDetailsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateProfileDetailsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response UpdateProfileDetailsdefaultApplicationProblemPlusJSONResponse) VisitUpdateProfileDetailsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListMyReposRequestObject struct {
 	Params ListMyReposParams
 }
@@ -60275,6 +61288,173 @@ func (response GetUserProfiledefaultApplicationProblemPlusJSONResponse) VisitGet
 	return err
 }
 
+type ListProfileActivityRequestObject struct {
+	Username Username `json:"username"`
+	Params   ListProfileActivityParams
+}
+
+type ListProfileActivityResponseObject interface {
+	VisitListProfileActivityResponse(w http.ResponseWriter) error
+}
+
+type ListProfileActivity200JSONResponse []ActivityItem
+
+func (response ListProfileActivity200JSONResponse) VisitListProfileActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListProfileActivity404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListProfileActivity404ApplicationProblemPlusJSONResponse) VisitListProfileActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListProfileActivitydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListProfileActivitydefaultApplicationProblemPlusJSONResponse) VisitListProfileActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUserContributionsRequestObject struct {
+	Username Username `json:"username"`
+	Params   GetUserContributionsParams
+}
+
+type GetUserContributionsResponseObject interface {
+	VisitGetUserContributionsResponse(w http.ResponseWriter) error
+}
+
+type GetUserContributions200JSONResponse ContributionCalendar
+
+func (response GetUserContributions200JSONResponse) VisitGetUserContributionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUserContributions404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetUserContributions404ApplicationProblemPlusJSONResponse) VisitGetUserContributionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUserContributionsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetUserContributionsdefaultApplicationProblemPlusJSONResponse) VisitGetUserContributionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListProfilePinsRequestObject struct {
+	Username Username `json:"username"`
+}
+
+type ListProfilePinsResponseObject interface {
+	VisitListProfilePinsResponse(w http.ResponseWriter) error
+}
+
+type ListProfilePins200JSONResponse []Repo
+
+func (response ListProfilePins200JSONResponse) VisitListProfilePinsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListProfilePins404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListProfilePins404ApplicationProblemPlusJSONResponse) VisitListProfilePinsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListProfilePinsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListProfilePinsdefaultApplicationProblemPlusJSONResponse) VisitListProfilePinsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListUserReposRequestObject struct {
 	Username Username `json:"username"`
 	Params   ListUserReposParams
@@ -60457,6 +61637,9 @@ type StrictServerInterface interface {
 	// RevokeInvite Revoke an unused instance invitation
 	// (DELETE /admin/invites/{inviteId})
 	RevokeInvite(ctx context.Context, request RevokeInviteRequestObject) (RevokeInviteResponseObject, error)
+	// GetAdminOverview Health and activity of the instance
+	// (GET /admin/overview)
+	GetAdminOverview(ctx context.Context, request GetAdminOverviewRequestObject) (GetAdminOverviewResponseObject, error)
 	// EvictAdminRepo Evict a hot repository to the remote tier now
 	// (POST /admin/repos/{owner}/{name}/evict)
 	EvictAdminRepo(ctx context.Context, request EvictAdminRepoRequestObject) (EvictAdminRepoResponseObject, error)
@@ -60625,6 +61808,9 @@ type StrictServerInterface interface {
 	// Register Create an account
 	// (POST /auth/register)
 	Register(ctx context.Context, request RegisterRequestObject) (RegisterResponseObject, error)
+	// ListReposWeeklyActivity Weekly activity of repositories, for the sparklines of repository lists
+	// (GET /explore/activity)
+	ListReposWeeklyActivity(ctx context.Context, request ListReposWeeklyActivityRequestObject) (ListReposWeeklyActivityResponseObject, error)
 	// ExploreRepos Public repositories
 	// (GET /explore/repos)
 	ExploreRepos(ctx context.Context, request ExploreReposRequestObject) (ExploreReposResponseObject, error)
@@ -60811,6 +61997,9 @@ type StrictServerInterface interface {
 	// RevokeOrgInvite Revoke a pending invitation
 	// (DELETE /orgs/{org}/invites/{id})
 	RevokeOrgInvite(ctx context.Context, request RevokeOrgInviteRequestObject) (RevokeOrgInviteResponseObject, error)
+	// ListOrgLanguages Top languages of an organization
+	// (GET /orgs/{org}/languages)
+	ListOrgLanguages(ctx context.Context, request ListOrgLanguagesRequestObject) (ListOrgLanguagesResponseObject, error)
 	// ListOrgMembers Members of an organization
 	// (GET /orgs/{org}/members)
 	ListOrgMembers(ctx context.Context, request ListOrgMembersRequestObject) (ListOrgMembersResponseObject, error)
@@ -61471,6 +62660,12 @@ type StrictServerInterface interface {
 	// UpdateProfile Change display name, avatar and language
 	// (PATCH /user/profile)
 	UpdateProfile(ctx context.Context, request UpdateProfileRequestObject) (UpdateProfileResponseObject, error)
+	// GetProfileDetails Public profile details of the signed-in user
+	// (GET /user/profile/details)
+	GetProfileDetails(ctx context.Context, request GetProfileDetailsRequestObject) (GetProfileDetailsResponseObject, error)
+	// UpdateProfileDetails Change the public profile details
+	// (PUT /user/profile/details)
+	UpdateProfileDetails(ctx context.Context, request UpdateProfileDetailsRequestObject) (UpdateProfileDetailsResponseObject, error)
 	// ListMyRepos Repositories the caller reaches by ownership, membership or grant
 	// (GET /user/repos)
 	ListMyRepos(ctx context.Context, request ListMyReposRequestObject) (ListMyReposResponseObject, error)
@@ -61522,6 +62717,15 @@ type StrictServerInterface interface {
 	// GetUserProfile Public profile of a user
 	// (GET /users/{username})
 	GetUserProfile(ctx context.Context, request GetUserProfileRequestObject) (GetUserProfileResponseObject, error)
+	// ListProfileActivity Recent activity of a user in the repositories the caller can read
+	// (GET /users/{username}/activity)
+	ListProfileActivity(ctx context.Context, request ListProfileActivityRequestObject) (ListProfileActivityResponseObject, error)
+	// GetUserContributions Contribution calendar of a user
+	// (GET /users/{username}/contributions)
+	GetUserContributions(ctx context.Context, request GetUserContributionsRequestObject) (GetUserContributionsResponseObject, error)
+	// ListProfilePins Repositories pinned by a user that the caller can see
+	// (GET /users/{username}/pins)
+	ListProfilePins(ctx context.Context, request ListProfilePinsRequestObject) (ListProfilePinsResponseObject, error)
 	// ListUserRepos Repositories of a user the caller can see
 	// (GET /users/{username}/repos)
 	ListUserRepos(ctx context.Context, request ListUserReposRequestObject) (ListUserReposResponseObject, error)
@@ -61840,6 +63044,32 @@ func (sh *strictHandler) RevokeInvite(w http.ResponseWriter, r *http.Request, in
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RevokeInviteResponseObject); ok {
 		if err := validResponse.VisitRevokeInviteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAdminOverview operation middleware
+func (sh *strictHandler) GetAdminOverview(w http.ResponseWriter, r *http.Request, params GetAdminOverviewParams) {
+	var request GetAdminOverviewRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAdminOverview(ctx, request.(GetAdminOverviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAdminOverview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAdminOverviewResponseObject); ok {
+		if err := validResponse.VisitGetAdminOverviewResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -63403,6 +64633,32 @@ func (sh *strictHandler) Register(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RegisterResponseObject); ok {
 		if err := validResponse.VisitRegisterResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListReposWeeklyActivity operation middleware
+func (sh *strictHandler) ListReposWeeklyActivity(w http.ResponseWriter, r *http.Request, params ListReposWeeklyActivityParams) {
+	var request ListReposWeeklyActivityRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListReposWeeklyActivity(ctx, request.(ListReposWeeklyActivityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListReposWeeklyActivity")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListReposWeeklyActivityResponseObject); ok {
+		if err := validResponse.VisitListReposWeeklyActivityResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -65143,6 +66399,32 @@ func (sh *strictHandler) RevokeOrgInvite(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RevokeOrgInviteResponseObject); ok {
 		if err := validResponse.VisitRevokeOrgInviteResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrgLanguages operation middleware
+func (sh *strictHandler) ListOrgLanguages(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request ListOrgLanguagesRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrgLanguages(ctx, request.(ListOrgLanguagesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrgLanguages")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOrgLanguagesResponseObject); ok {
+		if err := validResponse.VisitListOrgLanguagesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -71659,6 +72941,61 @@ func (sh *strictHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetProfileDetails operation middleware
+func (sh *strictHandler) GetProfileDetails(w http.ResponseWriter, r *http.Request) {
+	var request GetProfileDetailsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetProfileDetails(ctx, request.(GetProfileDetailsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetProfileDetails")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetProfileDetailsResponseObject); ok {
+		if err := validResponse.VisitGetProfileDetailsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateProfileDetails operation middleware
+func (sh *strictHandler) UpdateProfileDetails(w http.ResponseWriter, r *http.Request) {
+	var request UpdateProfileDetailsRequestObject
+
+	var body UpdateProfileDetailsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateProfileDetails(ctx, request.(UpdateProfileDetailsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateProfileDetails")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateProfileDetailsResponseObject); ok {
+		if err := validResponse.VisitUpdateProfileDetailsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListMyRepos operation middleware
 func (sh *strictHandler) ListMyRepos(w http.ResponseWriter, r *http.Request, params ListMyReposParams) {
 	var request ListMyReposRequestObject
@@ -72133,6 +73470,86 @@ func (sh *strictHandler) GetUserProfile(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetUserProfileResponseObject); ok {
 		if err := validResponse.VisitGetUserProfileResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListProfileActivity operation middleware
+func (sh *strictHandler) ListProfileActivity(w http.ResponseWriter, r *http.Request, username Username, params ListProfileActivityParams) {
+	var request ListProfileActivityRequestObject
+
+	request.Username = username
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListProfileActivity(ctx, request.(ListProfileActivityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListProfileActivity")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListProfileActivityResponseObject); ok {
+		if err := validResponse.VisitListProfileActivityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUserContributions operation middleware
+func (sh *strictHandler) GetUserContributions(w http.ResponseWriter, r *http.Request, username Username, params GetUserContributionsParams) {
+	var request GetUserContributionsRequestObject
+
+	request.Username = username
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUserContributions(ctx, request.(GetUserContributionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUserContributions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUserContributionsResponseObject); ok {
+		if err := validResponse.VisitGetUserContributionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListProfilePins operation middleware
+func (sh *strictHandler) ListProfilePins(w http.ResponseWriter, r *http.Request, username Username) {
+	var request ListProfilePinsRequestObject
+
+	request.Username = username
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListProfilePins(ctx, request.(ListProfilePinsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListProfilePins")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListProfilePinsResponseObject); ok {
+		if err := validResponse.VisitListProfilePinsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

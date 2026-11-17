@@ -4,6 +4,7 @@ import { useT } from "../../i18n/useT.ts";
 import { Button, Input, SaveBar, Select, SettingRow, SettingsCard, SettingsSection, useDraft } from "../../ui/index.ts";
 import { Avatar } from "../../ui/shell/ConsoleShell.tsx";
 import { useNotify } from "./common.tsx";
+import { ProfileDetailsSection } from "./ProfileDetails.tsx";
 
 /** Profile fields as settings rows with a save bar. Emails and organizations have their own pages. */
 export function Profile({ user }: { user: User }) {
@@ -63,60 +64,63 @@ export function Profile({ user }: { user: User }) {
   const busy = upload.isPending || remove.isPending;
 
   return (
-    <SettingsSection title={t("profile.title")}>
-      <SettingsCard>
-        <SettingRow label={t("profile.username")} description={t("profile.username.hint")}>
-          <Input label={t("profile.username")} hideLabel value={user.username} readOnly mono />
-        </SettingRow>
-        <SettingRow label={t("profile.displayName")} dirty={draft.isDirty("displayName")} was={draft.initial.displayName}>
-          <Input label={t("profile.displayName")} hideLabel maxLength={100} value={v.displayName} onChange={(e) => draft.set("displayName", e.target.value)} />
-        </SettingRow>
-        <SettingRow label={t("profile.avatar")} description={t("profile.avatar.hint")}>
-          <div className="ui-inline">
-            <Avatar user={user} size="xl" />
-            <input
-              ref={picker}
-              type="file"
-              accept="image/png,image/jpeg,image/gif"
-              hidden
-              aria-label={t("profile.avatar.upload")}
-              onChange={(e) => {
-                pick(e.target.files?.[0]);
-                e.target.value = "";
-              }}
-            />
-            <Button size="sm" icon="upload" disabled={busy} onClick={() => picker.current?.click()}>
-              {upload.isPending ? t("profile.avatar.uploading") : t("profile.avatar.upload")}
-            </Button>
-            {user.avatarUrl && (
-              <Button size="sm" icon="trash" disabled={busy} onClick={clear}>
-                {t("profile.avatar.remove")}
+    <>
+      <SettingsSection title={t("profile.title")}>
+        <SettingsCard>
+          <SettingRow label={t("profile.username")} description={t("profile.username.hint")}>
+            <Input label={t("profile.username")} hideLabel value={user.username} readOnly mono />
+          </SettingRow>
+          <SettingRow label={t("profile.displayName")} dirty={draft.isDirty("displayName")} was={draft.initial.displayName}>
+            <Input label={t("profile.displayName")} hideLabel maxLength={100} value={v.displayName} onChange={(e) => draft.set("displayName", e.target.value)} />
+          </SettingRow>
+          <SettingRow label={t("profile.avatar")} description={t("profile.avatar.hint")}>
+            <div className="ui-inline">
+              <Avatar user={user} size="xl" />
+              <input
+                ref={picker}
+                type="file"
+                accept="image/png,image/jpeg,image/gif"
+                hidden
+                aria-label={t("profile.avatar.upload")}
+                onChange={(e) => {
+                  pick(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+              <Button size="sm" icon="upload" disabled={busy} onClick={() => picker.current?.click()}>
+                {upload.isPending ? t("profile.avatar.uploading") : t("profile.avatar.upload")}
               </Button>
-            )}
-          </div>
-        </SettingRow>
-        <SettingRow label={t("profile.avatarUrl")} description={t("profile.avatarUrl.hint")} dirty={draft.isDirty("avatarUrl")} was={draft.initial.avatarUrl}>
-          <Input
-            label={t("profile.avatarUrl")}
-            hideLabel
-            type="url"
-            inputMode="url"
-            maxLength={2048}
-            placeholder="https://"
-            value={v.avatarUrl}
-            onChange={(e) => draft.set("avatarUrl", e.target.value)}
-          />
-        </SettingRow>
-        <SettingRow label={t("profile.locale")} dirty={draft.isDirty("locale")} was={t(`profile.locale.${draft.initial.locale}`)}>
-          <Select label={t("profile.locale")} hideLabel value={v.locale} onValueChange={(x) => draft.set("locale", x as User["locale"])} options={options} />
-        </SettingRow>
-      </SettingsCard>
-      <SaveBar
-        draft={draft}
-        labels={{ displayName: t("profile.displayName"), avatarUrl: t("profile.avatarUrl"), locale: t("profile.locale") }}
-        onSave={save}
-        saving={update.isPending}
-      />
-    </SettingsSection>
+              {user.avatarUrl && (
+                <Button size="sm" icon="trash" disabled={busy} onClick={clear}>
+                  {t("profile.avatar.remove")}
+                </Button>
+              )}
+            </div>
+          </SettingRow>
+          <SettingRow label={t("profile.avatarUrl")} description={t("profile.avatarUrl.hint")} dirty={draft.isDirty("avatarUrl")} was={draft.initial.avatarUrl}>
+            <Input
+              label={t("profile.avatarUrl")}
+              hideLabel
+              type="url"
+              inputMode="url"
+              maxLength={2048}
+              placeholder="https://"
+              value={v.avatarUrl}
+              onChange={(e) => draft.set("avatarUrl", e.target.value)}
+            />
+          </SettingRow>
+          <SettingRow label={t("profile.locale")} dirty={draft.isDirty("locale")} was={t(`profile.locale.${draft.initial.locale}`)}>
+            <Select label={t("profile.locale")} hideLabel value={v.locale} onValueChange={(x) => draft.set("locale", x as User["locale"])} options={options} />
+          </SettingRow>
+        </SettingsCard>
+        <SaveBar
+          draft={draft}
+          labels={{ displayName: t("profile.displayName"), avatarUrl: t("profile.avatarUrl"), locale: t("profile.locale") }}
+          onSave={save}
+          saving={update.isPending}
+        />
+      </SettingsSection>
+      <ProfileDetailsSection />
+    </>
   );
 }

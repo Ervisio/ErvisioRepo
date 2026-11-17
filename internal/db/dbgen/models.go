@@ -1272,6 +1272,18 @@ type UserPreference struct {
 	UpdatedAt pgtype.Timestamptz
 }
 
+type UserProfile struct {
+	UserID        uuid.UUID
+	Bio           string
+	Company       string
+	Location      string
+	Website       string
+	SocialLinks   []string
+	Timezone      string
+	PublicEmailID uuid.NullUUID
+	UpdatedAt     pgtype.Timestamptz
+}
+
 type WebauthnCredential struct {
 	ID           uuid.UUID
 	UserID       uuid.UUID

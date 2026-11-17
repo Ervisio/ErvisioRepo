@@ -31,13 +31,21 @@ type Querier interface {
 	// that has already happened, such as the growth of a repository after a
 	// push. Call EnsureUsageCounter first.
 	AdjustUsage(ctx context.Context, arg AdjustUsageParams) error
+	// Completed jobs since @since per bucket of @step_seconds (bucket 0 starts at
+	// @since), for the admin overview chart. Failed and timed out jobs count as
+	// failures; cancelled and skipped jobs are left out.
+	AdminActionsJobBuckets(ctx context.Context, arg AdminActionsJobBucketsParams) ([]AdminActionsJobBucketsRow, error)
 	AdminGetUser(ctx context.Context, username string) (AdminGetUserRow, error)
+	// Totals shown in the admin navigation.
+	AdminInstanceCounts(ctx context.Context) (AdminInstanceCountsRow, error)
 	// Invites newest first, with the names of their creator and user.
 	AdminListInvites(ctx context.Context, arg AdminListInvitesParams) ([]AdminListInvitesRow, error)
 	// Users for the instance admin, newest first. search matches the username,
 	// display name or any email address (case-insensitive substring); role and
 	// suspended filter when set. total is the count before paging.
 	AdminListUsers(ctx context.Context, arg AdminListUsersParams) ([]AdminListUsersRow, error)
+	// Unfiltered counts behind the filter shortcuts of the admin user list.
+	AdminUserCounts(ctx context.Context) (AdminUserCountsRow, error)
 	// Accepts a code for step only once: a replay in the same window matches
 	// no row.
 	AdvanceTOTPStep(ctx context.Context, arg AdvanceTOTPStepParams) (int64, error)
@@ -103,16 +111,22 @@ type Querier interface {
 	CountOrgWebhooks(ctx context.Context, orgID uuid.NullUUID) (int64, error)
 	CountOwnerRepos(ctx context.Context, ownerID uuid.UUID) (int64, error)
 	CountPendingReviewComments(ctx context.Context, reviewID uuid.NullUUID) (int64, error)
+	CountQueuedActionsJobs(ctx context.Context) (int64, error)
 	CountRecoveryCodes(ctx context.Context, userID uuid.UUID) (CountRecoveryCodesRow, error)
 	CountRepoActionsArtifacts(ctx context.Context, arg CountRepoActionsArtifactsParams) (int64, error)
 	CountRepoForks(ctx context.Context, parentID uuid.NullUUID) (int64, error)
 	CountRepoStars(ctx context.Context, id uuid.UUID) (int32, error)
 	CountRepoWebhooks(ctx context.Context, repoID uuid.NullUUID) (int64, error)
+	// Events per repository and week since since (week 0 = the oldest), for
+	// the readable repositories among ids.
+	CountRepoWeeklyActivity(ctx context.Context, arg CountRepoWeeklyActivityParams) ([]CountRepoWeeklyActivityRow, error)
 	// Number of distinct run names of each suite.
 	CountSuiteRuns(ctx context.Context, suiteIds []uuid.UUID) ([]CountSuiteRunsRow, error)
 	CountTeamsInOrg(ctx context.Context, arg CountTeamsInOrgParams) (int64, error)
 	CountUnreadNotifications(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserActionsRuns(ctx context.Context, arg CountUserActionsRunsParams) (int64, error)
+	// Events of one actor per UTC day in [since, until), readable repositories only.
+	CountUserContributions(ctx context.Context, arg CountUserContributionsParams) ([]CountUserContributionsRow, error)
 	CountUserEmails(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserGPGKeys(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserIssues(ctx context.Context, arg CountUserIssuesParams) (int64, error)
@@ -130,6 +144,7 @@ type Querier interface {
 	// finalized artifact of the same name returns no row.
 	CreateActionsArtifact(ctx context.Context, arg CreateActionsArtifactParams) (ActionsArtifact, error)
 	CreateLFSLock(ctx context.Context, arg CreateLFSLockParams) (LfsLock, error)
+	DatabaseSize(ctx context.Context) (int64, error)
 	DecideActionsRunnerDevice(ctx context.Context, arg DecideActionsRunnerDeviceParams) error
 	DecideDeviceCode(ctx context.Context, arg DecideDeviceCodeParams) error
 	DeclareActionsRunner(ctx context.Context, arg DeclareActionsRunnerParams) (ActionsRunner, error)
@@ -416,7 +431,13 @@ type Querier interface {
 	// Public profile fields of a user account (organizations have no users row).
 	// kind is "user" or "bot"; description is the description of a bot.
 	GetUserProfileByUsername(ctx context.Context, username string) (GetUserProfileByUsernameRow, error)
+	// Public profile details, the contribution calendar, the activity of one
+	// user and the weekly activity of repositories. Listings filter repositories
+	// through repo_readable(repo, viewer, all_repos, internal) like the dashboard.
+	// The saved details; public_email is empty unless it is still verified.
+	GetUserProfileDetails(ctx context.Context, userID uuid.UUID) (GetUserProfileDetailsRow, error)
 	GetValidInvite(ctx context.Context, tokenHash []byte) (GetValidInviteRow, error)
+	GetVerifiedEmailID(ctx context.Context, arg GetVerifiedEmailIDParams) (uuid.UUID, error)
 	GetWebAuthnHandle(ctx context.Context, userID uuid.UUID) ([]byte, error)
 	GetWebhook(ctx context.Context, id uuid.UUID) (Webhook, error)
 	GetWebhookDelivery(ctx context.Context, id uuid.UUID) (WebhookDelivery, error)
@@ -612,6 +633,8 @@ type Querier interface {
 	ListActiveActionsJobsInGroup(ctx context.Context, arg ListActiveActionsJobsInGroupParams) ([]ActionsJob, error)
 	// Runs of a concurrency group that are not completed, oldest first.
 	ListActiveActionsRunsInGroup(ctx context.Context, arg ListActiveActionsRunsInGroupParams) ([]ActionsRun, error)
+	// Newest first events of one actor in the readable repositories.
+	ListActorActivity(ctx context.Context, arg ListActorActivityParams) ([]ListActorActivityRow, error)
 	ListAppInstallations(ctx context.Context, arg ListAppInstallationsParams) ([]ListAppInstallationsRow, error)
 	ListAppKeys(ctx context.Context, appID uuid.UUID) ([]ListAppKeysRow, error)
 	ListAppsByOwner(ctx context.Context, ownerID uuid.UUID) ([]ListAppsByOwnerRow, error)
@@ -722,6 +745,7 @@ type Querier interface {
 	ListPullReviewComments(ctx context.Context, arg ListPullReviewCommentsParams) ([]PullReviewComment, error)
 	// Submitted reviews plus the caller's own pending review.
 	ListPullReviews(ctx context.Context, arg ListPullReviewsParams) ([]PullReview, error)
+	ListReadableRepoIDs(ctx context.Context, arg ListReadableRepoIDsParams) ([]uuid.UUID, error)
 	ListReleaseAssets(ctx context.Context, releaseIds []uuid.UUID) ([]ReleaseAsset, error)
 	// Newest first; drafts only when include_drafts. An empty tag matches all.
 	ListReleases(ctx context.Context, arg ListReleasesParams) ([]Release, error)
@@ -776,6 +800,8 @@ type Querier interface {
 	ListUserActionsRuns(ctx context.Context, arg ListUserActionsRunsParams) ([]ListUserActionsRunsRow, error)
 	// Newest first events of the readable repositories.
 	ListUserActivity(ctx context.Context, arg ListUserActivityParams) ([]ListUserActivityRow, error)
+	// UTC years in which the actor has events in readable repositories, newest first.
+	ListUserContributionYears(ctx context.Context, arg ListUserContributionYearsParams) ([]int32, error)
 	ListUserEmails(ctx context.Context, userID uuid.UUID) ([]ListUserEmailsRow, error)
 	ListUserGPGKeys(ctx context.Context, userID uuid.UUID) ([]ListUserGPGKeysRow, error)
 	// Installations on the account of user_id or on organizations it belongs to.
@@ -803,6 +829,9 @@ type Querier interface {
 	ListUserVerifiedEmails(ctx context.Context, userID uuid.UUID) ([]string, error)
 	// Running jobs whose runner is gone or silent since before.
 	ListVanishedActionsJobs(ctx context.Context, before pgtype.Timestamptz) ([]ListVanishedActionsJobsRow, error)
+	// Organizations of a user that the viewer can see: the viewer is a member
+	// too, or an instance admin (all_orgs).
+	ListVisibleUserOrgs(ctx context.Context, arg ListVisibleUserOrgsParams) ([]ListVisibleUserOrgsRow, error)
 	ListWaitingActionsJobsInGroup(ctx context.Context, arg ListWaitingActionsJobsInGroupParams) ([]ListWaitingActionsJobsInGroupRow, error)
 	ListWebAuthnCredentials(ctx context.Context, userID uuid.UUID) ([]WebauthnCredential, error)
 	ListWebhookDeliveries(ctx context.Context, arg ListWebhookDeliveriesParams) ([]ListWebhookDeliveriesRow, error)
@@ -1125,6 +1154,7 @@ type Querier interface {
 	UpsertTeamMember(ctx context.Context, arg UpsertTeamMemberParams) error
 	UpsertThreadSubscription(ctx context.Context, arg UpsertThreadSubscriptionParams) (ThreadSubscription, error)
 	UpsertUserPreferences(ctx context.Context, arg UpsertUserPreferencesParams) (UserPreference, error)
+	UpsertUserProfileDetails(ctx context.Context, arg UpsertUserProfileDetailsParams) error
 	UseOAuthCode(ctx context.Context, codeHash []byte) error
 	UseRecoveryCode(ctx context.Context, arg UseRecoveryCodeParams) (int64, error)
 	// Whether the address belongs to the user, and whether it is verified.

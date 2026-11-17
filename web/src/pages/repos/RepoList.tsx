@@ -1,9 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useMyOrgs, useSession } from "../../api/identity.ts";
-import { useCreateRepo, useForkRepo, type Repo, type Visibility } from "../../api/repos.ts";
+import { useWeeklyActivity } from "../../api/profile.ts";
+import { useCreateRepo, useForkRepo, useStar, type Repo, type Visibility } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, Dialog, Input, Select } from "../../ui/index.ts";
+import { Button, Dialog, Icon, Input, Select } from "../../ui/index.ts";
 import { formatBytes, When } from "../code/common.tsx";
 import { PinButton } from "./PinButton.tsx";
 import { Async, useNotify } from "../account/common.tsx";
@@ -12,38 +13,131 @@ import type { UseQueryResult } from "@tanstack/react-query";
 export const visibilities: Visibility[] = ["private", "internal", "public"];
 
 type TypeFilter = "all" | Visibility;
-type SortKey = "updated" | "name";
+type SortKey = "updated" | "name" | "stars";
 
-/** One repository in GitHub style: name, visibility, description, last update and size, an optional pin. */
-export function RepoRow({ repo: r, showOwner, pin = true }: { repo: Repo; showOwner?: boolean; pin?: boolean }) {
+/** Main language of a repository, by full name; only some pages know it (the organization page). */
+export type RepoLanguages = Map<string, { language: string; color: string }>;
+
+/** Language dot and name. */
+export function LangTag({ language, color }: { language: string; color: string }) {
+  return (
+    <span className="rl-lang">
+      <i style={{ background: color }} aria-hidden="true" />
+      {language}
+    </span>
+  );
+}
+
+/** Star toggle of a repository row; nothing while signed out. */
+export function StarButton({ repo }: { repo: Repo }) {
+  const t = useT("repos");
+  const signedIn = !!useSession().data;
+  const star = useStar(repo.owner, repo.name);
+  if (!signedIn) return null;
+  return (
+    <Button size="sm" icon="star" className={repo.starred ? "rl-starred" : undefined} aria-pressed={repo.starred} disabled={star.isPending} onClick={() => star.mutate(!repo.starred)}>
+      {repo.starred ? t("star.starred") : t("star.star")}
+    </Button>
+  );
+}
+
+/** Activity of the last weeks as a line; flat when nothing happened. */
+export function Sparkline({ weeks }: { weeks: number[] }) {
+  const t = useT("repos");
+  if (weeks.length < 2) return null;
+  const max = Math.max(1, ...weeks);
+  const step = 150 / (weeks.length - 1);
+  const d = weeks.map((v, i) => `${i === 0 ? "M" : "L"}${(i * step).toFixed(1)} ${(25 - (v / max) * 22).toFixed(1)}`).join(" ");
+  const total = weeks.reduce((a, b) => a + b, 0);
+  return (
+    <svg className="rl-spark" viewBox="0 0 150 28" preserveAspectRatio="none" role="img" aria-label={t("list.activity", { count: total, weeks: weeks.length })}>
+      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+/** One repository in GitHub style: name, visibility, description, language, stars, last update; star, pin and activity on the side. */
+export function RepoRow({ repo: r, showOwner, pin = true, lang, weeks }: { repo: Repo; showOwner?: boolean; pin?: boolean; lang?: { language: string; color: string }; weeks?: number[] }) {
   const t = useT("repos");
   return (
     <li className="rl-row">
       <div className="rl-main">
         <h3 className="rl-h">
           <Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="rl-name">
-            {showOwner ? `${r.owner} / ${r.name}` : r.name}
+            {showOwner && <span className="rl-o">{r.owner} / </span>}
+            {r.name}
           </Link>
           <span className="rl-vis">{t(`visibility.${r.visibility}`)}</span>
         </h3>
         {r.description && <p className="rl-desc">{r.description}</p>}
         <p className="rl-meta">
+          {lang && <LangTag {...lang} />}
+          {r.starsCount > 0 && (
+            <span className="rl-stat" title={t("list.stars", { count: r.starsCount })}>
+              <Icon name="star" />
+              {r.starsCount}
+            </span>
+          )}
           <span>{t("list.updated")} <When iso={r.updatedAt} /></span>
           {r.sizeBytes > 0 && <span>{formatBytes(r.sizeBytes)}</span>}
         </p>
       </div>
-      {pin && <PinButton owner={r.owner} name={r.name} compact />}
+      <div className="rl-side">
+        <div className="rl-act">
+          {pin && <PinButton owner={r.owner} name={r.name} compact />}
+          <StarButton repo={r} />
+        </div>
+        {weeks && <Sparkline weeks={weeks} />}
+      </div>
     </li>
   );
 }
 
-/** Repository list with GitHub's filter bar: find by name, type and sort, all on the loaded page. */
-export function RepoRows({ query, showOwner, action }: { query: UseQueryResult<Repo[]>; showOwner?: boolean; action?: ReactNode }) {
+/** Repository cards in two columns: pinned or popular repositories of a profile or organization. */
+export function RepoCards({ repos, showOwner, languages }: { repos: Repo[]; showOwner?: boolean; languages?: RepoLanguages }) {
+  const t = useT("repos");
+  return (
+    <ul className="rl-pins">
+      {repos.map((r) => {
+        const lang = languages?.get(r.fullName);
+        return (
+          <li key={r.id} className="rl-pin">
+            <p className="rl-pin-n">
+              <Icon name="book" />
+              <Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="rl-name">
+                {showOwner ? r.fullName : r.name}
+              </Link>
+              <span className="rl-vis">{t(`visibility.${r.visibility}`)}</span>
+            </p>
+            <p className="rl-pin-d">{r.description}</p>
+            <p className="rl-meta">
+              {lang && <LangTag {...lang} />}
+              {r.starsCount > 0 && <span className="rl-stat"><Icon name="star" />{r.starsCount}</span>}
+            </p>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** The most starred repositories, then the latest updated: what a profile shows when nothing is pinned. */
+export const popular = (repos: Repo[], n: number) =>
+  [...repos].filter((r) => r.visibility === "public").sort((a, b) => b.starsCount - a.starsCount || b.updatedAt.localeCompare(a.updatedAt)).slice(0, n);
+
+/** Repository list with GitHub's filter bar: find by name, type, language and sort, all on the loaded page. */
+export function RepoRows({ query, showOwner, action, languages, pin = true }: { query: UseQueryResult<Repo[]>; showOwner?: boolean; action?: ReactNode; languages?: RepoLanguages; pin?: boolean }) {
   const t = useT("repos");
   const [q, setQ] = useState("");
   const [type, setType] = useState<TypeFilter>("all");
+  const [lang, setLang] = useState("");
   const [sort, setSort] = useState<SortKey>("updated");
   const needle = q.trim().toLowerCase();
+  const langNames = languages ? [...new Set([...languages.values()].map((l) => l.language))].sort() : [];
+  const shown = (query.data ?? [])
+    .filter((r) => (type === "all" || r.visibility === type) && (!lang || languages?.get(r.fullName)?.language === lang) && (!needle || `${r.name} ${r.description}`.toLowerCase().includes(needle)))
+    .sort((x, y) => (sort === "name" ? x.name.localeCompare(y.name) : sort === "stars" ? y.starsCount - x.starsCount || y.updatedAt.localeCompare(x.updatedAt) : y.updatedAt.localeCompare(x.updatedAt)));
+  const activity = useWeeklyActivity(shown.slice(0, 100).map((r) => r.id));
   return (
     <div className="rl">
       <div className="rl-bar" role="search">
@@ -55,26 +149,34 @@ export function RepoRows({ query, showOwner, action }: { query: UseQueryResult<R
           onValueChange={(v) => setType(v as TypeFilter)}
           options={[{ value: "all", label: t("list.type.all") }, ...visibilities.map((v) => ({ value: v, label: t(`visibility.${v}`) }))]}
         />
+        {langNames.length > 0 && (
+          <Select
+            label={t("list.language")}
+            hideLabel
+            value={lang || "all"}
+            onValueChange={(v) => setLang(v === "all" ? "" : v)}
+            options={[{ value: "all", label: t("list.language.all") }, ...langNames.map((l) => ({ value: l, label: l }))]}
+          />
+        )}
         <Select
           label={t("explore.sort")}
           hideLabel
           value={sort}
-          onValueChange={(v) => setSort(v === "name" ? "name" : "updated")}
-          options={[{ value: "updated", label: t("explore.sort.updated") }, { value: "name", label: t("explore.sort.name") }]}
+          onValueChange={(v) => setSort(v as SortKey)}
+          options={[{ value: "updated", label: t("explore.sort.updated") }, { value: "name", label: t("explore.sort.name") }, { value: "stars", label: t("explore.sort.stars") }]}
         />
         {action}
       </div>
       <Async query={query} empty={t("list.empty")}>
-        {(rows) => {
-          const shown = rows
-            .filter((r) => (type === "all" || r.visibility === type) && (!needle || `${r.name} ${r.description}`.toLowerCase().includes(needle)))
-            .sort((x, y) => (sort === "name" ? x.name.localeCompare(y.name) : y.updatedAt.localeCompare(x.updatedAt)));
-          return shown.length === 0 ? (
+        {() =>
+          shown.length === 0 ? (
             <p className="ui-note rl-none">{t("explore.noMatch")}</p>
           ) : (
-            <ul className="rl-list">{shown.map((r) => <RepoRow key={r.id} repo={r} showOwner={showOwner} />)}</ul>
-          );
-        }}
+            <ul className="rl-list">
+              {shown.map((r) => <RepoRow key={r.id} repo={r} showOwner={showOwner} pin={pin} lang={languages?.get(r.fullName)} weeks={activity.data?.get(r.id)} />)}
+            </ul>
+          )
+        }
       </Async>
     </div>
   );
@@ -131,11 +233,6 @@ export function CreateRepoDialog({ org, open: openProp, onOpenChange }: { org?: 
       </form>
     </Dialog>
   );
-}
-
-/** The repositories of the signed-in user, with their owner since organizations are included. */
-export function MyRepos({ repos }: { repos: UseQueryResult<Repo[]> }) {
-  return <RepoRows query={repos} showOwner action={<CreateRepoDialog />} />;
 }
 
 /** Fork dialog: the copy goes to the signed-in user or to an organization they manage. */

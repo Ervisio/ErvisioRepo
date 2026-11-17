@@ -165,7 +165,7 @@ LIMIT @lim;
 -- name: GetUserProfileByUsername :one
 -- Public profile fields of a user account (organizations have no users row).
 -- kind is "user" or "bot"; description is the description of a bot.
-SELECT n.name AS username, n.kind, u.display_name, u.avatar_url, u.suspended_at, u.created_at,
+SELECT u.id, n.name AS username, n.kind, u.display_name, u.avatar_url, u.role, u.suspended_at, u.created_at,
        COALESCE(b.description, '')::text AS description
 FROM users u
 JOIN namespaces n ON n.id = u.id

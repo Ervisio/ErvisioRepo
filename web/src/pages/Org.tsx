@@ -35,6 +35,7 @@ import {
   Dialog,
   DialogClose,
   EmptyState,
+  Icon,
   Input,
   Page,
   SaveBar,
@@ -62,7 +63,8 @@ import { useLayout } from "../ui/shell/layout.ts";
 import { Avatar } from "../ui/shell/ConsoleShell.tsx";
 import { useOwnerRepos } from "../api/repos.ts";
 import { orgHooks } from "../api/settings.ts";
-import { CreateRepoDialog, RepoRows } from "./repos/RepoList.tsx";
+import { CreateRepoDialog, popular, RepoCards, RepoRows, type RepoLanguages } from "./repos/RepoList.tsx";
+import { useOrgLanguages } from "../api/profile.ts";
 import { Entries } from "./actions/Settings.tsx";
 import { Runners } from "./actions/Runners.tsx";
 import { Webhooks } from "./settings/Webhooks.tsx";
@@ -381,51 +383,121 @@ function Invites({ org, canManage }: { org: string; canManage: boolean }) {
   );
 }
 
-function OrgRepos({ org, canCreate }: { org: string; canCreate: boolean }) {
+/** Repositories tab: popular repositories as cards, then the full list with language filter and activity. */
+function OrgRepos({ org }: { org: string }) {
+  const t = useT("org");
   const repos = useOwnerRepos(org, "org");
-  return <RepoRows query={repos} action={canCreate ? <CreateRepoDialog org={org} /> : undefined} />;
+  const langs = useOrgLanguages(org);
+  const languages: RepoLanguages = new Map((langs.data?.repos ?? []).map((r) => [`${org}/${r.name}`, { language: r.language, color: r.color }]));
+  const top = popular(repos.data ?? [], 4);
+  return (
+    <>
+      {top.length > 0 && (
+        <section className="oh-sec" aria-labelledby="oh-pop-h">
+          <div className="ui-sech"><h2 id="oh-pop-h">{t("repos.popular")}</h2></div>
+          <RepoCards repos={top} languages={languages} />
+        </section>
+      )}
+      <section aria-labelledby="oh-repos-h">
+        <div className="ui-sech"><h2 id="oh-repos-h">{t("repos.title")}</h2></div>
+        <RepoRows query={repos} languages={languages} />
+      </section>
+    </>
+  );
 }
 
-/** GitHub-style organization header: square avatar, name with badges, description. */
-function OrgHead({ org }: { org: Org }) {
+/** GitHub-style organization header: square avatar, name, description, members and verified mark; Settings and New repository on the right. */
+function OrgHead({ org, isOwner, canCreate, onTab }: { org: Org; isOwner: boolean; canCreate: boolean; onTab: (tab: OrgTab) => void }) {
   const t = useT("org");
+  const members = useOrgMembers(org.name);
   return (
     <header className="oh">
       <span className="oh-av" aria-hidden="true">{(org.displayName || org.name).slice(0, 1).toUpperCase()}</span>
       <div className="oh-m">
-        <p className="oh-name">
-          {org.displayName || org.name}
-          {org.verified && <Badge tone="ok">{t("verified")}</Badge>}
-          {org.role && <Badge>{t(`role.${org.role}`)}</Badge>}
-        </p>
-        <p className="oh-login">@{org.name}</p>
+        <p className="oh-name">{org.displayName || org.name}</p>
         {org.description && <p className="oh-desc">{org.description}</p>}
+        <p className="oh-meta">
+          <span className="ui-mono">@{org.name}</span>
+          {members.data && <span><Icon name="users" />{t("members.count", { count: members.data.length })}</span>}
+          {org.verified && <span className="ui-chip ui-chip-ok"><Icon name="check" />{t("verified")}</span>}
+          {org.role && <span className="ui-chip">{t(`role.${org.role}`)}</span>}
+        </p>
+      </div>
+      <div className="oh-act">
+        {isOwner && <Button icon="gear" onClick={() => onTab("settings")}>{t("tab.settings")}</Button>}
+        {canCreate && <CreateRepoDialog org={org.name} />}
       </div>
     </header>
   );
 }
 
-/** Side column of the repositories tab: people and teams at a glance. */
-function OrgAside({ org }: { org: string }) {
+/** Side column of the repositories tab: people in a row, top languages with a split bar, teams with member counts. */
+function OrgAside({ org, canManage, onTab }: { org: string; canManage: boolean; onTab: (tab: OrgTab) => void }) {
   const t = useT("org");
   const members = useOrgMembers(org);
   const teams = useOrgTeams(org);
+  const langs = useOrgLanguages(org);
+  const items = langs.data?.items.filter((l) => l.percent > 0) ?? [];
+  const shown = items.slice(0, 6);
+  const rest = items.slice(6).reduce((a, l) => a + l.percent, 0);
   return (
     <>
       {members.data && members.data.length > 0 && (
-        <section className="oh-side">
-          <h2>{t("members.title")}</h2>
+        <section className="oh-side" aria-labelledby="oh-ppl-h">
+          <h2 id="oh-ppl-h">
+            {t("members.title")} <span className="ui-n">{members.data.length}</span>
+            {canManage && <button type="button" className="oh-link" onClick={() => onTab("invites")}>{t("invites.short")}</button>}
+          </h2>
           <ul className="oh-people">
             {members.data.slice(0, 24).map((m) => (
-              <li key={m.username} title={m.displayName || m.username}><Avatar user={{ username: m.username, avatarUrl: "" }} size="lg" /></li>
+              <li key={m.username}>
+                <Link to="/$owner" params={{ owner: m.username }} title={m.displayName || m.username} aria-label={m.displayName || m.username}>
+                  <Avatar user={{ username: m.username, avatarUrl: "" }} size="lg" />
+                </Link>
+              </li>
             ))}
+          </ul>
+          {members.data.length > 24 && <button type="button" className="oh-link" onClick={() => onTab("members")}>{t("members.all", { count: members.data.length })}</button>}
+        </section>
+      )}
+      {shown.length > 0 && (
+        <section className="oh-side" aria-labelledby="oh-lang-h">
+          <h2 id="oh-lang-h">{t("languages.title")}</h2>
+          <div className="oh-bar" aria-hidden="true">
+            {shown.map((l) => <i key={l.name} style={{ width: `${l.percent}%`, background: l.color }} />)}
+          </div>
+          <ul className="oh-langs">
+            {shown.map((l) => (
+              <li key={l.name}>
+                <i style={{ background: l.color }} aria-hidden="true" />
+                <span>{l.name === "Other" ? t("languages.other") : l.name}</span>
+                <span className="oh-pct">{l.percent.toFixed(1)}%</span>
+              </li>
+            ))}
+            {rest > 0 && (
+              <li>
+                <i className="oh-rest" aria-hidden="true" />
+                <span>{t("languages.other")}</span>
+                <span className="oh-pct">{rest.toFixed(1)}%</span>
+              </li>
+            )}
           </ul>
         </section>
       )}
       {teams.data && teams.data.length > 0 && (
-        <section className="oh-side">
-          <h2>{t("teams.title")}</h2>
-          <p className="ui-note">{teams.data.map((x) => x.name).join(" · ")}</p>
+        <section className="oh-side" aria-labelledby="oh-teams-h">
+          <h2 id="oh-teams-h">{t("teams.title")} <span className="ui-n">{teams.data.length}</span></h2>
+          <ul className="oh-teams">
+            {teams.data.slice(0, 8).map((x) => (
+              <li key={x.id}>
+                <button type="button" className="ui-li" onClick={() => onTab("teams")}>
+                  <Icon name="users" />
+                  <span className="oh-tn">{x.name}</span>
+                  <span className="ui-tm">{x.members}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
     </>
@@ -536,6 +608,12 @@ function OrgSettings({ org, tab, app, installation }: { org: Org; tab: OrgSettin
       label={t("settings.sections")}
       groups={groups}
       active={tab}
+      header={{
+        avatar: <span className="st-ph-org" aria-hidden="true">{(org.displayName || org.name).slice(0, 1).toUpperCase()}</span>,
+        name: org.displayName || org.name,
+        label: t("settings.header"),
+        action: <Link to="/orgs/$org" params={{ org: org.name }} className="ui-btn ui-btn-secondary">{t("settings.toOrg")}</Link>,
+      }}
       renderLink={(it, props) => <Link to="/orgs/$org" params={{ org: org.name }} search={{ tab: it.id as OrgTab }} {...props} />}
     >
       {tab === "settings" && <Settings key={org.updatedAt} org={org} />}
@@ -586,14 +664,14 @@ export function OrgPage({ name, tab, app, installation, onTab }: { name: string;
   const current = settingsTab ? "settings" : orgTabs(canManage, isOwner).some((it) => it.tab === tab) ? tab : "repos";
   if (settingsTab) {
     return (
-      <Page section="pr" title={o.displayName || o.name} subtitle={`@${o.name}`} compact>
+      <Page section="pr" title={o.displayName || o.name} quiet>
         <OrgSettings org={o} tab={settingsTab} app={app} installation={installation} />
       </Page>
     );
   }
   return (
     <Page section="pr" title={o.displayName || o.name} quiet>
-      <OrgHead org={o} />
+      <OrgHead org={o} isOwner={isOwner} canCreate={o.role !== undefined || instanceAdmin} onTab={onTab} />
       <div className={current === "repos" ? "oh-grid" : undefined}>
         <Tabs value={current} onValueChange={(v) => onTab(v as OrgTab)}>
           {/* The console sidebar already lists these sections. */}
@@ -602,12 +680,12 @@ export function OrgPage({ name, tab, app, installation, onTab }: { name: string;
               {orgTabs(canManage, isOwner).map((it) => <TabsTrigger key={it.tab} value={it.tab}>{t(`tab.${it.tab}`)}</TabsTrigger>)}
             </TabsList>
           )}
-          <TabsContent value="repos"><OrgRepos org={o.name} canCreate={o.role !== undefined || instanceAdmin} /></TabsContent>
+          <TabsContent value="repos"><OrgRepos org={o.name} /></TabsContent>
           <TabsContent value="members"><Members org={o.name} canManage={canManage} /></TabsContent>
           <TabsContent value="teams"><Teams org={o.name} canManage={canManage} /></TabsContent>
           {canManage && <TabsContent value="invites"><Invites org={o.name} canManage={canManage} /></TabsContent>}
         </Tabs>
-        {current === "repos" && <aside className="oh-aside"><OrgAside org={o.name} /></aside>}
+        {current === "repos" && <aside className="oh-aside"><OrgAside org={o.name} canManage={canManage} onTab={onTab} /></aside>}
       </div>
     </Page>
   );

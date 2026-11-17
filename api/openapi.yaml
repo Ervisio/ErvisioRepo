@@ -557,6 +557,16 @@ paths:
           in: query
           schema:
             type: boolean
+        - name: twoFactor
+          in: query
+          description: Only users with (true) or without (false) a second factor
+          schema:
+            type: boolean
+        - name: bot
+          in: query
+          description: Only bot accounts (true) or only people (false)
+          schema:
+            type: boolean
         - $ref: "#/components/parameters/PageOffset"
         - $ref: "#/components/parameters/PageLimit"
       responses:
@@ -668,6 +678,33 @@ paths:
           description: Invitation revoked
         "404":
           $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/overview:
+    get:
+      operationId: getAdminOverview
+      tags: [admin]
+      summary: Health and activity of the instance
+      description: |
+        Instance admins only. Request rate and disk samples are kept in
+        memory by the server and start empty after a restart; job counts
+        come from the Actions tables.
+      security:
+        - session: [admin]
+      parameters:
+        - name: range
+          in: query
+          schema:
+            type: string
+            enum: [24h, 7d]
+            default: 24h
+      responses:
+        "200":
+          description: Time series, service states and counts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOverview"
         default:
           $ref: "#/components/responses/Problem"
   /admin/settings:
@@ -932,6 +969,49 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/profile/details:
+    get:
+      operationId: getProfileDetails
+      tags: [users]
+      summary: Public profile details of the signed-in user
+      security:
+        - session: []
+        - token: [user:read]
+      responses:
+        "200":
+          description: Details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileDetails"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: updateProfileDetails
+      tags: [users]
+      summary: Change the public profile details
+      description: publicEmail must be a verified address of the account, or empty.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileDetails"
+      responses:
+        "200":
+          description: Saved details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileDetails"
         "400":
           $ref: "#/components/responses/Problem"
         "401":
@@ -2909,6 +2989,29 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /orgs/{org}/languages:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: listOrgLanguages
+      tags: [orgs]
+      summary: Top languages of an organization
+      description: |
+        Bytes per language summed over the default branches of the most
+        recently updated repositories the caller can read (at most 12, cold
+        repositories are skipped so nothing is restored), with the main
+        language of each counted repository.
+      responses:
+        "200":
+          description: Languages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgLanguages"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
   /orgs/{org}/members:
     parameters:
       - $ref: "#/components/parameters/OrgName"
@@ -3658,6 +3761,122 @@ paths:
                 items:
                   $ref: "#/components/schemas/StarredRepo"
         "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /users/{username}/pins:
+    parameters:
+      - $ref: "#/components/parameters/Username"
+    get:
+      operationId: listProfilePins
+      tags: [repos]
+      summary: Repositories pinned by a user that the caller can see
+      description: In pin order; shown as the featured repositories of the profile.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Pinned repositories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repo"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /users/{username}/activity:
+    parameters:
+      - $ref: "#/components/parameters/Username"
+    get:
+      operationId: listProfileActivity
+      tags: [repos]
+      summary: Recent activity of a user in the repositories the caller can read
+      description: Pushes, issues and pull requests opened, closed or merged, releases and comments, newest first.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - $ref: "#/components/parameters/PageOffset"
+        - $ref: "#/components/parameters/PageLimit"
+      responses:
+        "200":
+          description: Events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /users/{username}/contributions:
+    parameters:
+      - $ref: "#/components/parameters/Username"
+    get:
+      operationId: getUserContributions
+      tags: [repos]
+      summary: Contribution calendar of a user
+      description: |
+        Activity events of the user per UTC day (pushes, issues and pull
+        requests opened, closed or merged, releases, comments), counted only
+        in the repositories the caller can read. Without year the last 53
+        weeks up to today.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+            minimum: 2000
+            maximum: 9999
+      responses:
+        "200":
+          description: Calendar
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContributionCalendar"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /explore/activity:
+    get:
+      operationId: listReposWeeklyActivity
+      tags: [repos]
+      summary: Weekly activity of repositories, for the sparklines of repository lists
+      description: Events per week over the last 16 weeks, oldest first. Repositories the caller cannot read are left out.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      parameters:
+        - name: repo
+          in: query
+          required: true
+          description: Repository IDs (repeatable, at most 100)
+          schema:
+            type: array
+            maxItems: 100
+            items: {type: string, format: uuid}
+          explode: true
+      responses:
+        "200":
+          description: Weekly counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RepoWeeklyActivity"
+        "400":
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
@@ -12495,14 +12714,159 @@ components:
           type: string
           format: date-time
           description: Last use of a session
+    AdminUserCounts:
+      type: object
+      description: Unfiltered counts for the filter shortcuts
+      required: [all, admins, suspended, without2fa, bots]
+      properties:
+        all:
+          type: integer
+          format: int64
+        admins:
+          type: integer
+          format: int64
+        suspended:
+          type: integer
+          format: int64
+        without2fa:
+          type: integer
+          format: int64
+          description: People (not bots) without a second factor
+        bots:
+          type: integer
+          format: int64
+    AdminOverview:
+      type: object
+      required: [range, start, stepSeconds, requests, requestsNow, jobs, disk, services, counts, checkedAt]
+      properties:
+        range:
+          type: string
+          enum: [24h, 7d]
+        start:
+          type: string
+          format: date-time
+          description: Start of the first bucket of requests and jobs
+        stepSeconds:
+          type: integer
+          description: Width of one bucket
+        requests:
+          type: array
+          description: Mean requests per minute in each bucket, oldest first
+          items:
+            type: number
+            format: double
+        requestsNow:
+          type: integer
+          format: int64
+          description: Requests in the last full minute
+        jobs:
+          type: array
+          description: Completed Actions jobs in each bucket, oldest first
+          items:
+            $ref: "#/components/schemas/AdminJobBucket"
+        disk:
+          type: array
+          description: Samples of the local disk in the range, oldest first
+          items:
+            $ref: "#/components/schemas/AdminDiskSample"
+        diskTarget:
+          type: string
+          description: Local storage target whose disk is sampled
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminService"
+        counts:
+          $ref: "#/components/schemas/AdminCounts"
+        checkedAt:
+          type: string
+          format: date-time
+    AdminJobBucket:
+      type: object
+      required: [success, failure]
+      properties:
+        success:
+          type: integer
+          format: int64
+        failure:
+          type: integer
+          format: int64
+          description: Failed or timed out
+    AdminDiskSample:
+      type: object
+      required: [at, used, total]
+      properties:
+        at:
+          type: string
+          format: date-time
+        used:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
+    AdminService:
+      type: object
+      description: State of one subsystem; the fields set depend on the id
+      required: [id, status]
+      properties:
+        id:
+          type: string
+          enum: [server, database, storage, hotCache, runners, email, jobs]
+        status:
+          type: string
+          enum: [ok, warn, err, off]
+        version:
+          type: string
+        uptimeSeconds:
+          type: integer
+          format: int64
+        bytes:
+          type: integer
+          format: int64
+          description: Database size or hot cache usage
+        budget:
+          type: integer
+          format: int64
+          description: Hot cache budget, 0 when unlimited
+        warnings:
+          type: integer
+        online:
+          type: integer
+        total:
+          type: integer
+        queued:
+          type: integer
+          format: int64
+        host:
+          type: string
+          description: SMTP relay
+    AdminCounts:
+      type: object
+      required: [users, orgs, invites, runners]
+      properties:
+        users:
+          type: integer
+          format: int64
+        orgs:
+          type: integer
+          format: int64
+        invites:
+          type: integer
+          format: int64
+          description: Pending invitations
+        runners:
+          type: integer
     AdminUserPage:
       type: object
-      required: [items, total]
+      required: [items, total, counts]
       properties:
         items:
           type: array
           items:
             $ref: "#/components/schemas/AdminUser"
+        counts:
+          $ref: "#/components/schemas/AdminUserCounts"
         total:
           type: integer
           format: int64
@@ -12759,6 +13123,19 @@ components:
             type: string
         caps:
           $ref: "#/components/schemas/StorageCaps"
+        disk:
+          $ref: "#/components/schemas/StorageDisk"
+    StorageDisk:
+      type: object
+      description: Space of the file system of a local target
+      required: [used, total]
+      properties:
+        used:
+          type: integer
+          format: int64
+        total:
+          type: integer
+          format: int64
     StorageCaps:
       type: object
       required: [range, presign, multipart, atomicRename, conditionalPut, maxConns]
@@ -13639,6 +14016,102 @@ components:
         displayName: {type: string}
         avatarUrl: {type: string, description: Absolute https URL of the avatar; empty when unset}
         createdAt: {type: string, format: date-time}
+        instanceAdmin: {type: boolean, description: The user administers this instance}
+        bio: {type: string}
+        company: {type: string}
+        location: {type: string}
+        website: {type: string}
+        socialLinks:
+          type: array
+          items: {type: string}
+        timezone: {type: string, description: IANA time zone for the local time; absent when hidden}
+        publicEmail: {type: string}
+        orgs:
+          type: array
+          description: Organizations of the user that the caller can see
+          items:
+            $ref: "#/components/schemas/OrgSummary"
+    OrgSummary:
+      type: object
+      required: [name, displayName]
+      properties:
+        name: {type: string}
+        displayName: {type: string}
+    ProfileDetails:
+      type: object
+      required: [bio, company, location, website, socialLinks, timezone, publicEmail]
+      properties:
+        bio: {type: string, maxLength: 640}
+        company: {type: string, maxLength: 100}
+        location: {type: string, maxLength: 100}
+        website:
+          type: string
+          maxLength: 255
+          description: Absolute http(s) URL, or empty
+        socialLinks:
+          type: array
+          maxItems: 4
+          items: {type: string, maxLength: 255, description: Absolute http(s) URL}
+        timezone:
+          type: string
+          maxLength: 64
+          description: IANA time zone shown as local time, or empty to hide it
+        publicEmail:
+          type: string
+          maxLength: 254
+          description: A verified address of the account shown on the profile, or empty
+    ContributionCalendar:
+      type: object
+      required: [from, to, total, days, years]
+      properties:
+        from: {type: string, format: date, description: First day (UTC) of the range}
+        to: {type: string, format: date, description: Last day (UTC) of the range}
+        total: {type: integer, format: int64}
+        days:
+          type: array
+          description: Days with at least one contribution, oldest first
+          items:
+            $ref: "#/components/schemas/ContributionDay"
+        years:
+          type: array
+          description: Years with contributions, newest first
+          items: {type: integer}
+    ContributionDay:
+      type: object
+      required: [date, count]
+      properties:
+        date: {type: string, format: date}
+        count: {type: integer, format: int64}
+    RepoWeeklyActivity:
+      type: object
+      required: [repoId, weeks]
+      properties:
+        repoId: {type: string, format: uuid}
+        weeks:
+          type: array
+          description: Events per week, oldest first; the last item is the current week
+          items: {type: integer, format: int64}
+    OrgLanguages:
+      type: object
+      required: [totalBytes, items, repos]
+      properties:
+        totalBytes: {type: integer, format: int64}
+        items:
+          type: array
+          description: Most bytes first
+          items: {$ref: "#/components/schemas/Language"}
+        repos:
+          type: array
+          description: Main language of each counted repository
+          items:
+            $ref: "#/components/schemas/RepoLanguage"
+    RepoLanguage:
+      type: object
+      required: [name, language, color]
+      properties:
+        name: {type: string, description: Repository name}
+        language: {type: string}
+        color: {type: string, description: "Colour as #rrggbb"}
     RepoCollaborator:
       type: object
       required: [username, displayName, permission, since]

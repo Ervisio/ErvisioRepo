@@ -93,6 +93,28 @@ func (s *Service) ListPins(ctx context.Context, who auth.Principal) ([]Repo, err
 	return out, nil
 }
 
+// ListProfilePins returns the pins of user that who can read, in order: the
+// featured repositories of a profile.
+func (s *Service) ListProfilePins(ctx context.Context, who auth.Principal, user uuid.UUID) ([]Repo, error) {
+	// The pin owner's own access is not checked here: view drops what who cannot read.
+	rows, err := s.q.ListUserPins(ctx, dbgen.ListUserPinsParams{UserID: user, AllRepos: true, Internal: true})
+	if err != nil {
+		return nil, fmt.Errorf("list profile pins: %w", err)
+	}
+	out := make([]Repo, 0, len(rows))
+	for _, r := range rows {
+		v, err := s.view(ctx, s.q, who, r.Repo, r.OwnerName, r.OwnerKind)
+		if errors.Is(err, ErrNotFound) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, v)
+	}
+	return out, nil
+}
+
 // Pin adds owner/name after the caller's last pin; a repository that is
 // already pinned stays where it is. ErrPinLimit past MaxPins.
 func (s *Service) Pin(ctx context.Context, who auth.Principal, owner, name string) error {

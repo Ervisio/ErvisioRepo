@@ -107,5 +107,14 @@
   "tab.oauth-apps": "OAuth App",
   "tab.apps": "App",
   "tab.installations": "App installate",
-  "settings.group.developer": "Impostazioni sviluppatore"
+  "settings.group.developer": "Impostazioni sviluppatore",
+  "settings.header": "Impostazioni dell'organizzazione",
+  "settings.toOrg": "Vai all'organizzazione",
+  "repos.popular": "Repository popolari",
+  "repos.title": "Repository",
+  "members.count": "{count} membri",
+  "members.all": "Tutti i {count} membri",
+  "invites.short": "Invita",
+  "languages.title": "Linguaggi principali",
+  "languages.other": "Altro"
 }

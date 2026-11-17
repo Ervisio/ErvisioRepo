@@ -51,7 +51,7 @@ export function useSetPin() {
   });
 }
 
-export type ExploreParams = { sort?: "updated" | "name"; q?: string; page?: number; perPage?: number };
+export type ExploreParams = { sort?: "updated" | "name" | "stars"; q?: string; page?: number; perPage?: number };
 
 export const useExploreRepos = (p: ExploreParams) =>
   useQuery({

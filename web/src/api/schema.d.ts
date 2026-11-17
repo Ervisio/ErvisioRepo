@@ -429,6 +429,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Health and activity of the instance
+         * @description Instance admins only. Request rate and disk samples are kept in
+         *     memory by the server and start empty after a restart; job counts
+         *     come from the Actions tables.
+         */
+        get: operations["getAdminOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/settings": {
         parameters: {
             query?: never;
@@ -633,6 +655,27 @@ export interface paths {
         head?: never;
         /** Change display name, avatar and language */
         patch: operations["updateProfile"];
+        trace?: never;
+    };
+    "/user/profile/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public profile details of the signed-in user */
+        get: operations["getProfileDetails"];
+        /**
+         * Change the public profile details
+         * @description publicEmail must be a verified address of the account, or empty.
+         */
+        put: operations["updateProfileDetails"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/user/avatar": {
@@ -1945,6 +1988,31 @@ export interface paths {
         patch: operations["updateOrg"];
         trace?: never;
     };
+    "/orgs/{org}/languages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Top languages of an organization
+         * @description Bytes per language summed over the default branches of the most
+         *     recently updated repositories the caller can read (at most 12, cold
+         *     repositories are skipped so nothing is restored), with the main
+         *     language of each counted repository.
+         */
+        get: operations["listOrgLanguages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/orgs/{org}/members": {
         parameters: {
             query?: never;
@@ -2418,6 +2486,95 @@ export interface paths {
          * @description Latest star first.
          */
         get: operations["listUserStarred"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{username}/pins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Repositories pinned by a user that the caller can see
+         * @description In pin order; shown as the featured repositories of the profile.
+         */
+        get: operations["listProfilePins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{username}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Recent activity of a user in the repositories the caller can read
+         * @description Pushes, issues and pull requests opened, closed or merged, releases and comments, newest first.
+         */
+        get: operations["listProfileActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{username}/contributions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Contribution calendar of a user
+         * @description Activity events of the user per UTC day (pushes, issues and pull
+         *     requests opened, closed or merged, releases, comments), counted only
+         *     in the repositories the caller can read. Without year the last 53
+         *     weeks up to today.
+         */
+        get: operations["getUserContributions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/explore/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Weekly activity of repositories, for the sparklines of repository lists
+         * @description Events per week over the last 16 weeks, oldest first. Repositories the caller cannot read are left out.
+         */
+        get: operations["listReposWeeklyActivity"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7403,8 +7560,109 @@ export interface components {
              */
             lastActivity?: string;
         };
+        /** @description Unfiltered counts for the filter shortcuts */
+        AdminUserCounts: {
+            /** Format: int64 */
+            all: number;
+            /** Format: int64 */
+            admins: number;
+            /** Format: int64 */
+            suspended: number;
+            /**
+             * Format: int64
+             * @description People (not bots) without a second factor
+             */
+            without2fa: number;
+            /** Format: int64 */
+            bots: number;
+        };
+        AdminOverview: {
+            /** @enum {string} */
+            range: "24h" | "7d";
+            /**
+             * Format: date-time
+             * @description Start of the first bucket of requests and jobs
+             */
+            start: string;
+            /** @description Width of one bucket */
+            stepSeconds: number;
+            /** @description Mean requests per minute in each bucket, oldest first */
+            requests: number[];
+            /**
+             * Format: int64
+             * @description Requests in the last full minute
+             */
+            requestsNow: number;
+            /** @description Completed Actions jobs in each bucket, oldest first */
+            jobs: components["schemas"]["AdminJobBucket"][];
+            /** @description Samples of the local disk in the range, oldest first */
+            disk: components["schemas"]["AdminDiskSample"][];
+            /** @description Local storage target whose disk is sampled */
+            diskTarget?: string;
+            services: components["schemas"]["AdminService"][];
+            counts: components["schemas"]["AdminCounts"];
+            /** Format: date-time */
+            checkedAt: string;
+        };
+        AdminJobBucket: {
+            /** Format: int64 */
+            success: number;
+            /**
+             * Format: int64
+             * @description Failed or timed out
+             */
+            failure: number;
+        };
+        AdminDiskSample: {
+            /** Format: date-time */
+            at: string;
+            /** Format: int64 */
+            used: number;
+            /** Format: int64 */
+            total: number;
+        };
+        /** @description State of one subsystem; the fields set depend on the id */
+        AdminService: {
+            /** @enum {string} */
+            id: "server" | "database" | "storage" | "hotCache" | "runners" | "email" | "jobs";
+            /** @enum {string} */
+            status: "ok" | "warn" | "err" | "off";
+            version?: string;
+            /** Format: int64 */
+            uptimeSeconds?: number;
+            /**
+             * Format: int64
+             * @description Database size or hot cache usage
+             */
+            bytes?: number;
+            /**
+             * Format: int64
+             * @description Hot cache budget, 0 when unlimited
+             */
+            budget?: number;
+            warnings?: number;
+            online?: number;
+            total?: number;
+            /** Format: int64 */
+            queued?: number;
+            /** @description SMTP relay */
+            host?: string;
+        };
+        AdminCounts: {
+            /** Format: int64 */
+            users: number;
+            /** Format: int64 */
+            orgs: number;
+            /**
+             * Format: int64
+             * @description Pending invitations
+             */
+            invites: number;
+            runners: number;
+        };
         AdminUserPage: {
             items: components["schemas"]["AdminUser"][];
+            counts: components["schemas"]["AdminUserCounts"];
             /** Format: int64 */
             total: number;
         };
@@ -7543,6 +7801,14 @@ export interface components {
             /** @description Uses of this target, as primary:<policy>, replica:<policy> or cache:<policy> */
             roles: string[];
             caps: components["schemas"]["StorageCaps"];
+            disk?: components["schemas"]["StorageDisk"];
+        };
+        /** @description Space of the file system of a local target */
+        StorageDisk: {
+            /** Format: int64 */
+            used: number;
+            /** Format: int64 */
+            total: number;
         };
         StorageCaps: {
             range: boolean;
@@ -8090,6 +8356,79 @@ export interface components {
             avatarUrl: string;
             /** Format: date-time */
             createdAt: string;
+            /** @description The user administers this instance */
+            instanceAdmin?: boolean;
+            bio?: string;
+            company?: string;
+            location?: string;
+            website?: string;
+            socialLinks?: string[];
+            /** @description IANA time zone for the local time; absent when hidden */
+            timezone?: string;
+            publicEmail?: string;
+            /** @description Organizations of the user that the caller can see */
+            orgs?: components["schemas"]["OrgSummary"][];
+        };
+        OrgSummary: {
+            name: string;
+            displayName: string;
+        };
+        ProfileDetails: {
+            bio: string;
+            company: string;
+            location: string;
+            /** @description Absolute http(s) URL, or empty */
+            website: string;
+            socialLinks: string[];
+            /** @description IANA time zone shown as local time, or empty to hide it */
+            timezone: string;
+            /** @description A verified address of the account shown on the profile, or empty */
+            publicEmail: string;
+        };
+        ContributionCalendar: {
+            /**
+             * Format: date
+             * @description First day (UTC) of the range
+             */
+            from: string;
+            /**
+             * Format: date
+             * @description Last day (UTC) of the range
+             */
+            to: string;
+            /** Format: int64 */
+            total: number;
+            /** @description Days with at least one contribution, oldest first */
+            days: components["schemas"]["ContributionDay"][];
+            /** @description Years with contributions, newest first */
+            years: number[];
+        };
+        ContributionDay: {
+            /** Format: date */
+            date: string;
+            /** Format: int64 */
+            count: number;
+        };
+        RepoWeeklyActivity: {
+            /** Format: uuid */
+            repoId: string;
+            /** @description Events per week, oldest first; the last item is the current week */
+            weeks: number[];
+        };
+        OrgLanguages: {
+            /** Format: int64 */
+            totalBytes: number;
+            /** @description Most bytes first */
+            items: components["schemas"]["Language"][];
+            /** @description Main language of each counted repository */
+            repos: components["schemas"]["RepoLanguage"][];
+        };
+        RepoLanguage: {
+            /** @description Repository name */
+            name: string;
+            language: string;
+            /** @description Colour as #rrggbb */
+            color: string;
         };
         RepoCollaborator: {
             username: string;
@@ -10000,6 +10339,10 @@ export interface operations {
                 q?: string;
                 role?: "admin" | "user" | "restricted";
                 suspended?: boolean;
+                /** @description Only users with (true) or without (false) a second factor */
+                twoFactor?: boolean;
+                /** @description Only bot accounts (true) or only people (false) */
+                bot?: boolean;
                 offset?: components["parameters"]["PageOffset"];
                 limit?: components["parameters"]["PageLimit"];
             };
@@ -10117,6 +10460,29 @@ export interface operations {
                 content?: never;
             };
             404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getAdminOverview: {
+        parameters: {
+            query?: {
+                range?: "24h" | "7d";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Time series, service states and counts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOverview"];
+                };
+            };
             default: components["responses"]["Problem"];
         };
     };
@@ -10402,6 +10768,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["User"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getProfileDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileDetails"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    updateProfileDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileDetails"];
+            };
+        };
+        responses: {
+            /** @description Saved details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileDetails"];
                 };
             };
             400: components["responses"]["Problem"];
@@ -12626,6 +13041,30 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    listOrgLanguages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Languages */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrgLanguages"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
     listOrgMembers: {
         parameters: {
             query?: never;
@@ -13451,6 +13890,108 @@ export interface operations {
                 };
             };
             404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listProfilePins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pinned repositories */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Repo"][];
+                };
+            };
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listProfileActivity: {
+        parameters: {
+            query?: {
+                offset?: components["parameters"]["PageOffset"];
+                limit?: components["parameters"]["PageLimit"];
+            };
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Events */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityItem"][];
+                };
+            };
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getUserContributions: {
+        parameters: {
+            query?: {
+                year?: number;
+            };
+            header?: never;
+            path: {
+                username: components["parameters"]["Username"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Calendar */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContributionCalendar"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listReposWeeklyActivity: {
+        parameters: {
+            query: {
+                /** @description Repository IDs (repeatable, at most 100) */
+                repo: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Weekly counts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepoWeeklyActivity"][];
+                };
+            };
+            400: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

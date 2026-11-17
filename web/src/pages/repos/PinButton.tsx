@@ -33,7 +33,7 @@ export function PinButton({ owner, name, compact }: { owner: string; name: strin
   if (!pin) return null;
   const { pinned, label, toggle } = pin;
   return (
-    <Button size={compact ? "sm" : "md"} icon="star" aria-pressed={pinned} aria-label={compact ? label : undefined} title={label} disabled={pin.pending} onClick={toggle}>
+    <Button size={compact ? "sm" : "md"} icon="pin" aria-pressed={pinned} aria-label={compact ? label : undefined} title={label} disabled={pin.pending} onClick={toggle}>
       {compact ? null : label}
     </Button>
   );

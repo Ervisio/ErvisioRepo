@@ -27,9 +27,9 @@ import { BranchesPage, CommitPage, CommitsPage, TagsPage } from "./pages/code/Hi
 import { SearchPage, type CodeSearchParams } from "./pages/code/SearchPage.tsx";
 import { TreePage } from "./pages/code/TreePage.tsx";
 import { ReleaseFormPage, ReleasePage, ReleasesPage } from "./pages/releases/ReleasesPages.tsx";
-import { ExplorePage } from "./pages/repos/ExplorePage.tsx";
-import { MyReposPage } from "./pages/repos/MyReposPage.tsx";
-import { ProfilePage } from "./pages/repos/ProfilePage.tsx";
+import { ExplorePage, type ExploreSearch } from "./pages/repos/ExplorePage.tsx";
+import { MyReposPage, type MyReposView } from "./pages/repos/MyReposPage.tsx";
+import { ProfilePage, type ProfileTab } from "./pages/repos/ProfilePage.tsx";
 import { RepoSettings, repoSettingsSections, type RepoSettingsSection } from "./pages/repos/RepoSettings.tsx";
 import { IssuePage, IssuesPage, NewIssuePage, type IssueSearch } from "./pages/issues/IssuesPages.tsx";
 import { NotificationsPage, type InboxSearch } from "./pages/notifications/NotificationsPage.tsx";
@@ -129,7 +129,7 @@ const auditRoute = createRoute({ getParentRoute: () => adminLayoutRoute, path: "
 const adminUsersRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: "/admin/users",
-  validateSearch: (s: Record<string, unknown>): UsersSearch => ({ q: str(s.q), role: USER_ROLES.find((r) => r === s.role), suspended: bool(s.suspended), page: num(s.page) }),
+  validateSearch: (s: Record<string, unknown>): UsersSearch => ({ q: str(s.q), role: USER_ROLES.find((r) => r === s.role), suspended: bool(s.suspended), twoFactor: bool(s.twoFactor), bot: bool(s.bot), page: num(s.page) }),
   component: function UsersRoute() {
     const navigate = adminUsersRoute.useNavigate();
     return <AdminUsers search={adminUsersRoute.useSearch()} onSearch={(search) => void navigate({ search })} />;
@@ -203,15 +203,26 @@ const orgsRoute = createRoute({ getParentRoute: () => shellRoute, path: "/orgs",
 const exploreRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/explore",
-  validateSearch: (s: Record<string, unknown>): { q?: string; sort?: "name"; page?: number } => ({ q: str(s.q), sort: s.sort === "name" ? "name" : undefined, ...pageSearch(s) }),
+  validateSearch: (s: Record<string, unknown>): ExploreSearch => ({
+    q: str(s.q),
+    sort: s.sort === "name" || s.sort === "stars" ? s.sort : undefined,
+    view: s.view === "orgs" || s.view === "users" ? s.view : undefined,
+    ...pageSearch(s),
+  }),
   component: () => <ExplorePage search={exploreRoute.useSearch()} />,
 });
 const profileRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/$owner",
-  component: () => <ProfilePage username={profileRoute.useParams().owner} />,
+  validateSearch: (s: Record<string, unknown>): { tab?: ProfileTab } => ({ tab: s.tab === "repositories" || s.tab === "stars" ? s.tab : undefined }),
+  component: () => <ProfilePage username={profileRoute.useParams().owner} tab={profileRoute.useSearch().tab} />,
 });
-const reposRoute = createRoute({ getParentRoute: () => shellRoute, path: "/repos", component: () => guard(<MyReposPage />) });
+const reposRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/repos",
+  validateSearch: (s: Record<string, unknown>): { view?: MyReposView } => ({ view: s.view === "personal" || s.view === "orgs" || s.view === "stars" ? s.view : undefined }),
+  component: () => guard(<MyReposPage view={reposRoute.useSearch().view} />),
+});
 type RefPath = { ref?: string; path?: string };
 const refPathSearch = (s: Record<string, unknown>): RefPath => ({ ref: str(s.ref), path: str(s.path) });
 const pageSearch = (s: Record<string, unknown>): { page?: number } => ({ page: num(s.page) });

@@ -414,7 +414,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUs
 }
 
 const getUserProfileByUsername = `-- name: GetUserProfileByUsername :one
-SELECT n.name AS username, n.kind, u.display_name, u.avatar_url, u.suspended_at, u.created_at,
+SELECT u.id, n.name AS username, n.kind, u.display_name, u.avatar_url, u.role, u.suspended_at, u.created_at,
        COALESCE(b.description, '')::text AS description
 FROM users u
 JOIN namespaces n ON n.id = u.id
@@ -423,10 +423,12 @@ WHERE n.name_lower = lower($1::text)
 `
 
 type GetUserProfileByUsernameRow struct {
+	ID          uuid.UUID
 	Username    string
 	Kind        string
 	DisplayName string
 	AvatarUrl   string
+	Role        string
 	SuspendedAt pgtype.Timestamptz
 	CreatedAt   pgtype.Timestamptz
 	Description string
@@ -438,10 +440,12 @@ func (q *Queries) GetUserProfileByUsername(ctx context.Context, username string)
 	row := q.db.QueryRow(ctx, getUserProfileByUsername, username)
 	var i GetUserProfileByUsernameRow
 	err := row.Scan(
+		&i.ID,
 		&i.Username,
 		&i.Kind,
 		&i.DisplayName,
 		&i.AvatarUrl,
+		&i.Role,
 		&i.SuspendedAt,
 		&i.CreatedAt,
 		&i.Description,

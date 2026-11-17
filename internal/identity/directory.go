@@ -75,13 +75,16 @@ func likePrefix(p string) string {
 
 // Profile is the public view of a user account.
 type Profile struct {
+	ID       uuid.UUID
 	Username string
 	// Kind is "user" or "bot"; Description is what a bot does.
-	Kind        string
-	Description string
-	DisplayName string
-	AvatarURL   string
-	CreatedAt   time.Time
+	Kind          string
+	Description   string
+	DisplayName   string
+	AvatarURL     string
+	InstanceAdmin bool
+	CreatedAt     time.Time
+	Details       ProfileDetails
 }
 
 // UserProfile returns the public profile of the named user, or
@@ -98,6 +101,35 @@ func (s *Service) UserProfile(ctx context.Context, username string) (Profile, er
 	if row.SuspendedAt.Valid {
 		return Profile{}, ErrNotFound
 	}
-	return Profile{Username: row.Username, Kind: row.Kind, Description: row.Description, DisplayName: row.DisplayName,
-		AvatarURL: row.AvatarUrl, CreatedAt: row.CreatedAt.Time}, nil
+	details, err := s.ProfileDetails(ctx, row.ID)
+	if err != nil {
+		return Profile{}, err
+	}
+	return Profile{ID: row.ID, Username: row.Username, Kind: row.Kind, Description: row.Description,
+		DisplayName: row.DisplayName, AvatarURL: row.AvatarUrl, InstanceAdmin: row.Role == string(auth.RoleAdmin),
+		CreatedAt: row.CreatedAt.Time, Details: details}, nil
+}
+
+// OrgSummary names an organization.
+type OrgSummary struct {
+	Name        string
+	DisplayName string
+}
+
+// VisibleOrgs lists the organizations of user that who can see: those who
+// belongs to as well, or all of them for an instance admin.
+func (s *Service) VisibleOrgs(ctx context.Context, who auth.Principal, user uuid.UUID) ([]OrgSummary, error) {
+	if who.UserID == uuid.Nil {
+		return []OrgSummary{}, nil
+	}
+	rows, err := s.q.ListVisibleUserOrgs(ctx, dbgen.ListVisibleUserOrgsParams{UserID: user, AllOrgs: who.IsAdmin(),
+		Viewer: who.UserID})
+	if err != nil {
+		return nil, fmt.Errorf("list user orgs: %w", err)
+	}
+	out := make([]OrgSummary, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, OrgSummary{Name: r.Name, DisplayName: r.DisplayName})
+	}
+	return out, nil
 }

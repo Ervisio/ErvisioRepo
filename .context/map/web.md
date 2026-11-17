@@ -106,3 +106,12 @@ Related:
 - pages/auth/AuthFrame.tsx is the only chrome (no header): `.auth-pg` column 400 px (`wide` = 460 px), `.auth-box` + `.auth-in` card, `.auth-nx` box for the footer link, `.auth-lf` version from useMeta. Rules in styles/auth.css (pre-login block); fields/buttons inside `.auth-in` are overridden with `:root:root` to beat the console layout. OAuth consent also uses AuthFrame (`wide`).
 - pages/auth/parts.tsx: `OtpInput` (single transparent input over six decorative boxes), `CodeBoxes` (device code), `Details` (hairline rows), `Or` divider.
 - Omitted for lack of data/routes: Terms/Privacy/Status footer links, runner label chips and "verified app" line.
+
+## Profile, org, explore (2026-11-17, round 025 A)
+- Profile (pages/repos/ProfilePage.tsx, `.up-*`): `?tab=repositories|stars`; card shows UserProfile extras (bio, instanceAdmin, company, location, timezone -> LocalTime, website, publicEmail, socialLinks, orgs visible to the viewer). Overview = ProfileReadme, Featured (GET /users/{u}/pins, else `popular()`), Contributions (GET /users/{u}/contributions?year, UTC days of activity_events, levels via color-mix of --ok), activity (GET /users/{u}/activity).
+- Editable in account settings: `ProfileDetailsSection` (pages/account/ProfileDetails.tsx, GET/PUT /user/profile/details, table user_profiles; publicEmail must be a verified address).
+- RepoList.tsx: `RepoRow` (lang, StarButton, Sparkline from GET /explore/activity weekly counts, 16 weeks), `RepoCards` (`.rl-pins`), `RepoRows` (type, language when known, sort updated/name/stars; fetches sparklines for the shown rows).
+- Org page: `OrgHead` (members, Settings, New repository), popular cards + rows with languages from GET /orgs/{org}/languages (12 newest hot repos, cold skipped), `OrgAside` people row, top languages bar, teams.
+- Explore `?view=orgs|users` (orgs = useMyOrgs, users = /search/users, signed in only), `sort=stars`; aside most starred + orgs. My repos `?view=personal|orgs|stars` (`.px-*`).
+- Pins on profiles reuse the dashboard pins (user_pinned_repos): there is no separate profile pin list.
+
