@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Web, Console layout (redesign phase 1, soft surfaces): two-row header with site menu, owner / repository breadcrumb, centred search pill (⌘K), New, notification dot and avatar; repository and organization tabs with icons on a second row (Releases and Settings promoted to tabs, the rest under More). Kit controls and containers use layered surfaces instead of rings.
+- Dashboard: four tiles (review requests, assigned issues, your open pull requests, failed runs) that pick the queue below, activity feed, repositories and an instance block for admins.
+- Notifications: mail-style list (Inbox / Review / Assigned / All, text filter) with a preview of the issue or pull request (state, description) and Done, Unsubscribe, Open.
+
 ## [1.14.4] - 2026-11-16
 
 ### Fixed

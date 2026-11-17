@@ -66,5 +66,10 @@
   "nav.explore": "Explore",
   "group.code": "Code",
   "group.collab": "Collaboration",
-  "nav.more": "More"
+  "nav.more": "More",
+  "nav.site": "Site menu",
+  "nav.dashboard": "Dashboard",
+  "new.button": "New",
+  "search.pill": "Search or jump to…",
+  "search.pillRepo": "Search in {repo} or jump to…"
 }

@@ -292,12 +292,13 @@
 /* GitHub palette (the default; opt-in classic palettes keep the borderless look above). Surfaces get a 1px
    --bd ring, filled controls use --acc-fill with --on-accent, and the hard-coded 10-18 px radii follow the
    --r-* tokens. The ring is an inset shadow so sizes do not change. */
-:root:not([data-palette="classic"]) :is(
-  .ui-btn:not(.ui-btn-primary, .ui-btn-ghost), .ui-input, .ui-select, .ui-card, .ui-table-wrap, .ui-dialog, .ui-toast,
-  .st-bar, .auth-card, .wk-tpls > li, .cv, .dv, .ed
+/* The Console uses soft surfaces instead (block at the end of this file): its controls and containers get no ring. */
+:root:not([data-palette="classic"]):not([data-layout="console"]) :is(
+  .ui-btn:not(.ui-btn-primary, .ui-btn-ghost), .ui-input, .ui-select, .ui-card, .ui-table-wrap
 ) { box-shadow: inset 0 0 0 1px var(--bd); }
+:root:not([data-palette="classic"]) :is(.ui-dialog, .ui-toast, .st-bar, .auth-card, .wk-tpls > li, .cv, .dv, .ed) { box-shadow: inset 0 0 0 1px var(--bd); }
 :root:not([data-palette="classic"]) .ui-pop { outline-color: var(--line); box-shadow: 0 8px 24px rgba(1, 4, 9, .3), inset 0 0 0 1px var(--bd); }
-:root:not([data-palette="classic"]) .ui-tablist { box-shadow: inset 0 0 0 1px var(--bd); border-radius: var(--r-ctl); }
+:root:not([data-palette="classic"]):not([data-layout="console"]) .ui-tablist { box-shadow: inset 0 0 0 1px var(--bd); border-radius: var(--r-ctl); }
 :root:not([data-palette="classic"]) .ui-toast { outline-color: var(--line); }
 :root:not([data-palette="classic"]) .ui-dialog { border-radius: var(--r-sheet); }
 :root:not([data-palette="classic"]) .ui-card .ui-btn-secondary, :root:not([data-palette="classic"]) .ui-card .ui-tablist { background: var(--raise); }
@@ -319,3 +320,90 @@
 :root:root .st-dz .ui-btn-danger:hover { background: var(--err-s); color: var(--err); }
 :root:root .ui-dialog .ui-btn-danger { background: var(--err); color: #000; }
 :root:not([data-palette="classic"]):root .ui-dialog .ui-btn-danger { color: var(--on-accent); }
+
+/* ---------- Soft surfaces (Console, redesign 2026-11-17: round 015 B, design/mock/soft.css) ----------
+   No rules around blocks: layered surfaces (--surface around, --bg inside), radius --b-r for containers and
+   --b-rc for controls. Controls are 34 px on --surface without a border; the primary is --acc-fill. On a
+   --surface container, controls step to --bg (fields) or --raise (buttons). Reusable classes for every area:
+   .ui-box (surface) + .ui-in (inner --bg list), .ui-li (40 px row), .ui-n (count chip), .ui-chip (+ tones),
+   .ui-seg (segmented), .ui-sech (section title row), .ui-state (filled state pill), .ui-udot, .ui-tm, .ui-st-*. */
+:root[data-layout="console"] .ui-btn { height: 34px; padding: 0 13px; border-radius: var(--b-rc); background: var(--surface); box-shadow: none; font: 500 13px/1 var(--font); gap: 7px; }
+:root[data-layout="console"] .ui-btn .ui-icon { color: var(--ink2); }
+:root[data-layout="console"] .ui-btn:hover { background: var(--raise); }
+:root[data-layout="console"] .ui-btn-primary { background: var(--acc-fill); color: var(--on-accent); }
+:root[data-layout="console"] .ui-btn-primary .ui-icon { color: var(--on-accent); }
+:root[data-layout="console"] .ui-btn-primary:hover { background: var(--acc-fill); filter: brightness(1.12); }
+:root[data-layout="console"] .ui-btn-ghost { background: transparent; color: var(--ink2); }
+:root[data-layout="console"] .ui-btn-ghost:hover { background: var(--surface); color: var(--ink); }
+:root[data-layout="console"] .ui-btn-danger { background: var(--surface); color: var(--err); }
+:root[data-layout="console"] .ui-btn-danger .ui-icon { color: var(--err); }
+:root[data-layout="console"] .ui-btn-danger:hover { background: var(--err-s); color: var(--err); }
+:root[data-layout="console"] .ui-btn-sm { height: 30px; padding: 0 11px; font-size: 12.5px; }
+:root[data-layout="console"] .ui-iconbtn { width: 34px; height: 34px; border-radius: var(--b-rc); }
+:root[data-layout="console"] .ui-iconbtn:hover { background: var(--surface); }
+:root[data-layout="console"] :is(.ui-input, .ui-select) { height: 34px; border: 0; border-radius: var(--b-rc); background: var(--surface); box-shadow: none; font: 400 13.5px var(--font); }
+:root[data-layout="console"] :is(.ui-input, .ui-select):hover { background: var(--raise); }
+:root[data-layout="console"] :is(.ui-input, .ui-select):focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+:root[data-layout="console"] .ui-field-err .ui-input { box-shadow: inset 0 0 0 1px var(--err); }
+:root[data-layout="console"] .ui-field > label { font-weight: 600; }
+:root[data-layout="console"] :is(.ui-card, .ui-box, .ui-table-wrap) :is(.ui-input, .ui-select) { background: var(--bg); }
+:root[data-layout="console"] :is(.ui-card, .ui-box, .ui-table-wrap) .ui-btn-secondary { background: var(--raise); }
+:root[data-layout="console"] :is(.ui-card, .ui-box, .ui-table-wrap) .ui-btn-secondary:hover { background: color-mix(in srgb, var(--raise) 70%, var(--ink) 8%); filter: none; }
+:root[data-layout="console"] :is(.ui-card, .ui-box) { background: var(--surface); border-radius: var(--b-r); padding: 6px; box-shadow: none; }
+:root[data-layout="console"] .ui-table-wrap { background: var(--surface); border-radius: var(--b-r); box-shadow: none; }
+:root[data-layout="console"] .ui-card-head { padding: 8px 10px 10px; }
+:root[data-layout="console"] .ui-card-head h3 { font-size: 14px; font-weight: 600; }
+:root[data-layout="console"] .ui-row { border-radius: 8px; }
+:root[data-layout="console"] :is(.ui-card, .ui-box) .ui-row:hover { background: var(--bg); }
+:root[data-layout="console"] .ui-dialog { border-radius: var(--b-r); }
+:root[data-layout="console"] .ui-pop { border-radius: 12px; }
+:root[data-layout="console"] .ui-item { border-radius: 8px; }
+/* Tabs = segmented control: --surface track, the active segment on --bg. */
+:root[data-layout="console"] .ui-tablist { gap: 2px; padding: 3px; border-radius: var(--b-rc); background: var(--surface); box-shadow: none; }
+:root[data-layout="console"] .ui-tab { height: 28px; padding: 0 12px; border-radius: 8px; font: 500 13px var(--font); color: var(--ink2); }
+:root[data-layout="console"] .ui-tab:hover { color: var(--ink); }
+:root[data-layout="console"] .ui-tab[data-state="active"] { background: var(--bg); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .25); }
+:root[data-layout="console"] :is(.ui-card, .ui-box) .ui-tablist { background: var(--bg); }
+:root[data-layout="console"] :is(.ui-card, .ui-box) .ui-tab[data-state="active"] { background: var(--raise); }
+/* Badge = chip. */
+:root[data-layout="console"] .ui-badge { height: 20px; padding: 0 8px; font: 500 11.5px var(--font); }
+:root[data-layout="console"] .ui-badge-neutral { background: var(--surface); }
+:root[data-layout="console"] :is(.ui-card, .ui-box) .ui-badge-neutral { background: var(--raise); }
+
+/* Soft-surface primitives (any layout; tuned for the Console). */
+.ui-box { background: var(--surface); border-radius: var(--b-r); padding: 6px; min-width: 0; }
+.ui-in { background: var(--bg); border-radius: calc(var(--b-r) - 4px); padding: 4px; min-width: 0; }
+.ui-box-h { display: flex; align-items: center; gap: 8px; padding: 6px 10px 10px; font-size: 13px; color: var(--ink2); }
+.ui-box-h b { color: var(--ink); font-weight: 600; }
+.ui-li { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 0 12px; border-radius: 8px; font-size: 14px; color: var(--ink); }
+:is(a, button).ui-li { width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.ui-li:hover { background: var(--surface); }
+.ui-n { display: inline-block; min-width: 18px; padding: 0 7px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 9%, transparent); color: var(--ink2); font-size: 11.5px; font-weight: 600; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+.ui-chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; background: var(--surface); color: var(--ink2); font-size: 11.5px; font-weight: 500; line-height: 18px; white-space: nowrap; }
+.ui-chip-ok { background: var(--ok-s); color: var(--ok); }
+.ui-chip-err { background: var(--err-s); color: var(--err); }
+.ui-chip-warn { background: var(--warn-s); color: var(--warn); }
+.ui-chip-acc { background: var(--sel); color: var(--accent); }
+.ui-chip-rev { background: color-mix(in srgb, var(--h-svc) 16%, transparent); color: var(--h-svc); }
+.ui-seg { display: inline-flex; gap: 2px; max-width: 100%; padding: 3px; border-radius: var(--b-rc); background: var(--surface); overflow-x: auto; scrollbar-width: none; }
+.ui-segi { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border: 0; border-radius: 8px; flex: none; background: none; color: var(--ink2); font: 500 13px var(--font); white-space: nowrap; cursor: pointer; }
+.ui-segi:hover { color: var(--ink); }
+.ui-segi[aria-pressed="true"], .ui-segi[aria-current] { background: var(--bg); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .25); }
+.ui-sech { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+.ui-sech h2 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0; }
+.ui-sech .ui-n { background: var(--surface); }
+.ui-sech > a { margin-left: auto; font-size: 12.5px; font-weight: 500; color: var(--accent); }
+.ui-sech > a:hover { text-decoration: underline; }
+.ui-state { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; background: var(--st-open); color: var(--on-state); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.ui-state .ui-icon { color: inherit; }
+.ui-state-merged { background: var(--st-merged); }
+.ui-state-closed { background: var(--st-closed); }
+.ui-state-draft { background: var(--raise); color: var(--ink); }
+.ui-udot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+.ui-tm { color: var(--ink3); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Icon colours of subject states (open, merged, failed, warning, info). */
+.ui-st-open { color: var(--ok); }
+.ui-st-merged { color: var(--h-svc); }
+.ui-st-fail { color: var(--err); }
+.ui-st-warn { color: var(--warn); }
+.ui-st-info { color: var(--accent); }

@@ -68,6 +68,11 @@
   --sec-issue: var(--h-usr);   --sec-issue-s: var(--h-usr-s);
   --sec-act: var(--h-term);    --sec-act-s: var(--h-term-s);
   --sec-pkg: var(--h-sw);      --sec-pkg-s: var(--h-sw-s);
+
+  /* Soft surfaces (redesign 2026-11-17, design/mock/soft.css): containers and controls radii, block gap. */
+  --b-r: 14px;
+  --b-rc: 10px;
+  --b-gap: 20px;
 }
 
 /* GitHub dark (default), all layouts. */
@@ -112,6 +117,12 @@
   --r-card: 8px;
   --r-sheet: 12px;
 
+  /* Filled state pills (open, merged/done, closed) with white text: --ok misses contrast behind text. */
+  --st-open: #238636;
+  --st-merged: #8957e5;
+  --st-closed: #da3633;
+  --on-state: #ffffff;
+
   /* syntax (Shiki and CodeMirror read these) */
   --syn-kw: #ff7b72;
   --syn-fn: #d2a8ff;
@@ -133,6 +144,10 @@
   --ink: #1f2328;
   --ink2: #59636e;
   --ink3: #6e7781;
+
+  --st-open: #1f883d;
+  --st-merged: #8250df;
+  --st-closed: #cf222e;
 
   --accent: #0969da;
   --acc-fill: #0969da;

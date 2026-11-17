@@ -43,8 +43,10 @@ function useScopeFromRoute(): SearchScope | undefined {
   return useMemo(() => (owner && name ? { owner, name } : undefined), [owner, name]);
 }
 
-/** Button that opens the palette; `iconOnly` for compact bars. */
-export function SearchTrigger({ className, iconOnly }: { className?: string; iconOnly?: boolean }) {
+const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
+
+/** Button that opens the palette; `iconOnly` for compact bars, `pill` for the Console search field with its shortcut. */
+export function SearchTrigger({ className, iconOnly, pill }: { className?: string; iconOnly?: boolean; pill?: boolean }) {
   const t = useT("shell");
   const open = useContext(OpenContext);
   const scope = useScopeFromRoute();
@@ -52,7 +54,14 @@ export function SearchTrigger({ className, iconOnly }: { className?: string; ico
   return (
     <button type="button" className={className} onClick={() => open(scope)} aria-label={t("search.open")} title={t("search.shortcut")} aria-keyshortcuts="/ Control+K Meta+K">
       <Icon name="search" />
-      {!iconOnly && <span>{t("search.button")}</span>}
+      {pill ? (
+        <>
+          <span>{scope ? t("search.pillRepo", { repo: scope.name }) : t("search.pill")}</span>
+          <kbd aria-hidden="true">{isMac ? "⌘K" : "Ctrl K"}</kbd>
+        </>
+      ) : (
+        !iconOnly && <span>{t("search.button")}</span>
+      )}
     </button>
   );
 }

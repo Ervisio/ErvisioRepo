@@ -419,7 +419,7 @@ const pullRoute = createRoute({
     return <PullPage owner={p.owner} name={p.name} number={Number(p.number)} tab={s.tab} page={s.page} />;
   },
 });
-const inboxFilters = ["participating", "all"] as const;
+const inboxFilters = ["review", "assigned", "all"] as const;
 const notificationsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/notifications",

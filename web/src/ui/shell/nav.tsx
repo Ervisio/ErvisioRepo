@@ -79,15 +79,31 @@ export function repoGroups(canAdmin: boolean): NavGroup<RepoNavItem>[] {
   ];
 }
 
-const repoPrimary = ["", "issues", "pulls", "actions"];
+const repoPrimary = ["", "issues", "pulls", "actions", "releases"];
 
-/** Repository pages split for the Console top bar: the main tabs and the rest under "More". */
-export function repoTabs(canAdmin: boolean): { main: RepoNavItem[]; more: RepoNavItem[] } {
+/** Repository pages split for the Console top bar: the main tabs, the rest under "More", and Settings last. */
+export function repoTabs(canAdmin: boolean): { main: RepoNavItem[]; more: RepoNavItem[]; settings?: RepoNavItem } {
   const all = repoGroups(canAdmin).flatMap((g) => g.items);
   return {
     main: repoPrimary.map((sub) => all.find((i) => i.sub === sub)).filter((i): i is RepoNavItem => !!i),
-    more: all.filter((i) => !repoPrimary.includes(i.sub)),
+    more: all.filter((i) => !repoPrimary.includes(i.sub) && i.sub !== "settings"),
+    settings: all.find((i) => i.sub === "settings"),
   };
+}
+
+const globalPages: [prefix: string, labelKey: string][] = [
+  ["/notifications", "nav.notifications"],
+  ["/repos", "nav.repos"],
+  ["/explore", "nav.explore"],
+  ["/orgs", "nav.orgs"],
+  ["/settings", "user.settings"],
+  ["/admin", "group.admin"],
+];
+
+/** Label key of a global page for the Console breadcrumb; undefined when the page has none (profiles, catalog). */
+export function globalPageKey(pathname: string): string | undefined {
+  if (pathname === "/") return "nav.dashboard";
+  return globalPages.find(([p]) => pathname === p || pathname.startsWith(`${p}/`))?.[1];
 }
 
 /** Sub-page key of a repository path: "" for code pages. */

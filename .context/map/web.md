@@ -3,7 +3,7 @@ Purpose: React + Vite SPA served by the core. Kit in web/src/ui, pages in web/sr
 Entry points:
 - web/src/router.tsx: TanStack Router tree. Signed-out routes sit under "bare" (no shell); everything else under "shell", which wraps AppShell and passes the shell dialogs (NewRepo, NewOrg) so the kit never imports pages.
 - web/src/ui/shell/AppShell.tsx: picks the shell from the active layout (data-layout on <html>): console (default), foglio, corsie.
-- web/src/ui/shell/ConsoleShell.tsx: the default shell (Variant Studio round 001 B, single top bar). header.tb-top has TopRow (logo, Where = RepoSwitch menu / org / admin label, search, Bell, NewMenu, UserMenu) and Tabs (RepoTabs = repoTabs(canAdmin).main + "More" menu, OrgTabs, AdminTabs, or global tabs), then main.tb-main.
+- web/src/ui/shell/ConsoleShell.tsx: the default shell (redesign 2026-11-17, round 015 B). header.tb-top: TopRow (SiteMenu popover = useNavItems, logo, Where = RepoSwitch / org / globalPageKey label, SearchTrigger pill .tb-find, New .tb-new, Bell .tb-dot, avatar) and Tabs (repo or org only; global pages have no second row). Repo tabs = repoTabs(): main (Code, Issues, PRs, Actions, Releases) + More + Settings. More and the site menu are `NavPopover`: native popover of links, no menu roles.
 - web/src/styles/app.css: console block uses tb-* classes; .tb-main is a 920 px centred column, widened to 1160 px when it holds .page-body-aside or .st. The window scrolls (virtual code rows rely on it). .sb-kt survives only for Home.
 - web/src/styles/tokens.css: console tokens are scoped to :root[data-layout="console"] (and its light variant), remapping core surfaces; use --acc-fill + --on-accent for filled accent, never raw --accent behind text.
 - web/src/ui/shell/nav.tsx: single source of nav data for all three shells (global items, admin block, repo groups, org tabs, shell context). Add nav entries here, not in the shells.
@@ -43,8 +43,8 @@ Related:
 - tokens.css: `:root` = GitHub dark, `[data-theme=light]` = GitHub light; classic values live under `:root[data-palette=classic]` (oled = dark, soft = light). design/tokens.css mirrors it.
 - ui/shell/layout.ts `paint()` maps the preference (system, light, dark, oled, soft) to data-theme + data-palette. Enum also in api/openapi.yaml, internal/dashboard, migration 00240.
 - Kit tokens `--bd` (1px ring: `--line` in GitHub, transparent in classic), `--edge`, `--field`. The GitHub-only overrides sit at the end of ui.css under `:root:not([data-palette=classic])`; filled controls use `--acc-fill` + `--on-accent`.
-- Trap: those overrides have specificity 0,3,0. Page CSS that must undo the ring needs `:root:root` (see `.hm-tabs`, `.hm-find` in app.css).
-- Home (pages/Home.tsx, `.hm-*` in app.css): aside `Repos` (max 7, pinned first, 4 on mobile) + `AdminWarning`, `Attention` (kit Tabs), `Activity` by day.
+- Trap: those overrides have specificity 0,3,0. Page CSS that must undo the ring needs `:root:root` (e.g. `.st-sec` card reset in ui.css).
+- Home: see "Redesign phase 1" below (the `.hm-*` dashboard is gone).
 
 ## Repository code pages (2026-11-15)
 - `Page` has a `quiet` prop (sr-only h1, no header); `RepoFrame` sets it in the Console layout. Visibility pill = `.tb-pill` in ConsoleShell. Repo pages use a 1060px column (`.tb-main`), settings follow it.
@@ -70,3 +70,11 @@ Related:
 - `CloneMenu` replaces CloneDialog and ArchiveMenu: kit Menu with `MenuRadioGroup`/`MenuRadioItem` (new in ui/Menu.tsx) for HTTPS/SSH/CLI, copy item, archive links. SSH only when cloneUrls() derives a host.
 - No watcher or fork counts in the API: none shown.
 - Profile README: `ProfileReadme` in ProfilePage.tsx reads repo user/user (public only) and its tree readme, rendered with `Readme` (new label/action props). Owner without it gets a CTA: create repo (if missing) + POST /contents README.md, then the edit route.
+
+## Redesign phase 1 (2026-11-17, soft surfaces)
+- Tokens: `--b-r` 14 (containers), `--b-rc` 10 (controls), `--b-gap`; filled state pills `--st-open/--st-merged/--st-closed` + `--on-state` (GitHub hex per DESIGN contrast notes).
+- ui.css end block: in Console, Button/Input/Select/Card/Table/Tabs/Badge are ring-less soft surfaces (34 px controls on --surface; inside a card fields go --bg, buttons --raise; Tabs = segmented). The GitHub ring rule now skips Console for those.
+- Reusable primitives (any area): `.ui-box` + `.ui-in` (surface box with inner --bg list), `.ui-box-h`, `.ui-li` row, `.ui-n` count, `.ui-chip` (+ -ok -err -warn -acc -rev), `.ui-seg`/`.ui-segi` (aria-pressed or aria-current), `.ui-sech` (section title + count + link), `.ui-state` (+ -merged -closed -draft), `.ui-udot`, `.ui-tm`, `.ui-st-*` icon colours.
+- Home (`.db-*`, 1340 px): tiles = useUserIssues review_requested / assigned issues / created prs + useUserRuns failure; activity; repos; Instance (admin: runners, jobs, storage bytes). Omitted for lack of data: repo issue/PR counts, "For you / Following", "changes requested", oldest review time.
+- Notifications (`.nt-*`, full width, 100dvh − 61px): views unread / review / assigned / all (`filter` search; review and assigned filter the loaded page by reason); preview fetches useIssue / usePull. Omitted: Saved (no API), checks list.
+- Tab counts: no open issue/PR/release counts in the API, so tabs show icons only.

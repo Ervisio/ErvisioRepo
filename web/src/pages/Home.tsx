@@ -1,118 +1,44 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRunners } from "../api/actions.ts";
 import { useSession } from "../api/identity.ts";
-import { useUserActivity, useUserIssues, useUserPins, useUserRuns, type ActivityItem, type UserIssue, type UserIssueFilter } from "../api/personal.ts";
+import { useUserActivity, useUserIssues, useUserPins, useUserRuns, type ActivityItem, type UserActionsRun, type UserIssue } from "../api/personal.ts";
 import { useMyRepos } from "../api/repos.ts";
 import { useStorageStatus } from "../api/useStorage.ts";
 import { useT } from "../i18n/useT.ts";
-import { Badge, BotMark, Button, Icon, Input, Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/index.ts";
-import { When } from "./code/common.tsx";
+import { Badge, BotMark, Icon, Input, type IconName } from "../ui/index.ts";
+import { formatBytes, When } from "./code/common.tsx";
 import { CreateRepoDialog } from "./repos/RepoList.tsx";
+import { Avatar } from "./work/common.tsx";
 
-// Dashboard built from existing endpoints only. Each block hides itself or shows an empty note
-// when its data is missing, so a failing endpoint never breaks the page.
+// Dashboard (round 017 C): four tiles that pick the queue below, the activity feed, and on the right the
+// repositories and, for admins, the instance. Built from existing endpoints only; a block whose endpoint
+// fails hides itself or shows a note, so one failing endpoint never breaks the page.
+
+type Queue = "review" | "assigned" | "mine" | "failed";
+const queues: Queue[] = ["review", "assigned", "mine", "failed"];
+const queueSize = 10;
+const day = 86_400_000;
 
 export function Home() {
   const t = useT("home");
   const admin = useSession().data?.role === "admin";
-  // page-body-aside is what widens .tb-main in the console shell; hm-grid reshapes it.
   return (
-    <div className="page sec-code hm">
+    <div className="page db">
       <h1 className="sr-only">{t("dash.title")}</h1>
-      <div className="page-body page-body-aside hm-grid">
-        <aside className="hm-side" aria-label={t("dash.repos")}>
-          <Repos />
-        </aside>
-        <div className="hm-main">
-          {admin && <AdminWarning />}
-          <Attention />
+      <Board />
+      <div className="db-g">
+        <div className="db-main">
           <Activity />
         </div>
+        <aside className="db-side" aria-label={t("dash.side")}>
+          <Repos />
+          {admin && <Instance />}
+        </aside>
       </div>
     </div>
   );
 }
-
-const maxRepos = 7;
-
-function Repos() {
-  const t = useT("home");
-  const repos = useMyRepos();
-  const pins = useUserPins();
-  const [creating, setCreating] = useState(false);
-  const [query, setQuery] = useState("");
-  if (repos.isError) return null;
-  const all = repos.data ?? [];
-  const pinned = pins.data ?? [];
-  const pinnedNames = new Set(pinned.map((r) => r.fullName));
-  const recent = all.filter((r) => !pinnedNames.has(r.fullName)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  const q = query.trim().toLowerCase();
-  const matches = [...pinned, ...recent].filter((r) => r.fullName.toLowerCase().includes(q));
-  const rows = matches.slice(0, maxRepos);
-  return (
-    <>
-      <div className="hm-head">
-        <h2>{t("dash.repos")}</h2>
-        <Button variant="primary" size="sm" icon="plus" className="hm-new" onClick={() => setCreating(true)}>{t("dash.new")}</Button>
-        <CreateRepoDialog open={creating} onOpenChange={setCreating} />
-      </div>
-      {repos.isPending ? (
-        <p className="ui-note" role="status">{t("dash.loading")}</p>
-      ) : all.length === 0 ? (
-        <p className="hm-note">{t("dash.reposEmpty")}</p>
-      ) : (
-        <>
-          <Input className="hm-find" type="search" label={t("dash.find")} hideLabel placeholder={t("dash.find")} autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} />
-          {rows.length === 0 ? (
-            <p className="hm-note">{t("dash.noMatch")}</p>
-          ) : (
-            <ul className="hm-repos" data-filtered={q ? "" : undefined}>
-              {rows.map((r) => (
-                <li key={r.fullName}>
-                  <Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="hm-repo">
-                    <Icon name={r.visibility === "public" ? "book" : "lock"} />
-                    <span>{r.owner}/<b>{r.name}</b></span>
-                    {pinnedNames.has(r.fullName) && (
-                      <>
-                        <Icon name="star" />
-                        <span className="sr-only">{t("dash.pinned")}</span>
-                      </>
-                    )}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-          {all.length > rows.length && <Link to="/repos" className="hm-all">{t("dash.allRepos", { count: all.length })}</Link>}
-        </>
-      )}
-    </>
-  );
-}
-
-function AdminWarning() {
-  const t = useT("home");
-  const runners = useRunners({ kind: "instance" });
-  const storage = useStorageStatus();
-  const warnings = storage.data?.warnings ?? [];
-  const problems = [
-    ...(warnings.length > 0 ? [t("dash.storageWarnings", { count: warnings.length })] : []),
-    ...(runners.data && !runners.data.some((r) => r.online) ? [t("dash.noRunner")] : []),
-  ];
-  if (problems.length === 0) return null;
-  return (
-    <Link to="/admin" className="hm-warn">
-      <Icon name="alert" />
-      <span>{problems.join(" · ")}</span>
-      <span className="hm-warn-go">{t("dash.details")}</span>
-    </Link>
-  );
-}
-
-type AttentionTab = Extract<UserIssueFilter, "assigned" | "review_requested"> | "failed";
-const attentionTabs: AttentionTab[] = ["assigned", "review_requested", "failed"];
-const sizeAttention = 6;
 
 function issueLink(i: Pick<UserIssue, "owner" | "repo" | "number" | "kind">) {
   return i.kind === "pull"
@@ -120,83 +46,114 @@ function issueLink(i: Pick<UserIssue, "owner" | "repo" | "number" | "kind">) {
     : { to: "/$owner/$name/issues/$number" as const, params: { owner: i.owner, name: i.repo, number: String(i.number) } };
 }
 
-function Attention() {
+const queueIcon: Record<Queue, { icon: IconName; cls: string }> = {
+  review: { icon: "pr", cls: "ui-st-merged" },
+  assigned: { icon: "issue", cls: "ui-st-open" },
+  mine: { icon: "pr", cls: "ui-st-open" },
+  failed: { icon: "play", cls: "ui-st-fail" },
+};
+const queueChip: Record<Queue, string> = { review: "ui-chip-rev", assigned: "ui-chip-ok", mine: "ui-chip-acc", failed: "ui-chip-err" };
+
+/** Tiles with the four queues and the list of the picked one. */
+function Board() {
   const t = useT("home");
-  const assigned = useUserIssues({ filter: "assigned", state: "open", perPage: sizeAttention });
-  const reviews = useUserIssues({ filter: "review_requested", state: "open", perPage: sizeAttention });
-  const failed = useUserRuns({ status: "failure", perPage: sizeAttention });
-  const [picked, setPicked] = useState<AttentionTab | null>(null);
-  const counts: Record<AttentionTab, number | undefined> = {
-    assigned: assigned.data?.totalCount,
-    review_requested: reviews.data?.totalCount,
-    failed: failed.data?.totalCount,
+  const review = useUserIssues({ filter: "review_requested", state: "open", perPage: queueSize });
+  const assigned = useUserIssues({ filter: "assigned", type: "issue", state: "open", perPage: queueSize });
+  const mine = useUserIssues({ filter: "created", type: "pr", state: "open", perPage: queueSize });
+  const failed = useUserRuns({ status: "failure", perPage: queueSize });
+  const [picked, setPicked] = useState<Queue | null>(null);
+  const issues: Record<Exclude<Queue, "failed">, typeof review> = { review, assigned, mine };
+  const count = (q: Queue) => (q === "failed" ? failed.data?.totalCount : issues[q].data?.totalCount);
+  const active = picked ?? queues.find((q) => (count(q) ?? 0) > 0) ?? "review";
+  const query = active === "failed" ? failed : issues[active];
+
+  const context = (q: Queue): ReactNode => {
+    if (q === "failed") {
+      const runs = failed.data?.runs ?? [];
+      if (!runs.length) return t("dash.tile.none");
+      const recent = runs.filter((r) => Date.now() - new Date(r.updatedAt).getTime() < day).length;
+      return t("dash.tile.lastDay", { count: recent });
+    }
+    const data = issues[q].data;
+    const first = data?.items[0];
+    if (!data || !first) return t("dash.tile.none");
+    if (q === "assigned" && data.totalCount <= data.items.length) {
+      return t("dash.tile.repos", { count: new Set(data.items.map((i) => i.fullName)).size });
+    }
+    return <>{t("dash.tile.latest")} <When iso={first.updatedAt} /></>;
   };
-  if (assigned.isError && reviews.isError && failed.isError) return null;
-  const active = picked ?? attentionTabs.find((k) => (counts[k] ?? 0) > 0) ?? "assigned";
-  const total = attentionTabs.reduce((n, k) => n + (counts[k] ?? 0), 0);
-  const query = active === "assigned" ? assigned : active === "review_requested" ? reviews : failed;
-  const issues = active === "assigned" ? assigned.data?.items : active === "review_requested" ? reviews.data?.items : undefined;
-  const runs = active === "failed" ? failed.data?.runs : undefined;
-  const empty = !(issues?.length || runs?.length);
+
   return (
-    <Tabs className="hm-wait" value={active} onValueChange={(v) => setPicked(attentionTabs.find((k) => k === v) ?? null)}>
-      <div className="hm-top">
-        <h2>{t("dash.attention")}</h2>
-        <TabsList className="hm-tabs" aria-label={t("dash.attention")}>
-          {attentionTabs.map((k) => (
-            <TabsTrigger key={k} className="hm-tab" value={k}>
-              {t(`dash.tab.${k}`)}
-              {counts[k] ? <i>{counts[k]}</i> : null}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+    <>
+      <div className="db-tiles" role="group" aria-label={t("dash.attention")}>
+        {queues.map((q) => (
+          <button key={q} type="button" className="db-t" aria-pressed={active === q} onClick={() => setPicked(q)}>
+            <span className="db-tl">
+              <Icon name={queueIcon[q].icon} className={`ui-icon ${queueIcon[q].cls}`} />
+              {t(`dash.queue.${q}`)}
+            </span>
+            <b>{count(q) ?? "–"}</b>
+            <span className="db-ts">{context(q)}</span>
+          </button>
+        ))}
       </div>
-      <TabsContent value={active} className="hm-box">
-        {query.isPending ? (
-          <p className="hm-empty" role="status">{t("dash.loading")}</p>
-        ) : query.isError ? (
-          <p className="hm-empty" role="alert">{t("dash.loadError")}</p>
-        ) : empty ? (
-          total === 0 ? (
-            <div className="hm-empty">
-              <p>{t("dash.waitingEmpty")}</p>
-              <p>{t("dash.waitingHint")}</p>
-            </div>
-          ) : (
-            <p className="hm-empty">{t(`dash.empty.${active}`)}</p>
-          )
-        ) : (
-          <>
-            {issues?.map((i) => (
-              <Link key={`${i.fullName}#${i.number}`} {...issueLink(i)} className={`hm-row sec-${i.kind === "pull" ? "pr" : "issue"}`}>
-                <Icon name={i.kind === "pull" ? "pr" : "issue"} />
-                <span className="hm-body">
-                  <b>{i.title}</b>
-                  <small>{i.fullName} #{i.number}</small>
-                </span>
-                <When iso={i.updatedAt} />
-              </Link>
-            ))}
-            {runs?.map((r) => (
-              <a key={r.id} href={r.url} className="hm-row hm-fail">
-                <Icon name="x" />
-                <span className="hm-body">
-                  <b>{r.title || r.workflowName}</b>
-                  <small>{r.fullName} · {r.workflowName} · {r.branch}</small>
-                </span>
-                <When iso={r.updatedAt} />
-              </a>
-            ))}
-          </>
-        )}
-      </TabsContent>
-    </Tabs>
+      <section className="db-q" aria-labelledby="db-q-h">
+        <div className="ui-sech">
+          <h2 id="db-q-h">{t(`dash.queue.${active}`)}</h2>
+          {count(active) ? <span className="ui-n">{count(active)}</span> : null}
+        </div>
+        <div className="ui-box">
+          <div className="ui-in">
+            {query.isPending ? (
+              <p className="db-note" role="status">{t("dash.loading")}</p>
+            ) : query.isError ? (
+              <p className="db-note" role="alert">{t("dash.loadError")}</p>
+            ) : active === "failed" ? (
+              failed.data?.runs.length ? failed.data.runs.map((r) => <RunRow key={r.id} r={r} />) : <p className="db-note">{t(`dash.empty.${active}`)}</p>
+            ) : issues[active].data?.items.length ? (
+              issues[active].data.items.map((i) => <IssueRow key={`${i.fullName}#${i.number}`} i={i} q={active} />)
+            ) : (
+              <p className="db-note">{t(`dash.empty.${active}`)}</p>
+            )}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 
-function dayKey(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "" : d.toDateString();
+function IssueRow({ i, q }: { i: UserIssue; q: Exclude<Queue, "failed"> }) {
+  const t = useT("home");
+  return (
+    <Link {...issueLink(i)} className="db-r">
+      <Icon name={i.kind === "pull" ? "pr" : "issue"} className={`ui-icon ${queueIcon[q].cls}`} />
+      <span className="db-rm">
+        <span className="db-ttl">{i.title}</span>
+        <span className="db-rp">
+          <b>{i.fullName}</b> #{i.number}{i.author ? ` · ${i.author}` : ""}
+        </span>
+      </span>
+      <span className="db-rx"><span className={`ui-chip ${queueChip[q]}`}>{t(`dash.chip.${q}`)}</span></span>
+      <span className="ui-tm"><When iso={i.updatedAt} /></span>
+    </Link>
+  );
+}
+
+function RunRow({ r }: { r: UserActionsRun }) {
+  const t = useT("home");
+  return (
+    <a href={r.url} className="db-r">
+      <Icon name="play" className="ui-icon ui-st-fail" />
+      <span className="db-rm">
+        <span className="db-ttl">{r.title || r.workflowName}</span>
+        <span className="db-rp">
+          <b>{r.fullName}</b> · {r.workflowName} #{r.runNumber} · {r.branch}
+        </span>
+      </span>
+      <span className="db-rx"><span className="ui-chip ui-chip-err">{t("dash.chip.failed")}</span></span>
+      <span className="ui-tm"><When iso={r.updatedAt} /></span>
+    </a>
+  );
 }
 
 function activityLink(a: ActivityItem) {
@@ -219,40 +176,137 @@ function Activity() {
   const feed = useUserActivity({ offset: 0, limit: 10 });
   if (feed.isError) return null;
   const items = feed.data ?? [];
-  const now = new Date();
-  const yesterday = new Date(now.getTime() - 86_400_000);
-  const label = (key: string, iso: string) =>
-    key === now.toDateString() ? t("dash.today") : key === yesterday.toDateString() ? t("dash.yesterday") : new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "long" });
-  const groups: { key: string; label: string; rows: ActivityItem[] }[] = [];
-  for (const a of items) {
-    const key = dayKey(a.createdAt);
-    const last = groups[groups.length - 1];
-    if (last && last.key === key) last.rows.push(a);
-    else groups.push({ key, label: label(key, a.createdAt), rows: [a] });
-  }
   return (
-    <section className="hm-act" aria-labelledby="hm-act-h">
-      <h2 id="hm-act-h">{t("dash.activity")}</h2>
+    <section className="db-act" aria-labelledby="db-act-h">
+      <div className="ui-sech">
+        <h2 id="db-act-h">{t("dash.activity")}</h2>
+      </div>
       {feed.isPending ? (
-        <p className="hm-note" role="status">{t("dash.loading")}</p>
+        <p className="db-note" role="status">{t("dash.loading")}</p>
       ) : items.length === 0 ? (
-        <p className="hm-note">{t("dash.activityEmpty")}</p>
+        <p className="db-note">{t("dash.activityEmpty")}</p>
       ) : (
-        groups.map((g) => (
-          <section key={g.key} aria-label={g.label}>
-            <h3 className="hm-day">{g.label}</h3>
-            {g.rows.map((a) => (
-              // No actor means the server itself did it: the GitHub sync or an import.
-              <Link key={a.id} {...activityLink(a)} className="hm-line">
-                <span>
-                  {a.actor ? <><b>{a.actor}</b> <BotMark login={a.actor} /></> : <><b>ErvisioSync</b> <Badge>{t("dash.act.bot")}</Badge></>} {actionText(a)} <b>{a.fullName}</b>
-                </span>
-                <When iso={a.createdAt} />
-              </Link>
-            ))}
-          </section>
-        ))
+        <ul className="db-evs">
+          {items.map((a) => (
+            <li key={a.id} className="db-ev">
+              {/* No actor means the server itself did it: the GitHub sync or an import. */}
+              <Avatar user={a.actor || "ErvisioSync"} size={24} />
+              <span>
+                {a.actor ? <><b>{a.actor}</b> <BotMark login={a.actor} /></> : <><b>ErvisioSync</b> <Badge>{t("dash.act.bot")}</Badge></>} {actionText(a)} <b>{a.fullName}</b>
+                {a.title && (
+                  <Link {...activityLink(a)} className="db-evt">
+                    {a.number > 0 && `#${a.number} `}
+                    {a.title}
+                  </Link>
+                )}
+                <span className="ui-tm"><When iso={a.createdAt} /></span>
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
+    </section>
+  );
+}
+
+const maxRepos = 7;
+
+function Repos() {
+  const t = useT("home");
+  const repos = useMyRepos();
+  const pins = useUserPins();
+  const [creating, setCreating] = useState(false);
+  const [query, setQuery] = useState("");
+  if (repos.isError) return null;
+  const all = repos.data ?? [];
+  const pinned = pins.data ?? [];
+  const pinnedNames = new Set(pinned.map((r) => r.fullName));
+  const recent = all.filter((r) => !pinnedNames.has(r.fullName)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const q = query.trim().toLowerCase();
+  const matches = [...pinned, ...recent].filter((r) => r.fullName.toLowerCase().includes(q));
+  const rows = matches.slice(0, maxRepos);
+  return (
+    <section aria-labelledby="db-repos-h">
+      <div className="ui-sech">
+        <h2 id="db-repos-h">{t("dash.repos")}</h2>
+        <button type="button" className="db-link" onClick={() => setCreating(true)}>{t("dash.new")}</button>
+        <CreateRepoDialog open={creating} onOpenChange={setCreating} />
+      </div>
+      {repos.isPending ? (
+        <p className="db-note" role="status">{t("dash.loading")}</p>
+      ) : all.length === 0 ? (
+        <p className="db-note">{t("dash.reposEmpty")}</p>
+      ) : (
+        <>
+          <Input className="db-find" type="search" label={t("dash.find")} hideLabel placeholder={t("dash.find")} autoComplete="off" value={query} onChange={(e) => setQuery(e.target.value)} />
+          {rows.length === 0 ? (
+            <p className="db-note">{t("dash.noMatch")}</p>
+          ) : (
+            <ul className="db-repos" data-filtered={q ? "" : undefined}>
+              {rows.map((r) => (
+                <li key={r.fullName}>
+                  <Link to="/$owner/$name" params={{ owner: r.owner, name: r.name }} className="db-repo">
+                    <span className={r.ownerKind === "org" ? "db-ra org" : "db-ra"}><Avatar user={r.owner} size={20} /></span>
+                    <b>{r.fullName}</b>
+                    {r.visibility !== "public" && <Icon name="lock" />}
+                    {pinnedNames.has(r.fullName) && (
+                      <>
+                        <Icon name="star" />
+                        <span className="sr-only">{t("dash.pinned")}</span>
+                      </>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {all.length > rows.length && <Link to="/repos" className="db-all">{t("dash.allRepos", { count: all.length })}</Link>}
+        </>
+      )}
+    </section>
+  );
+}
+
+/** Instance health for admins: runners, running jobs and storage. */
+function Instance() {
+  const t = useT("home");
+  const runners = useRunners({ kind: "instance" });
+  const storage = useStorageStatus();
+  const list = runners.data ?? [];
+  const online = list.filter((r) => r.online).length;
+  const running = list.reduce((n, r) => n + r.running, 0);
+  const warnings = storage.data?.warnings.length ?? 0;
+  const used = storage.data?.policies.reduce((n, p) => n + p.bytes, 0);
+  return (
+    <section aria-labelledby="db-inst-h">
+      <div className="ui-sech">
+        <h2 id="db-inst-h">{t("dash.instance")}</h2>
+        <Link to="/admin">{t("dash.admin")}</Link>
+      </div>
+      <ul className="db-ck">
+        {runners.data && (
+          <li>
+            <Icon name={online > 0 ? "check" : "alert"} className={`ui-icon ${online > 0 ? "ui-st-open" : "ui-st-warn"}`} />
+            {t("dash.runnersOnline")}
+            <span className="ui-tm">{t("dash.ofTotal", { count: online, total: list.length })}</span>
+          </li>
+        )}
+        {runners.data && (
+          <li>
+            <Icon name="play" className="ui-icon ui-st-info" />
+            {t("dash.jobsRunning")}
+            <span className="ui-tm">{running}</span>
+          </li>
+        )}
+        {storage.data && (
+          <li>
+            <Icon name="db" className="ui-icon" />
+            {t("dash.storage")}
+            {warnings > 0 && <span className="ui-chip ui-chip-warn">{t("dash.storageWarnings", { count: warnings })}</span>}
+            <span className="ui-tm">{used !== undefined ? t("dash.used", { size: formatBytes(used) }) : ""}</span>
+          </li>
+        )}
+      </ul>
     </section>
   );
 }

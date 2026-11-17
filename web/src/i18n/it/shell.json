@@ -66,5 +66,10 @@
   "nav.explore": "Esplora",
   "group.code": "Codice",
   "group.collab": "Collaborazione",
-  "nav.more": "Altro"
+  "nav.more": "Altro",
+  "nav.site": "Menu del sito",
+  "nav.dashboard": "Dashboard",
+  "new.button": "Nuovo",
+  "search.pill": "Cerca o vai a…",
+  "search.pillRepo": "Cerca in {repo} o vai a…"
 }
