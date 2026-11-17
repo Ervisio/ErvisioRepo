@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-11-17
+
 ### Changed
 
 - Sign-in pages (round 029): no app header, centred 400 px column (460 px for runner approval and OAuth consent) with logo, title, soft card, a box for the secondary link and the version footer. Login shows "Forgot password?" next to the password, an "or" divider and passkey / provider buttons; two-factor uses a six-box one-time code (one real input underneath, so autofill and paste work) and an "Other methods" block; device and runner codes are drawn as boxes, the runner scope is a segmented control, OAuth consent lists each scope with an icon, area and description.
