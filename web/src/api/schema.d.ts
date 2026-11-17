@@ -8650,6 +8650,8 @@ export interface components {
             role: components["schemas"]["OrgRole"];
             /** Format: date-time */
             since: string;
+            /** @description Absolute https URL of the avatar; empty when unset */
+            avatarUrl?: string;
         };
         OrgRoleRequest: {
             role: components["schemas"]["OrgRole"];

@@ -221,5 +221,7 @@
   "settings.image.uploading": "Uploading…",
   "settings.image.remove": "Remove",
   "settings.image.uploaded": "Image updated",
-  "settings.image.removed": "Image removed"
+  "settings.image.removed": "Image removed",
+  "profile.activityMore": "Show more activity",
+  "profile.untitled": "Untitled"
 }

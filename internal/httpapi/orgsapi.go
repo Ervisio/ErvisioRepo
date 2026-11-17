@@ -90,7 +90,7 @@ func orgDTO(o orgs.Org) v1gen.Org {
 }
 
 func memberDTO(m orgs.Member) v1gen.OrgMember {
-	return v1gen.OrgMember{Username: m.Username, DisplayName: m.DisplayName, Role: v1gen.OrgRole(m.Role), Since: m.Since}
+	return v1gen.OrgMember{Username: m.Username, DisplayName: m.DisplayName, Role: v1gen.OrgRole(m.Role), Since: m.Since, AvatarUrl: &m.AvatarURL}
 }
 
 func teamDTO(t orgs.Team) v1gen.Team {

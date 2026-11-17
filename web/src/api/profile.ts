@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { qs } from "./code.ts";
 import { request } from "./http.ts";
 import type { ActivityItem } from "./personal.ts";
@@ -35,6 +35,7 @@ export const useProfilePins = (username: string) =>
 export const useProfileActivity = (username: string, limit = 10) =>
   useQuery({
     queryKey: ["users", username, "activity", limit],
+    placeholderData: keepPreviousData,
     queryFn: () => request<ActivityItem[]>("GET", `/users/${enc(username)}/activity${qs({ limit })}`),
   });
 

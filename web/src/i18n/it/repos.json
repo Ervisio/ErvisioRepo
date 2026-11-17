@@ -221,5 +221,7 @@
   "settings.image.uploading": "Caricamento…",
   "settings.image.remove": "Rimuovi",
   "settings.image.uploaded": "Immagine aggiornata",
-  "settings.image.removed": "Immagine rimossa"
+  "settings.image.removed": "Immagine rimossa",
+  "profile.activityMore": "Mostra altre attività",
+  "profile.untitled": "Senza titolo"
 }

@@ -292,10 +292,19 @@ function activityLink(a: ActivityItem) {
   return a.kind === "release" ? { to: "/$owner/$name/releases" as const, params } : { to: "/$owner/$name/commits" as const, params };
 }
 
-/** Recent activity of the user in the repositories the visitor can read. */
+/** Events that get a big card in the timeline; the others stay one compact line, like GitHub. */
+const isMajor = (a: ActivityItem) =>
+  (a.kind === "release" && a.action === "published") ||
+  (a.kind === "pull_request" && (a.action === "opened" || a.action === "merged")) ||
+  (a.kind === "issue" && a.action === "opened");
+
+const ACTIVITY_PAGE = 10;
+
+/** Recent activity of the user in the repositories the visitor can read, as a timeline grouped by month. */
 function ProfileActivity({ username }: { username: string }) {
   const t = useT("repos");
-  const feed = useProfileActivity(username, 10);
+  const [limit, setLimit] = useState(ACTIVITY_PAGE);
+  const feed = useProfileActivity(username, limit);
   if (feed.isError) return null;
   const items = feed.data ?? [];
   const actionText = (a: ActivityItem) => {
@@ -303,35 +312,98 @@ function ProfileActivity({ username }: { username: string }) {
     const text = t(key);
     return text === key ? a.action : text;
   };
+  const months: { key: string; label: string; items: ActivityItem[] }[] = [];
+  for (const a of items) {
+    const d = new Date(a.createdAt);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    let m = months[months.length - 1];
+    if (!m || m.key !== key) {
+      m = { key, label: d.toLocaleDateString(undefined, { month: "long", year: "numeric" }), items: [] };
+      months.push(m);
+    }
+    m.items.push(a);
+  }
   return (
     <section className="up-sec" aria-labelledby="up-act-h">
       <div className="ui-sech">
         <h2 id="up-act-h">{t("profile.activity")}</h2>
       </div>
-      {feed.isPending ? (
+      {feed.isPending && items.length === 0 ? (
         <p className="ui-note" role="status">{t("contrib.loading")}</p>
       ) : items.length === 0 ? (
         <p className="ui-note">{t("profile.activityEmpty")}</p>
       ) : (
-        <ul className="up-feed">
-          {items.map((a) => (
-            <li key={a.id}>
-              <span className="up-feed-i"><Icon name={activityIcon[a.kind]} /></span>
-              <span>
-                {actionText(a)} <Link to="/$owner/$name" params={{ owner: a.owner, name: a.repo }}><b>{a.fullName}</b></Link>
-                {a.title && (
-                  <Link {...activityLink(a)} className="up-feed-t">
-                    {a.number > 0 && `#${a.number} `}
-                    {a.title}
-                  </Link>
-                )}
-              </span>
-              <span className="ui-tm"><When iso={a.createdAt} /></span>
-            </li>
+        <>
+          {months.map((m) => (
+            <div key={m.key} className="up-tl">
+              <h3 className="up-tl-m"><span>{m.label}</span></h3>
+              <ol className="up-tl-l">
+                {m.items.map((a) => (
+                  <li key={a.id} className={isMajor(a) ? "up-tl-i major" : "up-tl-i"}>
+                    <span className="up-feed-i"><Icon name={activityIcon[a.kind]} /></span>
+                    <div className="up-tl-b">
+                      <div className="up-tl-h">
+                        <span>
+                          {actionText(a)} <Link to="/$owner/$name" params={{ owner: a.owner, name: a.repo }}><b>{a.fullName}</b></Link>
+                        </span>
+                        <span className="ui-tm"><When iso={a.createdAt} /></span>
+                      </div>
+                      {isMajor(a) ? <ActivityCard a={a} /> : a.title && (
+                        <Link {...activityLink(a)} className="up-feed-t">
+                          {a.number > 0 && `#${a.number} `}
+                          {a.title}
+                        </Link>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
           ))}
-        </ul>
+          {items.length >= limit && (
+            <button type="button" className="ui-btn ui-btn-secondary up-tl-more" disabled={feed.isFetching} onClick={() => setLimit((l) => l + ACTIVITY_PAGE)}>
+              {feed.isFetching ? t("contrib.loading") : t("profile.activityMore")}
+            </button>
+          )}
+        </>
       )}
     </section>
+  );
+}
+
+/** The big card of a major event: the release with its repository, or the issue / pull request. */
+function ActivityCard({ a }: { a: ActivityItem }) {
+  const t = useT("repos");
+  const repo = useRepo(a.owner, a.repo);
+  const r = repo.data;
+  if (a.kind === "release") {
+    return (
+      <div className="up-card-ev">
+        <span className="up-card-img">
+          <AvatarImg src={r?.avatarUrl || r?.ownerAvatarUrl} fill>
+            <Icon name="tag" />
+          </AvatarImg>
+        </span>
+        <div className="up-card-t">
+          <Link {...activityLink(a)} className="up-card-n">{a.title}</Link>
+          <span className="up-card-s">{a.fullName}</span>
+          {r?.description && <p>{r.description}</p>}
+          <span className="up-card-s"><Icon name="star" /> {r?.starsCount ?? 0}</span>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="up-card-ev small">
+      <Icon name={a.kind === "pull_request" ? "pr" : "issue"} className={a.action === "merged" ? "ui-st-merged" : "ui-st-open"} />
+      <div className="up-card-t">
+        <Link {...activityLink(a)} className="up-card-n">
+          {a.title || t("profile.untitled")}
+          {a.number > 0 && <span className="up-card-num"> #{a.number}</span>}
+        </Link>
+        <span className="up-card-s">{a.fullName}</span>
+      </div>
+    </div>
   );
 }
 

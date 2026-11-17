@@ -90,5 +90,13 @@
   "lightbox.title": "Image",
   "lightbox.fit": "Fit to screen",
   "lightbox.actual": "Actual size",
-  "lightbox.original": "Open original"
+  "lightbox.original": "Open original",
+  "hovercard.loading": "Loading…",
+  "hovercard.memberOf": "Member of",
+  "hovercard.org": "Organization",
+  "hovercard.verified": "Verified",
+  "hovercard.updated": "Updated {date}",
+  "hovercard.vis.private": "Private",
+  "hovercard.vis.internal": "Internal",
+  "hovercard.vis.public": "Public"
 }

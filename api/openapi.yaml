@@ -14468,6 +14468,7 @@ components:
         since:
           type: string
           format: date-time
+        avatarUrl: {type: string, description: Absolute https URL of the avatar; empty when unset}
     OrgRoleRequest:
       type: object
       required: [role]

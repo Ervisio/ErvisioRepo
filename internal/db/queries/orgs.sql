@@ -29,7 +29,7 @@ WHERE m.user_id = $1
 ORDER BY n.name_lower;
 
 -- name: ListOrgMembers :many
-SELECT m.user_id, n.name AS username, u.display_name, m.role, m.created_at
+SELECT m.user_id, n.name AS username, u.display_name, m.role, m.created_at, u.avatar_url
 FROM org_members m
 JOIN users u ON u.id = m.user_id
 JOIN namespaces n ON n.id = u.id

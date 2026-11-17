@@ -6,6 +6,20 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Hovercards: hovering or focusing any link to a user, an organization or a repository shows a card (avatar, name, bio, place, organizations; organization description; repository image, description, stars, last update).
+- Organization members carry `avatarUrl` (GET /orgs/{org}/members) and the people list shows their avatars.
+
+### Changed
+
+- Profile activity is a timeline grouped by month: published releases, opened or merged pull requests and opened issues get a large card, the rest stays one line; "Show more activity" loads the next page.
+- Organization tiles (profile, Explore, organizations list, settings, repository header) use a neutral surface with a thin border instead of the accent colour, so transparent logos and initials read as on GitHub.
+
+### Fixed
+
+- The avatar button in the Console header is square, so its focus and open ring is a circle.
+
 ## [1.16.1] - 2026-11-17
 
 ### Added

@@ -455,7 +455,7 @@ function OrgAside({ org, canManage, onTab }: { org: string; canManage: boolean; 
             {members.data.slice(0, 24).map((m) => (
               <li key={m.username}>
                 <Link to="/$owner" params={{ owner: m.username }} title={m.displayName || m.username} aria-label={m.displayName || m.username}>
-                  <Avatar user={{ username: m.username, avatarUrl: "" }} size="lg" />
+                  <Avatar user={{ username: m.username, avatarUrl: m.avatarUrl ?? "" }} size="lg" />
                 </Link>
               </li>
             ))}

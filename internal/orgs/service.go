@@ -127,6 +127,7 @@ type Member struct {
 	DisplayName string
 	Role        string
 	Since       time.Time
+	AvatarURL   string
 }
 
 // scope is an organization resolved for a caller.
@@ -401,7 +402,7 @@ func (s *Service) ListMembers(ctx context.Context, who auth.Principal, name stri
 	}
 	out := make([]Member, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, Member{UserID: r.UserID, Username: r.Username, DisplayName: r.DisplayName, Role: r.Role, Since: r.CreatedAt.Time})
+		out = append(out, Member{UserID: r.UserID, Username: r.Username, DisplayName: r.DisplayName, Role: r.Role, Since: r.CreatedAt.Time, AvatarURL: r.AvatarUrl})
 	}
 	return out, nil
 }

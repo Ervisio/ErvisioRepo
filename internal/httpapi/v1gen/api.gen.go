@@ -5244,6 +5244,8 @@ type OrgLanguages struct {
 
 // OrgMember defines model for OrgMember.
 type OrgMember struct {
+	// AvatarUrl Absolute https URL of the avatar; empty when unset
+	AvatarUrl   *string   `json:"avatarUrl,omitempty"`
 	DisplayName string    `json:"displayName"`
 	Role        OrgRole   `json:"role"`
 	Since       time.Time `json:"since"`
