@@ -165,6 +165,84 @@ Riferimento visivo: `design/mock/direzione-a.html` e lo screenshot approvato in 
   - A1 implementa: OAuth App personali e di org (elenco, registrazione, pagina dell'app con client ID, secret mostrati una volta, modifica, eliminazione), "Applicazioni" autorizzate con revoca, pagina di consenso `/login/oauth/authorize`, impostazione `security.app_registration`. "App" resta un segnaposto fino ad A2.
   - A2 implementa: sezione "App" (utente e org) con elenco, registrazione (slug con anteprima `slug[bot]`, permessi a matrice, eventi a chip limitati dai permessi: abbassare un permesso toglie gli eventi non più coperti; metadati fissi in Lettura; i permessi solo-scrittura non offrono Lettura), pagina dell'App a schede (Generali, Permessi ed eventi, Chiavi e secret, Installazioni, Consegne recenti, Avanzate). Chiave privata: scaricata subito come `<slug>.<data>.private-key.pem` e mostrata una volta. "App installate" nel gruppo Accesso (utente) e Organizzazione (org): elenco, configurazione (repository tutti/scelti, sospendi, disinstalla) e riquadro "Nuovi permessi richiesti" con tabella concesso/richiesto e "Accetta". Installazione in `/apps/:slug/installations/new`: card centrata 620 px, account come righe a radio (già installata = link a Configura), repository, permessi in parole.
 
+- **Riprogettazione: stile base (2026-11-17).** Round `015-fondamenta-stile` variante B "Superfici morbide" con la colonna del round `016-colonna-info` variante A "Colonna aperta". Base di tutte le schermate riprogettate: layout e funzioni come GitHub, stile più moderno. Kit dei mock in `design/mock/soft.css` (+ `design/mock/sprite.html` per le icone).
+  - Barra sticky su `--bg` all'88% con blur 12 px e filetto `--line` al 60%. Riga 1 (60 px): menu, logo 30 px, owner / repo, ricerca a pillola centrale (max 460 px, `⌘K`), Nuovo, notifiche con pallino, avatar. Riga 2: tab a pillola alte 34 px, raggio 10, attiva su `--raise` con icona in `--accent`, conteggi in chip tondo.
+  - Niente filetti attorno ai blocchi: superfici a strati (`--surface` attorno, `--bg` dentro), raggio 14 per i contenitori e 10 per i controlli. Pulsanti 34 px su `--surface` senza bordo; primario `--acc-fill` (non verde); varianti ghost trasparenti.
+  - Intestazione repo: avatar 56 px raggio 16, "owner / **nome**" a 28 px peso 600 (owner in `--ink2` 400), pillola di visibilità, descrizione 15 px, topic a pillola su `--sel`. A destra Fissa (ghost), Segui, Fork, Stella con conteggi.
+  - Lista file: card `--surface` con striscia dell'ultimo commit e lista su `--bg` interna; righe 40 px raggio 8, hover `--surface`.
+  - Colonna Informazioni (300 px): sezioni aperte separate da filetto leggero, titolo 14 px 600 con conteggio a chip; conteggi in riga; link a righe 32 px con hover; release con tile verde; contributori con nome e numero di commit; linguaggi in elenco con percentuale a destra.
+  - Mobile: tab scorrevoli, intestazione in colonna con azioni a tutta larghezza, conteggi sopra i file, ricerca a icona.
+
+- **Dashboard e notifiche (2026-11-17).** Round `017-dashboard-notifiche`, variante C "Riquadri e anteprima".
+  - Dashboard: in alto quattro riquadri in una superficie (Review richieste, Issue assegnate, Le tue PR aperte, Run falliti) con numero 26 px e riga di contesto; il riquadro attivo filtra la coda sotto (bordo interno `--accent`). Sotto: coda (righe con icona di stato, titolo, repo #n, chip del motivo, tempo) e attività per te / seguiti; a destra (340 px) repository con conteggi issue/PR e blocco Istanza (solo admin).
+  - Notifiche come posta: elenco da 420 px (titolo, segmentato In arrivo / Review / Assegnate / Salvate, filtro testo; righe con pallino non letto, icona, repo #n, tempo, titolo, chip) e anteprima del thread a destra con Fatto, Salva, Apri, stato, descrizione e controlli. Sotto i 720 px solo elenco.
+  - Contrasto (audit): il tempo nella riga selezionata (`--raise`) usa `--ink2`; la pillola di stato piena usa `#238636`/`#1f883d` con testo bianco, non `--ok`.
+
+- **Codice (2026-11-17).** Round `018-codice`, variante A "Albero laterale".
+  - Griglia 280 px + contenuto (max 1440): albero in una superficie sticky con chiudi albero, Aggiungi file, branch, "Vai al file" (t); cartella aperta, file corrente su `--bg` 500. Sotto i 900 px l'albero si apre da un pulsante.
+  - Cartella: percorso con link `--accent` e ultimo segmento in grassetto, Aggiungi file e ⋯; card con striscia dell'ultimo commit (Cronologia) e righe dei file.
+  - File: percorso con copia, card con l'ultimo commit del file, poi area codice su `--bg` con toolbar (segmentato Codice / Blame, righe e dimensione, Raw, copia, scarica, matita, ⋯); numeri di riga `--ink3`, righe selezionate su giallo 12% con barretta.
+  - Modifica: percorso con nome file modificabile e "in main", Annulla e "Salva modifiche…" primario; toolbar Modifica / Anteprima modifiche, rientro, a capo. Il salvataggio apre un dialog (messaggio, descrizione, commit diretto o nuovo branch + PR).
+
+- **Cronologia e ricerca (2026-11-17).** Round `020-cronologia-mix` (combinazione di 019 B, C e A).
+  - Commit: linea del tempo per giorno, ogni commit in una riga `--surface` raggio 12 con avatar 36 px, titolo, autore, stato dei controlli, ref (branch `--sel`, tag `--ok-s`), SHA, copia, sfoglia. "Carica altri commit" in fondo.
+  - Dettaglio commit (vale anche per confronto e "File modificati" delle PR): colonna dei file a tutta altezza (240 px, sticky, filtro, raggruppati per cartella, +/−) e a destra intestazione grande (avatar 44, titolo 24 px, corpo, autore, SHA, genitore, tag) con Unificata/Affiancata e Sfoglia; diff affiancato di default.
+  - Branch: tabella in una superficie (Branch, Ultimo commit, Indietro / avanti, Pull request, azioni), segmentato Tutti / I tuoi / Obsoleti, Cerca, Confronta, Nuovo branch.
+  - Ricerca nel codice: campo in alto, filtri a sinistra (tipo con conteggi, linguaggi, percorsi), risultati come card per file con le righe e la corrispondenza evidenziata.
+  - Contrasto (audit): nelle righe aggiunte/rimosse numeri di riga in `--ink2`; evidenziazione delle parole al 25% con testo `--ink`; conteggi −N piccoli in un rosso più chiaro (`#ff7b72`).
+
+- **Issue (2026-11-17).** Round `021-issue`, variante B "Viste e proprietà". Il dettaglio fa da base anche alla conversazione delle PR.
+  - Elenco: viste salvate a sinistra (Aperte, Assegnate a me, Create da me, Menzioni, Chiuse, poi Etichette con pallino colore e conteggio); titolo della vista, Milestone, Nuova issue; ricerca + filtri a chip (Etichetta, Assegnatario, Raggruppa); righe su una linea (icona, #n mono, titolo, etichette, commenti, avatar) raggruppate per milestone. Sotto i 900 px le viste diventano pillole scorrevoli.
+  - Etichette: pillola con colore al 18%, testo misto 55% col colore e bordo al 40%.
+  - Dettaglio: percorso "Issue / #n", titolo 30 px; post senza card (avatar 32, nome, tempo, ⋯, markdown, reazioni) separati da filetti; eventi compatti rientrati; composer in superficie. Pannello Proprietà sticky a destra (300 px): righe chiave/valore modificabili (Stato, Assegnatari, Etichette, Milestone, Sviluppo | Aperta da, Partecipanti) e azioni Disiscriviti, copia link, ⋯.
+  - Nuova: composer centrato 780 px con titolo 24 px senza bordo, descrizione, chip per assegnatario/etichette/milestone/PR, "Creane un'altra", Crea issue.
+
+- **Pull request (2026-11-17).** Round `022-pull-request`, variante B "Stato nel pannello".
+  - Elenco: viste come le issue (Aperte, Review richieste, Create da me, Assegnate a me, Unite, Chiuse), righe con stato review a chip (Review richiesta viola, Approvata verde, Modifiche richieste rosso, Bozza) e controlli N/M.
+  - Intestazione su tutta la larghezza: percorso, titolo, pillola di stato, "X vuole unire N commit in `base` da `head`" con ref su `--sel` e copia, Modifica, Codice ▾; poi tab Conversazione / Commit / Controlli / File modificati con conteggi e sottolineatura `--acc-fill`.
+  - Conversazione: post ed eventi come le issue; il pannello a destra apre con una card di stato su `--bg` (pillola "Pronta per il merge", review, controlli N/M, conflitti, elenco controlli compatto, split "Squash e unisci" verde con metodo, "Elimina il branch dopo il merge"), poi le proprietà (Revisori con stato, Assegnatari, Etichette, Milestone, Chiude, Partecipanti).
+  - File modificati: layout del dettaglio commit (020) sotto intestazione e tab, barra "N file +/− · X di N visti", Unificata/Affiancata, "Rivedi modifiche ▾"; thread inline in superficie con risposta.
+  - Contrasto (audit): conteggi −N a 11 px in `#ff7b72`.
+
+- **Actions (2026-11-17).** Round `023-actions`, variante A "GitHub fedele". Sostituisce il round 014 per il monitor dei runner.
+  - Run: colonna sinistra con i workflow (Tutti, CI, Release, …) e la sezione Gestione (Cache, Runner, Metriche); a destra filtri (evento, stato, branch, autore) e lista dei run in superficie: icona di stato, titolo del commit, "Workflow #n: evento di autore", ref su `--sel`, tempo e durata.
+  - Run e log: intestazione con titolo, stato, Riesegui ▾ e ⋯; colonna dei job (Riepilogo, job con stato e durata, Utilizzo, File del workflow); card del job con step espandibili, lo step fallito aperto sul log (sfondo `#010409`, numeri di riga, gruppi `##[group]` in `--accent`, righe d'errore su `--err-s`), ricerca nel log e Scarica.
+  - Runner: striscia di riepilogo a pillole (online, occupati, slot liberi) e tabella densa (Nome + etichette, Stato a chip, CPU / RAM / GPU con barre, Job N/M, ⋯); la riga selezionata si espande con versione, disco, load, heartbeat e job in corso. Barre: accento, giallo sopra il 70%, rosso sopra il 90%.
+
+- **Release (2026-11-17).** Round `024-release`, variante B "Ultima in evidenza".
+  - Elenco: titolo, segmentato Release / Tag con conteggi, Cerca, Nuova release. L'ultima release in un riquadro largo su `--surface` raggio 18: a sinistra su `--bg` badge Ultima, tag, titolo 30 px, autore, SHA, firma, note; a destra gli allegati con dimensione e scarica, e il download principale per la piattaforma. Sotto, le altre in tabella (Versione mono `--accent`, Titolo con badge Pre-release o Bozza, Autore, Allegati, Data, ⋯).
+  - Badge: Ultima su `--ok-s` con bordo al 40%, Pre-release su `--warn-s`, Bozza su `--raise`.
+  - Dettaglio: note a sinistra (titolo 30 px con badge, Modifica, ⋯, "X ha pubblicato…", markdown, reazioni); a destra pannello sticky 340 px con Tag (firma), Commit con copia, Branch, Confronta, Iscriviti, poi allegati su `--bg` e azioni Carica / Elimina.
+  - Nuova: due colonne. Sinistra titolo, note con Scrivi / Anteprima e "Genera le note", allegati con area di trascinamento e barra di caricamento. Destra Tag (con "Nuovo tag, creato alla pubblicazione"), Destinazione, Tag precedente, Pre-release / Ultima release, Pubblica release, Salva bozza.
+
+- **Profilo, organizzazione, esplora (2026-11-17).** Round `025-persone`, variante A "GitHub fedele".
+  - Profilo: colonna 280 px con avatar 260 px, nome, username, bio, Modifica profilo; dati come GitHub (ruolo nell'istanza, azienda, posizione, ora locale, sito, email pubblica, link social, data di iscrizione), poi Organizzazioni in riga. A destra schede Panoramica / Repository / Stelle sottolineate in `--acc-fill`; In evidenza (2 colonne, Personalizza), grafico dei contributi a tutta larghezza con anni, Attività.
+  - Organizzazione: avatar quadrato 84, nome, descrizione, membri / sito / verificata, Impostazioni e Nuovo repository; schede Panoramica / Repository / Team / Persone / Runner; repository fissati e poi elenco con filtri (Tipo, Linguaggio, Ordina), riga con Stella e attività recente in sparkline. Colonna destra 300 px: Persone (avatar in riga, Invita), Linguaggi principali con barra divisa e percentuali a lato, Team con conteggi.
+  - Esplora: segmentato Repository / Organizzazioni / Utenti, ricerca e filtri, righe come sopra; colonna destra con "Più stellati questa settimana" e Organizzazioni.
+  - I tuoi repository: segmentato Tutti / Personali / Organizzazioni / Stelle, Nuovo, filtri Visibilità / Linguaggio / Ordina, righe come sopra.
+  - Il grafico dei contributi e la sparkline richiedono un endpoint nuovo.
+
+- **Impostazioni (2026-11-17).** Round `026-impostazioni`, variante A "GitHub fedele". Vale per account, repository, organizzazione e admin.
+  - Intestazione con avatar 48, nome e "Le tue impostazioni personali" / "Impostazioni dell'organizzazione", "Vai al profilo". Nel repository la pagina sta sotto la scheda Impostazioni.
+  - Menu sticky 250 px a gruppi (titoletto 12 px `--ink3` con filetto sopra); voce attiva su `--raise` con barretta `--acc-fill` a sinistra. Sotto i 900 px diventa una fila scorrevole.
+  - Contenuto max 780 px: sezioni con titolo 22 px e filetto sotto, campi in griglia a due colonne, pulsante primario in fondo a ogni sezione.
+  - Visibilità come tre opzioni a scheda; la scelta ha bordo `--acc-fill` su `--sel` e la descrizione in `--ink2` (audit contrasto).
+  - Zona pericolosa: titolo `#ff7b72`, righe in un riquadro con bordo rosso al 45%, pulsanti con testo rosso.
+  - Persone dell'organizzazione: ricerca, filtro ruolo, Invita; righe con avatar, nome, stato 2FA, team, ruolo a menu e ⋯; inviti in attesa con Annulla.
+
+- **Amministrazione (2026-11-17).** Round `028-admin-mix` variante a (027 B con la panoramica di 027 C). Guscio delle impostazioni (026 A) con menu Panoramica, Utenti, Inviti, Organizzazioni | Infrastruttura: Storage (con "1 avviso" in `--warn`), Runner, Job e coda | Istanza: Impostazioni, Autenticazione, Email, Audit.
+  - Panoramica: intervallo 24 ore / 7 giorni; avviso su `--warn-s` con azione; tre grafici (richieste al minuto ad area, job Actions a barre verdi con i falliti in rosso, disco locale) con valore grande e assi; tabella Servizi in superficie (Server, Database, Storage, Cache calda, Runner, Email, Job in background) con icona, nome, dettaglio, stato in colonna fissa 128 px allineata a sinistra e azione in colonna 104 px; "Ricontrolla"; coda dell'audit in stile terminale a colonne (ora, evento in `--accent` o `--warn`, utente, oggetto).
+  - Utenti: Invita utente; filtri a pillole con conteggi (Tutti, Admin, Sospesi, Senza 2FA, Bot) e ricerca; righe con selezione, avatar, nome e email, ruolo e stato a chip, 2FA, ultima attività, ⋯.
+  - Storage: ogni policy come catena di nodi mono (primario → repliche → cache) con "Aggiungi replica" tratteggiato in `--warn` se manca; tabella destinazioni (nome e percorso, tipo, spazio con barra, stato, Prova / Svuota).
+  - Le serie temporali (richieste, job, disco) richiedono una raccolta nuova lato server.
+
+- **Accesso (2026-11-17).** Round `029-accesso`, variante A "GitHub fedele". Vale per login, registrazione, recupero password, verifica email, due passaggi, device code dei runner e consenso OAuth.
+  - Pagina senza header dell'app: colonna centrata (400 px, 460 px per runner e OAuth) con logo 44 px, titolo 24 px centrato e sottotitolo; modulo in una scheda (`--surface` con interno `--bg`, campi su `--surface`); sotto un riquadro con bordo per il link secondario ("Nuovo qui? Crea un account"); in fondo Termini, Privacy, Stato e versione.
+  - Login: username o email, password con "Password dimenticata?", Accedi a tutta larghezza, "oppure", passkey e provider esterni.
+  - Due passaggi: sei caselle mono 46×54, Verifica, poi chiave di sicurezza e codice di recupero.
+  - Runner: codice del dispositivo in caselle (4 + 4) da confrontare col terminale, dati del server (host, sistema, indirizzo, etichette), segmentato Istanza / Organizzazione / Repository, Rifiuta e Approva runner.
+  - OAuth: avatar dell'app e dell'utente, permessi richiesti con icona e descrizione, Annulla e Autorizza, URL di ritorno in mono.
+
 ## Implementazione (web/src/ui)
 
 - Kit sopra primitive Radix: Button, Input, Select, Dialog, Menu, Tabs, Table, Badge, Toast, EmptyState, più Card e Icon. Lo stile è nostro, solo da token (`web/src/ui/ui.css`).
