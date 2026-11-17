@@ -1,6 +1,6 @@
 // CodeMirror 6 setup, loaded only by the editor page through a dynamic import.
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import { bracketMatching, HighlightStyle, indentOnInput, syntaxHighlighting, type LanguageSupport } from "@codemirror/language";
+import { bracketMatching, HighlightStyle, indentOnInput, indentUnit, syntaxHighlighting, type LanguageSupport } from "@codemirror/language";
 import { Compartment, EditorState } from "@codemirror/state";
 import { drawSelection, EditorView, highlightActiveLine, highlightActiveLineGutter, keymap, lineNumbers } from "@codemirror/view";
 import { tags } from "@lezer/highlight";
@@ -57,11 +57,22 @@ function languageFor(path: string): Loader | undefined {
   return dot > 0 ? byExt[base.slice(dot + 1)] : undefined;
 }
 
-export type EditorHandle = { view: EditorView; setPath(path: string): void; destroy(): void };
+/** Indentation inserted by Tab: a tab character or N spaces. */
+export type Indent = "tab" | 2 | 4;
+export type EditorOptions = { indent: Indent; wrap: boolean };
+
+export type EditorHandle = { view: EditorView; setPath(path: string): void; setOptions(o: EditorOptions): void; destroy(): void };
+
+const optionExtensions = (o: EditorOptions) => [
+  indentUnit.of(o.indent === "tab" ? "\t" : " ".repeat(o.indent)),
+  EditorState.tabSize.of(o.indent === "tab" ? 4 : o.indent),
+  o.wrap ? EditorView.lineWrapping : [],
+];
 
 /** Mounts an editor in `parent`. `onChange` receives the whole document after edits. */
-export function createEditor(parent: HTMLElement, doc: string, path: string, label: string, onChange: (doc: string) => void): EditorHandle {
+export function createEditor(parent: HTMLElement, doc: string, path: string, label: string, onChange: (doc: string) => void, options: EditorOptions): EditorHandle {
   const lang = new Compartment();
+  const opts = new Compartment();
   const view = new EditorView({
     parent,
     state: EditorState.create({
@@ -79,6 +90,7 @@ export function createEditor(parent: HTMLElement, doc: string, path: string, lab
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
         theme,
         lang.of([]),
+        opts.of(optionExtensions(options)),
         EditorView.contentAttributes.of({ "aria-label": label }),
         EditorView.updateListener.of((u) => {
           if (u.docChanged) onChange(u.state.doc.toString());
@@ -99,5 +111,6 @@ export function createEditor(parent: HTMLElement, doc: string, path: string, lab
     });
   };
   setPath(path);
-  return { view, setPath, destroy: () => view.destroy() };
+  const setOptions = (o: EditorOptions) => view.dispatch({ effects: opts.reconfigure(optionExtensions(o)) });
+  return { view, setPath, setOptions, destroy: () => view.destroy() };
 }

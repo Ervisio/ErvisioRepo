@@ -85,3 +85,13 @@ Related:
 - Runners (Runners.tsx, `.rn-*`): one component for admin, org and repo; `.rn-sum` pills, `.rn-t` table in `.ui-box` (role=region, tabIndex), `Meter` (value + bar, >70 warn, >90 err), `Details` expanded row (`.rn-kv`, jobs with spinner). The admin left menu shell is not part of this.
 - Releases (pages/releases/ReleasesPages.tsx, `.rel-*` at the end of styles/actions.css): Releases/Tags `ui-seg` of links, `Hero` for the latest (first page only), `.rel-t` table for the rest, detail `.rel-dg` with sticky `.rel-pane`, form `.rel-ng`. `useUploader` uploads queued files one by one after create/update (native `<progress>`), `DropZone` = label + sr-only file input.
 - Omitted for lack of API: run author filter and free-text run search, per-run ⋯ menu, Cache/Metrics/Usage entries, release/tag counts, release search, reactions, signed-tag info, "Generate notes", previous-tag picker, "Latest release" flag. Compare in the release panel only when the previous release is on the first page. Old `.rl-card`/`.rl-body` rules in ui/code/code.css are now unused.
+
+## Code and history (2026-11-17, rounds 018 A / 020)
+- Repo pages other than the home pass `head={false}` to `RepoFrame` (no RepoHead in Console).
+- `CodeLayout` (pages/code/FileTree.tsx, `.cx-*` in code.css): tree sidebar for folder, blob and edit pages; folders via `useTreeNames` (tree without lastCommits), "Go to file" filters the loaded tree queries; closed state in localStorage `erepo.codeTree`.
+- `LastCommit` strip (TreePage.tsx) heads folder and file boxes (`.ui-box` + `.ui-in`); file toolbar `.cx-code`/`.cx-tb`.
+- Editor: `Editor` takes `options` (indent tab/2/4, wrap; cm.ts compartments); Save opens a dialog (`CommitFields` with description, `pull` option -> compare page); "Preview changes" = `lineDiff` (ui/code/linediff.ts, LCS) rendered by `DiffBody`.
+- `DiffView` (ui/code/DiffView.tsx) is the shared diff layout for commit, compare and PR files: props `diff`, `header`, `toolbar`, `fileActions`; full-height file column (`--dv-top` 105px in Console), split by default, word highlight. Pages wrap it in `.cd-page` to go full width.
+- History: `useCommitLog` (infinite) timeline `.cm-*`, `CommitRow` (also used by PRs) with ref chips from the first 100 branches/tags; branches/tags tables `.br-*`; search `.sr-*` with client facets (extension, top folder).
+- Omitted (no API): per-commit check status, new/delete branch, protected-branch lock, search over commits/issues/PRs, "Most relevant" sort, PR preselection after "new branch + PR" (lands on compare).
+

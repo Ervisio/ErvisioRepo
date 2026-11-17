@@ -9,6 +9,7 @@ import { useT } from "../../i18n/useT.ts";
 import { Badge, Button, EmptyState, Icon, Menu, MenuItem, MenuLabel, MenuSeparator, Page } from "../../ui/index.ts";
 import { useLayout } from "../../ui/shell/layout.ts";
 import type { Section } from "../../ui/shell/nav.tsx";
+import { useNotify } from "../account/common.tsx";
 import { useProblemText } from "../auth/useProblemText.ts";
 import { PinButton } from "../repos/PinButton.tsx";
 import { ForkDialog } from "../repos/RepoList.tsx";
@@ -19,12 +20,14 @@ export type RepoTab = "code" | "issues" | "pulls" | "commits" | "branches" | "ta
 export const shortSha = (sha: string) => sha.slice(0, 7);
 
 /** Repository pages: title, actions, sub-navigation and the repo query itself. */
-export function RepoFrame({ owner, name, tab, section = "code", actions, children }: {
+export function RepoFrame({ owner, name, tab, section = "code", actions, head = true, children }: {
   owner: string;
   name: string;
   tab: RepoTab;
   section?: Section;
   actions?: ReactNode;
+  /** Console only: false leaves out the repository header (code and history pages, rounds 018 / 020). */
+  head?: boolean;
   children: (repo: Repo) => ReactNode;
 }) {
   const t = useT("code");
@@ -55,7 +58,7 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, childre
   if (layout === "console") {
     return (
       <Page section={section} title={r.fullName} quiet>
-        <RepoHead repo={r} />
+        {head && <RepoHead repo={r} />}
         {actions && <div className="page-actions rh-page-act">{actions}</div>}
         {children(r)}
       </Page>
@@ -210,7 +213,16 @@ export function RefSwitcher({ owner, name, current, onPick }: { owner: string; n
 }
 
 /** Breadcrumb path: repository root, then each directory, the last segment as plain text. */
-export function Crumb({ owner, name, refName, path }: { owner: string; name: string; refName: string; path: string }) {
+export function Crumb({ owner, name, refName, path, trailing, linkLast }: {
+  owner: string;
+  name: string;
+  refName: string;
+  path: string;
+  /** Ends with a separator (a folder, or the directory of a file name being edited). */
+  trailing?: boolean;
+  /** Every segment is a link (the editor: the last segment is the directory, not the page). */
+  linkLast?: boolean;
+}) {
   const t = useT("code");
   const parts = path.split("/").filter(Boolean);
   return (
@@ -229,7 +241,7 @@ export function Crumb({ owner, name, refName, path }: { owner: string; name: str
             <span className="rp-crumb-sep" aria-hidden="true">
               /
             </span>
-            {i === parts.length - 1 ? (
+            {i === parts.length - 1 && !linkLast ? (
               <span aria-current="page">{p}</span>
             ) : (
               <Link to="/$owner/$name" params={{ owner, name }} search={{ ref: refName, path: sub }}>
@@ -239,8 +251,51 @@ export function Crumb({ owner, name, refName, path }: { owner: string; name: str
           </span>
         );
       })}
+      {trailing && (
+        <span className="rp-crumb-sep" aria-hidden="true">
+          /
+        </span>
+      )}
     </nav>
   );
+}
+
+/** Icon button that copies `value` and confirms with a toast (the toast region announces it). */
+export function CopyButton({ value, label, className = "rp-ib" }: { value: string; label: string; className?: string }) {
+  const ta = useT("account");
+  const notify = useNotify();
+  return (
+    <Button
+      icon="copy"
+      variant="ghost"
+      className={className}
+      aria-label={label}
+      title={label}
+      onClick={() => navigator.clipboard.writeText(value).then(() => notify.ok(ta("copied")), (e: unknown) => notify.fail(e))}
+    />
+  );
+}
+
+/** Initial of a commit author in a round tile (git authors have no avatar). */
+export function Initial({ name, size = 20 }: { name: string; size?: number }) {
+  return (
+    <span className="cx-av" style={{ width: size, height: size, fontSize: Math.round(size * 0.42) }} aria-hidden="true">
+      {(name.trim()[0] ?? "?").toUpperCase()}
+    </span>
+  );
+}
+
+/** "Today", "Yesterday" or the date, for grouping lists by day. */
+export function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((day(new Date()) - day(d)) / 86400000);
+  if (diff === 0 || diff === 1) {
+    const s = rtf.format(-diff, "day");
+    return s.charAt(0).toLocaleUpperCase() + s.slice(1);
+  }
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: diff > 300 ? "numeric" : undefined });
 }
 
 /** Previous / next buttons for offset pagination. `page` is 1-based. */

@@ -92,13 +92,13 @@ export function Readme({ owner, name, refName, path, label, action }: { owner: s
     );
   }
   return (
-    <section id="readme" className="rp-box rp-readme" aria-label={label ?? file}>
-      <div className="rp-head">
+    <section id="readme" className="ui-box rp-readme" aria-label={label ?? file}>
+      <div className="ui-box-h rp-rmh">
         <Icon name="book" />
         <h2>{label ?? file}</h2>
         {action && <span className="rp-head-a">{action}</span>}
       </div>
-      <div className="rp-rb">{body}</div>
+      <div className="ui-in rp-rb">{body}</div>
     </section>
   );
 }

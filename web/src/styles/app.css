@@ -97,6 +97,12 @@ h1, h2, h3 { letter-spacing: -.01em; }
 .tb-main:has(.st) { max-width: 1060px; }
 /* The repository home adds a 296px sidebar: 1216px of content. */
 .tb-main:has(.rp-home) { max-width: 1264px; }
+/* Code and history pages (rounds 018 A / 020): tree + content 1440px, timeline 1120px, search 1280px,
+   commit detail and compare full width (their file column runs along the left edge). */
+.tb-main:has(.cx) { max-width: 1488px; padding-top: 20px; }
+.tb-main:has(.cm-page) { max-width: 1168px; padding-top: 22px; }
+.tb-main:has(.sr-page) { max-width: 1328px; padding-top: 22px; }
+.tb-main:has(.cd-page) { max-width: none; padding: 0; }
 
 .tb-av { width: 28px; height: 28px; border-radius: 50%; background: var(--acc-fill); color: var(--on-accent); display: grid; place-items: center; font-weight: 600; font-size: 11px; flex: none; object-fit: cover; overflow: hidden; }
 .tb-av.lg { width: 30px; height: 30px; font-size: 12px; }

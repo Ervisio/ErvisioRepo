@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { canWrite, rawUrl, useBlame, useBlob, useEditFile, type Blame, type BlobFile } from "../../api/code.ts";
+import { canWrite, rawUrl, useBlame, useBlob, useCommits, useEditFile, type Blame, type BlobFile } from "../../api/code.ts";
 import { ApiError } from "../../api/http.ts";
 import type { Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
@@ -10,7 +10,9 @@ import { CodeView } from "../../ui/code/CodeView.tsx";
 import { highlight, type Token } from "../../ui/code/highlight.ts";
 import { useNotify } from "../account/common.tsx";
 import { CommitFields, emptyTarget, targetBody } from "./CommitForm.tsx";
-import { Crumb, dirOf, formatBytes, Gate, RefSwitcher, RepoFrame, shortSha, When } from "./common.tsx";
+import { CopyButton, Crumb, dirOf, formatBytes, Gate, RepoFrame, shortSha, When } from "./common.tsx";
+import { CodeLayout } from "./FileTree.tsx";
+import { LastCommit } from "./TreePage.tsx";
 import { isMarkdown, useInAppLinks, useMarkdownContext } from "./Readme.tsx";
 
 export type BlobMode = "code" | "blame" | "preview";
@@ -18,7 +20,7 @@ export type BlobMode = "code" | "blame" | "preview";
 /** One file: highlighted source, blame, or rendered Markdown; raw and download links. */
 export function BlobPage({ owner, name, refName, path, view }: { owner: string; name: string; refName?: string; path: string; view?: BlobMode }) {
   return (
-    <RepoFrame owner={owner} name={name} tab="code">
+    <RepoFrame owner={owner} name={name} tab="code" head={false}>
       {(repo) => <BlobBody repo={repo} refName={refName || repo.defaultBranch} path={path} view={view ?? (isMarkdown(path) ? "preview" : "code")} />}
     </RepoFrame>
   );
@@ -54,69 +56,82 @@ function lineFromHash(): number | undefined {
 }
 
 function BlobBody({ repo, refName, path, view }: { repo: Repo; refName: string; path: string; view: BlobMode }) {
+  const t = useT("code");
   const { owner, name } = repo;
   const blob = useBlob(owner, name, refName, path);
   const navigate = useNavigate();
   const go = (v: BlobMode) => void navigate({ to: "/$owner/$name/blob", params: { owner, name }, search: { ref: refName, path, view: v } });
   return (
-    <>
-      <div className="rp-bar">
-        <RefSwitcher
-          owner={owner}
-          name={name}
-          current={refName}
-          onPick={(ref) => void navigate({ to: "/$owner/$name/blob", params: { owner, name }, search: { ref, path, view } })}
-        />
-        <Crumb owner={owner} name={name} refName={refName} path={path} />
-      </div>
+    <CodeLayout
+      repo={repo}
+      refName={refName}
+      path={path}
+      isDir={false}
+      onPickRef={(ref) => void navigate({ to: "/$owner/$name/blob", params: { owner, name }, search: { ref, path, view } })}
+      top={
+        <>
+          <Crumb owner={owner} name={name} refName={refName} path={path} />
+          <CopyButton value={path} label={t("blob.copyPath")} />
+        </>
+      }
+    >
       <Gate query={blob}>{(b) => <BlobBox repo={repo} blob={b} refName={refName} path={path} view={view} onView={go} />}</Gate>
-    </>
+    </CodeLayout>
   );
 }
 
-/** One bordered box: a toolbar (meta, view switch, Raw, History, more actions) over the content. */
+/** The file's latest commit, from the first page of its history. */
+function FileCommit({ repo, refName, path }: { repo: Repo; refName: string; path: string }) {
+  const log = useCommits(repo.owner, repo.name, refName, path, 0);
+  const c = log.data?.commits[0];
+  if (!c) return null;
+  return <LastCommit repo={repo} commit={{ sha: c.sha, summary: c.summary, author: c.author.name, date: c.author.date }} refName={refName} path={path} />;
+}
+
+/** Surface with the latest commit, then the code area: toolbar (view, meta, Raw, copy, download, edit, more) over the content. */
 function BlobBox({ repo, blob: b, refName, path, view, onView }: { repo: Repo; blob: BlobFile; refName: string; path: string; view: BlobMode; onView: (v: BlobMode) => void }) {
   const t = useT("code");
   const { owner, name } = repo;
   const [deleting, setDeleting] = useState(false);
   const text = b.content !== undefined && !b.binary;
   const writable = canWrite(repo.permission) && b.ref.kind === "branch";
+  const editable = writable && !b.binary && !b.truncated && !b.lfs;
   const raw = rawUrl(owner, name, refName, path);
   const meta = [text ? t("blob.lines", { count: splitLines(b.content ?? "").length }) : "", formatBytes(b.size)].filter(Boolean).join(" · ");
   return (
-    <div className="rp-box">
-      <div className="rp-tool">
-        <span className="rp-meta">{meta}</span>
-        <div className="rp-ctl">
+    <div className="ui-box rp-blob">
+      <FileCommit repo={repo} refName={refName} path={path} />
+      <div className="cx-code">
+        <div className="cx-tb">
           {text && (
-            <div className="ui-tablist rp-seg" role="group" aria-label={t("blob.viewLabel")}>
+            <div className="ui-seg" role="group" aria-label={t("blob.viewLabel")}>
               {(isMarkdown(path) ? (["preview", "code", "blame"] as const) : (["code", "blame"] as const)).map((m) => (
-                <button key={m} type="button" className="ui-tab" data-state={view === m ? "active" : "inactive"} aria-pressed={view === m} onClick={() => onView(m)}>
+                <button key={m} type="button" className="ui-segi" aria-pressed={view === m} onClick={() => onView(m)}>
                   {t(`blob.view.${m}`)}
                 </button>
               ))}
             </div>
           )}
-          <a className="ui-btn ui-btn-secondary rp-ib" href={raw} target="_blank" rel="noopener" aria-label={t("blob.raw")} title={t("blob.raw")}>
-            <Icon name="file" />
+          <span className="cx-meta">{meta}</span>
+          <span className="acc-grow" />
+          <a className="ui-btn ui-btn-ghost" href={raw} target="_blank" rel="noopener">
+            {t("blob.raw")}
           </a>
-          <Link className="ui-btn ui-btn-secondary rp-ib" to="/$owner/$name/commits" params={{ owner, name }} search={{ ref: refName, path }} aria-label={t("tree.history")} title={t("tree.history")}>
-            <Icon name="clock" />
-          </Link>
-          <Menu align="end" label={t("blob.more")} trigger={<Button icon="dots" className="rp-ib" aria-label={t("blob.more")} title={t("blob.more")} />}>
-            {writable && !b.binary && !b.truncated && !b.lfs && (
-              <MenuItem asChild>
-                <Link to="/$owner/$name/edit" params={{ owner, name }} search={{ ref: refName, path }}>
-                  <Icon name="edit" />
-                  {t("blob.edit")}
-                </Link>
-              </MenuItem>
-            )}
+          {text && b.content !== undefined && <CopyButton value={b.content} label={t("blob.copyContent")} />}
+          <a className="ui-btn ui-btn-ghost rp-ib" href={raw} download={path.split("/").pop()} aria-label={t("blob.download")} title={t("blob.download")}>
+            <Icon name="download" />
+          </a>
+          {editable && (
+            <Link className="ui-btn ui-btn-ghost rp-ib" to="/$owner/$name/edit" params={{ owner, name }} search={{ ref: refName, path }} aria-label={t("blob.edit")} title={t("blob.edit")}>
+              <Icon name="edit" />
+            </Link>
+          )}
+          <Menu align="end" label={t("blob.more")} trigger={<Button icon="dots" variant="ghost" className="rp-ib" aria-label={t("blob.more")} title={t("blob.more")} />}>
             <MenuItem asChild>
-              <a href={raw} download={path.split("/").pop()}>
-                <Icon name="download" />
-                {t("blob.download")}
-              </a>
+              <Link to="/$owner/$name/commits" params={{ owner, name }} search={{ ref: refName, path }}>
+                <Icon name="clock" />
+                {t("tree.history")}
+              </Link>
             </MenuItem>
             {writable && (
               <>
@@ -128,8 +143,8 @@ function BlobBox({ repo, blob: b, refName, path, view, onView }: { repo: Repo; b
             )}
           </Menu>
         </div>
+        <BlobContent repo={repo} blob={b} refName={refName} view={view} />
       </div>
-      <BlobContent repo={repo} blob={b} refName={refName} view={view} />
       {writable && <DeleteFile repo={repo} blob={b} branch={b.ref.name.replace(/^refs\/heads\//, "")} open={deleting} onOpenChange={setDeleting} />}
     </div>
   );

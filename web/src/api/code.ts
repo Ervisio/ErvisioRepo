@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, request } from "./http.ts";
 import type { Repo } from "./repos.ts";
 import type { components } from "./schema";
@@ -76,6 +76,10 @@ function useCode<T>(owner: string, name: string, parts: unknown[], path: string,
 export const useTree = (owner: string, name: string, ref: string, path: string, enabled = true) =>
   useCode<Tree>(owner, name, ["tree", ref, path], `/tree${qs({ ref, path, lastCommits: true })}`, enabled);
 
+/** Entries of one directory without last-commit data (cheap): the file tree sidebar. */
+export const useTreeNames = (owner: string, name: string, ref: string, path: string, enabled = true) =>
+  useCode<Tree>(owner, name, ["tree-names", ref, path], `/tree${qs({ ref, path })}`, enabled);
+
 export const useBlob = (owner: string, name: string, ref: string, path: string) =>
   useCode<BlobFile>(owner, name, ["blob", ref, path], `/blob${qs({ ref, path })}`, path !== "");
 
@@ -91,6 +95,17 @@ export const useCommits = (owner: string, name: string, ref: string, path: strin
     queryFn: () =>
       request<CommitPage>("GET", `${repoBase(owner, name)}/commits${qs({ ref, path, offset: page * PAGE_SIZE, limit: PAGE_SIZE })}`),
     placeholderData: keepPreviousData,
+    ...hydrationRetry,
+  });
+
+/** History of a ref as a growing list ("Load more commits"). */
+export const useCommitLog = (owner: string, name: string, ref: string, path: string) =>
+  useInfiniteQuery({
+    queryKey: key(owner, name, "log", ref, path),
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      request<CommitPage>("GET", `${repoBase(owner, name)}/commits${qs({ ref, path, offset: pageParam * PAGE_SIZE, limit: PAGE_SIZE })}`),
+    getNextPageParam: (last, pages) => (last.hasMore ? pages.length : undefined),
     ...hydrationRetry,
   });
 

@@ -6,7 +6,8 @@ import { useT } from "../../i18n/useT.ts";
 import { Button, Card, EmptyState, Icon, Menu, MenuItem, MenuSeparator } from "../../ui/index.ts";
 import { useLayout } from "../../ui/shell/layout.ts";
 import { EmptyRepoCard } from "../repos/RepoPage.tsx";
-import { Crumb, dirOf, Gate, RefSwitcher, RepoFrame, shortSha, When } from "./common.tsx";
+import { Crumb, dirOf, Gate, Initial, RefSwitcher, RepoFrame, shortSha, When } from "./common.tsx";
+import { CodeLayout } from "./FileTree.tsx";
 import { Readme } from "./Readme.tsx";
 import { CloneMenu } from "./RepoHead.tsx";
 import { RepoSidebar } from "./RepoSidebar.tsx";
@@ -14,7 +15,7 @@ import { RepoSidebar } from "./RepoSidebar.tsx";
 /** Repository home and directory browsing: tree, last commit, README. */
 export function TreePage({ owner, name, refName, path = "" }: { owner: string; name: string; refName?: string; path?: string }) {
   return (
-    <RepoFrame owner={owner} name={name} tab="code">
+    <RepoFrame owner={owner} name={name} tab="code" head={path === ""}>
       {(repo) => <TreeBody repo={repo} refName={refName || repo.defaultBranch} path={path} />}
     </RepoFrame>
   );
@@ -41,13 +42,53 @@ function TreeBody({ repo, refName, path }: { repo: Repo; refName: string; path: 
     ) : (
       <EmptyState icon="folder" title={t("tree.notFound")} description={t("tree.notFoundHint", { ref: refName })} />
     );
-  const home = console_ && isRoot;
+  const files = (
+    <Gate query={tree} notFound={notFound}>
+      {(data) => (
+        <>
+          {console_ || !isRoot ? (
+            <FileBox repo={repo} tree={data} refName={refName} path={path} />
+          ) : (
+            <TreeCard repo={repo} tree={data} refName={refName} path={path} />
+          )}
+          {data.readme && <Readme owner={owner} name={name} refName={refName} path={data.readme} />}
+        </>
+      )}
+    </Gate>
+  );
+  // A folder: the file tree on the left, the path and its actions on top (round 018 A).
+  if (!isRoot) {
+    const pick = (ref: string) => void navigate({ to: "/$owner/$name", params: { owner, name }, search: { ref, path } });
+    return (
+      <CodeLayout
+        repo={repo}
+        refName={refName}
+        path={path}
+        isDir
+        onPickRef={pick}
+        top={
+          <>
+            <Crumb owner={owner} name={name} refName={refName} path={path} trailing />
+            <span className="acc-grow" />
+            {canWrite(repo.permission) && tree.data?.ref.kind === "branch" && (
+              <Link to="/$owner/$name/new" params={{ owner, name }} search={{ ref: refName, path }} className="ui-btn ui-btn-secondary">
+                <Icon name="plus" />
+                <span className="cx-lbl">{t("tree.addFile")}</span>
+              </Link>
+            )}
+            <RepoMore repo={repo} refName={refName} path={path} />
+          </>
+        }
+      >
+        {files}
+      </CodeLayout>
+    );
+  }
   const content = (
     <>
       {console_ ? (
         <div className="rp-bar">
           {switcher}
-          {path !== "" && <Crumb owner={owner} name={name} refName={refName} path={path} />}
           <span className="acc-grow" />
           <CloneMenu repo={repo} refName={refName} />
           <RepoMore repo={repo} refName={refName} path={path} />
@@ -63,21 +104,10 @@ function TreeBody({ repo, refName, path }: { repo: Repo; refName: string; path: 
           <CloneMenu repo={repo} refName={refName} />
         </div>
       )}
-      <Gate query={tree} notFound={notFound}>
-        {(data) => (
-          <>
-            {console_ ? (
-              <FileBox repo={repo} tree={data} refName={refName} path={path} />
-            ) : (
-              <TreeCard repo={repo} tree={data} refName={refName} path={path} />
-            )}
-            {data.readme && <Readme owner={owner} name={name} refName={refName} path={data.readme} />}
-          </>
-        )}
-      </Gate>
+      {files}
     </>
   );
-  if (!home) return content;
+  if (!console_) return content;
   return (
     <div className="rp-home">
       <div className="rp-main">{content}</div>
@@ -133,80 +163,89 @@ function RepoMore({ repo, refName, path }: { repo: Repo; refName: string; path: 
   );
 }
 
-/** Console file browser: the latest commit as a header strip over a fixed-column table. */
+/** File list (rounds 015 B / 018 A): a surface with the latest commit as a strip over the rows on --bg. */
 function FileBox({ repo, tree, refName, path }: { repo: Repo; tree: Tree; refName: string; path: string }) {
   const t = useT("code");
   const { owner, name } = repo;
   const last = latest(tree.entries);
   return (
-    <div className="rp-box">
-      {last && (
-        <div className="rp-head">
-          <span className="rp-who">
-            <span className="rp-av" aria-hidden="true">
-              {last.author.slice(0, 1).toUpperCase()}
-            </span>
-            <b>{last.author}</b>
-          </span>
-          <Link className="rp-hmsg" to="/$owner/$name/commit/$sha" params={{ owner, name, sha: last.sha }}>
-            {last.summary}
-          </Link>
-          <span className="rp-hm">
-            <code className="rp-hash">{shortSha(last.sha)}</code>
-            <When iso={last.date} />
-            <Link className="rp-hist" to="/$owner/$name/commits" params={{ owner, name }} search={{ ref: refName, path: path || undefined }}>
-              <Icon name="clock" />
-              {t("tree.history")}
-            </Link>
-          </span>
-        </div>
-      )}
-      <table className="rp-tbl">
-        <caption className="sr-only">{t("tree.files")}</caption>
-        <colgroup>
-          <col className="rp-c1" />
-          <col className="rp-c2" />
-          <col className="rp-c3" />
-        </colgroup>
-        <thead className="sr-only">
-          <tr>
-            <th scope="col">{t("tree.colName")}</th>
-            <th scope="col">{t("tree.colMessage")}</th>
-            <th scope="col">{t("tree.colDate")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {path !== "" && (
-            <tr className="k-folder">
-              <td className="rp-n">
-                <Link to="/$owner/$name" params={{ owner, name }} search={{ ref: refName, path: dirOf(path) || undefined }} className="rp-nm">
-                  <Icon name="folder" className="ui-icon rp-i" />
-                  <span>..</span>
-                </Link>
-              </td>
-              <td className="rp-cm" />
-              <td className="rp-tm" />
+    <div className="ui-box rp-files">
+      {last && <LastCommit repo={repo} commit={last} refName={refName} path={path} />}
+      <div className="ui-in">
+        <table className="rp-tbl">
+          <caption className="sr-only">{t("tree.files")}</caption>
+          <colgroup>
+            <col className="rp-c1" />
+            <col className="rp-c2" />
+            <col className="rp-c3" />
+          </colgroup>
+          <thead className="sr-only">
+            <tr>
+              <th scope="col">{t("tree.colName")}</th>
+              <th scope="col">{t("tree.colMessage")}</th>
+              <th scope="col">{t("tree.colDate")}</th>
             </tr>
-          )}
-          {tree.entries.map((e) => (
-            <tr key={e.path} className={e.type === "tree" ? "k-folder" : undefined}>
-              <td className="rp-n">
-                <EntryLink owner={owner} name={name} refName={refName} entry={e} lead={<Icon name={e.type === "tree" || e.type === "submodule" ? "folder" : "file"} className="ui-icon rp-i" />} />
-              </td>
-              <td className="rp-cm">
-                {e.lastCommit && (
-                  <Link to="/$owner/$name/commit/$sha" params={{ owner, name, sha: e.lastCommit.sha }}>
-                    {e.lastCommit.summary}
+          </thead>
+          <tbody>
+            {path !== "" && (
+              <tr className="k-folder">
+                <td className="rp-n">
+                  <Link to="/$owner/$name" params={{ owner, name }} search={{ ref: refName, path: dirOf(path) || undefined }} className="rp-nm">
+                    <Icon name="folder" className="ui-icon rp-i" />
+                    <span>..</span>
                   </Link>
-                )}
-              </td>
-              <td className="rp-tm">{e.lastCommit && <When iso={e.lastCommit.date} />}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {tree.entries.length === 0 && <p className="ui-note acc-pad">{t("tree.empty")}</p>}
-      {tree.truncated && <p className="ui-note acc-pad">{t("tree.truncated")}</p>}
+                </td>
+                <td className="rp-cm" />
+                <td className="rp-tm" />
+              </tr>
+            )}
+            {tree.entries.map((e) => (
+              <tr key={e.path} className={e.type === "tree" ? "k-folder" : undefined}>
+                <td className="rp-n">
+                  <EntryLink owner={owner} name={name} refName={refName} entry={e} lead={<Icon name={e.type === "tree" || e.type === "submodule" ? "folder" : "file"} className="ui-icon rp-i" />} />
+                </td>
+                <td className="rp-cm">
+                  {e.lastCommit && (
+                    <Link to="/$owner/$name/commit/$sha" params={{ owner, name, sha: e.lastCommit.sha }}>
+                      {e.lastCommit.summary}
+                    </Link>
+                  )}
+                </td>
+                <td className="rp-tm">{e.lastCommit && <When iso={e.lastCommit.date} />}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {tree.entries.length === 0 && <p className="ui-note acc-pad">{t("tree.empty")}</p>}
+        {tree.truncated && <p className="ui-note acc-pad">{t("tree.truncated")}</p>}
+      </div>
+    </div>
+  );
+}
+
+/** Strip with the latest commit of a folder or file: author, message, sha, time, History. */
+export function LastCommit({ repo, commit: c, refName, path }: { repo: Repo; commit: { sha: string; summary: string; author: string; date: string }; refName: string; path: string }) {
+  const t = useT("code");
+  const { owner, name } = repo;
+  return (
+    <div className="ui-box-h rp-lc">
+      <Initial name={c.author} size={22} />
+      <span className="rp-lcm">
+        <b>{c.author}</b>
+        <Link to="/$owner/$name/commit/$sha" params={{ owner, name, sha: c.sha }}>
+          {c.summary}
+        </Link>
+      </span>
+      <Link className="rp-hash" to="/$owner/$name/commit/$sha" params={{ owner, name, sha: c.sha }}>
+        {shortSha(c.sha)}
+      </Link>
+      <span className="ui-tm rp-lct">
+        <When iso={c.date} />
+      </span>
+      <Link className="ui-btn ui-btn-ghost rp-hist" to="/$owner/$name/commits" params={{ owner, name }} search={{ ref: refName, path: path || undefined }}>
+        <Icon name="clock" />
+        <span className="cx-lbl">{t("tree.history")}</span>
+      </Link>
     </div>
   );
 }
