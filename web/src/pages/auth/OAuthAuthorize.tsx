@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { isUnauthenticated, useSession } from "../../api/identity.ts";
 import { decideOAuthConsent, getOAuthConsent, parseAuthorizeQuery, type OAuthConsent } from "../../api/oauth.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, EmptyState } from "../../ui/index.ts";
+import { Button, EmptyState, Icon } from "../../ui/index.ts";
 import { Avatar } from "../../ui/shell/ConsoleShell.tsx";
 import { AppLogo, originOf, useOwnerLabel, useScopeText } from "../oauth/common.tsx";
 import { AuthFrame } from "./AuthFrame.tsx";
@@ -28,7 +28,6 @@ export function OAuthAuthorize() {
   const session = useSession();
   const navigate = useNavigate();
   const owner = useOwnerLabel();
-  const scopeText = useScopeText();
   const [raw] = useState(() => (bootQuery !== undefined && window.location.pathname === AUTHORIZE_PATH ? bootQuery : window.location.search));
   const [query] = useState(() => parseAuthorizeQuery(raw));
   const [phase, setPhase] = useState<Phase>(() => (query.clientId ? { kind: "loading" } : { kind: "error", message: t("consent.noClient") }));
@@ -97,35 +96,51 @@ export function OAuthAuthorize() {
 
   const { app, scopes, redirectUri } = phase.consent;
   return (
-    <div className="auth sec-act">
-      <main className="auth-card oa-consent">
-        <header className="oa-consent-h">
-          <AppLogo name={app.name} url={app.logoUrl} size="xl" />
-          <div>
-            <h1>{t("consent.authorize", { app: app.name })}</h1>
-            <p className="auth-sub">{t("by", { owner: owner(app.owner) })}</p>
-          </div>
-        </header>
-        {app.description && <p className="oa-consent-d">{app.description}</p>}
-        <div className="oa-consent-who">
-          <Avatar user={user} size="md" />
-          <p>{t("consent.account", { user: user.username })}</p>
-        </div>
-        <h2 className="oa-consent-t">{t("consent.wants")}</h2>
-        <ul className="oa-consent-s">
-          {scopes.length > 0 ? scopes.map((s) => <li key={s}>{scopeText(s)}</li>) : <li>{t("scope.none")}</li>}
-        </ul>
-        <p className="auth-sub">{t("consent.redirect", { origin: originOf(redirectUri) })}</p>
-        <div className="acc-actions">
-          <Button variant="primary" disabled={busy} onClick={() => void decide(true)}>{t("consent.approve")}</Button>
-          <Button disabled={busy} onClick={() => void decide(false)}>{t("consent.cancel")}</Button>
-        </div>
-        {app.homepageUrl && (
-          <p className="auth-foot">
-            <a href={app.homepageUrl} target="_blank" rel="noreferrer noopener">{originOf(app.homepageUrl)}</a>
-          </p>
+    <AuthFrame
+      wide
+      title={t("consent.authorize", { app: app.name })}
+      subtitle={t("by", { owner: owner(app.owner) })}
+      footer={app.homepageUrl ? <a href={app.homepageUrl} target="_blank" rel="noreferrer noopener">{originOf(app.homepageUrl)}</a> : undefined}
+    >
+      <div className="auth-pair">
+        <AppLogo name={app.name} url={app.logoUrl} size="xl" />
+        <span className="auth-pair-d" aria-hidden="true"><i /><i /><i /></span>
+        <Avatar user={user} size="xl" />
+      </div>
+      <p className="auth-note">{t("consent.account", { user: user.username })}</p>
+      {app.description && <p className="auth-note">{app.description}</p>}
+      <h2 className="sr-only">{t("consent.wants")}</h2>
+      <ul className="auth-scopes">
+        {scopes.length > 0 ? scopes.map((s) => <ScopeRow key={s} scope={s} />) : (
+          <li className="auth-scope"><Icon name="info" /><span><b>{t("scope.none")}</b></span></li>
         )}
-      </main>
-    </div>
+      </ul>
+      <div className="auth-actions">
+        <Button disabled={busy} onClick={() => void decide(false)}>{t("consent.cancel")}</Button>
+        <Button variant="primary" disabled={busy} onClick={() => void decide(true)}>{t("consent.approve")}</Button>
+      </div>
+      <p className="auth-note auth-redirect">{t("consent.redirectTo")} <span className="auth-mono">{redirectUri}</span></p>
+    </AuthFrame>
+  );
+}
+
+const SCOPE_GROUPS = { user: "user", repo: "book", packages: "pkg", actions: "play" } as const;
+type ScopeGroup = keyof typeof SCOPE_GROUPS;
+const isGroup = (g: string): g is ScopeGroup => g in SCOPE_GROUPS;
+
+/** One requested scope: an icon for its area, the area name and what the scope allows. */
+function ScopeRow({ scope }: { scope: string }) {
+  const t = useT("oauth");
+  const scopeText = useScopeText();
+  const group = scope.split(":")[0] ?? scope;
+  const known = isGroup(group);
+  return (
+    <li className="auth-scope">
+      <Icon name={known ? SCOPE_GROUPS[group] : "info"} />
+      <span>
+        <b>{known ? t(`scope.group.${group}`) : scope}</b>
+        {known && <small>{scopeText(scope)}</small>}
+      </span>
+    </li>
   );
 }

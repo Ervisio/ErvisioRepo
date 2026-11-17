@@ -8,6 +8,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Sign-in pages (round 029): no app header, centred 400 px column (460 px for runner approval and OAuth consent) with logo, title, soft card, a box for the secondary link and the version footer. Login shows "Forgot password?" next to the password, an "or" divider and passkey / provider buttons; two-factor uses a six-box one-time code (one real input underneath, so autofill and paste work) and an "Other methods" block; device and runner codes are drawn as boxes, the runner scope is a segmented control, OAuth consent lists each scope with an icon, area and description.
 - Web, Console layout (redesign phase 1, soft surfaces): two-row header with site menu, owner / repository breadcrumb, centred search pill (⌘K), New, notification dot and avatar; repository and organization tabs with icons on a second row (Releases and Settings promoted to tabs, the rest under More). Kit controls and containers use layered surfaces instead of rings.
 - Dashboard: four tiles (review requests, assigned issues, your open pull requests, failed runs) that pick the queue below, activity feed, repositories and an instance block for admins.
 - Notifications: mail-style list (Inbox / Review / Assigned / All, text filter) with a preview of the issue or pull request (state, description) and Done, Unsubscribe, Open.

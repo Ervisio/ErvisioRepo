@@ -9,6 +9,7 @@ import { useT } from "../../i18n/useT.ts";
 import { getCredential, webauthnSupported, type RequestOptionsJSON } from "../../lib/webauthn.ts";
 import { Button, Input } from "../../ui/index.ts";
 import { AuthFrame } from "./AuthFrame.tsx";
+import { Or } from "./parts.tsx";
 import { useProblemText } from "./useProblemText.ts";
 
 export function Login({ next, oidcError }: { next?: string; oidcError?: string }) {
@@ -75,23 +76,29 @@ export function Login({ next, oidcError }: { next?: string; oidcError?: string }
       }
     >
       <form className="auth-form" onSubmit={(e) => void submit(e)}>
-        <Input label={t("field.login")} name="login" autoComplete="username webauthn" autoFocus required value={login} onChange={(e) => setLogin(e.target.value)} />
-        <Input label={t("field.password")} name="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Input label={t("field.login")} name="login" autoComplete="username webauthn" autoCapitalize="none" spellCheck={false} autoFocus required value={login} onChange={(e) => setLogin(e.target.value)} />
+        <div className="auth-pw">
+          <Input label={t("field.password")} name="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Link to="/forgot-password" className="auth-link">{t("login.forgot")}</Link>
+        </div>
         {error && <p className="auth-error" role="alert">{error}</p>}
         <Button variant="primary" type="submit" disabled={busy}>{t("login.submit")}</Button>
-        <Link to="/forgot-password" className="auth-link">{t("login.forgot")}</Link>
-      </form>
-      {(webauthnSupported() || (providers.data?.length ?? 0) > 0) && <div className="auth-sep" role="separator"><span>{t("login.or")}</span></div>}
-      <div className="auth-alt">
-        {webauthnSupported() && (
-          <Button icon="lock" disabled={busy} onClick={() => void withPasskey()}>{t("login.passkey")}</Button>
+        {(webauthnSupported() || (providers.data?.length ?? 0) > 0) && (
+          <>
+            <Or>{t("login.or")}</Or>
+            <div className="auth-alt">
+              {webauthnSupported() && (
+                <Button icon="lock" disabled={busy} onClick={() => void withPasskey()}>{t("login.passkey")}</Button>
+              )}
+              {providers.data?.map((p) => (
+                <a key={p.name} className="ui-btn ui-btn-secondary" href={oidcLoginURL(p.name, target)}>
+                  {t("login.provider", { name: p.label })}
+                </a>
+              ))}
+            </div>
+          </>
         )}
-        {providers.data?.map((p) => (
-          <a key={p.name} className="ui-btn ui-btn-secondary" href={oidcLoginURL(p.name, target)}>
-            {t("login.provider", { name: p.label })}
-          </a>
-        ))}
-      </div>
+      </form>
     </AuthFrame>
   );
 }

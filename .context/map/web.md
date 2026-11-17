@@ -101,3 +101,8 @@ Related:
 - PR: `PullMeta` (state pill, refs, copy branch, Code menu), `PullTabs` with counts (commits page 1, files, statuses + check runs), `?tab=checks` = PullChecks, status card `.wk-stc` with `useHeadLines` + `CheckRows`, green `.wk-merge` split. Files changed = `DiffView` with `header` / `toolbar` inside `.cd-page`; review threads stay in a box under the diff (no inline threads).
 - Composer: soft box (`.wk-cps`), `before` / `extra` slots, write/preview `ui-seg`, `FormatBar` (role=toolbar, roving tabindex), textarea `field-sizing: content`.
 - Omitted (no API): view counts other than Open, label counts, PR checks N/M and review verdict in list rows, "Assigned to me" for PRs, linking a PR from the new issue form, inline diff threads, viewed-file tracking.
+
+## Sign-in pages (2026-11-17, round 029)
+- pages/auth/AuthFrame.tsx is the only chrome (no header): `.auth-pg` column 400 px (`wide` = 460 px), `.auth-box` + `.auth-in` card, `.auth-nx` box for the footer link, `.auth-lf` version from useMeta. Rules in styles/auth.css (pre-login block); fields/buttons inside `.auth-in` are overridden with `:root:root` to beat the console layout. OAuth consent also uses AuthFrame (`wide`).
+- pages/auth/parts.tsx: `OtpInput` (single transparent input over six decorative boxes), `CodeBoxes` (device code), `Details` (hairline rows), `Or` divider.
+- Omitted for lack of data/routes: Terms/Privacy/Status footer links, runner label chips and "verified app" line.

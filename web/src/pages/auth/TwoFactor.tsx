@@ -19,6 +19,7 @@ import { Button, Input } from "../../ui/index.ts";
 import { Secret } from "../account/common.tsx";
 import { QrCode } from "../account/QrCode.tsx";
 import { AuthFrame } from "./AuthFrame.tsx";
+import { OtpInput, Or } from "./parts.tsx";
 import { useProblemText } from "./useProblemText.ts";
 
 type Mode = "totp" | "recovery";
@@ -108,7 +109,7 @@ export function TwoFactor({ next }: { next?: string }) {
           >
             <QrCode value={setup.uri} label={t("enroll.qr")} />
             <Secret label={t("enroll.secret")} value={setup.secret} />
-            <Input label={t("field.code")} name="code" mono autoFocus required autoComplete="one-time-code" inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value)} />
+            <OtpInput label={t("field.code")} value={code} onChange={setCode} />
             {error && <p className="auth-error" role="alert">{error}</p>}
             <Button variant="primary" type="submit" disabled={busy}>{t("twofactor.submit")}</Button>
           </form>
@@ -119,6 +120,7 @@ export function TwoFactor({ next }: { next?: string }) {
 
   const recovery = mode === "recovery" || !methods.includes("totp");
   const canKey = methods.includes("webauthn") && webauthnSupported();
+  const canSwitch = methods.includes("totp") && methods.includes("recovery");
   return (
     <AuthFrame title={t("twofactor.title")} subtitle={recovery ? t("twofactor.recoveryHint") : t("twofactor.totpHint")} footer={back}>
       <form
@@ -128,52 +130,58 @@ export function TwoFactor({ next }: { next?: string }) {
           void run(async () => done(await (recovery ? mfaRecovery(code.trim()) : mfaTotp(code.trim()))));
         }}
       >
-        <Input
-          label={recovery ? t("field.recoveryCode") : t("field.code")}
-          name="code"
-          mono
-          autoFocus
-          required
-          autoComplete="one-time-code"
-          inputMode={recovery ? "text" : "numeric"}
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-        />
+        {recovery ? (
+          <Input
+            label={t("field.recoveryCode")}
+            name="code"
+            mono
+            autoFocus
+            required
+            autoComplete="one-time-code"
+            spellCheck={false}
+            autoCapitalize="none"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
+        ) : (
+          <OtpInput label={t("field.code")} value={code} onChange={setCode} />
+        )}
         {error && <p className="auth-error" role="alert">{error}</p>}
         <Button variant="primary" type="submit" disabled={busy}>{t("twofactor.submit")}</Button>
-        {methods.includes("totp") && methods.includes("recovery") && (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setMode(recovery ? "totp" : "recovery");
-              setCode("");
-              setError(undefined);
-            }}
-          >
-            {recovery ? t("twofactor.useApp") : t("twofactor.useRecovery")}
-          </Button>
+        {(canKey || canSwitch) && (
+          <>
+            <Or>{t("twofactor.other")}</Or>
+            <div className="auth-alt">
+              {canKey && (
+                <Button
+                  icon="lock"
+                  disabled={busy}
+                  onClick={() =>
+                    void run(async () => {
+                      const { options } = await mfaWebauthnBegin();
+                      const credential = await getCredential((options as { publicKey: RequestOptionsJSON }).publicKey);
+                      done(await mfaWebauthnFinish(credential));
+                    })
+                  }
+                >
+                  {t("twofactor.useKey")}
+                </Button>
+              )}
+              {canSwitch && (
+                <Button
+                  onClick={() => {
+                    setMode(recovery ? "totp" : "recovery");
+                    setCode("");
+                    setError(undefined);
+                  }}
+                >
+                  {recovery ? t("twofactor.useApp") : t("twofactor.useRecovery")}
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </form>
-      {canKey && (
-        <>
-          <div className="auth-sep" role="separator"><span>{t("login.or")}</span></div>
-          <div className="auth-alt">
-            <Button
-              icon="lock"
-              disabled={busy}
-              onClick={() =>
-                void run(async () => {
-                  const { options } = await mfaWebauthnBegin();
-                  const credential = await getCredential((options as { publicKey: RequestOptionsJSON }).publicKey);
-                  done(await mfaWebauthnFinish(credential));
-                })
-              }
-            >
-              {t("twofactor.useKey")}
-            </Button>
-          </div>
-        </>
-      )}
     </AuthFrame>
   );
 }

@@ -6,6 +6,7 @@ import { useT } from "../../i18n/useT.ts";
 import { Button, EmptyState, Input } from "../../ui/index.ts";
 import { formatDate } from "../account/common.tsx";
 import { AuthFrame } from "./AuthFrame.tsx";
+import { CodeBoxes, Details } from "./parts.tsx";
 import { useProblemText } from "./useProblemText.ts";
 
 type DeviceAuthorization = components["schemas"]["DeviceAuthorization"];
@@ -79,21 +80,21 @@ export function DeviceLogin({ userCode }: { userCode?: string }) {
   if (pending) {
     return (
       <AuthFrame title={t("device.authorizeTitle", { app: pending.appName })} subtitle={t("device.authorizeSub")} footer={home}>
-        <dl className="auth-dl">
-          <dt>{t("device.code")}</dt>
-          <dd className="auth-mono">{pending.userCode}</dd>
-          <dt>{t("device.requested")}</dt>
-          <dd>{formatDate(pending.createdAt)}{pending.requestIp ? ` · ${pending.requestIp}` : ""}</dd>
-          <dt>{t("device.scopes")}</dt>
-          <dd className="auth-mono">{pending.requestedScopes.join(", ") || "—"}</dd>
-          <dt>{t("device.granted")}</dt>
-          <dd className="auth-mono">{pending.scopes.join(", ")}</dd>
-        </dl>
-        <p className="auth-sub">{t("device.warning")}</p>
-        {error && <p className="auth-error" role="alert">{error}</p>}
         <div className="auth-form">
-          <Button variant="primary" disabled={busy} onClick={() => void decide(true)}>{t("device.authorize")}</Button>
-          <Button disabled={busy} onClick={() => void decide(false)}>{t("device.cancel")}</Button>
+          <CodeBoxes code={pending.userCode} label={t("device.code")} />
+          <Details
+            rows={[
+              { label: t("device.requested"), value: `${formatDate(pending.createdAt)}${pending.requestIp ? ` · ${pending.requestIp}` : ""}` },
+              { label: t("device.scopes"), value: pending.requestedScopes.join(", ") || "—", mono: true },
+              { label: t("device.granted"), value: pending.scopes.join(", "), mono: true },
+            ]}
+          />
+          <p className="auth-note">{t("device.warning")}</p>
+          {error && <p className="auth-error" role="alert">{error}</p>}
+          <div className="auth-actions">
+            <Button disabled={busy} onClick={() => void decide(false)}>{t("device.cancel")}</Button>
+            <Button variant="primary" disabled={busy} onClick={() => void decide(true)}>{t("device.authorize")}</Button>
+          </div>
         </div>
       </AuthFrame>
     );

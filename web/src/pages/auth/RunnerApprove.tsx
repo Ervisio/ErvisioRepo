@@ -5,6 +5,7 @@ import { useT } from "../../i18n/useT.ts";
 import { Button, EmptyState, Input } from "../../ui/index.ts";
 import { formatDate } from "../account/common.tsx";
 import { AuthFrame } from "./AuthFrame.tsx";
+import { CodeBoxes, Details } from "./parts.tsx";
 import { useProblemText } from "./useProblemText.ts";
 
 type Done = "approved" | "denied";
@@ -38,7 +39,7 @@ export function RunnerApprove({ userCode }: { userCode?: string }) {
   }
   if (device.data && active) {
     return (
-      <AuthFrame title={t("approve.reviewTitle")} subtitle={t("approve.reviewSub")} footer={home}>
+      <AuthFrame wide title={t("approve.reviewTitle")} subtitle={t("approve.reviewSub")} footer={home}>
         <ApproveForm device={device.data} onDone={setDone} />
       </AuthFrame>
     );
@@ -107,45 +108,40 @@ function ApproveForm({ device, onDone }: { device: ActionsRunnerDevice; onDone: 
         if (capOk && scopeOk) send(true);
       }}
     >
-      <dl className="auth-dl">
-        <dt>{t("approve.code")}</dt>
-        <dd className="auth-mono">{device.userCode}</dd>
-        <dt>{t("approve.host")}</dt>
-        <dd>{device.hostname}</dd>
-        <dt>{t("approve.system")}</dt>
-        <dd>{device.os} / {device.arch}</dd>
-        <dt>{t("approve.cpus")}</dt>
-        <dd>{device.cpus}</dd>
-        <dt>{t("approve.memory")}</dt>
-        <dd>{(device.memoryBytes / GIB).toFixed(1)} GiB</dd>
-        <dt>Docker</dt>
-        <dd>{device.docker ? t("approve.yes") : t("approve.no")}</dd>
-        <dt>{t("approve.version")}</dt>
-        <dd className="auth-mono">{device.version}</dd>
-        <dt>{t("approve.ip")}</dt>
-        <dd className="auth-mono">{device.requestIp || "—"}</dd>
-        <dt>{t("approve.expires")}</dt>
-        <dd>{formatDate(device.expiresAt)}</dd>
-      </dl>
+      <CodeBoxes code={device.userCode} label={t("approve.code")} />
+      <p className="auth-note">{t("approve.compare")}</p>
+      <Details
+        rows={[
+          { label: t("approve.host"), value: device.hostname, mono: true },
+          { label: t("approve.system"), value: `${device.os} / ${device.arch}` },
+          { label: t("approve.cpus"), value: device.cpus },
+          { label: t("approve.memory"), value: `${(device.memoryBytes / GIB).toFixed(1)} GiB` },
+          { label: "Docker", value: device.docker ? t("approve.yes") : t("approve.no") },
+          { label: t("approve.version"), value: device.version, mono: true },
+          { label: t("approve.ip"), value: device.requestIp || "—", mono: true },
+          { label: t("approve.expires"), value: formatDate(device.expiresAt) },
+        ]}
+      />
       <Input label={t("runners.name")} value={name} onChange={(e) => setName(e.target.value)} mono />
       <Input label={t("runners.extraLabels")} hint={t("approve.labelsHint")} value={labels} onChange={(e) => setLabels(e.target.value)} mono />
       <Input label={t("runners.capacity")} hint={t("approve.capacityHint")} type="number" min={1} max={64} value={capacity} onChange={(e) => setCapacity(e.target.value)} error={capOk ? undefined : t("approve.capacityError")} mono />
-      <fieldset className="rn-scope">
+      <fieldset className="auth-fs">
         <legend>{t("runners.scope")}</legend>
-        {targets.map((o) => (
-          <label key={o.id} className="acc-check">
-            <input type="radio" name="scope" checked={target === o.id} onChange={() => setTarget(o.id)} />
-            <span>{o.label}</span>
-          </label>
-        ))}
-        {target === "org" && <Input label={t("approve.orgName")} autoComplete="off" value={org} onChange={(e) => setOrg(e.target.value)} mono />}
-        {target === "repo" && <Input label={t("approve.repoName")} placeholder="owner/name" autoComplete="off" value={repo} onChange={(e) => setRepo(e.target.value)} mono />}
+        <div className="ui-seg auth-seg">
+          {targets.map((o) => (
+            <button key={o.id} type="button" className="ui-segi" aria-pressed={target === o.id} onClick={() => setTarget(o.id)}>
+              {o.label}
+            </button>
+          ))}
+        </div>
       </fieldset>
-      <p className="auth-sub">{t("approve.warning")}</p>
+      {target === "org" && <Input label={t("approve.orgName")} autoComplete="off" value={org} onChange={(e) => setOrg(e.target.value)} mono />}
+      {target === "repo" && <Input label={t("approve.repoName")} placeholder="owner/name" autoComplete="off" value={repo} onChange={(e) => setRepo(e.target.value)} mono />}
+      <p className="auth-note">{t("approve.warning")}</p>
       {error && <p className="auth-error" role="alert">{error}</p>}
-      <div className="auth-form">
-        <Button variant="primary" type="submit" disabled={decide.isPending || !capOk || !scopeOk}>{t("approve.approve")}</Button>
+      <div className="auth-actions">
         <Button type="button" disabled={decide.isPending} onClick={() => send(false)}>{t("approve.deny")}</Button>
+        <Button variant="primary" type="submit" disabled={decide.isPending || !capOk || !scopeOk}>{t("approve.approve")}</Button>
       </div>
     </form>
   );
