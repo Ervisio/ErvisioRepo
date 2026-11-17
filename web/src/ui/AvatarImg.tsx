@@ -1,4 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
+import { useT } from "../i18n/useT.ts";
 
 /**
  * An uploaded image (organization, repository or owner avatar) with the
@@ -7,20 +8,26 @@ import { useState, type CSSProperties, type ReactNode } from "react";
  * stay those of the placeholder; size and radius set them when the
  * placeholder has none, fill makes the image cover its parent.
  */
-export function AvatarImg({ src, className, size, radius, fill, children }: {
+export function AvatarImg({ src, className, size, radius, fill, zoom, children }: {
   src?: string;
   className?: string;
   size?: number;
   radius?: number | string;
   fill?: boolean;
+  /** Click or Enter opens the image in the lightbox (ui/Lightbox.tsx). */
+  zoom?: boolean;
   children?: ReactNode;
 }) {
+  const t = useT("ui");
   const [broken, setBroken] = useState("");
   if (src && broken !== src) {
     const style: CSSProperties = { objectFit: "cover", padding: 0, flex: "none" };
     if (size) Object.assign(style, { width: size, height: size });
     if (radius !== undefined) style.borderRadius = radius;
     if (fill) Object.assign(style, { width: "100%", height: "100%", borderRadius: "inherit", display: "block" });
+    if (zoom) {
+      return <img className={className} src={src} alt="" role="button" tabIndex={0} aria-label={t("lightbox.open")} data-zoom="" loading="lazy" style={style} onError={() => setBroken(src)} />;
+    }
     return <img className={className} src={src} alt="" aria-hidden="true" loading="lazy" style={style} onError={() => setBroken(src)} />;
   }
   if (children === undefined) return null;
@@ -32,11 +39,11 @@ export function AvatarImg({ src, className, size, radius, fill, children }: {
 }
 
 /** The image of a repository before its name; nothing when it has none. */
-export function RepoImage({ src, size = 20 }: { src?: string; size?: number }) {
+export function RepoImage({ src, size = 20, zoom }: { src?: string; size?: number; zoom?: boolean }) {
   if (!src) return null;
   return (
     <span style={{ display: "inline-flex", verticalAlign: "middle", marginInlineEnd: 6 }}>
-      <AvatarImg src={src} size={size} radius={Math.round(size / 4)} />
+      <AvatarImg src={src} size={size} radius={Math.round(size / 4)} zoom={zoom} />
     </span>
   );
 }

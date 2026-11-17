@@ -85,5 +85,10 @@
   "settings.leave.stay": "Stay",
   "settings.leave.go": "Leave and discard",
   "confirm.type": "Type {text} to confirm",
-  "bot.badge": "bot"
+  "bot.badge": "bot",
+  "lightbox.open": "Enlarge the image",
+  "lightbox.title": "Image",
+  "lightbox.fit": "Fit to screen",
+  "lightbox.actual": "Actual size",
+  "lightbox.original": "Open original"
 }

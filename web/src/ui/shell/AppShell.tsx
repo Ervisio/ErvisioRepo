@@ -4,6 +4,7 @@ import { ConsoleShell, type ShellDialogs } from "./ConsoleShell.tsx";
 import { CorsieShell } from "./CorsieShell.tsx";
 import { FoglioShell } from "./FoglioShell.tsx";
 import { useLayout } from "./layout.ts";
+import { LightboxProvider } from "../Lightbox.tsx";
 import { SearchPaletteProvider } from "./SearchPalette.tsx";
 import { useAppearance } from "./useAppearance.ts";
 
@@ -14,6 +15,7 @@ export function AppShell({ children, dialogs }: { children: ReactNode; dialogs?:
   return (
     <ToastProvider>
       <SearchPaletteProvider>
+        <LightboxProvider>
         {layout === "foglio" ? (
           <FoglioShell>{children}</FoglioShell>
         ) : layout === "corsie" ? (
@@ -21,6 +23,7 @@ export function AppShell({ children, dialogs }: { children: ReactNode; dialogs?:
         ) : (
           <ConsoleShell dialogs={dialogs}>{children}</ConsoleShell>
         )}
+        </LightboxProvider>
       </SearchPaletteProvider>
     </ToastProvider>
   );

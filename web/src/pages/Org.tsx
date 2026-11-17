@@ -415,7 +415,7 @@ function OrgHead({ org, isOwner, canCreate, onTab }: { org: Org; isOwner: boolea
   const members = useOrgMembers(org.name);
   return (
     <header className="oh">
-      <AvatarImg src={org.avatarUrl} className="oh-av">{(org.displayName || org.name).slice(0, 1).toUpperCase()}</AvatarImg>
+      <AvatarImg src={org.avatarUrl} className="oh-av" zoom>{(org.displayName || org.name).slice(0, 1).toUpperCase()}</AvatarImg>
       <div className="oh-m">
         <p className="oh-name">{org.displayName || org.name}</p>
         {org.description && <p className="oh-desc">{org.description}</p>}

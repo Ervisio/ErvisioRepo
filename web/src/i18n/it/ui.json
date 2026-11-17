@@ -85,5 +85,10 @@
   "settings.leave.stay": "Resta",
   "settings.leave.go": "Esci e scarta",
   "confirm.type": "Scrivi {text} per confermare",
-  "bot.badge": "bot"
+  "bot.badge": "bot",
+  "lightbox.open": "Ingrandisci l'immagine",
+  "lightbox.title": "Immagine",
+  "lightbox.fit": "Adatta allo schermo",
+  "lightbox.actual": "Dimensione reale",
+  "lightbox.original": "Apri l'originale"
 }

@@ -98,6 +98,7 @@ export function ProfilePage({ username, tab }: { username: string; tab?: Profile
 /** Left column: avatar, names, bio, details like GitHub (role, company, place, local time, links, email, joined) and organizations. */
 function ProfileCard({ user: u, own }: { user: UserProfile; own: boolean }) {
   const t = useT("repos");
+  const tu = useT("ui");
   const [broken, setBroken] = useState("");
   const host = (url: string) => {
     try {
@@ -110,7 +111,7 @@ function ProfileCard({ user: u, own }: { user: UserProfile; own: boolean }) {
   return (
     <aside className="up-card">
       {u.avatarUrl && broken !== u.avatarUrl ? (
-        <img className="up-av" src={u.avatarUrl} alt="" onError={() => setBroken(u.avatarUrl)} />
+        <img className="up-av" src={u.avatarUrl} alt={u.displayName || u.username} role="button" tabIndex={0} aria-label={tu("lightbox.open")} data-zoom="" onError={() => setBroken(u.avatarUrl)} />
       ) : (
         <span className="up-av" aria-hidden="true">{u.username.slice(0, 1).toUpperCase()}</span>
       )}

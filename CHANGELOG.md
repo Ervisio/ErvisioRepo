@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Images open in a lightbox (fit or actual size, open original, Esc to close): Markdown images outside links in READMEs, issues, pull requests and releases, and the profile, organization and repository images.
+
 ## [1.16.0] - 2026-11-17
 
 ### Added

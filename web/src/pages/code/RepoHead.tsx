@@ -48,7 +48,7 @@ export function RepoHead({ repo }: { repo: Repo }) {
         )}
         <span className="rh-sep" aria-hidden="true">/</span>
         <Link to="/$owner/$name" params={{ owner: repo.owner, name: repo.name }}>
-          <RepoImage src={repo.avatarUrl} size={22} />
+          <RepoImage src={repo.avatarUrl} size={22} zoom />
           <b>{repo.name}</b>
         </Link>
       </div>
