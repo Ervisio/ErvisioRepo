@@ -356,6 +356,14 @@ const releaseRoute = createRoute({
     return <ReleasePage owner={p.owner} name={p.name} id={p.id} />;
   },
 });
+const releaseTagRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/$owner/$name/releases/tag/$tag",
+  component: function ReleaseByTag() {
+    const { owner, name, tag } = releaseTagRoute.useParams();
+    return <ReleasePage owner={owner} name={name} id={tag} byTag />;
+  },
+});
 const releaseEditRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/$owner/$name/releases/$id/edit",
@@ -493,6 +501,7 @@ export const router = createRouter({
       releaseNewRoute,
       releaseRoute,
       releaseEditRoute,
+      releaseTagRoute,
       actionsRoute,
       actionRunRoute,
       repoSettingsRoute,

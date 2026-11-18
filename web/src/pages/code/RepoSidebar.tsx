@@ -85,14 +85,15 @@ function Releases({ repo }: { repo: Repo }) {
   const all = (
     <Link to="/$owner/$name/releases" params={{ owner, name }}>
       {t("side.releases")}
+      {rows && rows.length > 0 && <span className="rp-cnt">{total}</span>}
     </Link>
   );
   return (
-    <Group title={t("side.releases")} to={all} count={rows && rows.length > 0 ? total : undefined}>
+    <Group title={t("side.releases")} to={all}>
       {rows &&
         (latest ? (
           <>
-            <Link className="rp-rel" to="/$owner/$name/releases/$id" params={{ owner, name, id: latest.id }}>
+            <Link className="rp-rel" to="/$owner/$name/releases/tag/$tag" params={{ owner, name, tag: latest.tag }}>
               <Icon name="tag" />
               <span className="rp-rel-t">
                 <span className="rp-rel-n">

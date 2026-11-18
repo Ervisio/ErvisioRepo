@@ -162,7 +162,7 @@ function ReleaseList({ repo, page }: { repo: Repo; page: number }) {
                     {rest.map((r) => (
                       <tr key={r.id}>
                         <th scope="row">
-                          <Link to="/$owner/$name/releases/$id" params={{ owner, name, id: r.id }} className={r.draft ? "rel-v rel-vd" : "rel-v"}>{r.tag}</Link>
+                          <Link to="/$owner/$name/releases/tag/$tag" params={{ owner, name, tag: r.tag }} className={r.draft ? "rel-v rel-vd" : "rel-v"}>{r.tag}</Link>
                         </th>
                         <td><span className="rel-tt"><span className="rel-ell">{r.name || r.tag}</span><ReleaseBadges r={{ ...r, latest: false }} /></span></td>
                         <td>{r.author ? <span className="rel-who"><Avatar user={r.author} size={18} />{r.author}</span> : <span className="ui-tm">—</span>}</td>
@@ -199,7 +199,7 @@ function Hero({ repo, r }: { repo: Repo; r: Release }) {
           {r.publishedAt && <>· <When iso={r.publishedAt} /></>}
         </div>
         <h3 className="rel-h2">
-          <Link to="/$owner/$name/releases/$id" params={{ owner, name, id: r.id }}>{r.name || r.tag}</Link>
+          <Link to="/$owner/$name/releases/tag/$tag" params={{ owner, name, tag: r.tag }}>{r.name || r.tag}</Link>
         </h3>
         <p className="rel-by">
           {r.author && <><Avatar user={r.author} size={18} />{r.author}</>}
@@ -217,7 +217,7 @@ function Hero({ repo, r }: { repo: Repo; r: Release }) {
               {t("assets.forPlatform", { os: mine.os })}
             </a>
           )}
-          <Link to="/$owner/$name/releases/$id" params={{ owner, name, id: r.id }} className="ui-btn ui-btn-secondary">{t("list.open")}</Link>
+          <Link to="/$owner/$name/releases/tag/$tag" params={{ owner, name, tag: r.tag }} className="ui-btn ui-btn-secondary">{t("list.open")}</Link>
         </div>
       </div>
     </section>
@@ -225,18 +225,18 @@ function Hero({ repo, r }: { repo: Repo; r: Release }) {
 }
 
 /** One release: notes on the left, sticky info panel with assets on the right. */
-export function ReleasePage({ owner, name, id }: { owner: string; name: string; id: string }) {
+export function ReleasePage({ owner, name, id, byTag }: { owner: string; name: string; id: string; byTag?: boolean }) {
   return (
     <RepoFrame owner={owner} name={name} tab="releases" section="pkg">
-      {(repo) => <ReleaseDetail repo={repo} id={id} />}
+      {(repo) => <ReleaseDetail repo={repo} id={id} byTag={byTag} />}
     </RepoFrame>
   );
 }
 
-function ReleaseDetail({ repo, id }: { repo: Repo; id: string }) {
+function ReleaseDetail({ repo, id, byTag }: { repo: Repo; id: string; byTag?: boolean }) {
   const t = useT("releases");
   const { owner, name } = repo;
-  const rel = useRelease(owner, name, id);
+  const rel = useRelease(owner, name, id, byTag);
   const first = useReleases(owner, name, 0);
   const writer = canWrite(repo.permission);
   const [deleting, setDeleting] = useState(false);
@@ -583,7 +583,7 @@ function ReleaseForm({ repo, existing }: { repo: Repo; existing?: Release }) {
       const ok = await uploader.run(r.id, queue);
       if (ok) setQueue([]);
       notify.ok(existing ? t("form.saved") : draft ? t("form.drafted") : t("form.created"));
-      void navigate({ to: "/$owner/$name/releases/$id", params: { owner: repo.owner, name: repo.name, id: r.id } });
+      void navigate({ to: "/$owner/$name/releases/tag/$tag", params: { owner: repo.owner, name: repo.name, tag: r.tag } });
     };
     const opts = { onSuccess: (r: Release) => void done(r), onError: notify.fail };
     if (existing) update.mutate({ ...fields, ...(tagLocked ? {} : { tag: tag.trim() }) }, opts);
@@ -596,7 +596,7 @@ function ReleaseForm({ repo, existing }: { repo: Repo; existing?: Release }) {
   const cancel = () =>
     void navigate(
       existing
-        ? { to: "/$owner/$name/releases/$id", params: { owner: repo.owner, name: repo.name, id: existing.id } }
+        ? { to: "/$owner/$name/releases/tag/$tag", params: { owner: repo.owner, name: repo.name, tag: existing.tag } }
         : { to: "/$owner/$name/releases", params: { owner: repo.owner, name: repo.name } },
     );
 

@@ -22,8 +22,17 @@ export const useReleases = (owner: string, name: string, page: number) =>
     placeholderData: keepPreviousData,
   });
 
-export const useRelease = (owner: string, name: string, id: string) =>
-  useQuery({ queryKey: key(owner, name, "one", id), queryFn: () => request<Release>("GET", `${relBase(owner, name)}/${enc(id)}`) });
+export const useRelease = (owner: string, name: string, id: string, byTag = false) =>
+  useQuery({
+    queryKey: key(owner, name, byTag ? "tag" : "one", id),
+    queryFn: async () => {
+      const base = relBase(owner, name);
+      if (!byTag) return request<Release>("GET", `${base}/${enc(id)}`);
+      const [release] = await request<Release[]>("GET", `${base}${qs({ tag: id, limit: 1 })}`);
+      if (!release) throw new ApiError(404, "Release not found");
+      return release;
+    },
+  });
 
 function useReleaseMutation<V, R>(owner: string, name: string, fn: (v: V) => Promise<R>) {
   const qc = useQueryClient();

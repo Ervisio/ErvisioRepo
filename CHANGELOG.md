@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.16.3] - 2026-11-18
+
+### Fixed
+
+- Release pages and GitHub-compatible API links now use `/releases/tag/<tag>` in every repository. Existing release ID links still work.
+
 ## [1.16.2] - 2026-11-17
 
 ### Added

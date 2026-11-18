@@ -95,7 +95,7 @@ func (c *call) releaseObj(r releases.Release, cache map[uuid.UUID]*ghUser) ghRel
 	sid := strconv.FormatInt(id, 10)
 	self := c.repoAPI() + "/releases/" + sid
 	out := ghRelease{
-		URL: self, HTMLURL: c.repoHTML() + "/releases/" + r.ID.String(), AssetsURL: self + "/assets",
+		URL: self, HTMLURL: c.repoHTML() + "/releases/tag/" + esc(r.Tag), AssetsURL: self + "/assets",
 		UploadURL: c.s.base + uploadPrefix + "/repos/" + esc(c.owner) + "/" + esc(c.repo) + "/releases/" + sid +
 			"/assets{?name,label}",
 		ID: id, NodeID: nodeID("Release", r.ID), TagName: r.Tag, TargetCommitish: r.Target,
