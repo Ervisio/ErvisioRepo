@@ -575,7 +575,7 @@ type Querier interface {
 	// Active installations covering a repository, with the webhook of their app
 	// (for event deliveries).
 	InstallationsForRepo(ctx context.Context, repoID uuid.UUID) ([]InstallationsForRepoRow, error)
-	// Totals shown by the Ervisio plugin's status page.
+	// Totals shown by the Ervisio Console plugin's status page.
 	InstanceCounts(ctx context.Context) (InstanceCountsRow, error)
 	IsRepoStarred(ctx context.Context, arg IsRepoStarredParams) (bool, error)
 	// ---- assignees and users ----

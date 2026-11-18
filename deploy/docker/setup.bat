@@ -68,7 +68,7 @@ if not exist config\master.key (
   echo Created config\master.key: back it up somewhere safe.
 )
 
-rem With the Ervisio plugin the socket must sit where the plugin looks for it
+rem With the Ervisio Console plugin the socket must sit where the plugin looks for it
 rem (a path inside the Docker Desktop VM).
 set "SOCKDIR=./run"
 if /i "%ERVISIO%"=="yes" set "SOCKDIR=/run/ervisio-repo"

@@ -59,7 +59,7 @@ The same test, with the status of policies and caches, is on the admin page `/ad
 | `cmd/` | `ervisio-repo` (server), `ervisio-runner`, `erepo` (CLI) |
 | `internal/` | Server packages |
 | `web/` | React SPA (Vite) |
-| `plugin/` | Ervisio plugin |
+| `plugin/` | Ervisio Console plugin |
 | `deploy/` | Dev and production deployment files |
 | `packaging/` | Distribution packages |
 | `test/` | End-to-end and conformance tests |

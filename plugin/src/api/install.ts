@@ -36,7 +36,7 @@ export async function hasDocker(): Promise<boolean> {
   return (await getSdk().api.exec('has-docker')).exitCode === 0;
 }
 
-/** Starts the installation (administrator rights; Ervisio asks to unlock them). */
+/** Starts the installation (administrator rights; Ervisio Console asks to unlock them). */
 export async function start(mode: InstallMode, opts: { email: string; url: string }): Promise<void> {
   const sdk = getSdk();
   let r;

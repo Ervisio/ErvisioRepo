@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- References to the server manager now use its new name, **Ervisio Console** (formerly "Ervisio" or "the Ervisio core"): docs, plugin comments, the Caddyfile hint written by the plugin and the plugin test mail. "Ervisio" stays the name of the ecosystem; ErvisioRepo's own names, binaries and formats are unchanged.
+
 ## [1.16.3] - 2026-11-18
 
 ### Fixed

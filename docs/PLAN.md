@@ -6,7 +6,7 @@ Nov 3, 2026 · @Riccardo
 
 ErvisioRepo è una forgia Git self-hosted e multi-tenant: repository privati, Actions compatibili con i workflow GitHub e un registry OCI. Lo storage è ibrido: il disco locale fa da cache calda (budget di default 50 GB), mentre la copia canonica dei dati vive su storage esterno (Hetzner StorageBox, Hetzner Object Storage, qualsiasi S3). Se il server si rompe non si perde nulla: basta un server nuovo, la configurazione e le chiavi.
 
-Fa parte dell'ecosistema Ervisio. Gira come app standalone (Docker oppure nativa con systemd) e, quando sul server c'è il core Ervisio, si integra come plugin. Per i domini segue lo stesso modello di ErvisioDrive (git.ervisio.app, git.fonlogen.it).
+Fa parte dell'ecosistema Ervisio. Gira come app standalone (Docker oppure nativa con systemd) e, quando sul server c'è Ervisio Console, si integra come plugin. Per i domini segue lo stesso modello di ErvisioDrive (git.ervisio.app, git.fonlogen.it).
 
 ### Decisioni prese
 
@@ -19,7 +19,7 @@ Fa parte dell'ecosistema Ervisio. Gira come app standalone (Docker oppure nativa
 | Actions | Sintassi YAML GitHub (`.github/workflows` e `.ervisio/workflows`) | Migrazione immediata dei repo esistenti |
 | Isolamento job | Docker di default, Firecracker microVM per job non fidati | Multi-tenant pubblico: i fork e gli utenti esterni non devono mai toccare l'host |
 | Utenza | Multi-tenant pubblico: organizzazioni, team, quote, hardening | Requisito esplicito |
-| Auth | Email+password con 2FA (TOTP, passkey), OIDC, SSO con il core Ervisio, chiavi SSH | Tutte richieste per la v1 |
+| Auth | Email+password con 2FA (TOTP, passkey), OIDC, SSO con Ervisio Console, chiavi SSH | Tutte richieste per la v1 |
 | Scope v1 | PR e review, issue con label e milestone, mirror e import da GitHub, webhook, API REST | Le altre funzioni vanno in roadmap |
 
 ### Obiettivi misurabili della v1
@@ -70,7 +70,7 @@ Un solo modulo Go produce tre binari: `ervisio-repo`, il server; `ervisio-runner
 | Routing e dati | TanStack Router + TanStack Query | Route tipizzate, cache e invalidazione per le liste di PR e job |
 | Client API | `openapi-typescript` + `openapi-fetch`, generati da `api/openapi.yaml` | Nessun tipo scritto a mano |
 | UI kit | Componenti nostri sopra le primitive accessibili Radix (dialog, menu, popover, tabs) | Il core non usa librerie UI: Radix porta solo comportamento, lo stile resta nostro |
-| Stile | CSS con i token del core Ervisio (`tokens.css`: OLED, hue per sezione, raggi 12/18/20) | Coerenza visiva con il plugin; la UI la definiamo insieme dopo |
+| Stile | CSS con i token di Ervisio Console (`tokens.css`: OLED, hue per sezione, raggi 12/18/20) | Coerenza visiva con il plugin; la UI la definiamo insieme dopo |
 | Codice | Shiki (evidenziazione, temi da token), CodeMirror 6 (editor web), diff renderer nostro con virtualizzazione | I diff grandi non devono bloccare il browser |
 | Markdown | `react-markdown` + `remark-gfm` + `rehype-sanitize` | Mermaid e math in lazy load |
 | Log dei job | `@xterm/xterm` (già nel core) in streaming via SSE | ANSI nativo |
@@ -88,7 +88,7 @@ Un solo modulo Go produce tre binari: `ervisio-repo`, il server; `ervisio-runner
 
 Il sistema ha un nodo di controllo e uno o più nodi runner, e tutto lo stato durevole sta fuori dal server. Proposta per il tuo host Proxmox (Ryzen 7 7700, 64 GB):
 
-- **Una sola VM** (decisione presa): l'attuale VM da 8 vCPU e 16 GB ospita `ervisio-repo`, Postgres, Caddy, il core Ervisio e `ervisio-runner` con Docker e Firecracker. CPU di tipo `host` con nested virtualization attiva per Firecracker.
+- **Una sola VM** (decisione presa): l'attuale VM da 8 vCPU e 16 GB ospita `ervisio-repo`, Postgres, Caddy, Ervisio Console e `ervisio-runner` con Docker e Firecracker. CPU di tipo `host` con nested virtualization attiva per Firecracker.
 - **Separazione con cgroup**: server e Postgres stanno in una slice systemd `ervisio-repo.slice` con riserva garantita (`CPUWeight` alto, `MemoryMin=4G`). I job stanno in `ervisio-runner.slice` con un tetto rigido (`CPUQuota=600%`, `MemoryMax=12G`), così un job pesante rallenta solo gli altri job e mai i clone. Nella modalità Docker si ottiene lo stesso con `cpus` e `mem_limit` nel compose.
 - **Disco**: almeno 150 GB, di cui 50 GB di cache, circa 40 GB per immagini Docker e workspace dei job (ripuliti a fine job) e il resto per sistema e Postgres.
 - **Se serve più margine**: l'host ha 64 GB, quindi portare la VM a 24 GB lascia 16 GB ai job, cioè 4 job paralleli da 4 GB. Il runner resta comunque un processo separato che si può spostare su un'altra VM in seguito senza modifiche, perché comunica col server solo in uscita.
@@ -402,7 +402,7 @@ Per un'istanza pubblica la sicurezza è un requisito della v1, non una rifinitur
 - **Locale**: email + password con hash argon2id, verifica email, reset via email, password controllate contro le liste di password compromesse (k-anonymity HIBP opzionale).
 - **2FA**: TOTP e passkey WebAuthn (anche come primo fattore senza password), codici di recupero, 2FA obbligatoria configurabile per istanza o organizzazione.
 - **OIDC**: provider generici configurabili (Google, Cognito, Keycloak, Authentik, GitHub OAuth), con PKCE e collegamento a un account esistente. Il link è legato a `issuer#sub`, mai alla sola email, come in ErvisioDrive.
-- **SSO con il core Ervisio**: oggi il core non ha un'identità condivisa con i plugin, quindi serve una modifica al core (§9.3). Finché non c'è, il login è separato.
+- **SSO con Ervisio Console**: oggi il core non ha un'identità condivisa con i plugin, quindi serve una modifica al core (§9.3). Finché non c'è, il login è separato.
 - **Sessioni**: cookie opaco `HttpOnly` + `Secure` + `SameSite=Lax`, salvato in DB, revocabile dalla UI; durata 14 giorni con rotazione; protezione CSRF con double-submit token per tutte le mutazioni via cookie.
 - **Chiavi SSH** (ed25519, ecdsa, rsa ≥ 3072), firme dei commit verificate (GPG e SSH), deploy key per repo con permesso di sola lettura o di scrittura.
 
@@ -415,7 +415,7 @@ Per un'istanza pubblica la sicurezza è un requisito della v1, non una rifinitur
 
 ### 8.3 Hardening
 
-- Nessun comando di sistema passa da shell: tutto è argv con validazione (regola del core Ervisio).
+- Nessun comando di sistema passa da shell: tutto è argv con validazione (regola di Ervisio Console).
 - Path traversal: tutti i path dei repo derivano dall'UUID, mai dall'input; per i file si usa `os.Root`.
 - Rendering: il markdown è sanificato, l'HTML degli utenti non viene mai servito sul dominio principale; i file raw sono serviti con `Content-Disposition` e `Content-Security-Policy: sandbox`, ed è previsto un dominio separato opzionale per i contenuti degli utenti.
 - SSRF: webhook, mirror e import bloccano gli IP privati, link-local e i metadata endpoint, salvo allowlist dell'admin.
@@ -547,7 +547,7 @@ ErvisioRepo/
 │   ├── httpapi/              # handler REST v1 + v3 compat + SSE
 │   └── sec/                  # test di sicurezza trasversali
 ├── web/                      # SPA React + Vite (src/routes, src/ui, src/i18n/{en,it})
-├── plugin/                   # plugin Ervisio (manifest.json, src, test)
+├── plugin/                   # plugin Ervisio Console (manifest.json, src, test)
 ├── deploy/
 │   ├── docker/               # Dockerfile, compose.yaml, setup.sh, setup.bat
 │   └── runner-images/        # immagini ubuntu per runs-on
@@ -585,7 +585,7 @@ Tutte le chiavi primarie sono UUID v7 (ordinabili nel tempo). I numeri pubblici 
 | `/api/events/...` | SSE (log dei job, avanzamento hydration, notifiche) |
 | `/_runner/...` | ConnectRPC del runner |
 | `/_apis/...` | Servizi cache e artifact per le action (percorsi richiesti dal toolkit) |
-| `/auth/...` | Login, OIDC callback, SSO Ervisio, WebAuthn |
+| `/auth/...` | Login, OIDC callback, SSO Ervisio Console, WebAuthn |
 | `/healthz`, `/readyz`, `/metrics` | Operatività (`/metrics` solo da localhost o con token) |
 
 Sul socket unix separato: `/api/plugin/*`.
@@ -733,19 +733,19 @@ La Fase UI è l'unica che richiede una sessione con te; ogni gate si supera solo
 
 **Accettazione**: la suite di conformità OCI è verde; `docker buildx build --push` multi-arch da un job Actions funziona; la release di ErvisioRepo si costruisce su ErvisioRepo.
 
-### Fase 8 — Integrazione Ervisio e installazione
+### Fase 8 — Integrazione Ervisio Console e installazione
 
-> Ambito ridotto su decisione dell'utente (2026-11-03). Le distribuzioni sono due: **standalone** (binario nativo) e **Docker**. Il plugin Ervisio non è una terza distribuzione: automatizza l'installazione di una delle due, scelta dall'utente, e offre una configurazione grafica nelle impostazioni di Ervisio. Niente SSO col core: Ervisio usa il login con gli account Linux, che non si adatta.
+> Ambito ridotto su decisione dell'utente (2026-11-03). Le distribuzioni sono due: **standalone** (binario nativo) e **Docker**. Il plugin Ervisio Console non è una terza distribuzione: automatizza l'installazione di una delle due, scelta dall'utente, e offre una configurazione grafica nelle impostazioni di Ervisio Console. Niente SSO col core: Ervisio usa il login con gli account Linux, che non si adatta.
 
 - [x] Docker: Dockerfile multi-stage, `compose.yaml`, `setup.sh` e `setup.bat`.
 - [x] Standalone: pacchetti nativi nfpm (.deb e .rpm), unit systemd, `install.sh`, release firmate.
 - [x] Socket admin `/api/plugin/*` con segreto per processo, usato dal plugin per leggere e scrivere la configurazione.
-- [x] Plugin in `plugin/`: installazione automatica in modalità standalone o Docker (a scelta dell'utente) e pagina di configurazione grafica nelle impostazioni di Ervisio.
+- [x] Plugin in `plugin/`: installazione automatica in modalità standalone o Docker (a scelta dell'utente) e pagina di configurazione grafica nelle impostazioni di Ervisio Console.
 - [x] Flusso Caddy in TS (dal plugin) e in Go (`ervisio-repo caddy setup`), con i parametri Git del §9.4.
 - [x] Voce nel catalogo `Ervisio/plugins`.
 - ~~SSO col core~~ (tolto).
 
-**Accettazione**: ErvisioRepo si installa standalone e con Docker senza il plugin; dal pannello Ervisio il plugin installa una delle due modalità, configura `git.<dominio>` con TLS e permette di modificare la configurazione dalle impostazioni.
+**Accettazione**: ErvisioRepo si installa standalone e con Docker senza il plugin; dal pannello Ervisio Console il plugin installa una delle due modalità, configura `git.<dominio>` con TLS e permette di modificare la configurazione dalle impostazioni.
 
 ### Fase 9 — Isolamento e hardening per l'istanza pubblica (rinviata)
 

@@ -11,7 +11,7 @@ export const num = (n: number) => new Intl.NumberFormat(locale()).format(n);
 
 const GB = 1024 ** 3;
 
-/** Bytes with the unit people expect (1024 steps, like Ervisio). */
+/** Bytes with the unit people expect (1024 steps, like Ervisio Console). */
 export function bytes(n: number): string {
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let i = 0;

@@ -9,11 +9,11 @@ Le distribuzioni sono due:
 - **standalone**: binario nativo con .deb/.rpm, systemd e `install.sh`;
 - **Docker**: compose con `setup.sh` e `setup.bat`.
 
-Il **plugin Ervisio** non è una terza distribuzione. Fa due cose: installa una delle due modalità, scelta dall'utente, e offre una configurazione grafica nelle impostazioni di Ervisio.
+Il **plugin Ervisio Console** non è una terza distribuzione. Fa due cose: installa una delle due modalità, scelta dall'utente, e offre una configurazione grafica nelle impostazioni di Ervisio Console.
 
 Escluso dal lavoro degli agenti:
 
-- **SSO col core:** escluso, perché Ervisio usa il login con gli account Linux.
+- **SSO col core:** escluso, perché Ervisio Console usa il login con gli account Linux.
 - **Fase 7 (OCI) e Fase 9 (hardening):** rinviate.
 - **Fase 10:** niente documentazione utente/admin e niente guida alla migrazione. I test di carico e l'esercitazione DR li fa l'utente sul suo server.
 

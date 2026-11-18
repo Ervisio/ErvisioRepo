@@ -86,7 +86,7 @@ if [[ -f .env ]]; then
 fi
 pg_password="${pg_password:-$(rand_hex 24)}"
 bind_address="${bind_address:-127.0.0.1}"
-# With the Ervisio plugin the socket must sit where the plugin looks for it.
+# With the Ervisio Console plugin the socket must sit where the plugin looks for it.
 socket_dir=./run
 [[ "$ervisio" == yes ]] && socket_dir=/run/ervisio-repo
 docker_gid=0

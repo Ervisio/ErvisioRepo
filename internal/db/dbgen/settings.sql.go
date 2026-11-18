@@ -48,7 +48,7 @@ type InstanceCountsRow struct {
 	Orgs  int64
 }
 
-// Totals shown by the Ervisio plugin's status page.
+// Totals shown by the Ervisio Console plugin's status page.
 func (q *Queries) InstanceCounts(ctx context.Context) (InstanceCountsRow, error) {
 	row := q.db.QueryRow(ctx, instanceCounts)
 	var i InstanceCountsRow
