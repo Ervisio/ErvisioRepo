@@ -343,7 +343,7 @@ func directLoopback(r *http.Request) bool {
 // requirement (public, signed-in user or instance admin). The admin prefix
 // is also guarded as a whole, so that a misdeclared operation cannot leak.
 func mountV1(r chi.Router, d Deps) {
-	r.Use(d.Auth.LoadSession, d.Auth.CSRF, adminOnly(d.Auth), storageBodyLimit, mfaCookie(d.Auth.Cookies))
+	r.Use(d.Auth.LoadV1Session, d.Auth.CSRF, adminOnly(d.Auth), storageBodyLimit, mfaCookie(d.Auth.Cookies))
 	srv := &v1Server{log: d.Log, meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies, mfa: d.MFA, orgs: d.Orgs, repos: d.Repos, audit: d.Audit,
 		creds: d.Credentials, sso: d.SSO, tiering: d.Tiering, releases: d.Releases, browse: d.Browse,
 		protection: d.Protection, github: d.GitHub, issues: d.Issues}

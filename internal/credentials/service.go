@@ -221,7 +221,7 @@ func (s *Service) CreateToken(ctx context.Context, p auth.Principal, in NewToken
 		if err := lockUser(ctx, q, p.UserID); err != nil {
 			return err
 		}
-		return insertToken(ctx, q, p.UserID, out, hash, ip, nil)
+		return insertToken(ctx, q, p.UserID, out, hash, ip, false, nil)
 	})
 	if err != nil {
 		return CreatedToken{}, err
@@ -231,14 +231,14 @@ func (s *Service) CreateToken(ctx context.Context, p auth.Principal, in NewToken
 
 // insertToken stores t for userID and records the audit event; the caller
 // holds the user lock. extra is merged into the audit data.
-func insertToken(ctx context.Context, q *dbgen.Queries, userID uuid.UUID, t CreatedToken, hash []byte, ip string, extra map[string]any) error {
+func insertToken(ctx context.Context, q *dbgen.Queries, userID uuid.UUID, t CreatedToken, hash []byte, ip string, isErvisioCode bool, extra map[string]any) error {
 	if n, err := q.CountUserTokens(ctx, userID); err != nil {
 		return fmt.Errorf("count tokens: %w", err)
 	} else if n >= MaxTokens {
 		return ErrTooMany
 	}
 	if err := q.InsertToken(ctx, dbgen.InsertTokenParams{ID: t.ID, UserID: userID, Name: t.Name, TokenHash: hash,
-		Hint: t.Hint, Scopes: t.Scopes, ExpiresAt: pgtype.Timestamptz{Time: t.ExpiresAt, Valid: true}}); err != nil {
+		Hint: t.Hint, Scopes: t.Scopes, ExpiresAt: pgtype.Timestamptz{Time: t.ExpiresAt, Valid: true}, IsErvisiocodeDevice: isErvisioCode}); err != nil {
 		if isUniqueViolation(err) {
 			return ErrNameTaken
 		}

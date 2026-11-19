@@ -139,7 +139,7 @@ type Querier interface {
 	CountUserOIDCLinks(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserPins(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountUserSSHKeys(ctx context.Context, userID uuid.UUID) (int64, error)
-	// Personal access tokens only: OAuth app tokens are bounded per grant.
+	// PATs and first-party device credentials share a limit; app tokens are bounded per grant.
 	CountUserTokens(ctx context.Context, userID uuid.UUID) (int64, error)
 	// Human accounts: bots do not count (the first registered user still
 	// becomes the instance admin).
@@ -171,6 +171,7 @@ type Querier interface {
 	DeleteBranchProtection(ctx context.Context, arg DeleteBranchProtectionParams) (int64, error)
 	// Removes a network without members (its pool can then be trashed).
 	DeleteEmptyForkNetwork(ctx context.Context, id uuid.UUID) (int64, error)
+	DeleteErvisioCodeDevice(ctx context.Context, arg DeleteErvisioCodeDeviceParams) (int64, error)
 	DeleteExpiredActionsRegistrationTokens(ctx context.Context) error
 	DeleteExpiredActionsRunnerDevices(ctx context.Context, before pgtype.Timestamptz) error
 	// Keeps expired rows for an hour, so that a late poll still gets
@@ -329,6 +330,7 @@ type Querier interface {
 	GetEmailByAddress(ctx context.Context, address string) (GetEmailByAddressRow, error)
 	GetEmailByID(ctx context.Context, id uuid.UUID) (GetEmailByIDRow, error)
 	GetEmailNotifications(ctx context.Context, id uuid.UUID) (bool, error)
+	GetErvisioCodeDevice(ctx context.Context, arg GetErvisioCodeDeviceParams) (GetErvisioCodeDeviceRow, error)
 	// ---- fork networks ----
 	GetForkNetworkMember(ctx context.Context, repoID uuid.UUID) (ForkNetworkMember, error)
 	// The release of an asset: the asset URLs of /api/v3 carry no release id.
@@ -676,6 +678,7 @@ type Querier interface {
 	ListDirtyRepos(ctx context.Context, arg ListDirtyReposParams) ([]uuid.UUID, error)
 	// Enabled links whose scheduled run is due and not held by a backoff.
 	ListDueGitHubSyncLinks(ctx context.Context, limit int32) ([]GithubSyncLink, error)
+	ListErvisioCodeDevices(ctx context.Context, userID uuid.UUID) ([]ListErvisioCodeDevicesRow, error)
 	ListEvictionCandidates(ctx context.Context, arg ListEvictionCandidatesParams) ([]ListEvictionCandidatesRow, error)
 	// Expired artifacts and uploads not finalized before stale_before.
 	ListExpiredActionsArtifacts(ctx context.Context, arg ListExpiredActionsArtifactsParams) ([]ActionsArtifact, error)

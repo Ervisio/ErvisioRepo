@@ -1876,6 +1876,87 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /user/ervisiocode:
+    get:
+      operationId: getErvisioCodeAccount
+      tags: [users]
+      summary: Get the account and current ErvisioCode device
+      description: |
+        Only an ErvisioCode device credential is accepted. The account ID is
+        stable across username changes.
+
+        To opt in, send `client_id=ErvisioCodeRemote` and the explicit
+        `scope=ervisiocode:device` to `POST /login/device/code` at the server
+        root (not under /api/v1). An optional `device_name` is a friendly
+        label, not a network address. Send `Accept: application/json` for
+        JSON. The user opens `verification_uri`, enters `user_code`, signs
+        in if needed, and explicitly approves. Poll the server root's
+        `POST /login/oauth/access_token` with the same `client_id`,
+        `device_code`, and `grant_type=urn:ietf:params:oauth:grant-type:device_code`
+        at the returned `interval` in seconds. Success returns
+        `access_token`, `token_type=bearer`, and `scope=ervisiocode:device`.
+        The issued credential is valid until revoked or expired.
+      security:
+        - token: [ervisiocode:device]
+      responses:
+        "200":
+          description: The signed-in account and current device credential
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErvisioCodeAccount"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/devices:
+    get:
+      operationId: listErvisioCodeDevices
+      tags: [users]
+      summary: List active ErvisioCode device credentials
+      description: Returns only the caller's unexpired device registrations, newest first. No secrets are returned.
+      security:
+        - session: []
+        - token: [ervisiocode:device]
+      responses:
+        "200":
+          description: Active devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ErvisioCodeDevice"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/devices/{id}:
+    delete:
+      operationId: revokeErvisioCodeDevice
+      tags: [users]
+      summary: Revoke an ErvisioCode device credential
+      description: An account session can revoke any device it owns. A device credential can revoke only itself.
+      security:
+        - session: []
+        - token: [ervisiocode:device]
+      parameters:
+        - $ref: "#/components/parameters/CredentialID"
+      responses:
+        "204":
+          description: Revoked
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
   /user/device/{userCode}:
     parameters:
       - name: userCode
@@ -1916,7 +1997,9 @@ paths:
       description: |
         Session only. On approval the device receives a new access token of
         the caller at its next poll of POST /login/oauth/access_token; the
-        token appears among the personal access tokens.
+        token appears among the personal access tokens for the gh and eg
+        clients. ErvisioCode credentials are listed separately at
+        /user/ervisiocode/devices.
       requestBody:
         required: true
         content:
@@ -12575,6 +12658,37 @@ components:
           type: string
           format: date-time
           description: Required; at most the configured maximum lifetime from now
+    ErvisioCodeAccount:
+      type: object
+      required: [accountId, username, device]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        device:
+          $ref: "#/components/schemas/ErvisioCodeDevice"
+    ErvisioCodeDevice:
+      type: object
+      required: [id, name, createdAt, expiresAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Server-assigned device credential ID
+        name:
+          type: string
+          description: Friendly label
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
     DeviceAuthorization:
       type: object
       required: [userCode, clientId, appName, requestedScopes, scopes, createdAt, expiresAt]
@@ -12589,7 +12703,7 @@ components:
           description: Display name of the OAuth client
         requestedScopes:
           type: array
-          description: GitHub-style scopes the device asked for (repo, read:org, workflow...)
+          description: OAuth scopes the device asked for (GitHub-style, or ervisiocode:device for ErvisioCode)
           items:
             type: string
         scopes:

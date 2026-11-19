@@ -7,6 +7,7 @@ import { Avatar } from "../../ui/shell/ConsoleShell.tsx";
 import { Page, SettingsLayout, type SettingsNavGroup, type SettingsNavItem } from "../../ui/index.ts";
 import { Appearance } from "./Appearance.tsx";
 import { Emails } from "./Emails.tsx";
+import { ErvisioCodeDevices } from "./ErvisioCodeDevices.tsx";
 import { Keys } from "./Keys.tsx";
 import { Linked } from "./Linked.tsx";
 import { NotificationPrefs } from "./Notifications.tsx";
@@ -20,7 +21,7 @@ import { OAuthAppsSection, type AppsNav, type AppTarget } from "../oauth/OAuthAp
 import { AppsSection, type AppsNav as GhAppsNav, type AppTarget as GhAppTarget } from "../apps/Apps.tsx";
 import { InstalledApps, type InstalledNav } from "../apps/Installed.tsx";
 
-export const accountSections = ["emails", "notifications", "appearance", "security", "sessions", "tokens", "keys", "linked", "applications", "installations", "apps", "oauth-apps"] as const;
+export const accountSections = ["emails", "notifications", "appearance", "security", "sessions", "ervisiocode-devices", "tokens", "keys", "linked", "applications", "installations", "apps", "oauth-apps"] as const;
 export type AccountSection = (typeof accountSections)[number];
 
 /** Account settings. Rendered inside <Protected>, so the session is already loaded. */
@@ -49,7 +50,7 @@ export function Account({ section, app, installation, oidcError }: { section?: A
   const item = (id: AccountSection | "profile", icon: SettingsNavItem["icon"]): SettingsNavItem => ({ id, icon, label: t(`tab.${id}`) });
   const groups: SettingsNavGroup[] = [
     { title: t("group.personal"), items: [item("profile", "user"), item("emails", "info"), item("notifications", "bell"), item("appearance", "layers")] },
-    { title: t("group.access"), items: [item("security", "shield"), item("sessions", "clock"), item("keys", "code"), item("linked", "users"), item("applications", "check"), item("installations", "pkg")] },
+    { title: t("group.access"), items: [item("security", "shield"), item("sessions", "clock"), item("ervisiocode-devices", "terminal"), item("keys", "code"), item("linked", "users"), item("applications", "check"), item("installations", "pkg")] },
     { title: t("group.developer"), items: [item("apps", "grid"), item("oauth-apps", "cpu"), item("tokens", "lock")] },
   ];
   return (
@@ -72,6 +73,7 @@ export function Account({ section, app, installation, oidcError }: { section?: A
         {active === "appearance" && <Appearance />}
         {active === "security" && <><Password /><Security /></>}
         {active === "sessions" && <Sessions />}
+        {active === "ervisiocode-devices" && <ErvisioCodeDevices />}
         {active === "tokens" && <Tokens />}
         {active === "keys" && <Keys />}
         {active === "linked" && <Linked oidcError={oidcError} />}

@@ -36,6 +36,8 @@ type Principal struct {
 	TokenID   uuid.UUID // set when Method is MethodToken
 	// Scopes are the scopes of the access token (MethodToken only).
 	Scopes []string
+	// ErvisioCodeDevice comes from the stored OAuth device registration.
+	ErvisioCodeDevice bool
 	// Grant is set for an Ervisio Actions job token (erj_…): the caller
 	// acts on Grant.RepoID only, with Grant.Permission, and is anonymous
 	// everywhere else. UserID is uuid.Nil for such callers.

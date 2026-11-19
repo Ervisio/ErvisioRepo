@@ -16,12 +16,29 @@ const countUserTokens = `-- name: CountUserTokens :one
 SELECT count(*) FROM tokens WHERE user_id = $1 AND grant_id IS NULL
 `
 
-// Personal access tokens only: OAuth app tokens are bounded per grant.
+// PATs and first-party device credentials share a limit; app tokens are bounded per grant.
 func (q *Queries) CountUserTokens(ctx context.Context, userID uuid.UUID) (int64, error) {
 	row := q.db.QueryRow(ctx, countUserTokens, userID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const deleteErvisioCodeDevice = `-- name: DeleteErvisioCodeDevice :execrows
+DELETE FROM tokens WHERE user_id = $1 AND id = $2 AND is_ervisiocode_device
+`
+
+type DeleteErvisioCodeDeviceParams struct {
+	UserID  uuid.UUID
+	TokenID uuid.UUID
+}
+
+func (q *Queries) DeleteErvisioCodeDevice(ctx context.Context, arg DeleteErvisioCodeDeviceParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteErvisioCodeDevice, arg.UserID, arg.TokenID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const deleteExpiredTokens = `-- name: DeleteExpiredTokens :execrows
@@ -37,7 +54,8 @@ func (q *Queries) DeleteExpiredTokens(ctx context.Context, before pgtype.Timesta
 }
 
 const deleteUserToken = `-- name: DeleteUserToken :execrows
-DELETE FROM tokens WHERE user_id = $1 AND id = $2 AND grant_id IS NULL
+DELETE FROM tokens WHERE user_id = $1 AND id = $2
+  AND grant_id IS NULL AND NOT is_ervisiocode_device
 `
 
 type DeleteUserTokenParams struct {
@@ -53,8 +71,39 @@ func (q *Queries) DeleteUserToken(ctx context.Context, arg DeleteUserTokenParams
 	return result.RowsAffected(), nil
 }
 
+const getErvisioCodeDevice = `-- name: GetErvisioCodeDevice :one
+SELECT id, name, expires_at, last_used_at, created_at FROM tokens
+WHERE user_id = $1 AND id = $2 AND is_ervisiocode_device AND expires_at > now()
+`
+
+type GetErvisioCodeDeviceParams struct {
+	UserID  uuid.UUID
+	TokenID uuid.UUID
+}
+
+type GetErvisioCodeDeviceRow struct {
+	ID         uuid.UUID
+	Name       string
+	ExpiresAt  pgtype.Timestamptz
+	LastUsedAt pgtype.Timestamptz
+	CreatedAt  pgtype.Timestamptz
+}
+
+func (q *Queries) GetErvisioCodeDevice(ctx context.Context, arg GetErvisioCodeDeviceParams) (GetErvisioCodeDeviceRow, error) {
+	row := q.db.QueryRow(ctx, getErvisioCodeDevice, arg.UserID, arg.TokenID)
+	var i GetErvisioCodeDeviceRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.ExpiresAt,
+		&i.LastUsedAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getTokenByHash = `-- name: GetTokenByHash :one
-SELECT t.id, t.user_id, t.scopes, t.expires_at, t.last_used_at,
+SELECT t.id, t.user_id, t.scopes, t.expires_at, t.last_used_at, t.is_ervisiocode_device,
        n.name AS username, u.role, u.suspended_at, a.id AS app_id
 FROM tokens t
 JOIN users u ON u.id = t.user_id
@@ -65,15 +114,16 @@ WHERE t.token_hash = $1
 `
 
 type GetTokenByHashRow struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	Scopes      []string
-	ExpiresAt   pgtype.Timestamptz
-	LastUsedAt  pgtype.Timestamptz
-	Username    string
-	Role        string
-	SuspendedAt pgtype.Timestamptz
-	AppID       uuid.NullUUID
+	ID                  uuid.UUID
+	UserID              uuid.UUID
+	Scopes              []string
+	ExpiresAt           pgtype.Timestamptz
+	LastUsedAt          pgtype.Timestamptz
+	IsErvisiocodeDevice bool
+	Username            string
+	Role                string
+	SuspendedAt         pgtype.Timestamptz
+	AppID               uuid.NullUUID
 }
 
 // app_id is set for a user-to-server token of an app (a grant of the
@@ -87,6 +137,7 @@ func (q *Queries) GetTokenByHash(ctx context.Context, tokenHash []byte) (GetToke
 		&i.Scopes,
 		&i.ExpiresAt,
 		&i.LastUsedAt,
+		&i.IsErvisiocodeDevice,
 		&i.Username,
 		&i.Role,
 		&i.SuspendedAt,
@@ -96,18 +147,19 @@ func (q *Queries) GetTokenByHash(ctx context.Context, tokenHash []byte) (GetToke
 }
 
 const insertToken = `-- name: InsertToken :exec
-INSERT INTO tokens (id, user_id, name, token_hash, hint, scopes, expires_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO tokens (id, user_id, name, token_hash, hint, scopes, expires_at, is_ervisiocode_device)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 `
 
 type InsertTokenParams struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
-	Name      string
-	TokenHash []byte
-	Hint      string
-	Scopes    []string
-	ExpiresAt pgtype.Timestamptz
+	ID                  uuid.UUID
+	UserID              uuid.UUID
+	Name                string
+	TokenHash           []byte
+	Hint                string
+	Scopes              []string
+	ExpiresAt           pgtype.Timestamptz
+	IsErvisiocodeDevice bool
 }
 
 func (q *Queries) InsertToken(ctx context.Context, arg InsertTokenParams) error {
@@ -119,13 +171,54 @@ func (q *Queries) InsertToken(ctx context.Context, arg InsertTokenParams) error 
 		arg.Hint,
 		arg.Scopes,
 		arg.ExpiresAt,
+		arg.IsErvisiocodeDevice,
 	)
 	return err
 }
 
+const listErvisioCodeDevices = `-- name: ListErvisioCodeDevices :many
+SELECT id, name, expires_at, last_used_at, created_at FROM tokens
+WHERE user_id = $1 AND is_ervisiocode_device AND expires_at > now()
+ORDER BY created_at DESC, id DESC
+`
+
+type ListErvisioCodeDevicesRow struct {
+	ID         uuid.UUID
+	Name       string
+	ExpiresAt  pgtype.Timestamptz
+	LastUsedAt pgtype.Timestamptz
+	CreatedAt  pgtype.Timestamptz
+}
+
+func (q *Queries) ListErvisioCodeDevices(ctx context.Context, userID uuid.UUID) ([]ListErvisioCodeDevicesRow, error) {
+	rows, err := q.db.Query(ctx, listErvisioCodeDevices, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListErvisioCodeDevicesRow{}
+	for rows.Next() {
+		var i ListErvisioCodeDevicesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.ExpiresAt,
+			&i.LastUsedAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUserTokens = `-- name: ListUserTokens :many
 SELECT id, name, hint, scopes, expires_at, last_used_at, created_at
-FROM tokens WHERE user_id = $1 AND grant_id IS NULL ORDER BY created_at DESC
+FROM tokens WHERE user_id = $1 AND grant_id IS NULL AND NOT is_ervisiocode_device ORDER BY created_at DESC
 `
 
 type ListUserTokensRow struct {

@@ -1278,6 +1278,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/user/ervisiocode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the account and current ErvisioCode device
+         * @description Only an ErvisioCode device credential is accepted. The account ID is
+         *     stable across username changes.
+         *
+         *     To opt in, send `client_id=ErvisioCodeRemote` and the explicit
+         *     `scope=ervisiocode:device` to `POST /login/device/code` at the server
+         *     root (not under /api/v1). An optional `device_name` is a friendly
+         *     label, not a network address. Send `Accept: application/json` for
+         *     JSON. The user opens `verification_uri`, enters `user_code`, signs
+         *     in if needed, and explicitly approves. Poll the server root's
+         *     `POST /login/oauth/access_token` with the same `client_id`,
+         *     `device_code`, and `grant_type=urn:ietf:params:oauth:grant-type:device_code`
+         *     at the returned `interval` in seconds. Success returns
+         *     `access_token`, `token_type=bearer`, and `scope=ervisiocode:device`.
+         *     The issued credential is valid until revoked or expired.
+         */
+        get: operations["getErvisioCodeAccount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List active ErvisioCode device credentials
+         * @description Returns only the caller's unexpired device registrations, newest first. No secrets are returned.
+         */
+        get: operations["listErvisioCodeDevices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/devices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke an ErvisioCode device credential
+         * @description An account session can revoke any device it owns. A device credential can revoke only itself.
+         */
+        delete: operations["revokeErvisioCodeDevice"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/user/device/{userCode}": {
         parameters: {
             query?: never;
@@ -1301,7 +1374,9 @@ export interface paths {
          * Authorize or deny a pending OAuth device authorization
          * @description Session only. On approval the device receives a new access token of
          *     the caller at its next poll of POST /login/oauth/access_token; the
-         *     token appears among the personal access tokens.
+         *     token appears among the personal access tokens for the gh and eg
+         *     clients. ErvisioCode credentials are listed separately at
+         *     /user/ervisiocode/devices.
          */
         post: operations["decideDeviceAuthorization"];
         delete?: never;
@@ -7492,13 +7567,34 @@ export interface components {
              */
             expiresAt: string;
         };
+        ErvisioCodeAccount: {
+            /** Format: uuid */
+            accountId: string;
+            username: string;
+            device: components["schemas"]["ErvisioCodeDevice"];
+        };
+        ErvisioCodeDevice: {
+            /**
+             * Format: uuid
+             * @description Server-assigned device credential ID
+             */
+            id: string;
+            /** @description Friendly label */
+            name: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: date-time */
+            lastUsedAt?: string;
+        };
         DeviceAuthorization: {
             /** @description Normalized code (XXXX-XXXX) */
             userCode: string;
             clientId: string;
             /** @description Display name of the OAuth client */
             appName: string;
-            /** @description GitHub-style scopes the device asked for (repo, read:org, workflow...) */
+            /** @description OAuth scopes the device asked for (GitHub-style, or ervisiocode:device for ErvisioCode) */
             requestedScopes: string[];
             /** @description Token scopes of this server the device will receive */
             scopes: string[];
@@ -12192,6 +12288,76 @@ export interface operations {
                 content?: never;
             };
             401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getErvisioCodeAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The signed-in account and current device credential */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErvisioCodeAccount"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listErvisioCodeDevices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Active devices */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErvisioCodeDevice"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    revokeErvisioCodeDevice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["CredentialID"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };

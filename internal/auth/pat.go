@@ -30,6 +30,8 @@ const (
 	ScopeWriteActions  = "actions:write"
 	// ScopeAdmin lets an instance admin use the admin API with the token.
 	ScopeAdmin = "admin"
+	// ScopeErvisioCodeDevice is reserved for the ErvisioCode device flow, not PATs.
+	ScopeErvisioCodeDevice = "ervisiocode:device"
 )
 
 // AllScopes lists the valid token scopes.
@@ -135,6 +137,10 @@ type Tokens struct {
 
 // Lookup returns the caller authenticated by token.
 func (t *Tokens) Lookup(ctx context.Context, token string) (Principal, error) {
+	return t.lookup(ctx, token, false)
+}
+
+func (t *Tokens) lookup(ctx context.Context, token string, allowErvisioCode bool) (Principal, error) {
 	if strings.HasPrefix(token, JobTokenPrefix) {
 		if t.Jobs == nil || !ValidCredentialFormat(token) {
 			return Principal{}, ErrNoToken
@@ -164,11 +170,14 @@ func (t *Tokens) Lookup(ctx context.Context, token string) (Principal, error) {
 	if row.SuspendedAt.Valid || (row.ExpiresAt.Valid && !row.ExpiresAt.Time.After(now)) {
 		return Principal{}, ErrNoToken
 	}
+	if row.IsErvisiocodeDevice && (!allowErvisioCode || !slices.Equal(row.Scopes, []string{ScopeErvisioCodeDevice})) {
+		return Principal{}, ErrNoToken
+	}
 	if err := t.Store.TouchToken(ctx, row.ID); err != nil {
 		return Principal{}, fmt.Errorf("touch token: %w", err)
 	}
 	p := Principal{UserID: row.UserID, Username: row.Username, Role: row.Role, Method: MethodToken,
-		TokenID: row.ID, Scopes: slices.Clone(row.Scopes)}
+		TokenID: row.ID, Scopes: slices.Clone(row.Scopes), ErvisioCodeDevice: row.IsErvisiocodeDevice}
 	if row.AppID.Valid {
 		// A user-to-server token: bounded by the App.
 		if t.Apps == nil {

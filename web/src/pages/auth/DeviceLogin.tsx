@@ -78,6 +78,7 @@ export function DeviceLogin({ userCode }: { userCode?: string }) {
     );
   }
   if (pending) {
+    const ervisioCode = pending.clientId === "ErvisioCodeRemote";
     return (
       <AuthFrame title={t("device.authorizeTitle", { app: pending.appName })} subtitle={t("device.authorizeSub")} footer={home}>
         <div className="auth-form">
@@ -89,7 +90,7 @@ export function DeviceLogin({ userCode }: { userCode?: string }) {
               { label: t("device.granted"), value: pending.scopes.join(", "), mono: true },
             ]}
           />
-          <p className="auth-note">{t("device.warning")}</p>
+          <p className="auth-note">{t(ervisioCode ? "device.ervisioCodeWarning" : "device.warning")}</p>
           {error && <p className="auth-error" role="alert">{error}</p>}
           <div className="auth-actions">
             <Button disabled={busy} onClick={() => void decide(false)}>{t("device.cancel")}</Button>

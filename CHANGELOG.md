@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-11-19
+
+### Added
+
+- Opt-in ErvisioCode account sign-in uses the existing OAuth device approval page with the `ErvisioCodeRemote` client and only the `ervisiocode:device` scope. The account API returns a stable account ID and supports listing and revoking registered devices without exposing credentials or opening a tunnel.
+
 ## [1.17.0] - 2026-11-19
 
 ### Added

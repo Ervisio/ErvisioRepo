@@ -56,13 +56,23 @@ func safeMethod(m string) bool {
 // invalid session leaves it anonymous (and clears a stale cookie). It also
 // issues the CSRF cookie to clients that do not have one yet.
 func (m *Middleware) LoadSession(next http.Handler) http.Handler {
+	return m.loadSession(next, false)
+}
+
+// LoadV1Session also loads ErvisioCode credentials. It requires Authorize on
+// every operation so those principals cannot reach unrelated handlers.
+func (m *Middleware) LoadV1Session(next http.Handler) http.Handler {
+	return m.loadSession(next, true)
+}
+
+func (m *Middleware) loadSession(next http.Handler, allowErvisioCode bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ri := RequestInfo{IP: ClientIP(r, m.TrustedProxies), UserAgent: r.UserAgent()}
 		if bearer, ok := bearerToken(r); ok {
 			// An access token replaces the cookies: the session cookie of
 			// the same client is ignored, and no CSRF cookie is issued.
-			p, err := m.lookupToken(ctx, bearer)
+			p, err := m.lookupToken(ctx, bearer, allowErvisioCode)
 			switch {
 			case err == nil && (p.Installation != nil || p.UserApp != nil):
 				// App tokens are bounded by a permission set that only the
@@ -115,11 +125,11 @@ func bearerToken(r *http.Request) (string, bool) {
 	return strings.TrimSpace(cred), true
 }
 
-func (m *Middleware) lookupToken(ctx context.Context, token string) (Principal, error) {
+func (m *Middleware) lookupToken(ctx context.Context, token string, allowErvisioCode bool) (Principal, error) {
 	if m.Tokens == nil {
 		return Principal{}, ErrNoToken
 	}
-	return m.Tokens.Lookup(ctx, token)
+	return m.Tokens.lookup(ctx, token, allowErvisioCode)
 }
 
 // CSRF rejects unsafe requests that a browser marks as cross-site, and those
@@ -210,6 +220,8 @@ func (m *Middleware) Authorize(session, token func(context.Context) ([]string, b
 			}
 			p, _ := PrincipalFrom(ctx)
 			switch {
+			case p.Method == MethodToken && p.ErvisioCodeDevice != slices.Contains(ts, ScopeErvisioCodeDevice):
+				m.Problem(w, http.StatusForbidden, "ErvisioCode credentials are accepted only by ErvisioCode operations")
 			case !sessionOK && !tokenOK:
 				next.ServeHTTP(w, r)
 			case p.Method == MethodToken:

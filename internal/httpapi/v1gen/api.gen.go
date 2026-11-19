@@ -4191,7 +4191,7 @@ type DeviceAuthorization struct {
 	// RequestIp Client IP that started the request, when known
 	RequestIp *string `json:"requestIp,omitempty"`
 
-	// RequestedScopes GitHub-style scopes the device asked for (repo, read:org, workflow...)
+	// RequestedScopes OAuth scopes the device asked for (GitHub-style, or ervisiocode:device for ErvisioCode)
 	RequestedScopes []string `json:"requestedScopes"`
 
 	// Scopes Token scopes of this server the device will receive
@@ -4252,6 +4252,26 @@ type EmailAddress struct {
 // EmailRequest defines model for EmailRequest.
 type EmailRequest struct {
 	Email string `json:"email"`
+}
+
+// ErvisioCodeAccount defines model for ErvisioCodeAccount.
+type ErvisioCodeAccount struct {
+	AccountId openapi_types.UUID `json:"accountId"`
+	Device    ErvisioCodeDevice  `json:"device"`
+	Username  string             `json:"username"`
+}
+
+// ErvisioCodeDevice defines model for ErvisioCodeDevice.
+type ErvisioCodeDevice struct {
+	CreatedAt time.Time `json:"createdAt"`
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// Id Server-assigned device credential ID
+	Id         openapi_types.UUID `json:"id"`
+	LastUsedAt *time.Time         `json:"lastUsedAt,omitempty"`
+
+	// Name Friendly label
+	Name string `json:"name"`
 }
 
 // ExploreRepoList defines model for ExploreRepoList.
@@ -9265,6 +9285,15 @@ type ServerInterface interface {
 	// ResendEmailVerification Send the verification link again
 	// (POST /user/emails/{id}/verify)
 	ResendEmailVerification(w http.ResponseWriter, r *http.Request, id CredentialID)
+	// GetErvisioCodeAccount Get the account and current ErvisioCode device
+	// (GET /user/ervisiocode)
+	GetErvisioCodeAccount(w http.ResponseWriter, r *http.Request)
+	// ListErvisioCodeDevices List active ErvisioCode device credentials
+	// (GET /user/ervisiocode/devices)
+	ListErvisioCodeDevices(w http.ResponseWriter, r *http.Request)
+	// RevokeErvisioCodeDevice Revoke an ErvisioCode device credential
+	// (DELETE /user/ervisiocode/devices/{id})
+	RevokeErvisioCodeDevice(w http.ResponseWriter, r *http.Request, id CredentialID)
 	// ListUserIssues Issues and pull requests of the signed-in user across the readable repositories
 	// (GET /user/issues)
 	ListUserIssues(w http.ResponseWriter, r *http.Request, params ListUserIssuesParams)
@@ -11455,6 +11484,24 @@ func (_ Unimplemented) SetPrimaryEmail(w http.ResponseWriter, r *http.Request, i
 // ResendEmailVerification Send the verification link again
 // (POST /user/emails/{id}/verify)
 func (_ Unimplemented) ResendEmailVerification(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetErvisioCodeAccount Get the account and current ErvisioCode device
+// (GET /user/ervisiocode)
+func (_ Unimplemented) GetErvisioCodeAccount(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListErvisioCodeDevices List active ErvisioCode device credentials
+// (GET /user/ervisiocode/devices)
+func (_ Unimplemented) ListErvisioCodeDevices(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RevokeErvisioCodeDevice Revoke an ErvisioCode device credential
+// (DELETE /user/ervisiocode/devices/{id})
+func (_ Unimplemented) RevokeErvisioCodeDevice(w http.ResponseWriter, r *http.Request, id CredentialID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -27755,6 +27802,82 @@ func (siw *ServerInterfaceWrapper) ResendEmailVerification(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// GetErvisioCodeAccount operation middleware
+func (siw *ServerInterfaceWrapper) GetErvisioCodeAccount(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"ervisiocode:device"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetErvisioCodeAccount(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListErvisioCodeDevices operation middleware
+func (siw *ServerInterfaceWrapper) ListErvisioCodeDevices(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"ervisiocode:device"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListErvisioCodeDevices(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeErvisioCodeDevice operation middleware
+func (siw *ServerInterfaceWrapper) RevokeErvisioCodeDevice(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id CredentialID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"ervisiocode:device"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeErvisioCodeDevice(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListUserIssues operation middleware
 func (siw *ServerInterfaceWrapper) ListUserIssues(w http.ResponseWriter, r *http.Request) {
 
@@ -29646,6 +29769,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/user/tokens/{id}", wrapper.RevokeAccessToken)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/ervisiocode", wrapper.GetErvisioCodeAccount)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/ervisiocode/devices", wrapper.ListErvisioCodeDevices)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/ervisiocode/devices/{id}", wrapper.RevokeErvisioCodeDevice)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/user/device/{userCode}", wrapper.GetDeviceAuthorization)
@@ -60403,6 +60535,219 @@ func (response ResendEmailVerificationdefaultApplicationProblemPlusJSONResponse)
 	return err
 }
 
+type GetErvisioCodeAccountRequestObject struct {
+}
+
+type GetErvisioCodeAccountResponseObject interface {
+	VisitGetErvisioCodeAccountResponse(w http.ResponseWriter) error
+}
+
+type GetErvisioCodeAccount200JSONResponse ErvisioCodeAccount
+
+func (response GetErvisioCodeAccount200JSONResponse) VisitGetErvisioCodeAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeAccount401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetErvisioCodeAccount401ApplicationProblemPlusJSONResponse) VisitGetErvisioCodeAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeAccount403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetErvisioCodeAccount403ApplicationProblemPlusJSONResponse) VisitGetErvisioCodeAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeAccountdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetErvisioCodeAccountdefaultApplicationProblemPlusJSONResponse) VisitGetErvisioCodeAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeDevicesRequestObject struct {
+}
+
+type ListErvisioCodeDevicesResponseObject interface {
+	VisitListErvisioCodeDevicesResponse(w http.ResponseWriter) error
+}
+
+type ListErvisioCodeDevices200JSONResponse []ErvisioCodeDevice
+
+func (response ListErvisioCodeDevices200JSONResponse) VisitListErvisioCodeDevicesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeDevices401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListErvisioCodeDevices401ApplicationProblemPlusJSONResponse) VisitListErvisioCodeDevicesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeDevices403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListErvisioCodeDevices403ApplicationProblemPlusJSONResponse) VisitListErvisioCodeDevicesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeDevicesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListErvisioCodeDevicesdefaultApplicationProblemPlusJSONResponse) VisitListErvisioCodeDevicesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeErvisioCodeDeviceRequestObject struct {
+	Id CredentialID `json:"id"`
+}
+
+type RevokeErvisioCodeDeviceResponseObject interface {
+	VisitRevokeErvisioCodeDeviceResponse(w http.ResponseWriter) error
+}
+
+type RevokeErvisioCodeDevice204Response struct {
+}
+
+func (response RevokeErvisioCodeDevice204Response) VisitRevokeErvisioCodeDeviceResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeErvisioCodeDevice401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeErvisioCodeDevice401ApplicationProblemPlusJSONResponse) VisitRevokeErvisioCodeDeviceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeErvisioCodeDevice403ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeErvisioCodeDevice403ApplicationProblemPlusJSONResponse) VisitRevokeErvisioCodeDeviceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeErvisioCodeDevice404ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeErvisioCodeDevice404ApplicationProblemPlusJSONResponse) VisitRevokeErvisioCodeDeviceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeErvisioCodeDevicedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RevokeErvisioCodeDevicedefaultApplicationProblemPlusJSONResponse) VisitRevokeErvisioCodeDeviceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListUserIssuesRequestObject struct {
 	Params ListUserIssuesParams
 }
@@ -64869,6 +65214,15 @@ type StrictServerInterface interface {
 	// ResendEmailVerification Send the verification link again
 	// (POST /user/emails/{id}/verify)
 	ResendEmailVerification(ctx context.Context, request ResendEmailVerificationRequestObject) (ResendEmailVerificationResponseObject, error)
+	// GetErvisioCodeAccount Get the account and current ErvisioCode device
+	// (GET /user/ervisiocode)
+	GetErvisioCodeAccount(ctx context.Context, request GetErvisioCodeAccountRequestObject) (GetErvisioCodeAccountResponseObject, error)
+	// ListErvisioCodeDevices List active ErvisioCode device credentials
+	// (GET /user/ervisiocode/devices)
+	ListErvisioCodeDevices(ctx context.Context, request ListErvisioCodeDevicesRequestObject) (ListErvisioCodeDevicesResponseObject, error)
+	// RevokeErvisioCodeDevice Revoke an ErvisioCode device credential
+	// (DELETE /user/ervisiocode/devices/{id})
+	RevokeErvisioCodeDevice(ctx context.Context, request RevokeErvisioCodeDeviceRequestObject) (RevokeErvisioCodeDeviceResponseObject, error)
 	// ListUserIssues Issues and pull requests of the signed-in user across the readable repositories
 	// (GET /user/issues)
 	ListUserIssues(ctx context.Context, request ListUserIssuesRequestObject) (ListUserIssuesResponseObject, error)
@@ -74932,6 +75286,80 @@ func (sh *strictHandler) ResendEmailVerification(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ResendEmailVerificationResponseObject); ok {
 		if err := validResponse.VisitResendEmailVerificationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetErvisioCodeAccount operation middleware
+func (sh *strictHandler) GetErvisioCodeAccount(w http.ResponseWriter, r *http.Request) {
+	var request GetErvisioCodeAccountRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetErvisioCodeAccount(ctx, request.(GetErvisioCodeAccountRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetErvisioCodeAccount")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetErvisioCodeAccountResponseObject); ok {
+		if err := validResponse.VisitGetErvisioCodeAccountResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListErvisioCodeDevices operation middleware
+func (sh *strictHandler) ListErvisioCodeDevices(w http.ResponseWriter, r *http.Request) {
+	var request ListErvisioCodeDevicesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListErvisioCodeDevices(ctx, request.(ListErvisioCodeDevicesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListErvisioCodeDevices")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListErvisioCodeDevicesResponseObject); ok {
+		if err := validResponse.VisitListErvisioCodeDevicesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeErvisioCodeDevice operation middleware
+func (sh *strictHandler) RevokeErvisioCodeDevice(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	var request RevokeErvisioCodeDeviceRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeErvisioCodeDevice(ctx, request.(RevokeErvisioCodeDeviceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeErvisioCodeDevice")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeErvisioCodeDeviceResponseObject); ok {
+		if err := validResponse.VisitRevokeErvisioCodeDeviceResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

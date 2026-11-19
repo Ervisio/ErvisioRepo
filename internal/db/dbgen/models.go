@@ -1248,16 +1248,17 @@ type ThreadSubscription struct {
 }
 
 type Token struct {
-	ID         uuid.UUID
-	UserID     uuid.UUID
-	Name       string
-	TokenHash  []byte
-	Hint       string
-	Scopes     []string
-	ExpiresAt  pgtype.Timestamptz
-	LastUsedAt pgtype.Timestamptz
-	CreatedAt  pgtype.Timestamptz
-	GrantID    uuid.NullUUID
+	ID                  uuid.UUID
+	UserID              uuid.UUID
+	Name                string
+	TokenHash           []byte
+	Hint                string
+	Scopes              []string
+	ExpiresAt           pgtype.Timestamptz
+	LastUsedAt          pgtype.Timestamptz
+	CreatedAt           pgtype.Timestamptz
+	GrantID             uuid.NullUUID
+	IsErvisiocodeDevice bool
 }
 
 type UsageCounter struct {

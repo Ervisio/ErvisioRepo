@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -49,8 +50,7 @@ const (
 	deviceStatusConsumed = "consumed"
 )
 
-// The built-in first-party clients are system rows of oauth_apps
-// (migration 00300) with the device flow enabled.
+// The built-in first-party clients are system rows of oauth_apps with the device flow enabled.
 
 // EgClientID is the client_id of eg, the first-party command line client.
 const EgClientID = "Ov23liErvisioEgCli01"
@@ -58,6 +58,8 @@ const EgClientID = "Ov23liErvisioEgCli01"
 // GitHubCLIClientID is the client_id the gh CLI sends; accepting it lets
 // `gh auth login --hostname <this server>` use the device flow too.
 const GitHubCLIClientID = "178c6fc778ccc68e1d6a"
+
+const ErvisioCodeClientID = "ErvisioCodeRemote"
 
 // deviceApp returns the app clientID when it may use the device flow:
 // a built-in client or a registered app with the device flow enabled.
@@ -90,6 +92,7 @@ var (
 	ErrExpiredDeviceCode   = deviceErr("expired_token", "The device_code has expired.")
 	ErrDeviceAccessDenied  = deviceErr("access_denied", "The authorization request was denied.")
 	ErrDeviceRateLimited   = deviceErr("slow_down", "Too many device codes requested; retry later.")
+	ErrErvisioCodeScope    = deviceErr("invalid_scope", "ErvisioCodeRemote requires exactly ervisiocode:device.")
 )
 
 // ErrDeviceLimited means too many wrong user codes; Wait says how long to
@@ -106,9 +109,7 @@ type DeviceStart struct {
 	Interval   int    // seconds
 }
 
-// StartDevice starts a device authorization for clientID. scope is the
-// OAuth scope parameter (GitHub scopes); empty means DefaultGitHubScopes.
-// deviceName is an optional label of the device (non-standard).
+// StartDevice starts a device authorization with an optional friendly label.
 func (s *Service) StartDevice(ctx context.Context, clientID, scope, deviceName, ip string) (DeviceStart, error) {
 	if _, err := s.deviceApp(ctx, s.q, clientID); err != nil {
 		return DeviceStart{}, err
@@ -116,9 +117,9 @@ func (s *Service) StartDevice(ctx context.Context, clientID, scope, deviceName, 
 	if ok, _ := s.device.AllowAction(auth.IPKey(ip)); !ok {
 		return DeviceStart{}, ErrDeviceRateLimited
 	}
-	scopes := auth.DefaultGitHubScopes
-	if strings.TrimSpace(scope) != "" {
-		scopes = auth.ParseGitHubScopes(scope)
+	scopes, err := requestedDeviceScopes(clientID, scope)
+	if err != nil {
+		return DeviceStart{}, err
 	}
 	id, err := newID()
 	if err != nil {
@@ -144,6 +145,28 @@ func (s *Service) StartDevice(ctx context.Context, clientID, scope, deviceName, 
 			ExpiresIn: int(DeviceCodeTTL / time.Second), Interval: int(DevicePollInterval / time.Second)}, nil
 	}
 	return DeviceStart{}, fmt.Errorf("insert device code: %w", err)
+}
+
+func requestedDeviceScopes(clientID, scope string) ([]string, error) {
+	scope = strings.TrimSpace(scope)
+	switch {
+	case clientID == ErvisioCodeClientID:
+		if scope != auth.ScopeErvisioCodeDevice {
+			return nil, ErrErvisioCodeScope
+		}
+		return []string{auth.ScopeErvisioCodeDevice}, nil
+	case scope == "":
+		return auth.DefaultGitHubScopes, nil
+	default:
+		return auth.ParseGitHubScopes(scope), nil
+	}
+}
+
+func deviceScopes(clientID string, requested []string) []string {
+	if clientID == ErvisioCodeClientID {
+		return []string{auth.ScopeErvisioCodeDevice}
+	}
+	return auth.ScopesFromGitHub(requested)
 }
 
 // userCodeAlphabet has no vowels (no words) and no look-alike letters.
@@ -207,7 +230,7 @@ func cleanDeviceName(name string) string {
 // DeviceToken is the access token handed to an approved device.
 type DeviceToken struct {
 	AccessToken string
-	// Scope lists the granted GitHub scopes, comma separated as on GitHub.
+	// Scope is the granted OAuth scope string.
 	Scope string
 }
 
@@ -294,6 +317,10 @@ func (s *Service) issueDeviceToken(ctx context.Context, q *dbgen.Queries, row db
 	if err != nil {
 		return DeviceToken{}, err
 	}
+	isErvisioCode := client.System() && row.ClientID == ErvisioCodeClientID
+	if isErvisioCode && !slices.Equal(row.Scopes, []string{auth.ScopeErvisioCodeDevice}) {
+		return DeviceToken{}, ErrErvisioCodeScope
+	}
 	if !client.System() {
 		// A registered app: the token belongs to the user's grant and is
 		// listed among the authorized applications.
@@ -334,22 +361,31 @@ func (s *Service) issueDeviceToken(ctx context.Context, q *dbgen.Queries, row db
 		ttl = 90 * 24 * time.Hour
 	}
 	now := s.now()
-	scopes := auth.ScopesFromGitHub(row.Scopes)
+	scopes := deviceScopes(row.ClientID, row.Scopes)
 	secret, hash := auth.NewAccessToken()
 	t := CreatedToken{Token: Token{ID: id, Name: name, Hint: auth.TokenHint(secret), Scopes: scopes,
 		ExpiresAt: now.Add(ttl).UTC(), CreatedAt: now}, Secret: secret}
-	if err := insertToken(ctx, q, userID, t, hash, ip, map[string]any{"client_id": row.ClientID, "grant": "device_code"}); err != nil {
+	if err := insertToken(ctx, q, userID, t, hash, ip, isErvisioCode, map[string]any{"client_id": row.ClientID, "grant": "device_code"}); err != nil {
 		return DeviceToken{}, err
 	}
 	if err := q.ConsumeDeviceCode(ctx, dbgen.ConsumeDeviceCodeParams{ID: row.ID, TokenID: uuid.NullUUID{UUID: id, Valid: true}}); err != nil {
 		return DeviceToken{}, fmt.Errorf("consume device code: %w", err)
 	}
 	s.log.InfoContext(ctx, "device flow token issued", "user_id", userID, "client_id", row.ClientID, "token_id", id)
+	if isErvisioCode {
+		return DeviceToken{AccessToken: secret, Scope: auth.ScopeErvisioCodeDevice}, nil
+	}
 	return DeviceToken{AccessToken: secret, Scope: strings.Join(auth.GitHubScopes(scopes), ",")}, nil
 }
 
 // deviceTokenName is "<client> on <device or server host> (device)".
 func (s *Service) deviceTokenName(c OAuthApp, device string) string {
+	if c.ClientID == ErvisioCodeClientID {
+		if device == "" {
+			return "ErvisioCode device"
+		}
+		return "ErvisioCode on " + device
+	}
 	short := c.short
 	if short == "" {
 		short = c.Name
@@ -369,7 +405,7 @@ type DeviceRequest struct {
 	UserCode        string // XXXX-XXXX
 	ClientID        string
 	AppName         string
-	RequestedScopes []string // GitHub scopes
+	RequestedScopes []string // OAuth scopes
 	Scopes          []string // token scopes
 	DeviceName      string
 	RequestIP       string
@@ -395,7 +431,7 @@ func (s *Service) deviceRequest(ctx context.Context, row dbgen.OauthDeviceCode) 
 		return DeviceRequest{}, err
 	}
 	return DeviceRequest{UserCode: FormatUserCode(row.UserCode), ClientID: row.ClientID, AppName: c.Name,
-		RequestedScopes: row.Scopes, Scopes: auth.ScopesFromGitHub(row.Scopes), DeviceName: row.DeviceName,
+		RequestedScopes: row.Scopes, Scopes: deviceScopes(row.ClientID, row.Scopes), DeviceName: row.DeviceName,
 		RequestIP: row.RequestIp, CreatedAt: row.CreatedAt.Time, ExpiresAt: row.ExpiresAt.Time}, nil
 }
 
