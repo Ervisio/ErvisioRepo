@@ -17,6 +17,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Organizations: `/orgs` shows one card per organization (role, description, repository and team counts, member faces, a card to create a new one); the organization page moves its identity, people, languages and teams into a sticky left column next to the tabs, like the user profile.
 - The hot cache is never unlimited: when no size limit is set the hot target gets 20 GiB instead of the whole disk. Turning the hot cache off now also stops object caching for every data type with a remote primary (including caches set explicitly in a policy).
 - Admin > Storage no longer lists repositories with pin, unpin and evict buttons: placement is automatic. The REST endpoints `/admin/repos/{owner}/{name}/pin` and `/evict` remain for scripts.
 - Git LFS locks hold per branch: the same path may be locked once per ref. A lock created without a ref belongs to the default branch (existing locks were moved there), `GET locks` honors `refspec` and `locks/verify` honors `ref` (migration 00410).

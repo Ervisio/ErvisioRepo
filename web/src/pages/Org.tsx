@@ -686,8 +686,11 @@ export function OrgPage({ name, tab, app, installation, onTab }: { name: string;
   }
   return (
     <Page section="pr" title={o.displayName || o.name} quiet>
-      <OrgHead org={o} isOwner={isOwner} canCreate={o.role !== undefined || instanceAdmin} onTab={onTab} />
-      <div className={current === "repos" ? "oh-grid" : undefined}>
+      <div className="oa">
+        <aside className="oa-id">
+          <OrgHead org={o} isOwner={isOwner} canCreate={o.role !== undefined || instanceAdmin} onTab={onTab} />
+          <OrgAside org={o.name} canManage={canManage} onTab={onTab} />
+        </aside>
         <Tabs value={current} onValueChange={(v) => onTab(v as OrgTab)}>
           {/* The console sidebar already lists these sections. */}
           {layout !== "console" && (
@@ -700,7 +703,6 @@ export function OrgPage({ name, tab, app, installation, onTab }: { name: string;
           <TabsContent value="teams"><Teams org={o.name} canManage={canManage} /></TabsContent>
           {canManage && <TabsContent value="invites"><Invites org={o.name} canManage={canManage} /></TabsContent>}
         </Tabs>
-        {current === "repos" && <aside className="oh-aside"><OrgAside org={o.name} canManage={canManage} onTab={onTab} /></aside>}
       </div>
     </Page>
   );

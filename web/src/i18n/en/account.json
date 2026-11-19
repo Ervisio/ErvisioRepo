@@ -205,5 +205,11 @@
   "details.orgOrder.hint": "Order of the organizations on your profile. Drag them, or use the arrows.",
   "details.orgOrder.up": "Move {name} up",
   "details.orgOrder.down": "Move {name} down",
-  "details.orgOrder.none": "You are not a member of any organization."
+  "details.orgOrder.none": "You are not a member of any organization.",
+  "orgs.repos": "{count} repositories",
+  "orgs.teams": "{count} teams",
+  "orgs.members": "{count} members",
+  "orgs.noDescription": "No description",
+  "orgs.newTitle": "Create an organization",
+  "orgs.newHint": "Group repositories and people under one name."
 }

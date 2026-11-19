@@ -205,5 +205,11 @@
   "details.orgOrder.hint": "Ordine delle organizzazioni sul tuo profilo. Trascinale o usa le frecce.",
   "details.orgOrder.up": "Sposta {name} in alto",
   "details.orgOrder.down": "Sposta {name} in basso",
-  "details.orgOrder.none": "Non fai parte di nessuna organizzazione."
+  "details.orgOrder.none": "Non fai parte di nessuna organizzazione.",
+  "orgs.repos": "{count} repository",
+  "orgs.teams": "{count} team",
+  "orgs.members": "{count} membri",
+  "orgs.noDescription": "Nessuna descrizione",
+  "orgs.newTitle": "Crea un’organizzazione",
+  "orgs.newHint": "Raggruppa repository e persone sotto un unico nome."
 }
