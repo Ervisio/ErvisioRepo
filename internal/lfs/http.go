@@ -232,7 +232,9 @@ func (s *Server) batch(w http.ResponseWriter, r *http.Request, req githttp.LFSRe
 		case !upload:
 			a := server
 			key := objectKey(o.OID)
-			if presign && !s.o.Storage.Cached(key) {
+			// Downloads always go straight to the primary when it can
+			// presign, so object bytes do not pass through the server.
+			if presign {
 				if u, err := s.o.Storage.PresignGet(ctx, key, PresignTTL); err == nil {
 					a = &action{Href: u, ExpiresIn: int64(PresignTTL / time.Second)}
 				} else {

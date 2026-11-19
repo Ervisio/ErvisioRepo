@@ -168,7 +168,7 @@
   "profile.tab.overview": "Panoramica",
   "profile.tab.repositories": "Repository",
   "profile.tab.stars": "Stelle",
-  "profile.instanceAdmin": "Amministratore dell'istanza",
+  "profile.instanceAdmin": "STAFF",
   "profile.localTime": "{time} ({offset}) ora locale",
   "profile.orgs": "Organizzazioni",
   "profile.pinned": "In evidenza",

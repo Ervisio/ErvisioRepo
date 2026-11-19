@@ -341,9 +341,10 @@ paths:
       description: |
         Instance admins only. Lists the hot repositories (hot, hydrating or
         evicting), or every repository with all=true, with the usage of the
-        hot tier. evictAt is when the idle TTL moves a repository back to the
-        remote storage; it is missing for pinned repositories and when there
-        is no TTL or no remote storage.
+        hot tier and where the repositories are stored. evictAt is when the
+        idle TTL (or, for an ephemeral repository, the end of its use) moves
+        a repository back to the remote storage; it is missing for pinned
+        repositories and when there is no TTL or no remote storage.
       security:
         - session: [admin]
       parameters:
@@ -14023,8 +14024,22 @@ components:
           description: Idle TTL of this data type in seconds; 0 uses the hot cache setting. Missing keeps the value of config.toml.
     StorageHotCache:
       type: object
-      required: [enabled, ttlSeconds, source, defaults]
+      required: [enabled, ttlSeconds, source, defaults, maxBytes, largeRepoBytes, defaultMaxBytes, defaultLargeRepoBytes]
       properties:
+        maxBytes:
+          type: integer
+          format: int64
+          description: Size limit of the cache on the local disk (repositories and cached files); 0 uses defaultMaxBytes
+        largeRepoBytes:
+          type: integer
+          format: int64
+          description: Repositories larger than this are fetched from the remote storage for each use and never kept; 0 uses defaultLargeRepoBytes
+        defaultMaxBytes:
+          type: integer
+          format: int64
+        defaultLargeRepoBytes:
+          type: integer
+          format: int64
         enabled:
           type: boolean
           description: Data of remote targets is cached on the local disk automatically
@@ -14052,6 +14067,16 @@ components:
           format: int64
           minimum: 0
           description: 0 for the per data type defaults, otherwise at least 3600
+        maxBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Size limit of the cache; 0 (or missing) for the default, otherwise at least 1 GiB
+        largeRepoBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Size above which repositories are not kept in the cache; 0 (or missing) for the default
     HotRepoPage:
       type: object
       required: [items, total, summary]
@@ -14067,8 +14092,11 @@ components:
           $ref: "#/components/schemas/HotRepoSummary"
     HotRepo:
       type: object
-      required: [id, owner, name, fullName, state, pinned, sizeBytes, lastAccessAt]
+      required: [id, owner, name, fullName, state, pinned, sizeBytes, lastAccessAt, ephemeral]
       properties:
+        ephemeral:
+          type: boolean
+          description: Not kept in the cache (larger than the limit, or the cache is disabled); evicted right after use
         id:
           type: string
           format: uuid
@@ -14096,8 +14124,21 @@ components:
           description: When the idle TTL moves the repository to the remote storage
     HotRepoSummary:
       type: object
-      required: [repos, pinned, bytes, budget, highWatermark, lowWatermark, ttlSeconds, remote]
+      required: [repos, pinned, bytes, budget, highWatermark, lowWatermark, ttlSeconds, remote, primary, replicas, cacheEnabled, largeRepoBytes]
       properties:
+        primary:
+          type: string
+          description: Target holding the remote journal of the repositories; empty when there is none
+        replicas:
+          type: array
+          items: {type: string}
+          description: Targets holding copies of the remote journal
+        cacheEnabled:
+          type: boolean
+        largeRepoBytes:
+          type: integer
+          format: int64
+          description: Repositories above this size are evicted right after use
         repos:
           type: integer
           format: int64

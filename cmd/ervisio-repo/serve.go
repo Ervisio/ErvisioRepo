@@ -130,6 +130,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	var gitTier *gitstore.Tier
 	if tiering != nil {
 		gitTier = tiering.Tier
+		defer tiering.Evictor.Close()
 	}
 	jobOpts := []jobs.Option{jobs.WithStorage(storage, log), identity.JobsOption(mailer),
 		orgs.JobsOption(orgs.MailerFor(cfg, dbgen.New(pool), sender, log))}

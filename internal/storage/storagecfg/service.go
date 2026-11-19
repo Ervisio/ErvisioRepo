@@ -144,6 +144,11 @@ type HotCacheView struct {
 	Source  string        // SourceFile or SourceDatabase
 	// Defaults are the per data type idle TTLs used when TTL is 0.
 	Defaults map[string]time.Duration
+	// MaxBytes is the set size limit of the cache (0: default),
+	// LargeRepoBytes the set size above which repositories are not kept
+	// (0: default); the Default fields are what 0 means.
+	MaxBytes, LargeRepoBytes               int64
+	DefaultMaxBytes, DefaultLargeRepoBytes int64
 }
 
 // View is the configuration as the next start will run with it.
@@ -222,7 +227,9 @@ func (s *Service) view(ctx context.Context, doc Doc) (View, error) {
 	}
 
 	hot := doc.hotCache(s.opt.File.HotCache)
-	v.HotCache = HotCacheView{Enabled: hot.Enabled, TTL: time.Duration(hot.TTL), Source: SourceFile, Defaults: config.DefaultCacheTTL}
+	v.HotCache = HotCacheView{Enabled: hot.Enabled, TTL: time.Duration(hot.TTL), Source: SourceFile, Defaults: config.DefaultCacheTTL,
+		MaxBytes: int64(hot.MaxSize), LargeRepoBytes: int64(hot.LargeRepo),
+		DefaultMaxBytes: int64(config.DefaultHotCacheSize), DefaultLargeRepoBytes: int64(config.DefaultLargeRepoSize)}
 	if doc.HotCache != nil {
 		v.HotCache.Source = SourceDatabase
 	}
@@ -685,7 +692,14 @@ type HotCacheInput struct {
 	// TTL is the idle time after which data moves back to the remote
 	// storage, for every data type without its own; 0 uses the defaults.
 	TTL time.Duration
+	// MaxBytes bounds the local disk used by the cache; LargeRepoBytes is the
+	// size above which repositories are evicted right after use. 0 uses the
+	// defaults.
+	MaxBytes, LargeRepoBytes int64
 }
+
+// minHotCacheBytes is the smallest cache size limit accepted (1 GiB).
+const minHotCacheBytes = 1 << 30
 
 // checkTTL accepts 0 (the default) or at least config.MinHotCacheTTL.
 func checkTTL(path string, ttl time.Duration) error {
@@ -701,7 +715,13 @@ func (s *Service) PutHotCache(ctx context.Context, actor uuid.UUID, ip string, i
 	if err := checkTTL("ttl", in.TTL); err != nil {
 		return View{}, err
 	}
-	ov := HotCacheOverride{Enabled: in.Enabled, TTLSeconds: int64(in.TTL.Seconds())}
+	if in.MaxBytes < 0 || (in.MaxBytes > 0 && in.MaxBytes < minHotCacheBytes) {
+		return View{}, fieldErr("maxBytes", "must be 0 (default) or at least 1 GiB")
+	}
+	if in.LargeRepoBytes < 0 {
+		return View{}, fieldErr("largeRepoBytes", "must be 0 (default) or positive")
+	}
+	ov := HotCacheOverride{Enabled: in.Enabled, TTLSeconds: int64(in.TTL.Seconds()), MaxBytes: in.MaxBytes, LargeRepoBytes: in.LargeRepoBytes}
 	return s.mutate(ctx, func(_ *dbgen.Queries, doc *Doc) (audit.Event, error) {
 		if ov.config() == s.opt.File.HotCache {
 			doc.HotCache = nil
@@ -709,7 +729,7 @@ func (s *Service) PutHotCache(ctx context.Context, actor uuid.UUID, ip string, i
 			doc.HotCache = &ov
 		}
 		return audit.Event{Actor: actor, Action: ActionHotCacheSaved, TargetType: "storage_hot_cache", TargetID: "hot_cache", IP: ip,
-			Data: map[string]any{"enabled": ov.Enabled, "ttlSeconds": ov.TTLSeconds}}, nil
+			Data: map[string]any{"enabled": ov.Enabled, "ttlSeconds": ov.TTLSeconds, "maxBytes": ov.MaxBytes, "largeRepoBytes": ov.LargeRepoBytes}}, nil
 	})
 }
 

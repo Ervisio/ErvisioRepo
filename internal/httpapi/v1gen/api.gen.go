@@ -4593,6 +4593,9 @@ type GpgKeyCreate struct {
 
 // HotRepo defines model for HotRepo.
 type HotRepo struct {
+	// Ephemeral Not kept in the cache (larger than the limit, or the cache is disabled); evicted right after use
+	Ephemeral bool `json:"ephemeral"`
+
 	// EvictAt When the idle TTL moves the repository to the remote storage
 	EvictAt  *time.Time         `json:"evictAt,omitempty"`
 	FullName string             `json:"fullName"`
@@ -4622,12 +4625,22 @@ type HotRepoSummary struct {
 	// Budget Space of the hot repositories in bytes, 0 means no limit
 	Budget        int64   `json:"budget"`
 	Bytes         int64   `json:"bytes"`
+	CacheEnabled  bool    `json:"cacheEnabled"`
 	HighWatermark float64 `json:"highWatermark"`
-	LowWatermark  float64 `json:"lowWatermark"`
-	Pinned        int64   `json:"pinned"`
+
+	// LargeRepoBytes Repositories above this size are evicted right after use
+	LargeRepoBytes int64   `json:"largeRepoBytes"`
+	LowWatermark   float64 `json:"lowWatermark"`
+	Pinned         int64   `json:"pinned"`
+
+	// Primary Target holding the remote journal of the repositories; empty when there is none
+	Primary string `json:"primary"`
 
 	// Remote A remote storage holds the repositories, so idle ones can leave the local disk
 	Remote bool `json:"remote"`
+
+	// Replicas Targets holding copies of the remote journal
+	Replicas []string `json:"replicas"`
 
 	// Repos Hot repositories
 	Repos int64 `json:"repos"`
@@ -6285,12 +6298,21 @@ type StorageHostKeys struct {
 
 // StorageHotCache defines model for StorageHotCache.
 type StorageHotCache struct {
+	DefaultLargeRepoBytes int64 `json:"defaultLargeRepoBytes"`
+	DefaultMaxBytes       int64 `json:"defaultMaxBytes"`
+
 	// Defaults Idle TTL in seconds per data type used when ttlSeconds is 0
 	Defaults map[string]int64 `json:"defaults"`
 
 	// Enabled Data of remote targets is cached on the local disk automatically
-	Enabled bool                  `json:"enabled"`
-	Source  StorageHotCacheSource `json:"source"`
+	Enabled bool `json:"enabled"`
+
+	// LargeRepoBytes Repositories larger than this are fetched from the remote storage for each use and never kept; 0 uses defaultLargeRepoBytes
+	LargeRepoBytes int64 `json:"largeRepoBytes"`
+
+	// MaxBytes Size limit of the cache on the local disk (repositories and cached files); 0 uses defaultMaxBytes
+	MaxBytes int64                 `json:"maxBytes"`
+	Source   StorageHotCacheSource `json:"source"`
 
 	// TtlSeconds Idle time after which data moves back to the remote storage; 0 uses defaults
 	TtlSeconds int64 `json:"ttlSeconds"`
@@ -6302,6 +6324,12 @@ type StorageHotCacheSource string
 // StorageHotCacheInput defines model for StorageHotCacheInput.
 type StorageHotCacheInput struct {
 	Enabled bool `json:"enabled"`
+
+	// LargeRepoBytes Size above which repositories are not kept in the cache; 0 (or missing) for the default
+	LargeRepoBytes *int64 `json:"largeRepoBytes,omitempty"`
+
+	// MaxBytes Size limit of the cache; 0 (or missing) for the default, otherwise at least 1 GiB
+	MaxBytes *int64 `json:"maxBytes,omitempty"`
 
 	// TtlSeconds 0 for the per data type defaults, otherwise at least 3600
 	TtlSeconds int64 `json:"ttlSeconds"`

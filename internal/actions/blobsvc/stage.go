@@ -326,9 +326,28 @@ func (s *Stager) fail(w http.ResponseWriter, r *http.Request, err error) {
 	Problem(w, http.StatusInternalServerError, "")
 }
 
-// ServeBlob streams a committed object; filename, when set, is offered as
-// the attachment name.
+// DirectTTL bounds the presigned URLs ServeBlob redirects to.
+const DirectTTL = 5 * time.Minute
+
+// ServeBlob serves a committed object; filename, when set, is offered as
+// the attachment name. Callers check the request signature first.
+//
+// A GET of an object without filename is redirected to a presigned URL on
+// the storage primary when it supports one (the toolkit's HTTP clients
+// follow redirects). Presigned URLs cannot carry Content-Type and
+// Content-Disposition overrides, so blobs whose headers matter (artifacts,
+// which the toolkit may save under the served name and type) and HEAD
+// requests (the URL is signed for GET) are always streamed.
 func ServeBlob(w http.ResponseWriter, r *http.Request, c *tier.Class, log *slog.Logger, key, contentType, filename string) {
+	if r.Method == http.MethodGet && filename == "" && c.CanPresign() {
+		u, err := c.PresignGet(r.Context(), key, DirectTTL)
+		if err == nil {
+			w.Header().Set("Cache-Control", "private, no-store")
+			http.Redirect(w, r, u, http.StatusFound)
+			return
+		}
+		log.WarnContext(r.Context(), "presign actions results download, streaming instead", "error", err)
+	}
 	rc, obj, err := c.Get(r.Context(), key, nil)
 	if errors.Is(err, blob.ErrNotFound) {
 		Problem(w, http.StatusNotFound, "")

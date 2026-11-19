@@ -168,7 +168,7 @@
   "profile.tab.overview": "Overview",
   "profile.tab.repositories": "Repositories",
   "profile.tab.stars": "Stars",
-  "profile.instanceAdmin": "Instance administrator",
+  "profile.instanceAdmin": "STAFF",
   "profile.localTime": "{time} ({offset}) local time",
   "profile.orgs": "Organizations",
   "profile.pinned": "Pinned",

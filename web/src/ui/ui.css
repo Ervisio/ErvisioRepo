@@ -42,6 +42,8 @@
 .ui-input:disabled, .ui-select[data-disabled] { opacity: .45; cursor: not-allowed; }
 .ui-input.ui-mono { font-size: 13px; }
 .ui-field-err .ui-input { border-color: var(--err); }
+/* Multi-line fields: grow with rows and keep the same text inset as a single-line input (beats the fixed console and settings heights). */
+:root:root textarea.ui-input { height: auto; min-height: 34px; padding: 8px 12px; line-height: 1.45; resize: vertical; }
 .ui-note { margin: 0; font-size: 12.5px; color: var(--ink2); }
 .ui-field-err .ui-note { color: var(--err); }
 .ui-select { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; cursor: pointer; }

@@ -540,6 +540,11 @@ h1, h2, h3 { letter-spacing: -.01em; }
 .rh-hint { margin: 8px 0 0; color: var(--ink2); font-size: 12px; }
 .rh-clone > .ui-item { margin: 0 6px; }
 .up-readme { margin-bottom: 24px; }
+/* Profile README: no box around it, only the header line (specificity beats the console and ring rules). */
+:root:root:root .up-readme :is(.ui-box, .ui-card) { background: none; box-shadow: none; border-radius: 0; padding: 0; }
+:root:root:root .up-readme :is(.ui-box-h, .ui-card-head) { padding: 0 0 10px; margin-bottom: 16px; border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent); }
+:root:root:root .up-readme .ui-in { background: none; border-radius: 0; padding: 0; }
+:root:root:root .up-readme :is(.rp-rb, .rp-md) { padding: 0; }
 .rp-head-a { margin-left: auto; display: inline-flex; }
 .up-invite { display: flex; gap: 14px; align-items: flex-start; padding: 20px; margin-bottom: 24px; border: 1px dashed var(--line); border-radius: var(--r-card); }
 .up-invite > .ui-icon { flex: none; margin-top: 2px; color: var(--ink2); }

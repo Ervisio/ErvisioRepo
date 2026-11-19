@@ -446,8 +446,16 @@ func (s *Store) PresignGet(ctx context.Context, key string, ttl time.Duration) (
 	if err := blob.ValidateKey(key); err != nil {
 		return "", err
 	}
-	req, err := s.presign.PresignGetObject(ctx, &s3.GetObjectInput{Bucket: aws.String(s.opts.Bucket), Key: s.objKey(key)},
-		s3.WithPresignExpires(ttl))
+	in := &s3.GetObjectInput{Bucket: aws.String(s.opts.Bucket), Key: s.objKey(key)}
+	if h, ok := blob.ResponseHeadersFrom(ctx); ok {
+		if h.ContentType != "" {
+			in.ResponseContentType = aws.String(h.ContentType)
+		}
+		if h.ContentDisposition != "" {
+			in.ResponseContentDisposition = aws.String(h.ContentDisposition)
+		}
+	}
+	req, err := s.presign.PresignGetObject(ctx, in, s3.WithPresignExpires(ttl))
 	if err != nil {
 		return "", fmt.Errorf("s3 %s: presign get %s: %w", s.opts.Name, key, err)
 	}

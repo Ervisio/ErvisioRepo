@@ -68,7 +68,7 @@ func (q *Queries) GetRepoJournal(ctx context.Context, id uuid.UUID) (GetRepoJour
 }
 
 const incRepoPushes = `-- name: IncRepoPushes :one
-UPDATE repos SET pushes_since_maintenance = pushes_since_maintenance + 1
+UPDATE repos SET pushes_since_maintenance = pushes_since_maintenance + 1, updated_at = now()
 WHERE id = $1
 RETURNING pushes_since_maintenance
 `

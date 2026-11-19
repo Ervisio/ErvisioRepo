@@ -533,6 +533,20 @@ func (c *call) getAsset() error {
 			rng, status = &r, http.StatusPartialContent
 		}
 	}
+	if c.r.Method == http.MethodGet {
+		if l, ok := c.s.d.Releases.(assetLinker); ok {
+			u, _, err := l.AssetURL(c.ctx, c.who, c.owner, c.repo, relID, assetID, rng == nil || rng.Offset == 0)
+			if err == nil {
+				// As on GitHub: the asset bytes come from the object store.
+				c.w.Header().Set("Cache-Control", "private, no-store")
+				http.Redirect(c.w, c.r, u, http.StatusFound)
+				return nil
+			}
+			if !errors.Is(err, releases.ErrNoDirectURL) {
+				c.s.d.Log.WarnContext(c.ctx, "ghapi: presign asset, streaming instead", "asset", assetID, "error", err)
+			}
+		}
+	}
 	rc, _, err := c.s.d.Releases.OpenAsset(c.ctx, c.who, c.owner, c.repo, relID, assetID, rng)
 	if err != nil {
 		return err

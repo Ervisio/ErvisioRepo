@@ -24,6 +24,9 @@ type HotRepo struct {
 	// EvictAt is when the idle TTL moves the repository to the remote
 	// storage; zero when it never does (pinned, not hot, or no TTL).
 	EvictAt time.Time
+	// Ephemeral is set when the repository is not kept in the cache and
+	// leaves the local disk right after use.
+	Ephemeral bool
 }
 
 // HotSummary is the usage of the hot tier.
@@ -36,6 +39,12 @@ type HotSummary struct {
 	High, Low float64
 	TTL       time.Duration
 	Remote    bool
+	// Primary and Replicas are the targets of the remote journal;
+	// CacheEnabled and LargeRepo the hot cache setting (see EvictorOptions).
+	Primary      string
+	Replicas     []string
+	CacheEnabled bool
+	LargeRepo    int64
 }
 
 // HotFilter selects the listed repositories.
@@ -79,7 +88,12 @@ func (a *Admin) HotRepos(ctx context.Context, f HotFilter) ([]HotRepo, int64, er
 	for _, r := range rows {
 		h := HotRepo{ID: r.ID, Owner: r.OwnerName, Name: r.Name, State: r.StorageState, Pinned: r.Pinned,
 			SizeBytes: r.SizeBytes, LastAccess: r.LastAccessAt.Time}
-		if remote && ttl > 0 && !r.Pinned && r.StorageState == "hot" {
+		h.Ephemeral = remote && a.evictor.ephemeral(r.SizeBytes)
+		switch {
+		case !remote || r.Pinned || r.StorageState != "hot":
+		case h.Ephemeral:
+			h.EvictAt = h.LastAccess.Add(a.evictor.o.EphemeralGrace)
+		case ttl > 0:
 			h.EvictAt = h.LastAccess.Add(ttl)
 		}
 		out = append(out, h)
@@ -105,6 +119,8 @@ func (a *Admin) HotSummary(ctx context.Context) (HotSummary, error) {
 	if a.evictor != nil {
 		s.TTL, s.Budget, s.High, s.Low = a.evictor.Settings()
 		s.Remote = a.evictor.o.Tier.Store() != nil
+		s.Primary, s.Replicas = a.evictor.o.Primary, a.evictor.o.Replicas
+		s.CacheEnabled, s.LargeRepo = !a.evictor.o.NoCache, a.evictor.o.LargeRepo
 	}
 	return s, nil
 }

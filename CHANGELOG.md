@@ -11,11 +11,23 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - Presence and file locks (per repository, off by default; repository admins turn it on in the settings or with `PUT /api/v1/repos/{owner}/{name}/presence/enabled`, recorded in the audit log as `repo.presence_changed`). Members with write access, and organization members on the organization's public repositories, share through ErvisioGit Desktop the branch, head, uncommitted tracked files (paths only) and unpushed commits of each client: `GET /presence`, `PUT`/`DELETE /presence/heartbeat` (live for 90 s, every 30 s), and a server-sent event stream `GET /presence/stream` (`snapshot`, `presence`, `gone`, `lock`, `unlock`, `disabled`, ping every 25 s) that works across instances through Postgres `LISTEN/NOTIFY`. Personal access tokens need `repo:read` to read and `repo:write` to change.
 - File locks per branch: `POST /presence/locks` and `DELETE /presence/locks/{id}` (force for maintainers, admins and organization owners). On repositories with the feature on, a push (or a web edit or merge) that changes a file locked on that branch by another user is refused with `error: <path> is locked on <branch> by <login> since <date>`. Deleting a branch releases its locks.
 - Existing bidirectional GitHub links also synchronize published releases and missing assets for matching tags.
+- Hot cache size limit: **Admin > Storage > Hot cache** sets the maximum local disk used by hot repositories and cached files together (`maxBytes` in `PUT /admin/storage/hot-cache`, `[storage.hot_cache] max_size` in `config.toml`; default 20 GiB, or the hot target's own `budget`). Above it the least recently used repositories and files are evicted automatically and fetched again from the remote storage when needed. Applies after a restart.
+- Large repositories are not kept in the hot cache: above `largeRepoBytes` (`[storage.hot_cache] large_repo`, default 2 GiB) a repository with a remote journal is hydrated for its use and evicted about 2 minutes after its last lease is released (same safety checks as any eviction; the periodic eviction pass catches the ones still busy or with pushes not yet journaled). With the hot cache off every such repository is handled this way.
+- Admin > Storage: a lookup shows where a repository is stored right now (search owner/name or paste its web, HTTPS or SSH URL): state, size, whether it is cached, the journal primary and replicas. `GET /admin/storage/hot-repos` returns `ephemeral` per repository and `primary`, `replicas`, `cacheEnabled`, `largeRepoBytes` in the summary.
 
 ### Changed
 
+- The hot cache is never unlimited: when no size limit is set the hot target gets 20 GiB instead of the whole disk. Turning the hot cache off now also stops object caching for every data type with a remote primary (including caches set explicitly in a policy).
+- Admin > Storage no longer lists repositories with pin, unpin and evict buttons: placement is automatic. The REST endpoints `/admin/repos/{owner}/{name}/pin` and `/evict` remain for scripts.
 - Git LFS locks hold per branch: the same path may be locked once per ref. A lock created without a ref belongs to the default branch (existing locks were moved there), `GET locks` honors `refspec` and `locks/verify` honors `ref` (migration 00410).
 - References to the server manager now use its new name, **Ervisio Console** (formerly "Ervisio" or "the Ervisio core"): docs, plugin comments, the Caddyfile hint written by the plugin and the plugin test mail. "Ervisio" stays the name of the ecosystem; ErvisioRepo's own names, binaries and formats are unchanged.
+- Downloads go straight to object storage when the primary can presign (S3 without client-side encryption): Git LFS batch downloads always get a presigned URL, even when the object is in the hot cache, and release asset downloads (REST and GitHub-compatible API) and Actions cache downloads answer `302` to a 5-minute presigned URL. Download counts are unchanged. Presigned release downloads keep the asset name and type (S3 response header overrides). HEAD requests, Actions artifacts (whose served name and type matter) and local, SFTP or encrypted primaries keep streaming through the server.
+
+### Fixed
+
+- Profile: the README has no box around it (only its header line), only the current tab is underlined (Overview no longer stays active next to Repositories or Stars), and instance administrators show a "STAFF" label.
+- Multi-line text fields (bio, descriptions, keys) grow with their rows and use the same text inset as single-line fields instead of a fixed, clipped height.
+- Repository lists: "Updated" now moves on every push (`updated_at` is set when a push is recorded), not only on settings changes.
 
 ## [1.16.3] - 2026-11-18
 

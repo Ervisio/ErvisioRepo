@@ -40,6 +40,13 @@ type Releases interface {
 	OpenAsset(ctx context.Context, who auth.Principal, owner, name string, releaseID, assetID uuid.UUID, rng *blob.Range) (io.ReadCloser, releases.Asset, error)
 }
 
+// assetLinker is implemented by release services that can send asset
+// downloads straight to the storage primary with a presigned URL.
+// AssetURL returns releases.ErrNoDirectURL when that is not possible.
+type assetLinker interface {
+	AssetURL(ctx context.Context, who auth.Principal, owner, name string, releaseID, assetID uuid.UUID, count bool) (string, releases.Asset, error)
+}
+
 var errReleasesUnavailable = problemResponse{status: http.StatusServiceUnavailable, detail: "releases are not available"}
 
 // releasesFail maps a release service error to a problem response.
@@ -407,6 +414,19 @@ func downloadAsset(w http.ResponseWriter, req *http.Request, d Deps) {
 		return
 	} else if ok {
 		rng, status = &r, http.StatusPartialContent
+	}
+	if req.Method == http.MethodGet {
+		if l, ok := d.Releases.(assetLinker); ok {
+			u, _, err := l.AssetURL(ctx, p, owner, name, relID, assetID, rng == nil || rng.Offset == 0)
+			if err == nil {
+				w.Header().Set("Cache-Control", "private, no-store")
+				http.Redirect(w, req, u, http.StatusFound)
+				return
+			}
+			if !errors.Is(err, releases.ErrNoDirectURL) {
+				d.Log.WarnContext(ctx, "presign release asset, streaming instead", "asset", assetID, "error", err)
+			}
+		}
 	}
 	rc, _, err := d.Releases.OpenAsset(ctx, p, owner, name, relID, assetID, rng)
 	if err != nil {

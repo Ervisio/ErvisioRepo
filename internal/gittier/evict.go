@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -37,6 +38,21 @@ type EvictorOptions struct {
 	// evicted until the usage is at most Low×Budget.
 	Budget    int64
 	High, Low float64
+	// LargeRepo is the size in bytes above which a repository is ephemeral:
+	// hydrated for its use and evicted right after its last lease is
+	// released (0: no size limit). NoCache makes every repository
+	// ephemeral (hot cache disabled). Neither applies without a remote
+	// journal.
+	LargeRepo int64
+	NoCache   bool
+	// EphemeralGrace is how long an ephemeral repository stays after its
+	// last use, so that a clone followed by a fetch does not hydrate twice
+	// (default 2 minutes).
+	EphemeralGrace time.Duration
+	// Primary and Replicas name the targets of the remote journal, for the
+	// admin view only.
+	Primary  string
+	Replicas []string
 	// LockTimeout bounds the wait for the exclusive lease (default 2s): a
 	// repository in use is skipped, not waited for.
 	LockTimeout time.Duration
@@ -47,6 +63,10 @@ type EvictorOptions struct {
 type Evictor struct {
 	o EvictorOptions
 	q *dbgen.Queries
+
+	mu     sync.Mutex
+	timers map[uuid.UUID]*time.Timer
+	closed bool
 }
 
 // NewEvictor returns an Evictor.
@@ -66,7 +86,64 @@ func NewEvictor(o EvictorOptions) *Evictor {
 	if o.Low <= 0 || o.Low >= o.High {
 		o.Low = o.High * 0.8
 	}
-	return &Evictor{o: o, q: dbgen.New(o.Pool)}
+	if o.EphemeralGrace <= 0 {
+		o.EphemeralGrace = 2 * time.Minute
+	}
+	return &Evictor{o: o, q: dbgen.New(o.Pool), timers: map[uuid.UUID]*time.Timer{}}
+}
+
+// ephemeral reports whether a repository of that size must not stay hot.
+func (e *Evictor) ephemeral(size int64) bool {
+	return e.o.NoCache || (e.o.LargeRepo > 0 && size > e.o.LargeRepo)
+}
+
+// Released is the release hook of the tier (gitstore.Tier.SetOnRelease): an
+// ephemeral repository is evicted EphemeralGrace after its last lease. Each
+// release restarts the wait; a repository still busy or with pushes not yet
+// in the remote journal is left to the periodic pass.
+func (e *Evictor) Released(id uuid.UUID) {
+	if e.o.Tier.Store() == nil || (!e.o.NoCache && e.o.LargeRepo <= 0) {
+		return
+	}
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.closed {
+		return
+	}
+	if t, ok := e.timers[id]; ok {
+		t.Reset(e.o.EphemeralGrace)
+		return
+	}
+	e.timers[id] = time.AfterFunc(e.o.EphemeralGrace, func() {
+		e.mu.Lock()
+		delete(e.timers, id)
+		closed := e.closed
+		e.mu.Unlock()
+		if !closed {
+			e.evictEphemeral(id)
+		}
+	})
+}
+
+func (e *Evictor) evictEphemeral(id uuid.UUID) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	row, err := e.q.GetRepoStorage(ctx, id)
+	if err != nil || row.StorageState != gitstore.StateHot || row.Pinned || !e.ephemeral(row.SizeBytes) {
+		return
+	}
+	e.try(ctx, id, "ephemeral")
+}
+
+// Close stops the pending ephemeral evictions.
+func (e *Evictor) Close() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.closed = true
+	for id, t := range e.timers {
+		t.Stop()
+		delete(e.timers, id)
+	}
 }
 
 // evictBatch bounds the candidates loaded per pass.
@@ -82,6 +159,22 @@ func (e *Evictor) Run(ctx context.Context) (int, error) {
 	}
 	evicted := 0
 	done := map[uuid.UUID]bool{}
+	if e.o.NoCache || e.o.LargeRepo > 0 {
+		rows, err := e.q.ListHotUnpinnedRepos(ctx, evictBatch)
+		if err != nil {
+			return 0, fmt.Errorf("list hot repositories: %w", err)
+		}
+		idle := e.o.Now().Add(-e.o.EphemeralGrace)
+		for _, r := range rows {
+			if !e.ephemeral(r.SizeBytes) || (r.LastAccessAt.Valid && r.LastAccessAt.Time.After(idle)) {
+				continue
+			}
+			done[r.ID] = true
+			if e.try(ctx, r.ID, "ephemeral") {
+				evicted++
+			}
+		}
+	}
 	if e.o.TTL > 0 {
 		before := pgtype.Timestamptz{Time: e.o.Now().Add(-e.o.TTL), Valid: true}
 		rows, err := e.q.ListEvictionCandidates(ctx, dbgen.ListEvictionCandidatesParams{Before: before, Lim: evictBatch})
@@ -89,6 +182,9 @@ func (e *Evictor) Run(ctx context.Context) (int, error) {
 			return 0, fmt.Errorf("list eviction candidates: %w", err)
 		}
 		for _, r := range rows {
+			if done[r.ID] {
+				continue
+			}
 			done[r.ID] = true
 			if e.try(ctx, r.ID, "ttl") {
 				evicted++

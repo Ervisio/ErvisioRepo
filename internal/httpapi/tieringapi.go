@@ -125,10 +125,15 @@ func (s *v1Server) ListAdminHotRepos(ctx context.Context, req v1gen.ListAdminHot
 	out := v1gen.HotRepoPage{Items: make([]v1gen.HotRepo, 0, len(list)), Total: total, Summary: v1gen.HotRepoSummary{
 		Repos: sum.Repos, Pinned: sum.Pinned, Bytes: sum.Bytes, Budget: sum.Budget,
 		HighWatermark: sum.High, LowWatermark: sum.Low, TtlSeconds: int64(sum.TTL.Seconds()), Remote: sum.Remote,
+		Primary: sum.Primary, Replicas: sum.Replicas, CacheEnabled: sum.CacheEnabled, LargeRepoBytes: sum.LargeRepo,
 	}}
+	if out.Summary.Replicas == nil {
+		out.Summary.Replicas = []string{}
+	}
 	for _, r := range list {
 		h := v1gen.HotRepo{Id: r.ID, Owner: r.Owner, Name: r.Name, FullName: r.Owner + "/" + r.Name,
-			State: v1gen.HotRepoState(r.State), Pinned: r.Pinned, SizeBytes: r.SizeBytes, LastAccessAt: r.LastAccess}
+			State: v1gen.HotRepoState(r.State), Pinned: r.Pinned, SizeBytes: r.SizeBytes, LastAccessAt: r.LastAccess,
+			Ephemeral: r.Ephemeral}
 		if !r.EvictAt.IsZero() {
 			h.EvictAt = &r.EvictAt
 		}

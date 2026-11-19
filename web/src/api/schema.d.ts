@@ -221,9 +221,10 @@ export interface paths {
          * Repositories kept on the local disk, most recently used first
          * @description Instance admins only. Lists the hot repositories (hot, hydrating or
          *     evicting), or every repository with all=true, with the usage of the
-         *     hot tier. evictAt is when the idle TTL moves a repository back to the
-         *     remote storage; it is missing for pinned repositories and when there
-         *     is no TTL or no remote storage.
+         *     hot tier and where the repositories are stored. evictAt is when the
+         *     idle TTL (or, for an ephemeral repository, the end of its use) moves
+         *     a repository back to the remote storage; it is missing for pinned
+         *     repositories and when there is no TTL or no remote storage.
          */
         get: operations["listAdminHotRepos"];
         put?: never;
@@ -8342,6 +8343,20 @@ export interface components {
             cacheTtlSeconds?: number;
         };
         StorageHotCache: {
+            /**
+             * Format: int64
+             * @description Size limit of the cache on the local disk (repositories and cached files); 0 uses defaultMaxBytes
+             */
+            maxBytes: number;
+            /**
+             * Format: int64
+             * @description Repositories larger than this are fetched from the remote storage for each use and never kept; 0 uses defaultLargeRepoBytes
+             */
+            largeRepoBytes: number;
+            /** Format: int64 */
+            defaultMaxBytes: number;
+            /** Format: int64 */
+            defaultLargeRepoBytes: number;
             /** @description Data of remote targets is cached on the local disk automatically */
             enabled: boolean;
             /**
@@ -8363,6 +8378,16 @@ export interface components {
              * @description 0 for the per data type defaults, otherwise at least 3600
              */
             ttlSeconds: number;
+            /**
+             * Format: int64
+             * @description Size limit of the cache; 0 (or missing) for the default, otherwise at least 1 GiB
+             */
+            maxBytes?: number;
+            /**
+             * Format: int64
+             * @description Size above which repositories are not kept in the cache; 0 (or missing) for the default
+             */
+            largeRepoBytes?: number;
         };
         HotRepoPage: {
             items: components["schemas"]["HotRepo"][];
@@ -8371,6 +8396,8 @@ export interface components {
             summary: components["schemas"]["HotRepoSummary"];
         };
         HotRepo: {
+            /** @description Not kept in the cache (larger than the limit, or the cache is disabled); evicted right after use */
+            ephemeral: boolean;
             /** Format: uuid */
             id: string;
             owner: string;
@@ -8393,6 +8420,16 @@ export interface components {
             evictAt?: string;
         };
         HotRepoSummary: {
+            /** @description Target holding the remote journal of the repositories; empty when there is none */
+            primary: string;
+            /** @description Targets holding copies of the remote journal */
+            replicas: string[];
+            cacheEnabled: boolean;
+            /**
+             * Format: int64
+             * @description Repositories above this size are evicted right after use
+             */
+            largeRepoBytes: number;
             /**
              * Format: int64
              * @description Hot repositories

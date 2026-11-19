@@ -32,16 +32,20 @@ func setupGitTiering(cfg *config.Config, pool *pgxpool.Pool, storage *tier.Tier,
 	}
 	h.SetTier(t)
 	budget, high, low := hotBudget(cfg)
+	hc, gp := cfg.Storage.HotCache, cfg.Storage.Policy[gitstore.Policy]
 	ev := gittier.NewEvictor(gittier.EvictorOptions{
 		Pool: pool, Tier: t, Log: log.With("component", "evictor"),
-		TTL: time.Duration(cfg.Storage.Policy[gitstore.Policy].CacheTTL), Budget: budget, High: high, Low: low,
+		TTL: time.Duration(gp.CacheTTL), Budget: budget, High: high, Low: low,
+		LargeRepo: int64(hc.LargeRepoSize()), NoCache: !hc.Enabled,
+		Primary: gp.Primary, Replicas: gp.Replicas,
 	})
+	t.SetOnRelease(ev.Released)
 	return &gitTiering{Tier: t, Hydrator: h, Evictor: ev, Admin: gittier.NewAdmin(pool, ev)}, nil
 }
 
 // hotBudget returns the space of the hot tier: the budget of the local
 // target holding it (the git cache, else the git primary, else the hot
-// cache target), less the shares of the object caches kept on that target,
+// cache target, never unlimited: see config.HotCache.MaxSize), less the shares of the object caches kept on that target,
 // with that target's watermarks.
 func hotBudget(cfg *config.Config) (int64, float64, float64) {
 	s := &cfg.Storage
@@ -60,7 +64,16 @@ func hotBudget(cfg *config.Config) (int64, float64, float64) {
 	if hot == nil {
 		return 0, 0, 0
 	}
-	b := float64(hot.Budget)
+	// WithHotCache gives the hot target its budget; another local target
+	// holding the git cache without a budget gets the hot cache limit too.
+	budget := hot.Budget
+	if budget == 0 {
+		budget = s.HotCache.MaxSize
+	}
+	if budget == 0 {
+		budget = config.DefaultHotCacheSize
+	}
+	b := float64(budget)
 	if shares := s.CacheShares(hot.Name); shares > 0 && shares < 1 {
 		b *= 1 - shares
 	}

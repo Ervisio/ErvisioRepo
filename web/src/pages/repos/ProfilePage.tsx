@@ -69,7 +69,7 @@ export function ProfilePage({ username, tab }: { username: string; tab?: Profile
           <div className="up-body">
             <nav className="up-tabs" aria-label={t("profile.tabs")}>
               {tabs.map((x) => (
-                <Link key={x.id ?? "overview"} to="/$owner" params={{ owner: u.username }} search={{ tab: x.id }} aria-current={tab === x.id ? "page" : undefined}>
+                <Link key={x.id ?? "overview"} to="/$owner" params={{ owner: u.username }} search={{ tab: x.id }} activeOptions={{ exact: true }} aria-current={tab === x.id ? "page" : undefined}>
                   <Icon name={x.icon} />
                   {x.label}
                   {x.count !== undefined && x.count > 0 && <span className="ui-n">{x.count}</span>}

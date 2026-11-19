@@ -973,6 +973,60 @@ func (s *Service) OpenAsset(ctx context.Context, who auth.Principal, owner, name
 	return rc, assetFrom(row), nil
 }
 
+// AssetURLTTL bounds the presigned URLs that AssetURL hands out.
+const AssetURLTTL = 5 * time.Minute
+
+// ErrNoDirectURL means the asset storage cannot hand out a direct URL
+// (local or SFTP primary, client-side encryption): stream with OpenAsset.
+var ErrNoDirectURL = errors.New("release asset: no direct download URL")
+
+// AssetURL returns a short-lived presigned URL that downloads the asset
+// straight from the storage primary, checking access like OpenAsset. count
+// tells whether the download is counted (the read starts at the beginning).
+// It returns ErrNoDirectURL when the storage cannot presign.
+func (s *Service) AssetURL(ctx context.Context, who auth.Principal, owner, name string, releaseID, assetID uuid.UUID, count bool) (string, Asset, error) {
+	r, err := s.access(ctx, who, owner, name, false)
+	if err != nil {
+		return "", Asset{}, err
+	}
+	rel, err := s.one(ctx, r, releaseID)
+	if err != nil {
+		return "", Asset{}, err
+	}
+	row, err := s.q.GetReleaseAsset(ctx, dbgen.GetReleaseAssetParams{ID: assetID, ReleaseID: rel.ID, RepoID: r.ID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", Asset{}, ErrNotFound
+	}
+	if err != nil {
+		return "", Asset{}, fmt.Errorf("get asset: %w", err)
+	}
+	if s.o.Storage == nil {
+		return "", Asset{}, ErrNoStorage
+	}
+	cl, err := s.o.Storage.Class(row.StoragePolicy)
+	if err != nil {
+		return "", Asset{}, fmt.Errorf("asset storage: %w", err)
+	}
+	if !cl.CanPresign() {
+		return "", Asset{}, ErrNoDirectURL
+	}
+	pctx := blob.WithResponseHeaders(ctx, blob.ResponseHeaders{
+		ContentType:        row.ContentType,
+		ContentDisposition: mime.FormatMediaType("attachment", map[string]string{"filename": row.Name}),
+	})
+	u, err := cl.PresignGet(pctx, row.StorageKey, AssetURLTTL)
+	if err != nil {
+		return "", Asset{}, fmt.Errorf("presign asset %s: %w", row.ID, err)
+	}
+	if count {
+		if err := s.q.BumpReleaseAssetDownloads(ctx, row.ID); err != nil {
+			s.log.WarnContext(ctx, "count asset download", "asset", row.ID, "error", err)
+		}
+		row.DownloadCount++
+	}
+	return u, assetFrom(row), nil
+}
+
 func (s *Service) openAssetObject(ctx context.Context, row dbgen.ReleaseAsset, rng *blob.Range) (io.ReadCloser, error) {
 	if s.o.Storage == nil {
 		return nil, ErrNoStorage

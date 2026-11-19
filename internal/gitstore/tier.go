@@ -107,11 +107,17 @@ type Options struct {
 
 // Tier hands out hot repositories. It is safe for concurrent use.
 type Tier struct {
-	o       Options
-	q       *dbgen.Queries
-	mu      sync.Mutex
-	entries map[uuid.UUID]*entry
+	o         Options
+	q         *dbgen.Queries
+	mu        sync.Mutex
+	entries   map[uuid.UUID]*entry
+	onRelease func(uuid.UUID)
 }
+
+// SetOnRelease sets a function called after a Read or Write lease of a hot
+// repository is released (the evictor uses it for repositories that must not
+// stay in the cache). Call it before the tier is used; f must not block.
+func (t *Tier) SetOnRelease(f func(uuid.UUID)) { t.onRelease = f }
 
 type entry struct {
 	rw   rwlock
@@ -214,6 +220,10 @@ func (t *Tier) Acquire(ctx context.Context, repoID uuid.UUID, mode Mode) (*Lease
 				return nil, fmt.Errorf("stat %s: %w", repoID, err)
 			}
 			t.touch(ctx, row)
+			if f := t.onRelease; f != nil {
+				free := l.free
+				l.free = func() { free(); f(repoID) }
+			}
 			return l, nil
 		case StateDegraded:
 			l.Release()

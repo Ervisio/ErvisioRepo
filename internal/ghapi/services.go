@@ -176,3 +176,9 @@ type Artifacts interface {
 	DownloadURL(ctx context.Context, repoID uuid.UUID, id int64) (string, error)
 	Delete(ctx context.Context, repoID uuid.UUID, id int64) error
 }
+
+// assetLinker is implemented by release services that can send asset
+// downloads straight to the storage primary with a presigned URL.
+type assetLinker interface {
+	AssetURL(ctx context.Context, who auth.Principal, owner, name string, releaseID, assetID uuid.UUID, count bool) (string, releases.Asset, error)
+}

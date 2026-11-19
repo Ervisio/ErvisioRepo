@@ -130,7 +130,8 @@ func (s *v1Server) PutAdminStorageHotCache(ctx context.Context, req v1gen.PutAdm
 	if req.Body == nil {
 		return badRequest("a hot cache setting is required"), nil
 	}
-	in := storagecfg.HotCacheInput{Enabled: req.Body.Enabled, TTL: time.Duration(req.Body.TtlSeconds) * time.Second}
+	in := storagecfg.HotCacheInput{Enabled: req.Body.Enabled, TTL: time.Duration(req.Body.TtlSeconds) * time.Second,
+		MaxBytes: deref(req.Body.MaxBytes), LargeRepoBytes: deref(req.Body.LargeRepoBytes)}
 	v, err := s.storageCfg.PutHotCache(ctx, principal(ctx).UserID, clientOf(ctx).IP, in)
 	var verr *storagecfg.ValidationError
 	switch {
@@ -224,7 +225,9 @@ func storageConfigDTO(v storagecfg.View) v1gen.StorageConfig {
 		SecretsAvailable: v.SecretsAvailable, RestartRequired: v.RestartRequired, Fallback: v.Fallback,
 		FallbackCause: optString(v.FallbackCause),
 		HotCache: v1gen.StorageHotCache{Enabled: v.HotCache.Enabled, TtlSeconds: int64(v.HotCache.TTL.Seconds()),
-			Source: v1gen.StorageHotCacheSource(v.HotCache.Source), Defaults: make(map[string]int64, len(v.HotCache.Defaults))},
+			Source: v1gen.StorageHotCacheSource(v.HotCache.Source), Defaults: make(map[string]int64, len(v.HotCache.Defaults)),
+			MaxBytes: v.HotCache.MaxBytes, LargeRepoBytes: v.HotCache.LargeRepoBytes,
+			DefaultMaxBytes: v.HotCache.DefaultMaxBytes, DefaultLargeRepoBytes: v.HotCache.DefaultLargeRepoBytes},
 	}
 	for name, d := range v.HotCache.Defaults {
 		out.HotCache.Defaults[name] = int64(d.Seconds())

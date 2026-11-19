@@ -65,10 +65,16 @@ type HotCacheOverride struct {
 	// TTLSeconds is the idle time after which data moves back to the remote
 	// storage; 0 uses the per data type defaults.
 	TTLSeconds int64 `json:"ttlSeconds"`
+	// MaxBytes bounds the local disk used by the cache (0: default).
+	MaxBytes int64 `json:"maxBytes,omitempty"`
+	// LargeRepoBytes is the size above which repositories are never kept
+	// in the cache (0: default).
+	LargeRepoBytes int64 `json:"largeRepoBytes,omitempty"`
 }
 
 func (h HotCacheOverride) config() config.HotCache {
-	return config.HotCache{Enabled: h.Enabled, TTL: config.Duration(time.Duration(h.TTLSeconds) * time.Second)}
+	return config.HotCache{Enabled: h.Enabled, TTL: config.Duration(time.Duration(h.TTLSeconds) * time.Second),
+		MaxSize: config.Size(h.MaxBytes), LargeRepo: config.Size(h.LargeRepoBytes)}
 }
 
 // hotCache returns the hot cache setting of base with the overlay applied.
