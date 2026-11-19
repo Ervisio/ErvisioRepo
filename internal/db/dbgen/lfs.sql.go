@@ -27,7 +27,7 @@ func (q *Queries) CountLFSObjectRefs(ctx context.Context, oid string) (int64, er
 const createLFSLock = `-- name: CreateLFSLock :one
 INSERT INTO lfs_locks (id, repo_id, path, refname, owner_id)
 VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (repo_id, path) DO NOTHING
+ON CONFLICT (repo_id, refname, path) DO NOTHING
 RETURNING id, repo_id, path, refname, owner_id, created_at
 `
 
@@ -149,12 +149,13 @@ func (q *Queries) GetLFSLock(ctx context.Context, arg GetLFSLockParams) (GetLFSL
 const getLFSLockByPath = `-- name: GetLFSLockByPath :one
 SELECT l.id, l.repo_id, l.path, l.refname, l.owner_id, l.created_at, n.name AS owner_name
 FROM lfs_locks l JOIN namespaces n ON n.id = l.owner_id
-WHERE l.repo_id = $1 AND l.path = $2
+WHERE l.repo_id = $1 AND l.refname = $2 AND l.path = $3
 `
 
 type GetLFSLockByPathParams struct {
-	RepoID uuid.UUID
-	Path   string
+	RepoID  uuid.UUID
+	Refname string
+	Path    string
 }
 
 type GetLFSLockByPathRow struct {
@@ -168,7 +169,7 @@ type GetLFSLockByPathRow struct {
 }
 
 func (q *Queries) GetLFSLockByPath(ctx context.Context, arg GetLFSLockByPathParams) (GetLFSLockByPathRow, error) {
-	row := q.db.QueryRow(ctx, getLFSLockByPath, arg.RepoID, arg.Path)
+	row := q.db.QueryRow(ctx, getLFSLockByPath, arg.RepoID, arg.Refname, arg.Path)
 	var i GetLFSLockByPathRow
 	err := row.Scan(
 		&i.ID,
@@ -334,18 +335,20 @@ SELECT l.id, l.repo_id, l.path, l.refname, l.owner_id, l.created_at, n.name AS o
 FROM lfs_locks l JOIN namespaces n ON n.id = l.owner_id
 WHERE l.repo_id = $1
   AND ($2::text = '' OR l.path = $2)
-  AND ($3::uuid IS NULL OR l.id = $3)
-  AND ($4::uuid IS NULL OR l.owner_id = $4)
-  AND ($5::uuid IS NULL OR l.owner_id <> $5)
-  AND ($6::timestamptz IS NULL
-       OR (l.created_at, l.id) > ($6::timestamptz, $7::uuid))
+  AND ($3::text = '' OR l.refname = $3)
+  AND ($4::uuid IS NULL OR l.id = $4)
+  AND ($5::uuid IS NULL OR l.owner_id = $5)
+  AND ($6::uuid IS NULL OR l.owner_id <> $6)
+  AND ($7::timestamptz IS NULL
+       OR (l.created_at, l.id) > ($7::timestamptz, $8::uuid))
 ORDER BY l.created_at, l.id
-LIMIT $8
+LIMIT $9
 `
 
 type ListLFSLocksParams struct {
 	RepoID       uuid.UUID
 	Path         string
+	Refname      string
 	LockID       uuid.NullUUID
 	OwnerID      uuid.NullUUID
 	NotOwnerID   uuid.NullUUID
@@ -369,6 +372,7 @@ func (q *Queries) ListLFSLocks(ctx context.Context, arg ListLFSLocksParams) ([]L
 	rows, err := q.db.Query(ctx, listLFSLocks,
 		arg.RepoID,
 		arg.Path,
+		arg.Refname,
 		arg.LockID,
 		arg.OwnerID,
 		arg.NotOwnerID,

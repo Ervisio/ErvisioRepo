@@ -20,4 +20,5 @@ Gotchas:
 - Outbox rows are pruned after 7 days; delivery retries are capped at 10 per handler.
 - Tests exist but must not be extended or run (CLAUDE.md rule 6); verify with make build, go vet ./..., make lint, make check-generate.
 - Generated code (dbgen, oapi, TS client) is versioned: edit api/openapi.yaml or queries then make generate, never the output.
+- Hook chain (cmd/ervisio-repo/hook.go): events.PushHooks → ghsync.Hooks → protection.Hooks → presence.Hooks (file locks per branch, release on branch delete) → gitjournal.
 Related: map/deploy.md (caddy CLI, install), map/runner.md, map/plugin.md

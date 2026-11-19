@@ -223,5 +223,10 @@
   "settings.image.uploaded": "Immagine aggiornata",
   "settings.image.removed": "Immagine rimossa",
   "profile.activityMore": "Mostra altre attività",
-  "profile.untitled": "Senza titolo"
+  "profile.untitled": "Senza titolo",
+  "presence.title": "Presenza e lock dei file",
+  "presence.enabled": "Condividi attività e lock dei file",
+  "presence.enabled.hint": "I membri con accesso in scrittura (e i membri dell'organizzazione sui repository pubblici) vedono chi lavora su quale branch, quali file tracciati ha modificato e quali file sono bloccati. I push che modificano un file bloccato da altri su quel branch vengono rifiutati. Ognuno sceglie in ErvisioGit Desktop se condividere la propria attività.",
+  "presence.on": "Presenza e lock dei file attivati",
+  "presence.off": "Presenza e lock dei file disattivati"
 }

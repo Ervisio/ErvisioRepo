@@ -8,10 +8,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Presence and file locks (per repository, off by default; repository admins turn it on in the settings or with `PUT /api/v1/repos/{owner}/{name}/presence/enabled`, recorded in the audit log as `repo.presence_changed`). Members with write access, and organization members on the organization's public repositories, share through ErvisioGit Desktop the branch, head, uncommitted tracked files (paths only) and unpushed commits of each client: `GET /presence`, `PUT`/`DELETE /presence/heartbeat` (live for 90 s, every 30 s), and a server-sent event stream `GET /presence/stream` (`snapshot`, `presence`, `gone`, `lock`, `unlock`, `disabled`, ping every 25 s) that works across instances through Postgres `LISTEN/NOTIFY`. Personal access tokens need `repo:read` to read and `repo:write` to change.
+- File locks per branch: `POST /presence/locks` and `DELETE /presence/locks/{id}` (force for maintainers, admins and organization owners). On repositories with the feature on, a push (or a web edit or merge) that changes a file locked on that branch by another user is refused with `error: <path> is locked on <branch> by <login> since <date>`. Deleting a branch releases its locks.
 - Existing bidirectional GitHub links also synchronize published releases and missing assets for matching tags.
 
 ### Changed
 
+- Git LFS locks hold per branch: the same path may be locked once per ref. A lock created without a ref belongs to the default branch (existing locks were moved there), `GET locks` honors `refspec` and `locks/verify` honors `ref` (migration 00410).
 - References to the server manager now use its new name, **Ervisio Console** (formerly "Ervisio" or "the Ervisio core"): docs, plugin comments, the Caddyfile hint written by the plugin and the plugin test mail. "Ervisio" stays the name of the ecosystem; ErvisioRepo's own names, binaries and formats are unchanged.
 
 ## [1.16.3] - 2026-11-18

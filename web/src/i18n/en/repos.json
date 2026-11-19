@@ -223,5 +223,10 @@
   "settings.image.uploaded": "Image updated",
   "settings.image.removed": "Image removed",
   "profile.activityMore": "Show more activity",
-  "profile.untitled": "Untitled"
+  "profile.untitled": "Untitled",
+  "presence.title": "Presence and file locks",
+  "presence.enabled": "Share activity and file locks",
+  "presence.enabled.hint": "Members with write access (and organization members on public repositories) see who works on which branch, which tracked files they changed and which files are locked. Pushes that change a file locked on that branch by someone else are refused. Each person chooses in ErvisioGit Desktop whether to share their own activity.",
+  "presence.on": "Presence and file locks turned on",
+  "presence.off": "Presence and file locks turned off"
 }

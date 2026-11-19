@@ -184,6 +184,8 @@ type Querier interface {
 	DeleteExpiredOneTimeTokens(ctx context.Context) (int64, error)
 	// Forgets invitations expired for more than the given age.
 	DeleteExpiredOrgInvites(ctx context.Context, before pgtype.Timestamptz) (int64, error)
+	// Presences not heard from since sqlc.arg(before), at most max_rows of them.
+	DeleteExpiredPresence(ctx context.Context, arg DeleteExpiredPresenceParams) ([]DeleteExpiredPresenceRow, error)
 	DeleteExpiredSessions(ctx context.Context, idleBefore pgtype.Timestamptz) (int64, error)
 	DeleteExpiredTokens(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	DeleteGitHubConnection(ctx context.Context, id uuid.UUID) (int64, error)
@@ -215,13 +217,17 @@ type Querier interface {
 	// Deletes the organization with its namespace, members, teams and invites.
 	DeleteOrgNamespace(ctx context.Context, id uuid.UUID) (int64, error)
 	DeletePendingPullReview(ctx context.Context, id uuid.UUID) (int64, error)
+	DeletePresence(ctx context.Context, arg DeletePresenceParams) (int64, error)
 	DeletePullReviewComment(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteQuotaOverride(ctx context.Context, namespaceID uuid.UUID) (int64, error)
 	DeleteRecoveryCodes(ctx context.Context, userID uuid.UUID) error
+	// Releases the locks of a deleted branch.
+	DeleteRefLocks(ctx context.Context, arg DeleteRefLocksParams) ([]uuid.UUID, error)
 	DeleteRelease(ctx context.Context, arg DeleteReleaseParams) (int64, error)
 	DeleteReleaseAsset(ctx context.Context, arg DeleteReleaseAssetParams) (int64, error)
 	DeleteRepo(ctx context.Context, id uuid.UUID) (int64, error)
 	DeleteRepoCollaborator(ctx context.Context, arg DeleteRepoCollaboratorParams) (int64, error)
+	DeleteRepoPresence(ctx context.Context, repoID uuid.UUID) error
 	DeleteRepoRedirect(ctx context.Context, arg DeleteRepoRedirectParams) error
 	DeleteRepoSubscription(ctx context.Context, arg DeleteRepoSubscriptionParams) error
 	// Removes the team grants of a repository (on transfer to another owner).
@@ -357,6 +363,7 @@ type Querier interface {
 	// The release flagged as latest, else the newest published release that is
 	// not a draft or a prerelease (and not excluded with make_latest = false).
 	GetLatestRelease(ctx context.Context, repoID uuid.UUID) (Release, error)
+	GetLivePresence(ctx context.Context, arg GetLivePresenceParams) (GetLivePresenceRow, error)
 	// Credentials for a login by email address; any verified address of the user works.
 	GetLoginByEmail(ctx context.Context, address string) (GetLoginByEmailRow, error)
 	// Credentials for a login by username; the email is the primary address.
@@ -387,6 +394,9 @@ type Querier interface {
 	GetPendingDeviceCode(ctx context.Context, userCode string) (OauthDeviceCode, error)
 	GetPendingDeviceCodeForUpdate(ctx context.Context, userCode string) (OauthDeviceCode, error)
 	GetPendingPullReview(ctx context.Context, arg GetPendingPullReviewParams) (PullReview, error)
+	GetPresenceForUpdate(ctx context.Context, arg GetPresenceForUpdateParams) (GetPresenceForUpdateRow, error)
+	GetPresenceLock(ctx context.Context, arg GetPresenceLockParams) (GetPresenceLockRow, error)
+	GetPresenceLockByPath(ctx context.Context, arg GetPresenceLockByPathParams) (GetPresenceLockByPathRow, error)
 	// The account owning a verified address (commit signer, CODEOWNERS email).
 	GetProtectionUserByVerifiedEmail(ctx context.Context, address string) (uuid.UUID, error)
 	GetPullRequest(ctx context.Context, arg GetPullRequestParams) (PullRequest, error)
@@ -410,6 +420,9 @@ type Querier interface {
 	GetRepoForUpdate(ctx context.Context, id uuid.UUID) (Repo, error)
 	GetRepoFork(ctx context.Context, repoID uuid.UUID) (RepoFork, error)
 	GetRepoJournal(ctx context.Context, id uuid.UUID) (GetRepoJournalRow, error)
+	// Presence and file locks (internal/presence). The locks live in lfs_locks
+	// (lfs.sql) and are shared with the Git LFS Locks API.
+	GetRepoPresenceEnabled(ctx context.Context, id uuid.UUID) (bool, error)
 	// The repository an old path points to.
 	GetRepoRedirect(ctx context.Context, arg GetRepoRedirectParams) (uuid.UUID, error)
 	// Tiering state read by gitstore.Tier.Acquire.
@@ -669,6 +682,8 @@ type Querier interface {
 	// Complete entries unused since used_before and uploads abandoned before
 	// stale_before.
 	ListExpiredActionsCaches(ctx context.Context, arg ListExpiredActionsCachesParams) ([]ActionsCache, error)
+	// Locks on one ref held by users other than sqlc.arg(user_id) (push check).
+	ListForeignRefLocks(ctx context.Context, arg ListForeignRefLocksParams) ([]ListForeignRefLocksRow, error)
 	ListGitHubAPIIDs(ctx context.Context, uuids []uuid.UUID) ([]GhapiID, error)
 	// Fork flag and direct fork count of repositories, for the repository
 	// objects of /api/v3.
@@ -712,6 +727,8 @@ type Querier interface {
 	// ---- labels ----
 	ListLabels(ctx context.Context, repoID uuid.UUID) ([]Label, error)
 	ListLabelsByNames(ctx context.Context, arg ListLabelsByNamesParams) ([]Label, error)
+	// Presences heard from since sqlc.arg(since), with their users.
+	ListLivePresence(ctx context.Context, arg ListLivePresenceParams) ([]ListLivePresenceRow, error)
 	// Pull requests merged by (or whose head is) one of the given commits, in
 	// merge order; used to write release notes.
 	ListMergedPullsByCommit(ctx context.Context, arg ListMergedPullsByCommitParams) ([]ListMergedPullsByCommitRow, error)
@@ -745,6 +762,8 @@ type Querier interface {
 	// every repository (instance admin, the user himself, organization
 	// owner/admin); internal = the viewer is signed in and not restricted.
 	ListOwnerRepos(ctx context.Context, arg ListOwnerReposParams) ([]ListOwnerReposRow, error)
+	// Every lock of a repository with its owner, oldest first.
+	ListPresenceLocks(ctx context.Context, arg ListPresenceLocksParams) ([]ListPresenceLocksRow, error)
 	// Armored public keys of a user, for commit signature verification.
 	ListProtectionGPGKeys(ctx context.Context, userID uuid.UUID) ([]ListProtectionGPGKeysRow, error)
 	// Public keys of a user, for SSH commit signature verification.
@@ -854,6 +873,8 @@ type Querier interface {
 	ListenActionsLogs(ctx context.Context) error
 	// Runners long-polling FetchTask wait on this channel.
 	ListenActionsTasks(ctx context.Context) error
+	// Presence streams of every instance wait on this channel.
+	ListenPresence(ctx context.Context) error
 	// Serializes the concurrency decisions of one group (or one repository's
 	// schedules) for the rest of the transaction.
 	LockActionsGroup(ctx context.Context, key string) error
@@ -915,6 +936,7 @@ type Querier interface {
 	NotifyIssueParticipants(ctx context.Context, issueID uuid.UUID) ([]NotifyIssueParticipantsRow, error)
 	// Users mentioned by one source (issue:<id> or comment:<id>).
 	NotifyMentions(ctx context.Context, sourceKey string) ([]uuid.UUID, error)
+	NotifyPresence(ctx context.Context, payload string) error
 	NotifyRepoLevels(ctx context.Context, arg NotifyRepoLevelsParams) ([]NotifyRepoLevelsRow, error)
 	NotifyRepoWatchers(ctx context.Context, repoID uuid.UUID) ([]uuid.UUID, error)
 	NotifySubjectSubscriptions(ctx context.Context, subjectKey string) ([]NotifySubjectSubscriptionsRow, error)
@@ -1056,6 +1078,8 @@ type Querier interface {
 	// Records the manifest sequence after a successful CAS save.
 	SetRepoManifestSeq(ctx context.Context, arg SetRepoManifestSeqParams) error
 	SetRepoPinned(ctx context.Context, arg SetRepoPinnedParams) error
+	// 0 rows when the setting already had that value.
+	SetRepoPresenceEnabled(ctx context.Context, arg SetRepoPresenceEnabledParams) (int64, error)
 	// Sets the size of a repository and returns the previous one, so that the
 	// caller can adjust the storage usage of the owner by the difference.
 	SetRepoSize(ctx context.Context, arg SetRepoSizeParams) (int64, error)
@@ -1162,6 +1186,7 @@ type Querier interface {
 	UpsertPassword(ctx context.Context, arg UpsertPasswordParams) error
 	// Starts (or restarts) a TOTP enrollment; a confirmed secret is kept.
 	UpsertPendingTOTP(ctx context.Context, arg UpsertPendingTOTPParams) (int64, error)
+	UpsertPresence(ctx context.Context, arg UpsertPresenceParams) error
 	UpsertRepoCollaborator(ctx context.Context, arg UpsertRepoCollaboratorParams) error
 	UpsertRepoRedirect(ctx context.Context, arg UpsertRepoRedirectParams) error
 	UpsertRepoSubscription(ctx context.Context, arg UpsertRepoSubscriptionParams) (RepoSubscription, error)

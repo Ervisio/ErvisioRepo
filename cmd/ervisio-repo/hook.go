@@ -17,6 +17,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/gitstore"
 	"github.com/Ervisio/ErvisioRepo/internal/gittransport"
 	"github.com/Ervisio/ErvisioRepo/internal/jobs"
+	"github.com/Ervisio/ErvisioRepo/internal/presence"
 	"github.com/Ervisio/ErvisioRepo/internal/protection"
 )
 
@@ -48,7 +49,8 @@ type gitJournal struct {
 // store) and starts the hook server, which enforces the branch protection
 // rules and publishes push events on bus; it returns nil without a git tier. Call Journal.SetEnqueuer once
 // the job runner exists.
-func setupGitJournal(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, bus *events.Bus, log *slog.Logger) (*gitJournal, error) {
+func setupGitJournal(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, bus *events.Bus,
+	pres *presence.Service, log *slog.Logger) (*gitJournal, error) {
 	if t == nil {
 		return nil, nil
 	}
@@ -66,7 +68,9 @@ func setupGitJournal(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool
 		return nil, err
 	}
 	g := &gitJournal{Protection: prot, GitHub: gh}
-	chain := &protection.Hooks{Engine: prot, Log: log.With("component", "protection")}
+	// File locks are checked after the branch protection rules.
+	locks := &presence.Hooks{Service: pres}
+	chain := &protection.Hooks{Engine: prot, Next: locks, Log: log.With("component", "protection")}
 	if t.Store() != nil {
 		j, err := gitjournal.New(gitjournal.Options{
 			Pool: pool, Tier: t,
@@ -77,7 +81,7 @@ func setupGitJournal(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool
 		if err != nil {
 			return nil, err
 		}
-		g.Journal, g.Jobs, chain.Next = j, gitjournal.JobsOption(j), j
+		g.Journal, g.Jobs, locks.Next = j, gitjournal.JobsOption(j), j
 	}
 	exe, err := os.Executable()
 	if err != nil {

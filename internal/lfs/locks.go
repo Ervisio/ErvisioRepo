@@ -15,6 +15,7 @@ import (
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
+	"github.com/Ervisio/ErvisioRepo/internal/git"
 	"github.com/Ervisio/ErvisioRepo/internal/githttp"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
 )
@@ -44,9 +45,36 @@ func lockFrom(id uuid.UUID, path, ref string, owner uuid.UUID, name string, at p
 	return Lock{ID: id, Path: path, Refname: ref, OwnerID: owner, OwnerName: name, LockedAt: at.Time.UTC()}
 }
 
+// LockEvents is told about the locks created and released through the
+// Locks API (the presence streams, internal/presence).
+type LockEvents interface {
+	LockCreated(ctx context.Context, repoID, lockID uuid.UUID)
+	LockReleased(ctx context.Context, repoID, lockID uuid.UUID)
+}
+
+// SetLockEvents sets the receiver of lock changes.
+func (s *Server) SetLockEvents(e LockEvents) { s.lockEvents = e }
+
+// lockRef returns the ref a lock request applies to: the default branch
+// when the client names none (git lfs lock without --ref), a short branch
+// name as refs/heads/<name>.
+func lockRef(repo repos.Repo, ref string) (string, error) {
+	switch {
+	case ref == "":
+		return "refs/heads/" + repo.DefaultBranch, nil
+	case !strings.HasPrefix(ref, "refs/"):
+		ref = "refs/heads/" + ref
+	}
+	if err := git.ValidateRefName(ref); err != nil {
+		return "", fmt.Errorf("%w: invalid ref", errBadLock)
+	}
+	return ref, nil
+}
+
 // lockFilter selects locks; zero fields do not filter.
 type lockFilter struct {
 	Path     string
+	Refspec  string // only locks on this ref
 	ID       string
 	Cursor   string
 	Limit    int
@@ -60,18 +88,25 @@ func (s *Server) createLock(ctx context.Context, repo repos.Repo, who auth.Princ
 	if path == "" || len(path) > maxLockPath || strings.ContainsRune(path, 0) {
 		return Lock{}, fmt.Errorf("%w: invalid path", errBadLock)
 	}
+	ref, err := lockRef(repo, ref)
+	if err != nil {
+		return Lock{}, err
+	}
 	id, err := uuid.NewV7()
 	if err != nil {
 		return Lock{}, fmt.Errorf("lock id: %w", err)
 	}
 	row, err := s.q.CreateLFSLock(ctx, dbgen.CreateLFSLockParams{ID: id, RepoID: repo.ID, Path: path, Refname: ref, OwnerID: who.UserID})
 	if err == nil {
+		if s.lockEvents != nil {
+			s.lockEvents.LockCreated(ctx, repo.ID, row.ID)
+		}
 		return lockFrom(row.ID, row.Path, row.Refname, row.OwnerID, who.Username, row.CreatedAt), nil
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return Lock{}, fmt.Errorf("create lock: %w", err)
 	}
-	ex, err := s.q.GetLFSLockByPath(ctx, dbgen.GetLFSLockByPathParams{RepoID: repo.ID, Path: path})
+	ex, err := s.q.GetLFSLockByPath(ctx, dbgen.GetLFSLockByPathParams{RepoID: repo.ID, Refname: ref, Path: path})
 	if err != nil {
 		return Lock{}, fmt.Errorf("get existing lock: %w", err)
 	}
@@ -86,6 +121,13 @@ func (s *Server) listLocks(ctx context.Context, repo repos.Repo, f lockFilter) (
 	}
 	limit = min(limit, maxLockLimit)
 	p := dbgen.ListLFSLocksParams{RepoID: repo.ID, Path: f.Path, MaxRows: int32(limit + 1)}
+	if f.Refspec != "" {
+		ref, err := lockRef(repo, f.Refspec)
+		if err != nil {
+			return nil, "", nil // no lock matches an invalid ref
+		}
+		p.Refname = ref
+	}
 	if f.ID != "" {
 		id, err := uuid.Parse(f.ID)
 		if err != nil {
@@ -163,8 +205,12 @@ func (s *Server) unlock(ctx context.Context, repo repos.Repo, who auth.Principal
 			return l, fmt.Errorf("%w: only repository admins can break other users' locks", errForbidden)
 		}
 	}
-	if _, err := s.q.DeleteLFSLock(ctx, dbgen.DeleteLFSLockParams{RepoID: repo.ID, ID: lid}); err != nil {
+	n, err := s.q.DeleteLFSLock(ctx, dbgen.DeleteLFSLockParams{RepoID: repo.ID, ID: lid})
+	if err != nil {
 		return l, fmt.Errorf("delete lock: %w", err)
+	}
+	if n > 0 && s.lockEvents != nil {
+		s.lockEvents.LockReleased(ctx, repo.ID, lid)
 	}
 	if row.OwnerID != who.UserID {
 		s.o.Log.InfoContext(ctx, "git lfs: lock broken", "repo", repo.ID, "lock", lid, "by", who.UserID, "owner", row.OwnerID)
@@ -245,7 +291,8 @@ func (s *Server) listLocksHTTP(w http.ResponseWriter, r *http.Request, req githt
 	}
 	q := r.URL.Query()
 	limit, _ := strconv.Atoi(q.Get("limit"))
-	locks, next, err := s.listLocks(r.Context(), req.Repo, lockFilter{Path: q.Get("path"), ID: q.Get("id"), Cursor: q.Get("cursor"), Limit: limit})
+	locks, next, err := s.listLocks(r.Context(), req.Repo, lockFilter{Path: q.Get("path"), ID: q.Get("id"), Refspec: q.Get("refspec"),
+		Cursor: q.Get("cursor"), Limit: limit})
 	if err != nil {
 		s.lockFail(w, r, err, "list locks")
 		return
@@ -262,14 +309,19 @@ func (s *Server) verifyLocksHTTP(w http.ResponseWriter, r *http.Request, req git
 		return
 	}
 	var in struct {
-		Cursor string `json:"cursor"`
-		Limit  int    `json:"limit"`
+		Cursor string    `json:"cursor"`
+		Limit  int       `json:"limit"`
+		Ref    *batchRef `json:"ref"`
 	}
 	if !readJSON(w, r, &in) {
 		return
 	}
+	f := lockFilter{Cursor: in.Cursor, Limit: in.Limit}
+	if in.Ref != nil {
+		f.Refspec = in.Ref.Name
+	}
 	// Pages are taken over all locks so that one cursor covers both lists.
-	locks, next, err := s.listLocks(r.Context(), req.Repo, lockFilter{Cursor: in.Cursor, Limit: in.Limit})
+	locks, next, err := s.listLocks(r.Context(), req.Repo, f)
 	if err != nil {
 		s.lockFail(w, r, err, "verify locks")
 		return

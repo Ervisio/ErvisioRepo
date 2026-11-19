@@ -77,7 +77,7 @@ func (q *Queries) DeleteRepoTeamGrants(ctx context.Context, repoID uuid.UUID) er
 }
 
 const getRepo = `-- name: GetRepo :one
-SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, n.name AS owner_name, n.kind AS owner_kind
+SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, r.presence_enabled, n.name AS owner_name, n.kind AS owner_kind
 FROM repos r
 JOIN namespaces n ON n.id = r.owner_id
 WHERE r.id = $1
@@ -113,6 +113,7 @@ func (q *Queries) GetRepo(ctx context.Context, id uuid.UUID) (GetRepoRow, error)
 		&i.Repo.PushesSinceMaintenance,
 		&i.Repo.StarsCount,
 		&i.Repo.AvatarUrl,
+		&i.Repo.PresenceEnabled,
 		&i.OwnerName,
 		&i.OwnerKind,
 	)
@@ -151,7 +152,7 @@ func (q *Queries) GetRepoAccess(ctx context.Context, arg GetRepoAccessParams) (G
 }
 
 const getRepoByPath = `-- name: GetRepoByPath :one
-SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, n.name AS owner_name, n.kind AS owner_kind
+SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, r.presence_enabled, n.name AS owner_name, n.kind AS owner_kind
 FROM repos r
 JOIN namespaces n ON n.id = r.owner_id
 WHERE n.name_lower = lower($1::text) AND r.name_lower = lower($2::text)
@@ -192,6 +193,7 @@ func (q *Queries) GetRepoByPath(ctx context.Context, arg GetRepoByPathParams) (G
 		&i.Repo.PushesSinceMaintenance,
 		&i.Repo.StarsCount,
 		&i.Repo.AvatarUrl,
+		&i.Repo.PresenceEnabled,
 		&i.OwnerName,
 		&i.OwnerKind,
 	)
@@ -199,7 +201,7 @@ func (q *Queries) GetRepoByPath(ctx context.Context, arg GetRepoByPathParams) (G
 }
 
 const getRepoForUpdate = `-- name: GetRepoForUpdate :one
-SELECT id, owner_id, name, name_lower, description, visibility, default_branch, storage_state, state_changed_at, pinned, size_bytes, last_access_at, manifest_seq, created_by, created_at, updated_at, journal_dirty_since, pushes_since_maintenance, stars_count, avatar_url FROM repos WHERE id = $1 FOR UPDATE
+SELECT id, owner_id, name, name_lower, description, visibility, default_branch, storage_state, state_changed_at, pinned, size_bytes, last_access_at, manifest_seq, created_by, created_at, updated_at, journal_dirty_since, pushes_since_maintenance, stars_count, avatar_url, presence_enabled FROM repos WHERE id = $1 FOR UPDATE
 `
 
 func (q *Queries) GetRepoForUpdate(ctx context.Context, id uuid.UUID) (Repo, error) {
@@ -226,6 +228,7 @@ func (q *Queries) GetRepoForUpdate(ctx context.Context, id uuid.UUID) (Repo, err
 		&i.PushesSinceMaintenance,
 		&i.StarsCount,
 		&i.AvatarUrl,
+		&i.PresenceEnabled,
 	)
 	return i, err
 }
@@ -387,7 +390,7 @@ func (q *Queries) ListNamespaceAvatars(ctx context.Context, ids []uuid.UUID) ([]
 }
 
 const listOwnerRepos = `-- name: ListOwnerRepos :many
-SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, n.name AS owner_name, n.kind AS owner_kind
+SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, r.presence_enabled, n.name AS owner_name, n.kind AS owner_kind
 FROM repos r
 JOIN namespaces n ON n.id = r.owner_id
 WHERE r.owner_id = $1::uuid
@@ -459,6 +462,7 @@ func (q *Queries) ListOwnerRepos(ctx context.Context, arg ListOwnerReposParams) 
 			&i.Repo.PushesSinceMaintenance,
 			&i.Repo.StarsCount,
 			&i.Repo.AvatarUrl,
+			&i.Repo.PresenceEnabled,
 			&i.OwnerName,
 			&i.OwnerKind,
 		); err != nil {
@@ -550,7 +554,7 @@ func (q *Queries) ListRepoRedirects(ctx context.Context, repoID uuid.UUID) ([]Li
 }
 
 const listUserAccessibleRepos = `-- name: ListUserAccessibleRepos :many
-SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, n.name AS owner_name, n.kind AS owner_kind
+SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, r.presence_enabled, n.name AS owner_name, n.kind AS owner_kind
 FROM repos r
 JOIN namespaces n ON n.id = r.owner_id
 WHERE r.owner_id = $1::uuid
@@ -609,6 +613,7 @@ func (q *Queries) ListUserAccessibleRepos(ctx context.Context, arg ListUserAcces
 			&i.Repo.PushesSinceMaintenance,
 			&i.Repo.StarsCount,
 			&i.Repo.AvatarUrl,
+			&i.Repo.PresenceEnabled,
 			&i.OwnerName,
 			&i.OwnerKind,
 		); err != nil {

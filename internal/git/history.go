@@ -100,6 +100,31 @@ func ChangedPaths(ctx context.Context, repoPath string, env []string, base, head
 	return paths, nil
 }
 
+// IntroducedPaths lists the paths touched by the commits reachable from tip
+// that no branch reaches yet (the commits a branch creation introduces),
+// without rename detection. Merge commits contribute no paths.
+func IntroducedPaths(ctx context.Context, repoPath string, env []string, tip string) ([]string, error) {
+	if err := ValidateObjectID(tip); err != nil {
+		return nil, err
+	}
+	args := []string{"log", "--format=", "--name-only", "-z", "--no-renames", tip, "--not", "--branches"}
+	out, err := Output(ctx, Cmd{RepoPath: repoPath, Env: env, Args: args, Timeout: historyTimeout})
+	if err != nil {
+		return nil, err
+	}
+	seen := map[string]bool{}
+	var paths []string
+	for p := range bytes.SplitSeq(out, []byte{0}) {
+		p = bytes.TrimPrefix(p, []byte{'\n'})
+		if len(p) == 0 || seen[string(p)] {
+			continue
+		}
+		seen[string(p)] = true
+		paths = append(paths, string(p))
+	}
+	return paths, nil
+}
+
 // RawCommits reads the raw content of the given commits, in order, with
 // one git cat-file process. A missing object or one that is not a commit
 // is an error.

@@ -1,6 +1,17 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useDeleteRepo, useDeleteRepoAvatar, useRepo, useTransferRepo, useUpdateRepo, useUploadRepoAvatar, type Repo, type Visibility } from "../../api/repos.ts";
+import {
+  useDeleteRepo,
+  useDeleteRepoAvatar,
+  usePresence,
+  useRepo,
+  useSetPresenceEnabled,
+  useTransferRepo,
+  useUpdateRepo,
+  useUploadRepoAvatar,
+  type Repo,
+  type Visibility,
+} from "../../api/repos.ts";
 import { AvatarImg } from "../../ui/AvatarImg.tsx";
 import { ImagePicker } from "../settings/ImagePicker.tsx";
 import { useT } from "../../i18n/useT.ts";
@@ -19,6 +30,7 @@ import {
   SettingsGrid,
   SettingsLayout,
   SettingsSection,
+  Toggle,
   useDraft,
   type SettingsNavGroup,
   type SettingsNavItem,
@@ -95,6 +107,30 @@ function General({ repo }: { repo: Repo }) {
         </SettingRow>
       </SettingsCard>
       <SaveBar draft={draft} labels={{ name: t("create.name"), description: t("create.descriptionLabel"), visibility: t("create.visibility") }} onSave={save} saving={update.isPending} />
+    </SettingsSection>
+  );
+}
+
+/** Presence and file locks: one switch, applied at once. */
+function PresenceSetting({ repo }: { repo: Repo }) {
+  const t = useT("repos");
+  const notify = useNotify();
+  const state = usePresence(repo.owner, repo.name);
+  const set = useSetPresenceEnabled(repo.owner, repo.name);
+  if (!state.data) return null;
+  const enabled = state.data.enabled;
+  return (
+    <SettingsSection title={t("presence.title")}>
+      <SettingsCard>
+        <SettingRow label={t("presence.enabled")} description={t("presence.enabled.hint")}>
+          <Toggle
+            label={t("presence.enabled")}
+            checked={enabled}
+            disabled={set.isPending}
+            onChange={(on) => set.mutate(on, { onSuccess: () => notify.ok(t(on ? "presence.on" : "presence.off")), onError: notify.fail })}
+          />
+        </SettingRow>
+      </SettingsCard>
     </SettingsSection>
   );
 }
@@ -216,6 +252,7 @@ export function RepoSettings({ owner, name, section }: { owner: string; name: st
           {section === undefined && (
             <>
               <General key={r.updatedAt} repo={r} />
+              <PresenceSetting repo={r} />
               <Danger repo={r} />
             </>
           )}

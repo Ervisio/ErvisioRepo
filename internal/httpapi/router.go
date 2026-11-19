@@ -152,6 +152,9 @@ type Deps struct {
 	// MailHost is the SMTP relay shown in the admin overview; empty when
 	// mail is off.
 	MailHost string
+	// Presence serves the presence and file lock endpoints and their
+	// event stream; nil answers 503.
+	Presence Presence
 }
 
 // NewRouter builds the root handler.
@@ -196,6 +199,7 @@ func NewRouter(d Deps) http.Handler {
 	mountGit(r, d)
 	mountGitHubAPI(r, d)
 	mountActions(r, d)
+	mountPresence(r, d)
 	mountAvatars(r, d)
 	r.Get(runnerinstall.ShellPath, runnerinstall.Shell(d.Meta.Version, d.Meta.PublicURL))
 	r.Get(runnerinstall.PowerShellPath, runnerinstall.PowerShell(d.Meta.Version, d.Meta.PublicURL))
@@ -352,6 +356,7 @@ func mountV1(r chi.Router, d Deps) {
 	srv.storageCfg = d.StorageCfg
 	srv.avatars = d.Avatars
 	srv.apps = d.Apps
+	srv.presence = d.Presence
 	srv.db, _ = d.DB.(dbgen.DBTX)
 	srv.monitor, srv.mailHost = d.Monitor, d.MailHost
 	if d.Jobs != nil {

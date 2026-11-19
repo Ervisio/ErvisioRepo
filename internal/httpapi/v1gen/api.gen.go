@@ -1343,6 +1343,33 @@ func (e Permission) Valid() bool {
 	}
 }
 
+// Defines values for PresenceFileState.
+const (
+	PresenceFileStateAdded      PresenceFileState = "added"
+	PresenceFileStateConflicted PresenceFileState = "conflicted"
+	PresenceFileStateDeleted    PresenceFileState = "deleted"
+	PresenceFileStateModified   PresenceFileState = "modified"
+	PresenceFileStateRenamed    PresenceFileState = "renamed"
+)
+
+// Valid indicates whether the value is a known member of the PresenceFileState enum.
+func (e PresenceFileState) Valid() bool {
+	switch e {
+	case PresenceFileStateAdded:
+		return true
+	case PresenceFileStateConflicted:
+		return true
+	case PresenceFileStateDeleted:
+		return true
+	case PresenceFileStateModified:
+		return true
+	case PresenceFileStateRenamed:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ProfileUpdateLocale.
 const (
 	ProfileUpdateLocaleEn ProfileUpdateLocale = "en"
@@ -5315,6 +5342,98 @@ type PasswordChange struct {
 // Permission defines model for Permission.
 type Permission string
 
+// Presence defines model for Presence.
+type Presence struct {
+	Active      bool                `json:"active"`
+	Ahead       int                 `json:"ahead"`
+	Branch      string              `json:"branch"`
+	ClientId    openapi_types.UUID  `json:"clientId"`
+	Dirty       []PresenceDirtyFile `json:"dirty"`
+	Head        string              `json:"head"`
+	Truncated   bool                `json:"truncated"`
+	Unpublished bool                `json:"unpublished"`
+	UpdatedAt   time.Time           `json:"updatedAt"`
+	User        PresenceUser        `json:"user"`
+}
+
+// PresenceDirtyFile defines model for PresenceDirtyFile.
+type PresenceDirtyFile struct {
+	Path  string            `json:"path"`
+	State PresenceFileState `json:"state"`
+}
+
+// PresenceEnabled defines model for PresenceEnabled.
+type PresenceEnabled struct {
+	Enabled bool `json:"enabled"`
+}
+
+// PresenceFileState defines model for PresenceFileState.
+type PresenceFileState string
+
+// PresenceHeartbeat defines model for PresenceHeartbeat.
+type PresenceHeartbeat struct {
+	Active      *bool                `json:"active,omitempty"`
+	Ahead       *int                 `json:"ahead,omitempty"`
+	Branch      *string              `json:"branch,omitempty"`
+	ClientId    openapi_types.UUID   `json:"clientId"`
+	Dirty       *[]PresenceDirtyFile `json:"dirty,omitempty"`
+	Head        *string              `json:"head,omitempty"`
+	Truncated   *bool                `json:"truncated,omitempty"`
+	Unpublished *bool                `json:"unpublished,omitempty"`
+}
+
+// PresenceLock defines model for PresenceLock.
+type PresenceLock struct {
+	// Branch Short branch name
+	Branch   string             `json:"branch"`
+	Id       openapi_types.UUID `json:"id"`
+	LockedAt time.Time          `json:"lockedAt"`
+	Owner    PresenceUser       `json:"owner"`
+	Path     string             `json:"path"`
+}
+
+// PresenceLockConflict defines model for PresenceLockConflict.
+type PresenceLockConflict struct {
+	Lock PresenceLock `json:"lock"`
+}
+
+// PresenceLockCreate defines model for PresenceLockCreate.
+type PresenceLockCreate struct {
+	// Branch Short branch name
+	Branch string `json:"branch"`
+	Path   string `json:"path"`
+}
+
+// PresenceState defines model for PresenceState.
+type PresenceState struct {
+	CanForceUnlock bool `json:"canForceUnlock"`
+	CanManage      bool `json:"canManage"`
+	CanUse         bool `json:"canUse"`
+	Enabled        bool `json:"enabled"`
+
+	// Interval Seconds between two heartbeats
+	Interval int `json:"interval"`
+
+	// Locks Every lock of the repository, on every branch
+	Locks []PresenceLock `json:"locks"`
+
+	// Others Live presences of the other users
+	Others []Presence `json:"others"`
+
+	// Ttl Seconds a presence stays live after its last heartbeat
+	Ttl int `json:"ttl"`
+}
+
+// PresenceUser defines model for PresenceUser.
+type PresenceUser struct {
+	// AvatarUrl Empty when unset
+	AvatarUrl string `json:"avatarUrl"`
+	Login     string `json:"login"`
+
+	// Name Display name
+	Name string `json:"name"`
+}
+
 // Problem defines model for Problem.
 type Problem struct {
 	Detail   *string `json:"detail,omitempty"`
@@ -7476,6 +7595,16 @@ type ListMilestonesParams struct {
 // ListMilestonesParamsState defines parameters for ListMilestones.
 type ListMilestonesParamsState string
 
+// DeletePresenceHeartbeatParams defines parameters for DeletePresenceHeartbeat.
+type DeletePresenceHeartbeatParams struct {
+	ClientId openapi_types.UUID `form:"clientId" json:"clientId"`
+}
+
+// DeletePresenceLockParams defines parameters for DeletePresenceLock.
+type DeletePresenceLockParams struct {
+	Force *bool `form:"force,omitempty" json:"force,omitempty"`
+}
+
 // ListPullsParams defines parameters for ListPulls.
 type ListPullsParams struct {
 	// State Default open
@@ -7953,6 +8082,15 @@ type CreateMilestoneJSONRequestBody = MilestoneCreate
 
 // UpdateMilestoneJSONRequestBody defines body for UpdateMilestone for application/json ContentType.
 type UpdateMilestoneJSONRequestBody = MilestoneUpdate
+
+// SetPresenceEnabledJSONRequestBody defines body for SetPresenceEnabled for application/json ContentType.
+type SetPresenceEnabledJSONRequestBody = PresenceEnabled
+
+// PutPresenceHeartbeatJSONRequestBody defines body for PutPresenceHeartbeat for application/json ContentType.
+type PutPresenceHeartbeatJSONRequestBody = PresenceHeartbeat
+
+// CreatePresenceLockJSONRequestBody defines body for CreatePresenceLock for application/json ContentType.
+type CreatePresenceLockJSONRequestBody = PresenceLockCreate
 
 // CreatePullJSONRequestBody defines body for CreatePull for application/json ContentType.
 type CreatePullJSONRequestBody = PullRequestCreate
@@ -8868,6 +9006,24 @@ type ServerInterface interface {
 	// UpdateMilestone Edit, close or reopen a milestone
 	// (PATCH /repos/{owner}/{name}/milestones/{milestoneId})
 	UpdateMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID)
+	// GetPresence Presence and file locks of a repository
+	// (GET /repos/{owner}/{name}/presence)
+	GetPresence(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// SetPresenceEnabled Turn presence and file locks on or off
+	// (PUT /repos/{owner}/{name}/presence/enabled)
+	SetPresenceEnabled(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeletePresenceHeartbeat Remove the presence of a client
+	// (DELETE /repos/{owner}/{name}/presence/heartbeat)
+	DeletePresenceHeartbeat(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params DeletePresenceHeartbeatParams)
+	// PutPresenceHeartbeat Report the state of a client
+	// (PUT /repos/{owner}/{name}/presence/heartbeat)
+	PutPresenceHeartbeat(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// CreatePresenceLock Lock a file on a branch
+	// (POST /repos/{owner}/{name}/presence/locks)
+	CreatePresenceLock(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// DeletePresenceLock Release a lock
+	// (DELETE /repos/{owner}/{name}/presence/locks/{lockId})
+	DeletePresenceLock(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, lockId openapi_types.UUID, params DeletePresenceLockParams)
 	// ListPulls List the pull requests of the repository
 	// (GET /repos/{owner}/{name}/pulls)
 	ListPulls(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListPullsParams)
@@ -10809,6 +10965,42 @@ func (_ Unimplemented) GetMilestone(w http.ResponseWriter, r *http.Request, owne
 // UpdateMilestone Edit, close or reopen a milestone
 // (PATCH /repos/{owner}/{name}/milestones/{milestoneId})
 func (_ Unimplemented) UpdateMilestone(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, milestoneId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetPresence Presence and file locks of a repository
+// (GET /repos/{owner}/{name}/presence)
+func (_ Unimplemented) GetPresence(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetPresenceEnabled Turn presence and file locks on or off
+// (PUT /repos/{owner}/{name}/presence/enabled)
+func (_ Unimplemented) SetPresenceEnabled(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeletePresenceHeartbeat Remove the presence of a client
+// (DELETE /repos/{owner}/{name}/presence/heartbeat)
+func (_ Unimplemented) DeletePresenceHeartbeat(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params DeletePresenceHeartbeatParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PutPresenceHeartbeat Report the state of a client
+// (PUT /repos/{owner}/{name}/presence/heartbeat)
+func (_ Unimplemented) PutPresenceHeartbeat(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreatePresenceLock Lock a file on a branch
+// (POST /repos/{owner}/{name}/presence/locks)
+func (_ Unimplemented) CreatePresenceLock(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeletePresenceLock Release a lock
+// (DELETE /repos/{owner}/{name}/presence/locks/{lockId})
+func (_ Unimplemented) DeletePresenceLock(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, lockId openapi_types.UUID, params DeletePresenceLockParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -23381,6 +23573,305 @@ func (siw *ServerInterfaceWrapper) UpdateMilestone(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// GetPresence operation middleware
+func (siw *ServerInterfaceWrapper) GetPresence(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"anonymous"})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPresence(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetPresenceEnabled operation middleware
+func (siw *ServerInterfaceWrapper) SetPresenceEnabled(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetPresenceEnabled(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePresenceHeartbeat operation middleware
+func (siw *ServerInterfaceWrapper) DeletePresenceHeartbeat(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeletePresenceHeartbeatParams
+
+	// ------------- Required query parameter "clientId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "clientId", r.URL.Query(), &params.ClientId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "clientId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePresenceHeartbeat(w, r, owner, name, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutPresenceHeartbeat operation middleware
+func (siw *ServerInterfaceWrapper) PutPresenceHeartbeat(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutPresenceHeartbeat(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePresenceLock operation middleware
+func (siw *ServerInterfaceWrapper) CreatePresenceLock(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePresenceLock(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePresenceLock operation middleware
+func (siw *ServerInterfaceWrapper) DeletePresenceLock(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "lockId" -------------
+	var lockId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "lockId", chi.URLParam(r, "lockId"), &lockId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "lockId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeletePresenceLockParams
+
+	// ------------- Optional query parameter "force" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "force", r.URL.Query(), &params.Force, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "force"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "force", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePresenceLock(w, r, owner, name, lockId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListPulls operation middleware
 func (siw *ServerInterfaceWrapper) ListPulls(w http.ResponseWriter, r *http.Request) {
 
@@ -29760,6 +30251,24 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/github/imports", wrapper.ImportGitHubRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/presence", wrapper.GetPresence)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/presence/enabled", wrapper.SetPresenceEnabled)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/presence/heartbeat", wrapper.DeletePresenceHeartbeat)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/presence/heartbeat", wrapper.PutPresenceHeartbeat)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/repos/{owner}/{name}/presence/locks", wrapper.CreatePresenceLock)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/repos/{owner}/{name}/presence/locks/{lockId}", wrapper.DeletePresenceLock)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/repos/{owner}/{name}/github/import", wrapper.GetGitHubImport)
@@ -52517,6 +53026,612 @@ func (response UpdateMilestonedefaultApplicationProblemPlusJSONResponse) VisitUp
 	return err
 }
 
+type GetPresenceRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type GetPresenceResponseObject interface {
+	VisitGetPresenceResponse(w http.ResponseWriter) error
+}
+
+type GetPresence200JSONResponse PresenceState
+
+func (response GetPresence200JSONResponse) VisitGetPresenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPresence301ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response GetPresence301ApplicationProblemPlusJSONResponse) VisitGetPresenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(301)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPresence404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPresence404ApplicationProblemPlusJSONResponse) VisitGetPresenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPresencedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetPresencedefaultApplicationProblemPlusJSONResponse) VisitGetPresenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetPresenceEnabledRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *SetPresenceEnabledJSONRequestBody
+}
+
+type SetPresenceEnabledResponseObject interface {
+	VisitSetPresenceEnabledResponse(w http.ResponseWriter) error
+}
+
+type SetPresenceEnabled200JSONResponse PresenceState
+
+func (response SetPresenceEnabled200JSONResponse) VisitSetPresenceEnabledResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetPresenceEnabled307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response SetPresenceEnabled307ApplicationProblemPlusJSONResponse) VisitSetPresenceEnabledResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetPresenceEnabled403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetPresenceEnabled403ApplicationProblemPlusJSONResponse) VisitSetPresenceEnabledResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetPresenceEnabled404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetPresenceEnabled404ApplicationProblemPlusJSONResponse) VisitSetPresenceEnabledResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetPresenceEnableddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetPresenceEnableddefaultApplicationProblemPlusJSONResponse) VisitSetPresenceEnabledResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePresenceHeartbeatRequestObject struct {
+	Owner  RepoOwner `json:"owner"`
+	Name   RepoName  `json:"name"`
+	Params DeletePresenceHeartbeatParams
+}
+
+type DeletePresenceHeartbeatResponseObject interface {
+	VisitDeletePresenceHeartbeatResponse(w http.ResponseWriter) error
+}
+
+type DeletePresenceHeartbeat204Response struct {
+}
+
+func (response DeletePresenceHeartbeat204Response) VisitDeletePresenceHeartbeatResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeletePresenceHeartbeat307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePresenceHeartbeat307ApplicationProblemPlusJSONResponse) VisitDeletePresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePresenceHeartbeat403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePresenceHeartbeat403ApplicationProblemPlusJSONResponse) VisitDeletePresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePresenceHeartbeat404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePresenceHeartbeat404ApplicationProblemPlusJSONResponse) VisitDeletePresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePresenceHeartbeat409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePresenceHeartbeat409ApplicationProblemPlusJSONResponse) VisitDeletePresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePresenceHeartbeatdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeletePresenceHeartbeatdefaultApplicationProblemPlusJSONResponse) VisitDeletePresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPresenceHeartbeatRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *PutPresenceHeartbeatJSONRequestBody
+}
+
+type PutPresenceHeartbeatResponseObject interface {
+	VisitPutPresenceHeartbeatResponse(w http.ResponseWriter) error
+}
+
+type PutPresenceHeartbeat200JSONResponse PresenceState
+
+func (response PutPresenceHeartbeat200JSONResponse) VisitPutPresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPresenceHeartbeat307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response PutPresenceHeartbeat307ApplicationProblemPlusJSONResponse) VisitPutPresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPresenceHeartbeat400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutPresenceHeartbeat400ApplicationProblemPlusJSONResponse) VisitPutPresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPresenceHeartbeat403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPresenceHeartbeat403ApplicationProblemPlusJSONResponse) VisitPutPresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPresenceHeartbeat404ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPresenceHeartbeat404ApplicationProblemPlusJSONResponse) VisitPutPresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPresenceHeartbeat409ApplicationProblemPlusJSONResponse Problem
+
+func (response PutPresenceHeartbeat409ApplicationProblemPlusJSONResponse) VisitPutPresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutPresenceHeartbeatdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PutPresenceHeartbeatdefaultApplicationProblemPlusJSONResponse) VisitPutPresenceHeartbeatResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePresenceLockRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *CreatePresenceLockJSONRequestBody
+}
+
+type CreatePresenceLockResponseObject interface {
+	VisitCreatePresenceLockResponse(w http.ResponseWriter) error
+}
+
+type CreatePresenceLock201JSONResponse PresenceLock
+
+func (response CreatePresenceLock201JSONResponse) VisitCreatePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePresenceLock307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePresenceLock307ApplicationProblemPlusJSONResponse) VisitCreatePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePresenceLock400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreatePresenceLock400ApplicationProblemPlusJSONResponse) VisitCreatePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePresenceLock403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePresenceLock403ApplicationProblemPlusJSONResponse) VisitCreatePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePresenceLock404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePresenceLock404ApplicationProblemPlusJSONResponse) VisitCreatePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePresenceLock409JSONResponse PresenceLockConflict
+
+func (response CreatePresenceLock409JSONResponse) VisitCreatePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePresenceLock409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreatePresenceLock409ApplicationProblemPlusJSONResponse) VisitCreatePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePresenceLockdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreatePresenceLockdefaultApplicationProblemPlusJSONResponse) VisitCreatePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePresenceLockRequestObject struct {
+	Owner  RepoOwner          `json:"owner"`
+	Name   RepoName           `json:"name"`
+	LockId openapi_types.UUID `json:"lockId"`
+	Params DeletePresenceLockParams
+}
+
+type DeletePresenceLockResponseObject interface {
+	VisitDeletePresenceLockResponse(w http.ResponseWriter) error
+}
+
+type DeletePresenceLock200JSONResponse PresenceLock
+
+func (response DeletePresenceLock200JSONResponse) VisitDeletePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePresenceLock307ApplicationProblemPlusJSONResponse struct {
+	MovedApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePresenceLock307ApplicationProblemPlusJSONResponse) VisitDeletePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.Header().Set("Location", fmt.Sprint(response.Headers.Location))
+	w.WriteHeader(307)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePresenceLock403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeletePresenceLock403ApplicationProblemPlusJSONResponse) VisitDeletePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePresenceLock404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePresenceLock404ApplicationProblemPlusJSONResponse) VisitDeletePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePresenceLock409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeletePresenceLock409ApplicationProblemPlusJSONResponse) VisitDeletePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeletePresenceLockdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response DeletePresenceLockdefaultApplicationProblemPlusJSONResponse) VisitDeletePresenceLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListPullsRequestObject struct {
 	Owner  RepoOwner `json:"owner"`
 	Name   RepoName  `json:"name"`
@@ -63495,6 +64610,24 @@ type StrictServerInterface interface {
 	// UpdateMilestone Edit, close or reopen a milestone
 	// (PATCH /repos/{owner}/{name}/milestones/{milestoneId})
 	UpdateMilestone(ctx context.Context, request UpdateMilestoneRequestObject) (UpdateMilestoneResponseObject, error)
+	// GetPresence Presence and file locks of a repository
+	// (GET /repos/{owner}/{name}/presence)
+	GetPresence(ctx context.Context, request GetPresenceRequestObject) (GetPresenceResponseObject, error)
+	// SetPresenceEnabled Turn presence and file locks on or off
+	// (PUT /repos/{owner}/{name}/presence/enabled)
+	SetPresenceEnabled(ctx context.Context, request SetPresenceEnabledRequestObject) (SetPresenceEnabledResponseObject, error)
+	// DeletePresenceHeartbeat Remove the presence of a client
+	// (DELETE /repos/{owner}/{name}/presence/heartbeat)
+	DeletePresenceHeartbeat(ctx context.Context, request DeletePresenceHeartbeatRequestObject) (DeletePresenceHeartbeatResponseObject, error)
+	// PutPresenceHeartbeat Report the state of a client
+	// (PUT /repos/{owner}/{name}/presence/heartbeat)
+	PutPresenceHeartbeat(ctx context.Context, request PutPresenceHeartbeatRequestObject) (PutPresenceHeartbeatResponseObject, error)
+	// CreatePresenceLock Lock a file on a branch
+	// (POST /repos/{owner}/{name}/presence/locks)
+	CreatePresenceLock(ctx context.Context, request CreatePresenceLockRequestObject) (CreatePresenceLockResponseObject, error)
+	// DeletePresenceLock Release a lock
+	// (DELETE /repos/{owner}/{name}/presence/locks/{lockId})
+	DeletePresenceLock(ctx context.Context, request DeletePresenceLockRequestObject) (DeletePresenceLockResponseObject, error)
 	// ListPulls List the pull requests of the repository
 	// (GET /repos/{owner}/{name}/pulls)
 	ListPulls(ctx context.Context, request ListPullsRequestObject) (ListPullsResponseObject, error)
@@ -71478,6 +72611,192 @@ func (sh *strictHandler) UpdateMilestone(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateMilestoneResponseObject); ok {
 		if err := validResponse.VisitUpdateMilestoneResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPresence operation middleware
+func (sh *strictHandler) GetPresence(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request GetPresenceRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPresence(ctx, request.(GetPresenceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPresence")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPresenceResponseObject); ok {
+		if err := validResponse.VisitGetPresenceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetPresenceEnabled operation middleware
+func (sh *strictHandler) SetPresenceEnabled(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request SetPresenceEnabledRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body SetPresenceEnabledJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetPresenceEnabled(ctx, request.(SetPresenceEnabledRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetPresenceEnabled")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetPresenceEnabledResponseObject); ok {
+		if err := validResponse.VisitSetPresenceEnabledResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeletePresenceHeartbeat operation middleware
+func (sh *strictHandler) DeletePresenceHeartbeat(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params DeletePresenceHeartbeatParams) {
+	var request DeletePresenceHeartbeatRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeletePresenceHeartbeat(ctx, request.(DeletePresenceHeartbeatRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeletePresenceHeartbeat")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeletePresenceHeartbeatResponseObject); ok {
+		if err := validResponse.VisitDeletePresenceHeartbeatResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutPresenceHeartbeat operation middleware
+func (sh *strictHandler) PutPresenceHeartbeat(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request PutPresenceHeartbeatRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body PutPresenceHeartbeatJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutPresenceHeartbeat(ctx, request.(PutPresenceHeartbeatRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutPresenceHeartbeat")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutPresenceHeartbeatResponseObject); ok {
+		if err := validResponse.VisitPutPresenceHeartbeatResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreatePresenceLock operation middleware
+func (sh *strictHandler) CreatePresenceLock(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request CreatePresenceLockRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body CreatePresenceLockJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreatePresenceLock(ctx, request.(CreatePresenceLockRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreatePresenceLock")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreatePresenceLockResponseObject); ok {
+		if err := validResponse.VisitCreatePresenceLockResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeletePresenceLock operation middleware
+func (sh *strictHandler) DeletePresenceLock(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, lockId openapi_types.UUID, params DeletePresenceLockParams) {
+	var request DeletePresenceLockRequestObject
+
+	request.Owner = owner
+	request.Name = name
+	request.LockId = lockId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeletePresenceLock(ctx, request.(DeletePresenceLockRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeletePresenceLock")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeletePresenceLockResponseObject); ok {
+		if err := validResponse.VisitDeletePresenceLockResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

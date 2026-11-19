@@ -120,7 +120,7 @@ func (q *Queries) ListStarredAmong(ctx context.Context, arg ListStarredAmongPara
 }
 
 const listUserStarredRepos = `-- name: ListUserStarredRepos :many
-SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, n.name AS owner_name, n.kind AS owner_kind, s.created_at AS starred_at
+SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, r.presence_enabled, n.name AS owner_name, n.kind AS owner_kind, s.created_at AS starred_at
 FROM repo_stars s
 JOIN repos r ON r.id = s.repo_id
 JOIN namespaces n ON n.id = r.owner_id
@@ -184,6 +184,7 @@ func (q *Queries) ListUserStarredRepos(ctx context.Context, arg ListUserStarredR
 			&i.Repo.PushesSinceMaintenance,
 			&i.Repo.StarsCount,
 			&i.Repo.AvatarUrl,
+			&i.Repo.PresenceEnabled,
 			&i.OwnerName,
 			&i.OwnerKind,
 			&i.StarredAt,

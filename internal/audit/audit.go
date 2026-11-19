@@ -64,6 +64,7 @@ const (
 	ActionRepoDeleted         = "repo.deleted"
 	ActionRepoCollaboratorSet = "repo.collaborator_set"
 	ActionRepoCollaboratorDel = "repo.collaborator_removed"
+	ActionRepoPresence        = "repo.presence_changed"
 )
 
 // Inserter is the subset of dbgen.Querier used to record events.

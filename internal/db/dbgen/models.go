@@ -1104,6 +1104,7 @@ type Repo struct {
 	PushesSinceMaintenance int32
 	StarsCount             int32
 	AvatarUrl              string
+	PresenceEnabled        bool
 }
 
 type RepoCollaborator struct {
@@ -1118,6 +1119,20 @@ type RepoFork struct {
 	RepoID    uuid.UUID
 	ParentID  uuid.NullUUID
 	CreatedAt pgtype.Timestamptz
+}
+
+type RepoPresence struct {
+	RepoID      uuid.UUID
+	UserID      uuid.UUID
+	ClientID    uuid.UUID
+	Branch      string
+	Head        string
+	Dirty       []byte
+	Truncated   bool
+	Ahead       int32
+	Unpublished bool
+	Active      bool
+	UpdatedAt   pgtype.Timestamptz
 }
 
 type RepoRedirect struct {

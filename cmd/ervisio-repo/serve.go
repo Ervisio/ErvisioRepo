@@ -42,6 +42,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/notify"
 	"github.com/Ervisio/ErvisioRepo/internal/orgs"
 	"github.com/Ervisio/ErvisioRepo/internal/pluginapi"
+	"github.com/Ervisio/ErvisioRepo/internal/presence"
 	"github.com/Ervisio/ErvisioRepo/internal/pulls"
 	"github.com/Ervisio/ErvisioRepo/internal/releases"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
@@ -141,8 +142,12 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	if err != nil {
 		return err
 	}
+	// Presence and file locks: the lock changes of the LFS API reach the
+	// presence streams, and the hooks enforce the locks on push.
+	presenceSvc := presence.New(presence.Options{Pool: pool, Log: log.With("component", "presence")})
 	if lfsSrv != nil {
 		jobOpts = append(jobOpts, lfsSrv.JobsOption())
+		lfsSrv.SetLockEvents(presenceSvc)
 	}
 	if opt, ok := backupJobOption(cfg, storage, log); ok {
 		jobOpts = append(jobOpts, opt)
@@ -154,7 +159,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		return err
 	}
 	jobOpts = append(jobOpts, hooks.JobsOption(), notifier.JobsOption())
-	journal, err := setupGitJournal(ctx, cfg, pool, gitTier, bus, log)
+	journal, err := setupGitJournal(ctx, cfg, pool, gitTier, bus, presenceSvc, log)
 	if err != nil {
 		return err
 	}
@@ -284,6 +289,9 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	}
 	if repoSvc != nil {
 		deps.Repos = repoSvc
+		presenceSvc.SetRepos(repoSvc)
+		deps.Presence = presenceSvc
+		go presenceSvc.Run(ctx)
 		var rj releases.Journal
 		if journal != nil && journal.Journal != nil {
 			rj = journal.Journal

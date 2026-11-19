@@ -64,6 +64,8 @@ type v1Server struct {
 	avatars *avatars.Service
 	// apps serves the App registration and installation endpoints; nil answers 503.
 	apps *apps.Service
+	// presence serves the presence and file lock endpoints; nil answers 503.
+	presence Presence
 	// db, jobs, monitor and mailHost feed the admin overview; nil parts are left out.
 	db       dbgen.DBTX
 	jobs     JobsStatus

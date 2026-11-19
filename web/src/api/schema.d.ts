@@ -4678,6 +4678,172 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/repos/{owner}/{name}/presence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Presence and file locks of a repository
+         * @description Anyone who can read the repository. `others` (the live presences of
+         *     the other users) is only filled for callers that can use the
+         *     feature (canUse); `locks` lists every lock of the repository on
+         *     every branch. With the feature off, enabled is false and both lists
+         *     are empty.
+         */
+        get: operations["getPresence"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/presence/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Turn presence and file locks on or off
+         * @description Repository admins. Turning the feature off deletes the stored
+         *     presences, sends `disabled` to the open streams and closes them;
+         *     locks are kept.
+         */
+        put: operations["setPresenceEnabled"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/presence/heartbeat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Report the state of a client
+         * @description Callers that can use the feature (write permission, or membership
+         *     of the owning organization for its public repositories). The
+         *     presence stays live for `ttl` seconds; send a heartbeat every
+         *     `interval` seconds. Only tracked changes are reported, never
+         *     untracked or ignored files.
+         */
+        put: operations["putPresenceHeartbeat"];
+        post?: never;
+        /** Remove the presence of a client */
+        delete: operations["deletePresenceHeartbeat"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/presence/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Live presence and lock events (server-sent events)
+         * @description Callers that can use the feature. Events (`event:` name, `data:`
+         *     JSON): `snapshot` (PresenceState) on connection, `presence`
+         *     (Presence, never one of the caller), `gone` (PresenceGone), `lock`
+         *     (PresenceLock), `unlock` (PresenceUnlock), `disabled` (`{}`, then
+         *     the stream ends). A `: ping` comment every 25 s. The stream also
+         *     ends when the caller loses access. Served outside the request
+         *     timeout (not part of the generated Go server).
+         */
+        get: operations["streamPresence"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/presence/locks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lock a file on a branch
+         * @description Callers that can use the feature. While the lock exists, pushes by
+         *     other users that change the file on that branch are refused. The
+         *     same locks are served by the Git LFS Locks API.
+         */
+        post: operations["createPresenceLock"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/presence/locks/{lockId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                lockId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Release a lock
+         * @description The owner of the lock, or with force=true a caller that can force
+         *     unlocks (maintain or admin on the repository, owner of the owning
+         *     organization, instance admin).
+         */
+        delete: operations["deletePresenceLock"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/repos/{owner}/{name}/github/import": {
         parameters: {
             query?: never;
@@ -9859,6 +10025,88 @@ export interface components {
         };
         RepoSubscriptionUpdate: {
             level: components["schemas"]["RepoWatchLevel"];
+        };
+        PresenceEnabled: {
+            enabled: boolean;
+        };
+        PresenceUser: {
+            login: string;
+            /** @description Display name */
+            name: string;
+            /** @description Empty when unset */
+            avatarUrl: string;
+        };
+        /** @enum {string} */
+        PresenceFileState: "modified" | "added" | "deleted" | "renamed" | "conflicted";
+        PresenceDirtyFile: {
+            path: string;
+            state: components["schemas"]["PresenceFileState"];
+        };
+        Presence: {
+            user: components["schemas"]["PresenceUser"];
+            /** Format: uuid */
+            clientId: string;
+            branch: string;
+            head: string;
+            dirty: components["schemas"]["PresenceDirtyFile"][];
+            truncated: boolean;
+            ahead: number;
+            unpublished: boolean;
+            active: boolean;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PresenceLock: {
+            /** Format: uuid */
+            id: string;
+            path: string;
+            /** @description Short branch name */
+            branch: string;
+            owner: components["schemas"]["PresenceUser"];
+            /** Format: date-time */
+            lockedAt: string;
+        };
+        PresenceLockConflict: {
+            lock: components["schemas"]["PresenceLock"];
+        };
+        PresenceLockCreate: {
+            path: string;
+            /** @description Short branch name */
+            branch: string;
+        };
+        PresenceState: {
+            enabled: boolean;
+            canUse: boolean;
+            canManage: boolean;
+            canForceUnlock: boolean;
+            /** @description Seconds between two heartbeats */
+            interval: number;
+            /** @description Seconds a presence stays live after its last heartbeat */
+            ttl: number;
+            /** @description Live presences of the other users */
+            others: components["schemas"]["Presence"][];
+            /** @description Every lock of the repository, on every branch */
+            locks: components["schemas"]["PresenceLock"][];
+        };
+        PresenceHeartbeat: {
+            /** Format: uuid */
+            clientId: string;
+            branch?: string;
+            head?: string;
+            dirty?: components["schemas"]["PresenceDirtyFile"][];
+            truncated?: boolean;
+            ahead?: number;
+            unpublished?: boolean;
+            active?: boolean;
+        };
+        PresenceGone: {
+            login: string;
+            /** Format: uuid */
+            clientId: string;
+        };
+        PresenceUnlock: {
+            /** Format: uuid */
+            id: string;
         };
         Problem: {
             /** @example about:blank */
@@ -18121,6 +18369,268 @@ export interface operations {
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getPresence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresenceState"];
+                };
+            };
+            301: components["responses"]["Moved"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    setPresenceEnabled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PresenceEnabled"];
+            };
+        };
+        responses: {
+            /** @description New state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresenceState"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    putPresenceHeartbeat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PresenceHeartbeat"];
+            };
+        };
+        responses: {
+            /** @description Current state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresenceState"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            /** @description The feature is off for this repository */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    deletePresenceHeartbeat: {
+        parameters: {
+            query: {
+                clientId: string;
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed (also when there was none) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            /** @description The feature is off for this repository */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    streamPresence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event stream */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            /** @description The feature is off for this repository */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createPresenceLock: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PresenceLockCreate"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresenceLock"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            /**
+             * @description The path is already locked on that branch (by anyone, the caller
+             *     included): the body carries the existing lock. A problem
+             *     document instead when the feature is off.
+             */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresenceLockConflict"];
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    deletePresenceLock: {
+        parameters: {
+            query?: {
+                force?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+                lockId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The released lock */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresenceLock"];
+                };
+            };
+            307: components["responses"]["Moved"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            /** @description The feature is off for this repository */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             default: components["responses"]["Problem"];
         };
     };

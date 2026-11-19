@@ -24,6 +24,7 @@ tags:
   - name: actions
   - name: oauth
   - name: apps
+  - name: presence
 # Every operation needs a session unless it declares `security: []`. The
 # "admin" scope means an instance admin. Unsafe methods also need the
 # X-CSRF-Token header (see components.securitySchemes.session).
@@ -8027,6 +8028,286 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/presence:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getPresence
+      tags: [presence]
+      summary: Presence and file locks of a repository
+      description: |
+        Anyone who can read the repository. `others` (the live presences of
+        the other users) is only filled for callers that can use the
+        feature (canUse); `locks` lists every lock of the repository on
+        every branch. With the feature off, enabled is false and both lists
+        are empty.
+      security:
+        - session: [anonymous]
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Current state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceState"
+        "301":
+          $ref: "#/components/responses/Moved"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/presence/enabled:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    put:
+      operationId: setPresenceEnabled
+      tags: [presence]
+      summary: Turn presence and file locks on or off
+      description: |
+        Repository admins. Turning the feature off deletes the stored
+        presences, sends `disabled` to the open streams and closes them;
+        locks are kept.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresenceEnabled"
+      responses:
+        "200":
+          description: New state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceState"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/presence/heartbeat:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    put:
+      operationId: putPresenceHeartbeat
+      tags: [presence]
+      summary: Report the state of a client
+      description: |
+        Callers that can use the feature (write permission, or membership
+        of the owning organization for its public repositories). The
+        presence stays live for `ttl` seconds; send a heartbeat every
+        `interval` seconds. Only tracked changes are reported, never
+        untracked or ignored files.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresenceHeartbeat"
+      responses:
+        "200":
+          description: Current state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceState"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          description: The feature is off for this repository
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deletePresenceHeartbeat
+      tags: [presence]
+      summary: Remove the presence of a client
+      security:
+        - session: []
+        - token: [repo:write]
+      parameters:
+        - name: clientId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Removed (also when there was none)
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          description: The feature is off for this repository
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/presence/stream:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: streamPresence
+      tags: [presence]
+      summary: Live presence and lock events (server-sent events)
+      description: |
+        Callers that can use the feature. Events (`event:` name, `data:`
+        JSON): `snapshot` (PresenceState) on connection, `presence`
+        (Presence, never one of the caller), `gone` (PresenceGone), `lock`
+        (PresenceLock), `unlock` (PresenceUnlock), `disabled` (`{}`, then
+        the stream ends). A `: ping` comment every 25 s. The stream also
+        ends when the caller loses access. Served outside the request
+        timeout (not part of the generated Go server).
+      security:
+        - session: []
+        - token: [repo:read]
+      responses:
+        "200":
+          description: Event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          description: The feature is off for this repository
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/presence/locks:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    post:
+      operationId: createPresenceLock
+      tags: [presence]
+      summary: Lock a file on a branch
+      description: |
+        Callers that can use the feature. While the lock exists, pushes by
+        other users that change the file on that branch are refused. The
+        same locks are served by the Git LFS Locks API.
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PresenceLockCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceLock"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          description: |
+            The path is already locked on that branch (by anyone, the caller
+            included): the body carries the existing lock. A problem
+            document instead when the feature is off.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceLockConflict"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/presence/locks/{lockId}:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+      - name: lockId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      operationId: deletePresenceLock
+      tags: [presence]
+      summary: Release a lock
+      description: |
+        The owner of the lock, or with force=true a caller that can force
+        unlocks (maintain or admin on the repository, owner of the owning
+        organization, instance admin).
+      security:
+        - session: []
+        - token: [repo:write]
+      parameters:
+        - name: force
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: The released lock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresenceLock"
+        "307":
+          $ref: "#/components/responses/Moved"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          description: The feature is off for this repository
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
   /repos/{owner}/{name}/github/import:
     parameters:
       - $ref: "#/components/parameters/RepoOwner"
@@ -15830,6 +16111,115 @@ components:
       properties:
         level: {$ref: "#/components/schemas/RepoWatchLevel"}
     # --- end notifications schemas ---
+    PresenceEnabled:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: {type: boolean}
+    PresenceUser:
+      type: object
+      required: [login, name, avatarUrl]
+      properties:
+        login: {type: string}
+        name: {type: string, description: Display name, empty when unset}
+        avatarUrl: {type: string, description: Empty when unset}
+    PresenceFileState:
+      type: string
+      enum: [modified, added, deleted, renamed, conflicted]
+    PresenceDirtyFile:
+      type: object
+      required: [path, state]
+      properties:
+        path: {type: string, maxLength: 4096}
+        state:
+          $ref: "#/components/schemas/PresenceFileState"
+    Presence:
+      type: object
+      required: [user, clientId, branch, head, dirty, truncated, ahead, unpublished, active, updatedAt]
+      properties:
+        user:
+          $ref: "#/components/schemas/PresenceUser"
+        clientId: {type: string, format: uuid}
+        branch: {type: string}
+        head: {type: string}
+        dirty:
+          type: array
+          items:
+            $ref: "#/components/schemas/PresenceDirtyFile"
+        truncated: {type: boolean}
+        ahead: {type: integer}
+        unpublished: {type: boolean}
+        active: {type: boolean}
+        updatedAt: {type: string, format: date-time}
+    PresenceLock:
+      type: object
+      required: [id, path, branch, owner, lockedAt]
+      properties:
+        id: {type: string, format: uuid}
+        path: {type: string}
+        branch: {type: string, description: Short branch name}
+        owner:
+          $ref: "#/components/schemas/PresenceUser"
+        lockedAt: {type: string, format: date-time}
+    PresenceLockConflict:
+      type: object
+      required: [lock]
+      properties:
+        lock:
+          $ref: "#/components/schemas/PresenceLock"
+    PresenceLockCreate:
+      type: object
+      required: [path, branch]
+      properties:
+        path: {type: string, maxLength: 4096}
+        branch: {type: string, maxLength: 255, description: Short branch name}
+    PresenceState:
+      type: object
+      required: [enabled, canUse, canManage, canForceUnlock, interval, ttl, others, locks]
+      properties:
+        enabled: {type: boolean}
+        canUse: {type: boolean}
+        canManage: {type: boolean}
+        canForceUnlock: {type: boolean}
+        interval: {type: integer, description: Seconds between two heartbeats}
+        ttl: {type: integer, description: Seconds a presence stays live after its last heartbeat}
+        others:
+          type: array
+          description: Live presences of the other users
+          items:
+            $ref: "#/components/schemas/Presence"
+        locks:
+          type: array
+          description: Every lock of the repository, on every branch
+          items:
+            $ref: "#/components/schemas/PresenceLock"
+    PresenceHeartbeat:
+      type: object
+      required: [clientId]
+      properties:
+        clientId: {type: string, format: uuid}
+        branch: {type: string, maxLength: 255}
+        head: {type: string, maxLength: 64}
+        dirty:
+          type: array
+          maxItems: 500
+          items:
+            $ref: "#/components/schemas/PresenceDirtyFile"
+        truncated: {type: boolean}
+        ahead: {type: integer, minimum: 0}
+        unpublished: {type: boolean}
+        active: {type: boolean}
+    PresenceGone:
+      type: object
+      required: [login, clientId]
+      properties:
+        login: {type: string}
+        clientId: {type: string, format: uuid}
+    PresenceUnlock:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string, format: uuid}
     Problem:
       type: object
       required: [type, title, status]

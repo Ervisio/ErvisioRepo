@@ -9,6 +9,7 @@ export type RepoCreate = S["RepoCreate"];
 export type RepoUpdate = S["RepoUpdate"];
 export type RepoTransfer = S["RepoTransfer"];
 export type Visibility = S["Visibility"];
+export type PresenceState = S["PresenceState"];
 
 const enc = encodeURIComponent;
 const repoPath = (owner: string, name: string) => `/repos/${enc(owner)}/${enc(name)}`;
@@ -47,6 +48,18 @@ export const useUploadRepoAvatar = (owner: string, name: string) =>
   useRepoMutation<File, Repo>((file) => uploadBlob<Repo>("PUT", `${repoPath(owner, name)}/avatar`, file));
 export const useDeleteRepoAvatar = (owner: string, name: string) =>
   useRepoMutation<void, Repo>(() => request("DELETE", `${repoPath(owner, name)}/avatar`));
+
+/** Presence and file locks of a repository (enabled flag, rights, live presences, locks). */
+export const usePresence = (owner: string, name: string) =>
+  useQuery({ queryKey: ["repos", "presence", owner, name], retry: false, queryFn: () => request<PresenceState>("GET", `${repoPath(owner, name)}/presence`) });
+/** Turns presence and file locks on or off (repository admins). */
+export function useSetPresenceEnabled(owner: string, name: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (enabled: boolean) => request<PresenceState>("PUT", `${repoPath(owner, name)}/presence/enabled`, { enabled }),
+    onSuccess: (st) => qc.setQueryData(["repos", "presence", owner, name], st),
+  });
+}
 
 /** Stars or unstars a repository; the cached repository shows the change before the server answers. */
 export function useStar(owner: string, name: string) {

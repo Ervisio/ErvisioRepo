@@ -106,7 +106,7 @@ func (q *Queries) CountUserPins(ctx context.Context, userID uuid.UUID) (int64, e
 }
 
 const exploreRepos = `-- name: ExploreRepos :many
-SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, n.name AS owner_name, n.kind AS owner_kind
+SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, r.presence_enabled, n.name AS owner_name, n.kind AS owner_kind
 FROM repos r
 JOIN namespaces n ON n.id = r.owner_id
 WHERE r.visibility = 'public'
@@ -171,6 +171,7 @@ func (q *Queries) ExploreRepos(ctx context.Context, arg ExploreReposParams) ([]E
 			&i.Repo.PushesSinceMaintenance,
 			&i.Repo.StarsCount,
 			&i.Repo.AvatarUrl,
+			&i.Repo.PresenceEnabled,
 			&i.OwnerName,
 			&i.OwnerKind,
 		); err != nil {
@@ -493,7 +494,7 @@ func (q *Queries) ListUserIssues(ctx context.Context, arg ListUserIssuesParams) 
 }
 
 const listUserPins = `-- name: ListUserPins :many
-SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, n.name AS owner_name, n.kind AS owner_kind
+SELECT r.id, r.owner_id, r.name, r.name_lower, r.description, r.visibility, r.default_branch, r.storage_state, r.state_changed_at, r.pinned, r.size_bytes, r.last_access_at, r.manifest_seq, r.created_by, r.created_at, r.updated_at, r.journal_dirty_since, r.pushes_since_maintenance, r.stars_count, r.avatar_url, r.presence_enabled, n.name AS owner_name, n.kind AS owner_kind
 FROM user_pinned_repos p
 JOIN repos r ON r.id = p.repo_id
 JOIN namespaces n ON n.id = r.owner_id
@@ -545,6 +546,7 @@ func (q *Queries) ListUserPins(ctx context.Context, arg ListUserPinsParams) ([]L
 			&i.Repo.PushesSinceMaintenance,
 			&i.Repo.StarsCount,
 			&i.Repo.AvatarUrl,
+			&i.Repo.PresenceEnabled,
 			&i.OwnerName,
 			&i.OwnerKind,
 		); err != nil {

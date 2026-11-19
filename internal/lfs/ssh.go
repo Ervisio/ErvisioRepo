@@ -331,7 +331,7 @@ func (t *transfer) listLock(ctx context.Context, args map[string]string) error {
 		return t.out.err
 	}
 	limit, _ := strconv.Atoi(args["limit"])
-	locks, next, err := t.s.listLocks(ctx, t.req.Repo, lockFilter{Path: args["path"], ID: args["id"], Cursor: args["cursor"], Limit: limit})
+	locks, next, err := t.s.listLocks(ctx, t.req.Repo, lockFilter{Path: args["path"], ID: args["id"], Refspec: args["refspec"], Cursor: args["cursor"], Limit: limit})
 	if err != nil {
 		return t.fail(ctx, err)
 	}

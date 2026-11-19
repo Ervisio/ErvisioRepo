@@ -67,13 +67,13 @@ SELECT EXISTS (SELECT 1 FROM namespaces WHERE id = $1);
 -- name: CreateLFSLock :one
 INSERT INTO lfs_locks (id, repo_id, path, refname, owner_id)
 VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (repo_id, path) DO NOTHING
+ON CONFLICT (repo_id, refname, path) DO NOTHING
 RETURNING id, repo_id, path, refname, owner_id, created_at;
 
 -- name: GetLFSLockByPath :one
 SELECT l.id, l.repo_id, l.path, l.refname, l.owner_id, l.created_at, n.name AS owner_name
 FROM lfs_locks l JOIN namespaces n ON n.id = l.owner_id
-WHERE l.repo_id = $1 AND l.path = $2;
+WHERE l.repo_id = $1 AND l.refname = $2 AND l.path = $3;
 
 -- name: GetLFSLock :one
 SELECT l.id, l.repo_id, l.path, l.refname, l.owner_id, l.created_at, n.name AS owner_name
@@ -86,6 +86,7 @@ SELECT l.id, l.repo_id, l.path, l.refname, l.owner_id, l.created_at, n.name AS o
 FROM lfs_locks l JOIN namespaces n ON n.id = l.owner_id
 WHERE l.repo_id = sqlc.arg(repo_id)
   AND (sqlc.arg(path)::text = '' OR l.path = sqlc.arg(path))
+  AND (sqlc.arg(refname)::text = '' OR l.refname = sqlc.arg(refname))
   AND (sqlc.narg(lock_id)::uuid IS NULL OR l.id = sqlc.narg(lock_id))
   AND (sqlc.narg(owner_id)::uuid IS NULL OR l.owner_id = sqlc.narg(owner_id))
   AND (sqlc.narg(not_owner_id)::uuid IS NULL OR l.owner_id <> sqlc.narg(not_owner_id))

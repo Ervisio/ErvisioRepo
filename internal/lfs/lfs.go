@@ -83,6 +83,8 @@ type Server struct {
 	q    *dbgen.Queries
 	base *url.URL
 	now  func() time.Time
+	// lockEvents, when set, is told about lock changes.
+	lockEvents LockEvents
 }
 
 // New returns the server.
