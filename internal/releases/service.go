@@ -960,19 +960,9 @@ func (s *Service) OpenAsset(ctx context.Context, who auth.Principal, owner, name
 	if err != nil {
 		return nil, Asset{}, fmt.Errorf("get asset: %w", err)
 	}
-	if s.o.Storage == nil {
-		return nil, Asset{}, ErrNoStorage
-	}
-	cl, err := s.o.Storage.Class(row.StoragePolicy)
+	rc, err := s.openAssetObject(ctx, row, rng)
 	if err != nil {
-		return nil, Asset{}, fmt.Errorf("asset storage: %w", err)
-	}
-	rc, _, err := cl.Get(ctx, row.StorageKey, rng)
-	if err != nil {
-		if errors.Is(err, blob.ErrNotFound) {
-			return nil, Asset{}, fmt.Errorf("asset %s: object missing: %w", row.ID, err)
-		}
-		return nil, Asset{}, fmt.Errorf("open asset: %w", err)
+		return nil, Asset{}, err
 	}
 	if rng == nil || rng.Offset == 0 {
 		if err := s.q.BumpReleaseAssetDownloads(ctx, row.ID); err != nil {
@@ -981,6 +971,24 @@ func (s *Service) OpenAsset(ctx context.Context, who auth.Principal, owner, name
 		row.DownloadCount++
 	}
 	return rc, assetFrom(row), nil
+}
+
+func (s *Service) openAssetObject(ctx context.Context, row dbgen.ReleaseAsset, rng *blob.Range) (io.ReadCloser, error) {
+	if s.o.Storage == nil {
+		return nil, ErrNoStorage
+	}
+	cl, err := s.o.Storage.Class(row.StoragePolicy)
+	if err != nil {
+		return nil, fmt.Errorf("asset storage: %w", err)
+	}
+	rc, _, err := cl.Get(ctx, row.StorageKey, rng)
+	if errors.Is(err, blob.ErrNotFound) {
+		return nil, fmt.Errorf("asset %s: object missing: %w", row.ID, err)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("open asset: %w", err)
+	}
+	return rc, nil
 }
 
 // ---- helpers ----

@@ -275,6 +275,62 @@ func (a *API) Download(ctx context.Context, path string, fn func(io.Reader) erro
 	return fn(resp.Body)
 }
 
+// Upload streams a release asset to the upload URL returned by GitHub.
+func (a *API) Upload(ctx context.Context, endpoint, contentType string, size int64, body io.Reader, out any) error {
+	target, err := url.Parse(endpoint)
+	if err != nil {
+		return fmt.Errorf("parse GitHub upload URL: %w", err)
+	}
+	base, err := url.Parse(a.base)
+	if err != nil {
+		return fmt.Errorf("parse GitHub API URL: %w", err)
+	}
+	host := base.Host
+	if a.base == APIURL(DefaultBaseURL) {
+		host = "uploads.github.com"
+	}
+	if target.Scheme != "https" || !strings.EqualFold(target.Host, host) || target.User != nil || target.Fragment != "" {
+		return errors.New("GitHub upload URL is outside the trusted upload host")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, target.String(), body)
+	if err != nil {
+		return fmt.Errorf("GitHub upload request: %w", err)
+	}
+	tok := a.token
+	if a.source != nil {
+		tok, err = a.source(ctx)
+		if err != nil {
+			return fmt.Errorf("GitHub authentication: %w", err)
+		}
+	}
+	if size == 0 {
+		req.Body = http.NoBody
+	}
+	req.ContentLength = size
+	req.Header.Set("Authorization", "Bearer "+tok)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("X-GitHub-Api-Version", apiVersion)
+	req.Header.Set("User-Agent", "ErvisioRepo")
+	req.Header.Set("Content-Type", contentType)
+
+	client := *downloadClient
+	client.CheckRedirect = func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("send GitHub upload: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return &APIError{Status: resp.StatusCode}
+	}
+	if out != nil {
+		if err := json.NewDecoder(io.LimitReader(resp.Body, maxAPIBody)).Decode(out); err != nil {
+			return fmt.Errorf("decode GitHub upload: %w", err)
+		}
+	}
+	return nil
+}
+
 // downloadClient has no overall timeout (assets can be large) but bounds
 // the wait for the response headers.
 var downloadClient = func() *http.Client {
@@ -437,6 +493,7 @@ type remoteRepo struct {
 	DefaultBranch string `json:"default_branch"`
 	Private       bool   `json:"private"`
 	Archived      bool   `json:"archived"`
+	Visibility    string `json:"visibility"`
 }
 
 func getRepo(ctx context.Context, a *API, owner, name string) (remoteRepo, error) {

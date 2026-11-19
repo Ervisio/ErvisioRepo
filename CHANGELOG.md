@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Existing bidirectional GitHub links also synchronize published releases and missing assets for matching tags.
+
 ## [1.16.3] - 2026-11-18
 
 ### Fixed

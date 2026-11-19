@@ -9,6 +9,15 @@ fine-grained):
 - **sync**: entrambe le direzioni, solo fast-forward; in caso di divergenza il
   commit di GitHub resta su `sync-conflict/github/<branch>`.
 
+I collegamenti **sync** attivi allineano anche le release pubblicate e gli
+allegati mancanti per i tag che puntano allo stesso oggetto sui due server.
+Vale anche per i collegamenti esistenti, al normale intervallo di sync, e
+richiede **Contents: lettura e scrittura** su GitHub. I repository con
+visibilità diversa vengono saltati. Bozze, cancellazioni e sostituzioni di
+binari esistenti non vengono propagate.
+Per lo stesso tag prevalgono titolo, note e stato di prerelease più recenti
+quando i timestamp permettono di stabilirlo. Le modifiche ambigue restano intatte.
+
 Un repository si può anche importare una volta da GitHub (dati git, label,
 milestone, issue, pull request, release e, con il tipo **actions**, la
 configurazione Actions e lo storico delle esecuzioni).

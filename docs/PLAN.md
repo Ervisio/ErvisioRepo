@@ -300,7 +300,7 @@ Markdown con allegati (salvati sullo storage a livelli), label, milestone, asseg
 
 ### 5.6 Import, backup e sync con GitHub
 
-GitHub diventa una destinazione in più per il codice: una copia di sicurezza esterna o un secondo remote sempre allineato. Si sincronizzano solo branch e tag. LFS, issue, PR, release e Actions restano su ErvisioRepo.
+GitHub diventa una destinazione in più per il codice: una copia di sicurezza esterna o un secondo remote sempre allineato. La modalità bidirezionale allinea anche le release pubblicate associate ai tag sincronizzati; vedi [Sincronizzazione con GitHub](github-sync.it.md).
 
 **Connessione.** Il metodo consigliato è una GitHub App installata sull'organizzazione o sull'account GitHub: ha permessi fini (`contents: read/write`, `metadata`, `administration` solo se deve creare i repo), token brevi e webhook firmati. In alternativa si può usare un token fine-grained. Le credenziali sono cifrate in DB come i segreti delle Actions. Una connessione appartiene a un utente o a un'organizzazione di ErvisioRepo e si riusa su più repo.
 

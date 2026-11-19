@@ -8,6 +8,14 @@ a GitHub connection (an App installation or a fine-grained token):
 - **sync**: both directions, fast-forward only; a divergence keeps the GitHub
   commit on `sync-conflict/github/<branch>`.
 
+Enabled **sync** links also reconcile published releases and missing assets
+for tags that point to the same object on both servers. This runs on existing
+links at their usual sync interval and needs GitHub **Contents: read and write**.
+Repositories with different visibility are skipped. Drafts, deletions, and
+replacing an existing binary are not synchronized.
+For the same tag, newer release notes, title and prerelease status win when
+the timestamps establish which side changed last. Ambiguous edits are left alone.
+
 A repository can also be imported once from GitHub (git data, labels,
 milestones, issues, pull requests, releases and, with the **actions** kind,
 the Actions configuration and run history).

@@ -146,15 +146,21 @@ type Options struct {
 
 // Service is the GitHub sync service.
 type Service struct {
-	o      Options
-	q      *dbgen.Queries
-	seal   *sealer
-	tokens *tokens
-	hooks  atomic.Pointer[githooks.Server]
-	imps   atomic.Pointer[[]Importer]
-	repos  atomic.Value // Repos
-	jobs   atomic.Value // Enqueuer
-	after  atomic.Pointer[func(ctx context.Context, repoID uuid.UUID)]
+	o           Options
+	q           *dbgen.Queries
+	seal        *sealer
+	tokens      *tokens
+	hooks       atomic.Pointer[githooks.Server]
+	imps        atomic.Pointer[[]Importer]
+	repos       atomic.Value // Repos
+	jobs        atomic.Value // Enqueuer
+	after       atomic.Pointer[func(ctx context.Context, repoID uuid.UUID)]
+	releaseSync atomic.Pointer[func(context.Context, ImportContext) error]
+}
+
+// SetReleaseSync registers release reconciliation for bidirectional links.
+func (s *Service) SetReleaseSync(sync func(context.Context, ImportContext) error) {
+	s.releaseSync.Store(&sync)
 }
 
 // SetAfterRun sets a function called after every successful run of a

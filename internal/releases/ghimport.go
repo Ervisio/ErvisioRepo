@@ -32,6 +32,7 @@ type gitHubAsset struct {
 	Label       string             `json:"label"`
 	ContentType string             `json:"content_type"`
 	Size        int64              `json:"size"`
+	State       string             `json:"state"`
 	Uploader    *ghsync.GitHubUser `json:"uploader"`
 }
 
@@ -45,7 +46,9 @@ type gitHubRelease struct {
 	Prerelease  bool               `json:"prerelease"`
 	Author      *ghsync.GitHubUser `json:"author"`
 	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
 	PublishedAt *time.Time         `json:"published_at"`
+	UploadURL   string             `json:"upload_url"`
 	Assets      []gitHubAsset      `json:"assets"`
 }
 
@@ -127,6 +130,10 @@ func (s *Service) importRelease(ctx context.Context, ic ghsync.ImportContext, gr
 		}
 		return rel, false, nil
 	}
+	return s.createImportedRelease(ctx, ic, gr, false)
+}
+
+func (s *Service) createImportedRelease(ctx context.Context, ic ghsync.ImportContext, gr gitHubRelease, sync bool) (dbgen.Release, bool, error) {
 	tag := gr.TagName
 	if tag == "" || len(tag) > 255 || strings.ContainsAny(tag, "\x00 ~^:?*[\\") {
 		ic.Log.WarnContext(ctx, "github release skipped: unusable tag", "repo", ic.RepoID, "release", gr.ID)
@@ -136,9 +143,15 @@ func (s *Service) importRelease(ctx context.Context, ic ghsync.ImportContext, gr
 	if err != nil {
 		return dbgen.Release{}, false, err
 	}
+	if sync && sha == "" {
+		return dbgen.Release{}, false, nil
+	}
 	author, body, err := ic.Author(ctx, gr.Author, ptrStr(gr.Body), 125000)
 	if err != nil {
 		return dbgen.Release{}, false, err
+	}
+	if sync {
+		body = ghsync.Clip(ptrStr(gr.Body), 125000)
 	}
 	id, err := uuid.NewV7()
 	if err != nil {
@@ -148,9 +161,17 @@ func (s *Service) importRelease(ctx context.Context, ic ghsync.ImportContext, gr
 	if gr.Draft {
 		published = ghsync.TimePtr(nil)
 	}
-	updated := ghsync.Stamp(gr.CreatedAt)
+	createdAt := gr.CreatedAt
+	if sync && createdAt.IsZero() {
+		createdAt = published.Time
+	}
+	createdStamp := ghsync.Stamp(createdAt)
+	updated := createdStamp
 	if published.Valid {
 		updated = published
+	}
+	if sync && !gr.UpdatedAt.IsZero() && gr.UpdatedAt.After(updated.Time) {
+		updated = ghsync.Time(gr.UpdatedAt)
 	}
 	var rel dbgen.Release
 	created := false
@@ -159,7 +180,7 @@ func (s *Service) importRelease(ctx context.Context, ic ghsync.ImportContext, gr
 		rel, err = q.ImportRelease(ctx, dbgen.ImportReleaseParams{ID: id, RepoID: ic.RepoID, Tag: tag,
 			Name: ghsync.Clip(ptrStr(gr.Name), 255), Body: body, Draft: gr.Draft, Prerelease: gr.Prerelease,
 			Target: ghsync.Clip(gr.Target, 255), CommitSha: sha, AuthorID: author,
-			CreatedAt: ghsync.Stamp(gr.CreatedAt), UpdatedAt: updated, PublishedAt: published})
+			CreatedAt: createdStamp, UpdatedAt: updated, PublishedAt: published})
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
 			if rel, err = q.GetReleaseByTag(ctx, dbgen.GetReleaseByTagParams{RepoID: ic.RepoID, Tag: tag}); err != nil {
@@ -189,6 +210,10 @@ func (s *Service) importAsset(ctx context.Context, ic ghsync.ImportContext, owne
 	if _, ok, err := ic.Mapped(ctx, s.q, ghsync.MapAsset, ga.ID); err != nil || ok {
 		return false, err
 	}
+	return s.storeGitHubAsset(ctx, ic, ownerID, rel, ga)
+}
+
+func (s *Service) storeGitHubAsset(ctx context.Context, ic ghsync.ImportContext, ownerID uuid.UUID, rel dbgen.Release, ga gitHubAsset) (bool, error) {
 	skip := func(why string) (bool, error) {
 		ic.Log.WarnContext(ctx, "github release asset skipped", "repo", ic.RepoID, "tag", rel.Tag,
 			"asset", ga.Name, "reason", why)

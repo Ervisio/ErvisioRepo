@@ -363,6 +363,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 				imps = append(imps, actionsSvc.GitHubImporter())
 			}
 			journal.GitHub.SetImporters(imps...)
+			journal.GitHub.SetReleaseSync(relSvc.SyncGitHubReleases)
 			deps.GitHub = journal.GitHub
 		}
 	}

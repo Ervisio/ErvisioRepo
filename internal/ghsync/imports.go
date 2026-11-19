@@ -62,6 +62,8 @@ type ImportContext struct {
 	// BaseURL is the web URL of the GitHub server (https://github.com).
 	BaseURL string
 	Log     *slog.Logger
+	// SyncedTags contains tags that point to the same object on both sides.
+	SyncedTags map[string]bool
 
 	st *importState
 }

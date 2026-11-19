@@ -187,6 +187,9 @@ func (s *Service) runLink(ctx context.Context, repoID uuid.UUID, force bool) err
 			err = serr
 		}
 	}
+	if reconcile := s.releaseSync.Load(); err == nil && link.Mode == ModeSync && reconcile != nil {
+		err = s.syncReleases(ctx, link, states, *reconcile)
+	}
 	if states == nil {
 		states = prev
 	}
@@ -195,6 +198,47 @@ func (s *Service) runLink(ctx context.Context, repoID uuid.UUID, force bool) err
 	}
 	if fn := s.after.Load(); fn != nil && err == nil {
 		(*fn)(ctx, link.RepoID)
+	}
+	return nil
+}
+
+func (s *Service) syncReleases(ctx context.Context, link dbgen.GithubSyncLink, states map[string]refState, reconcile func(context.Context, ImportContext) error) error {
+	tags := make(map[string]bool)
+	for ref, state := range states {
+		if tag, ok := strings.CutPrefix(ref, tagsPrefix); ok && state.status == stateOK && state.local != "" && state.local == state.remote {
+			tags[tag] = true
+		}
+	}
+	if len(tags) == 0 {
+		return nil
+	}
+	local, err := s.q.GetRepo(ctx, link.RepoID)
+	if err != nil {
+		return fmt.Errorf("get local repository for release sync: %w", err)
+	}
+	r, err := s.open(ctx, link.ConnectionID, link.RemoteOwner, link.RemoteName)
+	if err != nil {
+		return err
+	}
+	repo, err := getRepo(ctx, r.api, link.RemoteOwner, link.RemoteName)
+	if err != nil {
+		return fmt.Errorf("get GitHub repository for release sync: %w", err)
+	}
+	visibility := repo.Visibility
+	if visibility == "" {
+		visibility = "public"
+		if repo.Private {
+			visibility = "private"
+		}
+	}
+	if repo.Archived || visibility != local.Repo.Visibility || visibility == "internal" {
+		return nil
+	}
+	if err := reconcile(ctx, ImportContext{
+		RepoID: link.RepoID, RemoteOwner: link.RemoteOwner, RemoteName: link.RemoteName,
+		API: r.api, BaseURL: r.base, Log: s.o.Log, SyncedTags: tags,
+	}); err != nil {
+		return fmt.Errorf("sync GitHub releases: %w", err)
 	}
 	return nil
 }
