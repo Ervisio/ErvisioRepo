@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.17.0] - 2026-11-19
+
 ### Added
 
 - Presence and file locks (per repository, off by default; repository admins turn it on in the settings or with `PUT /api/v1/repos/{owner}/{name}/presence/enabled`, recorded in the audit log as `repo.presence_changed`). Members with write access, and organization members on the organization's public repositories, share through ErvisioGit Desktop the branch, head, uncommitted tracked files (paths only) and unpushed commits of each client: `GET /presence`, `PUT`/`DELETE /presence/heartbeat` (live for 90 s, every 30 s), and a server-sent event stream `GET /presence/stream` (`snapshot`, `presence`, `gone`, `lock`, `unlock`, `disabled`, ping every 25 s) that works across instances through Postgres `LISTEN/NOTIFY`. Personal access tokens need `repo:read` to read and `repo:write` to change.
