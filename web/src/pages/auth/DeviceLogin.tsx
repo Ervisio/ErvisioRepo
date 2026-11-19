@@ -1,6 +1,8 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { request } from "../../api/http.ts";
+import { ervisioCodeDevicesKey } from "../../api/identity.ts";
 import type { components } from "../../api/schema";
 import { useT } from "../../i18n/useT.ts";
 import { Button, EmptyState, Input } from "../../ui/index.ts";
@@ -15,15 +17,18 @@ type Done = "approved" | "denied";
 const path = (code: string) => `/user/device/${encodeURIComponent(code.trim())}`;
 
 /** OAuth device flow approval (/login/device): enter the code shown by a CLI, review and authorize it. */
-export function DeviceLogin({ userCode }: { userCode?: string }) {
+export function DeviceLogin({ userCode, fromCode }: { userCode?: string; fromCode: boolean }) {
   const t = useT("auth");
   const problem = useProblemText();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [code, setCode] = useState(userCode ?? "");
   const [pending, setPending] = useState<DeviceAuthorization>();
   const [done, setDone] = useState<Done>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const looked = useRef(false);
+  const ervisioCode = pending?.clientId === "ErvisioCodeRemote";
 
   async function lookup(value: string) {
     setError(undefined);
@@ -51,6 +56,10 @@ export function DeviceLogin({ userCode }: { userCode?: string }) {
     try {
       await request("POST", path(pending.userCode), { approve });
       setDone(approve ? "approved" : "denied");
+      if (approve && ervisioCode) {
+        void qc.invalidateQueries({ queryKey: ervisioCodeDevicesKey });
+        void navigate({ to: "/code", replace: true });
+      }
     } catch (err) {
       setError(problem(err));
     } finally {
@@ -63,7 +72,9 @@ export function DeviceLogin({ userCode }: { userCode?: string }) {
     void lookup(code);
   }
 
-  const home = <Link to="/">{t("device.home")}</Link>;
+  const home = fromCode || ervisioCode
+    ? <Link to="/code">{t("device.codeHub")}</Link>
+    : <Link to="/">{t("device.home")}</Link>;
   if (done) {
     return (
       <AuthFrame title={t("device.title")} footer={home}>
@@ -78,7 +89,6 @@ export function DeviceLogin({ userCode }: { userCode?: string }) {
     );
   }
   if (pending) {
-    const ervisioCode = pending.clientId === "ErvisioCodeRemote";
     return (
       <AuthFrame title={t("device.authorizeTitle", { app: pending.appName })} subtitle={t("device.authorizeSub")} footer={home}>
         <div className="auth-form">

@@ -6,6 +6,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-11-20
+
+### Added
+
+- Signed-in ErvisioCode devices can report Remote Control presence. The account device list shows whether the device is online; status clears when stopped or after 45 seconds without a heartbeat. Presence does not expose the device or open a tunnel.
+
+- Reserved `code` as a user and organization name, regardless of capitalization, for the ErvisioCode web hub.
+- The signed-in `/code` hub links devices with the existing verification code flow, manages linked devices, and shows when a linked PC has ErvisioCode Remote enabled.
+
 ## [1.18.0] - 2026-11-19
 
 ### Added

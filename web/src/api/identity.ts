@@ -250,9 +250,16 @@ export const useRevokeSession = () =>
   useInvalidating<string, void>([["user", "sessions"]], (id) => request("DELETE", `/user/sessions/${enc(id)}`));
 export const useRevokeOtherSessions = () =>
   useInvalidating<void, void>([["user", "sessions"]], () => request("DELETE", "/user/sessions"));
-export const useErvisioCodeDevices = () => useList<S["ErvisioCodeDevice"]>("ervisiocode-devices", "/user/ervisiocode/devices");
+export const ervisioCodeDevicesKey = ["user", "ervisiocode-devices"];
+export const useErvisioCodeDevices = (live = false) =>
+  useQuery({
+    queryKey: ervisioCodeDevicesKey,
+    queryFn: () => request<S["ErvisioCodeDevice"][]>("GET", "/user/ervisiocode/devices"),
+    refetchInterval: live ? 5_000 : false,
+    refetchIntervalInBackground: false,
+  });
 export const useRevokeErvisioCodeDevice = () =>
-  useInvalidating<string, void>([["user", "ervisiocode-devices"]], (id) => request("DELETE", `/user/ervisiocode/devices/${enc(id)}`));
+  useInvalidating<string, void>([ervisioCodeDevicesKey], (id) => request("DELETE", `/user/ervisiocode/devices/${enc(id)}`));
 export const useEmails = () => useList<EmailAddress>("emails", "/user/emails");
 export const useAddEmail = () =>
   useInvalidating<string, EmailAddress>([["user", "emails"]], (email) => request("POST", "/user/emails", { email }));

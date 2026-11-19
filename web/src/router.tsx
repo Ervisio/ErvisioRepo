@@ -17,6 +17,7 @@ import { RunnerApprove } from "./pages/auth/RunnerApprove.tsx";
 import { OAuthAuthorize } from "./pages/auth/OAuthAuthorize.tsx";
 import { Catalog } from "./pages/Catalog.tsx";
 import { Home } from "./pages/Home.tsx";
+import { CodeHub } from "./pages/CodeHub.tsx";
 import { OrgPage } from "./pages/Org.tsx";
 import { InstallApp } from "./pages/apps/InstallApp.tsx";
 import { OrgInviteAccept } from "./pages/OrgInvite.tsx";
@@ -90,8 +91,14 @@ const twoFactorRoute = createRoute({ getParentRoute: () => bareRoute, path: "/lo
 const deviceRoute = createRoute({
   getParentRoute: () => bareRoute,
   path: "/login/device",
-  validateSearch: (s: Record<string, unknown>): { user_code?: string } => ({ user_code: str(s.user_code) }),
-  component: () => guard(<DeviceLogin userCode={deviceRoute.useSearch().user_code} />),
+  validateSearch: (s: Record<string, unknown>): { user_code?: string; from?: "code" } => ({
+    user_code: str(s.user_code),
+    from: s.from === "code" ? "code" : undefined,
+  }),
+  component: function DeviceRoute() {
+    const search = deviceRoute.useSearch();
+    return guard(<DeviceLogin userCode={search.user_code} fromCode={search.from === "code"} />);
+  },
 });
 // Runner enrolment approval (install.sh prints the code); same guard as /login/device.
 const runnerApproveRoute = createRoute({
@@ -121,6 +128,7 @@ const shellRoute = createRoute({
 });
 const guard = (node: ReactNode, admin = false) => <Protected admin={admin}>{node}</Protected>;
 const homeRoute = createRoute({ getParentRoute: () => shellRoute, path: "/", component: () => guard(<Home />) });
+const codeHubRoute = createRoute({ getParentRoute: () => shellRoute, path: "/code", component: () => guard(<CodeHub />) });
 // Admin pages share one frame (sub-nav) and one guard; the child routes keep their full /admin paths.
 const adminLayoutRoute = createRoute({ getParentRoute: () => shellRoute, id: "admin", component: () => guard(<AdminFrame />, true) });
 const adminRoute = createRoute({ getParentRoute: () => adminLayoutRoute, path: "/admin", component: AdminOverview });
@@ -480,7 +488,7 @@ const catalogRoute = createRoute({ getParentRoute: () => shellRoute, path: "/_ui
 export const router = createRouter({
   routeTree: rootRoute.addChildren([
     bareRoute.addChildren([loginRoute, twoFactorRoute, deviceRoute, runnerApproveRoute, oauthAuthorizeRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
-    shellRoute.addChildren([homeRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, installAppRoute, reposRoute, exploreRoute, profileRoute,
+    shellRoute.addChildren([homeRoute, codeHubRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, installAppRoute, reposRoute, exploreRoute, profileRoute,
       repoRoute,
       issuesRoute,
       issueNewRoute,

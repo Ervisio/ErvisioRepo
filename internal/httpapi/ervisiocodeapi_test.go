@@ -22,6 +22,7 @@ func TestErvisioCodeDeviceHTTP(t *testing.T) {
 	client := newBrowser(t, h, "198.51.100.20")
 	const accountPath = "/api/v1/user/ervisiocode"
 	const devicesPath = accountPath + "/devices"
+	const remotePath = accountPath + "/remote"
 
 	start := func(scope string) *httptest.ResponseRecorder {
 		return client.do(http.MethodPost, "/login/device/code", map[string]string{
@@ -81,6 +82,10 @@ func TestErvisioCodeDeviceHTTP(t *testing.T) {
 	pat, _ := createToken(t, admin, "ordinary", auth.ScopeReadUser)
 	wantHTTPStatus(t, client.do(http.MethodGet, accountPath, nil, bearer(pat)), http.StatusForbidden)
 	wantHTTPStatus(t, client.do(http.MethodGet, devicesPath, nil, bearer(pat)), http.StatusForbidden)
+	online := map[string]bool{"active": true}
+	wantHTTPStatus(t, admin.do(http.MethodPut, remotePath, online), http.StatusUnauthorized)
+	wantHTTPStatus(t, client.prime().do(http.MethodPut, remotePath, online), http.StatusUnauthorized)
+	wantHTTPStatus(t, client.do(http.MethodPut, remotePath, online, bearer(pat)), http.StatusForbidden)
 
 	first, second := enroll(true), enroll(false)
 	identity := func(token string) v1gen.ErvisioCodeAccount {
@@ -116,6 +121,33 @@ func TestErvisioCodeDeviceHTTP(t *testing.T) {
 	wantHTTPStatus(t, client.do(http.MethodDelete, devicesPath+"/"+b.Device.Id.String(), nil, bearer(first)), http.StatusForbidden)
 	wantHTTPStatus(t, admin.do(http.MethodDelete, "/api/v1/user/tokens/"+b.Device.Id.String(), nil), http.StatusNotFound)
 
+	for _, invalid := range []any{
+		nil, json.RawMessage(`null`), json.RawMessage(`{}`),
+		json.RawMessage(`{"active":null}`), json.RawMessage(`{"active":"true"}`),
+		map[string]any{"active": true, "deviceId": b.Device.Id},
+	} {
+		wantHTTPStatus(t, client.do(http.MethodPut, remotePath, invalid, bearer(first)), http.StatusBadRequest)
+	}
+	checkPresence := func(want bool) {
+		t.Helper()
+		rec := admin.do(http.MethodGet, devicesPath, nil)
+		wantHTTPStatus(t, rec, http.StatusOK)
+		if rec.Header().Get("Cache-Control") != "no-store" {
+			t.Fatal("presence must not be cached")
+		}
+		var listed []v1gen.ErvisioCodeDevice
+		if err := json.Unmarshal(rec.Body.Bytes(), &listed); err != nil || len(listed) != 2 {
+			t.Fatal("missing device registrations")
+		}
+		if listed[0].Remote != nil || listed[1].Remote == nil || listed[1].Remote.Online != want {
+			t.Fatalf("expected only the reporting device to have presence, online=%t", want)
+		}
+	}
+	wantHTTPStatus(t, client.do(http.MethodPut, remotePath, online, bearer(first)), http.StatusNoContent)
+	checkPresence(true)
+	wantHTTPStatus(t, client.do(http.MethodPut, remotePath, map[string]bool{"active": false}, bearer(first)), http.StatusNoContent)
+	checkPresence(false)
+
 	invite := admin.do(http.MethodPost, "/api/v1/admin/invites", map[string]string{})
 	wantHTTPStatus(t, invite, http.StatusCreated)
 	var inv struct{ Token string }
@@ -138,6 +170,7 @@ func TestErvisioCodeDeviceHTTP(t *testing.T) {
 	wantHTTPStatus(t, client.do(http.MethodGet, accountPath, nil, bearer(second)), http.StatusUnauthorized)
 	wantHTTPStatus(t, client.do(http.MethodDelete, devicesPath+"/"+a.Device.Id.String(), nil, bearer(first)), http.StatusNoContent)
 	wantHTTPStatus(t, client.do(http.MethodGet, accountPath, nil, bearer(first)), http.StatusUnauthorized)
+	wantHTTPStatus(t, client.do(http.MethodPut, remotePath, online, bearer(first)), http.StatusUnauthorized)
 }
 
 func acceptOAuthJSON(r *http.Request) {

@@ -1259,6 +1259,8 @@ type Token struct {
 	CreatedAt           pgtype.Timestamptz
 	GrantID             uuid.NullUUID
 	IsErvisiocodeDevice bool
+	RemoteLastSeenAt    pgtype.Timestamptz
+	RemoteActive        bool
 }
 
 type UsageCounter struct {

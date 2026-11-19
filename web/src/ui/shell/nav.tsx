@@ -7,7 +7,7 @@ import type { IconName } from "../Icon.tsx";
 
 export type Section = "code" | "pr" | "issue" | "act" | "pkg";
 
-type GlobalTo = "/" | "/explore" | "/repos" | "/orgs" | "/notifications" | "/settings" | "/login";
+type GlobalTo = "/" | "/code" | "/explore" | "/repos" | "/orgs" | "/notifications" | "/settings" | "/login";
 type AdminTo = "/admin" | "/admin/users" | "/admin/settings" | "/admin/storage" | "/admin/runners" | "/admin/audit";
 
 export type NavItem = { to: GlobalTo | AdminTo; icon: IconName; labelKey: string; section?: Section };
@@ -15,6 +15,7 @@ export type NavItem = { to: GlobalTo | AdminTo; icon: IconName; labelKey: string
 export const homeItem: NavItem = { to: "/", icon: "home", labelKey: "nav.home" };
 export const exploreItem: NavItem = { to: "/explore", icon: "search", labelKey: "nav.explore", section: "code" };
 export const reposItem: NavItem = { to: "/repos", icon: "book", labelKey: "nav.repos", section: "code" };
+const codeHubItem: NavItem = { to: "/code", icon: "code", labelKey: "nav.ervisioCode", section: "code" };
 export const orgsItem: NavItem = { to: "/orgs", icon: "users", labelKey: "nav.orgs", section: "pr" };
 export const inboxItem: NavItem = { to: "/notifications", icon: "bell", labelKey: "nav.notifications", section: "issue" };
 export const accountItem: NavItem = { to: "/settings", icon: "gear", labelKey: "nav.account", section: "issue" };
@@ -36,7 +37,7 @@ export const adminItems: readonly NavItem[] = [
 export function useNavItems(): readonly NavItem[] {
   const user = useSession().data;
   if (!user) return [homeItem, exploreItem, signInItem];
-  return [homeItem, reposItem, exploreItem, orgsItem, inboxItem, ...(user.role === "admin" ? [adminItem] : []), accountItem];
+  return [homeItem, reposItem, codeHubItem, exploreItem, orgsItem, inboxItem, ...(user.role === "admin" ? [adminItem] : []), accountItem];
 }
 
 /* Repository context. `sub` is the first path segment after /owner/name that makes the item active. */
@@ -103,6 +104,7 @@ const globalPages: [prefix: string, labelKey: string][] = [
 /** Label key of a global page for the Console breadcrumb; undefined when the page has none (profiles, catalog). */
 export function globalPageKey(pathname: string): string | undefined {
   if (pathname === "/") return "nav.dashboard";
+  if (pathname === "/code" || pathname === "/code/") return codeHubItem.labelKey;
   return globalPages.find(([p]) => pathname === p || pathname.startsWith(`${p}/`))?.[1];
 }
 
@@ -160,7 +162,7 @@ export function NavLink({ item, label, className, iconOnly, children }: {
       aria-label={iconOnly ? label : undefined}
       title={iconOnly ? label : undefined}
       activeProps={{ "aria-current": "page" }}
-      activeOptions={{ exact: item.to === "/" || item === adminItems[0] }}
+      activeOptions={{ exact: item.to === "/" || item.to === "/code" || item === adminItems[0] }}
     >
       {children}
     </Link>

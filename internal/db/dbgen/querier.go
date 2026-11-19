@@ -678,6 +678,7 @@ type Querier interface {
 	ListDirtyRepos(ctx context.Context, arg ListDirtyReposParams) ([]uuid.UUID, error)
 	// Enabled links whose scheduled run is due and not held by a backoff.
 	ListDueGitHubSyncLinks(ctx context.Context, limit int32) ([]GithubSyncLink, error)
+	// Compare against the same database clock used to record heartbeats.
 	ListErvisioCodeDevices(ctx context.Context, userID uuid.UUID) ([]ListErvisioCodeDevicesRow, error)
 	ListEvictionCandidates(ctx context.Context, arg ListEvictionCandidatesParams) ([]ListEvictionCandidatesRow, error)
 	// Expired artifacts and uploads not finalized before stale_before.
@@ -1050,6 +1051,7 @@ type Querier interface {
 	SetActionsScheduleNext(ctx context.Context, arg SetActionsScheduleNextParams) error
 	SetDeviceCodePoll(ctx context.Context, arg SetDeviceCodePollParams) error
 	SetEmailNotifications(ctx context.Context, arg SetEmailNotificationsParams) error
+	SetErvisioCodeRemotePresence(ctx context.Context, arg SetErvisioCodeRemotePresenceParams) (int64, error)
 	SetForkNetworkMemberPooled(ctx context.Context, arg SetForkNetworkMemberPooledParams) error
 	SetGitHubImportInclude(ctx context.Context, arg SetGitHubImportIncludeParams) error
 	SetGitHubImportStatus(ctx context.Context, arg SetGitHubImportStatusParams) error

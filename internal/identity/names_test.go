@@ -20,7 +20,7 @@ func TestValidateName(t *testing.T) {
 			t.Errorf("%q: %v", n, err)
 		}
 	}
-	for _, n := range []string{"admin", "API", "Settings", "login", "verify-email"} {
+	for _, n := range []string{"admin", "API", "code", "CODE", "CoDe", "Settings", "login", "verify-email"} {
 		if err := ValidateName(n); !errors.Is(err, ErrReservedName) {
 			t.Errorf("%q: %v", n, err)
 		}

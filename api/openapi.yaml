@@ -1916,13 +1916,17 @@ paths:
       operationId: listErvisioCodeDevices
       tags: [users]
       summary: List active ErvisioCode device credentials
-      description: Returns only the caller's unexpired device registrations, newest first. No secrets are returned.
+      description: Returns only the caller's unexpired device registrations, newest first. Remote presence is advisory. No secrets are returned.
       security:
         - session: []
         - token: [ervisiocode:device]
       responses:
         "200":
           description: Active devices
+          headers:
+            Cache-Control:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -1954,6 +1958,35 @@ paths:
         "403":
           $ref: "#/components/responses/Problem"
         "404":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/remote:
+    put:
+      operationId: setErvisioCodeRemotePresence
+      tags: [users]
+      summary: Update the current ErvisioCode device's remote presence
+      description: |
+        Only the device credential can report its own presence. Send `active: true`
+        periodically while Remote Control is running. Presence expires 45 seconds
+        after the last heartbeat, or immediately on `active: false`. This reports
+        status only and does not expose or connect to the device.
+      security:
+        - token: [ervisiocode:device]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErvisioCodeRemotePresenceUpdate"
+      responses:
+        "204":
+          description: Presence updated
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
@@ -12689,6 +12722,22 @@ components:
         lastUsedAt:
           type: string
           format: date-time
+        remote:
+          $ref: "#/components/schemas/ErvisioCodeRemotePresence"
+    ErvisioCodeRemotePresence:
+      type: object
+      required: [online]
+      properties:
+        online:
+          type: boolean
+    ErvisioCodeRemotePresenceUpdate:
+      type: object
+      x-go-type: remotePresenceUpdate
+      additionalProperties: false
+      required: [active]
+      properties:
+        active:
+          type: boolean
     DeviceAuthorization:
       type: object
       required: [userCode, clientId, appName, requestedScopes, scopes, createdAt, expiresAt]

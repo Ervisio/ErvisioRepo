@@ -4271,8 +4271,17 @@ type ErvisioCodeDevice struct {
 	LastUsedAt *time.Time         `json:"lastUsedAt,omitempty"`
 
 	// Name Friendly label
-	Name string `json:"name"`
+	Name   string                     `json:"name"`
+	Remote *ErvisioCodeRemotePresence `json:"remote,omitempty"`
 }
+
+// ErvisioCodeRemotePresence defines model for ErvisioCodeRemotePresence.
+type ErvisioCodeRemotePresence struct {
+	Online bool `json:"online"`
+}
+
+// ErvisioCodeRemotePresenceUpdate defines model for ErvisioCodeRemotePresenceUpdate.
+type ErvisioCodeRemotePresenceUpdate = remotePresenceUpdate
 
 // ExploreRepoList defines model for ExploreRepoList.
 type ExploreRepoList struct {
@@ -8209,6 +8218,9 @@ type DecideDeviceAuthorizationJSONRequestBody = DeviceAuthorizationDecision
 // AddEmailJSONRequestBody defines body for AddEmail for application/json ContentType.
 type AddEmailJSONRequestBody = EmailRequest
 
+// SetErvisioCodeRemotePresenceJSONRequestBody defines body for SetErvisioCodeRemotePresence for application/json ContentType.
+type SetErvisioCodeRemotePresenceJSONRequestBody = ErvisioCodeRemotePresenceUpdate
+
 // AddGpgKeyJSONRequestBody defines body for AddGpgKey for application/json ContentType.
 type AddGpgKeyJSONRequestBody = GpgKeyCreate
 
@@ -9294,6 +9306,9 @@ type ServerInterface interface {
 	// RevokeErvisioCodeDevice Revoke an ErvisioCode device credential
 	// (DELETE /user/ervisiocode/devices/{id})
 	RevokeErvisioCodeDevice(w http.ResponseWriter, r *http.Request, id CredentialID)
+	// SetErvisioCodeRemotePresence Update the current ErvisioCode device's remote presence
+	// (PUT /user/ervisiocode/remote)
+	SetErvisioCodeRemotePresence(w http.ResponseWriter, r *http.Request)
 	// ListUserIssues Issues and pull requests of the signed-in user across the readable repositories
 	// (GET /user/issues)
 	ListUserIssues(w http.ResponseWriter, r *http.Request, params ListUserIssuesParams)
@@ -11502,6 +11517,12 @@ func (_ Unimplemented) ListErvisioCodeDevices(w http.ResponseWriter, r *http.Req
 // RevokeErvisioCodeDevice Revoke an ErvisioCode device credential
 // (DELETE /user/ervisiocode/devices/{id})
 func (_ Unimplemented) RevokeErvisioCodeDevice(w http.ResponseWriter, r *http.Request, id CredentialID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetErvisioCodeRemotePresence Update the current ErvisioCode device's remote presence
+// (PUT /user/ervisiocode/remote)
+func (_ Unimplemented) SetErvisioCodeRemotePresence(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -27878,6 +27899,26 @@ func (siw *ServerInterfaceWrapper) RevokeErvisioCodeDevice(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// SetErvisioCodeRemotePresence operation middleware
+func (siw *ServerInterfaceWrapper) SetErvisioCodeRemotePresence(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"ervisiocode:device"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetErvisioCodeRemotePresence(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListUserIssues operation middleware
 func (siw *ServerInterfaceWrapper) ListUserIssues(w http.ResponseWriter, r *http.Request) {
 
@@ -29778,6 +29819,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/user/ervisiocode/devices/{id}", wrapper.RevokeErvisioCodeDevice)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/user/ervisiocode/remote", wrapper.SetErvisioCodeRemotePresence)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/user/device/{userCode}", wrapper.GetDeviceAuthorization)
@@ -60610,15 +60654,25 @@ type ListErvisioCodeDevicesResponseObject interface {
 	VisitListErvisioCodeDevicesResponse(w http.ResponseWriter) error
 }
 
-type ListErvisioCodeDevices200JSONResponse []ErvisioCodeDevice
+type ListErvisioCodeDevices200ResponseHeaders struct {
+	CacheControl *string
+}
+
+type ListErvisioCodeDevices200JSONResponse struct {
+	Body    []ErvisioCodeDevice
+	Headers ListErvisioCodeDevices200ResponseHeaders
+}
 
 func (response ListErvisioCodeDevices200JSONResponse) VisitListErvisioCodeDevicesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.CacheControl != nil {
+		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
+	}
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
@@ -60737,6 +60791,83 @@ type RevokeErvisioCodeDevicedefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response RevokeErvisioCodeDevicedefaultApplicationProblemPlusJSONResponse) VisitRevokeErvisioCodeDeviceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetErvisioCodeRemotePresenceRequestObject struct {
+	Body *SetErvisioCodeRemotePresenceJSONRequestBody
+}
+
+type SetErvisioCodeRemotePresenceResponseObject interface {
+	VisitSetErvisioCodeRemotePresenceResponse(w http.ResponseWriter) error
+}
+
+type SetErvisioCodeRemotePresence204Response struct {
+}
+
+func (response SetErvisioCodeRemotePresence204Response) VisitSetErvisioCodeRemotePresenceResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SetErvisioCodeRemotePresence400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetErvisioCodeRemotePresence400ApplicationProblemPlusJSONResponse) VisitSetErvisioCodeRemotePresenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetErvisioCodeRemotePresence401ApplicationProblemPlusJSONResponse Problem
+
+func (response SetErvisioCodeRemotePresence401ApplicationProblemPlusJSONResponse) VisitSetErvisioCodeRemotePresenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetErvisioCodeRemotePresence403ApplicationProblemPlusJSONResponse Problem
+
+func (response SetErvisioCodeRemotePresence403ApplicationProblemPlusJSONResponse) VisitSetErvisioCodeRemotePresenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetErvisioCodeRemotePresencedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetErvisioCodeRemotePresencedefaultApplicationProblemPlusJSONResponse) VisitSetErvisioCodeRemotePresenceResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -65223,6 +65354,9 @@ type StrictServerInterface interface {
 	// RevokeErvisioCodeDevice Revoke an ErvisioCode device credential
 	// (DELETE /user/ervisiocode/devices/{id})
 	RevokeErvisioCodeDevice(ctx context.Context, request RevokeErvisioCodeDeviceRequestObject) (RevokeErvisioCodeDeviceResponseObject, error)
+	// SetErvisioCodeRemotePresence Update the current ErvisioCode device's remote presence
+	// (PUT /user/ervisiocode/remote)
+	SetErvisioCodeRemotePresence(ctx context.Context, request SetErvisioCodeRemotePresenceRequestObject) (SetErvisioCodeRemotePresenceResponseObject, error)
 	// ListUserIssues Issues and pull requests of the signed-in user across the readable repositories
 	// (GET /user/issues)
 	ListUserIssues(ctx context.Context, request ListUserIssuesRequestObject) (ListUserIssuesResponseObject, error)
@@ -75360,6 +75494,37 @@ func (sh *strictHandler) RevokeErvisioCodeDevice(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RevokeErvisioCodeDeviceResponseObject); ok {
 		if err := validResponse.VisitRevokeErvisioCodeDeviceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetErvisioCodeRemotePresence operation middleware
+func (sh *strictHandler) SetErvisioCodeRemotePresence(w http.ResponseWriter, r *http.Request) {
+	var request SetErvisioCodeRemotePresenceRequestObject
+
+	var body SetErvisioCodeRemotePresenceJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetErvisioCodeRemotePresence(ctx, request.(SetErvisioCodeRemotePresenceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetErvisioCodeRemotePresence")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetErvisioCodeRemotePresenceResponseObject); ok {
+		if err := validResponse.VisitSetErvisioCodeRemotePresenceResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

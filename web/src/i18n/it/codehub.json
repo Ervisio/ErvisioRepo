@@ -1,0 +1,17 @@
+{
+  "title": "ErvisioCode",
+  "subtitle": "Gestisci i dispositivi Remote dal browser, anche quando il computer è spento.",
+  "enterCode": "Inserisci codice dispositivo",
+  "devices.title": "Dispositivi autorizzati",
+  "devices.description": "Solo i dispositivi collegati a questo account ErvisioRepo. Lo stato di Remote si aggiorna mentre la scheda è visibile.",
+  "devices.empty": "Nessun dispositivo. Usa /account sul computer per ottenere un codice dispositivo.",
+  "setup.title": "Configura Remote",
+  "setup.account": "Esegui questo comando in ErvisioCode sul computer e scegli Accedi. Usa lo stesso account ErvisioRepo per inserire e approvare il codice.",
+  "setup.remote": "Apri una sessione sul computer ed esegui questo comando per avviare Remote. Lascia ErvisioCode in esecuzione per restare online.",
+  "setup.limits": "Qui puoi vedere lo stato dei dispositivi, ma non eseguire codice o sincronizzare la cronologia delle sessioni.",
+  "legacy.title": "QR o link di abbinamento",
+  "legacy.description": "Per usare Remote senza collegare un account, scansiona il codice QR o apri il link di abbinamento mostrato in ErvisioCode. Queste connessioni non compaiono qui.",
+  "status.online": "Remote online",
+  "status.offline": "Remote offline",
+  "status.unknown": "Stato di Remote non disponibile"
+}

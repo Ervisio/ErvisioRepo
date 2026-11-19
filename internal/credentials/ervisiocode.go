@@ -14,11 +14,12 @@ import (
 )
 
 type ErvisioCodeDevice struct {
-	ID         uuid.UUID
-	Name       string
-	CreatedAt  time.Time
-	ExpiresAt  time.Time
-	LastUsedAt *time.Time
+	ID           uuid.UUID
+	Name         string
+	CreatedAt    time.Time
+	ExpiresAt    time.Time
+	LastUsedAt   *time.Time
+	RemoteOnline *bool
 }
 
 func (s *Service) GetErvisioCodeDevice(ctx context.Context, userID, id uuid.UUID) (ErvisioCodeDevice, error) {
@@ -40,10 +41,27 @@ func (s *Service) ListErvisioCodeDevices(ctx context.Context, userID uuid.UUID) 
 	}
 	out := make([]ErvisioCodeDevice, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, ErvisioCodeDevice{ID: r.ID, Name: r.Name, CreatedAt: r.CreatedAt.Time, ExpiresAt: r.ExpiresAt.Time,
-			LastUsedAt: ts(r.LastUsedAt)})
+		device := ErvisioCodeDevice{ID: r.ID, Name: r.Name, CreatedAt: r.CreatedAt.Time, ExpiresAt: r.ExpiresAt.Time,
+			LastUsedAt: ts(r.LastUsedAt)}
+		if r.RemoteLastSeenAt.Valid {
+			device.RemoteOnline = &r.RemoteOnline
+		}
+		out = append(out, device)
 	}
 	return out, nil
+}
+
+func (s *Service) SetErvisioCodeRemotePresence(ctx context.Context, userID, id uuid.UUID, active bool) error {
+	n, err := s.q.SetErvisioCodeRemotePresence(ctx, dbgen.SetErvisioCodeRemotePresenceParams{
+		UserID: userID, TokenID: id, Active: active,
+	})
+	if err != nil {
+		return fmt.Errorf("set ErvisioCode remote presence: %w", err)
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (s *Service) RevokeErvisioCodeDevice(ctx context.Context, userID, id uuid.UUID, ip string) error {

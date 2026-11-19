@@ -13,6 +13,7 @@
   "nav.account": "Account",
   "nav.signIn": "Accedi",
   "nav.repos": "Repository",
+  "nav.ervisioCode": "ErvisioCode",
   "nav.notifications": "Notifiche",
   "search.button": "Cerca",
   "search.open": "Cerca repository",

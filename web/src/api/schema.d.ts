@@ -1320,7 +1320,7 @@ export interface paths {
         };
         /**
          * List active ErvisioCode device credentials
-         * @description Returns only the caller's unexpired device registrations, newest first. No secrets are returned.
+         * @description Returns only the caller's unexpired device registrations, newest first. Remote presence is advisory. No secrets are returned.
          */
         get: operations["listErvisioCodeDevices"];
         put?: never;
@@ -1346,6 +1346,29 @@ export interface paths {
          * @description An account session can revoke any device it owns. A device credential can revoke only itself.
          */
         delete: operations["revokeErvisioCodeDevice"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/remote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update the current ErvisioCode device's remote presence
+         * @description Only the device credential can report its own presence. Send `active: true`
+         *     periodically while Remote Control is running. Presence expires 45 seconds
+         *     after the last heartbeat, or immediately on `active: false`. This reports
+         *     status only and does not expose or connect to the device.
+         */
+        put: operations["setErvisioCodeRemotePresence"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -7587,6 +7610,13 @@ export interface components {
             expiresAt: string;
             /** Format: date-time */
             lastUsedAt?: string;
+            remote?: components["schemas"]["ErvisioCodeRemotePresence"];
+        };
+        ErvisioCodeRemotePresence: {
+            online: boolean;
+        };
+        ErvisioCodeRemotePresenceUpdate: {
+            active: boolean;
         };
         DeviceAuthorization: {
             /** @description Normalized code (XXXX-XXXX) */
@@ -12327,6 +12357,7 @@ export interface operations {
             /** @description Active devices */
             200: {
                 headers: {
+                    "Cache-Control"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -12359,6 +12390,32 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    setErvisioCodeRemotePresence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErvisioCodeRemotePresenceUpdate"];
+            };
+        };
+        responses: {
+            /** @description Presence updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

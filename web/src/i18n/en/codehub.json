@@ -1,0 +1,17 @@
+{
+  "title": "ErvisioCode",
+  "subtitle": "Manage your Remote devices from any browser, even when your computer is off.",
+  "enterCode": "Enter device code",
+  "devices.title": "Authorized devices",
+  "devices.description": "Only devices linked to this ErvisioRepo account. Remote status refreshes while this tab is visible.",
+  "devices.empty": "No devices yet. Use /account on your computer to get a device code.",
+  "setup.title": "Set up Remote",
+  "setup.account": "Run this in ErvisioCode on your computer and choose Sign in. Use the same ErvisioRepo account to enter and approve the code.",
+  "setup.remote": "Open a session on your computer and run this command to start Remote. Keep ErvisioCode running to stay online.",
+  "setup.limits": "This page shows device status. It doesn’t run code or sync session history.",
+  "legacy.title": "QR or pairing link",
+  "legacy.description": "To use Remote without linking an account, scan the QR code or open the pairing link shown in ErvisioCode. Those connections won’t appear here.",
+  "status.online": "Remote online",
+  "status.offline": "Remote offline",
+  "status.unknown": "No Remote status"
+}

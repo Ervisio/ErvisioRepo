@@ -38,7 +38,10 @@ DELETE FROM tokens WHERE user_id = $1 AND id = sqlc.arg(token_id)
 DELETE FROM tokens WHERE expires_at < sqlc.arg(before);
 
 -- name: ListErvisioCodeDevices :many
-SELECT id, name, expires_at, last_used_at, created_at FROM tokens
+-- Compare against the same database clock used to record heartbeats.
+SELECT id, name, expires_at, last_used_at, created_at, remote_last_seen_at,
+       (remote_active AND COALESCE(remote_last_seen_at > statement_timestamp() - interval '45 seconds', false))::boolean AS remote_online
+FROM tokens
 WHERE user_id = $1 AND is_ervisiocode_device AND expires_at > now()
 ORDER BY created_at DESC, id DESC;
 
@@ -48,3 +51,11 @@ WHERE user_id = $1 AND id = sqlc.arg(token_id) AND is_ervisiocode_device AND exp
 
 -- name: DeleteErvisioCodeDevice :execrows
 DELETE FROM tokens WHERE user_id = $1 AND id = sqlc.arg(token_id) AND is_ervisiocode_device;
+
+-- name: SetErvisioCodeRemotePresence :execrows
+UPDATE tokens
+SET remote_active = sqlc.arg(active)::boolean,
+    remote_last_seen_at = CASE WHEN sqlc.arg(active)::boolean THEN clock_timestamp() ELSE remote_last_seen_at END
+WHERE tokens.user_id = $1 AND tokens.id = sqlc.arg(token_id)
+  AND tokens.is_ervisiocode_device AND tokens.expires_at > clock_timestamp()
+  AND EXISTS (SELECT 1 FROM users WHERE users.id = tokens.user_id AND users.suspended_at IS NULL);

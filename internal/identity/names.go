@@ -29,7 +29,7 @@ var reserved = map[string]struct{}{}
 
 func init() {
 	for _, n := range strings.Fields(`
-		about abuse account accounts admin administrator admins api app apps assets auth avatars blog
+		about abuse account accounts admin administrator admins api app apps assets auth avatars blog code
 		docs explore favicon git github healthz help home info issues join login logout
 		mail marketplace me metrics new noreply no-reply notifications null org orgs
 		organization organizations owner packages postmaster privacy pulls raw readyz register

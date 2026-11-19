@@ -177,19 +177,24 @@ func (q *Queries) InsertToken(ctx context.Context, arg InsertTokenParams) error 
 }
 
 const listErvisioCodeDevices = `-- name: ListErvisioCodeDevices :many
-SELECT id, name, expires_at, last_used_at, created_at FROM tokens
+SELECT id, name, expires_at, last_used_at, created_at, remote_last_seen_at,
+       (remote_active AND COALESCE(remote_last_seen_at > statement_timestamp() - interval '45 seconds', false))::boolean AS remote_online
+FROM tokens
 WHERE user_id = $1 AND is_ervisiocode_device AND expires_at > now()
 ORDER BY created_at DESC, id DESC
 `
 
 type ListErvisioCodeDevicesRow struct {
-	ID         uuid.UUID
-	Name       string
-	ExpiresAt  pgtype.Timestamptz
-	LastUsedAt pgtype.Timestamptz
-	CreatedAt  pgtype.Timestamptz
+	ID               uuid.UUID
+	Name             string
+	ExpiresAt        pgtype.Timestamptz
+	LastUsedAt       pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+	RemoteLastSeenAt pgtype.Timestamptz
+	RemoteOnline     bool
 }
 
+// Compare against the same database clock used to record heartbeats.
 func (q *Queries) ListErvisioCodeDevices(ctx context.Context, userID uuid.UUID) ([]ListErvisioCodeDevicesRow, error) {
 	rows, err := q.db.Query(ctx, listErvisioCodeDevices, userID)
 	if err != nil {
@@ -205,6 +210,8 @@ func (q *Queries) ListErvisioCodeDevices(ctx context.Context, userID uuid.UUID) 
 			&i.ExpiresAt,
 			&i.LastUsedAt,
 			&i.CreatedAt,
+			&i.RemoteLastSeenAt,
+			&i.RemoteOnline,
 		); err != nil {
 			return nil, err
 		}
@@ -257,6 +264,29 @@ func (q *Queries) ListUserTokens(ctx context.Context, userID uuid.UUID) ([]ListU
 		return nil, err
 	}
 	return items, nil
+}
+
+const setErvisioCodeRemotePresence = `-- name: SetErvisioCodeRemotePresence :execrows
+UPDATE tokens
+SET remote_active = $2::boolean,
+    remote_last_seen_at = CASE WHEN $2::boolean THEN clock_timestamp() ELSE remote_last_seen_at END
+WHERE tokens.user_id = $1 AND tokens.id = $3
+  AND tokens.is_ervisiocode_device AND tokens.expires_at > clock_timestamp()
+  AND EXISTS (SELECT 1 FROM users WHERE users.id = tokens.user_id AND users.suspended_at IS NULL)
+`
+
+type SetErvisioCodeRemotePresenceParams struct {
+	UserID  uuid.UUID
+	Active  bool
+	TokenID uuid.UUID
+}
+
+func (q *Queries) SetErvisioCodeRemotePresence(ctx context.Context, arg SetErvisioCodeRemotePresenceParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setErvisioCodeRemotePresence, arg.UserID, arg.Active, arg.TokenID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const tokenNameTaken = `-- name: TokenNameTaken :one

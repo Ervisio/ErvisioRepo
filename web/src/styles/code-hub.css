@@ -1,0 +1,25 @@
+.code-hub {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 280px);
+  align-items: start;
+  gap: 28px;
+}
+.code-hub-header { padding: 10px 14px 12px; }
+.code-hub h2, .code-hub h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.code-hub p { margin: 4px 0 0; color: var(--ink2); font-size: 13px; line-height: 1.5; }
+.code-hub .acc-pad { margin: 0; }
+.code-hub-guide { padding: 12px 0; }
+.code-hub-guide h2 { display: flex; align-items: center; gap: 8px; }
+.code-hub-guide ol { display: grid; gap: 14px; margin: 14px 0; padding-inline-start: 24px; }
+.code-hub-guide li::marker { color: var(--ink2); font-variant-numeric: tabular-nums; }
+.code-hub-guide code {
+  padding: 2px 6px;
+  border-radius: var(--r-ctl);
+  background: var(--surface);
+  font: 500 12px var(--mono);
+}
+.code-hub-legacy { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+@media (max-width: 760px) {
+  .code-hub { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .page .code-hub-link, .code-hub .st-item .ui-btn { min-height: 44px; }
+}
