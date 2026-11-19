@@ -1,5 +1,5 @@
 /**
- * The ErvisioRepo page in Ervisio: a header with the server's state, a grouped menu (chips on narrow screens), one
+ * The ErvisioRepo page in Ervisio Console: a header with the server's state, a grouped menu (chips on narrow screens), one
  * section at a time and, while settings wait for a restart, a bar to apply or undo them. With the server installed
  * but stopped the page stays, with the reason and the way to start it again; with nothing installed, the install
  * steps (Connect.tsx).

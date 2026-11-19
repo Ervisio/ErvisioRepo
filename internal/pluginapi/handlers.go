@@ -290,7 +290,7 @@ func (s *Server) mailTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	msg := mail.Message{To: body.To, Subject: "ErvisioRepo test message",
-		Body: "This is a test message sent from the Ervisio plugin to check the mail settings of " +
+		Body: "This is a test message sent from the Ervisio Console plugin to check the mail settings of " +
 			cfg.Server.PublicURL + ".\n"}
 	if err := sender.Send(r.Context(), msg); err != nil {
 		s.log.Warn("plugin API: test mail failed", "err", err)

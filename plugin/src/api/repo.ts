@@ -6,7 +6,7 @@
  * carries per-field `errors` ({path, msg}, path "" for file-level errors).
  *
  * The socket is 0660 and belongs to the server's user: the "repo" API is declared `admin`, so the first call of a
- * session from a non-root account brings up Ervisio's unlock dialog. statusQuiet() goes through "repo-user", which is
+ * session from a non-root account brings up Ervisio Console's unlock dialog. statusQuiet() goes through "repo-user", which is
  * not admin: it never prompts and simply fails when the account may not open the socket (used by the widget).
  */
 import { getSdk, type PluginError } from '../sdk';
@@ -19,7 +19,7 @@ const BASE = '/api/plugin';
 /**
  * - `unavailable`: nothing answers on the socket (not installed, stopped, starting);
  * - `admin`: administrator rights are needed and the user did not unlock them;
- * - `forbidden`: Ervisio refused the call (plugin disabled, socket permission denied);
+ * - `forbidden`: Ervisio Console refused the call (plugin disabled, socket permission denied);
  * - `invalid`: the server refused the input (HTTP 400/409/413/422);
  * - `failed`: any other error (`status` tells which, e.g. 501 when Actions is off).
  */

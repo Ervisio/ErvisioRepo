@@ -1,4 +1,4 @@
-// Package pluginapi is the administration API of the Ervisio core plugin
+// Package pluginapi is the administration API of the Ervisio Console plugin
 // (PLAN 9.2). It is served on the unix socket server.plugin_socket and never
 // on the public listener.
 //

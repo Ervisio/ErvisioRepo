@@ -60,7 +60,7 @@ Lo stesso test, con lo stato di policy e cache, è nella pagina di amministrazio
 | `cmd/` | `ervisio-repo` (server), `ervisio-runner`, `erepo` (CLI) |
 | `internal/` | Pacchetti del server |
 | `web/` | SPA React (Vite) |
-| `plugin/` | Plugin Ervisio |
+| `plugin/` | Plugin Ervisio Console |
 | `deploy/` | File di deploy, sviluppo e produzione |
 | `packaging/` | Pacchetti di distribuzione |
 | `test/` | Test end-to-end e di conformità |

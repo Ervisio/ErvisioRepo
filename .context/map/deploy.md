@@ -17,7 +17,7 @@ Gotchas:
 - make package passes VERSION from `git describe --dirty`; on a dirty tree the version contains "-dirty" and package/file names stop matching install.sh, so pass VERSION=x.y.z explicitly.
 - make release only checks RELEASE_SIGNING_KEY is set; build.sh signs only when that var is non-empty.
 - compose "walg" service is a placeholder (entrypoint prints a hint and sleeps); do not rely on it for backups.
-- Socket dir: setup.sh and setup.bat both switch ERVISIO_SOCKET_DIR to /run/ervisio-repo when the Ervisio plugin is enabled (the plugin looks there inside the Docker VM); otherwise ./run.
+- Socket dir: setup.sh and setup.bat both switch ERVISIO_SOCKET_DIR to /run/ervisio-repo when the Ervisio Console plugin is enabled (the plugin looks there inside the Docker VM); otherwise ./run.
 - build.sh writes stub scripts for missing optional binaries so nfpm does not fail; a stub exits 1 by design.
 - Dockerfile and Makefile build ervisio-runner/erepo only if cmd/<name> has Go files (skips silently).
 - build.sh renders packaging/nfpm.yaml with sed (only ${VERSION}, ${ARCH}, ${BIN_DIR}) into dist/build/nfpm-<arch>.yaml, because nfpm does not expand env vars; a new placeholder must be added to that sed line.

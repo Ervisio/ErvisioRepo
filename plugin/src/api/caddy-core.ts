@@ -13,7 +13,7 @@
 /** The first line of every block this plugin writes. */
 export const MARKER = '# Managed by the ErvisioRepo plugin';
 /** Second line: a hint for people who open the file. */
-export const MARKER_HINT = '# Change it from Ervisio > Repo: edits made here are replaced.';
+export const MARKER_HINT = '# Change it from Ervisio Console > Repo: edits made here are replaced.';
 /** Last line of a block kept inside the main Caddyfile (containers whose config folder is not mounted). */
 export const END_MARKER = '# End of the ErvisioRepo block';
 /** The comment written above the import line. */

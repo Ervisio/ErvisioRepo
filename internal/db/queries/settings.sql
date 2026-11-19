@@ -12,7 +12,7 @@ VALUES ($1, $2, now())
 ON CONFLICT (key) DO NOTHING;
 
 -- name: InstanceCounts :one
--- Totals shown by the Ervisio plugin's status page.
+-- Totals shown by the Ervisio Console plugin's status page.
 SELECT (SELECT count(*) FROM repos)::bigint AS repos,
        (SELECT count(*) FROM namespaces WHERE kind = 'user')::bigint AS users,
        (SELECT count(*) FROM orgs)::bigint  AS orgs;

@@ -3,7 +3,7 @@ package config
 import "strings"
 
 // Editable lists the settings an administrator may change at run time, from
-// the web admin or the Ervisio plugin, as "section.key". None holds a secret.
+// the web admin or the Ervisio Console plugin, as "section.key". None holds a secret.
 var Editable = []string{
 	"server.public_url", "server.ssh_listen", "server.trusted_proxies",
 	"log.level", "log.format",
