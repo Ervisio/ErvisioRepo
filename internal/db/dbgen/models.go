@@ -465,6 +465,48 @@ type Email struct {
 	CreatedAt    pgtype.Timestamptz
 }
 
+type ErvisiocodeActiveShare struct {
+	ID          uuid.UUID
+	OwnerID     uuid.UUID
+	RecipientID uuid.NullUUID
+	OrgID       uuid.NullUUID
+}
+
+type ErvisiocodeProposal struct {
+	ID         uuid.UUID
+	ShareID    uuid.UUID
+	AuthorID   uuid.UUID
+	Body       string
+	Status     string
+	CreatedAt  pgtype.Timestamptz
+	ExpiresAt  pgtype.Timestamptz
+	ReviewedAt pgtype.Timestamptz
+}
+
+type ErvisiocodeShare struct {
+	ID              uuid.UUID
+	OwnerID         uuid.UUID
+	DeviceID        uuid.UUID
+	SessionID       string
+	RecipientID     uuid.NullUUID
+	OrgID           uuid.NullUUID
+	Role            string
+	FullHistory     bool
+	AfterMessageID  pgtype.Text
+	FromMessageID   pgtype.Text
+	HostCursor      pgtype.Text
+	InviteTokenHash []byte
+	InviteExpiresAt pgtype.Timestamptz
+	AcceptedAt      pgtype.Timestamptz
+	RevokedAt       pgtype.Timestamptz
+	CreatedAt       pgtype.Timestamptz
+}
+
+type ErvisiocodeShareRecipient struct {
+	ShareID   uuid.UUID
+	AccountID uuid.UUID
+}
+
 type EventsOutbox struct {
 	ID           uuid.UUID
 	Kind         string
@@ -1248,19 +1290,22 @@ type ThreadSubscription struct {
 }
 
 type Token struct {
-	ID                  uuid.UUID
-	UserID              uuid.UUID
-	Name                string
-	TokenHash           []byte
-	Hint                string
-	Scopes              []string
-	ExpiresAt           pgtype.Timestamptz
-	LastUsedAt          pgtype.Timestamptz
-	CreatedAt           pgtype.Timestamptz
-	GrantID             uuid.NullUUID
-	IsErvisiocodeDevice bool
-	RemoteLastSeenAt    pgtype.Timestamptz
-	RemoteActive        bool
+	ID                    uuid.UUID
+	UserID                uuid.UUID
+	Name                  string
+	TokenHash             []byte
+	Hint                  string
+	Scopes                []string
+	ExpiresAt             pgtype.Timestamptz
+	LastUsedAt            pgtype.Timestamptz
+	CreatedAt             pgtype.Timestamptz
+	GrantID               uuid.NullUUID
+	IsErvisiocodeDevice   bool
+	RemoteLastSeenAt      pgtype.Timestamptz
+	RemoteActive          bool
+	HubSessionHash        []byte
+	HubSessionExpiresAt   pgtype.Timestamptz
+	RemoteSessionMetadata []byte
 }
 
 type UsageCounter struct {

@@ -52,7 +52,7 @@ type RegistrationNoticeArgs struct {
 
 func (RegistrationNoticeArgs) Kind() string { return "identity_registration_notice" }
 
-// CleanupArgs deletes expired sessions, one-time tokens and OAuth device
+// CleanupArgs deletes expired sessions, one-time tokens, ErvisioCode proposals and OAuth device
 // codes.
 type CleanupArgs struct{}
 
@@ -291,9 +291,13 @@ func (w *cleanupWorker) Work(ctx context.Context, _ *river.Job[CleanupArgs]) err
 	if err != nil {
 		return fmt.Errorf("delete expired oauth codes: %w", err)
 	}
-	if sessions+tokens+devices+codes > 0 {
+	proposals, err := w.m.Queries.DeleteExpiredErvisioCodeProposals(ctx)
+	if err != nil {
+		return fmt.Errorf("delete expired ErvisioCode proposals: %w", err)
+	}
+	if sessions+tokens+devices+codes+proposals > 0 {
 		w.m.Log.InfoContext(ctx, "identity cleanup", "sessions", sessions, "tokens", tokens, "device_codes", devices,
-			"oauth_codes", codes)
+			"oauth_codes", codes, "code_proposals", proposals)
 	}
 	return nil
 }

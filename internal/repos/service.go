@@ -554,6 +554,27 @@ func (s *Service) ListMine(ctx context.Context, who auth.Principal, offset, limi
 	return out, nil
 }
 
+// AuthorizeLinkedRepository requires an account grant, not merely repository visibility or instance admin.
+func (s *Service) AuthorizeLinkedRepository(ctx context.Context, who auth.Principal, owner, name string) error {
+	row, err := s.q.GetRepoByPath(ctx, dbgen.GetRepoByPathParams{Owner: owner, Name: name})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("get linked repository: %w", err)
+	}
+	facts, err := Facts(ctx, s.q, who, row.Repo, row.OwnerKind)
+	if err != nil {
+		return err
+	}
+	facts.Visibility = authz.Private
+	facts.InstanceAdmin = false
+	if !authz.Allowed(authz.RepoPermission(facts), authz.ActRead) {
+		return ErrForbidden
+	}
+	return nil
+}
+
 // pageOffset clamps a caller offset to the int32 range of the query.
 func pageOffset(n int) int32 {
 	return int32(min(max(n, 0), math.MaxInt32)) //nolint:gosec // clamped

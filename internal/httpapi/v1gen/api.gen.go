@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	SessionScopes sessionContextKey = "session.Scopes"
-	TokenScopes   tokenContextKey   = "token.Scopes"
+	HubSessionScopes hubSessionContextKey = "hubSession.Scopes"
+	SessionScopes    sessionContextKey    = "session.Scopes"
+	TokenScopes      tokenContextKey      = "token.Scopes"
 )
 
 // Defines values for AccessTokenCreateScopes.
@@ -665,6 +666,240 @@ func (e DiffLineType) Valid() bool {
 	case DiffLineTypeDelete:
 		return true
 	case DiffLineTypeNoNewline:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeProposalStatus.
+const (
+	ErvisioCodeProposalStatusApproved ErvisioCodeProposalStatus = "approved"
+	ErvisioCodeProposalStatusPending  ErvisioCodeProposalStatus = "pending"
+	ErvisioCodeProposalStatusRejected ErvisioCodeProposalStatus = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeProposalStatus enum.
+func (e ErvisioCodeProposalStatus) Valid() bool {
+	switch e {
+	case ErvisioCodeProposalStatusApproved:
+		return true
+	case ErvisioCodeProposalStatusPending:
+		return true
+	case ErvisioCodeProposalStatusRejected:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeProposalReviewStatus.
+const (
+	ErvisioCodeProposalReviewStatusApproved ErvisioCodeProposalReviewStatus = "approved"
+	ErvisioCodeProposalReviewStatusRejected ErvisioCodeProposalReviewStatus = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeProposalReviewStatus enum.
+func (e ErvisioCodeProposalReviewStatus) Valid() bool {
+	switch e {
+	case ErvisioCodeProposalReviewStatusApproved:
+		return true
+	case ErvisioCodeProposalReviewStatusRejected:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeProviderCatalogStatus.
+const (
+	CatalogNotConnected ErvisioCodeProviderCatalogStatus = "not_connected"
+	CatalogPartial      ErvisioCodeProviderCatalogStatus = "partial"
+	CatalogReady        ErvisioCodeProviderCatalogStatus = "ready"
+	CatalogUnavailable  ErvisioCodeProviderCatalogStatus = "unavailable"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeProviderCatalogStatus enum.
+func (e ErvisioCodeProviderCatalogStatus) Valid() bool {
+	switch e {
+	case CatalogNotConnected:
+		return true
+	case CatalogPartial:
+		return true
+	case CatalogReady:
+		return true
+	case CatalogUnavailable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeRecipientKind.
+const (
+	RecipientOrg  ErvisioCodeRecipientKind = "org"
+	RecipientUser ErvisioCodeRecipientKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeRecipientKind enum.
+func (e ErvisioCodeRecipientKind) Valid() bool {
+	switch e {
+	case RecipientOrg:
+		return true
+	case RecipientUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeRelayOp.
+const (
+	RelayCreate          ErvisioCodeRelayOp = "create"
+	RelayHistoryBoundary ErvisioCodeRelayOp = "history-boundary"
+	RelayInterrupt       ErvisioCodeRelayOp = "interrupt"
+	RelayPrompt          ErvisioCodeRelayOp = "prompt"
+	RelayState           ErvisioCodeRelayOp = "state"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeRelayOp enum.
+func (e ErvisioCodeRelayOp) Valid() bool {
+	switch e {
+	case RelayCreate:
+		return true
+	case RelayHistoryBoundary:
+		return true
+	case RelayInterrupt:
+		return true
+	case RelayPrompt:
+		return true
+	case RelayState:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeRemoteMessageRole.
+const (
+	ErvisioCodeRemoteMessageRoleAssistant ErvisioCodeRemoteMessageRole = "assistant"
+	ErvisioCodeRemoteMessageRoleUser      ErvisioCodeRemoteMessageRole = "user"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeRemoteMessageRole enum.
+func (e ErvisioCodeRemoteMessageRole) Valid() bool {
+	switch e {
+	case ErvisioCodeRemoteMessageRoleAssistant:
+		return true
+	case ErvisioCodeRemoteMessageRoleUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeRemoteOp.
+const (
+	Interrupt ErvisioCodeRemoteOp = "interrupt"
+	Prompt    ErvisioCodeRemoteOp = "prompt"
+	State     ErvisioCodeRemoteOp = "state"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeRemoteOp enum.
+func (e ErvisioCodeRemoteOp) Valid() bool {
+	switch e {
+	case Interrupt:
+		return true
+	case Prompt:
+		return true
+	case State:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeRemoteRepositoryCheckout.
+const (
+	Existing ErvisioCodeRemoteRepositoryCheckout = "existing"
+	Separate ErvisioCodeRemoteRepositoryCheckout = "separate"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeRemoteRepositoryCheckout enum.
+func (e ErvisioCodeRemoteRepositoryCheckout) Valid() bool {
+	switch e {
+	case Existing:
+		return true
+	case Separate:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeRemoteRepositoryProvider.
+const (
+	ErvisioCodeRemoteRepositoryProviderErvisiorepo ErvisioCodeRemoteRepositoryProvider = "ervisiorepo"
+	ErvisioCodeRemoteRepositoryProviderGithub      ErvisioCodeRemoteRepositoryProvider = "github"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeRemoteRepositoryProvider enum.
+func (e ErvisioCodeRemoteRepositoryProvider) Valid() bool {
+	switch e {
+	case ErvisioCodeRemoteRepositoryProviderErvisiorepo:
+		return true
+	case ErvisioCodeRemoteRepositoryProviderGithub:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeShareCreateFullHistory.
+const (
+	ErvisioCodeShareCreateFullHistoryTrue ErvisioCodeShareCreateFullHistory = true
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeShareCreateFullHistory enum.
+func (e ErvisioCodeShareCreateFullHistory) Valid() bool {
+	switch e {
+	case ErvisioCodeShareCreateFullHistoryTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeShareCreateNewOnly.
+const (
+	ErvisioCodeShareCreateNewOnlyTrue ErvisioCodeShareCreateNewOnly = true
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeShareCreateNewOnly enum.
+func (e ErvisioCodeShareCreateNewOnly) Valid() bool {
+	switch e {
+	case ErvisioCodeShareCreateNewOnlyTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeShareRole.
+const (
+	ShareDirect   ErvisioCodeShareRole = "direct"
+	ShareProposer ErvisioCodeShareRole = "proposer"
+	ShareReader   ErvisioCodeShareRole = "reader"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeShareRole enum.
+func (e ErvisioCodeShareRole) Valid() bool {
+	switch e {
+	case ShareDirect:
+		return true
+	case ShareProposer:
+		return true
+	case ShareReader:
 		return true
 	default:
 		return false
@@ -2470,16 +2705,16 @@ func (e WebhookDeliveryStatus) Valid() bool {
 
 // Defines values for WebhookFormat.
 const (
-	Ervisio WebhookFormat = "ervisio"
-	Github  WebhookFormat = "github"
+	WebhookFormatErvisio WebhookFormat = "ervisio"
+	WebhookFormatGithub  WebhookFormat = "github"
 )
 
 // Valid indicates whether the value is a known member of the WebhookFormat enum.
 func (e WebhookFormat) Valid() bool {
 	switch e {
-	case Ervisio:
+	case WebhookFormatErvisio:
 		return true
-	case Github:
+	case WebhookFormatGithub:
 		return true
 	default:
 		return false
@@ -4261,6 +4496,12 @@ type ErvisioCodeAccount struct {
 	Username  string             `json:"username"`
 }
 
+// ErvisioCodeCatalogRepository defines model for ErvisioCodeCatalogRepository.
+type ErvisioCodeCatalogRepository struct {
+	Checkouts []ErvisioCodeRemoteProject `json:"checkouts"`
+	Name      string                     `json:"name"`
+}
+
 // ErvisioCodeDevice defines model for ErvisioCodeDevice.
 type ErvisioCodeDevice struct {
 	CreatedAt time.Time `json:"createdAt"`
@@ -4275,6 +4516,171 @@ type ErvisioCodeDevice struct {
 	Remote *ErvisioCodeRemotePresence `json:"remote,omitempty"`
 }
 
+// ErvisioCodeHistoryAfter defines model for ErvisioCodeHistoryAfter.
+type ErvisioCodeHistoryAfter struct {
+	// AfterMessageId Opaque native message identifier scoped to the session.
+	AfterMessageId ErvisioCodeMessageId `json:"afterMessageId"`
+}
+
+// ErvisioCodeHistoryCursor defines model for ErvisioCodeHistoryCursor.
+type ErvisioCodeHistoryCursor struct {
+	// HostCursor Opaque history cursor created and interpreted by the bound host.
+	HostCursor ErvisioCodeHostCursor `json:"hostCursor"`
+}
+
+// ErvisioCodeHistoryFrom defines model for ErvisioCodeHistoryFrom.
+type ErvisioCodeHistoryFrom struct {
+	// FromMessageId Opaque native message identifier scoped to the session.
+	FromMessageId ErvisioCodeMessageId `json:"fromMessageId"`
+}
+
+// ErvisioCodeHostCursor Opaque history cursor created and interpreted by the bound host.
+type ErvisioCodeHostCursor = string
+
+// ErvisioCodeMessageId Opaque native message identifier scoped to the session.
+type ErvisioCodeMessageId = string
+
+// ErvisioCodeProposal defines model for ErvisioCodeProposal.
+type ErvisioCodeProposal struct {
+	AuthorId   openapi_types.UUID        `json:"authorId"`
+	Body       string                    `json:"body"`
+	CreatedAt  time.Time                 `json:"createdAt"`
+	ExpiresAt  time.Time                 `json:"expiresAt"`
+	Id         openapi_types.UUID        `json:"id"`
+	ReviewedAt *time.Time                `json:"reviewedAt,omitempty"`
+	ShareId    openapi_types.UUID        `json:"shareId"`
+	Status     ErvisioCodeProposalStatus `json:"status"`
+}
+
+// ErvisioCodeProposalStatus defines model for ErvisioCodeProposal.Status.
+type ErvisioCodeProposalStatus string
+
+// ErvisioCodeProposalCreate defines model for ErvisioCodeProposalCreate.
+type ErvisioCodeProposalCreate struct {
+	// Body Plain text; maximum 16384 UTF-8 bytes.
+	Body string `json:"body"`
+}
+
+// ErvisioCodeProposalReview defines model for ErvisioCodeProposalReview.
+type ErvisioCodeProposalReview struct {
+	Status ErvisioCodeProposalReviewStatus `json:"status"`
+}
+
+// ErvisioCodeProposalReviewStatus defines model for ErvisioCodeProposalReview.Status.
+type ErvisioCodeProposalReviewStatus string
+
+// ErvisioCodeProviderCatalog defines model for ErvisioCodeProviderCatalog.
+type ErvisioCodeProviderCatalog struct {
+	Repositories []ErvisioCodeCatalogRepository `json:"repositories"`
+
+	// Status Partial means only part of the catalog could be listed; listed repositories are still authorized.
+	Status ErvisioCodeProviderCatalogStatus `json:"status"`
+}
+
+// ErvisioCodeProviderCatalogStatus Partial means only part of the catalog could be listed; listed repositories are still authorized.
+type ErvisioCodeProviderCatalogStatus string
+
+// ErvisioCodeRecipient defines model for ErvisioCodeRecipient.
+type ErvisioCodeRecipient struct {
+	DisplayName string                   `json:"displayName"`
+	Id          openapi_types.UUID       `json:"id"`
+	Kind        ErvisioCodeRecipientKind `json:"kind"`
+	Name        string                   `json:"name"`
+}
+
+// ErvisioCodeRecipientKind defines model for ErvisioCodeRecipientKind.
+type ErvisioCodeRecipientKind string
+
+// ErvisioCodeRelayHistory defines model for ErvisioCodeRelayHistory.
+type ErvisioCodeRelayHistory struct {
+	union json.RawMessage
+}
+
+// ErvisioCodeRelayOp defines model for ErvisioCodeRelayOp.
+type ErvisioCodeRelayOp string
+
+// ErvisioCodeRelayPoll defines model for ErvisioCodeRelayPoll.
+type ErvisioCodeRelayPoll struct {
+	// Enabled When omitted
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// HistoryFiltering The host supports history-boundary and can filter before returning any restricted state.
+	HistoryFiltering *bool `json:"historyFiltering,omitempty"`
+
+	// Projects Complete set of approved project advertisements; omit to advertise none.
+	Projects *[]ErvisioCodeRemoteProjectPublication `json:"projects,omitempty"`
+	RelayId  openapi_types.UUID                     `json:"relayId"`
+	Results  *[]ErvisioCodeRelayResult              `json:"results,omitempty"`
+	Sessions []ErvisioCodeRemotePublication         `json:"sessions"`
+}
+
+// ErvisioCodeRelayRequest defines model for ErvisioCodeRelayRequest.
+type ErvisioCodeRelayRequest struct {
+	ExpiresAt time.Time                `json:"expiresAt"`
+	History   *ErvisioCodeRelayHistory `json:"history,omitempty"`
+	Id        openapi_types.UUID       `json:"id"`
+	Op        ErvisioCodeRelayOp       `json:"op"`
+
+	// ProjectId Present only for create.
+	ProjectId *openapi_types.UUID `json:"projectId,omitempty"`
+
+	// SessionId Present only for actions targeting existing sessions.
+	SessionId *string `json:"sessionId,omitempty"`
+	Text      *string `json:"text,omitempty"`
+}
+
+// ErvisioCodeRelayResult defines model for ErvisioCodeRelayResult.
+type ErvisioCodeRelayResult struct {
+	Busy *bool `json:"busy,omitempty"`
+
+	// Error Optional host diagnostic; not shown to controllers.
+	Error *string `json:"error,omitempty"`
+
+	// HistoryApplied Set to true only after the host successfully applied the requested state boundary.
+	HistoryApplied *bool `json:"historyApplied,omitempty"`
+
+	// HostCursor Opaque history cursor created and interpreted by the bound host.
+	HostCursor *ErvisioCodeHostCursor      `json:"hostCursor,omitempty"`
+	Id         openapi_types.UUID          `json:"id"`
+	Messages   *[]ErvisioCodeRemoteMessage `json:"messages,omitempty"`
+	Ok         bool                        `json:"ok"`
+
+	// SessionId On successful create only; also include the new session in this poll's sessions.
+	SessionId *string `json:"sessionId,omitempty"`
+}
+
+// ErvisioCodeRemoteAction defines model for ErvisioCodeRemoteAction.
+type ErvisioCodeRemoteAction struct {
+	DeviceId  openapi_types.UUID  `json:"deviceId"`
+	Op        ErvisioCodeRemoteOp `json:"op"`
+	RelayId   openapi_types.UUID  `json:"relayId"`
+	SessionId string              `json:"sessionId"`
+
+	// Text Plain prompt text; required only for the prompt operation.
+	Text *string `json:"text,omitempty"`
+}
+
+// ErvisioCodeRemoteCreate defines model for ErvisioCodeRemoteCreate.
+type ErvisioCodeRemoteCreate struct {
+	DeviceId  openapi_types.UUID `json:"deviceId"`
+	ProjectId openapi_types.UUID `json:"projectId"`
+	RelayId   openapi_types.UUID `json:"relayId"`
+}
+
+// ErvisioCodeRemoteMessage defines model for ErvisioCodeRemoteMessage.
+type ErvisioCodeRemoteMessage struct {
+	// MessageId Opaque native message identifier scoped to the session.
+	MessageId *ErvisioCodeMessageId        `json:"messageId,omitempty"`
+	Role      ErvisioCodeRemoteMessageRole `json:"role"`
+	Text      string                       `json:"text"`
+}
+
+// ErvisioCodeRemoteMessageRole defines model for ErvisioCodeRemoteMessage.Role.
+type ErvisioCodeRemoteMessageRole string
+
+// ErvisioCodeRemoteOp defines model for ErvisioCodeRemoteOp.
+type ErvisioCodeRemoteOp string
+
 // ErvisioCodeRemotePresence defines model for ErvisioCodeRemotePresence.
 type ErvisioCodeRemotePresence struct {
 	Online bool `json:"online"`
@@ -4282,6 +4688,144 @@ type ErvisioCodeRemotePresence struct {
 
 // ErvisioCodeRemotePresenceUpdate defines model for ErvisioCodeRemotePresenceUpdate.
 type ErvisioCodeRemotePresenceUpdate = remotePresenceUpdate
+
+// ErvisioCodeRemoteProject defines model for ErvisioCodeRemoteProject.
+type ErvisioCodeRemoteProject struct {
+	DeviceId   openapi_types.UUID `json:"deviceId"`
+	DeviceName *string            `json:"deviceName,omitempty"`
+	Label      string             `json:"label"`
+	ProjectId  openapi_types.UUID `json:"projectId"`
+	RelayId    openapi_types.UUID `json:"relayId"`
+
+	// Repository Display metadata for a host-approved checkout. Never contains a path, URL, or credentials.
+	Repository *ErvisioCodeRemoteRepository `json:"repository,omitempty"`
+}
+
+// ErvisioCodeRemoteProjectPublication defines model for ErvisioCodeRemoteProjectPublication.
+type ErvisioCodeRemoteProjectPublication struct {
+	// Label Display label only; do not include local paths or repository URLs.
+	Label     string             `json:"label"`
+	ProjectId openapi_types.UUID `json:"projectId"`
+
+	// Repository Display metadata for a host-approved checkout. Never contains a path, URL, or credentials.
+	Repository *ErvisioCodeRemoteRepository `json:"repository,omitempty"`
+}
+
+// ErvisioCodeRemotePublication defines model for ErvisioCodeRemotePublication.
+type ErvisioCodeRemotePublication struct {
+	// LastActivityAt Local session activity
+	LastActivityAt *time.Time `json:"lastActivityAt,omitempty"`
+	SessionId      string     `json:"sessionId"`
+	Title          string     `json:"title"`
+}
+
+// ErvisioCodeRemoteRecent defines model for ErvisioCodeRemoteRecent.
+type ErvisioCodeRemoteRecent struct {
+	DeviceId       openapi_types.UUID `json:"deviceId"`
+	LastActivityAt time.Time          `json:"lastActivityAt"`
+	SessionId      string             `json:"sessionId"`
+	Title          string             `json:"title"`
+}
+
+// ErvisioCodeRemoteRepository Display metadata for a host-approved checkout. Never contains a path, URL, or credentials.
+type ErvisioCodeRemoteRepository struct {
+	Checkout ErvisioCodeRemoteRepositoryCheckout `json:"checkout"`
+	Name     string                              `json:"name"`
+	Provider ErvisioCodeRemoteRepositoryProvider `json:"provider"`
+}
+
+// ErvisioCodeRemoteRepositoryCheckout defines model for ErvisioCodeRemoteRepository.Checkout.
+type ErvisioCodeRemoteRepositoryCheckout string
+
+// ErvisioCodeRemoteRepositoryProvider defines model for ErvisioCodeRemoteRepository.Provider.
+type ErvisioCodeRemoteRepositoryProvider string
+
+// ErvisioCodeRemoteSession defines model for ErvisioCodeRemoteSession.
+type ErvisioCodeRemoteSession struct {
+	DeviceId       openapi_types.UUID `json:"deviceId"`
+	LastActivityAt time.Time          `json:"lastActivityAt"`
+	RelayId        openapi_types.UUID `json:"relayId"`
+	SessionId      string             `json:"sessionId"`
+	Title          string             `json:"title"`
+}
+
+// ErvisioCodeRemoteState defines model for ErvisioCodeRemoteState.
+type ErvisioCodeRemoteState struct {
+	// Busy Required for state; omitted for mutations.
+	Busy *bool `json:"busy,omitempty"`
+
+	// Messages Recent visible messages, oldest first, at most 65536 bytes of text in total. Required for state; omitted for mutations.
+	Messages *[]ErvisioCodeRemoteMessage `json:"messages,omitempty"`
+}
+
+// ErvisioCodeRepositoryCatalog defines model for ErvisioCodeRepositoryCatalog.
+type ErvisioCodeRepositoryCatalog struct {
+	Ervisiorepo ErvisioCodeProviderCatalog `json:"ervisiorepo"`
+	Github      ErvisioCodeProviderCatalog `json:"github"`
+}
+
+// ErvisioCodeShare defines model for ErvisioCodeShare.
+type ErvisioCodeShare struct {
+	AcceptedAt *time.Time `json:"acceptedAt,omitempty"`
+
+	// AfterMessageId Opaque native message identifier scoped to the session.
+	AfterMessageId *ErvisioCodeMessageId `json:"afterMessageId,omitempty"`
+	CreatedAt      time.Time             `json:"createdAt"`
+	DeviceId       openapi_types.UUID    `json:"deviceId"`
+
+	// FromMessageId Opaque native message identifier scoped to the session.
+	FromMessageId   *ErvisioCodeMessageId `json:"fromMessageId,omitempty"`
+	FullHistory     bool                  `json:"fullHistory"`
+	Id              openapi_types.UUID    `json:"id"`
+	InviteExpiresAt *time.Time            `json:"inviteExpiresAt,omitempty"`
+
+	// NewOnly A private host cursor is stored for this grant.
+	NewOnly     *bool               `json:"newOnly,omitempty"`
+	OrgId       *openapi_types.UUID `json:"orgId,omitempty"`
+	OwnerId     openapi_types.UUID  `json:"ownerId"`
+	RecipientId *openapi_types.UUID `json:"recipientId,omitempty"`
+	RevokedAt   *time.Time          `json:"revokedAt,omitempty"`
+
+	// Role Reader can read state; proposer and direct can also submit proposals. Direct requires full-history consent and does not authorize execution.
+	Role      ErvisioCodeShareRole `json:"role"`
+	SessionId string               `json:"sessionId"`
+}
+
+// ErvisioCodeShareAccept defines model for ErvisioCodeShareAccept.
+type ErvisioCodeShareAccept struct {
+	Token string `json:"token"`
+}
+
+// ErvisioCodeShareCreate Supply exactly one of recipientId or orgId, and exactly one of fullHistory true, afterMessageId, fromMessageId, or newOnly true. New-only captures a cursor from a live host that supports history filtering.
+type ErvisioCodeShareCreate struct {
+	// AfterMessageId Opaque native message identifier scoped to the session.
+	AfterMessageId *ErvisioCodeMessageId `json:"afterMessageId,omitempty"`
+	DeviceId       openapi_types.UUID    `json:"deviceId"`
+
+	// FromMessageId Opaque native message identifier scoped to the session.
+	FromMessageId *ErvisioCodeMessageId `json:"fromMessageId,omitempty"`
+
+	// FullHistory Explicit consent to disclose existing and future messages.
+	FullHistory *ErvisioCodeShareCreateFullHistory `json:"fullHistory,omitempty"`
+
+	// NewOnly Start after the host's current history boundary.
+	NewOnly     *ErvisioCodeShareCreateNewOnly `json:"newOnly,omitempty"`
+	OrgId       *openapi_types.UUID            `json:"orgId,omitempty"`
+	RecipientId *openapi_types.UUID            `json:"recipientId,omitempty"`
+
+	// Role Reader can read state; proposer and direct can also submit proposals. Direct requires full-history consent and does not authorize execution.
+	Role      ErvisioCodeShareRole `json:"role"`
+	SessionId string               `json:"sessionId"`
+}
+
+// ErvisioCodeShareCreateFullHistory Explicit consent to disclose existing and future messages.
+type ErvisioCodeShareCreateFullHistory bool
+
+// ErvisioCodeShareCreateNewOnly Start after the host's current history boundary.
+type ErvisioCodeShareCreateNewOnly bool
+
+// ErvisioCodeShareRole Reader can read state; proposer and direct can also submit proposals. Direct requires full-history consent and does not authorize execution.
+type ErvisioCodeShareRole string
 
 // ExploreRepoList defines model for ExploreRepoList.
 type ExploreRepoList struct {
@@ -7119,6 +7663,15 @@ type CommitRef = string
 // CredentialID defines model for CredentialID.
 type CredentialID = openapi_types.UUID
 
+// ErvisioCodeShareAccountId defines model for ErvisioCodeShareAccountId.
+type ErvisioCodeShareAccountId = openapi_types.UUID
+
+// ErvisioCodeShareBeforeId defines model for ErvisioCodeShareBeforeId.
+type ErvisioCodeShareBeforeId = openapi_types.UUID
+
+// ErvisioCodeShareId defines model for ErvisioCodeShareId.
+type ErvisioCodeShareId = openapi_types.UUID
+
 // InstallationID defines model for InstallationID.
 type InstallationID = int64
 
@@ -7178,6 +7731,9 @@ type TooManyRequests = Problem
 
 // Unavailable defines model for Unavailable.
 type Unavailable = Problem
+
+// hubSessionContextKey is the context key for hubSession security scheme
+type hubSessionContextKey string
 
 // sessionContextKey is the context key for session security scheme
 type sessionContextKey string
@@ -7827,6 +8383,115 @@ type ListUserActivityParams struct {
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListErvisioCodeRepositoryCatalogParams defines parameters for ListErvisioCodeRepositoryCatalog.
+type ListErvisioCodeRepositoryCatalogParams struct {
+	// AccountId Selects the matching embedded hub session. Omit for a normal browser session.
+	AccountId *openapi_types.UUID `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// GetErvisioCodeHubSessionParams defines parameters for GetErvisioCodeHubSession.
+type GetErvisioCodeHubSessionParams struct {
+	// AccountId The account ID stored by the device. Must match the hub session.
+	AccountId openapi_types.UUID `form:"accountId" json:"accountId"`
+}
+
+// ListErvisioCodeProjectsParams defines parameters for ListErvisioCodeProjects.
+type ListErvisioCodeProjectsParams struct {
+	// AccountId Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID.
+	AccountId *openapi_types.UUID `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// CreateErvisioCodeRemoteSessionParams defines parameters for CreateErvisioCodeRemoteSession.
+type CreateErvisioCodeRemoteSessionParams struct {
+	// AccountId Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID.
+	AccountId *openapi_types.UUID `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// ListErvisioCodeSessionsParams defines parameters for ListErvisioCodeSessions.
+type ListErvisioCodeSessionsParams struct {
+	// AccountId Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID.
+	AccountId *openapi_types.UUID `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// ActOnErvisioCodeSessionParams defines parameters for ActOnErvisioCodeSession.
+type ActOnErvisioCodeSessionParams struct {
+	// AccountId Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID.
+	AccountId *openapi_types.UUID `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// ListErvisioCodeSharesParams defines parameters for ListErvisioCodeShares.
+type ListErvisioCodeSharesParams struct {
+	// BeforeId Pass the previous page's nextBeforeId to continue.
+	BeforeId *ErvisioCodeShareBeforeId `form:"beforeId,omitempty" json:"beforeId,omitempty"`
+
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// CreateErvisioCodeShareParams defines parameters for CreateErvisioCodeShare.
+type CreateErvisioCodeShareParams struct {
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// AcceptErvisioCodeShareParams defines parameters for AcceptErvisioCodeShare.
+type AcceptErvisioCodeShareParams struct {
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// SearchErvisioCodeRecipientsParams defines parameters for SearchErvisioCodeRecipients.
+type SearchErvisioCodeRecipientsParams struct {
+	// Q A case-insensitive handle or display-name prefix, optionally prefixed by @.
+	Q    string                   `form:"q" json:"q"`
+	Kind ErvisioCodeRecipientKind `form:"kind" json:"kind"`
+
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// RevokeErvisioCodeShareParams defines parameters for RevokeErvisioCodeShare.
+type RevokeErvisioCodeShareParams struct {
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// AcceptErvisioCodeShareByIdJSONBody defines parameters for AcceptErvisioCodeShareById.
+type AcceptErvisioCodeShareByIdJSONBody = map[string]interface{}
+
+// AcceptErvisioCodeShareByIdParams defines parameters for AcceptErvisioCodeShareById.
+type AcceptErvisioCodeShareByIdParams struct {
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// ListErvisioCodeProposalsParams defines parameters for ListErvisioCodeProposals.
+type ListErvisioCodeProposalsParams struct {
+	// BeforeId Pass the previous page's nextBeforeId to continue.
+	BeforeId *ErvisioCodeShareBeforeId `form:"beforeId,omitempty" json:"beforeId,omitempty"`
+
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// CreateErvisioCodeProposalParams defines parameters for CreateErvisioCodeProposal.
+type CreateErvisioCodeProposalParams struct {
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// ReviewErvisioCodeProposalParams defines parameters for ReviewErvisioCodeProposal.
+type ReviewErvisioCodeProposalParams struct {
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
+// GetErvisioCodeSharedStateParams defines parameters for GetErvisioCodeSharedState.
+type GetErvisioCodeSharedStateParams struct {
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
 // ListUserIssuesParams defines parameters for ListUserIssues.
 type ListUserIssuesParams struct {
 	// Filter Default assigned
@@ -8218,8 +8883,32 @@ type DecideDeviceAuthorizationJSONRequestBody = DeviceAuthorizationDecision
 // AddEmailJSONRequestBody defines body for AddEmail for application/json ContentType.
 type AddEmailJSONRequestBody = EmailRequest
 
+// CreateErvisioCodeRemoteSessionJSONRequestBody defines body for CreateErvisioCodeRemoteSession for application/json ContentType.
+type CreateErvisioCodeRemoteSessionJSONRequestBody = ErvisioCodeRemoteCreate
+
+// PollErvisioCodeRelayJSONRequestBody defines body for PollErvisioCodeRelay for application/json ContentType.
+type PollErvisioCodeRelayJSONRequestBody = ErvisioCodeRelayPoll
+
 // SetErvisioCodeRemotePresenceJSONRequestBody defines body for SetErvisioCodeRemotePresence for application/json ContentType.
 type SetErvisioCodeRemotePresenceJSONRequestBody = ErvisioCodeRemotePresenceUpdate
+
+// ActOnErvisioCodeSessionJSONRequestBody defines body for ActOnErvisioCodeSession for application/json ContentType.
+type ActOnErvisioCodeSessionJSONRequestBody = ErvisioCodeRemoteAction
+
+// CreateErvisioCodeShareJSONRequestBody defines body for CreateErvisioCodeShare for application/json ContentType.
+type CreateErvisioCodeShareJSONRequestBody = ErvisioCodeShareCreate
+
+// AcceptErvisioCodeShareJSONRequestBody defines body for AcceptErvisioCodeShare for application/json ContentType.
+type AcceptErvisioCodeShareJSONRequestBody = ErvisioCodeShareAccept
+
+// AcceptErvisioCodeShareByIdJSONRequestBody defines body for AcceptErvisioCodeShareById for application/json ContentType.
+type AcceptErvisioCodeShareByIdJSONRequestBody = AcceptErvisioCodeShareByIdJSONBody
+
+// CreateErvisioCodeProposalJSONRequestBody defines body for CreateErvisioCodeProposal for application/json ContentType.
+type CreateErvisioCodeProposalJSONRequestBody = ErvisioCodeProposalCreate
+
+// ReviewErvisioCodeProposalJSONRequestBody defines body for ReviewErvisioCodeProposal for application/json ContentType.
+type ReviewErvisioCodeProposalJSONRequestBody = ErvisioCodeProposalReview
 
 // AddGpgKeyJSONRequestBody defines body for AddGpgKey for application/json ContentType.
 type AddGpgKeyJSONRequestBody = GpgKeyCreate
@@ -8274,6 +8963,94 @@ type ConfirmTotpJSONRequestBody = CodeRequest
 
 // CreateAccessTokenJSONRequestBody defines body for CreateAccessToken for application/json ContentType.
 type CreateAccessTokenJSONRequestBody = AccessTokenCreate
+
+// AsErvisioCodeHistoryFrom returns the union data inside the ErvisioCodeRelayHistory as a ErvisioCodeHistoryFrom
+func (t ErvisioCodeRelayHistory) AsErvisioCodeHistoryFrom() (ErvisioCodeHistoryFrom, error) {
+	var body ErvisioCodeHistoryFrom
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromErvisioCodeHistoryFrom overwrites any union data inside the ErvisioCodeRelayHistory as the provided ErvisioCodeHistoryFrom
+func (t *ErvisioCodeRelayHistory) FromErvisioCodeHistoryFrom(v ErvisioCodeHistoryFrom) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeErvisioCodeHistoryFrom performs a merge with any union data inside the ErvisioCodeRelayHistory, using the provided ErvisioCodeHistoryFrom
+func (t *ErvisioCodeRelayHistory) MergeErvisioCodeHistoryFrom(v ErvisioCodeHistoryFrom) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsErvisioCodeHistoryAfter returns the union data inside the ErvisioCodeRelayHistory as a ErvisioCodeHistoryAfter
+func (t ErvisioCodeRelayHistory) AsErvisioCodeHistoryAfter() (ErvisioCodeHistoryAfter, error) {
+	var body ErvisioCodeHistoryAfter
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromErvisioCodeHistoryAfter overwrites any union data inside the ErvisioCodeRelayHistory as the provided ErvisioCodeHistoryAfter
+func (t *ErvisioCodeRelayHistory) FromErvisioCodeHistoryAfter(v ErvisioCodeHistoryAfter) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeErvisioCodeHistoryAfter performs a merge with any union data inside the ErvisioCodeRelayHistory, using the provided ErvisioCodeHistoryAfter
+func (t *ErvisioCodeRelayHistory) MergeErvisioCodeHistoryAfter(v ErvisioCodeHistoryAfter) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsErvisioCodeHistoryCursor returns the union data inside the ErvisioCodeRelayHistory as a ErvisioCodeHistoryCursor
+func (t ErvisioCodeRelayHistory) AsErvisioCodeHistoryCursor() (ErvisioCodeHistoryCursor, error) {
+	var body ErvisioCodeHistoryCursor
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromErvisioCodeHistoryCursor overwrites any union data inside the ErvisioCodeRelayHistory as the provided ErvisioCodeHistoryCursor
+func (t *ErvisioCodeRelayHistory) FromErvisioCodeHistoryCursor(v ErvisioCodeHistoryCursor) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeErvisioCodeHistoryCursor performs a merge with any union data inside the ErvisioCodeRelayHistory, using the provided ErvisioCodeHistoryCursor
+func (t *ErvisioCodeRelayHistory) MergeErvisioCodeHistoryCursor(v ErvisioCodeHistoryCursor) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ErvisioCodeRelayHistory) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ErvisioCodeRelayHistory) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -9300,15 +10077,69 @@ type ServerInterface interface {
 	// GetErvisioCodeAccount Get the account and current ErvisioCode device
 	// (GET /user/ervisiocode)
 	GetErvisioCodeAccount(w http.ResponseWriter, r *http.Request)
+	// ListErvisioCodeRepositoryCatalog List the selected account's repositories and their matching live host approvals
+	// (GET /user/ervisiocode/catalog)
+	ListErvisioCodeRepositoryCatalog(w http.ResponseWriter, r *http.Request, params ListErvisioCodeRepositoryCatalogParams)
 	// ListErvisioCodeDevices List active ErvisioCode device credentials
 	// (GET /user/ervisiocode/devices)
 	ListErvisioCodeDevices(w http.ResponseWriter, r *http.Request)
 	// RevokeErvisioCodeDevice Revoke an ErvisioCode device credential
 	// (DELETE /user/ervisiocode/devices/{id})
 	RevokeErvisioCodeDevice(w http.ResponseWriter, r *http.Request, id CredentialID)
+	// GetErvisioCodeHubSession Read the account and devices of an active ErvisioCode hub session
+	// (GET /user/ervisiocode/hub-session)
+	GetErvisioCodeHubSession(w http.ResponseWriter, r *http.Request, params GetErvisioCodeHubSessionParams)
+	// CreateErvisioCodeHubSession Issue an ErvisioCode hub session for the current device
+	// (POST /user/ervisiocode/hub-session)
+	CreateErvisioCodeHubSession(w http.ResponseWriter, r *http.Request)
+	// ListErvisioCodeProjects List locally approved projects advertised by the caller's live linked hosts
+	// (GET /user/ervisiocode/projects)
+	ListErvisioCodeProjects(w http.ResponseWriter, r *http.Request, params ListErvisioCodeProjectsParams)
+	// CreateErvisioCodeRemoteSession Create a session on a live linked host in a locally approved project
+	// (POST /user/ervisiocode/projects)
+	CreateErvisioCodeRemoteSession(w http.ResponseWriter, r *http.Request, params CreateErvisioCodeRemoteSessionParams)
+	// PollErvisioCodeRelay Poll typed ErvisioCode Remote actions as the linked host
+	// (POST /user/ervisiocode/relay)
+	PollErvisioCodeRelay(w http.ResponseWriter, r *http.Request)
 	// SetErvisioCodeRemotePresence Update the current ErvisioCode device's remote presence
 	// (PUT /user/ervisiocode/remote)
 	SetErvisioCodeRemotePresence(w http.ResponseWriter, r *http.Request)
+	// ListErvisioCodeSessions List live ErvisioCode Remote sessions and offline recent metadata
+	// (GET /user/ervisiocode/sessions)
+	ListErvisioCodeSessions(w http.ResponseWriter, r *http.Request, params ListErvisioCodeSessionsParams)
+	// ActOnErvisioCodeSession Read, prompt, or interrupt one live ErvisioCode Remote session
+	// (POST /user/ervisiocode/sessions)
+	ActOnErvisioCodeSession(w http.ResponseWriter, r *http.Request, params ActOnErvisioCodeSessionParams)
+	// ListErvisioCodeShares List owned and currently accessible ErvisioCode shares
+	// (GET /user/ervisiocode/shares)
+	ListErvisioCodeShares(w http.ResponseWriter, r *http.Request, params ListErvisioCodeSharesParams)
+	// CreateErvisioCodeShare Invite an account or grant current members of an organization access
+	// (POST /user/ervisiocode/shares)
+	CreateErvisioCodeShare(w http.ResponseWriter, r *http.Request, params CreateErvisioCodeShareParams)
+	// AcceptErvisioCodeShare Accept a personal invitation as the account it was issued to
+	// (POST /user/ervisiocode/shares/accept)
+	AcceptErvisioCodeShare(w http.ResponseWriter, r *http.Request, params AcceptErvisioCodeShareParams)
+	// SearchErvisioCodeRecipients Search the ErvisioCode sharing directory
+	// (GET /user/ervisiocode/shares/recipients)
+	SearchErvisioCodeRecipients(w http.ResponseWriter, r *http.Request, params SearchErvisioCodeRecipientsParams)
+	// RevokeErvisioCodeShare Revoke a share or pending personal invite
+	// (DELETE /user/ervisiocode/shares/{shareId})
+	RevokeErvisioCodeShare(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params RevokeErvisioCodeShareParams)
+	// AcceptErvisioCodeShareById Accept a pending personal invitation from the signed-in account's inbox
+	// (POST /user/ervisiocode/shares/{shareId}/accept)
+	AcceptErvisioCodeShareById(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params AcceptErvisioCodeShareByIdParams)
+	// ListErvisioCodeProposals List proposals while the host is online or offline
+	// (GET /user/ervisiocode/shares/{shareId}/proposals)
+	ListErvisioCodeProposals(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params ListErvisioCodeProposalsParams)
+	// CreateErvisioCodeProposal Submit a proposal without executing it
+	// (POST /user/ervisiocode/shares/{shareId}/proposals)
+	CreateErvisioCodeProposal(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params CreateErvisioCodeProposalParams)
+	// ReviewErvisioCodeProposal Record the session owner's decision on a pending proposal
+	// (POST /user/ervisiocode/shares/{shareId}/proposals/{proposalId}/review)
+	ReviewErvisioCodeProposal(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, proposalId openapi_types.UUID, params ReviewErvisioCodeProposalParams)
+	// GetErvisioCodeSharedState Read the visible transcript of a live shared session
+	// (GET /user/ervisiocode/shares/{shareId}/state)
+	GetErvisioCodeSharedState(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params GetErvisioCodeSharedStateParams)
 	// ListUserIssues Issues and pull requests of the signed-in user across the readable repositories
 	// (GET /user/issues)
 	ListUserIssues(w http.ResponseWriter, r *http.Request, params ListUserIssuesParams)
@@ -11508,6 +12339,12 @@ func (_ Unimplemented) GetErvisioCodeAccount(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListErvisioCodeRepositoryCatalog List the selected account's repositories and their matching live host approvals
+// (GET /user/ervisiocode/catalog)
+func (_ Unimplemented) ListErvisioCodeRepositoryCatalog(w http.ResponseWriter, r *http.Request, params ListErvisioCodeRepositoryCatalogParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListErvisioCodeDevices List active ErvisioCode device credentials
 // (GET /user/ervisiocode/devices)
 func (_ Unimplemented) ListErvisioCodeDevices(w http.ResponseWriter, r *http.Request) {
@@ -11520,9 +12357,111 @@ func (_ Unimplemented) RevokeErvisioCodeDevice(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetErvisioCodeHubSession Read the account and devices of an active ErvisioCode hub session
+// (GET /user/ervisiocode/hub-session)
+func (_ Unimplemented) GetErvisioCodeHubSession(w http.ResponseWriter, r *http.Request, params GetErvisioCodeHubSessionParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateErvisioCodeHubSession Issue an ErvisioCode hub session for the current device
+// (POST /user/ervisiocode/hub-session)
+func (_ Unimplemented) CreateErvisioCodeHubSession(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListErvisioCodeProjects List locally approved projects advertised by the caller's live linked hosts
+// (GET /user/ervisiocode/projects)
+func (_ Unimplemented) ListErvisioCodeProjects(w http.ResponseWriter, r *http.Request, params ListErvisioCodeProjectsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateErvisioCodeRemoteSession Create a session on a live linked host in a locally approved project
+// (POST /user/ervisiocode/projects)
+func (_ Unimplemented) CreateErvisioCodeRemoteSession(w http.ResponseWriter, r *http.Request, params CreateErvisioCodeRemoteSessionParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PollErvisioCodeRelay Poll typed ErvisioCode Remote actions as the linked host
+// (POST /user/ervisiocode/relay)
+func (_ Unimplemented) PollErvisioCodeRelay(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // SetErvisioCodeRemotePresence Update the current ErvisioCode device's remote presence
 // (PUT /user/ervisiocode/remote)
 func (_ Unimplemented) SetErvisioCodeRemotePresence(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListErvisioCodeSessions List live ErvisioCode Remote sessions and offline recent metadata
+// (GET /user/ervisiocode/sessions)
+func (_ Unimplemented) ListErvisioCodeSessions(w http.ResponseWriter, r *http.Request, params ListErvisioCodeSessionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ActOnErvisioCodeSession Read, prompt, or interrupt one live ErvisioCode Remote session
+// (POST /user/ervisiocode/sessions)
+func (_ Unimplemented) ActOnErvisioCodeSession(w http.ResponseWriter, r *http.Request, params ActOnErvisioCodeSessionParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListErvisioCodeShares List owned and currently accessible ErvisioCode shares
+// (GET /user/ervisiocode/shares)
+func (_ Unimplemented) ListErvisioCodeShares(w http.ResponseWriter, r *http.Request, params ListErvisioCodeSharesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateErvisioCodeShare Invite an account or grant current members of an organization access
+// (POST /user/ervisiocode/shares)
+func (_ Unimplemented) CreateErvisioCodeShare(w http.ResponseWriter, r *http.Request, params CreateErvisioCodeShareParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AcceptErvisioCodeShare Accept a personal invitation as the account it was issued to
+// (POST /user/ervisiocode/shares/accept)
+func (_ Unimplemented) AcceptErvisioCodeShare(w http.ResponseWriter, r *http.Request, params AcceptErvisioCodeShareParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SearchErvisioCodeRecipients Search the ErvisioCode sharing directory
+// (GET /user/ervisiocode/shares/recipients)
+func (_ Unimplemented) SearchErvisioCodeRecipients(w http.ResponseWriter, r *http.Request, params SearchErvisioCodeRecipientsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RevokeErvisioCodeShare Revoke a share or pending personal invite
+// (DELETE /user/ervisiocode/shares/{shareId})
+func (_ Unimplemented) RevokeErvisioCodeShare(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params RevokeErvisioCodeShareParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// AcceptErvisioCodeShareById Accept a pending personal invitation from the signed-in account's inbox
+// (POST /user/ervisiocode/shares/{shareId}/accept)
+func (_ Unimplemented) AcceptErvisioCodeShareById(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params AcceptErvisioCodeShareByIdParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListErvisioCodeProposals List proposals while the host is online or offline
+// (GET /user/ervisiocode/shares/{shareId}/proposals)
+func (_ Unimplemented) ListErvisioCodeProposals(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params ListErvisioCodeProposalsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateErvisioCodeProposal Submit a proposal without executing it
+// (POST /user/ervisiocode/shares/{shareId}/proposals)
+func (_ Unimplemented) CreateErvisioCodeProposal(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params CreateErvisioCodeProposalParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ReviewErvisioCodeProposal Record the session owner's decision on a pending proposal
+// (POST /user/ervisiocode/shares/{shareId}/proposals/{proposalId}/review)
+func (_ Unimplemented) ReviewErvisioCodeProposal(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, proposalId openapi_types.UUID, params ReviewErvisioCodeProposalParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetErvisioCodeSharedState Read the visible transcript of a live shared session
+// (GET /user/ervisiocode/shares/{shareId}/state)
+func (_ Unimplemented) GetErvisioCodeSharedState(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params GetErvisioCodeSharedStateParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -27843,6 +28782,47 @@ func (siw *ServerInterfaceWrapper) GetErvisioCodeAccount(w http.ResponseWriter, 
 	handler.ServeHTTP(w, r)
 }
 
+// ListErvisioCodeRepositoryCatalog operation middleware
+func (siw *ServerInterfaceWrapper) ListErvisioCodeRepositoryCatalog(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListErvisioCodeRepositoryCatalogParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListErvisioCodeRepositoryCatalog(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListErvisioCodeDevices operation middleware
 func (siw *ServerInterfaceWrapper) ListErvisioCodeDevices(w http.ResponseWriter, r *http.Request) {
 
@@ -27899,6 +28879,171 @@ func (siw *ServerInterfaceWrapper) RevokeErvisioCodeDevice(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// GetErvisioCodeHubSession operation middleware
+func (siw *ServerInterfaceWrapper) GetErvisioCodeHubSession(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetErvisioCodeHubSessionParams
+
+	// ------------- Required query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetErvisioCodeHubSession(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateErvisioCodeHubSession operation middleware
+func (siw *ServerInterfaceWrapper) CreateErvisioCodeHubSession(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"ervisiocode:device"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateErvisioCodeHubSession(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListErvisioCodeProjects operation middleware
+func (siw *ServerInterfaceWrapper) ListErvisioCodeProjects(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"ervisiocode:device"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListErvisioCodeProjectsParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListErvisioCodeProjects(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateErvisioCodeRemoteSession operation middleware
+func (siw *ServerInterfaceWrapper) CreateErvisioCodeRemoteSession(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"ervisiocode:device"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateErvisioCodeRemoteSessionParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateErvisioCodeRemoteSession(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PollErvisioCodeRelay operation middleware
+func (siw *ServerInterfaceWrapper) PollErvisioCodeRelay(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"ervisiocode:device"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PollErvisioCodeRelay(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // SetErvisioCodeRemotePresence operation middleware
 func (siw *ServerInterfaceWrapper) SetErvisioCodeRemotePresence(w http.ResponseWriter, r *http.Request) {
 
@@ -27910,6 +29055,617 @@ func (siw *ServerInterfaceWrapper) SetErvisioCodeRemotePresence(w http.ResponseW
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SetErvisioCodeRemotePresence(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListErvisioCodeSessions operation middleware
+func (siw *ServerInterfaceWrapper) ListErvisioCodeSessions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"ervisiocode:device"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListErvisioCodeSessionsParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListErvisioCodeSessions(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ActOnErvisioCodeSession operation middleware
+func (siw *ServerInterfaceWrapper) ActOnErvisioCodeSession(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"ervisiocode:device"})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ActOnErvisioCodeSessionParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ActOnErvisioCodeSession(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListErvisioCodeShares operation middleware
+func (siw *ServerInterfaceWrapper) ListErvisioCodeShares(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListErvisioCodeSharesParams
+
+	// ------------- Optional query parameter "beforeId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "beforeId", r.URL.Query(), &params.BeforeId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "beforeId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "beforeId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListErvisioCodeShares(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateErvisioCodeShare operation middleware
+func (siw *ServerInterfaceWrapper) CreateErvisioCodeShare(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateErvisioCodeShareParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateErvisioCodeShare(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AcceptErvisioCodeShare operation middleware
+func (siw *ServerInterfaceWrapper) AcceptErvisioCodeShare(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AcceptErvisioCodeShareParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AcceptErvisioCodeShare(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SearchErvisioCodeRecipients operation middleware
+func (siw *ServerInterfaceWrapper) SearchErvisioCodeRecipients(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SearchErvisioCodeRecipientsParams
+
+	// ------------- Required query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "kind" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "kind", r.URL.Query(), &params.Kind, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "kind"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SearchErvisioCodeRecipients(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeErvisioCodeShare operation middleware
+func (siw *ServerInterfaceWrapper) RevokeErvisioCodeShare(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ErvisioCodeShareId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", chi.URLParam(r, "shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shareId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RevokeErvisioCodeShareParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeErvisioCodeShare(w, r, shareId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AcceptErvisioCodeShareById operation middleware
+func (siw *ServerInterfaceWrapper) AcceptErvisioCodeShareById(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ErvisioCodeShareId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", chi.URLParam(r, "shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shareId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AcceptErvisioCodeShareByIdParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AcceptErvisioCodeShareById(w, r, shareId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListErvisioCodeProposals operation middleware
+func (siw *ServerInterfaceWrapper) ListErvisioCodeProposals(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ErvisioCodeShareId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", chi.URLParam(r, "shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shareId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListErvisioCodeProposalsParams
+
+	// ------------- Optional query parameter "beforeId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "beforeId", r.URL.Query(), &params.BeforeId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "beforeId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "beforeId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListErvisioCodeProposals(w, r, shareId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateErvisioCodeProposal operation middleware
+func (siw *ServerInterfaceWrapper) CreateErvisioCodeProposal(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ErvisioCodeShareId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", chi.URLParam(r, "shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shareId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateErvisioCodeProposalParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateErvisioCodeProposal(w, r, shareId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReviewErvisioCodeProposal operation middleware
+func (siw *ServerInterfaceWrapper) ReviewErvisioCodeProposal(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ErvisioCodeShareId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", chi.URLParam(r, "shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shareId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "proposalId" -------------
+	var proposalId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "proposalId", chi.URLParam(r, "proposalId"), &proposalId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "proposalId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ReviewErvisioCodeProposalParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReviewErvisioCodeProposal(w, r, shareId, proposalId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetErvisioCodeSharedState operation middleware
+func (siw *ServerInterfaceWrapper) GetErvisioCodeSharedState(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ErvisioCodeShareId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", chi.URLParam(r, "shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shareId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetErvisioCodeSharedStateParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetErvisioCodeSharedState(w, r, shareId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -29815,6 +31571,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/user/ervisiocode", wrapper.GetErvisioCodeAccount)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/ervisiocode/hub-session", wrapper.GetErvisioCodeHubSession)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/hub-session", wrapper.CreateErvisioCodeHubSession)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/user/ervisiocode/devices", wrapper.ListErvisioCodeDevices)
 	})
 	r.Group(func(r chi.Router) {
@@ -29822,6 +31584,54 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/user/ervisiocode/remote", wrapper.SetErvisioCodeRemotePresence)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/ervisiocode/sessions", wrapper.ListErvisioCodeSessions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/sessions", wrapper.ActOnErvisioCodeSession)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/ervisiocode/projects", wrapper.ListErvisioCodeProjects)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/projects", wrapper.CreateErvisioCodeRemoteSession)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/ervisiocode/catalog", wrapper.ListErvisioCodeRepositoryCatalog)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/ervisiocode/shares", wrapper.ListErvisioCodeShares)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/shares", wrapper.CreateErvisioCodeShare)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/ervisiocode/shares/recipients", wrapper.SearchErvisioCodeRecipients)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/shares/accept", wrapper.AcceptErvisioCodeShare)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/user/ervisiocode/shares/{shareId}", wrapper.RevokeErvisioCodeShare)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/shares/{shareId}/accept", wrapper.AcceptErvisioCodeShareById)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/ervisiocode/shares/{shareId}/state", wrapper.GetErvisioCodeSharedState)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/user/ervisiocode/shares/{shareId}/proposals", wrapper.ListErvisioCodeProposals)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/shares/{shareId}/proposals", wrapper.CreateErvisioCodeProposal)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/shares/{shareId}/proposals/{proposalId}/review", wrapper.ReviewErvisioCodeProposal)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/relay", wrapper.PollErvisioCodeRelay)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/user/device/{userCode}", wrapper.GetDeviceAuthorization)
@@ -60647,6 +62457,45 @@ func (response GetErvisioCodeAccountdefaultApplicationProblemPlusJSONResponse) V
 	return err
 }
 
+type ListErvisioCodeRepositoryCatalogRequestObject struct {
+	Params ListErvisioCodeRepositoryCatalogParams
+}
+
+type ListErvisioCodeRepositoryCatalogResponseObject interface {
+	VisitListErvisioCodeRepositoryCatalogResponse(w http.ResponseWriter) error
+}
+
+type ListErvisioCodeRepositoryCatalog200JSONResponse ErvisioCodeRepositoryCatalog
+
+func (response ListErvisioCodeRepositoryCatalog200JSONResponse) VisitListErvisioCodeRepositoryCatalogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeRepositoryCatalogdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListErvisioCodeRepositoryCatalogdefaultApplicationProblemPlusJSONResponse) VisitListErvisioCodeRepositoryCatalogResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListErvisioCodeDevicesRequestObject struct {
 }
 
@@ -60802,6 +62651,343 @@ func (response RevokeErvisioCodeDevicedefaultApplicationProblemPlusJSONResponse)
 	return err
 }
 
+type GetErvisioCodeHubSessionRequestObject struct {
+	Params GetErvisioCodeHubSessionParams
+}
+
+type GetErvisioCodeHubSessionResponseObject interface {
+	VisitGetErvisioCodeHubSessionResponse(w http.ResponseWriter) error
+}
+
+type GetErvisioCodeHubSession200JSONResponse struct {
+	AccountId openapi_types.UUID  `json:"accountId"`
+	Devices   []ErvisioCodeDevice `json:"devices"`
+	Username  string              `json:"username"`
+}
+
+func (response GetErvisioCodeHubSession200JSONResponse) VisitGetErvisioCodeHubSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeHubSession400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetErvisioCodeHubSession400ApplicationProblemPlusJSONResponse) VisitGetErvisioCodeHubSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeHubSession401ApplicationProblemPlusJSONResponse Problem
+
+func (response GetErvisioCodeHubSession401ApplicationProblemPlusJSONResponse) VisitGetErvisioCodeHubSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeHubSessiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetErvisioCodeHubSessiondefaultApplicationProblemPlusJSONResponse) VisitGetErvisioCodeHubSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeHubSessionRequestObject struct {
+}
+
+type CreateErvisioCodeHubSessionResponseObject interface {
+	VisitCreateErvisioCodeHubSessionResponse(w http.ResponseWriter) error
+}
+
+type CreateErvisioCodeHubSession204ResponseHeaders struct {
+	SetCookie string
+}
+
+type CreateErvisioCodeHubSession204Response struct {
+	Headers CreateErvisioCodeHubSession204ResponseHeaders
+}
+
+func (response CreateErvisioCodeHubSession204Response) VisitCreateErvisioCodeHubSessionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Set-Cookie", fmt.Sprint(response.Headers.SetCookie))
+	w.WriteHeader(204)
+	return nil
+}
+
+type CreateErvisioCodeHubSession401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateErvisioCodeHubSession401ApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeHubSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeHubSession403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateErvisioCodeHubSession403ApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeHubSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeHubSessiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateErvisioCodeHubSessiondefaultApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeHubSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeProjectsRequestObject struct {
+	Params ListErvisioCodeProjectsParams
+}
+
+type ListErvisioCodeProjectsResponseObject interface {
+	VisitListErvisioCodeProjectsResponse(w http.ResponseWriter) error
+}
+
+type ListErvisioCodeProjects200JSONResponse struct {
+	Projects []ErvisioCodeRemoteProject `json:"projects"`
+}
+
+func (response ListErvisioCodeProjects200JSONResponse) VisitListErvisioCodeProjectsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeProjectsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListErvisioCodeProjectsdefaultApplicationProblemPlusJSONResponse) VisitListErvisioCodeProjectsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeRemoteSessionRequestObject struct {
+	Params CreateErvisioCodeRemoteSessionParams
+	Body   *CreateErvisioCodeRemoteSessionJSONRequestBody
+}
+
+type CreateErvisioCodeRemoteSessionResponseObject interface {
+	VisitCreateErvisioCodeRemoteSessionResponse(w http.ResponseWriter) error
+}
+
+type CreateErvisioCodeRemoteSession200JSONResponse struct {
+	SessionId string `json:"sessionId"`
+}
+
+func (response CreateErvisioCodeRemoteSession200JSONResponse) VisitCreateErvisioCodeRemoteSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeRemoteSession403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateErvisioCodeRemoteSession403ApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeRemoteSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeRemoteSession404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateErvisioCodeRemoteSession404ApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeRemoteSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeRemoteSession429ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateErvisioCodeRemoteSession429ApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeRemoteSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeRemoteSession502ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateErvisioCodeRemoteSession502ApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeRemoteSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeRemoteSession504ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateErvisioCodeRemoteSession504ApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeRemoteSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(504)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeRemoteSessiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateErvisioCodeRemoteSessiondefaultApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeRemoteSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PollErvisioCodeRelayRequestObject struct {
+	Body *PollErvisioCodeRelayJSONRequestBody
+}
+
+type PollErvisioCodeRelayResponseObject interface {
+	VisitPollErvisioCodeRelayResponse(w http.ResponseWriter) error
+}
+
+type PollErvisioCodeRelay200JSONResponse struct {
+	Requests []ErvisioCodeRelayRequest `json:"requests"`
+}
+
+func (response PollErvisioCodeRelay200JSONResponse) VisitPollErvisioCodeRelayResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PollErvisioCodeRelaydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PollErvisioCodeRelaydefaultApplicationProblemPlusJSONResponse) VisitPollErvisioCodeRelayResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type SetErvisioCodeRemotePresenceRequestObject struct {
 	Body *SetErvisioCodeRemotePresenceJSONRequestBody
 }
@@ -60868,6 +63054,641 @@ type SetErvisioCodeRemotePresencedefaultApplicationProblemPlusJSONResponse struc
 }
 
 func (response SetErvisioCodeRemotePresencedefaultApplicationProblemPlusJSONResponse) VisitSetErvisioCodeRemotePresenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeSessionsRequestObject struct {
+	Params ListErvisioCodeSessionsParams
+}
+
+type ListErvisioCodeSessionsResponseObject interface {
+	VisitListErvisioCodeSessionsResponse(w http.ResponseWriter) error
+}
+
+type ListErvisioCodeSessions200JSONResponse struct {
+	Recent   []ErvisioCodeRemoteRecent  `json:"recent"`
+	Sessions []ErvisioCodeRemoteSession `json:"sessions"`
+}
+
+func (response ListErvisioCodeSessions200JSONResponse) VisitListErvisioCodeSessionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeSessionsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListErvisioCodeSessionsdefaultApplicationProblemPlusJSONResponse) VisitListErvisioCodeSessionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ActOnErvisioCodeSessionRequestObject struct {
+	Params ActOnErvisioCodeSessionParams
+	Body   *ActOnErvisioCodeSessionJSONRequestBody
+}
+
+type ActOnErvisioCodeSessionResponseObject interface {
+	VisitActOnErvisioCodeSessionResponse(w http.ResponseWriter) error
+}
+
+type ActOnErvisioCodeSession200JSONResponse ErvisioCodeRemoteState
+
+func (response ActOnErvisioCodeSession200JSONResponse) VisitActOnErvisioCodeSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ActOnErvisioCodeSession404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ActOnErvisioCodeSession404ApplicationProblemPlusJSONResponse) VisitActOnErvisioCodeSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ActOnErvisioCodeSession429ApplicationProblemPlusJSONResponse Problem
+
+func (response ActOnErvisioCodeSession429ApplicationProblemPlusJSONResponse) VisitActOnErvisioCodeSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ActOnErvisioCodeSession502ApplicationProblemPlusJSONResponse Problem
+
+func (response ActOnErvisioCodeSession502ApplicationProblemPlusJSONResponse) VisitActOnErvisioCodeSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ActOnErvisioCodeSession504ApplicationProblemPlusJSONResponse Problem
+
+func (response ActOnErvisioCodeSession504ApplicationProblemPlusJSONResponse) VisitActOnErvisioCodeSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(504)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ActOnErvisioCodeSessiondefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ActOnErvisioCodeSessiondefaultApplicationProblemPlusJSONResponse) VisitActOnErvisioCodeSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeSharesRequestObject struct {
+	Params ListErvisioCodeSharesParams
+}
+
+type ListErvisioCodeSharesResponseObject interface {
+	VisitListErvisioCodeSharesResponse(w http.ResponseWriter) error
+}
+
+type ListErvisioCodeShares200JSONResponse struct {
+	NextBeforeId *openapi_types.UUID `json:"nextBeforeId,omitempty"`
+	Shares       []ErvisioCodeShare  `json:"shares"`
+}
+
+func (response ListErvisioCodeShares200JSONResponse) VisitListErvisioCodeSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeSharesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListErvisioCodeSharesdefaultApplicationProblemPlusJSONResponse) VisitListErvisioCodeSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeShareRequestObject struct {
+	Params CreateErvisioCodeShareParams
+	Body   *CreateErvisioCodeShareJSONRequestBody
+}
+
+type CreateErvisioCodeShareResponseObject interface {
+	VisitCreateErvisioCodeShareResponse(w http.ResponseWriter) error
+}
+
+type CreateErvisioCodeShare201JSONResponse struct {
+	Share ErvisioCodeShare `json:"share"`
+	Token *string          `json:"token,omitempty"`
+}
+
+func (response CreateErvisioCodeShare201JSONResponse) VisitCreateErvisioCodeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeShare422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateErvisioCodeShare422ApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeSharedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateErvisioCodeSharedefaultApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptErvisioCodeShareRequestObject struct {
+	Params AcceptErvisioCodeShareParams
+	Body   *AcceptErvisioCodeShareJSONRequestBody
+}
+
+type AcceptErvisioCodeShareResponseObject interface {
+	VisitAcceptErvisioCodeShareResponse(w http.ResponseWriter) error
+}
+
+type AcceptErvisioCodeShare200JSONResponse ErvisioCodeShare
+
+func (response AcceptErvisioCodeShare200JSONResponse) VisitAcceptErvisioCodeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptErvisioCodeSharedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response AcceptErvisioCodeSharedefaultApplicationProblemPlusJSONResponse) VisitAcceptErvisioCodeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SearchErvisioCodeRecipientsRequestObject struct {
+	Params SearchErvisioCodeRecipientsParams
+}
+
+type SearchErvisioCodeRecipientsResponseObject interface {
+	VisitSearchErvisioCodeRecipientsResponse(w http.ResponseWriter) error
+}
+
+type SearchErvisioCodeRecipients200JSONResponse struct {
+	Recipients []ErvisioCodeRecipient `json:"recipients"`
+}
+
+func (response SearchErvisioCodeRecipients200JSONResponse) VisitSearchErvisioCodeRecipientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SearchErvisioCodeRecipientsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SearchErvisioCodeRecipientsdefaultApplicationProblemPlusJSONResponse) VisitSearchErvisioCodeRecipientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeErvisioCodeShareRequestObject struct {
+	ShareId ErvisioCodeShareId `json:"shareId"`
+	Params  RevokeErvisioCodeShareParams
+}
+
+type RevokeErvisioCodeShareResponseObject interface {
+	VisitRevokeErvisioCodeShareResponse(w http.ResponseWriter) error
+}
+
+type RevokeErvisioCodeShare204Response struct {
+}
+
+func (response RevokeErvisioCodeShare204Response) VisitRevokeErvisioCodeShareResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeErvisioCodeSharedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RevokeErvisioCodeSharedefaultApplicationProblemPlusJSONResponse) VisitRevokeErvisioCodeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptErvisioCodeShareByIdRequestObject struct {
+	ShareId ErvisioCodeShareId `json:"shareId"`
+	Params  AcceptErvisioCodeShareByIdParams
+	Body    *AcceptErvisioCodeShareByIdJSONRequestBody
+}
+
+type AcceptErvisioCodeShareByIdResponseObject interface {
+	VisitAcceptErvisioCodeShareByIdResponse(w http.ResponseWriter) error
+}
+
+type AcceptErvisioCodeShareById200JSONResponse ErvisioCodeShare
+
+func (response AcceptErvisioCodeShareById200JSONResponse) VisitAcceptErvisioCodeShareByIdResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcceptErvisioCodeShareByIddefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response AcceptErvisioCodeShareByIddefaultApplicationProblemPlusJSONResponse) VisitAcceptErvisioCodeShareByIdResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeProposalsRequestObject struct {
+	ShareId ErvisioCodeShareId `json:"shareId"`
+	Params  ListErvisioCodeProposalsParams
+}
+
+type ListErvisioCodeProposalsResponseObject interface {
+	VisitListErvisioCodeProposalsResponse(w http.ResponseWriter) error
+}
+
+type ListErvisioCodeProposals200JSONResponse struct {
+	NextBeforeId *openapi_types.UUID   `json:"nextBeforeId,omitempty"`
+	Proposals    []ErvisioCodeProposal `json:"proposals"`
+}
+
+func (response ListErvisioCodeProposals200JSONResponse) VisitListErvisioCodeProposalsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListErvisioCodeProposalsdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ListErvisioCodeProposalsdefaultApplicationProblemPlusJSONResponse) VisitListErvisioCodeProposalsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeProposalRequestObject struct {
+	ShareId ErvisioCodeShareId `json:"shareId"`
+	Params  CreateErvisioCodeProposalParams
+	Body    *CreateErvisioCodeProposalJSONRequestBody
+}
+
+type CreateErvisioCodeProposalResponseObject interface {
+	VisitCreateErvisioCodeProposalResponse(w http.ResponseWriter) error
+}
+
+type CreateErvisioCodeProposal201JSONResponse ErvisioCodeProposal
+
+func (response CreateErvisioCodeProposal201JSONResponse) VisitCreateErvisioCodeProposalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeProposaldefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CreateErvisioCodeProposaldefaultApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeProposalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewErvisioCodeProposalRequestObject struct {
+	ShareId    ErvisioCodeShareId `json:"shareId"`
+	ProposalId openapi_types.UUID `json:"proposalId"`
+	Params     ReviewErvisioCodeProposalParams
+	Body       *ReviewErvisioCodeProposalJSONRequestBody
+}
+
+type ReviewErvisioCodeProposalResponseObject interface {
+	VisitReviewErvisioCodeProposalResponse(w http.ResponseWriter) error
+}
+
+type ReviewErvisioCodeProposal200JSONResponse ErvisioCodeProposal
+
+func (response ReviewErvisioCodeProposal200JSONResponse) VisitReviewErvisioCodeProposalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewErvisioCodeProposaldefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ReviewErvisioCodeProposaldefaultApplicationProblemPlusJSONResponse) VisitReviewErvisioCodeProposalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeSharedStateRequestObject struct {
+	ShareId ErvisioCodeShareId `json:"shareId"`
+	Params  GetErvisioCodeSharedStateParams
+}
+
+type GetErvisioCodeSharedStateResponseObject interface {
+	VisitGetErvisioCodeSharedStateResponse(w http.ResponseWriter) error
+}
+
+type GetErvisioCodeSharedState200JSONResponse ErvisioCodeRemoteState
+
+func (response GetErvisioCodeSharedState200JSONResponse) VisitGetErvisioCodeSharedStateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeSharedState404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetErvisioCodeSharedState404ApplicationProblemPlusJSONResponse) VisitGetErvisioCodeSharedStateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeSharedState422ApplicationProblemPlusJSONResponse Problem
+
+func (response GetErvisioCodeSharedState422ApplicationProblemPlusJSONResponse) VisitGetErvisioCodeSharedStateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeSharedState429ApplicationProblemPlusJSONResponse Problem
+
+func (response GetErvisioCodeSharedState429ApplicationProblemPlusJSONResponse) VisitGetErvisioCodeSharedStateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeSharedState502ApplicationProblemPlusJSONResponse Problem
+
+func (response GetErvisioCodeSharedState502ApplicationProblemPlusJSONResponse) VisitGetErvisioCodeSharedStateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeSharedState504ApplicationProblemPlusJSONResponse Problem
+
+func (response GetErvisioCodeSharedState504ApplicationProblemPlusJSONResponse) VisitGetErvisioCodeSharedStateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(504)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetErvisioCodeSharedStatedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetErvisioCodeSharedStatedefaultApplicationProblemPlusJSONResponse) VisitGetErvisioCodeSharedStateResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -65348,15 +68169,69 @@ type StrictServerInterface interface {
 	// GetErvisioCodeAccount Get the account and current ErvisioCode device
 	// (GET /user/ervisiocode)
 	GetErvisioCodeAccount(ctx context.Context, request GetErvisioCodeAccountRequestObject) (GetErvisioCodeAccountResponseObject, error)
+	// ListErvisioCodeRepositoryCatalog List the selected account's repositories and their matching live host approvals
+	// (GET /user/ervisiocode/catalog)
+	ListErvisioCodeRepositoryCatalog(ctx context.Context, request ListErvisioCodeRepositoryCatalogRequestObject) (ListErvisioCodeRepositoryCatalogResponseObject, error)
 	// ListErvisioCodeDevices List active ErvisioCode device credentials
 	// (GET /user/ervisiocode/devices)
 	ListErvisioCodeDevices(ctx context.Context, request ListErvisioCodeDevicesRequestObject) (ListErvisioCodeDevicesResponseObject, error)
 	// RevokeErvisioCodeDevice Revoke an ErvisioCode device credential
 	// (DELETE /user/ervisiocode/devices/{id})
 	RevokeErvisioCodeDevice(ctx context.Context, request RevokeErvisioCodeDeviceRequestObject) (RevokeErvisioCodeDeviceResponseObject, error)
+	// GetErvisioCodeHubSession Read the account and devices of an active ErvisioCode hub session
+	// (GET /user/ervisiocode/hub-session)
+	GetErvisioCodeHubSession(ctx context.Context, request GetErvisioCodeHubSessionRequestObject) (GetErvisioCodeHubSessionResponseObject, error)
+	// CreateErvisioCodeHubSession Issue an ErvisioCode hub session for the current device
+	// (POST /user/ervisiocode/hub-session)
+	CreateErvisioCodeHubSession(ctx context.Context, request CreateErvisioCodeHubSessionRequestObject) (CreateErvisioCodeHubSessionResponseObject, error)
+	// ListErvisioCodeProjects List locally approved projects advertised by the caller's live linked hosts
+	// (GET /user/ervisiocode/projects)
+	ListErvisioCodeProjects(ctx context.Context, request ListErvisioCodeProjectsRequestObject) (ListErvisioCodeProjectsResponseObject, error)
+	// CreateErvisioCodeRemoteSession Create a session on a live linked host in a locally approved project
+	// (POST /user/ervisiocode/projects)
+	CreateErvisioCodeRemoteSession(ctx context.Context, request CreateErvisioCodeRemoteSessionRequestObject) (CreateErvisioCodeRemoteSessionResponseObject, error)
+	// PollErvisioCodeRelay Poll typed ErvisioCode Remote actions as the linked host
+	// (POST /user/ervisiocode/relay)
+	PollErvisioCodeRelay(ctx context.Context, request PollErvisioCodeRelayRequestObject) (PollErvisioCodeRelayResponseObject, error)
 	// SetErvisioCodeRemotePresence Update the current ErvisioCode device's remote presence
 	// (PUT /user/ervisiocode/remote)
 	SetErvisioCodeRemotePresence(ctx context.Context, request SetErvisioCodeRemotePresenceRequestObject) (SetErvisioCodeRemotePresenceResponseObject, error)
+	// ListErvisioCodeSessions List live ErvisioCode Remote sessions and offline recent metadata
+	// (GET /user/ervisiocode/sessions)
+	ListErvisioCodeSessions(ctx context.Context, request ListErvisioCodeSessionsRequestObject) (ListErvisioCodeSessionsResponseObject, error)
+	// ActOnErvisioCodeSession Read, prompt, or interrupt one live ErvisioCode Remote session
+	// (POST /user/ervisiocode/sessions)
+	ActOnErvisioCodeSession(ctx context.Context, request ActOnErvisioCodeSessionRequestObject) (ActOnErvisioCodeSessionResponseObject, error)
+	// ListErvisioCodeShares List owned and currently accessible ErvisioCode shares
+	// (GET /user/ervisiocode/shares)
+	ListErvisioCodeShares(ctx context.Context, request ListErvisioCodeSharesRequestObject) (ListErvisioCodeSharesResponseObject, error)
+	// CreateErvisioCodeShare Invite an account or grant current members of an organization access
+	// (POST /user/ervisiocode/shares)
+	CreateErvisioCodeShare(ctx context.Context, request CreateErvisioCodeShareRequestObject) (CreateErvisioCodeShareResponseObject, error)
+	// AcceptErvisioCodeShare Accept a personal invitation as the account it was issued to
+	// (POST /user/ervisiocode/shares/accept)
+	AcceptErvisioCodeShare(ctx context.Context, request AcceptErvisioCodeShareRequestObject) (AcceptErvisioCodeShareResponseObject, error)
+	// SearchErvisioCodeRecipients Search the ErvisioCode sharing directory
+	// (GET /user/ervisiocode/shares/recipients)
+	SearchErvisioCodeRecipients(ctx context.Context, request SearchErvisioCodeRecipientsRequestObject) (SearchErvisioCodeRecipientsResponseObject, error)
+	// RevokeErvisioCodeShare Revoke a share or pending personal invite
+	// (DELETE /user/ervisiocode/shares/{shareId})
+	RevokeErvisioCodeShare(ctx context.Context, request RevokeErvisioCodeShareRequestObject) (RevokeErvisioCodeShareResponseObject, error)
+	// AcceptErvisioCodeShareById Accept a pending personal invitation from the signed-in account's inbox
+	// (POST /user/ervisiocode/shares/{shareId}/accept)
+	AcceptErvisioCodeShareById(ctx context.Context, request AcceptErvisioCodeShareByIdRequestObject) (AcceptErvisioCodeShareByIdResponseObject, error)
+	// ListErvisioCodeProposals List proposals while the host is online or offline
+	// (GET /user/ervisiocode/shares/{shareId}/proposals)
+	ListErvisioCodeProposals(ctx context.Context, request ListErvisioCodeProposalsRequestObject) (ListErvisioCodeProposalsResponseObject, error)
+	// CreateErvisioCodeProposal Submit a proposal without executing it
+	// (POST /user/ervisiocode/shares/{shareId}/proposals)
+	CreateErvisioCodeProposal(ctx context.Context, request CreateErvisioCodeProposalRequestObject) (CreateErvisioCodeProposalResponseObject, error)
+	// ReviewErvisioCodeProposal Record the session owner's decision on a pending proposal
+	// (POST /user/ervisiocode/shares/{shareId}/proposals/{proposalId}/review)
+	ReviewErvisioCodeProposal(ctx context.Context, request ReviewErvisioCodeProposalRequestObject) (ReviewErvisioCodeProposalResponseObject, error)
+	// GetErvisioCodeSharedState Read the visible transcript of a live shared session
+	// (GET /user/ervisiocode/shares/{shareId}/state)
+	GetErvisioCodeSharedState(ctx context.Context, request GetErvisioCodeSharedStateRequestObject) (GetErvisioCodeSharedStateResponseObject, error)
 	// ListUserIssues Issues and pull requests of the signed-in user across the readable repositories
 	// (GET /user/issues)
 	ListUserIssues(ctx context.Context, request ListUserIssuesRequestObject) (ListUserIssuesResponseObject, error)
@@ -75451,6 +78326,32 @@ func (sh *strictHandler) GetErvisioCodeAccount(w http.ResponseWriter, r *http.Re
 	}
 }
 
+// ListErvisioCodeRepositoryCatalog operation middleware
+func (sh *strictHandler) ListErvisioCodeRepositoryCatalog(w http.ResponseWriter, r *http.Request, params ListErvisioCodeRepositoryCatalogParams) {
+	var request ListErvisioCodeRepositoryCatalogRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListErvisioCodeRepositoryCatalog(ctx, request.(ListErvisioCodeRepositoryCatalogRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListErvisioCodeRepositoryCatalog")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListErvisioCodeRepositoryCatalogResponseObject); ok {
+		if err := validResponse.VisitListErvisioCodeRepositoryCatalogResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListErvisioCodeDevices operation middleware
 func (sh *strictHandler) ListErvisioCodeDevices(w http.ResponseWriter, r *http.Request) {
 	var request ListErvisioCodeDevicesRequestObject
@@ -75501,6 +78402,146 @@ func (sh *strictHandler) RevokeErvisioCodeDevice(w http.ResponseWriter, r *http.
 	}
 }
 
+// GetErvisioCodeHubSession operation middleware
+func (sh *strictHandler) GetErvisioCodeHubSession(w http.ResponseWriter, r *http.Request, params GetErvisioCodeHubSessionParams) {
+	var request GetErvisioCodeHubSessionRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetErvisioCodeHubSession(ctx, request.(GetErvisioCodeHubSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetErvisioCodeHubSession")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetErvisioCodeHubSessionResponseObject); ok {
+		if err := validResponse.VisitGetErvisioCodeHubSessionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateErvisioCodeHubSession operation middleware
+func (sh *strictHandler) CreateErvisioCodeHubSession(w http.ResponseWriter, r *http.Request) {
+	var request CreateErvisioCodeHubSessionRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateErvisioCodeHubSession(ctx, request.(CreateErvisioCodeHubSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateErvisioCodeHubSession")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateErvisioCodeHubSessionResponseObject); ok {
+		if err := validResponse.VisitCreateErvisioCodeHubSessionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListErvisioCodeProjects operation middleware
+func (sh *strictHandler) ListErvisioCodeProjects(w http.ResponseWriter, r *http.Request, params ListErvisioCodeProjectsParams) {
+	var request ListErvisioCodeProjectsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListErvisioCodeProjects(ctx, request.(ListErvisioCodeProjectsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListErvisioCodeProjects")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListErvisioCodeProjectsResponseObject); ok {
+		if err := validResponse.VisitListErvisioCodeProjectsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateErvisioCodeRemoteSession operation middleware
+func (sh *strictHandler) CreateErvisioCodeRemoteSession(w http.ResponseWriter, r *http.Request, params CreateErvisioCodeRemoteSessionParams) {
+	var request CreateErvisioCodeRemoteSessionRequestObject
+
+	request.Params = params
+
+	var body CreateErvisioCodeRemoteSessionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateErvisioCodeRemoteSession(ctx, request.(CreateErvisioCodeRemoteSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateErvisioCodeRemoteSession")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateErvisioCodeRemoteSessionResponseObject); ok {
+		if err := validResponse.VisitCreateErvisioCodeRemoteSessionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PollErvisioCodeRelay operation middleware
+func (sh *strictHandler) PollErvisioCodeRelay(w http.ResponseWriter, r *http.Request) {
+	var request PollErvisioCodeRelayRequestObject
+
+	var body PollErvisioCodeRelayJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PollErvisioCodeRelay(ctx, request.(PollErvisioCodeRelayRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PollErvisioCodeRelay")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PollErvisioCodeRelayResponseObject); ok {
+		if err := validResponse.VisitPollErvisioCodeRelayResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // SetErvisioCodeRemotePresence operation middleware
 func (sh *strictHandler) SetErvisioCodeRemotePresence(w http.ResponseWriter, r *http.Request) {
 	var request SetErvisioCodeRemotePresenceRequestObject
@@ -75525,6 +78566,367 @@ func (sh *strictHandler) SetErvisioCodeRemotePresence(w http.ResponseWriter, r *
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SetErvisioCodeRemotePresenceResponseObject); ok {
 		if err := validResponse.VisitSetErvisioCodeRemotePresenceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListErvisioCodeSessions operation middleware
+func (sh *strictHandler) ListErvisioCodeSessions(w http.ResponseWriter, r *http.Request, params ListErvisioCodeSessionsParams) {
+	var request ListErvisioCodeSessionsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListErvisioCodeSessions(ctx, request.(ListErvisioCodeSessionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListErvisioCodeSessions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListErvisioCodeSessionsResponseObject); ok {
+		if err := validResponse.VisitListErvisioCodeSessionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ActOnErvisioCodeSession operation middleware
+func (sh *strictHandler) ActOnErvisioCodeSession(w http.ResponseWriter, r *http.Request, params ActOnErvisioCodeSessionParams) {
+	var request ActOnErvisioCodeSessionRequestObject
+
+	request.Params = params
+
+	var body ActOnErvisioCodeSessionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ActOnErvisioCodeSession(ctx, request.(ActOnErvisioCodeSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ActOnErvisioCodeSession")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ActOnErvisioCodeSessionResponseObject); ok {
+		if err := validResponse.VisitActOnErvisioCodeSessionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListErvisioCodeShares operation middleware
+func (sh *strictHandler) ListErvisioCodeShares(w http.ResponseWriter, r *http.Request, params ListErvisioCodeSharesParams) {
+	var request ListErvisioCodeSharesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListErvisioCodeShares(ctx, request.(ListErvisioCodeSharesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListErvisioCodeShares")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListErvisioCodeSharesResponseObject); ok {
+		if err := validResponse.VisitListErvisioCodeSharesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateErvisioCodeShare operation middleware
+func (sh *strictHandler) CreateErvisioCodeShare(w http.ResponseWriter, r *http.Request, params CreateErvisioCodeShareParams) {
+	var request CreateErvisioCodeShareRequestObject
+
+	request.Params = params
+
+	var body CreateErvisioCodeShareJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateErvisioCodeShare(ctx, request.(CreateErvisioCodeShareRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateErvisioCodeShare")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateErvisioCodeShareResponseObject); ok {
+		if err := validResponse.VisitCreateErvisioCodeShareResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AcceptErvisioCodeShare operation middleware
+func (sh *strictHandler) AcceptErvisioCodeShare(w http.ResponseWriter, r *http.Request, params AcceptErvisioCodeShareParams) {
+	var request AcceptErvisioCodeShareRequestObject
+
+	request.Params = params
+
+	var body AcceptErvisioCodeShareJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AcceptErvisioCodeShare(ctx, request.(AcceptErvisioCodeShareRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AcceptErvisioCodeShare")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AcceptErvisioCodeShareResponseObject); ok {
+		if err := validResponse.VisitAcceptErvisioCodeShareResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SearchErvisioCodeRecipients operation middleware
+func (sh *strictHandler) SearchErvisioCodeRecipients(w http.ResponseWriter, r *http.Request, params SearchErvisioCodeRecipientsParams) {
+	var request SearchErvisioCodeRecipientsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SearchErvisioCodeRecipients(ctx, request.(SearchErvisioCodeRecipientsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SearchErvisioCodeRecipients")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SearchErvisioCodeRecipientsResponseObject); ok {
+		if err := validResponse.VisitSearchErvisioCodeRecipientsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeErvisioCodeShare operation middleware
+func (sh *strictHandler) RevokeErvisioCodeShare(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params RevokeErvisioCodeShareParams) {
+	var request RevokeErvisioCodeShareRequestObject
+
+	request.ShareId = shareId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeErvisioCodeShare(ctx, request.(RevokeErvisioCodeShareRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeErvisioCodeShare")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeErvisioCodeShareResponseObject); ok {
+		if err := validResponse.VisitRevokeErvisioCodeShareResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AcceptErvisioCodeShareById operation middleware
+func (sh *strictHandler) AcceptErvisioCodeShareById(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params AcceptErvisioCodeShareByIdParams) {
+	var request AcceptErvisioCodeShareByIdRequestObject
+
+	request.ShareId = shareId
+	request.Params = params
+
+	var body AcceptErvisioCodeShareByIdJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AcceptErvisioCodeShareById(ctx, request.(AcceptErvisioCodeShareByIdRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AcceptErvisioCodeShareById")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AcceptErvisioCodeShareByIdResponseObject); ok {
+		if err := validResponse.VisitAcceptErvisioCodeShareByIdResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListErvisioCodeProposals operation middleware
+func (sh *strictHandler) ListErvisioCodeProposals(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params ListErvisioCodeProposalsParams) {
+	var request ListErvisioCodeProposalsRequestObject
+
+	request.ShareId = shareId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListErvisioCodeProposals(ctx, request.(ListErvisioCodeProposalsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListErvisioCodeProposals")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListErvisioCodeProposalsResponseObject); ok {
+		if err := validResponse.VisitListErvisioCodeProposalsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateErvisioCodeProposal operation middleware
+func (sh *strictHandler) CreateErvisioCodeProposal(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params CreateErvisioCodeProposalParams) {
+	var request CreateErvisioCodeProposalRequestObject
+
+	request.ShareId = shareId
+	request.Params = params
+
+	var body CreateErvisioCodeProposalJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateErvisioCodeProposal(ctx, request.(CreateErvisioCodeProposalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateErvisioCodeProposal")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateErvisioCodeProposalResponseObject); ok {
+		if err := validResponse.VisitCreateErvisioCodeProposalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReviewErvisioCodeProposal operation middleware
+func (sh *strictHandler) ReviewErvisioCodeProposal(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, proposalId openapi_types.UUID, params ReviewErvisioCodeProposalParams) {
+	var request ReviewErvisioCodeProposalRequestObject
+
+	request.ShareId = shareId
+	request.ProposalId = proposalId
+	request.Params = params
+
+	var body ReviewErvisioCodeProposalJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReviewErvisioCodeProposal(ctx, request.(ReviewErvisioCodeProposalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReviewErvisioCodeProposal")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReviewErvisioCodeProposalResponseObject); ok {
+		if err := validResponse.VisitReviewErvisioCodeProposalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetErvisioCodeSharedState operation middleware
+func (sh *strictHandler) GetErvisioCodeSharedState(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params GetErvisioCodeSharedStateParams) {
+	var request GetErvisioCodeSharedStateRequestObject
+
+	request.ShareId = shareId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetErvisioCodeSharedState(ctx, request.(GetErvisioCodeSharedStateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetErvisioCodeSharedState")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetErvisioCodeSharedStateResponseObject); ok {
+		if err := validResponse.VisitGetErvisioCodeSharedStateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

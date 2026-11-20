@@ -32,6 +32,14 @@ func ervisioCodeDeviceDTO(d credentials.ErvisioCodeDevice) v1gen.ErvisioCodeDevi
 	return device
 }
 
+func ervisioCodeDevicesDTO(devices []credentials.ErvisioCodeDevice) []v1gen.ErvisioCodeDevice {
+	out := make([]v1gen.ErvisioCodeDevice, 0, len(devices))
+	for _, device := range devices {
+		out = append(out, ervisioCodeDeviceDTO(device))
+	}
+	return out
+}
+
 func (s *v1Server) GetErvisioCodeAccount(ctx context.Context, _ v1gen.GetErvisioCodeAccountRequestObject) (v1gen.GetErvisioCodeAccountResponseObject, error) {
 	if s.creds == nil {
 		return errCredentialsUnavailable, nil
@@ -64,13 +72,9 @@ func (s *v1Server) ListErvisioCodeDevices(ctx context.Context, _ v1gen.ListErvis
 	if err != nil {
 		return nil, err
 	}
-	out := make([]v1gen.ErvisioCodeDevice, 0, len(devices))
-	for _, device := range devices {
-		out = append(out, ervisioCodeDeviceDTO(device))
-	}
 	cacheControl := "no-store"
 	return v1gen.ListErvisioCodeDevices200JSONResponse{
-		Body: out, Headers: v1gen.ListErvisioCodeDevices200ResponseHeaders{CacheControl: &cacheControl},
+		Body: ervisioCodeDevicesDTO(devices), Headers: v1gen.ListErvisioCodeDevices200ResponseHeaders{CacheControl: &cacheControl},
 	}, nil
 }
 
@@ -113,5 +117,6 @@ func (s *v1Server) RevokeErvisioCodeDevice(ctx context.Context, req v1gen.Revoke
 	if err != nil {
 		return nil, err
 	}
+	s.remote.revoke(remoteHostKey{accountID: p.UserID, deviceID: req.Id})
 	return v1gen.RevokeErvisioCodeDevice204Response{}, nil
 }

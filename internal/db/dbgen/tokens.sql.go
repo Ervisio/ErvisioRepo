@@ -102,6 +102,49 @@ func (q *Queries) GetErvisioCodeDevice(ctx context.Context, arg GetErvisioCodeDe
 	return i, err
 }
 
+const getErvisioCodeHubSession = `-- name: GetErvisioCodeHubSession :one
+SELECT n.name AS username
+FROM tokens t
+JOIN users u ON u.id = t.user_id
+JOIN namespaces n ON n.id = u.id
+WHERE t.hub_session_hash = $1
+  AND t.user_id = $2 AND t.is_ervisiocode_device
+  AND t.scopes = ARRAY['ervisiocode:device']::text[]
+  AND t.hub_session_expires_at > now() AND t.expires_at > now()
+  AND u.suspended_at IS NULL
+`
+
+type GetErvisioCodeHubSessionParams struct {
+	SessionHash []byte
+	UserID      uuid.UUID
+}
+
+func (q *Queries) GetErvisioCodeHubSession(ctx context.Context, arg GetErvisioCodeHubSessionParams) (string, error) {
+	row := q.db.QueryRow(ctx, getErvisioCodeHubSession, arg.SessionHash, arg.UserID)
+	var username string
+	err := row.Scan(&username)
+	return username, err
+}
+
+const getErvisioCodeRemoteMetadata = `-- name: GetErvisioCodeRemoteMetadata :one
+SELECT remote_session_metadata FROM tokens t
+WHERE t.id = $1 AND t.user_id = $2
+  AND t.is_ervisiocode_device AND t.expires_at > now()
+  AND EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id AND u.suspended_at IS NULL)
+`
+
+type GetErvisioCodeRemoteMetadataParams struct {
+	TokenID uuid.UUID
+	UserID  uuid.UUID
+}
+
+func (q *Queries) GetErvisioCodeRemoteMetadata(ctx context.Context, arg GetErvisioCodeRemoteMetadataParams) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getErvisioCodeRemoteMetadata, arg.TokenID, arg.UserID)
+	var remote_session_metadata []byte
+	err := row.Scan(&remote_session_metadata)
+	return remote_session_metadata, err
+}
+
 const getTokenByHash = `-- name: GetTokenByHash :one
 SELECT t.id, t.user_id, t.scopes, t.expires_at, t.last_used_at, t.is_ervisiocode_device,
        n.name AS username, u.role, u.suspended_at, a.id AS app_id
@@ -223,6 +266,37 @@ func (q *Queries) ListErvisioCodeDevices(ctx context.Context, userID uuid.UUID) 
 	return items, nil
 }
 
+const listErvisioCodeRemoteMetadata = `-- name: ListErvisioCodeRemoteMetadata :many
+SELECT t.id, t.remote_session_metadata FROM tokens t
+WHERE t.user_id = $1 AND t.is_ervisiocode_device AND t.expires_at > now()
+  AND EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id AND u.suspended_at IS NULL)
+`
+
+type ListErvisioCodeRemoteMetadataRow struct {
+	ID                    uuid.UUID
+	RemoteSessionMetadata []byte
+}
+
+func (q *Queries) ListErvisioCodeRemoteMetadata(ctx context.Context, userID uuid.UUID) ([]ListErvisioCodeRemoteMetadataRow, error) {
+	rows, err := q.db.Query(ctx, listErvisioCodeRemoteMetadata, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListErvisioCodeRemoteMetadataRow{}
+	for rows.Next() {
+		var i ListErvisioCodeRemoteMetadataRow
+		if err := rows.Scan(&i.ID, &i.RemoteSessionMetadata); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUserTokens = `-- name: ListUserTokens :many
 SELECT id, name, hint, scopes, expires_at, last_used_at, created_at
 FROM tokens WHERE user_id = $1 AND grant_id IS NULL AND NOT is_ervisiocode_device ORDER BY created_at DESC
@@ -264,6 +338,54 @@ func (q *Queries) ListUserTokens(ctx context.Context, userID uuid.UUID) ([]ListU
 		return nil, err
 	}
 	return items, nil
+}
+
+const setErvisioCodeHubSession = `-- name: SetErvisioCodeHubSession :execrows
+UPDATE tokens t
+SET hub_session_hash = $1,
+    hub_session_expires_at = LEAST(t.expires_at, now() + make_interval(secs => $2::integer))
+WHERE t.id = $3 AND t.user_id = $4
+  AND t.is_ervisiocode_device AND t.expires_at > now()
+  AND EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id AND u.suspended_at IS NULL)
+`
+
+type SetErvisioCodeHubSessionParams struct {
+	SessionHash []byte
+	TtlSeconds  int32
+	TokenID     uuid.UUID
+	UserID      uuid.UUID
+}
+
+func (q *Queries) SetErvisioCodeHubSession(ctx context.Context, arg SetErvisioCodeHubSessionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setErvisioCodeHubSession,
+		arg.SessionHash,
+		arg.TtlSeconds,
+		arg.TokenID,
+		arg.UserID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const setErvisioCodeRemoteMetadata = `-- name: SetErvisioCodeRemoteMetadata :exec
+UPDATE tokens t SET remote_session_metadata = $1::jsonb
+WHERE t.id = $2 AND t.user_id = $3
+  AND t.is_ervisiocode_device AND t.expires_at > now()
+  AND t.remote_session_metadata IS DISTINCT FROM $1::jsonb
+  AND EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id AND u.suspended_at IS NULL)
+`
+
+type SetErvisioCodeRemoteMetadataParams struct {
+	Metadata []byte
+	TokenID  uuid.UUID
+	UserID   uuid.UUID
+}
+
+func (q *Queries) SetErvisioCodeRemoteMetadata(ctx context.Context, arg SetErvisioCodeRemoteMetadataParams) error {
+	_, err := q.db.Exec(ctx, setErvisioCodeRemoteMetadata, arg.Metadata, arg.TokenID, arg.UserID)
+	return err
 }
 
 const setErvisioCodeRemotePresence = `-- name: SetErvisioCodeRemotePresence :execrows

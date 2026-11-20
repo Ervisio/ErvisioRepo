@@ -23,6 +23,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/avatars"
+	"github.com/Ervisio/ErvisioRepo/internal/codeshare"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/dashboard"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
@@ -338,12 +339,12 @@ func directLoopback(r *http.Request) bool {
 	return err == nil && ip != nil && ip.IsLoopback() && !forwarded
 }
 
-// mountV1 mounts the REST API. Every request loads the session and passes
+// mountV1 mounts the REST API. Requests load the applicable credential and pass
 // the CSRF check; each operation then enforces its OpenAPI security
 // requirement (public, signed-in user or instance admin). The admin prefix
 // is also guarded as a whole, so that a misdeclared operation cannot leak.
 func mountV1(r chi.Router, d Deps) {
-	r.Use(d.Auth.LoadV1Session, d.Auth.CSRF, adminOnly(d.Auth), storageBodyLimit, mfaCookie(d.Auth.Cookies))
+	r.Use(remoteRequestHeaders(d.Meta.PublicURL), hubSessionAuth(d.Auth, d.Meta.PublicURL), adminOnly(d.Auth), storageBodyLimit, mfaCookie(d.Auth.Cookies))
 	srv := &v1Server{log: d.Log, meta: d.Meta, storage: d.Storage, identity: d.Identity, cookies: d.Auth.Cookies, mfa: d.MFA, orgs: d.Orgs, repos: d.Repos, audit: d.Audit,
 		creds: d.Credentials, sso: d.SSO, tiering: d.Tiering, releases: d.Releases, browse: d.Browse,
 		protection: d.Protection, github: d.GitHub, issues: d.Issues}
@@ -358,6 +359,10 @@ func mountV1(r chi.Router, d Deps) {
 	srv.apps = d.Apps
 	srv.presence = d.Presence
 	srv.db, _ = d.DB.(dbgen.DBTX)
+	if srv.db != nil {
+		srv.shares = codeshare.New(srv.db)
+	}
+	srv.sessions = d.Auth.Sessions
 	srv.monitor, srv.mailHost = d.Monitor, d.MailHost
 	if d.Jobs != nil {
 		srv.jobs = d.Jobs
@@ -374,7 +379,7 @@ func mountV1(r chi.Router, d Deps) {
 	})
 	v1gen.HandlerWithOptions(strict, v1gen.ChiServerOptions{
 		BaseRouter:  r,
-		Middlewares: []v1gen.MiddlewareFunc{d.Auth.Authorize(operationScopes, operationTokenScopes)},
+		Middlewares: []v1gen.MiddlewareFunc{remoteRequestBody, authorizeHubSession(d.Auth.Authorize(operationScopes, operationTokenScopes))},
 		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())
 		},

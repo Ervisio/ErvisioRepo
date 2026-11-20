@@ -435,33 +435,42 @@ func (t *tokens) token(ctx context.Context, c credential) (string, error) {
 	if ok && ct.version.Equal(c.version) && now.Add(tokenRefresh).Before(ct.expires) {
 		return ct.token, nil
 	}
+	token, expires, err := mintInstallationToken(ctx, c, t.http, nil)
+	if err != nil {
+		return "", err
+	}
+	t.mu.Lock()
+	t.byID[c.id] = cachedToken{token: token, expires: expires, version: c.version}
+	t.mu.Unlock()
+	return token, nil
+}
+
+func mintInstallationToken(ctx context.Context, c credential, client *http.Client, body any) (string, time.Time, error) {
 	key, err := parsePrivateKey(c.secret)
 	if err != nil {
-		return "", err
+		return "", time.Time{}, err
 	}
+	now := time.Now()
 	jwt, err := appJWT(c.appID, key, now)
 	if err != nil {
-		return "", err
+		return "", time.Time{}, err
 	}
-	app := &API{base: APIURL(c.baseURL), token: jwt, http: t.http}
+	app := &API{base: APIURL(c.baseURL), token: jwt, http: client}
 	var out struct {
 		Token     string    `json:"token"`
 		ExpiresAt time.Time `json:"expires_at"`
 	}
 	path := "/app/installations/" + strconv.FormatInt(c.installationID, 10) + "/access_tokens"
-	if err := app.Do(ctx, http.MethodPost, path, nil, &out); err != nil {
-		return "", fmt.Errorf("installation token: %w", err)
+	if err := app.Do(ctx, http.MethodPost, path, body, &out); err != nil {
+		return "", time.Time{}, fmt.Errorf("installation token: %w", err)
 	}
 	if out.Token == "" {
-		return "", errors.New("installation token: empty answer")
+		return "", time.Time{}, errors.New("installation token: empty answer")
 	}
 	if out.ExpiresAt.IsZero() {
 		out.ExpiresAt = now.Add(time.Hour)
 	}
-	t.mu.Lock()
-	t.byID[c.id] = cachedToken{token: out.Token, expires: out.ExpiresAt, version: c.version}
-	t.mu.Unlock()
-	return out.Token, nil
+	return out.Token, out.ExpiresAt, nil
 }
 
 // api returns an API client authenticated as the connection.

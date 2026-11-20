@@ -1311,6 +1311,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/user/ervisiocode/hub-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the account and devices of an active ErvisioCode hub session
+         * @description Only the hub cookie is accepted. The session stops working when its issuing device expires or is revoked.
+         */
+        get: operations["getErvisioCodeHubSession"];
+        put?: never;
+        /**
+         * Issue an ErvisioCode hub session for the current device
+         * @description Replaces the current device's hub session. The HTTPS-only cookie is usable only by the hub session, sessions, and projects operations, is not a browser sign-in, and expires after 15 minutes at most.
+         */
+        post: operations["createErvisioCodeHubSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/user/ervisiocode/devices": {
         parameters: {
             query?: never;
@@ -1368,6 +1392,314 @@ export interface paths {
          */
         put: operations["setErvisioCodeRemotePresence"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/sessions": {
+        parameters: {
+            query?: {
+                /** @description Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID. */
+                accountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List live ErvisioCode Remote sessions and offline recent metadata
+         * @description Only explicitly published sessions appear. Live access expires 15 seconds after the last poll. Offline entries carry no relay ID and cannot be acted on.
+         */
+        get: operations["listErvisioCodeSessions"];
+        put?: never;
+        /**
+         * Read, prompt, or interrupt one live ErvisioCode Remote session
+         * @description Waits at most 10 seconds for the linked host. Browser sessions use the normal
+         *     CSRF token; embedded hub sessions require a matching HTTPS Origin and JSON.
+         *     Prompt and interrupt are never automatically replayed; a timeout does
+         *     not prove the host did not already accept the operation.
+         */
+        post: operations["actOnErvisioCodeSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/projects": {
+        parameters: {
+            query?: {
+                /** @description Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID. */
+                accountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List locally approved projects advertised by the caller's live linked hosts */
+        get: operations["listErvisioCodeProjects"];
+        put?: never;
+        /**
+         * Create a session on a live linked host in a locally approved project
+         * @description Local projects have up to 10 seconds. Repository-backed projects allow
+         *     up to 12 additional seconds for live provider authorization before giving
+         *     the host up to 45 seconds for a separate checkout or 10 seconds otherwise.
+         *     Browser sessions use the normal CSRF token; embedded hub sessions require
+         *     a matching HTTPS Origin and JSON.
+         *     A timeout does not prove the host did not create a session. Refresh the live
+         *     list instead of automatically retrying.
+         */
+        post: operations["createErvisioCodeRemoteSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/catalog": {
+        parameters: {
+            query?: {
+                /** @description Selects the matching embedded hub session. Omit for a normal browser session. */
+                accountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the selected account's repositories and their matching live host approvals
+         * @description Discovery does not grant checkout access. A repository with no matching live
+         *     host approval has an empty checkouts array. Only the IDs of a live host
+         *     approval can be used to create a session. GitHub discovery uses the selected
+         *     account's personal GitHub.com connections configured in ErvisioRepo.
+         */
+        get: operations["listErvisioCodeRepositoryCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/shares": {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List owned and currently accessible ErvisioCode shares */
+        get: operations["listErvisioCodeShares"];
+        put?: never;
+        /**
+         * Invite an account or grant current members of an organization access
+         * @description Browser writes require the CSRF header. All writes require the configured HTTPS origin. Personal invites expire after seven days and only the named account can accept. Organization grants require the host account to be a current owner or admin of the organization.
+         */
+        post: operations["createErvisioCodeShare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/shares/recipients": {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search the ErvisioCode sharing directory
+         * @description Searches visible accounts or organizations where the caller is an owner or admin. Returns at most ten matches and never returns email addresses.
+         */
+        get: operations["searchErvisioCodeRecipients"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/shares/accept": {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a personal invitation as the account it was issued to */
+        post: operations["acceptErvisioCodeShare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/shares/{shareId}": {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke a share or pending personal invite */
+        delete: operations["revokeErvisioCodeShare"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/shares/{shareId}/accept": {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept a pending personal invitation from the signed-in account's inbox
+         * @description Only the named recipient can accept. The invite must be unexpired and unrevoked, and target a session still published by a valid linked device. The device may be offline.
+         */
+        post: operations["acceptErvisioCodeShareById"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/shares/{shareId}/state": {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Read the visible transcript of a live shared session
+         * @description Restricted grants require a host that supports history filtering; they never fall back to full history. The host sends its bounded recent transcript; the service does not persist it. The share never authorizes a prompt, interrupt, or other action.
+         */
+        get: operations["getErvisioCodeSharedState"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/shares/{shareId}/proposals": {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List proposals while the host is online or offline
+         * @description The host account can list all proposals. Other accounts see only those they submitted.
+         */
+        get: operations["listErvisioCodeProposals"];
+        put?: never;
+        /**
+         * Submit a proposal without executing it
+         * @description Requires the proposer or direct role. The host does not need to be online. Proposals expire seven days after submission, whether reviewed or not.
+         */
+        post: operations["createErvisioCodeProposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/shares/{shareId}/proposals/{proposalId}/review": {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+                proposalId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record the session owner's decision on a pending proposal
+         * @description Expired proposals cannot be reviewed. Approval is only a recorded decision; it never dispatches, queues, or schedules execution.
+         */
+        post: operations["reviewErvisioCodeProposal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/relay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Poll typed ErvisioCode Remote actions as the linked host
+         * @description Use only over HTTPS with the linked device Bearer token. Poll serially about every
+         *     two seconds with a fresh UUID per active Remote lifetime and a complete opt-in
+         *     list of sessions in host-approved projects. `enabled: true` permits an empty
+         *     session list and publishes the approved project advertisements. `enabled: false`
+         *     withdraws live access without clearing recents. An enabled snapshot also replaces
+         *     the stored metadata, so omitted sessions disappear from recents. When `enabled`
+         *     is omitted, the lifetime is active only when sessions are present.
+         *     Deliveries are at most once; discard expired requests and recheck
+         *     local approval before acting on any session or creating one in a project.
+         */
+        post: operations["pollErvisioCodeRelay"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7618,6 +7950,257 @@ export interface components {
         ErvisioCodeRemotePresenceUpdate: {
             active: boolean;
         };
+        ErvisioCodeRemoteSession: {
+            /** Format: uuid */
+            deviceId: string;
+            /** Format: uuid */
+            relayId: string;
+            sessionId: string;
+            title: string;
+            /** Format: date-time */
+            lastActivityAt: string;
+        };
+        ErvisioCodeRemoteRecent: {
+            /** Format: uuid */
+            deviceId: string;
+            sessionId: string;
+            title: string;
+            /** Format: date-time */
+            lastActivityAt: string;
+        };
+        /** @enum {string} */
+        ErvisioCodeRemoteOp: "state" | "prompt" | "interrupt";
+        ErvisioCodeRemoteProject: {
+            /** Format: uuid */
+            deviceId: string;
+            /** Format: uuid */
+            relayId: string;
+            /** Format: uuid */
+            projectId: string;
+            label: string;
+            deviceName?: string;
+            repository?: components["schemas"]["ErvisioCodeRemoteRepository"];
+        };
+        /** @description Display metadata for a host-approved checkout. Never contains a path, URL, or credentials. */
+        ErvisioCodeRemoteRepository: {
+            /** @enum {string} */
+            provider: "ervisiorepo" | "github";
+            name: string;
+            /** @enum {string} */
+            checkout: "separate" | "existing";
+        };
+        ErvisioCodeRepositoryCatalog: {
+            ervisiorepo: components["schemas"]["ErvisioCodeProviderCatalog"];
+            github: components["schemas"]["ErvisioCodeProviderCatalog"];
+        };
+        ErvisioCodeProviderCatalog: {
+            /**
+             * @description Partial means only part of the catalog could be listed; listed repositories are still authorized.
+             * @enum {string}
+             */
+            status: "ready" | "not_connected" | "unavailable" | "partial";
+            repositories: components["schemas"]["ErvisioCodeCatalogRepository"][];
+        };
+        ErvisioCodeCatalogRepository: {
+            name: string;
+            checkouts: components["schemas"]["ErvisioCodeRemoteProject"][];
+        };
+        ErvisioCodeRemoteCreate: {
+            /** Format: uuid */
+            deviceId: string;
+            /** Format: uuid */
+            relayId: string;
+            /** Format: uuid */
+            projectId: string;
+        };
+        ErvisioCodeRemoteAction: {
+            /** Format: uuid */
+            deviceId: string;
+            /** Format: uuid */
+            relayId: string;
+            sessionId: string;
+            op: components["schemas"]["ErvisioCodeRemoteOp"];
+            /** @description Plain prompt text; required only for the prompt operation. */
+            text?: string;
+        };
+        ErvisioCodeRemoteMessage: {
+            messageId?: components["schemas"]["ErvisioCodeMessageId"];
+            /** @enum {string} */
+            role: "user" | "assistant";
+            text: string;
+        };
+        ErvisioCodeRemoteState: {
+            /** @description Recent visible messages, oldest first, at most 65536 bytes of text in total. Required for state; omitted for mutations. */
+            messages?: components["schemas"]["ErvisioCodeRemoteMessage"][];
+            /** @description Required for state; omitted for mutations. */
+            busy?: boolean;
+        };
+        /** @enum {string} */
+        ErvisioCodeRecipientKind: "user" | "org";
+        ErvisioCodeRecipient: {
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ErvisioCodeRecipientKind"];
+            name: string;
+            displayName: string;
+        };
+        /**
+         * @description Reader can read state; proposer and direct can also submit proposals. Direct requires full-history consent and does not authorize execution.
+         * @enum {string}
+         */
+        ErvisioCodeShareRole: "reader" | "proposer" | "direct";
+        ErvisioCodeShare: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            ownerId: string;
+            /** Format: uuid */
+            deviceId: string;
+            sessionId: string;
+            /** Format: uuid */
+            recipientId?: string;
+            /** Format: uuid */
+            orgId?: string;
+            role: components["schemas"]["ErvisioCodeShareRole"];
+            fullHistory: boolean;
+            afterMessageId?: components["schemas"]["ErvisioCodeMessageId"];
+            fromMessageId?: components["schemas"]["ErvisioCodeMessageId"];
+            /** @description A private host cursor is stored for this grant. */
+            newOnly?: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            inviteExpiresAt?: string;
+            /** Format: date-time */
+            acceptedAt?: string;
+            /** Format: date-time */
+            revokedAt?: string;
+        };
+        /** @description Supply exactly one of recipientId or orgId, and exactly one of fullHistory true, afterMessageId, fromMessageId, or newOnly true. New-only captures a cursor from a live host that supports history filtering. */
+        ErvisioCodeShareCreate: {
+            /** Format: uuid */
+            deviceId: string;
+            sessionId: string;
+            /** Format: uuid */
+            recipientId?: string;
+            /** Format: uuid */
+            orgId?: string;
+            role: components["schemas"]["ErvisioCodeShareRole"];
+            /**
+             * @description Explicit consent to disclose existing and future messages.
+             * @enum {boolean}
+             */
+            fullHistory?: true;
+            afterMessageId?: components["schemas"]["ErvisioCodeMessageId"];
+            fromMessageId?: components["schemas"]["ErvisioCodeMessageId"];
+            /**
+             * @description Start after the host's current history boundary.
+             * @enum {boolean}
+             */
+            newOnly?: true;
+        };
+        ErvisioCodeShareAccept: {
+            token: string;
+        };
+        ErvisioCodeProposal: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            shareId: string;
+            /** Format: uuid */
+            authorId: string;
+            body: string;
+            /** @enum {string} */
+            status: "pending" | "approved" | "rejected";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            reviewedAt?: string;
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        ErvisioCodeProposalCreate: {
+            /** @description Plain text; maximum 16384 UTF-8 bytes. */
+            body: string;
+        };
+        ErvisioCodeProposalReview: {
+            /** @enum {string} */
+            status: "approved" | "rejected";
+        };
+        /** @description Opaque native message identifier scoped to the session. */
+        ErvisioCodeMessageId: string;
+        /** @description Opaque history cursor created and interpreted by the bound host. */
+        ErvisioCodeHostCursor: string;
+        ErvisioCodeRelayHistory: components["schemas"]["ErvisioCodeHistoryFrom"] | components["schemas"]["ErvisioCodeHistoryAfter"] | components["schemas"]["ErvisioCodeHistoryCursor"];
+        ErvisioCodeHistoryFrom: {
+            fromMessageId: components["schemas"]["ErvisioCodeMessageId"];
+        };
+        ErvisioCodeHistoryAfter: {
+            afterMessageId: components["schemas"]["ErvisioCodeMessageId"];
+        };
+        ErvisioCodeHistoryCursor: {
+            hostCursor: components["schemas"]["ErvisioCodeHostCursor"];
+        };
+        ErvisioCodeRelayPoll: {
+            /** Format: uuid */
+            relayId: string;
+            /** @description When omitted */
+            enabled?: boolean;
+            /** @description The host supports history-boundary and can filter before returning any restricted state. */
+            historyFiltering?: boolean;
+            /** @description Complete set of approved project advertisements; omit to advertise none. */
+            projects?: components["schemas"]["ErvisioCodeRemoteProjectPublication"][];
+            sessions: components["schemas"]["ErvisioCodeRemotePublication"][];
+            results?: components["schemas"]["ErvisioCodeRelayResult"][];
+        };
+        ErvisioCodeRemoteProjectPublication: {
+            /** Format: uuid */
+            projectId: string;
+            /** @description Display label only; do not include local paths or repository URLs. */
+            label: string;
+            repository?: components["schemas"]["ErvisioCodeRemoteRepository"];
+        };
+        ErvisioCodeRemotePublication: {
+            sessionId: string;
+            title: string;
+            /**
+             * Format: date-time
+             * @description Local session activity
+             */
+            lastActivityAt?: string;
+        };
+        ErvisioCodeRelayRequest: {
+            /** Format: uuid */
+            id: string;
+            /** @description Present only for actions targeting existing sessions. */
+            sessionId?: string;
+            /**
+             * Format: uuid
+             * @description Present only for create.
+             */
+            projectId?: string;
+            op: components["schemas"]["ErvisioCodeRelayOp"];
+            text?: string;
+            history?: components["schemas"]["ErvisioCodeRelayHistory"];
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        /** @enum {string} */
+        ErvisioCodeRelayOp: "state" | "prompt" | "interrupt" | "create" | "history-boundary";
+        ErvisioCodeRelayResult: {
+            /** Format: uuid */
+            id: string;
+            ok: boolean;
+            /** @description On successful create only; also include the new session in this poll's sessions. */
+            sessionId?: string;
+            messages?: components["schemas"]["ErvisioCodeRemoteMessage"][];
+            busy?: boolean;
+            hostCursor?: components["schemas"]["ErvisioCodeHostCursor"];
+            /** @description Set to true only after the host successfully applied the requested state boundary. */
+            historyApplied?: boolean;
+            /** @description Optional host diagnostic; not shown to controllers. */
+            error?: string;
+        };
         DeviceAuthorization: {
             /** @description Normalized code (XXXX-XXXX) */
             userCode: string;
@@ -10328,6 +10911,11 @@ export interface components {
         };
     };
     parameters: {
+        /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+        ErvisioCodeShareAccountId: string;
+        /** @description Pass the previous page's nextBeforeId to continue. */
+        ErvisioCodeShareBeforeId: string;
+        ErvisioCodeShareId: string;
         /** @description Workflow file name (ci.yml) or path (.github/workflows/ci.yml, URL-encoded) */
         ActionsWorkflowParam: string;
         ActionsRunId: string;
@@ -12345,6 +12933,59 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    getErvisioCodeHubSession: {
+        parameters: {
+            query: {
+                /** @description The account ID stored by the device. Must match the hub session. */
+                accountId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Account and authorized devices */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        accountId: string;
+                        username: string;
+                        devices: components["schemas"]["ErvisioCodeDevice"][];
+                    };
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    createErvisioCodeHubSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Hub session issued */
+            204: {
+                headers: {
+                    "Set-Cookie": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
     listErvisioCodeDevices: {
         parameters: {
             query?: never;
@@ -12416,6 +13057,474 @@ export interface operations {
             400: components["responses"]["Problem"];
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listErvisioCodeSessions: {
+        parameters: {
+            query?: {
+                /** @description Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID. */
+                accountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Live sessions and offline recent metadata for the caller's linked devices */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        sessions: components["schemas"]["ErvisioCodeRemoteSession"][];
+                        recent: components["schemas"]["ErvisioCodeRemoteRecent"][];
+                    };
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    actOnErvisioCodeSession: {
+        parameters: {
+            query?: {
+                /** @description Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID. */
+                accountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErvisioCodeRemoteAction"];
+            };
+        };
+        responses: {
+            /** @description Session state or acknowledgement */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErvisioCodeRemoteState"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+            502: components["responses"]["Problem"];
+            504: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listErvisioCodeProjects: {
+        parameters: {
+            query?: {
+                /** @description Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID. */
+                accountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Live project advertisements */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        projects: components["schemas"]["ErvisioCodeRemoteProject"][];
+                    };
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createErvisioCodeRemoteSession: {
+        parameters: {
+            query?: {
+                /** @description Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID. */
+                accountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErvisioCodeRemoteCreate"];
+            };
+        };
+        responses: {
+            /** @description The host created and published a session */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        sessionId: string;
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+            502: components["responses"]["Problem"];
+            504: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listErvisioCodeRepositoryCatalog: {
+        parameters: {
+            query?: {
+                /** @description Selects the matching embedded hub session. Omit for a normal browser session. */
+                accountId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Provider catalog results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErvisioCodeRepositoryCatalog"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    listErvisioCodeShares: {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+                /** @description Pass the previous page's nextBeforeId to continue. */
+                beforeId?: components["parameters"]["ErvisioCodeShareBeforeId"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Owned shares, active received shares, and valid pending invites issued to the caller */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        shares: components["schemas"]["ErvisioCodeShare"][];
+                        /** Format: uuid */
+                        nextBeforeId?: string;
+                    };
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createErvisioCodeShare: {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErvisioCodeShareCreate"];
+            };
+        };
+        responses: {
+            /** @description Created share; the secret token is returned only on creation of a personal invite */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        share: components["schemas"]["ErvisioCodeShare"];
+                        token?: string;
+                    };
+                };
+            };
+            422: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    searchErvisioCodeRecipients: {
+        parameters: {
+            query: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+                /** @description A case-insensitive handle or display-name prefix, optionally prefixed by @. */
+                q: string;
+                kind: components["schemas"]["ErvisioCodeRecipientKind"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Eligible sharing recipients matching the prefix */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        recipients: components["schemas"]["ErvisioCodeRecipient"][];
+                    };
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    acceptErvisioCodeShare: {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErvisioCodeShareAccept"];
+            };
+        };
+        responses: {
+            /** @description Accepted share */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErvisioCodeShare"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    revokeErvisioCodeShare: {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Share revoked by its host account or a current organization owner or admin */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    acceptErvisioCodeShareById: {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Accepted share */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErvisioCodeShare"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getErvisioCodeSharedState: {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent messages and session busy status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErvisioCodeRemoteState"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+            502: components["responses"]["Problem"];
+            504: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    listErvisioCodeProposals: {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+                /** @description Pass the previous page's nextBeforeId to continue. */
+                beforeId?: components["parameters"]["ErvisioCodeShareBeforeId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unexpired proposals ordered newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        proposals: components["schemas"]["ErvisioCodeProposal"][];
+                        /** Format: uuid */
+                        nextBeforeId?: string;
+                    };
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    createErvisioCodeProposal: {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErvisioCodeProposalCreate"];
+            };
+        };
+        responses: {
+            /** @description Pending proposal saved for review */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErvisioCodeProposal"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    reviewErvisioCodeProposal: {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+                proposalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErvisioCodeProposalReview"];
+            };
+        };
+        responses: {
+            /** @description Reviewed proposal */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErvisioCodeProposal"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    pollErvisioCodeRelay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErvisioCodeRelayPoll"];
+            };
+        };
+        responses: {
+            /** @description Actions to dispatch to a still-approved local session or project, in order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        requests: components["schemas"]["ErvisioCodeRelayRequest"][];
+                    };
+                };
+            };
             default: components["responses"]["Problem"];
         };
     };

@@ -27,6 +27,7 @@ type Repos interface {
 	SetAvatar(ctx context.Context, who auth.Principal, owner, name, avatarURL string, c identity.Client) (repos.Repo, error)
 	MarkOwnerAvatars(ctx context.Context, list []repos.Repo) error
 	ListMine(ctx context.Context, who auth.Principal, offset, limit int) ([]repos.Repo, error)
+	AuthorizeLinkedRepository(ctx context.Context, who auth.Principal, owner, name string) error
 	Update(ctx context.Context, who auth.Principal, owner, name string, in repos.UpdateInput, c identity.Client) (repos.Repo, error)
 	Transfer(ctx context.Context, who auth.Principal, owner, name string, in repos.TransferInput, c identity.Client) (repos.Repo, error)
 	Delete(ctx context.Context, who auth.Principal, owner, name string, c identity.Client) error

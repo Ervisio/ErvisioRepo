@@ -75,6 +75,27 @@
   --b-gap: 20px;
 }
 
+/* The standalone Code workspace stays dark in every site palette. */
+:root {
+  --code-canvas: #191919;
+  --code-sidebar: #202020;
+  --code-raised: #242424;
+  --code-hover: #2d2d2d;
+  --code-line: #393939;
+  --code-control-line: #737373;
+  --code-text: #ececec;
+  --code-muted: #ababab;
+  --code-focus: #64b5ff;
+  --code-action: #1f6feb;
+  --code-on-action: #ffffff;
+  --code-success: #3ddc97;
+  --code-warning: #ffd166;
+  --code-error: #ff6b81;
+  --code-scrim: rgb(0 0 0 / .6);
+  --code-rail: 288px;
+  --code-column: 768px;
+}
+
 /* GitHub dark (default), all layouts. */
 :root {
   color-scheme: dark;

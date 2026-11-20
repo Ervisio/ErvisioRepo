@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/Ervisio/ErvisioRepo/internal/audit"
+	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 )
 
@@ -20,6 +21,38 @@ type ErvisioCodeDevice struct {
 	ExpiresAt    time.Time
 	LastUsedAt   *time.Time
 	RemoteOnline *bool
+}
+
+const ErvisioCodeHubSessionTTL = 15 * time.Minute
+
+func (s *Service) CreateErvisioCodeHubSession(ctx context.Context, userID, tokenID uuid.UUID) (string, error) {
+	secret, hash := auth.NewToken()
+	n, err := s.q.SetErvisioCodeHubSession(ctx, dbgen.SetErvisioCodeHubSessionParams{
+		UserID: userID, TokenID: tokenID, SessionHash: hash, TtlSeconds: int32(ErvisioCodeHubSessionTTL / time.Second),
+	})
+	if err != nil {
+		return "", fmt.Errorf("set ErvisioCode hub session: %w", err)
+	}
+	if n == 0 {
+		return "", ErrNotFound
+	}
+	return secret, nil
+}
+
+func (s *Service) GetErvisioCodeHubSession(ctx context.Context, userID uuid.UUID, secret string) (string, error) {
+	if !auth.ValidTokenFormat(secret) {
+		return "", ErrNotFound
+	}
+	username, err := s.q.GetErvisioCodeHubSession(ctx, dbgen.GetErvisioCodeHubSessionParams{
+		UserID: userID, SessionHash: auth.HashToken(secret),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrNotFound
+	}
+	if err != nil {
+		return "", fmt.Errorf("get ErvisioCode hub session: %w", err)
+	}
+	return username, nil
 }
 
 func (s *Service) GetErvisioCodeDevice(ctx context.Context, userID, id uuid.UUID) (ErvisioCodeDevice, error) {

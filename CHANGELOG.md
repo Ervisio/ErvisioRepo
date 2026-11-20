@@ -6,6 +6,21 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-11-20
+
+### Added
+
+- Android can open the `/code` hub with its existing ErvisioCode device login. The hub session expires after at most 15 minutes, stops working when that device is revoked, and cannot sign in to ErvisioRepo.
+- The personal ErvisioCode Remote API lists explicitly published sessions and relays transcript reads, plain-text prompts, and interrupts to linked hosts over HTTPS. It keeps offline recent titles and last activity until a host unpublishes those sessions or the account revokes the device; prompts and transcripts are not stored.
+- Live linked ErvisioCode hosts can advertise locally approved projects and create a session on request. Project advertisements are not persisted and may include the Git provider, repository name, and checkout mode, but not paths or URLs. The relay waits up to 45 seconds for a separate Git checkout and 10 seconds otherwise.
+- The `/code` repository catalog lists account repositories from ErvisioRepo and the account's personal GitHub.com connections. Catalog entries can be used for a new session only when a live linked host advertises a matching approved checkout.
+- Repository-backed session creation rechecks linked provider access before the host receives a create request. Local-only creation is unchanged.
+- ErvisioCode session owners can invite accounts or grant current organization members reader or proposer access. Offline proposals expire after seven days. Approval records a decision and never executes a prompt.
+
+### Limitations
+
+- The PC workspace requires a compatible ErvisioCode host with account linking enabled. Direct collaboration is disabled; private GitHub checkout has not been verified end to end.
+
 ## [1.19.0] - 2026-11-20
 
 ### Added

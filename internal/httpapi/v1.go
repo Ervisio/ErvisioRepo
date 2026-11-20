@@ -9,6 +9,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/auth/mfa"
 	"github.com/Ervisio/ErvisioRepo/internal/avatars"
+	"github.com/Ervisio/ErvisioRepo/internal/codeshare"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/dashboard"
 	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
@@ -33,6 +34,9 @@ type v1Server struct {
 	repos    Repos
 	audit    audit.Lister
 	creds    *credentials.Service
+	remote   remoteRelay
+	shares   *codeshare.Service
+	sessions *auth.Sessions
 	sso      *sso.Manager
 	tiering  Tiering
 	releases Releases

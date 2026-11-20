@@ -59,3 +59,40 @@ SET remote_active = sqlc.arg(active)::boolean,
 WHERE tokens.user_id = $1 AND tokens.id = sqlc.arg(token_id)
   AND tokens.is_ervisiocode_device AND tokens.expires_at > clock_timestamp()
   AND EXISTS (SELECT 1 FROM users WHERE users.id = tokens.user_id AND users.suspended_at IS NULL);
+
+-- name: SetErvisioCodeHubSession :execrows
+UPDATE tokens t
+SET hub_session_hash = sqlc.arg(session_hash),
+    hub_session_expires_at = LEAST(t.expires_at, now() + make_interval(secs => sqlc.arg(ttl_seconds)::integer))
+WHERE t.id = sqlc.arg(token_id) AND t.user_id = sqlc.arg(user_id)
+  AND t.is_ervisiocode_device AND t.expires_at > now()
+  AND EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id AND u.suspended_at IS NULL);
+
+-- name: GetErvisioCodeHubSession :one
+SELECT n.name AS username
+FROM tokens t
+JOIN users u ON u.id = t.user_id
+JOIN namespaces n ON n.id = u.id
+WHERE t.hub_session_hash = sqlc.arg(session_hash)
+  AND t.user_id = sqlc.arg(user_id) AND t.is_ervisiocode_device
+  AND t.scopes = ARRAY['ervisiocode:device']::text[]
+  AND t.hub_session_expires_at > now() AND t.expires_at > now()
+  AND u.suspended_at IS NULL;
+
+-- name: GetErvisioCodeRemoteMetadata :one
+SELECT remote_session_metadata FROM tokens t
+WHERE t.id = sqlc.arg(token_id) AND t.user_id = sqlc.arg(user_id)
+  AND t.is_ervisiocode_device AND t.expires_at > now()
+  AND EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id AND u.suspended_at IS NULL);
+
+-- name: ListErvisioCodeRemoteMetadata :many
+SELECT t.id, t.remote_session_metadata FROM tokens t
+WHERE t.user_id = sqlc.arg(user_id) AND t.is_ervisiocode_device AND t.expires_at > now()
+  AND EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id AND u.suspended_at IS NULL);
+
+-- name: SetErvisioCodeRemoteMetadata :exec
+UPDATE tokens t SET remote_session_metadata = sqlc.arg(metadata)::jsonb
+WHERE t.id = sqlc.arg(token_id) AND t.user_id = sqlc.arg(user_id)
+  AND t.is_ervisiocode_device AND t.expires_at > now()
+  AND t.remote_session_metadata IS DISTINCT FROM sqlc.arg(metadata)::jsonb
+  AND EXISTS (SELECT 1 FROM users u WHERE u.id = t.user_id AND u.suspended_at IS NULL);

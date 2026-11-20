@@ -1911,6 +1911,67 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /user/ervisiocode/hub-session:
+    post:
+      operationId: createErvisioCodeHubSession
+      tags: [users]
+      summary: Issue an ErvisioCode hub session for the current device
+      description: Replaces the current device's hub session. The HTTPS-only cookie is usable only by the hub session, sessions, and projects operations, is not a browser sign-in, and expires after 15 minutes at most.
+      security:
+        - token: [ervisiocode:device]
+      responses:
+        "204":
+          description: Hub session issued
+          headers:
+            Set-Cookie:
+              required: true
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    get:
+      operationId: getErvisioCodeHubSession
+      tags: [users]
+      summary: Read the account and devices of an active ErvisioCode hub session
+      description: Only the hub cookie is accepted. The session stops working when its issuing device expires or is revoked.
+      security:
+        - hubSession: []
+      parameters:
+        - name: accountId
+          in: query
+          required: true
+          description: The account ID stored by the device. Must match the hub session.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Account and authorized devices
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accountId, username, devices]
+                properties:
+                  accountId:
+                    type: string
+                    format: uuid
+                  username:
+                    type: string
+                  devices:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ErvisioCodeDevice"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
   /user/ervisiocode/devices:
     get:
       operationId: listErvisioCodeDevices
@@ -1988,6 +2049,469 @@ paths:
           $ref: "#/components/responses/Problem"
         "403":
           $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/sessions:
+    parameters:
+      - name: accountId
+        in: query
+        description: Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID.
+        schema: {type: string, format: uuid}
+    get:
+      operationId: listErvisioCodeSessions
+      tags: [users]
+      summary: List live ErvisioCode Remote sessions and offline recent metadata
+      description: Only explicitly published sessions appear. Live access expires 15 seconds after the last poll. Offline entries carry no relay ID and cannot be acted on.
+      security:
+        - session: []
+        - hubSession: []
+        - token: [ervisiocode:device]
+      responses:
+        "200":
+          description: Live sessions and offline recent metadata for the caller's linked devices
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sessions, recent]
+                properties:
+                  sessions:
+                    type: array
+                    items: {$ref: "#/components/schemas/ErvisioCodeRemoteSession"}
+                  recent:
+                    type: array
+                    items: {$ref: "#/components/schemas/ErvisioCodeRemoteRecent"}
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: actOnErvisioCodeSession
+      tags: [users]
+      summary: Read, prompt, or interrupt one live ErvisioCode Remote session
+      description: |
+        Waits at most 10 seconds for the linked host. Browser sessions use the normal
+        CSRF token; embedded hub sessions require a matching HTTPS Origin and JSON.
+        Prompt and interrupt are never automatically replayed; a timeout does
+        not prove the host did not already accept the operation.
+      security:
+        - session: []
+        - hubSession: []
+        - token: [ervisiocode:device]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ErvisioCodeRemoteAction"}
+      responses:
+        "200":
+          description: Session state or acknowledgement
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ErvisioCodeRemoteState"}
+        "404":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+        "502":
+          $ref: "#/components/responses/Problem"
+        "504":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/projects:
+    parameters:
+      - name: accountId
+        in: query
+        description: Required for the hub cookie. When supplied, authenticates only that embedded hub session, except that Bearer callers may supply their own account ID.
+        schema: {type: string, format: uuid}
+    get:
+      operationId: listErvisioCodeProjects
+      tags: [users]
+      summary: List locally approved projects advertised by the caller's live linked hosts
+      security:
+        - session: []
+        - hubSession: []
+        - token: [ervisiocode:device]
+      responses:
+        "200":
+          description: Live project advertisements
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [projects]
+                properties:
+                  projects:
+                    type: array
+                    items: {$ref: "#/components/schemas/ErvisioCodeRemoteProject"}
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createErvisioCodeRemoteSession
+      tags: [users]
+      summary: Create a session on a live linked host in a locally approved project
+      description: |
+        Local projects have up to 10 seconds. Repository-backed projects allow
+        up to 12 additional seconds for live provider authorization before giving
+        the host up to 45 seconds for a separate checkout or 10 seconds otherwise.
+        Browser sessions use the normal CSRF token; embedded hub sessions require
+        a matching HTTPS Origin and JSON.
+        A timeout does not prove the host did not create a session. Refresh the live
+        list instead of automatically retrying.
+      security:
+        - session: []
+        - hubSession: []
+        - token: [ervisiocode:device]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ErvisioCodeRemoteCreate"}
+      responses:
+        "200":
+          description: The host created and published a session
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sessionId]
+                properties:
+                  sessionId: {type: string, minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$'}
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+        "502":
+          $ref: "#/components/responses/Problem"
+        "504":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/catalog:
+    parameters:
+      - name: accountId
+        in: query
+        description: Selects the matching embedded hub session. Omit for a normal browser session.
+        schema: {type: string, format: uuid}
+    get:
+      operationId: listErvisioCodeRepositoryCatalog
+      tags: [users]
+      summary: List the selected account's repositories and their matching live host approvals
+      description: |
+        Discovery does not grant checkout access. A repository with no matching live
+        host approval has an empty checkouts array. Only the IDs of a live host
+        approval can be used to create a session. GitHub discovery uses the selected
+        account's personal GitHub.com connections configured in ErvisioRepo.
+      security:
+        - session: []
+        - hubSession: []
+      responses:
+        "200":
+          description: Provider catalog results
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ErvisioCodeRepositoryCatalog"}
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/shares:
+    parameters:
+      - $ref: "#/components/parameters/ErvisioCodeShareAccountId"
+    get:
+      operationId: listErvisioCodeShares
+      tags: [users]
+      summary: List owned and currently accessible ErvisioCode shares
+      security:
+        - session: []
+        - hubSession: []
+      parameters:
+        - $ref: "#/components/parameters/ErvisioCodeShareBeforeId"
+      responses:
+        "200":
+          description: Owned shares, active received shares, and valid pending invites issued to the caller
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [shares]
+                properties:
+                  shares:
+                    type: array
+                    items: {$ref: "#/components/schemas/ErvisioCodeShare"}
+                  nextBeforeId: {type: string, format: uuid}
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createErvisioCodeShare
+      tags: [users]
+      summary: Invite an account or grant current members of an organization access
+      description: Browser writes require the CSRF header. All writes require the configured HTTPS origin. Personal invites expire after seven days and only the named account can accept. Organization grants require the host account to be a current owner or admin of the organization.
+      security:
+        - session: []
+        - hubSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ErvisioCodeShareCreate"}
+      responses:
+        "201":
+          description: Created share; the secret token is returned only on creation of a personal invite
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [share]
+                properties:
+                  share: {$ref: "#/components/schemas/ErvisioCodeShare"}
+                  token: {type: string}
+        "422":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/shares/recipients:
+    parameters:
+      - $ref: "#/components/parameters/ErvisioCodeShareAccountId"
+    get:
+      operationId: searchErvisioCodeRecipients
+      tags: [users]
+      summary: Search the ErvisioCode sharing directory
+      description: Searches visible accounts or organizations where the caller is an owner or admin. Returns at most ten matches and never returns email addresses.
+      security:
+        - session: []
+        - hubSession: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: A case-insensitive handle or display-name prefix, optionally prefixed by @.
+          schema: {type: string, minLength: 1, maxLength: 100}
+        - name: kind
+          in: query
+          required: true
+          schema: {$ref: "#/components/schemas/ErvisioCodeRecipientKind"}
+      responses:
+        "200":
+          description: Eligible sharing recipients matching the prefix
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [recipients]
+                properties:
+                  recipients:
+                    type: array
+                    maxItems: 10
+                    items: {$ref: "#/components/schemas/ErvisioCodeRecipient"}
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/shares/accept:
+    parameters:
+      - $ref: "#/components/parameters/ErvisioCodeShareAccountId"
+    post:
+      operationId: acceptErvisioCodeShare
+      tags: [users]
+      summary: Accept a personal invitation as the account it was issued to
+      security:
+        - session: []
+        - hubSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ErvisioCodeShareAccept"}
+      responses:
+        "200":
+          description: Accepted share
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ErvisioCodeShare"}
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/shares/{shareId}:
+    parameters:
+      - $ref: "#/components/parameters/ErvisioCodeShareAccountId"
+      - $ref: "#/components/parameters/ErvisioCodeShareId"
+    delete:
+      operationId: revokeErvisioCodeShare
+      tags: [users]
+      summary: Revoke a share or pending personal invite
+      security:
+        - session: []
+        - hubSession: []
+      responses:
+        "204":
+          description: Share revoked by its host account or a current organization owner or admin
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/shares/{shareId}/accept:
+    parameters:
+      - $ref: "#/components/parameters/ErvisioCodeShareAccountId"
+      - $ref: "#/components/parameters/ErvisioCodeShareId"
+    post:
+      operationId: acceptErvisioCodeShareById
+      tags: [users]
+      summary: Accept a pending personal invitation from the signed-in account's inbox
+      description: Only the named recipient can accept. The invite must be unexpired and unrevoked, and target a session still published by a valid linked device. The device may be offline.
+      security:
+        - session: []
+        - hubSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: false}
+      responses:
+        "200":
+          description: Accepted share
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ErvisioCodeShare"}
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/shares/{shareId}/state:
+    parameters:
+      - $ref: "#/components/parameters/ErvisioCodeShareAccountId"
+      - $ref: "#/components/parameters/ErvisioCodeShareId"
+    get:
+      operationId: getErvisioCodeSharedState
+      tags: [users]
+      summary: Read the visible transcript of a live shared session
+      description: Restricted grants require a host that supports history filtering; they never fall back to full history. The host sends its bounded recent transcript; the service does not persist it. The share never authorizes a prompt, interrupt, or other action.
+      security:
+        - session: []
+        - hubSession: []
+      responses:
+        "200":
+          description: Recent messages and session busy status
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ErvisioCodeRemoteState"}
+        "404":
+          $ref: "#/components/responses/Problem"
+        "422":
+          $ref: "#/components/responses/Problem"
+        "429":
+          $ref: "#/components/responses/Problem"
+        "502":
+          $ref: "#/components/responses/Problem"
+        "504":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/shares/{shareId}/proposals:
+    parameters:
+      - $ref: "#/components/parameters/ErvisioCodeShareAccountId"
+      - $ref: "#/components/parameters/ErvisioCodeShareId"
+    get:
+      operationId: listErvisioCodeProposals
+      tags: [users]
+      summary: List proposals while the host is online or offline
+      description: The host account can list all proposals. Other accounts see only those they submitted.
+      security:
+        - session: []
+        - hubSession: []
+      parameters:
+        - $ref: "#/components/parameters/ErvisioCodeShareBeforeId"
+      responses:
+        "200":
+          description: Unexpired proposals ordered newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proposals]
+                properties:
+                  proposals:
+                    type: array
+                    items: {$ref: "#/components/schemas/ErvisioCodeProposal"}
+                  nextBeforeId: {type: string, format: uuid}
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: createErvisioCodeProposal
+      tags: [users]
+      summary: Submit a proposal without executing it
+      description: Requires the proposer or direct role. The host does not need to be online. Proposals expire seven days after submission, whether reviewed or not.
+      security:
+        - session: []
+        - hubSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ErvisioCodeProposalCreate"}
+      responses:
+        "201":
+          description: Pending proposal saved for review
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ErvisioCodeProposal"}
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/shares/{shareId}/proposals/{proposalId}/review:
+    parameters:
+      - $ref: "#/components/parameters/ErvisioCodeShareAccountId"
+      - $ref: "#/components/parameters/ErvisioCodeShareId"
+      - name: proposalId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: reviewErvisioCodeProposal
+      tags: [users]
+      summary: Record the session owner's decision on a pending proposal
+      description: Expired proposals cannot be reviewed. Approval is only a recorded decision; it never dispatches, queues, or schedules execution.
+      security:
+        - session: []
+        - hubSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ErvisioCodeProposalReview"}
+      responses:
+        "200":
+          description: Reviewed proposal
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ErvisioCodeProposal"}
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/relay:
+    post:
+      operationId: pollErvisioCodeRelay
+      tags: [users]
+      summary: Poll typed ErvisioCode Remote actions as the linked host
+      description: |
+        Use only over HTTPS with the linked device Bearer token. Poll serially about every
+        two seconds with a fresh UUID per active Remote lifetime and a complete opt-in
+        list of sessions in host-approved projects. `enabled: true` permits an empty
+        session list and publishes the approved project advertisements. `enabled: false`
+        withdraws live access without clearing recents. An enabled snapshot also replaces
+        the stored metadata, so omitted sessions disappear from recents. When `enabled`
+        is omitted, the lifetime is active only when sessions are present.
+        Deliveries are at most once; discard expired requests and recheck
+        local approval before acting on any session or creating one in a project.
+      security:
+        - token: [ervisiocode:device]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ErvisioCodeRelayPoll"}
+      responses:
+        "200":
+          description: Actions to dispatch to a still-approved local session or project, in order
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [requests]
+                properties:
+                  requests:
+                    type: array
+                    items: {$ref: "#/components/schemas/ErvisioCodeRelayRequest"}
         default:
           $ref: "#/components/responses/Problem"
   /user/device/{userCode}:
@@ -11414,6 +11938,11 @@ paths:
   # --- end actions ---
 components:
   securitySchemes:
+    hubSession:
+      type: apiKey
+      in: cookie
+      name: erepo_hub_session
+      description: Opaque, short-lived cookie accepted only on explicitly listed ErvisioCode hub operations.
     session:
       type: apiKey
       in: cookie
@@ -11431,6 +11960,21 @@ components:
         operations that list the token scheme accept it, and the token must
         hold every scope listed there. Tokens skip the CSRF check.
   parameters:
+    ErvisioCodeShareAccountId:
+      name: accountId
+      in: query
+      description: Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+      schema: {type: string, format: uuid}
+    ErvisioCodeShareBeforeId:
+      name: beforeId
+      in: query
+      description: Pass the previous page's nextBeforeId to continue.
+      schema: {type: string, format: uuid}
+    ErvisioCodeShareId:
+      name: shareId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
     # --- actions parameters ---
     ActionsWorkflowParam:
       name: workflow
@@ -12738,6 +13282,290 @@ components:
       properties:
         active:
           type: boolean
+    ErvisioCodeRemoteSession:
+      type: object
+      required: [deviceId, relayId, sessionId, title, lastActivityAt]
+      properties:
+        deviceId: {type: string, format: uuid}
+        relayId: {type: string, format: uuid}
+        sessionId: {type: string, minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$'}
+        title: {type: string, maxLength: 256}
+        lastActivityAt: {type: string, format: date-time}
+    ErvisioCodeRemoteRecent:
+      type: object
+      required: [deviceId, sessionId, title, lastActivityAt]
+      properties:
+        deviceId: {type: string, format: uuid}
+        sessionId: {type: string, minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$'}
+        title: {type: string, maxLength: 256}
+        lastActivityAt: {type: string, format: date-time}
+    ErvisioCodeRemoteOp:
+      type: string
+      enum: [state, prompt, interrupt]
+    ErvisioCodeRemoteProject:
+      type: object
+      required: [deviceId, relayId, projectId, label]
+      properties:
+        deviceId: {type: string, format: uuid}
+        relayId: {type: string, format: uuid}
+        projectId: {type: string, format: uuid}
+        label: {type: string, minLength: 1, maxLength: 128}
+        deviceName: {type: string}
+        repository: {$ref: "#/components/schemas/ErvisioCodeRemoteRepository"}
+    ErvisioCodeRemoteRepository:
+      type: object
+      additionalProperties: false
+      description: Display metadata for a host-approved checkout. Never contains a path, URL, or credentials.
+      required: [provider, name, checkout]
+      properties:
+        provider: {type: string, enum: [ervisiorepo, github]}
+        name: {type: string, maxLength: 201, pattern: '^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}/[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$'}
+        checkout: {type: string, enum: [separate, existing]}
+    ErvisioCodeRepositoryCatalog:
+      type: object
+      required: [ervisiorepo, github]
+      properties:
+        ervisiorepo: {$ref: "#/components/schemas/ErvisioCodeProviderCatalog"}
+        github: {$ref: "#/components/schemas/ErvisioCodeProviderCatalog"}
+    ErvisioCodeProviderCatalog:
+      type: object
+      required: [status, repositories]
+      properties:
+        status:
+          type: string
+          enum: [ready, not_connected, unavailable, partial]
+          x-enum-varnames: [CatalogReady, CatalogNotConnected, CatalogUnavailable, CatalogPartial]
+          description: Partial means only part of the catalog could be listed; listed repositories are still authorized.
+        repositories:
+          type: array
+          items: {$ref: "#/components/schemas/ErvisioCodeCatalogRepository"}
+    ErvisioCodeCatalogRepository:
+      type: object
+      required: [name, checkouts]
+      properties:
+        name: {type: string, maxLength: 201, pattern: '^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}/[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$'}
+        checkouts:
+          type: array
+          items: {$ref: "#/components/schemas/ErvisioCodeRemoteProject"}
+    ErvisioCodeRemoteCreate:
+      type: object
+      additionalProperties: false
+      required: [deviceId, relayId, projectId]
+      properties:
+        deviceId: {type: string, format: uuid}
+        relayId: {type: string, format: uuid}
+        projectId: {type: string, format: uuid}
+    ErvisioCodeRemoteAction:
+      type: object
+      additionalProperties: false
+      required: [deviceId, relayId, sessionId, op]
+      properties:
+        deviceId: {type: string, format: uuid}
+        relayId: {type: string, format: uuid}
+        sessionId: {type: string, minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$'}
+        op: {$ref: "#/components/schemas/ErvisioCodeRemoteOp"}
+        text: {type: string, minLength: 1, maxLength: 16384, description: Plain prompt text; required only for the prompt operation.}
+    ErvisioCodeRemoteMessage:
+      type: object
+      additionalProperties: false
+      required: [role, text]
+      properties:
+        messageId: {$ref: "#/components/schemas/ErvisioCodeMessageId"}
+        role: {type: string, enum: [user, assistant]}
+        text: {type: string, maxLength: 8192}
+    ErvisioCodeRemoteState:
+      type: object
+      properties:
+        messages:
+          type: array
+          maxItems: 50
+          description: Recent visible messages, oldest first, at most 65536 bytes of text in total. Required for state; omitted for mutations.
+          items: {$ref: "#/components/schemas/ErvisioCodeRemoteMessage"}
+        busy: {type: boolean, description: Required for state; omitted for mutations.}
+    ErvisioCodeRecipientKind:
+      type: string
+      enum: [user, org]
+      x-enum-varnames: [RecipientUser, RecipientOrg]
+    ErvisioCodeRecipient:
+      type: object
+      required: [id, kind, name, displayName]
+      properties:
+        id: {type: string, format: uuid}
+        kind: {$ref: "#/components/schemas/ErvisioCodeRecipientKind"}
+        name: {type: string}
+        displayName: {type: string}
+    ErvisioCodeShareRole:
+      type: string
+      description: Reader can read state; proposer and direct can also submit proposals. Direct requires full-history consent and does not authorize execution.
+      enum: [reader, proposer, direct]
+      x-enum-varnames: [ShareReader, ShareProposer, ShareDirect]
+    ErvisioCodeShare:
+      type: object
+      required: [id, ownerId, deviceId, sessionId, role, fullHistory, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        ownerId: {type: string, format: uuid}
+        deviceId: {type: string, format: uuid}
+        sessionId: {type: string}
+        recipientId: {type: string, format: uuid}
+        orgId: {type: string, format: uuid}
+        role: {$ref: "#/components/schemas/ErvisioCodeShareRole"}
+        fullHistory: {type: boolean}
+        afterMessageId: {$ref: "#/components/schemas/ErvisioCodeMessageId"}
+        fromMessageId: {$ref: "#/components/schemas/ErvisioCodeMessageId"}
+        newOnly: {type: boolean, description: A private host cursor is stored for this grant.}
+        createdAt: {type: string, format: date-time}
+        inviteExpiresAt: {type: string, format: date-time}
+        acceptedAt: {type: string, format: date-time}
+        revokedAt: {type: string, format: date-time}
+    ErvisioCodeShareCreate:
+      type: object
+      additionalProperties: false
+      required: [deviceId, sessionId, role]
+      description: Supply exactly one of recipientId or orgId, and exactly one of fullHistory true, afterMessageId, fromMessageId, or newOnly true. New-only captures a cursor from a live host that supports history filtering.
+      properties:
+        deviceId: {type: string, format: uuid}
+        sessionId: {type: string, minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$'}
+        recipientId: {type: string, format: uuid}
+        orgId: {type: string, format: uuid}
+        role: {$ref: "#/components/schemas/ErvisioCodeShareRole"}
+        fullHistory: {type: boolean, enum: [true], description: Explicit consent to disclose existing and future messages.}
+        afterMessageId: {$ref: "#/components/schemas/ErvisioCodeMessageId"}
+        fromMessageId: {$ref: "#/components/schemas/ErvisioCodeMessageId"}
+        newOnly: {type: boolean, enum: [true], description: Start after the host's current history boundary.}
+    ErvisioCodeShareAccept:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token: {type: string, minLength: 43, maxLength: 43}
+    ErvisioCodeProposal:
+      type: object
+      required: [id, shareId, authorId, body, status, createdAt, expiresAt]
+      properties:
+        id: {type: string, format: uuid}
+        shareId: {type: string, format: uuid}
+        authorId: {type: string, format: uuid}
+        body: {type: string}
+        status: {type: string, enum: [pending, approved, rejected]}
+        createdAt: {type: string, format: date-time}
+        reviewedAt: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+    ErvisioCodeProposalCreate:
+      type: object
+      additionalProperties: false
+      required: [body]
+      properties:
+        body: {type: string, minLength: 1, maxLength: 16384, description: Plain text; maximum 16384 UTF-8 bytes.}
+    ErvisioCodeProposalReview:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status: {type: string, enum: [approved, rejected]}
+    ErvisioCodeMessageId:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^[A-Za-z0-9_-]+$'
+      description: Opaque native message identifier scoped to the session.
+    ErvisioCodeHostCursor:
+      type: string
+      minLength: 1
+      maxLength: 128
+      pattern: '^[A-Za-z0-9_-]+$'
+      description: Opaque history cursor created and interpreted by the bound host.
+    ErvisioCodeRelayHistory:
+      oneOf:
+        - $ref: "#/components/schemas/ErvisioCodeHistoryFrom"
+        - $ref: "#/components/schemas/ErvisioCodeHistoryAfter"
+        - $ref: "#/components/schemas/ErvisioCodeHistoryCursor"
+    ErvisioCodeHistoryFrom:
+      type: object
+      additionalProperties: false
+      required: [fromMessageId]
+      properties:
+        fromMessageId: {$ref: "#/components/schemas/ErvisioCodeMessageId"}
+    ErvisioCodeHistoryAfter:
+      type: object
+      additionalProperties: false
+      required: [afterMessageId]
+      properties:
+        afterMessageId: {$ref: "#/components/schemas/ErvisioCodeMessageId"}
+    ErvisioCodeHistoryCursor:
+      type: object
+      additionalProperties: false
+      required: [hostCursor]
+      properties:
+        hostCursor: {$ref: "#/components/schemas/ErvisioCodeHostCursor"}
+    ErvisioCodeRelayPoll:
+      type: object
+      additionalProperties: false
+      required: [relayId, sessions]
+      properties:
+        relayId: {type: string, format: uuid}
+        enabled: {type: boolean, description: When omitted, falls back to whether sessions is nonempty.}
+        historyFiltering: {type: boolean, description: The host supports history-boundary and can filter before returning any restricted state.}
+        projects:
+          type: array
+          maxItems: 16
+          description: Complete set of approved project advertisements; omit to advertise none.
+          items: {$ref: "#/components/schemas/ErvisioCodeRemoteProjectPublication"}
+        sessions:
+          type: array
+          maxItems: 16
+          items: {$ref: "#/components/schemas/ErvisioCodeRemotePublication"}
+        results:
+          type: array
+          maxItems: 8
+          items: {$ref: "#/components/schemas/ErvisioCodeRelayResult"}
+    ErvisioCodeRemoteProjectPublication:
+      type: object
+      additionalProperties: false
+      required: [projectId, label]
+      properties:
+        projectId: {type: string, format: uuid}
+        label: {type: string, minLength: 1, maxLength: 128, description: Display label only; do not include local paths or repository URLs.}
+        repository: {$ref: "#/components/schemas/ErvisioCodeRemoteRepository"}
+    ErvisioCodeRemotePublication:
+      type: object
+      additionalProperties: false
+      required: [sessionId, title]
+      properties:
+        sessionId: {type: string, minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$'}
+        title: {type: string, maxLength: 256}
+        lastActivityAt: {type: string, format: date-time, description: Local session activity, not heartbeat time. For omitted timestamps, the server preserves last known activity or uses initial publication time.}
+    ErvisioCodeRelayRequest:
+      type: object
+      required: [id, op, expiresAt]
+      properties:
+        id: {type: string, format: uuid}
+        sessionId: {type: string, description: Present only for actions targeting existing sessions.}
+        projectId: {type: string, format: uuid, description: Present only for create.}
+        op: {$ref: "#/components/schemas/ErvisioCodeRelayOp"}
+        text: {type: string}
+        history: {$ref: "#/components/schemas/ErvisioCodeRelayHistory"}
+        expiresAt: {type: string, format: date-time}
+    ErvisioCodeRelayOp:
+      type: string
+      enum: [state, prompt, interrupt, create, history-boundary]
+      x-enum-varnames: [RelayState, RelayPrompt, RelayInterrupt, RelayCreate, RelayHistoryBoundary]
+    ErvisioCodeRelayResult:
+      type: object
+      additionalProperties: false
+      required: [id, ok]
+      properties:
+        id: {type: string, format: uuid}
+        ok: {type: boolean}
+        sessionId: {type: string, minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$', description: On successful create only; also include the new session in this poll's sessions.}
+        messages:
+          type: array
+          maxItems: 50
+          items: {$ref: "#/components/schemas/ErvisioCodeRemoteMessage"}
+        busy: {type: boolean}
+        hostCursor: {$ref: "#/components/schemas/ErvisioCodeHostCursor"}
+        historyApplied: {type: boolean, description: Set to true only after the host successfully applied the requested state boundary.}
+        error: {type: string, maxLength: 160, description: Optional host diagnostic; not shown to controllers.}
     DeviceAuthorization:
       type: object
       required: [userCode, clientId, appName, requestedScopes, scopes, createdAt, expiresAt]
