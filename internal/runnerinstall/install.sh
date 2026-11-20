@@ -437,7 +437,8 @@ fi
 # unused anonymous volumes, and runner caches/workspaces untouched for 14
 # days. When the Docker data root is below 15% free it also drops every
 # unused image regardless of age. Images of running containers are never
-# touched (prune skips them). Logs go to the journal.
+# touched (prune skips them), nor images labelled dev.ervisio.runner.keep=true
+# (built on the machine, e.g. for a custom runner label). Logs go to the journal.
 if [ $root -eq 1 ] && [ $host -eq 0 ]; then
   mkdir -p "$(dirname "$PRUNE_SCRIPT")"
   cat > "$PRUNE_SCRIPT" <<PRUNE
@@ -447,7 +448,7 @@ set -u
 data_dir="$data_dir"
 command -v docker >/dev/null 2>&1 || { echo "docker not found, nothing to prune"; exit 0; }
 echo "pruning Docker objects unused for 7 days"
-docker system prune -af --filter until=168h
+docker system prune -af --filter until=168h --filter "label!=dev.ervisio.runner.keep=true"
 docker volume prune -f
 root=\$(docker info -f '{{.DockerRootDir}}' 2>/dev/null || echo /var/lib/docker)
 [ -d "\$root" ] || root=/
@@ -455,7 +456,7 @@ free=\$(df -P "\$root" | awk 'NR==2 { gsub("%", "", \$5); print 100 - \$5 }')
 echo "free space on \$root: \${free}%"
 if [ -n "\$free" ] && [ "\$free" -lt 15 ]; then
   echo "below 15% free: pruning every unused image and the build cache"
-  docker system prune -af
+  docker system prune -af --filter "label!=dev.ervisio.runner.keep=true"
   docker builder prune -af 2>/dev/null || true
 fi
 for d in "\$data_dir/cache" "\$data_dir/host"; do

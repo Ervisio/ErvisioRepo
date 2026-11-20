@@ -117,6 +117,8 @@ An expensive machine (for example an EC2 instance) can stay off and start only w
 
 While the runner is offline (no contact for 75 s) and a queued job matches its labels, the server POSTs to the start URL, at most once per cooldown; if an online runner could take the job, it waits 90 s first. A refused call (4xx such as 401/403, e.g. blocked hours) is retried after 10 minutes, other failures (409 while the machine is still stopping, network, 5xx) after a minute. **Start now** in the same menu calls the URL at once. The runner row shows an **On demand** chip and the outcome of the last call. Only instance runners can be on demand.
 
+**Cross-compiling for Windows and macOS.** Docker on Linux runs only Linux containers. `deploy/runner-images/cross/Dockerfile` adds mingw-w64, zig, clang, NSIS, osslsigncode and wine to the job image: build it on the runner machine (`docker build -t ervisio/runner-cross:24.04 deploy/runner-images/cross`) and add a label such as `"highpriority-cross=docker://ervisio/runner-cross:24.04"` to `runner.labels`. It produces Windows and macOS binaries, but cannot sign or notarize for Apple or test on the real systems.
+
 ## Publishing behind Caddy
 
 ```sh

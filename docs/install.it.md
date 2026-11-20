@@ -117,6 +117,8 @@ Una macchina costosa (per esempio un'istanza EC2) può restare spenta e accender
 
 Quando il runner è offline (nessun contatto da 75 s) e un job in coda corrisponde alle sue etichette, il server fa una POST all'URL di avvio, al massimo una volta per intervallo; se un runner online potrebbe prendere il job, aspetta prima 90 s. Una chiamata rifiutata (4xx come 401/403, per esempio fasce orarie bloccate) si riprova dopo 10 minuti, gli altri errori (409 mentre la macchina si sta ancora spegnendo, rete, 5xx) dopo un minuto. **Avvia ora** nello stesso menu chiama subito l'URL. La riga del runner mostra il chip **On demand** e l'esito dell'ultima chiamata. Solo i runner d'istanza possono essere on demand.
 
+**Cross-compilazione per Windows e macOS.** Docker su Linux esegue solo container Linux. `deploy/runner-images/cross/Dockerfile` aggiunge all'immagine dei job mingw-w64, zig, clang, NSIS, osslsigncode e wine: costruiscila sulla macchina del runner (`docker build -t ervisio/runner-cross:24.04 deploy/runner-images/cross`) e aggiungi un'etichetta come `"highpriority-cross=docker://ervisio/runner-cross:24.04"` a `runner.labels`. Produce binari Windows e macOS, ma non può firmare o notarizzare per Apple né provare sui sistemi veri.
+
 ## Pubblicare dietro Caddy
 
 ```sh
