@@ -10,12 +10,20 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+)
+
+const (
+	remoteMaxPromptText  = 16384
+	remoteMaxMessageText = 8192
+	remoteMaxTodos       = 50
+	remoteMaxTodoText    = 512
 )
 
 var remoteSessionID = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)
@@ -146,6 +154,10 @@ func (s *v1Server) sendRemoteRequest(ctx context.Context, key remoteHostKey, rel
 }
 
 func (s *v1Server) sendAuthorizedRemoteRequest(ctx context.Context, key remoteHostKey, relayID uuid.UUID, request v1gen.ErvisioCodeRelayRequest, authorize remoteRepositoryAuthorizer) (remoteReply, error) {
+	return s.sendGatedRemoteRequest(ctx, key, relayID, request, authorize, nil)
+}
+
+func (s *v1Server) sendGatedRemoteRequest(ctx context.Context, key remoteHostKey, relayID uuid.UUID, request v1gen.ErvisioCodeRelayRequest, authorize remoteRepositoryAuthorizer, collaboration remoteCollaborationAuthorizer) (remoteReply, error) {
 	_, err := s.creds.GetErvisioCodeDevice(ctx, key.accountID, key.deviceID)
 	if errors.Is(err, credentials.ErrNotFound) {
 		return remoteReply{problem: missingRemoteTarget(request.Op)}, nil
@@ -153,7 +165,7 @@ func (s *v1Server) sendAuthorizedRemoteRequest(ctx context.Context, key remoteHo
 	if err != nil {
 		return remoteReply{}, err
 	}
-	call, problem := s.remote.enqueue(ctx, key, relayID, request, authorize)
+	call, problem := s.remote.enqueue(ctx, key, relayID, request, authorize, collaboration)
 	if problem.status != 0 {
 		return remoteReply{problem: problem}, nil
 	}
@@ -175,12 +187,16 @@ func validRemoteAction(action *v1gen.ErvisioCodeRemoteAction) bool {
 	}
 	switch action.Op {
 	case v1gen.Prompt:
-		return action.Text != nil && len(*action.Text) <= 16384 && strings.TrimSpace(*action.Text) != "" && !strings.ContainsRune(*action.Text, 0)
+		return validRemotePrompt(action.Text)
 	case v1gen.State, v1gen.Interrupt:
 		return action.Text == nil
 	default:
 		return false
 	}
+}
+
+func validRemotePrompt(text *string) bool {
+	return text != nil && len(*text) <= remoteMaxPromptText && strings.TrimSpace(*text) != "" && !strings.ContainsRune(*text, 0)
 }
 
 func (s *v1Server) PollErvisioCodeRelay(ctx context.Context, req v1gen.PollErvisioCodeRelayRequestObject) (v1gen.PollErvisioCodeRelayResponseObject, error) {
@@ -234,23 +250,28 @@ func (s *v1Server) publishRemote(ctx context.Context, key remoteHostKey, body *v
 	}
 	publication := remotePublication{
 		id: body.RelayId, enabled: true, projects: projects,
-		historyFiltering: body.HistoryFiltering != nil && *body.HistoryFiltering,
-		sessions:         remoteSessions(key.deviceID, body.RelayId, metadata),
+		historyFiltering:  body.HistoryFiltering != nil && *body.HistoryFiltering,
+		textCollaboration: shareValue(body.TextCollaboration),
+		sessions:          remoteSessions(key.deviceID, body.RelayId, metadata, body.TextCollaboration),
 	}
 	requests, gated, problem := s.remote.poll(key, publication, results)
 	if problem.status != 0 {
 		return problem, nil
 	}
-	if len(gated) > 0 && len(requests) == 0 {
-		requests, problem, err = s.dispatchRepositoryProjects(ctx, key, body.RelayId, gated)
+	if len(requests) != 0 {
+		gated = slices.DeleteFunc(gated, func(call *remoteCall) bool { return call.collaboration == nil })
+	}
+	if len(gated) != 0 {
+		authorized, problem, err := s.dispatchGatedRemoteCalls(ctx, key, body.RelayId, gated)
 		if err != nil || problem.status != 0 {
 			return problem, err
 		}
+		requests = append(requests, authorized...)
 	}
 	return v1gen.PollErvisioCodeRelay200JSONResponse{Requests: requests}, nil
 }
 
-func (s *v1Server) dispatchRepositoryProjects(ctx context.Context, key remoteHostKey, relayID uuid.UUID, gated []*remoteCall) ([]v1gen.ErvisioCodeRelayRequest, problemResponse, error) {
+func (s *v1Server) dispatchGatedRemoteCalls(ctx context.Context, key remoteHostKey, relayID uuid.UUID, gated []*remoteCall) ([]v1gen.ErvisioCodeRelayRequest, problemResponse, error) {
 	problems := make([]problemResponse, len(gated))
 	var checks sync.WaitGroup
 	for i, call := range gated {
@@ -259,6 +280,17 @@ func (s *v1Server) dispatchRepositoryProjects(ctx context.Context, key remoteHos
 			defer cancel()
 			stop := context.AfterFunc(ctx, cancel)
 			defer stop()
+			if call.collaboration != nil {
+				problem, err := call.collaboration(checkCtx)
+				if err != nil {
+					if checkCtx.Err() == nil {
+						s.log.WarnContext(ctx, "collaboration authorization recheck failed", "error", err)
+					}
+					problem = problemResponse{status: http.StatusServiceUnavailable, detail: "collaboration authorization could not be verified"}
+				}
+				problems[i] = problem
+				return
+			}
 			problems[i] = call.authorize(checkCtx, *call.project.project.Repository)
 		})
 	}
@@ -273,15 +305,16 @@ func (s *v1Server) dispatchRepositoryProjects(ctx context.Context, key remoteHos
 	if err != nil {
 		return nil, problemResponse{}, err
 	}
-	return s.remote.dispatchAuthorizedProjects(key, relayID, gated, problems), problemResponse{}, nil
+	return s.remote.dispatchAuthorizedCalls(key, relayID, gated, problems), problemResponse{}, nil
 }
 
-func remoteSessions(deviceID, relayID uuid.UUID, metadata []credentials.ErvisioCodeRemoteMetadata) map[string]v1gen.ErvisioCodeRemoteSession {
+func remoteSessions(deviceID, relayID uuid.UUID, metadata []credentials.ErvisioCodeRemoteMetadata, textCollaboration *bool) map[string]v1gen.ErvisioCodeRemoteSession {
 	sessions := make(map[string]v1gen.ErvisioCodeRemoteSession, len(metadata))
 	for _, session := range metadata {
 		sessions[session.SessionID] = v1gen.ErvisioCodeRemoteSession{
 			DeviceId: deviceID, RelayId: relayID, SessionId: session.SessionID,
 			Title: session.Title, LastActivityAt: session.LastActivityAt,
+			TextCollaboration: textCollaboration,
 		}
 	}
 	return sessions
@@ -318,7 +351,9 @@ func remoteResults(input *[]v1gen.ErvisioCodeRelayResult) (map[uuid.UUID]v1gen.E
 	for _, result := range *input {
 		if result.Id == uuid.Nil || result.Error != nil && len(*result.Error) > 160 ||
 			result.SessionId != nil && !remoteSessionID.MatchString(*result.SessionId) ||
-			result.HostCursor != nil && !remoteSessionID.MatchString(*result.HostCursor) || !validRemoteMessages(result.Messages) {
+			result.CollaborationContributorId != nil && *result.CollaborationContributorId == uuid.Nil ||
+			result.HostCursor != nil && !remoteSessionID.MatchString(*result.HostCursor) || !validRemoteMessages(result.Messages) ||
+			!validRemoteTodos(result.Todos) {
 			return nil, false
 		}
 		if _, ok := results[result.Id]; ok {
@@ -329,13 +364,38 @@ func remoteResults(input *[]v1gen.ErvisioCodeRelayResult) (map[uuid.UUID]v1gen.E
 	return results, true
 }
 
+func validRemoteTodos(todos *[]v1gen.ErvisioCodeTodo) bool {
+	if todos == nil {
+		return true
+	}
+	if len(*todos) > remoteMaxTodos {
+		return false
+	}
+	for _, todo := range *todos {
+		if !todo.Status.Valid() || todo.Content == "" || utf8.RuneCountInString(todo.Content) > remoteMaxTodoText ||
+			!utf8.ValidString(todo.Content) || strings.ContainsRune(todo.Content, 0) {
+			return false
+		}
+	}
+	return true
+}
+
 func validRemoteMessages(messages *[]v1gen.ErvisioCodeRemoteMessage) bool {
 	if messages == nil {
 		return true
 	}
 	totalBytes := 0
 	for _, message := range *messages {
-		if !message.Role.Valid() || len(message.Text) > 8192 ||
+		limit := remoteMaxMessageText
+		if message.ContributorId != nil {
+			if *message.ContributorId == uuid.Nil {
+				return false
+			}
+			if message.Role == v1gen.ErvisioCodeRemoteMessageRoleUser {
+				limit = remoteMaxPromptText
+			}
+		}
+		if !message.Role.Valid() || len(message.Text) > limit || (message.ContributorId != nil && strings.ContainsRune(message.Text, 0)) ||
 			message.MessageId != nil && !remoteSessionID.MatchString(*message.MessageId) {
 			return false
 		}

@@ -6,6 +6,7 @@ import type { components } from "./schema";
 export type RemoteSession = components["schemas"]["ErvisioCodeRemoteSession"];
 export type RemoteRecent = components["schemas"]["ErvisioCodeRemoteRecent"];
 export type RemoteMessage = components["schemas"]["ErvisioCodeRemoteMessage"];
+export type RemoteTodo = components["schemas"]["ErvisioCodeTodo"];
 export type RemoteProject = components["schemas"]["ErvisioCodeRemoteProject"];
 export type RemoteRepositoryCatalog = components["schemas"]["ErvisioCodeRepositoryCatalog"];
 type RemoteState = components["schemas"]["ErvisioCodeRemoteState"];
@@ -97,11 +98,11 @@ export function useRemoteTranscript(
     enabled: !!session && canPoll,
     queryFn: async ({ signal }) => {
       if (!deviceId || !relayId || !sessionId) throw new Error("No active remote session");
-      const { messages, busy } = await act({ deviceId, relayId, sessionId, op: "state" }, hubAccountId, signal);
+      const { messages, busy, collaborationBusy, todos } = await act({ deviceId, relayId, sessionId, op: "state" }, hubAccountId, signal);
       if (!Array.isArray(messages) || typeof busy !== "boolean") throw new Error("Missing remote session state");
-      return { messages, busy };
+      return { messages, busy, collaborationBusy: collaborationBusy === true, todos };
     },
-    refetchInterval: (query) => query.state.data?.busy ? 2_500 : 5_000,
+    refetchInterval: (query) => query.state.data?.busy || query.state.data?.collaborationBusy ? 2_500 : 5_000,
     networkMode: "always",
     retry: false,
     gcTime: 0,

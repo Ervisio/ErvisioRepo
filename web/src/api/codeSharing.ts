@@ -6,7 +6,8 @@ import type { components, operations } from "./schema";
 type Schema = components["schemas"];
 export type CodeShare = Schema["ErvisioCodeShare"];
 export type CodeShareRecipientKind = Schema["ErvisioCodeRecipientKind"];
-export type CodeShareCreate = Omit<Schema["ErvisioCodeShareCreate"], "role"> & { role: "reader" | "proposer" };
+export type CodeShareCreate = Omit<Schema["ErvisioCodeShareCreate"], "role"> & { role: "reader" | "direct" };
+export type CollaborationCommand = { op: "prompt"; text: string } | { op: "interrupt" };
 export type CodeProposal = Schema["ErvisioCodeProposal"];
 export type CodeReview = Schema["ErvisioCodeProposalReview"]["status"];
 export type CodeShareScope = { accountId: string; hubAccountId?: string };
@@ -94,10 +95,28 @@ export function useSharedCodeState(scope: CodeShareScope, shareId: string) {
       if (!Array.isArray(state.messages) || typeof state.busy !== "boolean") {
         throw new Error("Missing shared ErvisioCode session state");
       }
-      return { messages: state.messages, busy: state.busy };
+      const textCollaboration = state.textCollaboration === true;
+      if (textCollaboration && typeof state.collaborationBusy !== "boolean") {
+        throw new Error("Missing collaboration status");
+      }
+      return {
+        messages: state.messages,
+        busy: state.busy,
+        textCollaboration,
+        collaborationBusy: state.collaborationBusy === true,
+        collaborationContributorId: state.collaborationContributorId,
+        todos: state.todos,
+      };
     },
-    refetchInterval: 5_000,
+    refetchInterval: (query) => query.state.data?.collaborationBusy ? 2_500 : 5_000,
   });
+}
+
+export async function sendCodeCollaborationCommand(scope: CodeShareScope, shareId: string, body: CollaborationCommand) {
+  const { response } = await api.POST("/user/ervisiocode/shares/{shareId}/collaboration", {
+    ...privateFetch, params: { query: queryParams(scope), path: { shareId } }, body,
+  });
+  if (!response.ok) throw new ApiError(response.status, "ErvisioCode collaboration request did not complete");
 }
 
 export function useCodeProposals(scope: CodeShareScope, shareId: string) {

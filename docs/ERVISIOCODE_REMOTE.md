@@ -20,6 +20,12 @@ Host approvals currently identify a repository by provider and name, not an immu
 
 ## Sharing
 
-Reader and proposer grants authorize existing live sessions only. A personal invite must be accepted by its named recipient. Organization access follows current membership. Restricted reads require a capable PC, and it applies the stored history boundary before sending a text-only result. The server checks the grant again before returning the result. It does not persist transcripts.
+Reader grants authorize existing live sessions only. A personal invite must be accepted by its named recipient. Organization access follows current membership. Restricted reads require a capable PC, and it applies the stored history boundary before sending a text-only result. The server checks the grant again before returning the result. It does not persist transcripts.
 
-Proposals are review records, can be sent while the PC is offline, and expire after seven days. Approval never submits a prompt. Direct collaboration is not enabled.
+Proposals are disabled and historical proposer grants remain revoked.
+
+### Text collaboration
+
+On a compatible linked PC, an owner can invite people or share with an organization as **Collaborator** without enabling an experimental flag. The owner explicitly grants full access to the chat history; organization grants also require consent for future members. Replacing or removing an organization member does not transfer their individual permissions.
+
+Collaborators write in the same chat as its owner. Both see the same timeline, including who sent each prompt. The owner and the contributor who sent a request can stop its generation. Collaborator prompts join the owner's session queue, and the PC's agent works on them with the owner's model, tools, files and permission settings; tool approvals appear only on the PC. The owner opts the PC in with `experimental.remote_collaboration` in its global ErvisioCode config. A Collaborator can stop only the run their own prompt started; the owner can stop any run. Restricted Reader views show collaborator prompts with their author. The chat also shows the agent's current todo list, taken from its latest update among the visible messages. Only the linked PC retains the transcript; ErvisioRepo relays it without storing it. The PC must be online for new messages. Revocation, removal from the organization, or loss of the host lease stop new prompts; a prompt that is already running or queued stays in the owner's chat.

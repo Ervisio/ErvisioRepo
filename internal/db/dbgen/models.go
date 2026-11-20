@@ -498,22 +498,24 @@ type ErvisiocodeProposal struct {
 }
 
 type ErvisiocodeShare struct {
-	ID              uuid.UUID
-	OwnerID         uuid.UUID
-	DeviceID        uuid.UUID
-	SessionID       string
-	RecipientID     uuid.NullUUID
-	OrgID           uuid.NullUUID
-	Role            string
-	FullHistory     bool
-	AfterMessageID  pgtype.Text
-	FromMessageID   pgtype.Text
-	HostCursor      pgtype.Text
-	InviteTokenHash []byte
-	InviteExpiresAt pgtype.Timestamptz
-	AcceptedAt      pgtype.Timestamptz
-	RevokedAt       pgtype.Timestamptz
-	CreatedAt       pgtype.Timestamptz
+	ID                  uuid.UUID
+	OwnerID             uuid.UUID
+	DeviceID            uuid.UUID
+	SessionID           string
+	RecipientID         uuid.NullUUID
+	OrgID               uuid.NullUUID
+	Role                string
+	FullHistory         bool
+	AfterMessageID      pgtype.Text
+	FromMessageID       pgtype.Text
+	HostCursor          pgtype.Text
+	InviteTokenHash     []byte
+	InviteExpiresAt     pgtype.Timestamptz
+	AcceptedAt          pgtype.Timestamptz
+	RevokedAt           pgtype.Timestamptz
+	CreatedAt           pgtype.Timestamptz
+	TextCollaboration   bool
+	OrganizationConsent bool
 }
 
 type ErvisiocodeShareRecipient struct {

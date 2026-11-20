@@ -115,6 +115,8 @@ export function CodeShareList({ scope, query, titleOf, sessions, onShare, onRead
               <b>{titleOf(share)}</b>
               <p>{t(`share.role.${share.role}`)} · {t(share.orgId ? "share.org" : "share.personal")} · {t(`share.status.${status}`)}</p>
               <p className="ec-share-id">{t(share.orgId ? "share.orgId" : "share.accountId")}: {share.orgId ?? share.recipientId}</p>
+              {share.role === "direct" && status === "active" && <button type="button" className="ec-retry" disabled={action.busy}
+                onClick={() => onRead(share)}>{t("collaboration.open")}</button>}
               {!share.revokedAt && (revoke === share.id ? <>
                 <p>{t("share.revokeHint")}</p>
                 <button type="button" className="ec-retry" disabled={blocked} onClick={() => void action.run(async () => {

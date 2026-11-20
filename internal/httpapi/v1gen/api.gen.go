@@ -672,6 +672,24 @@ func (e DiffLineType) Valid() bool {
 	}
 }
 
+// Defines values for ErvisioCodeCollaborationActionOp.
+const (
+	CollaborationInterrupt ErvisioCodeCollaborationActionOp = "interrupt"
+	CollaborationPrompt    ErvisioCodeCollaborationActionOp = "prompt"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeCollaborationActionOp enum.
+func (e ErvisioCodeCollaborationActionOp) Valid() bool {
+	switch e {
+	case CollaborationInterrupt:
+		return true
+	case CollaborationPrompt:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ErvisioCodeProposalStatus.
 const (
 	ErvisioCodeProposalStatusApproved ErvisioCodeProposalStatus = "approved"
@@ -755,16 +773,25 @@ func (e ErvisioCodeRecipientKind) Valid() bool {
 
 // Defines values for ErvisioCodeRelayOp.
 const (
-	RelayCreate          ErvisioCodeRelayOp = "create"
-	RelayHistoryBoundary ErvisioCodeRelayOp = "history-boundary"
-	RelayInterrupt       ErvisioCodeRelayOp = "interrupt"
-	RelayPrompt          ErvisioCodeRelayOp = "prompt"
-	RelayState           ErvisioCodeRelayOp = "state"
+	RelayCollaborationPrompt ErvisioCodeRelayOp = "collaboration-prompt"
+	RelayCollaborationState  ErvisioCodeRelayOp = "collaboration-state"
+	RelayCollaborationStop   ErvisioCodeRelayOp = "collaboration-stop"
+	RelayCreate              ErvisioCodeRelayOp = "create"
+	RelayHistoryBoundary     ErvisioCodeRelayOp = "history-boundary"
+	RelayInterrupt           ErvisioCodeRelayOp = "interrupt"
+	RelayPrompt              ErvisioCodeRelayOp = "prompt"
+	RelayState               ErvisioCodeRelayOp = "state"
 )
 
 // Valid indicates whether the value is a known member of the ErvisioCodeRelayOp enum.
 func (e ErvisioCodeRelayOp) Valid() bool {
 	switch e {
+	case RelayCollaborationPrompt:
+		return true
+	case RelayCollaborationState:
+		return true
+	case RelayCollaborationStop:
+		return true
 	case RelayCreate:
 		return true
 	case RelayHistoryBoundary:
@@ -900,6 +927,30 @@ func (e ErvisioCodeShareRole) Valid() bool {
 	case ShareProposer:
 		return true
 	case ShareReader:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ErvisioCodeTodoStatus.
+const (
+	TodoCancelled  ErvisioCodeTodoStatus = "cancelled"
+	TodoCompleted  ErvisioCodeTodoStatus = "completed"
+	TodoInProgress ErvisioCodeTodoStatus = "in_progress"
+	TodoPending    ErvisioCodeTodoStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the ErvisioCodeTodoStatus enum.
+func (e ErvisioCodeTodoStatus) Valid() bool {
+	switch e {
+	case TodoCancelled:
+		return true
+	case TodoCompleted:
+		return true
+	case TodoInProgress:
+		return true
+	case TodoPending:
 		return true
 	default:
 		return false
@@ -4544,6 +4595,26 @@ type ErvisioCodeCatalogRepository struct {
 	Name      string                     `json:"name"`
 }
 
+// ErvisioCodeCollaborationAction defines model for ErvisioCodeCollaborationAction.
+type ErvisioCodeCollaborationAction struct {
+	Op ErvisioCodeCollaborationActionOp `json:"op"`
+
+	// Text Plain text only; required for prompt and forbidden for interrupt.
+	Text *string `json:"text,omitempty"`
+}
+
+// ErvisioCodeCollaborationActionOp defines model for ErvisioCodeCollaborationAction.Op.
+type ErvisioCodeCollaborationActionOp string
+
+// ErvisioCodeCollaborationCheck defines model for ErvisioCodeCollaborationCheck.
+type ErvisioCodeCollaborationCheck struct {
+	ContributorId openapi_types.UUID `json:"contributorId"`
+	RelayId       openapi_types.UUID `json:"relayId"`
+
+	// SessionId Opaque native message identifier scoped to the session.
+	SessionId ErvisioCodeMessageId `json:"sessionId"`
+}
+
 // ErvisioCodeDevice defines model for ErvisioCodeDevice.
 type ErvisioCodeDevice struct {
 	CreatedAt time.Time `json:"createdAt"`
@@ -4655,14 +4726,22 @@ type ErvisioCodeRelayPoll struct {
 	RelayId  openapi_types.UUID                     `json:"relayId"`
 	Results  *[]ErvisioCodeRelayResult              `json:"results,omitempty"`
 	Sessions []ErvisioCodeRemotePublication         `json:"sessions"`
+
+	// TextCollaboration The host supports tool-free collaboration in the session transcripts in this live publication.
+	TextCollaboration *bool `json:"textCollaboration,omitempty"`
 }
 
 // ErvisioCodeRelayRequest defines model for ErvisioCodeRelayRequest.
 type ErvisioCodeRelayRequest struct {
-	ExpiresAt time.Time                `json:"expiresAt"`
-	History   *ErvisioCodeRelayHistory `json:"history,omitempty"`
-	Id        openapi_types.UUID       `json:"id"`
-	Op        ErvisioCodeRelayOp       `json:"op"`
+	// ContributorId Server-authenticated actor; present only for collaboration operations.
+	ContributorId *openapi_types.UUID `json:"contributorId,omitempty"`
+	ExpiresAt     time.Time           `json:"expiresAt"`
+
+	// GrantId Present only for collaboration operations.
+	GrantId *openapi_types.UUID      `json:"grantId,omitempty"`
+	History *ErvisioCodeRelayHistory `json:"history,omitempty"`
+	Id      openapi_types.UUID       `json:"id"`
+	Op      ErvisioCodeRelayOp       `json:"op"`
 
 	// ProjectId Present only for create.
 	ProjectId *openapi_types.UUID `json:"projectId,omitempty"`
@@ -4674,7 +4753,11 @@ type ErvisioCodeRelayRequest struct {
 
 // ErvisioCodeRelayResult defines model for ErvisioCodeRelayResult.
 type ErvisioCodeRelayResult struct {
-	Busy *bool `json:"busy,omitempty"`
+	Busy              *bool `json:"busy,omitempty"`
+	CollaborationBusy *bool `json:"collaborationBusy,omitempty"`
+
+	// CollaborationContributorId Returned by collaboration-state when its grant and contributor can stop the active request.
+	CollaborationContributorId *openapi_types.UUID `json:"collaborationContributorId,omitempty"`
 
 	// Error Optional host diagnostic; not shown to controllers.
 	Error *string `json:"error,omitempty"`
@@ -4690,6 +4773,9 @@ type ErvisioCodeRelayResult struct {
 
 	// SessionId On successful create only; also include the new session in this poll's sessions.
 	SessionId *string `json:"sessionId,omitempty"`
+
+	// Todos The agent's current todo list, from its latest update; omitted when the visible messages never set one.
+	Todos *[]ErvisioCodeTodo `json:"todos,omitempty"`
 }
 
 // ErvisioCodeRemoteAction defines model for ErvisioCodeRemoteAction.
@@ -4712,10 +4798,15 @@ type ErvisioCodeRemoteCreate struct {
 
 // ErvisioCodeRemoteMessage defines model for ErvisioCodeRemoteMessage.
 type ErvisioCodeRemoteMessage struct {
+	// ContributorId Account that submitted the collaborator prompt that produced this message; omitted for ordinary owner turns.
+	ContributorId *openapi_types.UUID `json:"contributorId,omitempty"`
+
 	// MessageId Opaque native message identifier scoped to the session.
 	MessageId *ErvisioCodeMessageId        `json:"messageId,omitempty"`
 	Role      ErvisioCodeRemoteMessageRole `json:"role"`
-	Text      string                       `json:"text"`
+
+	// Text At most 8192 UTF-8 bytes except for a contributor's prompt (16384 bytes).
+	Text string `json:"text"`
 }
 
 // ErvisioCodeRemoteMessageRole defines model for ErvisioCodeRemoteMessage.Role.
@@ -4789,16 +4880,25 @@ type ErvisioCodeRemoteSession struct {
 	LastActivityAt time.Time          `json:"lastActivityAt"`
 	RelayId        openapi_types.UUID `json:"relayId"`
 	SessionId      string             `json:"sessionId"`
-	Title          string             `json:"title"`
+
+	// TextCollaboration The exact live publication supports tool-free collaboration in the session transcript.
+	TextCollaboration *bool  `json:"textCollaboration,omitempty"`
+	Title             string `json:"title"`
 }
 
 // ErvisioCodeRemoteState defines model for ErvisioCodeRemoteState.
 type ErvisioCodeRemoteState struct {
-	// Busy Required for state; omitted for mutations.
+	// Busy Whether owner execution is busy. Required for state; omitted for mutations.
 	Busy *bool `json:"busy,omitempty"`
+
+	// CollaborationBusy Whether the session is running on a prompt; on collaboration state it mirrors busy.
+	CollaborationBusy *bool `json:"collaborationBusy,omitempty"`
 
 	// Messages Recent visible messages, oldest first, at most 65536 bytes of text in total. Required for state; omitted for mutations.
 	Messages *[]ErvisioCodeRemoteMessage `json:"messages,omitempty"`
+
+	// Todos The agent's current todo list, from its latest update; omitted when the visible messages never set one.
+	Todos *[]ErvisioCodeTodo `json:"todos,omitempty"`
 }
 
 // ErvisioCodeRepositoryCatalog defines model for ErvisioCodeRepositoryCatalog.
@@ -4832,7 +4932,7 @@ type ErvisioCodeShare struct {
 	RecipientId      *openapi_types.UUID `json:"recipientId,omitempty"`
 	RevokedAt        *time.Time          `json:"revokedAt,omitempty"`
 
-	// Role Only reader grants are active or may be created. Proposer and direct may appear on historical revoked shares.
+	// Role Direct grants authorize tool-free model turns in the shared session transcript. Proposer grants remain disabled and may appear on historical revoked shares.
 	Role      ErvisioCodeShareRole `json:"role"`
 	SessionId string               `json:"sessionId"`
 
@@ -4845,7 +4945,7 @@ type ErvisioCodeShareAccept struct {
 	Token string `json:"token"`
 }
 
-// ErvisioCodeShareCreate Supply exactly one of recipientId or orgId, and exactly one of fullHistory true, afterMessageId, fromMessageId, or newOnly true. New-only captures a cursor from a live host that supports history filtering.
+// ErvisioCodeShareCreate Supply exactly one of recipientId or orgId, and exactly one history choice. Direct grants require fullHistory true and a live host with text collaboration; organization direct grants also require organizationConsent true.
 type ErvisioCodeShareCreate struct {
 	// AfterMessageId Opaque native message identifier scoped to the session.
 	AfterMessageId *ErvisioCodeMessageId `json:"afterMessageId,omitempty"`
@@ -4858,11 +4958,14 @@ type ErvisioCodeShareCreate struct {
 	FullHistory *ErvisioCodeShareCreateFullHistory `json:"fullHistory,omitempty"`
 
 	// NewOnly Start after the host's current history boundary.
-	NewOnly     *ErvisioCodeShareCreateNewOnly `json:"newOnly,omitempty"`
-	OrgId       *openapi_types.UUID            `json:"orgId,omitempty"`
-	RecipientId *openapi_types.UUID            `json:"recipientId,omitempty"`
+	NewOnly *ErvisioCodeShareCreateNewOnly `json:"newOnly,omitempty"`
+	OrgId   *openapi_types.UUID            `json:"orgId,omitempty"`
 
-	// Role Only reader grants are active or may be created. Proposer and direct may appear on historical revoked shares.
+	// OrganizationConsent Separate explicit consent to let current organization members write in the chat and drive the host's agent. Required as true when role is direct and orgId is present.
+	OrganizationConsent *bool               `json:"organizationConsent,omitempty"`
+	RecipientId         *openapi_types.UUID `json:"recipientId,omitempty"`
+
+	// Role Direct grants authorize tool-free model turns in the shared session transcript. Proposer grants remain disabled and may appear on historical revoked shares.
 	Role      ErvisioCodeShareRole `json:"role"`
 	SessionId string               `json:"sessionId"`
 }
@@ -4873,8 +4976,36 @@ type ErvisioCodeShareCreateFullHistory bool
 // ErvisioCodeShareCreateNewOnly Start after the host's current history boundary.
 type ErvisioCodeShareCreateNewOnly bool
 
-// ErvisioCodeShareRole Only reader grants are active or may be created. Proposer and direct may appear on historical revoked shares.
+// ErvisioCodeShareRole Direct grants authorize tool-free model turns in the shared session transcript. Proposer grants remain disabled and may appear on historical revoked shares.
 type ErvisioCodeShareRole string
+
+// ErvisioCodeSharedState defines model for ErvisioCodeSharedState.
+type ErvisioCodeSharedState struct {
+	// Busy Whether owner execution is busy.
+	Busy *bool `json:"busy,omitempty"`
+
+	// CollaborationBusy Whether the session is running on a prompt.
+	CollaborationBusy *bool `json:"collaborationBusy,omitempty"`
+
+	// CollaborationContributorId Contributor whose prompt started the current run
+	CollaborationContributorId *openapi_types.UUID         `json:"collaborationContributorId,omitempty"`
+	Messages                   *[]ErvisioCodeRemoteMessage `json:"messages,omitempty"`
+
+	// TextCollaboration This active direct grant can add prompts to the session
+	TextCollaboration *bool `json:"textCollaboration,omitempty"`
+
+	// Todos The agent's current todo list, from its latest update; omitted when the visible messages never set one.
+	Todos *[]ErvisioCodeTodo `json:"todos,omitempty"`
+}
+
+// ErvisioCodeTodo defines model for ErvisioCodeTodo.
+type ErvisioCodeTodo struct {
+	Content string                `json:"content"`
+	Status  ErvisioCodeTodoStatus `json:"status"`
+}
+
+// ErvisioCodeTodoStatus defines model for ErvisioCodeTodo.Status.
+type ErvisioCodeTodoStatus string
 
 // ExploreRepoList defines model for ExploreRepoList.
 type ExploreRepoList struct {
@@ -8514,6 +8645,12 @@ type AcceptErvisioCodeShareByIdParams struct {
 	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
 }
 
+// ActOnErvisioCodeCollaborationParams defines parameters for ActOnErvisioCodeCollaboration.
+type ActOnErvisioCodeCollaborationParams struct {
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
 // ListErvisioCodeProposalsParams defines parameters for ListErvisioCodeProposals.
 type ListErvisioCodeProposalsParams struct {
 	// BeforeId Pass the previous page's nextBeforeId to continue.
@@ -8961,6 +9098,12 @@ type AcceptErvisioCodeShareJSONRequestBody = ErvisioCodeShareAccept
 
 // AcceptErvisioCodeShareByIdJSONRequestBody defines body for AcceptErvisioCodeShareById for application/json ContentType.
 type AcceptErvisioCodeShareByIdJSONRequestBody = AcceptErvisioCodeShareByIdJSONBody
+
+// ActOnErvisioCodeCollaborationJSONRequestBody defines body for ActOnErvisioCodeCollaboration for application/json ContentType.
+type ActOnErvisioCodeCollaborationJSONRequestBody = ErvisioCodeCollaborationAction
+
+// CheckErvisioCodeCollaborationJSONRequestBody defines body for CheckErvisioCodeCollaboration for application/json ContentType.
+type CheckErvisioCodeCollaborationJSONRequestBody = ErvisioCodeCollaborationCheck
 
 // CreateErvisioCodeProposalJSONRequestBody defines body for CreateErvisioCodeProposal for application/json ContentType.
 type CreateErvisioCodeProposalJSONRequestBody = ErvisioCodeProposalCreate
@@ -10195,6 +10338,12 @@ type ServerInterface interface {
 	// AcceptErvisioCodeShareById Accept a pending personal invitation from the signed-in account's inbox
 	// (POST /user/ervisiocode/shares/{shareId}/accept)
 	AcceptErvisioCodeShareById(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params AcceptErvisioCodeShareByIdParams)
+	// ActOnErvisioCodeCollaboration Send or stop a tool-free contribution in the shared session
+	// (POST /user/ervisiocode/shares/{shareId}/collaboration)
+	ActOnErvisioCodeCollaboration(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params ActOnErvisioCodeCollaborationParams)
+	// CheckErvisioCodeCollaboration Recheck grant and contributor access as the approved linked host
+	// (POST /user/ervisiocode/shares/{shareId}/collaboration/check)
+	CheckErvisioCodeCollaboration(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId)
 	// ListErvisioCodeProposals List proposals while the host is online or offline
 	// (GET /user/ervisiocode/shares/{shareId}/proposals)
 	ListErvisioCodeProposals(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params ListErvisioCodeProposalsParams)
@@ -12526,6 +12675,18 @@ func (_ Unimplemented) RevokeErvisioCodeShare(w http.ResponseWriter, r *http.Req
 // AcceptErvisioCodeShareById Accept a pending personal invitation from the signed-in account's inbox
 // (POST /user/ervisiocode/shares/{shareId}/accept)
 func (_ Unimplemented) AcceptErvisioCodeShareById(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params AcceptErvisioCodeShareByIdParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ActOnErvisioCodeCollaboration Send or stop a tool-free contribution in the shared session
+// (POST /user/ervisiocode/shares/{shareId}/collaboration)
+func (_ Unimplemented) ActOnErvisioCodeCollaboration(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params ActOnErvisioCodeCollaborationParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CheckErvisioCodeCollaboration Recheck grant and contributor access as the approved linked host
+// (POST /user/ervisiocode/shares/{shareId}/collaboration/check)
+func (_ Unimplemented) CheckErvisioCodeCollaboration(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -29649,6 +29810,88 @@ func (siw *ServerInterfaceWrapper) AcceptErvisioCodeShareById(w http.ResponseWri
 	handler.ServeHTTP(w, r)
 }
 
+// ActOnErvisioCodeCollaboration operation middleware
+func (siw *ServerInterfaceWrapper) ActOnErvisioCodeCollaboration(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ErvisioCodeShareId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", chi.URLParam(r, "shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shareId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ActOnErvisioCodeCollaborationParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ActOnErvisioCodeCollaboration(w, r, shareId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CheckErvisioCodeCollaboration operation middleware
+func (siw *ServerInterfaceWrapper) CheckErvisioCodeCollaboration(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ErvisioCodeShareId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", chi.URLParam(r, "shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shareId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"ervisiocode:device"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CheckErvisioCodeCollaboration(w, r, shareId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListErvisioCodeProposals operation middleware
 func (siw *ServerInterfaceWrapper) ListErvisioCodeProposals(w http.ResponseWriter, r *http.Request) {
 
@@ -31871,6 +32114,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/user/ervisiocode/shares/{shareId}/state", wrapper.GetErvisioCodeSharedState)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/shares/{shareId}/collaboration", wrapper.ActOnErvisioCodeCollaboration)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/user/ervisiocode/shares/{shareId}/proposals", wrapper.ListErvisioCodeProposals)
 	})
 	r.Group(func(r chi.Router) {
@@ -31881,6 +32127,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/user/ervisiocode/relay", wrapper.PollErvisioCodeRelay)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/shares/{shareId}/collaboration/check", wrapper.CheckErvisioCodeCollaboration)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/user/device/{userCode}", wrapper.GetDeviceAuthorization)
@@ -64036,6 +64285,75 @@ func (response AcceptErvisioCodeShareByIddefaultApplicationProblemPlusJSONRespon
 	return err
 }
 
+type ActOnErvisioCodeCollaborationRequestObject struct {
+	ShareId ErvisioCodeShareId `json:"shareId"`
+	Params  ActOnErvisioCodeCollaborationParams
+	Body    *ActOnErvisioCodeCollaborationJSONRequestBody
+}
+
+type ActOnErvisioCodeCollaborationResponseObject interface {
+	VisitActOnErvisioCodeCollaborationResponse(w http.ResponseWriter) error
+}
+
+type ActOnErvisioCodeCollaboration204Response struct {
+}
+
+func (response ActOnErvisioCodeCollaboration204Response) VisitActOnErvisioCodeCollaborationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ActOnErvisioCodeCollaborationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ActOnErvisioCodeCollaborationdefaultApplicationProblemPlusJSONResponse) VisitActOnErvisioCodeCollaborationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CheckErvisioCodeCollaborationRequestObject struct {
+	ShareId ErvisioCodeShareId `json:"shareId"`
+	Body    *CheckErvisioCodeCollaborationJSONRequestBody
+}
+
+type CheckErvisioCodeCollaborationResponseObject interface {
+	VisitCheckErvisioCodeCollaborationResponse(w http.ResponseWriter) error
+}
+
+type CheckErvisioCodeCollaboration204Response struct {
+}
+
+func (response CheckErvisioCodeCollaboration204Response) VisitCheckErvisioCodeCollaborationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type CheckErvisioCodeCollaborationdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CheckErvisioCodeCollaborationdefaultApplicationProblemPlusJSONResponse) VisitCheckErvisioCodeCollaborationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListErvisioCodeProposalsRequestObject struct {
 	ShareId ErvisioCodeShareId `json:"shareId"`
 	Params  ListErvisioCodeProposalsParams
@@ -64253,7 +64571,7 @@ type GetErvisioCodeSharedStateResponseObject interface {
 	VisitGetErvisioCodeSharedStateResponse(w http.ResponseWriter) error
 }
 
-type GetErvisioCodeSharedState200JSONResponse ErvisioCodeRemoteState
+type GetErvisioCodeSharedState200JSONResponse ErvisioCodeSharedState
 
 func (response GetErvisioCodeSharedState200JSONResponse) VisitGetErvisioCodeSharedStateResponse(w http.ResponseWriter) error {
 
@@ -68885,6 +69203,12 @@ type StrictServerInterface interface {
 	// AcceptErvisioCodeShareById Accept a pending personal invitation from the signed-in account's inbox
 	// (POST /user/ervisiocode/shares/{shareId}/accept)
 	AcceptErvisioCodeShareById(ctx context.Context, request AcceptErvisioCodeShareByIdRequestObject) (AcceptErvisioCodeShareByIdResponseObject, error)
+	// ActOnErvisioCodeCollaboration Send or stop a tool-free contribution in the shared session
+	// (POST /user/ervisiocode/shares/{shareId}/collaboration)
+	ActOnErvisioCodeCollaboration(ctx context.Context, request ActOnErvisioCodeCollaborationRequestObject) (ActOnErvisioCodeCollaborationResponseObject, error)
+	// CheckErvisioCodeCollaboration Recheck grant and contributor access as the approved linked host
+	// (POST /user/ervisiocode/shares/{shareId}/collaboration/check)
+	CheckErvisioCodeCollaboration(ctx context.Context, request CheckErvisioCodeCollaborationRequestObject) (CheckErvisioCodeCollaborationResponseObject, error)
 	// ListErvisioCodeProposals List proposals while the host is online or offline
 	// (GET /user/ervisiocode/shares/{shareId}/proposals)
 	ListErvisioCodeProposals(ctx context.Context, request ListErvisioCodeProposalsRequestObject) (ListErvisioCodeProposalsResponseObject, error)
@@ -79557,6 +79881,73 @@ func (sh *strictHandler) AcceptErvisioCodeShareById(w http.ResponseWriter, r *ht
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(AcceptErvisioCodeShareByIdResponseObject); ok {
 		if err := validResponse.VisitAcceptErvisioCodeShareByIdResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ActOnErvisioCodeCollaboration operation middleware
+func (sh *strictHandler) ActOnErvisioCodeCollaboration(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params ActOnErvisioCodeCollaborationParams) {
+	var request ActOnErvisioCodeCollaborationRequestObject
+
+	request.ShareId = shareId
+	request.Params = params
+
+	var body ActOnErvisioCodeCollaborationJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ActOnErvisioCodeCollaboration(ctx, request.(ActOnErvisioCodeCollaborationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ActOnErvisioCodeCollaboration")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ActOnErvisioCodeCollaborationResponseObject); ok {
+		if err := validResponse.VisitActOnErvisioCodeCollaborationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CheckErvisioCodeCollaboration operation middleware
+func (sh *strictHandler) CheckErvisioCodeCollaboration(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId) {
+	var request CheckErvisioCodeCollaborationRequestObject
+
+	request.ShareId = shareId
+
+	var body CheckErvisioCodeCollaborationJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CheckErvisioCodeCollaboration(ctx, request.(CheckErvisioCodeCollaborationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CheckErvisioCodeCollaboration")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CheckErvisioCodeCollaborationResponseObject); ok {
+		if err := validResponse.VisitCheckErvisioCodeCollaborationResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

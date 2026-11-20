@@ -2,12 +2,14 @@
 WITH share AS (
 INSERT INTO ervisiocode_shares (
     id, owner_id, device_id, session_id, recipient_id, org_id, role, full_history,
-    after_message_id, from_message_id, host_cursor, invite_token_hash, invite_expires_at
+    after_message_id, from_message_id, host_cursor, invite_token_hash, invite_expires_at,
+    text_collaboration, organization_consent
 )
 SELECT sqlc.arg(id), t.user_id, t.id, sqlc.arg(session_id)::text, sqlc.narg(recipient_id)::uuid,
        sqlc.narg(org_id)::uuid, sqlc.arg(role), sqlc.arg(full_history)::boolean,
        sqlc.narg(after_message_id), sqlc.narg(from_message_id), sqlc.narg(host_cursor),
-       sqlc.narg(invite_token_hash), sqlc.narg(invite_expires_at)
+       sqlc.narg(invite_token_hash), sqlc.narg(invite_expires_at),
+       sqlc.arg(text_collaboration), sqlc.arg(organization_consent)
 FROM tokens t
 JOIN users owner ON owner.id = t.user_id AND owner.suspended_at IS NULL
 WHERE t.id = sqlc.arg(device_id) AND t.user_id = sqlc.arg(owner_id)
@@ -36,7 +38,7 @@ SET accepted_at = clock_timestamp(), invite_token_hash = NULL
 FROM tokens t, users owner, users recipient
 WHERE s.recipient_id = sqlc.arg(recipient_id)
   AND (s.id = sqlc.narg(share_id)::uuid OR s.invite_token_hash = sqlc.narg(token_hash)::bytea)
-  AND s.role = 'reader' AND s.accepted_at IS NULL AND s.revoked_at IS NULL AND s.invite_expires_at > clock_timestamp()
+   AND (s.role = 'reader' OR s.text_collaboration) AND s.accepted_at IS NULL AND s.revoked_at IS NULL AND s.invite_expires_at > clock_timestamp()
   AND owner.id = s.owner_id AND owner.suspended_at IS NULL
   AND recipient.id = s.recipient_id AND recipient.suspended_at IS NULL
   AND t.id = s.device_id AND t.user_id = s.owner_id
@@ -72,10 +74,10 @@ WHERE s.id = sqlc.arg(id) AND s.revoked_at IS NULL
 
 -- name: GetActiveErvisioCodeShare :one
 SELECT s.owner_id, s.device_id, s.session_id, s.full_history,
-       s.after_message_id, s.from_message_id, s.host_cursor
+       s.after_message_id, s.from_message_id, s.host_cursor, s.role
 FROM ervisiocode_shares s
 JOIN ervisiocode_active_shares a ON a.id = s.id
-WHERE s.id = sqlc.arg(id) AND s.role = 'reader' AND (
+WHERE s.id = sqlc.arg(id) AND (s.role = 'reader' OR s.text_collaboration) AND (
     s.owner_id = sqlc.arg(actor_id)::uuid OR EXISTS (
         SELECT 1 FROM ervisiocode_share_recipients r WHERE r.share_id = s.id AND r.account_id = sqlc.arg(actor_id)::uuid
     )
@@ -90,7 +92,7 @@ FROM ervisiocode_shares s
 JOIN users actor ON actor.id = sqlc.arg(actor_id) AND actor.suspended_at IS NULL
 LEFT JOIN ervisiocode_share_session_details d USING (owner_id, device_id, session_id)
 WHERE (sqlc.narg(before_id)::uuid IS NULL OR s.id < sqlc.narg(before_id)::uuid)
-  AND (s.owner_id = actor.id OR (s.role = 'reader' AND EXISTS (
+  AND (s.owner_id = actor.id OR ((s.role = 'reader' OR s.text_collaboration) AND EXISTS (
       SELECT 1 FROM ervisiocode_share_recipients r WHERE r.share_id = s.id AND r.account_id = actor.id
   )) OR EXISTS (
       SELECT 1 FROM ervisiocode_pending_share_invites p WHERE p.id = s.id AND p.recipient_id = actor.id

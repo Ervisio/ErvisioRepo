@@ -102,14 +102,30 @@ func (s *v1Server) CreateErvisioCodeShare(ctx context.Context, req v1gen.CreateE
 		body.DeviceId == uuid.Nil || !remoteSessionID.MatchString(body.SessionId) || !body.Role.Valid() {
 		return shareProblem(codeshare.ErrInvalid)
 	}
-	if body.Role != v1gen.ShareReader {
+	if body.Role != v1gen.ShareReader && body.Role != v1gen.ShareDirect {
 		return shareProblem(codeshare.ErrRoleDisabled)
+	}
+	if body.Role == v1gen.ShareDirect && (!bool(shareValue(body.FullHistory)) || body.OrgId != nil && !shareValue(body.OrganizationConsent)) {
+		return shareProblem(codeshare.ErrInvalid)
 	}
 	history, problem, err := s.shareCreateHistory(ctx, accountID, req.Params.AccountId, *body)
 	if err != nil || problem.status != 0 {
 		return problem, err
 	}
-	in := codeshare.CreateShareInput{DeviceID: body.DeviceId, SessionID: body.SessionId, Role: codeshare.Role(body.Role), History: history}
+	if body.Role == v1gen.ShareDirect {
+		key := remoteHostKey{accountID: accountID, deviceID: body.DeviceId}
+		unlock := s.remote.lockPoll(key)
+		defer unlock()
+		if problem, err := s.recheckSharingAccount(ctx, accountID, req.Params.AccountId); err != nil || problem.status != 0 {
+			return problem, err
+		}
+		request := v1gen.ErvisioCodeRelayRequest{Op: v1gen.RelayCollaborationState, SessionId: &body.SessionId}
+		if _, problem := s.remote.sessionRelay(key, request); problem.status != 0 {
+			return problem, nil
+		}
+	}
+	in := codeshare.CreateShareInput{DeviceID: body.DeviceId, SessionID: body.SessionId, Role: codeshare.Role(body.Role),
+		History: history, OrganizationConsent: shareValue(body.OrganizationConsent)}
 	if body.OrgId != nil {
 		share, err := s.shares.CreateOrgGrant(ctx, accountID, *body.OrgId, in)
 		if err != nil {
@@ -212,29 +228,57 @@ func (s *v1Server) GetErvisioCodeSharedState(ctx context.Context, req v1gen.GetE
 	if err != nil {
 		return shareProblem(err)
 	}
+	if share.Role == codeshare.Direct {
+		reply, err := s.sendCollaborationRequest(ctx, accountID, req.Params.AccountId, req.ShareId, share, v1gen.RelayCollaborationState, nil)
+		if err != nil {
+			return nil, err
+		}
+		if reply.problem.status == 0 {
+			return sharedState(reply, true), nil
+		}
+		if reply.problem != errCollaborationUnsupported {
+			return reply.problem, nil
+		}
+	}
 	history, err := relayShareHistory(share.History)
 	if err != nil {
 		return nil, err
 	}
-	reply, err := s.sendSharedSessionRequest(ctx, remoteHostKey{accountID: share.Target.OwnerID, deviceID: share.Target.DeviceID},
+	key := remoteHostKey{accountID: share.Target.OwnerID, deviceID: share.Target.DeviceID}
+	reply, err := s.sendSharedSessionRequest(ctx, key,
 		v1gen.ErvisioCodeRelayRequest{Op: v1gen.RelayState, SessionId: &share.Target.SessionID, History: history})
 	if err != nil {
 		return nil, err
 	}
-	if problem, err := s.recheckSharingAccount(ctx, accountID, req.Params.AccountId); err != nil || problem.status != 0 {
+	if problem, err := s.recheckSharedSession(ctx, accountID, req.Params.AccountId, req.ShareId, share); err != nil || problem.status != 0 {
 		return problem, err
-	}
-	current, err := s.shares.GetActiveSession(ctx, accountID, req.ShareId)
-	if err != nil {
-		return shareProblem(err)
-	}
-	if current.Target != share.Target || current.History != share.History {
-		return shareProblem(codeshare.ErrNotFound)
 	}
 	if reply.problem.status != 0 {
 		return reply.problem, nil
 	}
-	return v1gen.GetErvisioCodeSharedState200JSONResponse(reply.state), nil
+	return sharedState(reply, false), nil
+}
+
+func sharedState(reply remoteReply, canCollaborate bool) v1gen.GetErvisioCodeSharedState200JSONResponse {
+	return v1gen.GetErvisioCodeSharedState200JSONResponse{
+		Messages: reply.state.Messages, Busy: reply.state.Busy, TextCollaboration: shareOptional(canCollaborate),
+		CollaborationBusy: reply.state.CollaborationBusy, CollaborationContributorId: reply.collaborationContributorID,
+		Todos: reply.state.Todos,
+	}
+}
+
+func (s *v1Server) recheckSharedSession(ctx context.Context, accountID uuid.UUID, selected *uuid.UUID, shareID uuid.UUID, share codeshare.SharedSession) (problemResponse, error) {
+	if problem, err := s.recheckSharingAccount(ctx, accountID, selected); err != nil || problem.status != 0 {
+		return problem, err
+	}
+	current, err := s.shares.GetActiveSession(ctx, accountID, shareID)
+	if err != nil {
+		return shareProblem(err)
+	}
+	if current != share {
+		return shareProblem(codeshare.ErrNotFound)
+	}
+	return problemResponse{}, nil
 }
 
 func (s *v1Server) sendSharedSessionRequest(ctx context.Context, key remoteHostKey, request v1gen.ErvisioCodeRelayRequest) (remoteReply, error) {

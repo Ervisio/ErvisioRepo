@@ -19,15 +19,15 @@ SET accepted_at = clock_timestamp(), invite_token_hash = NULL
 FROM tokens t, users owner, users recipient
 WHERE s.recipient_id = $1
   AND (s.id = $2::uuid OR s.invite_token_hash = $3::bytea)
-  AND s.role = 'reader' AND s.accepted_at IS NULL AND s.revoked_at IS NULL AND s.invite_expires_at > clock_timestamp()
+   AND (s.role = 'reader' OR s.text_collaboration) AND s.accepted_at IS NULL AND s.revoked_at IS NULL AND s.invite_expires_at > clock_timestamp()
   AND owner.id = s.owner_id AND owner.suspended_at IS NULL
   AND recipient.id = s.recipient_id AND recipient.suspended_at IS NULL
   AND t.id = s.device_id AND t.user_id = s.owner_id
   AND t.is_ervisiocode_device AND t.expires_at > clock_timestamp()
   AND t.remote_session_metadata @> jsonb_build_array(jsonb_build_object('sessionId', s.session_id))
-RETURNING s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at
+RETURNING s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at, s.text_collaboration, s.organization_consent
 )
-SELECT s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at, COALESCE(d.session_title, '')::text AS session_title,
+SELECT s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at, s.text_collaboration, s.organization_consent, COALESCE(d.session_title, '')::text AS session_title,
        COALESCE(d.owner_username, '')::text AS owner_username,
        COALESCE(d.owner_display_name, '')::text AS owner_display_name,
        COALESCE(d.owner_avatar_url, '')::text AS owner_avatar_url
@@ -42,26 +42,28 @@ type AcceptErvisioCodeShareParams struct {
 }
 
 type AcceptErvisioCodeShareRow struct {
-	ID               uuid.UUID
-	OwnerID          uuid.UUID
-	DeviceID         uuid.UUID
-	SessionID        string
-	RecipientID      uuid.NullUUID
-	OrgID            uuid.NullUUID
-	Role             string
-	FullHistory      bool
-	AfterMessageID   pgtype.Text
-	FromMessageID    pgtype.Text
-	HostCursor       pgtype.Text
-	InviteTokenHash  []byte
-	InviteExpiresAt  pgtype.Timestamptz
-	AcceptedAt       pgtype.Timestamptz
-	RevokedAt        pgtype.Timestamptz
-	CreatedAt        pgtype.Timestamptz
-	SessionTitle     string
-	OwnerUsername    string
-	OwnerDisplayName string
-	OwnerAvatarUrl   string
+	ID                  uuid.UUID
+	OwnerID             uuid.UUID
+	DeviceID            uuid.UUID
+	SessionID           string
+	RecipientID         uuid.NullUUID
+	OrgID               uuid.NullUUID
+	Role                string
+	FullHistory         bool
+	AfterMessageID      pgtype.Text
+	FromMessageID       pgtype.Text
+	HostCursor          pgtype.Text
+	InviteTokenHash     []byte
+	InviteExpiresAt     pgtype.Timestamptz
+	AcceptedAt          pgtype.Timestamptz
+	RevokedAt           pgtype.Timestamptz
+	CreatedAt           pgtype.Timestamptz
+	TextCollaboration   bool
+	OrganizationConsent bool
+	SessionTitle        string
+	OwnerUsername       string
+	OwnerDisplayName    string
+	OwnerAvatarUrl      string
 }
 
 func (q *Queries) AcceptErvisioCodeShare(ctx context.Context, arg AcceptErvisioCodeShareParams) (AcceptErvisioCodeShareRow, error) {
@@ -84,6 +86,8 @@ func (q *Queries) AcceptErvisioCodeShare(ctx context.Context, arg AcceptErvisioC
 		&i.AcceptedAt,
 		&i.RevokedAt,
 		&i.CreatedAt,
+		&i.TextCollaboration,
+		&i.OrganizationConsent,
 		&i.SessionTitle,
 		&i.OwnerUsername,
 		&i.OwnerDisplayName,
@@ -107,15 +111,17 @@ const createErvisioCodeShare = `-- name: CreateErvisioCodeShare :one
 WITH share AS (
 INSERT INTO ervisiocode_shares (
     id, owner_id, device_id, session_id, recipient_id, org_id, role, full_history,
-    after_message_id, from_message_id, host_cursor, invite_token_hash, invite_expires_at
+    after_message_id, from_message_id, host_cursor, invite_token_hash, invite_expires_at,
+    text_collaboration, organization_consent
 )
 SELECT $1, t.user_id, t.id, $2::text, $3::uuid,
        $4::uuid, $5, $6::boolean,
        $7, $8, $9,
-       $10, $11
+       $10, $11,
+       $12, $13
 FROM tokens t
 JOIN users owner ON owner.id = t.user_id AND owner.suspended_at IS NULL
-WHERE t.id = $12 AND t.user_id = $13
+WHERE t.id = $14 AND t.user_id = $15
   AND t.is_ervisiocode_device AND t.expires_at > statement_timestamp()
   AND t.remote_session_metadata @> jsonb_build_array(jsonb_build_object('sessionId', $2::text))
   AND ($3::uuid IS NULL OR EXISTS (
@@ -125,9 +131,9 @@ WHERE t.id = $12 AND t.user_id = $13
       SELECT 1 FROM org_members m
       WHERE m.org_id = $4::uuid AND m.user_id = t.user_id AND m.role IN ('owner', 'admin')
   ))
-RETURNING id, owner_id, device_id, session_id, recipient_id, org_id, role, full_history, after_message_id, from_message_id, host_cursor, invite_token_hash, invite_expires_at, accepted_at, revoked_at, created_at
+RETURNING id, owner_id, device_id, session_id, recipient_id, org_id, role, full_history, after_message_id, from_message_id, host_cursor, invite_token_hash, invite_expires_at, accepted_at, revoked_at, created_at, text_collaboration, organization_consent
 )
-SELECT s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at, COALESCE(d.session_title, '')::text AS session_title,
+SELECT s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at, s.text_collaboration, s.organization_consent, COALESCE(d.session_title, '')::text AS session_title,
        COALESCE(d.owner_username, '')::text AS owner_username,
        COALESCE(d.owner_display_name, '')::text AS owner_display_name,
        COALESCE(d.owner_avatar_url, '')::text AS owner_avatar_url
@@ -136,42 +142,46 @@ LEFT JOIN ervisiocode_share_session_details d USING (owner_id, device_id, sessio
 `
 
 type CreateErvisioCodeShareParams struct {
-	ID              uuid.UUID
-	SessionID       string
-	RecipientID     uuid.NullUUID
-	OrgID           uuid.NullUUID
-	Role            string
-	FullHistory     bool
-	AfterMessageID  pgtype.Text
-	FromMessageID   pgtype.Text
-	HostCursor      pgtype.Text
-	InviteTokenHash []byte
-	InviteExpiresAt pgtype.Timestamptz
-	DeviceID        uuid.UUID
-	OwnerID         uuid.UUID
+	ID                  uuid.UUID
+	SessionID           string
+	RecipientID         uuid.NullUUID
+	OrgID               uuid.NullUUID
+	Role                string
+	FullHistory         bool
+	AfterMessageID      pgtype.Text
+	FromMessageID       pgtype.Text
+	HostCursor          pgtype.Text
+	InviteTokenHash     []byte
+	InviteExpiresAt     pgtype.Timestamptz
+	TextCollaboration   bool
+	OrganizationConsent bool
+	DeviceID            uuid.UUID
+	OwnerID             uuid.UUID
 }
 
 type CreateErvisioCodeShareRow struct {
-	ID               uuid.UUID
-	OwnerID          uuid.UUID
-	DeviceID         uuid.UUID
-	SessionID        string
-	RecipientID      uuid.NullUUID
-	OrgID            uuid.NullUUID
-	Role             string
-	FullHistory      bool
-	AfterMessageID   pgtype.Text
-	FromMessageID    pgtype.Text
-	HostCursor       pgtype.Text
-	InviteTokenHash  []byte
-	InviteExpiresAt  pgtype.Timestamptz
-	AcceptedAt       pgtype.Timestamptz
-	RevokedAt        pgtype.Timestamptz
-	CreatedAt        pgtype.Timestamptz
-	SessionTitle     string
-	OwnerUsername    string
-	OwnerDisplayName string
-	OwnerAvatarUrl   string
+	ID                  uuid.UUID
+	OwnerID             uuid.UUID
+	DeviceID            uuid.UUID
+	SessionID           string
+	RecipientID         uuid.NullUUID
+	OrgID               uuid.NullUUID
+	Role                string
+	FullHistory         bool
+	AfterMessageID      pgtype.Text
+	FromMessageID       pgtype.Text
+	HostCursor          pgtype.Text
+	InviteTokenHash     []byte
+	InviteExpiresAt     pgtype.Timestamptz
+	AcceptedAt          pgtype.Timestamptz
+	RevokedAt           pgtype.Timestamptz
+	CreatedAt           pgtype.Timestamptz
+	TextCollaboration   bool
+	OrganizationConsent bool
+	SessionTitle        string
+	OwnerUsername       string
+	OwnerDisplayName    string
+	OwnerAvatarUrl      string
 }
 
 func (q *Queries) CreateErvisioCodeShare(ctx context.Context, arg CreateErvisioCodeShareParams) (CreateErvisioCodeShareRow, error) {
@@ -187,6 +197,8 @@ func (q *Queries) CreateErvisioCodeShare(ctx context.Context, arg CreateErvisioC
 		arg.HostCursor,
 		arg.InviteTokenHash,
 		arg.InviteExpiresAt,
+		arg.TextCollaboration,
+		arg.OrganizationConsent,
 		arg.DeviceID,
 		arg.OwnerID,
 	)
@@ -208,6 +220,8 @@ func (q *Queries) CreateErvisioCodeShare(ctx context.Context, arg CreateErvisioC
 		&i.AcceptedAt,
 		&i.RevokedAt,
 		&i.CreatedAt,
+		&i.TextCollaboration,
+		&i.OrganizationConsent,
 		&i.SessionTitle,
 		&i.OwnerUsername,
 		&i.OwnerDisplayName,
@@ -230,10 +244,10 @@ func (q *Queries) DeleteExpiredErvisioCodeProposals(ctx context.Context) (int64,
 
 const getActiveErvisioCodeShare = `-- name: GetActiveErvisioCodeShare :one
 SELECT s.owner_id, s.device_id, s.session_id, s.full_history,
-       s.after_message_id, s.from_message_id, s.host_cursor
+       s.after_message_id, s.from_message_id, s.host_cursor, s.role
 FROM ervisiocode_shares s
 JOIN ervisiocode_active_shares a ON a.id = s.id
-WHERE s.id = $1 AND s.role = 'reader' AND (
+WHERE s.id = $1 AND (s.role = 'reader' OR s.text_collaboration) AND (
     s.owner_id = $2::uuid OR EXISTS (
         SELECT 1 FROM ervisiocode_share_recipients r WHERE r.share_id = s.id AND r.account_id = $2::uuid
     )
@@ -253,6 +267,7 @@ type GetActiveErvisioCodeShareRow struct {
 	AfterMessageID pgtype.Text
 	FromMessageID  pgtype.Text
 	HostCursor     pgtype.Text
+	Role           string
 }
 
 func (q *Queries) GetActiveErvisioCodeShare(ctx context.Context, arg GetActiveErvisioCodeShareParams) (GetActiveErvisioCodeShareRow, error) {
@@ -266,6 +281,7 @@ func (q *Queries) GetActiveErvisioCodeShare(ctx context.Context, arg GetActiveEr
 		&i.AfterMessageID,
 		&i.FromMessageID,
 		&i.HostCursor,
+		&i.Role,
 	)
 	return i, err
 }
@@ -282,7 +298,7 @@ func (q *Queries) GetErvisioCodeDirectoryRole(ctx context.Context, id uuid.UUID)
 }
 
 const listErvisioCodeShares = `-- name: ListErvisioCodeShares :many
-SELECT s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at, COALESCE(d.session_title, '')::text AS session_title,
+SELECT s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at, s.text_collaboration, s.organization_consent, COALESCE(d.session_title, '')::text AS session_title,
        COALESCE(d.owner_username, '')::text AS owner_username,
        COALESCE(d.owner_display_name, '')::text AS owner_display_name,
        COALESCE(d.owner_avatar_url, '')::text AS owner_avatar_url
@@ -290,7 +306,7 @@ FROM ervisiocode_shares s
 JOIN users actor ON actor.id = $1 AND actor.suspended_at IS NULL
 LEFT JOIN ervisiocode_share_session_details d USING (owner_id, device_id, session_id)
 WHERE ($2::uuid IS NULL OR s.id < $2::uuid)
-  AND (s.owner_id = actor.id OR (s.role = 'reader' AND EXISTS (
+  AND (s.owner_id = actor.id OR ((s.role = 'reader' OR s.text_collaboration) AND EXISTS (
       SELECT 1 FROM ervisiocode_share_recipients r WHERE r.share_id = s.id AND r.account_id = actor.id
   )) OR EXISTS (
       SELECT 1 FROM ervisiocode_pending_share_invites p WHERE p.id = s.id AND p.recipient_id = actor.id
@@ -306,26 +322,28 @@ type ListErvisioCodeSharesParams struct {
 }
 
 type ListErvisioCodeSharesRow struct {
-	ID               uuid.UUID
-	OwnerID          uuid.UUID
-	DeviceID         uuid.UUID
-	SessionID        string
-	RecipientID      uuid.NullUUID
-	OrgID            uuid.NullUUID
-	Role             string
-	FullHistory      bool
-	AfterMessageID   pgtype.Text
-	FromMessageID    pgtype.Text
-	HostCursor       pgtype.Text
-	InviteTokenHash  []byte
-	InviteExpiresAt  pgtype.Timestamptz
-	AcceptedAt       pgtype.Timestamptz
-	RevokedAt        pgtype.Timestamptz
-	CreatedAt        pgtype.Timestamptz
-	SessionTitle     string
-	OwnerUsername    string
-	OwnerDisplayName string
-	OwnerAvatarUrl   string
+	ID                  uuid.UUID
+	OwnerID             uuid.UUID
+	DeviceID            uuid.UUID
+	SessionID           string
+	RecipientID         uuid.NullUUID
+	OrgID               uuid.NullUUID
+	Role                string
+	FullHistory         bool
+	AfterMessageID      pgtype.Text
+	FromMessageID       pgtype.Text
+	HostCursor          pgtype.Text
+	InviteTokenHash     []byte
+	InviteExpiresAt     pgtype.Timestamptz
+	AcceptedAt          pgtype.Timestamptz
+	RevokedAt           pgtype.Timestamptz
+	CreatedAt           pgtype.Timestamptz
+	TextCollaboration   bool
+	OrganizationConsent bool
+	SessionTitle        string
+	OwnerUsername       string
+	OwnerDisplayName    string
+	OwnerAvatarUrl      string
 }
 
 func (q *Queries) ListErvisioCodeShares(ctx context.Context, arg ListErvisioCodeSharesParams) ([]ListErvisioCodeSharesRow, error) {
@@ -354,6 +372,8 @@ func (q *Queries) ListErvisioCodeShares(ctx context.Context, arg ListErvisioCode
 			&i.AcceptedAt,
 			&i.RevokedAt,
 			&i.CreatedAt,
+			&i.TextCollaboration,
+			&i.OrganizationConsent,
 			&i.SessionTitle,
 			&i.OwnerUsername,
 			&i.OwnerDisplayName,

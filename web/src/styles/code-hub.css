@@ -253,6 +253,38 @@
 .ec-context { display: flex; align-items: center; gap: 6px; margin-block-start: 8px; }
 .ec-context .ui-icon { width: 15px; height: 15px; }
 .ec-compose-area .ec-command-error { margin-block-start: 8px; color: var(--code-error); }
+.ec-todos {
+  width: calc(100% - 40px);
+  max-width: var(--code-column);
+  margin: 0 auto 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--code-line);
+  border-radius: var(--b-r);
+  background: var(--code-raised);
+  font-size: 14px;
+}
+.ec-todos-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--code-text);
+  font: inherit;
+  text-align: start;
+}
+.ec-todos-header .ui-icon { width: 15px; height: 15px; color: var(--code-muted); }
+.ec-todos-header span { margin-inline-start: auto; color: var(--code-muted); font-size: 13px; }
+.ec-todos ol { max-height: min(30dvh, 260px); margin: 6px 0 0; padding: 0; overflow-y: auto; list-style: none; }
+.ec-todos li { display: grid; grid-template-columns: 1.4em minmax(0, 1fr); padding-block: 2px; overflow-wrap: anywhere; }
+.ec-todos li > span:first-child { color: var(--code-muted); text-align: center; }
+.ec-todos li[data-status="in_progress"] { font-weight: 600; }
+.ec-todos li[data-status="in_progress"] > span:first-child { color: var(--code-action); }
+.ec-todos li[data-status="completed"], .ec-todos li[data-status="cancelled"] { color: var(--code-muted); }
+.ec-todos li[data-status="completed"] > span:last-child,
+.ec-todos li[data-status="cancelled"] > span:last-child { text-decoration: line-through; }
 
 .ec-drawer-overlay { position: fixed; inset: 0; z-index: 35; background: var(--code-scrim); }
 .ec-drawer {
@@ -378,7 +410,8 @@
   .ec-mobile-toggle { display: inline-flex; }
   .ec-main-head { padding-inline: max(10px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right)); }
   .ec-transcript { padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right)); }
-  .ec-compose-area { width: calc(100% - max(12px, env(safe-area-inset-left)) - max(12px, env(safe-area-inset-right))); }
+  .ec-compose-area, .ec-todos { width: calc(100% - max(12px, env(safe-area-inset-left)) - max(12px, env(safe-area-inset-right))); }
+  .ec-todos-header { min-height: 44px; }
   .ec-composer textarea, .ec-search, .ec-new-form select { font-size: 16px; }
   .ec-rail-row, .ec-icon-button, .ec-search, .ec-retry, .ec-new-form select, .ec-new-submit { min-height: 44px; }
   .ec-icon-button { width: 44px; }

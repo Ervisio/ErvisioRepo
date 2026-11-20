@@ -50,41 +50,47 @@ type remoteProjectOffer struct {
 }
 
 type remotePublication struct {
-	id               uuid.UUID
-	enabled          bool
-	historyFiltering bool
-	sessions         map[string]v1gen.ErvisioCodeRemoteSession
-	projects         map[uuid.UUID]v1gen.ErvisioCodeRemoteProjectPublication
+	id                uuid.UUID
+	enabled           bool
+	historyFiltering  bool
+	textCollaboration bool
+	sessions          map[string]v1gen.ErvisioCodeRemoteSession
+	projects          map[uuid.UUID]v1gen.ErvisioCodeRemoteProjectPublication
 }
 
 type remoteCall struct {
-	ctx       context.Context
-	cancel    context.CancelFunc
-	request   v1gen.ErvisioCodeRelayRequest
-	delivered bool
-	reply     chan remoteReply
-	project   *remoteProjectOffer
-	authorize remoteRepositoryAuthorizer
+	ctx           context.Context
+	cancel        context.CancelFunc
+	request       v1gen.ErvisioCodeRelayRequest
+	delivered     bool
+	reply         chan remoteReply
+	project       *remoteProjectOffer
+	authorize     remoteRepositoryAuthorizer
+	collaboration remoteCollaborationAuthorizer
 }
 
 type remoteRepositoryAuthorizer func(context.Context, v1gen.ErvisioCodeRemoteRepository) problemResponse
 
+type remoteCollaborationAuthorizer func(context.Context) (problemResponse, error)
+
 type remoteReply struct {
-	state      v1gen.ErvisioCodeRemoteState
-	sessionID  string
-	hostCursor string
-	problem    problemResponse
+	state                      v1gen.ErvisioCodeRemoteState
+	collaborationContributorID *uuid.UUID
+	sessionID                  string
+	hostCursor                 string
+	problem                    problemResponse
 }
 
 var (
-	errRemoteOffline      = problemResponse{status: http.StatusNotFound, detail: "Remote session is not live"}
-	errProjectOffline     = problemResponse{status: http.StatusNotFound, detail: "Remote project is not advertised"}
-	errProjectAccess      = problemResponse{status: http.StatusForbidden, detail: "Linked repository access could not be verified"}
-	errRemoteBusy         = problemResponse{status: http.StatusTooManyRequests, detail: "Remote relay is busy", retryAfter: 2}
-	errRemoteTimeout      = problemResponse{status: http.StatusGatewayTimeout, detail: "the host did not acknowledge in time; it may already have accepted the action"}
-	errRemoteHost         = problemResponse{status: http.StatusBadGateway, detail: "the host did not accept the Remote action"}
-	errRelayConflict      = problemResponse{status: http.StatusConflict, detail: "another Remote relay lifetime is active or this lifetime has stopped"}
-	errHistoryUnsupported = problemResponse{status: http.StatusUnprocessableEntity, detail: "the linked host does not support restricted history"}
+	errRemoteOffline            = problemResponse{status: http.StatusNotFound, detail: "Remote session is not live"}
+	errProjectOffline           = problemResponse{status: http.StatusNotFound, detail: "Remote project is not advertised"}
+	errProjectAccess            = problemResponse{status: http.StatusForbidden, detail: "Linked repository access could not be verified"}
+	errRemoteBusy               = problemResponse{status: http.StatusTooManyRequests, detail: "Remote relay is busy", retryAfter: 2}
+	errRemoteTimeout            = problemResponse{status: http.StatusGatewayTimeout, detail: "the host did not acknowledge in time; it may already have accepted the action"}
+	errRemoteHost               = problemResponse{status: http.StatusBadGateway, detail: "the host did not accept the Remote action"}
+	errRelayConflict            = problemResponse{status: http.StatusConflict, detail: "another Remote relay lifetime is active or this lifetime has stopped"}
+	errHistoryUnsupported       = problemResponse{status: http.StatusUnprocessableEntity, detail: "the linked host does not support restricted history"}
+	errCollaborationUnsupported = problemResponse{status: http.StatusUnprocessableEntity, detail: "the linked host does not support text collaboration in the session"}
 )
 
 func (r *remoteRelay) list(accountID uuid.UUID, devices map[uuid.UUID][]credentials.ErvisioCodeRemoteMetadata) []v1gen.ErvisioCodeRemoteSession {
@@ -155,7 +161,7 @@ func (r *remoteRelay) sessionRelay(key remoteHostKey, request v1gen.ErvisioCodeR
 	return host.id, problemResponse{}
 }
 
-func (r *remoteRelay) enqueue(ctx context.Context, key remoteHostKey, relayID uuid.UUID, request v1gen.ErvisioCodeRelayRequest, authorize remoteRepositoryAuthorizer) (*remoteCall, problemResponse) {
+func (r *remoteRelay) enqueue(ctx context.Context, key remoteHostKey, relayID uuid.UUID, request v1gen.ErvisioCodeRelayRequest, authorize remoteRepositoryAuthorizer, collaboration remoteCollaborationAuthorizer) (*remoteCall, problemResponse) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	now := time.Now()
@@ -166,6 +172,11 @@ func (r *remoteRelay) enqueue(ctx context.Context, key remoteHostKey, relayID uu
 	}
 	if problem := host.offerProblem(request); problem.status != 0 {
 		return nil, problem
+	}
+	if isCollaborationOp(request.Op) && (collaboration == nil ||
+		request.GrantId == nil || *request.GrantId == uuid.Nil ||
+		request.ContributorId == nil || *request.ContributorId == uuid.Nil) {
+		return nil, errCollaborationUnsupported
 	}
 	if len(host.pending) >= remoteMaxRequests {
 		return nil, errRemoteBusy
@@ -188,7 +199,7 @@ func (r *remoteRelay) enqueue(ctx context.Context, key remoteHostKey, relayID uu
 	}
 	request.Id = uuid.New()
 	request.ExpiresAt, _ = ctx.Deadline()
-	call := &remoteCall{ctx: ctx, cancel: cancel, reply: make(chan remoteReply, 1), request: request, project: project, authorize: authorize}
+	call := &remoteCall{ctx: ctx, cancel: cancel, reply: make(chan remoteReply, 1), request: request, project: project, authorize: authorize, collaboration: collaboration}
 	host.pending = append(host.pending, call)
 	return call, problemResponse{}
 }
@@ -276,6 +287,10 @@ func (h *remoteHost) exchange(results map[uuid.UUID]v1gen.ErvisioCodeRelayResult
 			return true
 		}
 		if !call.delivered {
+			if call.collaboration != nil {
+				gated = append(gated, call)
+				return false
+			}
 			if call.project != nil {
 				if h.projectOffers[*call.request.ProjectId] != call.project {
 					call.reply <- remoteReply{problem: errProjectOffline}
@@ -300,7 +315,7 @@ func (h *remoteHost) exchange(results map[uuid.UUID]v1gen.ErvisioCodeRelayResult
 	return requests, gated
 }
 
-func (r *remoteRelay) dispatchAuthorizedProjects(key remoteHostKey, relayID uuid.UUID, gated []*remoteCall, problems []problemResponse) []v1gen.ErvisioCodeRelayRequest {
+func (r *remoteRelay) dispatchAuthorizedCalls(key remoteHostKey, relayID uuid.UUID, gated []*remoteCall, problems []problemResponse) []v1gen.ErvisioCodeRelayRequest {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	now := time.Now()
@@ -316,7 +331,10 @@ func (r *remoteRelay) dispatchAuthorizedProjects(key remoteHostKey, relayID uuid
 			continue
 		}
 		problem := problems[i]
-		if host.projectOffers[*call.request.ProjectId] != call.project {
+		if hostProblem := host.offerProblem(call.request); hostProblem.status != 0 {
+			problem = hostProblem
+		}
+		if call.project != nil && host.projectOffers[*call.request.ProjectId] != call.project {
 			problem = errProjectOffline
 		}
 		if problem.status != 0 {
@@ -324,8 +342,10 @@ func (r *remoteRelay) dispatchAuthorizedProjects(key remoteHostKey, relayID uuid
 			host.pending = slices.Delete(host.pending, pending, pending+1)
 			continue
 		}
-		if deadline := now.Add(projectDeliveryTTL(call.project.project.Repository)); deadline.Before(call.request.ExpiresAt) {
-			call.request.ExpiresAt = deadline
+		if call.project != nil {
+			if deadline := now.Add(projectDeliveryTTL(call.project.project.Repository)); deadline.Before(call.request.ExpiresAt) {
+				call.request.ExpiresAt = deadline
+			}
 		}
 		call.delivered = true
 		requests = append(requests, call.request)
@@ -356,6 +376,9 @@ func (h *remoteHost) offerProblem(request v1gen.ErvisioCodeRelayRequest) problem
 	if (request.History != nil || request.Op == v1gen.RelayHistoryBoundary) && !h.historyFiltering {
 		return errHistoryUnsupported
 	}
+	if isCollaborationOp(request.Op) && !h.textCollaboration {
+		return errCollaborationUnsupported
+	}
 	return problemResponse{}
 }
 
@@ -371,19 +394,43 @@ func (h *remoteHost) result(request v1gen.ErvisioCodeRelayRequest, result v1gen.
 			}
 		}
 		return remoteReply{problem: errRemoteTimeout}
-	case v1gen.RelayState:
-		if result.Messages != nil && result.Busy != nil &&
-			(request.History == nil || result.HistoryApplied != nil && *result.HistoryApplied) {
-			return remoteReply{state: v1gen.ErvisioCodeRemoteState{Messages: result.Messages, Busy: result.Busy}}
+	case v1gen.RelayState, v1gen.RelayCollaborationState:
+		if result.Messages == nil || result.Busy == nil ||
+			(request.Op == v1gen.RelayCollaborationState && result.CollaborationBusy == nil) {
+			break
 		}
+		// Collaborator prompts are ordinary chat messages, so restricted views keep them with their author.
+		if request.History != nil && (!shareValue(result.HistoryApplied) ||
+			result.CollaborationBusy != nil || result.CollaborationContributorId != nil) {
+			break
+		}
+		reply := remoteReply{state: v1gen.ErvisioCodeRemoteState{
+			Messages: result.Messages, Busy: result.Busy, CollaborationBusy: result.CollaborationBusy, Todos: result.Todos,
+		}}
+		if request.Op == v1gen.RelayCollaborationState && shareValue(result.CollaborationBusy) &&
+			result.CollaborationContributorId != nil && *result.CollaborationContributorId == shareValue(request.ContributorId) {
+			reply.collaborationContributorID = result.CollaborationContributorId
+		}
+		return reply
 	case v1gen.RelayHistoryBoundary:
 		if result.HostCursor != nil && result.Messages == nil && result.Busy == nil {
 			return remoteReply{hostCursor: *result.HostCursor}
 		}
+	case v1gen.RelayCollaborationPrompt, v1gen.RelayCollaborationStop:
+		return remoteReply{}
 	default:
 		return remoteReply{}
 	}
 	return remoteReply{problem: errRemoteHost}
+}
+
+func isCollaborationOp(op v1gen.ErvisioCodeRelayOp) bool {
+	switch op {
+	case v1gen.RelayCollaborationState, v1gen.RelayCollaborationPrompt, v1gen.RelayCollaborationStop:
+		return true
+	default:
+		return false
+	}
 }
 
 func missingRemoteTarget(op v1gen.ErvisioCodeRelayOp) problemResponse {

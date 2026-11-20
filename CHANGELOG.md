@@ -6,6 +6,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.22.0] - 2026-11-20
+
+### Added
+
+- A Collaborator role for full-history chats on compatible ErvisioCode hosts that opt in. Owner and collaborators write in one group chat with attributed messages, and the PC's agent works on every prompt with the owner's tools and permission prompts.
+- `/code` shows the agent's current todo list above the composer, in the owner's chat and in shared chats, refreshed while the agent works.
+
 ## [1.21.0] - 2026-11-20
 
 ### Added

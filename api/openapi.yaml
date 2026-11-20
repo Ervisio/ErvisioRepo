@@ -2252,7 +2252,7 @@ paths:
       operationId: createErvisioCodeShare
       tags: [users]
       summary: Invite an account or grant current members of an organization access
-      description: Browser writes require the CSRF header. All writes require the configured HTTPS origin. Personal invites expire after seven days and only the named account can accept. Organization grants require the host account to be a current owner or admin of the organization. Only reader grants can be created.
+      description: Browser writes require the CSRF header. All writes require the configured HTTPS origin. Personal invites expire after seven days and only the named account can accept. Organization grants require the host account to be a current owner or admin. Direct grants require a capable live host, full history, and separate consent for organization grants.
       security:
         - session: []
         - hubSession: []
@@ -2401,7 +2401,7 @@ paths:
       operationId: getErvisioCodeSharedState
       tags: [users]
       summary: Read the visible transcript of a live shared session
-      description: Restricted grants require a host that supports history filtering; they never fall back to full history. The host sends its bounded recent transcript; the service does not persist it. The share never authorizes a prompt, interrupt, or other action.
+      description: Returns the host's visible session transcript. Restricted grants require a host that applies the requested history boundary and never fall back to full history. On compatible hosts that opt in, an active direct grant can add attributed prompts to the same transcript, and the host's agent works on them. The service does not persist the transcript.
       security:
         - session: []
         - hubSession: []
@@ -2410,7 +2410,7 @@ paths:
           description: Recent messages and session busy status
           content:
             application/json:
-              schema: {$ref: "#/components/schemas/ErvisioCodeRemoteState"}
+              schema: {$ref: "#/components/schemas/ErvisioCodeSharedState"}
         "404":
           $ref: "#/components/responses/Problem"
         "422":
@@ -2421,6 +2421,28 @@ paths:
           $ref: "#/components/responses/Problem"
         "504":
           $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/shares/{shareId}/collaboration:
+    parameters:
+      - $ref: "#/components/parameters/ErvisioCodeShareAccountId"
+      - $ref: "#/components/parameters/ErvisioCodeShareId"
+    post:
+      operationId: actOnErvisioCodeCollaboration
+      tags: [users]
+      summary: Send or stop a tool-free contribution in the shared session
+      description: An active direct grant can submit plain text for a model response in the session transcript. Only its requester or the owner may stop the pending contribution. Acknowledgment does not wait for generation. These operations never target owner execution.
+      security:
+        - session: []
+        - hubSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ErvisioCodeCollaborationAction"}
+      responses:
+        "204":
+          description: The host acknowledged the action
         default:
           $ref: "#/components/responses/Problem"
   /user/ervisiocode/shares/{shareId}/proposals:
@@ -2542,6 +2564,26 @@ paths:
                   requests:
                     type: array
                     items: {$ref: "#/components/schemas/ErvisioCodeRelayRequest"}
+        default:
+          $ref: "#/components/responses/Problem"
+  /user/ervisiocode/shares/{shareId}/collaboration/check:
+    parameters:
+      - $ref: "#/components/parameters/ErvisioCodeShareId"
+    post:
+      operationId: checkErvisioCodeCollaboration
+      tags: [users]
+      summary: Recheck grant and contributor access as the approved linked host
+      description: Use the same device Bearer token as the relay poll. Check before acting on a collaboration delivery and before retaining or publishing a collaboration reply. A non-204 response denies access.
+      security:
+        - token: [ervisiocode:device]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/ErvisioCodeCollaborationCheck"}
+      responses:
+        "204":
+          description: The exact live device publication and contributor are authorized
         default:
           $ref: "#/components/responses/Problem"
   /user/device/{userCode}:
@@ -13439,6 +13481,7 @@ components:
         sessionId: {type: string, minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$'}
         title: {type: string, maxLength: 256}
         lastActivityAt: {type: string, format: date-time}
+        textCollaboration: {type: boolean, description: The exact live publication supports tool-free collaboration in the session transcript.}
     ErvisioCodeRemoteRecent:
       type: object
       required: [deviceId, sessionId, title, lastActivityAt]
@@ -13520,7 +13563,8 @@ components:
       properties:
         messageId: {$ref: "#/components/schemas/ErvisioCodeMessageId"}
         role: {type: string, enum: [user, assistant]}
-        text: {type: string, maxLength: 8192}
+        text: {type: string, maxLength: 16384, description: At most 8192 UTF-8 bytes except for a contributor's prompt (16384 bytes).}
+        contributorId: {type: string, format: uuid, description: Account that submitted the collaborator prompt that produced this message; omitted for ordinary owner turns.}
     ErvisioCodeRemoteState:
       type: object
       properties:
@@ -13529,7 +13573,54 @@ components:
           maxItems: 50
           description: Recent visible messages, oldest first, at most 65536 bytes of text in total. Required for state; omitted for mutations.
           items: {$ref: "#/components/schemas/ErvisioCodeRemoteMessage"}
-        busy: {type: boolean, description: Required for state; omitted for mutations.}
+        busy: {type: boolean, description: Whether owner execution is busy. Required for state; omitted for mutations.}
+        collaborationBusy: {type: boolean, description: Whether the session is running on a prompt; on collaboration state it mirrors busy.}
+        todos:
+          type: array
+          maxItems: 50
+          description: The agent's current todo list, from its latest update; omitted when the visible messages never set one.
+          items: {$ref: "#/components/schemas/ErvisioCodeTodo"}
+    ErvisioCodeTodo:
+      type: object
+      additionalProperties: false
+      required: [content, status]
+      properties:
+        content: {type: string, minLength: 1, maxLength: 512}
+        status: {type: string, enum: [pending, in_progress, completed, cancelled], x-enum-varnames: [TodoPending, TodoInProgress, TodoCompleted, TodoCancelled]}
+    ErvisioCodeSharedState:
+      type: object
+      properties:
+        messages:
+          type: array
+          maxItems: 50
+          items: {$ref: "#/components/schemas/ErvisioCodeRemoteMessage"}
+        busy: {type: boolean, description: Whether owner execution is busy.}
+        textCollaboration: {type: boolean, description: This active direct grant can add prompts to the session, and the host's agent works on them.}
+        collaborationBusy: {type: boolean, description: Whether the session is running on a prompt.}
+        collaborationContributorId: {type: string, format: uuid, description: Contributor whose prompt started the current run, when it is this grant's contributor.}
+        todos:
+          type: array
+          maxItems: 50
+          description: The agent's current todo list, from its latest update; omitted when the visible messages never set one.
+          items: {$ref: "#/components/schemas/ErvisioCodeTodo"}
+    ErvisioCodeCollaborationAction:
+      type: object
+      additionalProperties: false
+      required: [op]
+      properties:
+        op:
+          type: string
+          enum: [prompt, interrupt]
+          x-enum-varnames: [CollaborationPrompt, CollaborationInterrupt]
+        text: {type: string, minLength: 1, maxLength: 16384, description: Plain text only; required for prompt and forbidden for interrupt.}
+    ErvisioCodeCollaborationCheck:
+      type: object
+      additionalProperties: false
+      required: [relayId, sessionId, contributorId]
+      properties:
+        relayId: {type: string, format: uuid}
+        sessionId: {$ref: "#/components/schemas/ErvisioCodeMessageId"}
+        contributorId: {type: string, format: uuid}
     ErvisioCodeRecipientKind:
       type: string
       enum: [user, org]
@@ -13545,7 +13636,7 @@ components:
         avatarUrl: {type: string}
     ErvisioCodeShareRole:
       type: string
-      description: Only reader grants are active or may be created. Proposer and direct may appear on historical revoked shares.
+      description: Direct grants authorize tool-free model turns in the shared session transcript. Proposer grants remain disabled and may appear on historical revoked shares.
       enum: [reader, proposer, direct]
       x-enum-varnames: [ShareReader, ShareProposer, ShareDirect]
     ErvisioCodeShare:
@@ -13575,7 +13666,7 @@ components:
       type: object
       additionalProperties: false
       required: [deviceId, sessionId, role]
-      description: Supply exactly one of recipientId or orgId, and exactly one of fullHistory true, afterMessageId, fromMessageId, or newOnly true. New-only captures a cursor from a live host that supports history filtering.
+      description: Supply exactly one of recipientId or orgId, and exactly one history choice. Direct grants require fullHistory true and a live host with text collaboration; organization direct grants also require organizationConsent true.
       properties:
         deviceId: {type: string, format: uuid}
         sessionId: {type: string, minLength: 1, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$'}
@@ -13583,6 +13674,7 @@ components:
         orgId: {type: string, format: uuid}
         role: {$ref: "#/components/schemas/ErvisioCodeShareRole"}
         fullHistory: {type: boolean, enum: [true], description: Explicit consent to disclose existing and future messages.}
+        organizationConsent: {type: boolean, description: Separate explicit consent to let current organization members write in the chat and drive the host's agent. Required as true when role is direct and orgId is present.}
         afterMessageId: {$ref: "#/components/schemas/ErvisioCodeMessageId"}
         fromMessageId: {$ref: "#/components/schemas/ErvisioCodeMessageId"}
         newOnly: {type: boolean, enum: [true], description: Start after the host's current history boundary.}
@@ -13659,6 +13751,7 @@ components:
         relayId: {type: string, format: uuid}
         enabled: {type: boolean, description: When omitted, falls back to whether sessions is nonempty.}
         historyFiltering: {type: boolean, description: The host supports history-boundary and can filter before returning any restricted state.}
+        textCollaboration: {type: boolean, description: The host supports tool-free collaboration in the session transcripts in this live publication.}
         projects:
           type: array
           maxItems: 16
@@ -13695,14 +13788,16 @@ components:
         id: {type: string, format: uuid}
         sessionId: {type: string, description: Present only for actions targeting existing sessions.}
         projectId: {type: string, format: uuid, description: Present only for create.}
+        grantId: {type: string, format: uuid, description: Present only for collaboration operations.}
+        contributorId: {type: string, format: uuid, description: Server-authenticated actor; present only for collaboration operations.}
         op: {$ref: "#/components/schemas/ErvisioCodeRelayOp"}
         text: {type: string}
         history: {$ref: "#/components/schemas/ErvisioCodeRelayHistory"}
         expiresAt: {type: string, format: date-time}
     ErvisioCodeRelayOp:
       type: string
-      enum: [state, prompt, interrupt, create, history-boundary]
-      x-enum-varnames: [RelayState, RelayPrompt, RelayInterrupt, RelayCreate, RelayHistoryBoundary]
+      enum: [state, prompt, interrupt, create, history-boundary, collaboration-state, collaboration-prompt, collaboration-stop]
+      x-enum-varnames: [RelayState, RelayPrompt, RelayInterrupt, RelayCreate, RelayHistoryBoundary, RelayCollaborationState, RelayCollaborationPrompt, RelayCollaborationStop]
     ErvisioCodeRelayResult:
       type: object
       additionalProperties: false
@@ -13716,6 +13811,13 @@ components:
           maxItems: 50
           items: {$ref: "#/components/schemas/ErvisioCodeRemoteMessage"}
         busy: {type: boolean}
+        collaborationBusy: {type: boolean}
+        collaborationContributorId: {type: string, format: uuid, description: Returned by collaboration-state when its grant and contributor can stop the active request.}
+        todos:
+          type: array
+          maxItems: 50
+          description: The agent's current todo list, from its latest update; omitted when the visible messages never set one.
+          items: {$ref: "#/components/schemas/ErvisioCodeTodo"}
         hostCursor: {$ref: "#/components/schemas/ErvisioCodeHostCursor"}
         historyApplied: {type: boolean, description: Set to true only after the host successfully applied the requested state boundary.}
         error: {type: string, maxLength: 160, description: Optional host diagnostic; not shown to controllers.}

@@ -44,6 +44,9 @@ func sharingRoute(path, method string) bool {
 		return false
 	}
 	parts := strings.Split(tail, "/")
+	if len(parts) == 2 && parts[1] == "collaboration" && method == http.MethodPost {
+		return true
+	}
 	if !sharePathID(parts[0]) {
 		return false
 	}
@@ -59,6 +62,12 @@ func sharingRoute(path, method string) bool {
 	default:
 		return false
 	}
+}
+
+func collaborationCheckRoute(path, method string) bool {
+	tail, ok := strings.CutPrefix(path, remoteSharePath+"/")
+	_, suffix, found := strings.Cut(tail, "/")
+	return ok && found && method == http.MethodPost && suffix == "collaboration/check"
 }
 
 func sharePathID(value string) bool {

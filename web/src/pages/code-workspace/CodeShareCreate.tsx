@@ -26,6 +26,8 @@ export function CodeShareCreate({ scope, session, isLive, onClose, onRestoreFocu
   const listId = useId();
   const searchInput = useRef<HTMLInputElement>(null);
   const [history, setHistory] = useState<History>("new");
+  const [role, setRole] = useState<"reader" | "direct">("reader");
+  const [organizationConsent, setOrganizationConsent] = useState(false);
   const [boundary, setBoundary] = useState("");
   const [consent, setConsent] = useState(false);
   const [created, setCreated] = useState<{ token?: string }>();
@@ -44,6 +46,8 @@ export function CodeShareCreate({ scope, session, isLive, onClose, onRestoreFocu
     ...(orgs.isSuccess ? orgs.data.filter((entry) => entry.kind === "org") : []),
   ] : [];
   const target = recipient?.kind;
+  const directAvailable = session.textCollaboration === true;
+  const direct = role === "direct";
   const transcript = useRemoteTranscript(scope.accountId, scope.hubAccountId, session, isLive && history !== "new" && !created);
   const messages = isLive && transcript.isSuccess ? transcript.data.messages : [];
   const needsBoundary = history === "from" || history === "after";
@@ -51,6 +55,7 @@ export function CodeShareCreate({ scope, session, isLive, onClose, onRestoreFocu
   const expanded = !recipient && !dismissed && matches.length > 0;
   const activeIndex = Math.min(active, matches.length - 1);
   const canCreate = isLive && recipient && consent && !action.busy && action.problem !== "share.uncertain"
+    && (!direct || directAvailable && (target !== "org" || organizationConsent))
     && (!needsBoundary || boundaryIndex >= 0);
   const preview = history === "full" ? messages : boundaryIndex < 0 ? [] : messages.slice(boundaryIndex + (history === "after" ? 1 : 0));
 
@@ -72,7 +77,10 @@ export function CodeShareCreate({ scope, session, isLive, onClose, onRestoreFocu
       : history === "from" ? { fromMessageId: boundary }
         : history === "after" ? { afterMessageId: boundary } : { newOnly: true as const };
     void action.run(async () => {
-      const result = await createCodeShare(scope, { deviceId: session.deviceId, sessionId: session.sessionId, role: "reader", ...destination, ...range });
+      const result = await createCodeShare(scope, {
+        deviceId: session.deviceId, sessionId: session.sessionId, role, ...destination, ...range,
+        ...(direct && target === "org" && { organizationConsent: true }),
+      });
       setCreated({ token: result.token });
     });
   }
@@ -90,6 +98,7 @@ export function CodeShareCreate({ scope, session, isLive, onClose, onRestoreFocu
   function pickTarget(entry?: typeof recipient) {
     setRecipient(entry);
     setConsent(false);
+    setOrganizationConsent(false);
     setActive(0);
     setDismissed(false);
   }
@@ -166,9 +175,21 @@ export function CodeShareCreate({ scope, session, isLive, onClose, onRestoreFocu
         </div>
         {recipient && <p>{t(target === "org" ? "share.orgHint" : "share.personalHint")}</p>}
         <div className="ec-share-options">
-          <div className="ec-share-access"><span>{t("share.role")}</span><p>{t("share.role.reader")}</p></div>
+          <label>{t("share.role")}
+            <select value={role} disabled={action.busy} onChange={(event) => {
+              const next = event.target.value === "direct" && directAvailable ? "direct" : "reader";
+              setRole(next);
+              setHistory(next === "direct" ? "full" : "new");
+              setBoundary("");
+              setConsent(false);
+              setOrganizationConsent(false);
+            }}>
+              <option value="reader">{t("share.role.reader")}</option>
+              <option value="direct" disabled={!directAvailable}>{t("share.role.direct")}</option>
+            </select>
+          </label>
           <label>{t("share.history")}
-            <select name="history" value={history} disabled={action.busy} onChange={(event) => {
+            <select name="history" value={history} disabled={action.busy || direct} onChange={(event) => {
               const mode = event.target.value;
               setHistory(mode === "full" || mode === "from" || mode === "after" ? mode : "new");
               setBoundary("");
@@ -181,6 +202,8 @@ export function CodeShareCreate({ scope, session, isLive, onClose, onRestoreFocu
             </select>
           </label>
         </div>
+        {direct && <p>{t("collaboration.shareHint")}</p>}
+        {!directAvailable && <p>{t("collaboration.unavailable")}</p>}
         {needsBoundary && <label>{t("share.boundary")}
           <select name="boundary" value={boundaryIndex >= 0 ? boundary : ""} disabled={action.busy || !messages.length} onChange={(event) => {
             setBoundary(event.target.value);
@@ -208,6 +231,11 @@ export function CodeShareCreate({ scope, session, isLive, onClose, onRestoreFocu
           <input type="checkbox" checked={consent} disabled={action.busy} onChange={(event) => setConsent(event.target.checked)} />
           {t(`share.consent.${history}`)}
         </label>
+        {direct && target === "org" && <label className="ec-share-check">
+          <input type="checkbox" checked={organizationConsent} disabled={action.busy}
+            onChange={(event) => setOrganizationConsent(event.target.checked)} />
+          {t("collaboration.orgConsent")}
+        </label>}
         {action.problem && <p role="alert">{t(action.problem)}</p>}
         <div className="ec-new-actions ec-share-create-actions">
           <button type="button" className="ec-retry" disabled={action.busy} onClick={onClose}>{t("share.cancel")}</button>

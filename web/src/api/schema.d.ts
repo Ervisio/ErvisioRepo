@@ -1499,7 +1499,7 @@ export interface paths {
         put?: never;
         /**
          * Invite an account or grant current members of an organization access
-         * @description Browser writes require the CSRF header. All writes require the configured HTTPS origin. Personal invites expire after seven days and only the named account can accept. Organization grants require the host account to be a current owner or admin of the organization. Only reader grants can be created.
+         * @description Browser writes require the CSRF header. All writes require the configured HTTPS origin. Personal invites expire after seven days and only the named account can accept. Organization grants require the host account to be a current owner or admin. Direct grants require a capable live host, full history, and separate consent for organization grants.
          */
         post: operations["createErvisioCodeShare"];
         delete?: never;
@@ -1637,11 +1637,36 @@ export interface paths {
         };
         /**
          * Read the visible transcript of a live shared session
-         * @description Restricted grants require a host that supports history filtering; they never fall back to full history. The host sends its bounded recent transcript; the service does not persist it. The share never authorizes a prompt, interrupt, or other action.
+         * @description Returns the host's visible session transcript. Restricted grants require a host that applies the requested history boundary and never fall back to full history. On compatible hosts that opt in, an active direct grant can add attributed prompts to the same transcript, and the host's agent works on them. The service does not persist the transcript.
          */
         get: operations["getErvisioCodeSharedState"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/shares/{shareId}/collaboration": {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send or stop a tool-free contribution in the shared session
+         * @description An active direct grant can submit plain text for a model response in the session transcript. Only its requester or the owner may stop the pending contribution. Acknowledgment does not wait for generation. These operations never target owner execution.
+         */
+        post: operations["actOnErvisioCodeCollaboration"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1725,6 +1750,28 @@ export interface paths {
          *     local approval before acting on any session or creating one in a project.
          */
         post: operations["pollErvisioCodeRelay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/ervisiocode/shares/{shareId}/collaboration/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Recheck grant and contributor access as the approved linked host
+         * @description Use the same device Bearer token as the relay poll. Check before acting on a collaboration delivery and before retaining or publishing a collaboration reply. A non-204 response denies access.
+         */
+        post: operations["checkErvisioCodeCollaboration"];
         delete?: never;
         options?: never;
         head?: never;
@@ -8050,6 +8097,8 @@ export interface components {
             title: string;
             /** Format: date-time */
             lastActivityAt: string;
+            /** @description The exact live publication supports tool-free collaboration in the session transcript. */
+            textCollaboration?: boolean;
         };
         ErvisioCodeRemoteRecent: {
             /** Format: uuid */
@@ -8118,13 +8167,57 @@ export interface components {
             messageId?: components["schemas"]["ErvisioCodeMessageId"];
             /** @enum {string} */
             role: "user" | "assistant";
+            /** @description At most 8192 UTF-8 bytes except for a contributor's prompt (16384 bytes). */
             text: string;
+            /**
+             * Format: uuid
+             * @description Account that submitted the collaborator prompt that produced this message; omitted for ordinary owner turns.
+             */
+            contributorId?: string;
         };
         ErvisioCodeRemoteState: {
             /** @description Recent visible messages, oldest first, at most 65536 bytes of text in total. Required for state; omitted for mutations. */
             messages?: components["schemas"]["ErvisioCodeRemoteMessage"][];
-            /** @description Required for state; omitted for mutations. */
+            /** @description Whether owner execution is busy. Required for state; omitted for mutations. */
             busy?: boolean;
+            /** @description Whether the session is running on a prompt; on collaboration state it mirrors busy. */
+            collaborationBusy?: boolean;
+            /** @description The agent's current todo list, from its latest update; omitted when the visible messages never set one. */
+            todos?: components["schemas"]["ErvisioCodeTodo"][];
+        };
+        ErvisioCodeTodo: {
+            content: string;
+            /** @enum {string} */
+            status: "pending" | "in_progress" | "completed" | "cancelled";
+        };
+        ErvisioCodeSharedState: {
+            messages?: components["schemas"]["ErvisioCodeRemoteMessage"][];
+            /** @description Whether owner execution is busy. */
+            busy?: boolean;
+            /** @description This active direct grant can add prompts to the session */
+            textCollaboration?: boolean;
+            /** @description Whether the session is running on a prompt. */
+            collaborationBusy?: boolean;
+            /**
+             * Format: uuid
+             * @description Contributor whose prompt started the current run
+             */
+            collaborationContributorId?: string;
+            /** @description The agent's current todo list, from its latest update; omitted when the visible messages never set one. */
+            todos?: components["schemas"]["ErvisioCodeTodo"][];
+        };
+        ErvisioCodeCollaborationAction: {
+            /** @enum {string} */
+            op: "prompt" | "interrupt";
+            /** @description Plain text only; required for prompt and forbidden for interrupt. */
+            text?: string;
+        };
+        ErvisioCodeCollaborationCheck: {
+            /** Format: uuid */
+            relayId: string;
+            sessionId: components["schemas"]["ErvisioCodeMessageId"];
+            /** Format: uuid */
+            contributorId: string;
         };
         /** @enum {string} */
         ErvisioCodeRecipientKind: "user" | "org";
@@ -8137,7 +8230,7 @@ export interface components {
             avatarUrl?: string;
         };
         /**
-         * @description Only reader grants are active or may be created. Proposer and direct may appear on historical revoked shares.
+         * @description Direct grants authorize tool-free model turns in the shared session transcript. Proposer grants remain disabled and may appear on historical revoked shares.
          * @enum {string}
          */
         ErvisioCodeShareRole: "reader" | "proposer" | "direct";
@@ -8173,7 +8266,7 @@ export interface components {
             /** Format: date-time */
             revokedAt?: string;
         };
-        /** @description Supply exactly one of recipientId or orgId, and exactly one of fullHistory true, afterMessageId, fromMessageId, or newOnly true. New-only captures a cursor from a live host that supports history filtering. */
+        /** @description Supply exactly one of recipientId or orgId, and exactly one history choice. Direct grants require fullHistory true and a live host with text collaboration; organization direct grants also require organizationConsent true. */
         ErvisioCodeShareCreate: {
             /** Format: uuid */
             deviceId: string;
@@ -8188,6 +8281,8 @@ export interface components {
              * @enum {boolean}
              */
             fullHistory?: true;
+            /** @description Separate explicit consent to let current organization members write in the chat and drive the host's agent. Required as true when role is direct and orgId is present. */
+            organizationConsent?: boolean;
             afterMessageId?: components["schemas"]["ErvisioCodeMessageId"];
             fromMessageId?: components["schemas"]["ErvisioCodeMessageId"];
             /**
@@ -8245,6 +8340,8 @@ export interface components {
             enabled?: boolean;
             /** @description The host supports history-boundary and can filter before returning any restricted state. */
             historyFiltering?: boolean;
+            /** @description The host supports tool-free collaboration in the session transcripts in this live publication. */
+            textCollaboration?: boolean;
             /** @description Complete set of approved project advertisements; omit to advertise none. */
             projects?: components["schemas"]["ErvisioCodeRemoteProjectPublication"][];
             sessions: components["schemas"]["ErvisioCodeRemotePublication"][];
@@ -8276,6 +8373,16 @@ export interface components {
              * @description Present only for create.
              */
             projectId?: string;
+            /**
+             * Format: uuid
+             * @description Present only for collaboration operations.
+             */
+            grantId?: string;
+            /**
+             * Format: uuid
+             * @description Server-authenticated actor; present only for collaboration operations.
+             */
+            contributorId?: string;
             op: components["schemas"]["ErvisioCodeRelayOp"];
             text?: string;
             history?: components["schemas"]["ErvisioCodeRelayHistory"];
@@ -8283,7 +8390,7 @@ export interface components {
             expiresAt: string;
         };
         /** @enum {string} */
-        ErvisioCodeRelayOp: "state" | "prompt" | "interrupt" | "create" | "history-boundary";
+        ErvisioCodeRelayOp: "state" | "prompt" | "interrupt" | "create" | "history-boundary" | "collaboration-state" | "collaboration-prompt" | "collaboration-stop";
         ErvisioCodeRelayResult: {
             /** Format: uuid */
             id: string;
@@ -8292,6 +8399,14 @@ export interface components {
             sessionId?: string;
             messages?: components["schemas"]["ErvisioCodeRemoteMessage"][];
             busy?: boolean;
+            collaborationBusy?: boolean;
+            /**
+             * Format: uuid
+             * @description Returned by collaboration-state when its grant and contributor can stop the active request.
+             */
+            collaborationContributorId?: string;
+            /** @description The agent's current todo list, from its latest update; omitted when the visible messages never set one. */
+            todos?: components["schemas"]["ErvisioCodeTodo"][];
             hostCursor?: components["schemas"]["ErvisioCodeHostCursor"];
             /** @description Set to true only after the host successfully applied the requested state boundary. */
             historyApplied?: boolean;
@@ -13527,7 +13642,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ErvisioCodeRemoteState"];
+                    "application/json": components["schemas"]["ErvisioCodeSharedState"];
                 };
             };
             404: components["responses"]["Problem"];
@@ -13535,6 +13650,34 @@ export interface operations {
             429: components["responses"]["Problem"];
             502: components["responses"]["Problem"];
             504: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    actOnErvisioCodeCollaboration: {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErvisioCodeCollaborationAction"];
+            };
+        };
+        responses: {
+            /** @description The host acknowledged the action */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             default: components["responses"]["Problem"];
         };
     };
@@ -13657,6 +13800,31 @@ export interface operations {
                         requests: components["schemas"]["ErvisioCodeRelayRequest"][];
                     };
                 };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    checkErvisioCodeCollaboration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ErvisioCodeCollaborationCheck"];
+            };
+        };
+        responses: {
+            /** @description The exact live device publication and contributor are authorized */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             default: components["responses"]["Problem"];
         };

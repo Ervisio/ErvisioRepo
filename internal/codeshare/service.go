@@ -19,7 +19,7 @@ var (
 	ErrInvalid       = errors.New("invalid ErvisioCode sharing input")
 	ErrNotFound      = errors.New("ErvisioCode share not available")
 	ErrInvalidInvite = errors.New("ErvisioCode invitation not available")
-	ErrRoleDisabled  = errors.New("only reader grants are enabled")
+	ErrRoleDisabled  = errors.New("this ErvisioCode sharing role is disabled")
 
 	opaqueID = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)
 )
@@ -33,6 +33,7 @@ type Role string
 
 const (
 	Reader Role = "reader"
+	Direct Role = "direct"
 )
 
 type Target struct {
@@ -73,13 +74,15 @@ type SharePage struct {
 type SharedSession struct {
 	Target  Target
 	History History
+	Role    Role
 }
 
 type CreateShareInput struct {
-	DeviceID  uuid.UUID
-	SessionID string
-	Role      Role
-	History   History
+	DeviceID            uuid.UUID
+	SessionID           string
+	Role                Role
+	History             History
+	OrganizationConsent bool
 }
 
 type Invitation struct {
@@ -120,8 +123,11 @@ func (s *Service) createShare(ctx context.Context, accountID, recipientID, orgID
 	if accountID == uuid.Nil || in.DeviceID == uuid.Nil || !opaqueID.MatchString(in.SessionID) || !in.History.valid() {
 		return Share{}, ErrInvalid
 	}
-	if in.Role != Reader {
+	if in.Role != Reader && in.Role != Direct {
 		return Share{}, ErrRoleDisabled
+	}
+	if in.Role == Direct && (!in.History.FullHistory || orgID != uuid.Nil && !in.OrganizationConsent) {
+		return Share{}, ErrInvalid
 	}
 	var expiresAt pgtype.Timestamptz
 	if recipientID != uuid.Nil {
@@ -136,7 +142,8 @@ func (s *Service) createShare(ctx context.Context, accountID, recipientID, orgID
 		RecipientID: nullableID(recipientID), OrgID: nullableID(orgID),
 		Role: string(in.Role), FullHistory: in.History.FullHistory, InviteTokenHash: hash, InviteExpiresAt: expiresAt,
 		AfterMessageID: nullableText(in.History.AfterMessageID), FromMessageID: nullableText(in.History.FromMessageID),
-		HostCursor: nullableText(in.History.HostCursor),
+		HostCursor:        nullableText(in.History.HostCursor),
+		TextCollaboration: in.Role == Direct, OrganizationConsent: in.Role == Direct && orgID != uuid.Nil && in.OrganizationConsent,
 	})
 	return shareFromRow(dbgen.ListErvisioCodeSharesRow(row)), queryError("create share", err)
 }
@@ -188,6 +195,7 @@ func (s *Service) GetActiveSession(ctx context.Context, accountID, shareID uuid.
 	return SharedSession{
 		Target:  Target{OwnerID: row.OwnerID, DeviceID: row.DeviceID, SessionID: row.SessionID},
 		History: shareHistory(row.FullHistory, row.AfterMessageID, row.FromMessageID, row.HostCursor),
+		Role:    Role(row.Role),
 	}, queryError("get active share", err)
 }
 

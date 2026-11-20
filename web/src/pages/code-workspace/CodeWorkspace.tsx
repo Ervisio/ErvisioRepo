@@ -127,9 +127,10 @@ export function CodeWorkspace({ account, hubAccountId, devices, manageDevices, a
   }
 
   function readShare(share: CodeShare) {
-    setSelectedKey("");
+    const owned = share.ownerId === account.id;
+    setSelectedKey(owned ? sessionKey(share) : "");
     setOpening(undefined);
-    setSharedId(share.id);
+    setSharedId(owned ? "" : share.id);
     sharingTrigger.current = null;
     setSharingView(undefined);
   }

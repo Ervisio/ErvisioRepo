@@ -68,7 +68,7 @@ func remoteRequestHeaders(publicURL string) func(http.Handler) http.Handler {
 	https := hubOrigin(publicURL) != ""
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if sharingRoute(r.URL.Path, r.Method) {
+			if sharingRoute(r.URL.Path, r.Method) || collaborationCheckRoute(r.URL.Path, r.Method) {
 				w.Header().Set("Cache-Control", "no-store")
 				if !https {
 					writeProblem(w, http.StatusForbidden, "ErvisioCode sharing requires a public HTTPS URL")
@@ -110,7 +110,12 @@ func remoteRequestBody(next http.Handler) http.Handler {
 		case remoteRelayPath:
 			body, limit = new(remotePollBody), maxRemotePollBody
 		default:
-			body, limit = sharingPostBody(r.URL.Path), maxRemoteActionBody
+			limit = maxRemoteActionBody
+			if collaborationCheckRoute(r.URL.Path, r.Method) {
+				body = new(v1gen.ErvisioCodeCollaborationCheck)
+			} else {
+				body = sharingPostBody(r.URL.Path)
+			}
 			if body == nil {
 				next.ServeHTTP(w, r)
 				return
@@ -137,6 +142,8 @@ func sharingPostBody(path string) any {
 	switch {
 	case strings.HasSuffix(path, "/accept"):
 		return new(struct{})
+	case strings.HasSuffix(path, "/collaboration"):
+		return new(v1gen.ErvisioCodeCollaborationAction)
 	case strings.HasSuffix(path, "/proposals"):
 		return new(v1gen.ErvisioCodeProposalCreate)
 	case strings.HasSuffix(path, "/review"):
