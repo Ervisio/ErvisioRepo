@@ -20,6 +20,7 @@ export type ActionsEnvironmentPut = S["ActionsEnvironmentPut"];
 export type ActionsRunner = S["ActionsRunner"];
 export type ActionsRegistrationToken = S["ActionsRegistrationToken"];
 export type ActionsRunnerUpdateAll = S["ActionsRunnerUpdateAll"];
+export type ActionsRunnerWakeSettings = S["ActionsRunnerWakeSettings"];
 export type ActionsRunnerDevice = S["ActionsRunnerDevice"];
 export type ActionsRunnerDeviceDecision = S["ActionsRunnerDeviceDecision"];
 export type ActionsGitHubImport = S["ActionsGitHubImport"];
@@ -172,6 +173,25 @@ export function useUpdateAllRunners() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => request<ActionsRunnerUpdateAll>("POST", "/admin/actions/runners/update"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["actions-cfg", "instance", "runners"] }),
+  });
+}
+
+/** Instance only (admin): on-demand start URL of a runner, and a manual start. */
+export function useSetRunnerWake() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: ActionsRunnerWakeSettings | null }) =>
+      body
+        ? request<ActionsRunner>("PUT", `/admin/actions/runners/${enc(id)}/wake`, body)
+        : request<ActionsRunner>("DELETE", `/admin/actions/runners/${enc(id)}/wake`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["actions-cfg", "instance", "runners"] }),
+  });
+}
+export function useWakeRunner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => request<ActionsRunner>("POST", `/admin/actions/runners/${enc(id)}/wake`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["actions-cfg", "instance", "runners"] }),
   });
 }

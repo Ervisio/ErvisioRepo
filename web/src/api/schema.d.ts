@@ -7012,6 +7012,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/actions/runners/{runnerId}/wake": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Configure the on-demand start of a self-hosted runner
+         * @description Makes the runner on-demand: while it is offline and a queued job
+         *     needs it, the server calls the start URL (POST, with the token in
+         *     the given header) at most once per cooldown. Meant for machines
+         *     switched off while idle, e.g. an EC2 instance started by an AWS
+         *     Lambda function URL. An omitted token keeps the stored one. Needs
+         *     the master key to store a token. Recorded in the audit log.
+         */
+        put: operations["setInstanceActionsRunnerWake"];
+        /**
+         * Start an on-demand runner now
+         * @description Calls the start URL at once, without waiting for a queued job. The
+         *     answer carries the outcome in wake.lastStatus and wake.lastError.
+         *     409 when the runner has no start URL.
+         */
+        post: operations["wakeInstanceActionsRunner"];
+        /** Remove the on-demand start of a self-hosted runner */
+        delete: operations["deleteInstanceActionsRunnerWake"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/actions/runners/update": {
         parameters: {
             query?: never;
@@ -7440,6 +7474,7 @@ export interface components {
              *     versions without self-update)
              */
             selfUpdate: boolean;
+            wake?: components["schemas"]["ActionsRunnerWake"];
         };
         ActionsRunnerUpdateAll: {
             /** @description Runners asked to update */
@@ -7514,6 +7549,37 @@ export interface components {
             name: string;
             /** @description owner/name */
             fullName: string;
+        };
+        /**
+         * @description On-demand start of an instance runner (absent when none is set).
+         *     The token is write-only.
+         */
+        ActionsRunnerWake: {
+            enabled: boolean;
+            /** @description Start URL called with POST */
+            url: string;
+            /** @description Header carrying the token; empty sends it as Authorization Bearer */
+            header: string;
+            hasToken: boolean;
+            /** @description Minimum time between two calls */
+            cooldownSeconds: number;
+            /** Format: date-time */
+            lastWakeAt?: string | null;
+            /** @description HTTP status of the last call; 0 when the call failed or never ran */
+            lastStatus: number;
+            /** @description Why the last call failed */
+            lastError?: string;
+        };
+        ActionsRunnerWakeSettings: {
+            enabled: boolean;
+            /** @description https:// start URL */
+            url: string;
+            /** @description Token header, e.g. x-token; empty means Authorization: Bearer */
+            header?: string;
+            /** @description Token sent in the header; omitted keeps the stored one, empty removes it */
+            token?: string;
+            /** @description Minimum time between two calls (default 180) */
+            cooldownSeconds?: number;
         };
         ActionsRunnerPause: {
             paused: boolean;
@@ -22939,6 +23005,91 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    setInstanceActionsRunnerWake: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActionsRunnerWakeSettings"];
+            };
+        };
+        responses: {
+            /** @description The runner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunner"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    wakeInstanceActionsRunner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The runner, with the outcome of the call */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunner"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Unavailable"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    deleteInstanceActionsRunnerWake: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runnerId: components["parameters"]["ActionsRunnerId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The runner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionsRunner"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             503: components["responses"]["Unavailable"];
             default: components["responses"]["Problem"];
         };

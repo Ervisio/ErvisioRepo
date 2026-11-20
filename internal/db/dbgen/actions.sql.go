@@ -196,6 +196,95 @@ func (q *Queries) ClaimActionsJob(ctx context.Context, arg ClaimActionsJobParams
 	return i, err
 }
 
+const claimActionsRunnerWakes = `-- name: ClaimActionsRunnerWakes :many
+UPDATE actions_runners rn
+SET wake_next_at = now() + make_interval(secs => $1::int)
+WHERE rn.wake_enabled AND NOT rn.paused AND rn.wake_url <> ''
+  AND (NOT rn.online OR rn.last_seen_at IS NULL OR rn.last_seen_at < $2)
+  AND (rn.wake_next_at IS NULL OR rn.wake_next_at <= now())
+  AND EXISTS (
+      SELECT 1 FROM actions_jobs j
+      JOIN repos r ON r.id = j.repo_id
+      WHERE j.status = 'queued'
+        AND j.runs_on <@ rn.labels
+        AND (rn.scope = 'instance'
+             OR (rn.scope = 'org' AND r.owner_id = rn.owner_id)
+             OR (rn.scope = 'repo' AND j.repo_id = rn.repo_id))
+        AND (j.updated_at < $3 OR NOT EXISTS (
+            SELECT 1 FROM actions_runners o
+            WHERE o.id <> rn.id AND o.online AND NOT o.paused AND o.last_seen_at >= $2
+              AND j.runs_on <@ o.labels
+              AND (o.scope = 'instance'
+                   OR (o.scope = 'org' AND r.owner_id = o.owner_id)
+                   OR (o.scope = 'repo' AND j.repo_id = o.repo_id))))
+  )
+RETURNING rn.id, rn.name, rn.scope, rn.owner_id, rn.repo_id, rn.labels, rn.raw_labels, rn.version, rn.ephemeral, rn.credential_hash, rn.online, rn.last_seen_at, rn.created_by, rn.created_at, rn.updated_at, rn.paused, rn.capacity, rn.metrics, rn.metrics_at, rn.update_version, rn.update_requested_at, rn.update_error, rn.self_update, rn.wake_enabled, rn.wake_url, rn.wake_header, rn.wake_token, rn.wake_cooldown, rn.wake_next_at, rn.last_wake_at, rn.wake_status, rn.wake_error
+`
+
+type ClaimActionsRunnerWakesParams struct {
+	Hold       int32
+	SeenBefore pgtype.Timestamptz
+	BusyBefore pgtype.Timestamptz
+}
+
+// Takes the on-demand runners to start now: enabled, not paused, not seen
+// since seen_before and needed by a queued job in their scope. A job that
+// an online runner could also take only counts once it waited past
+// busy_before. The claim holds the runner for hold seconds so that one
+// server process calls it.
+func (q *Queries) ClaimActionsRunnerWakes(ctx context.Context, arg ClaimActionsRunnerWakesParams) ([]ActionsRunner, error) {
+	rows, err := q.db.Query(ctx, claimActionsRunnerWakes, arg.Hold, arg.SeenBefore, arg.BusyBefore)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ActionsRunner{}
+	for rows.Next() {
+		var i ActionsRunner
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Scope,
+			&i.OwnerID,
+			&i.RepoID,
+			&i.Labels,
+			&i.RawLabels,
+			&i.Version,
+			&i.Ephemeral,
+			&i.CredentialHash,
+			&i.Online,
+			&i.LastSeenAt,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Paused,
+			&i.Capacity,
+			&i.Metrics,
+			&i.MetricsAt,
+			&i.UpdateVersion,
+			&i.UpdateRequestedAt,
+			&i.UpdateError,
+			&i.SelfUpdate,
+			&i.WakeEnabled,
+			&i.WakeUrl,
+			&i.WakeHeader,
+			&i.WakeToken,
+			&i.WakeCooldown,
+			&i.WakeNextAt,
+			&i.LastWakeAt,
+			&i.WakeStatus,
+			&i.WakeError,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const claimDueActionsSchedules = `-- name: ClaimDueActionsSchedules :many
 SELECT id, repo_id, workflow_path, cron, next_at, created_at FROM actions_schedules WHERE next_at <= now() ORDER BY next_at LIMIT 100 FOR UPDATE SKIP LOCKED
 `
@@ -423,7 +512,7 @@ UPDATE actions_runners
 SET version = $1, labels = $2, raw_labels = $3, capacity = $4, self_update = $5,
     online = true, last_seen_at = now(), updated_at = now()
 WHERE id = $6
-RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update, wake_enabled, wake_url, wake_header, wake_token, wake_cooldown, wake_next_at, last_wake_at, wake_status, wake_error
 `
 
 type DeclareActionsRunnerParams struct {
@@ -469,6 +558,15 @@ func (q *Queries) DeclareActionsRunner(ctx context.Context, arg DeclareActionsRu
 		&i.UpdateRequestedAt,
 		&i.UpdateError,
 		&i.SelfUpdate,
+		&i.WakeEnabled,
+		&i.WakeUrl,
+		&i.WakeHeader,
+		&i.WakeToken,
+		&i.WakeCooldown,
+		&i.WakeNextAt,
+		&i.LastWakeAt,
+		&i.WakeStatus,
+		&i.WakeError,
 	)
 	return i, err
 }
@@ -930,7 +1028,7 @@ func (q *Queries) GetActionsRunForUpdate(ctx context.Context, id uuid.UUID) (Act
 }
 
 const getActionsRunner = `-- name: GetActionsRunner :one
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update FROM actions_runners WHERE id = $1
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update, wake_enabled, wake_url, wake_header, wake_token, wake_cooldown, wake_next_at, last_wake_at, wake_status, wake_error FROM actions_runners WHERE id = $1
 `
 
 func (q *Queries) GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRunner, error) {
@@ -960,12 +1058,21 @@ func (q *Queries) GetActionsRunner(ctx context.Context, id uuid.UUID) (ActionsRu
 		&i.UpdateRequestedAt,
 		&i.UpdateError,
 		&i.SelfUpdate,
+		&i.WakeEnabled,
+		&i.WakeUrl,
+		&i.WakeHeader,
+		&i.WakeToken,
+		&i.WakeCooldown,
+		&i.WakeNextAt,
+		&i.LastWakeAt,
+		&i.WakeStatus,
+		&i.WakeError,
 	)
 	return i, err
 }
 
 const getActionsRunnerByCredential = `-- name: GetActionsRunnerByCredential :one
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update FROM actions_runners WHERE credential_hash = $1
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update, wake_enabled, wake_url, wake_header, wake_token, wake_cooldown, wake_next_at, last_wake_at, wake_status, wake_error FROM actions_runners WHERE credential_hash = $1
 `
 
 func (q *Queries) GetActionsRunnerByCredential(ctx context.Context, credentialHash []byte) (ActionsRunner, error) {
@@ -995,6 +1102,15 @@ func (q *Queries) GetActionsRunnerByCredential(ctx context.Context, credentialHa
 		&i.UpdateRequestedAt,
 		&i.UpdateError,
 		&i.SelfUpdate,
+		&i.WakeEnabled,
+		&i.WakeUrl,
+		&i.WakeHeader,
+		&i.WakeToken,
+		&i.WakeCooldown,
+		&i.WakeNextAt,
+		&i.LastWakeAt,
+		&i.WakeStatus,
+		&i.WakeError,
 	)
 	return i, err
 }
@@ -1112,6 +1228,58 @@ func (q *Queries) GetPendingActionsRunnerDeviceForUpdate(ctx context.Context, us
 		&i.LastPollAt,
 		&i.ExpiresAt,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const holdActionsRunnerWake = `-- name: HoldActionsRunnerWake :one
+UPDATE actions_runners SET wake_next_at = now() + make_interval(secs => $1::int)
+WHERE id = $2 AND wake_url <> ''
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update, wake_enabled, wake_url, wake_header, wake_token, wake_cooldown, wake_next_at, last_wake_at, wake_status, wake_error
+`
+
+type HoldActionsRunnerWakeParams struct {
+	Hold int32
+	ID   uuid.UUID
+}
+
+// Claims one runner for a manual start, whatever its queue.
+func (q *Queries) HoldActionsRunnerWake(ctx context.Context, arg HoldActionsRunnerWakeParams) (ActionsRunner, error) {
+	row := q.db.QueryRow(ctx, holdActionsRunnerWake, arg.Hold, arg.ID)
+	var i ActionsRunner
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Scope,
+		&i.OwnerID,
+		&i.RepoID,
+		&i.Labels,
+		&i.RawLabels,
+		&i.Version,
+		&i.Ephemeral,
+		&i.CredentialHash,
+		&i.Online,
+		&i.LastSeenAt,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Paused,
+		&i.Capacity,
+		&i.Metrics,
+		&i.MetricsAt,
+		&i.UpdateVersion,
+		&i.UpdateRequestedAt,
+		&i.UpdateError,
+		&i.SelfUpdate,
+		&i.WakeEnabled,
+		&i.WakeUrl,
+		&i.WakeHeader,
+		&i.WakeToken,
+		&i.WakeCooldown,
+		&i.WakeNextAt,
+		&i.LastWakeAt,
+		&i.WakeStatus,
+		&i.WakeError,
 	)
 	return i, err
 }
@@ -1398,7 +1566,7 @@ INSERT INTO actions_runners (id, name, scope, owner_id, repo_id, labels, raw_lab
     credential_hash, online, last_seen_at, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
     $10, true, now(), $11)
-RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update, wake_enabled, wake_url, wake_header, wake_token, wake_cooldown, wake_next_at, last_wake_at, wake_status, wake_error
 `
 
 type InsertActionsRunnerParams struct {
@@ -1456,6 +1624,15 @@ func (q *Queries) InsertActionsRunner(ctx context.Context, arg InsertActionsRunn
 		&i.UpdateRequestedAt,
 		&i.UpdateError,
 		&i.SelfUpdate,
+		&i.WakeEnabled,
+		&i.WakeUrl,
+		&i.WakeHeader,
+		&i.WakeToken,
+		&i.WakeCooldown,
+		&i.WakeNextAt,
+		&i.LastWakeAt,
+		&i.WakeStatus,
+		&i.WakeError,
 	)
 	return i, err
 }
@@ -2047,7 +2224,7 @@ func (q *Queries) ListActionsRunKeys(ctx context.Context, arg ListActionsRunKeys
 }
 
 const listActionsRunners = `-- name: ListActionsRunners :many
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update FROM actions_runners
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update, wake_enabled, wake_url, wake_header, wake_token, wake_cooldown, wake_next_at, last_wake_at, wake_status, wake_error FROM actions_runners
 WHERE scope = $1
   AND owner_id IS NOT DISTINCT FROM $2::uuid
   AND repo_id IS NOT DISTINCT FROM $3::uuid
@@ -2095,6 +2272,15 @@ func (q *Queries) ListActionsRunners(ctx context.Context, arg ListActionsRunners
 			&i.UpdateRequestedAt,
 			&i.UpdateError,
 			&i.SelfUpdate,
+			&i.WakeEnabled,
+			&i.WakeUrl,
+			&i.WakeHeader,
+			&i.WakeToken,
+			&i.WakeCooldown,
+			&i.WakeNextAt,
+			&i.LastWakeAt,
+			&i.WakeStatus,
+			&i.WakeError,
 		); err != nil {
 			return nil, err
 		}
@@ -2107,7 +2293,7 @@ func (q *Queries) ListActionsRunners(ctx context.Context, arg ListActionsRunners
 }
 
 const listActionsRunnersForRepo = `-- name: ListActionsRunnersForRepo :many
-SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update FROM actions_runners
+SELECT id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update, wake_enabled, wake_url, wake_header, wake_token, wake_cooldown, wake_next_at, last_wake_at, wake_status, wake_error FROM actions_runners
 WHERE scope = 'instance' OR (scope = 'org' AND owner_id = $1) OR (scope = 'repo' AND repo_id = $2)
 ORDER BY scope, name, id
 `
@@ -2151,6 +2337,15 @@ func (q *Queries) ListActionsRunnersForRepo(ctx context.Context, arg ListActions
 			&i.UpdateRequestedAt,
 			&i.UpdateError,
 			&i.SelfUpdate,
+			&i.WakeEnabled,
+			&i.WakeUrl,
+			&i.WakeHeader,
+			&i.WakeToken,
+			&i.WakeCooldown,
+			&i.WakeNextAt,
+			&i.LastWakeAt,
+			&i.WakeStatus,
+			&i.WakeError,
 		); err != nil {
 			return nil, err
 		}
@@ -3068,6 +3263,66 @@ func (q *Queries) ReadyActionsJob(ctx context.Context, arg ReadyActionsJobParams
 	return result.RowsAffected(), nil
 }
 
+const recordActionsRunnerWake = `-- name: RecordActionsRunnerWake :one
+UPDATE actions_runners
+SET last_wake_at = now(), wake_status = $1, wake_error = $2,
+    wake_next_at = now() + make_interval(secs => $3::int)
+WHERE id = $4
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update, wake_enabled, wake_url, wake_header, wake_token, wake_cooldown, wake_next_at, last_wake_at, wake_status, wake_error
+`
+
+type RecordActionsRunnerWakeParams struct {
+	Status     int32
+	Error      string
+	RetryAfter int32
+	ID         uuid.UUID
+}
+
+func (q *Queries) RecordActionsRunnerWake(ctx context.Context, arg RecordActionsRunnerWakeParams) (ActionsRunner, error) {
+	row := q.db.QueryRow(ctx, recordActionsRunnerWake,
+		arg.Status,
+		arg.Error,
+		arg.RetryAfter,
+		arg.ID,
+	)
+	var i ActionsRunner
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Scope,
+		&i.OwnerID,
+		&i.RepoID,
+		&i.Labels,
+		&i.RawLabels,
+		&i.Version,
+		&i.Ephemeral,
+		&i.CredentialHash,
+		&i.Online,
+		&i.LastSeenAt,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Paused,
+		&i.Capacity,
+		&i.Metrics,
+		&i.MetricsAt,
+		&i.UpdateVersion,
+		&i.UpdateRequestedAt,
+		&i.UpdateError,
+		&i.SelfUpdate,
+		&i.WakeEnabled,
+		&i.WakeUrl,
+		&i.WakeHeader,
+		&i.WakeToken,
+		&i.WakeCooldown,
+		&i.WakeNextAt,
+		&i.LastWakeAt,
+		&i.WakeStatus,
+		&i.WakeError,
+	)
+	return i, err
+}
+
 const requestActionsJobCancel = `-- name: RequestActionsJobCancel :exec
 UPDATE actions_jobs SET cancel_requested = true, updated_at = now() WHERE id = $1 AND status <> 'completed'
 `
@@ -3081,7 +3336,7 @@ const requestActionsRunnerUpdate = `-- name: RequestActionsRunnerUpdate :one
 UPDATE actions_runners
 SET update_version = $1, update_requested_at = now(), update_error = '', updated_at = now()
 WHERE id = $2
-RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update, wake_enabled, wake_url, wake_header, wake_token, wake_cooldown, wake_next_at, last_wake_at, wake_status, wake_error
 `
 
 type RequestActionsRunnerUpdateParams struct {
@@ -3116,6 +3371,15 @@ func (q *Queries) RequestActionsRunnerUpdate(ctx context.Context, arg RequestAct
 		&i.UpdateRequestedAt,
 		&i.UpdateError,
 		&i.SelfUpdate,
+		&i.WakeEnabled,
+		&i.WakeUrl,
+		&i.WakeHeader,
+		&i.WakeToken,
+		&i.WakeCooldown,
+		&i.WakeNextAt,
+		&i.LastWakeAt,
+		&i.WakeStatus,
+		&i.WakeError,
 	)
 	return i, err
 }
@@ -3284,7 +3548,7 @@ func (q *Queries) SetActionsRunnerMetrics(ctx context.Context, arg SetActionsRun
 }
 
 const setActionsRunnerPaused = `-- name: SetActionsRunnerPaused :one
-UPDATE actions_runners SET paused = $1, updated_at = now() WHERE id = $2 RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update
+UPDATE actions_runners SET paused = $1, updated_at = now() WHERE id = $2 RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update, wake_enabled, wake_url, wake_header, wake_token, wake_cooldown, wake_next_at, last_wake_at, wake_status, wake_error
 `
 
 type SetActionsRunnerPausedParams struct {
@@ -3319,6 +3583,79 @@ func (q *Queries) SetActionsRunnerPaused(ctx context.Context, arg SetActionsRunn
 		&i.UpdateRequestedAt,
 		&i.UpdateError,
 		&i.SelfUpdate,
+		&i.WakeEnabled,
+		&i.WakeUrl,
+		&i.WakeHeader,
+		&i.WakeToken,
+		&i.WakeCooldown,
+		&i.WakeNextAt,
+		&i.LastWakeAt,
+		&i.WakeStatus,
+		&i.WakeError,
+	)
+	return i, err
+}
+
+const setActionsRunnerWake = `-- name: SetActionsRunnerWake :one
+UPDATE actions_runners
+SET wake_enabled = $1, wake_url = $2, wake_header = $3, wake_token = $4,
+    wake_cooldown = $5, wake_next_at = NULL, wake_error = '', updated_at = now()
+WHERE id = $6
+RETURNING id, name, scope, owner_id, repo_id, labels, raw_labels, version, ephemeral, credential_hash, online, last_seen_at, created_by, created_at, updated_at, paused, capacity, metrics, metrics_at, update_version, update_requested_at, update_error, self_update, wake_enabled, wake_url, wake_header, wake_token, wake_cooldown, wake_next_at, last_wake_at, wake_status, wake_error
+`
+
+type SetActionsRunnerWakeParams struct {
+	Enabled  bool
+	Url      string
+	Header   string
+	Token    []byte
+	Cooldown int32
+	ID       uuid.UUID
+}
+
+func (q *Queries) SetActionsRunnerWake(ctx context.Context, arg SetActionsRunnerWakeParams) (ActionsRunner, error) {
+	row := q.db.QueryRow(ctx, setActionsRunnerWake,
+		arg.Enabled,
+		arg.Url,
+		arg.Header,
+		arg.Token,
+		arg.Cooldown,
+		arg.ID,
+	)
+	var i ActionsRunner
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Scope,
+		&i.OwnerID,
+		&i.RepoID,
+		&i.Labels,
+		&i.RawLabels,
+		&i.Version,
+		&i.Ephemeral,
+		&i.CredentialHash,
+		&i.Online,
+		&i.LastSeenAt,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Paused,
+		&i.Capacity,
+		&i.Metrics,
+		&i.MetricsAt,
+		&i.UpdateVersion,
+		&i.UpdateRequestedAt,
+		&i.UpdateError,
+		&i.SelfUpdate,
+		&i.WakeEnabled,
+		&i.WakeUrl,
+		&i.WakeHeader,
+		&i.WakeToken,
+		&i.WakeCooldown,
+		&i.WakeNextAt,
+		&i.LastWakeAt,
+		&i.WakeStatus,
+		&i.WakeError,
 	)
 	return i, err
 }

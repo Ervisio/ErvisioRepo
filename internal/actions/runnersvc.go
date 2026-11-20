@@ -707,6 +707,8 @@ type Runner struct {
 	UpdateVersion   string
 	UpdateError     string
 	SelfUpdate      bool
+	// Wake is the on-demand start (nil when none is set).
+	Wake *RunnerWake
 }
 
 func (s *Service) runnerFrom(ctx context.Context, rn dbgen.ActionsRunner, running int) Runner {
@@ -714,6 +716,7 @@ func (s *Service) runnerFrom(ctx context.Context, rn dbgen.ActionsRunner, runnin
 		Labels: rn.RawLabels, Version: rn.Version, Ephemeral: rn.Ephemeral, CreatedAt: rn.CreatedAt.Time,
 		Busy: running > 0, Paused: rn.Paused, Running: running, Capacity: int(rn.Capacity), Metrics: runnerMetrics(rn)}
 	updateFields(&out, rn)
+	wakeFields(&out, rn)
 	if rn.LastSeenAt.Valid {
 		t := rn.LastSeenAt.Time
 		out.LastSeenAt = &t

@@ -116,6 +116,67 @@ func (s *v1Server) UpdateInstanceActionsRunners(ctx context.Context, _ v1gen.Upd
 	return v1gen.UpdateInstanceActionsRunners202JSONResponse{Requested: n, Version: version}, nil
 }
 
+// SetInstanceActionsRunnerWake makes an instance runner on-demand.
+func (s *v1Server) SetInstanceActionsRunnerWake(ctx context.Context, req v1gen.SetInstanceActionsRunnerWakeRequestObject) (v1gen.SetInstanceActionsRunnerWakeResponseObject, error) {
+	if s.actions == nil {
+		return errActionsUnavailable, nil
+	}
+	if req.Body == nil {
+		return badRequest("missing body"), nil
+	}
+	who := principal(ctx)
+	sc, err := s.actions.InstanceScope(who)
+	if err != nil {
+		return actionsFail(err, http.MethodPut, "")
+	}
+	b := req.Body
+	in := actions.RunnerWakeSettings{Enabled: b.Enabled, URL: b.Url, Token: b.Token}
+	if b.Header != nil {
+		in.Header = *b.Header
+	}
+	if b.CooldownSeconds != nil {
+		in.Cooldown = *b.CooldownSeconds
+	}
+	r, err := s.actions.SetRunnerWake(ctx, who, sc, req.RunnerId, in, clientOf(ctx).IP)
+	if err != nil {
+		return actionsFail(err, http.MethodPut, "")
+	}
+	return v1gen.SetInstanceActionsRunnerWake200JSONResponse(actionsDTORunner(r)), nil
+}
+
+func (s *v1Server) DeleteInstanceActionsRunnerWake(ctx context.Context, req v1gen.DeleteInstanceActionsRunnerWakeRequestObject) (v1gen.DeleteInstanceActionsRunnerWakeResponseObject, error) {
+	if s.actions == nil {
+		return errActionsUnavailable, nil
+	}
+	who := principal(ctx)
+	sc, err := s.actions.InstanceScope(who)
+	if err != nil {
+		return actionsFail(err, http.MethodDelete, "")
+	}
+	r, err := s.actions.DeleteRunnerWake(ctx, who, sc, req.RunnerId, clientOf(ctx).IP)
+	if err != nil {
+		return actionsFail(err, http.MethodDelete, "")
+	}
+	return v1gen.DeleteInstanceActionsRunnerWake200JSONResponse(actionsDTORunner(r)), nil
+}
+
+// WakeInstanceActionsRunner calls the start URL of an instance runner now.
+func (s *v1Server) WakeInstanceActionsRunner(ctx context.Context, req v1gen.WakeInstanceActionsRunnerRequestObject) (v1gen.WakeInstanceActionsRunnerResponseObject, error) {
+	if s.actions == nil {
+		return errActionsUnavailable, nil
+	}
+	who := principal(ctx)
+	sc, err := s.actions.InstanceScope(who)
+	if err != nil {
+		return actionsFail(err, http.MethodPost, "")
+	}
+	r, err := s.actions.WakeRunner(ctx, who, sc, req.RunnerId, clientOf(ctx).IP)
+	if err != nil {
+		return actionsFail(err, http.MethodPost, "")
+	}
+	return v1gen.WakeInstanceActionsRunner200JSONResponse(actionsDTORunner(r)), nil
+}
+
 // runnerDeviceFail maps the errors of the device approval.
 func runnerDeviceFail(err error) (actionsResponse, error) {
 	var lim *actions.ErrDeviceLimited

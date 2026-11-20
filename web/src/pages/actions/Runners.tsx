@@ -1,19 +1,21 @@
 import { Link } from "@tanstack/react-router";
-import { Fragment, useEffect, useRef, useState, type SyntheticEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type FormEvent, type SyntheticEvent } from "react";
 import {
   useDeleteRunner,
   useRegistrationToken,
   useRunners,
   useSetRunnerPaused,
+  useSetRunnerWake,
   useUpdateAllRunners,
   useUpdateRunner,
+  useWakeRunner,
   type ActionsRegistrationToken,
   type ActionsRunner,
   type ActionsScope,
 } from "../../api/actions.ts";
 import { useMeta } from "../../api/useMeta.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, Dialog, EmptyState, Input, Menu, MenuItem, SettingsSection, Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/index.ts";
+import { Button, Dialog, DialogClose, EmptyState, Input, Menu, MenuItem, SettingsSection, Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/index.ts";
 import { Async, formatDate, Secret, useNotify } from "../account/common.tsx";
 import { formatBytes, When } from "../code/common.tsx";
 import { duration } from "./common.tsx";
@@ -45,6 +47,28 @@ function StatusChip({ runner: r }: { runner: ActionsRunner }) {
       {r.status === "offline" && r.lastSeenAt && <> · <When iso={r.lastSeenAt} /></>}
     </span>
   );
+}
+
+/** On-demand runner: started by the server through its start URL when a queued job needs it. */
+function WakeChip({ runner: r }: { runner: ActionsRunner }) {
+  const t = useT("actions");
+  const w = r.wake;
+  if (!w) return null;
+  if (!w.enabled) return <span className="ui-chip" title={t("runners.wake.offHint")}>{t("runners.wake.chipOff")}</span>;
+  const failed = w.lastWakeAt && (w.lastStatus < 200 || w.lastStatus >= 300);
+  return (
+    <span className={`ui-chip ${failed ? "ui-chip-err" : "ui-chip-acc"}`} title={failed ? wakeOutcome(t, w) : t("runners.wake.chipHint")}>
+      {t("runners.wake.chip")}
+    </span>
+  );
+}
+
+type RunnerWake = NonNullable<ActionsRunner["wake"]>;
+
+function wakeOutcome(t: ReturnType<typeof useT>, w: RunnerWake): string {
+  if (w.lastStatus >= 200 && w.lastStatus < 300) return t("runners.wake.ok", { status: w.lastStatus });
+  const why = w.lastError ?? "";
+  return w.lastStatus ? t("runners.wake.failedStatus", { status: w.lastStatus, error: why }) : t("runners.wake.failed", { error: why });
 }
 
 /** v-prefixed version for display. */
@@ -243,6 +267,7 @@ function RunnerTable({ scope, rows }: { scope: ActionsScope; rows: ActionsRunner
                     <span className="rn-labs">
                       {r.ephemeral && <span className="ui-chip ui-chip-acc">{t("runners.ephemeral")}</span>}
                       <UpdateChip runner={r} />
+                      <WakeChip runner={r} />
                       {r.labels.map((l) => <span key={l} className="ui-chip" title={l}>{labelName(l)}</span>)}
                     </span>
                   </th>
@@ -283,10 +308,18 @@ function RowMenu({ scope, runner: r }: { scope: ActionsScope; runner: ActionsRun
   const del = useDeleteRunner(scope);
   const pause = useSetRunnerPaused(scope);
   const update = useUpdateRunner();
+  const wake = useWakeRunner();
+  const [wakeOpen, setWakeOpen] = useState(false);
   const meta = useMeta();
   const label = t("runners.menuOf", { name: r.name });
+  const instance = scope.kind === "instance";
   return (
     <div onClick={(e) => e.stopPropagation()}>
+      {instance && (
+        <Dialog open={wakeOpen} onOpenChange={setWakeOpen} title={t("runners.wake.title", { name: r.name })} description={t("runners.wake.hint")}>
+          {wakeOpen && <WakeForm runner={r} close={() => setWakeOpen(false)} />}
+        </Dialog>
+      )}
       <Menu align="end" label={label} trigger={<Button size="sm" icon="dots" aria-label={label} title={label} />}>
         <MenuItem
           icon={r.paused ? "play" : "clock"}
@@ -307,11 +340,77 @@ function RowMenu({ scope, runner: r }: { scope: ActionsScope; runner: ActionsRun
             {meta.data?.version ? t("runners.upd.toVersion", { version: vv(meta.data.version) }) : t("runners.upd.action")}
           </MenuItem>
         )}
+        {instance && (
+          <MenuItem icon="monitor" onSelect={() => setWakeOpen(true)}>
+            {t("runners.wake.action")}
+          </MenuItem>
+        )}
+        {instance && r.wake && r.status === "offline" && (
+          <MenuItem
+            icon="play"
+            onSelect={() =>
+              wake.mutate(r.id, {
+                onSuccess: (res) => (res.wake && res.wake.lastStatus >= 200 && res.wake.lastStatus < 300 ? notify.ok(t("runners.wake.started", { name: r.name })) : notify.fail(new Error(res.wake ? wakeOutcome(t, res.wake) : ""))),
+                onError: notify.fail,
+              })
+            }
+          >
+            {t("runners.wake.now")}
+          </MenuItem>
+        )}
         <MenuItem icon="trash" danger onSelect={() => del.mutate(r.id, { onSuccess: () => notify.ok(t("runners.deleted")), onError: notify.fail })}>
           {t("runners.remove")}
         </MenuItem>
       </Menu>
     </div>
+  );
+}
+
+/** On-demand start settings of an instance runner; the token is write-only (empty field keeps it). */
+function WakeForm({ runner: r, close }: { runner: ActionsRunner; close: () => void }) {
+  const t = useT("actions");
+  const notify = useNotify();
+  const save = useSetRunnerWake();
+  const w = r.wake;
+  const [enabled, setEnabled] = useState(w?.enabled ?? true);
+  const [url, setUrl] = useState(w?.url ?? "");
+  const [header, setHeader] = useState(w?.header ?? "x-token");
+  const [token, setToken] = useState("");
+  const [cooldown, setCooldown] = useState(String(w?.cooldownSeconds ?? 180));
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    const secs = Number.parseInt(cooldown, 10);
+    const body = { enabled, url: url.trim(), header: header.trim(), ...(token ? { token } : {}), ...(Number.isFinite(secs) ? { cooldownSeconds: secs } : {}) };
+    save.mutate({ id: r.id, body }, { onSuccess: () => (notify.ok(t("runners.wake.saved")), close()), onError: notify.fail });
+  }
+  const remove = () => save.mutate({ id: r.id, body: null }, { onSuccess: () => (notify.ok(t("runners.wake.removed")), close()), onError: notify.fail });
+
+  return (
+    <form className="acc-form" onSubmit={submit}>
+      <Input label={t("runners.wake.url")} type="url" required mono autoComplete="off" placeholder="https://….lambda-url.eu-west-3.on.aws/" value={url} onChange={(e) => setUrl(e.target.value)} />
+      <Input label={t("runners.wake.header")} hint={t("runners.wake.headerHint")} mono autoComplete="off" value={header} onChange={(e) => setHeader(e.target.value)} />
+      <Input label={t("runners.wake.token")} type="password" autoComplete="new-password" hint={w?.hasToken ? t("runners.wake.tokenKeep") : t("runners.wake.tokenHint")} value={token} onChange={(e) => setToken(e.target.value)} />
+      <Input label={t("runners.wake.cooldown")} hint={t("runners.wake.cooldownHint")} inputMode="numeric" mono value={cooldown} onChange={(e) => setCooldown(e.target.value)} />
+      <label className="acc-check">
+        <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
+        <span>{t("runners.wake.enabled")}</span>
+      </label>
+      <p className="ui-note">{t("runners.wake.idleNote")}</p>
+      <div className="acc-actions">
+        {w && (
+          <Button variant="ghost" icon="trash" disabled={save.isPending} onClick={remove}>
+            {t("runners.wake.remove")}
+          </Button>
+        )}
+        <DialogClose asChild>
+          <Button variant="ghost">{t("runners.wake.cancel")}</Button>
+        </DialogClose>
+        <Button variant="primary" type="submit" disabled={save.isPending || !url.trim()}>
+          {t("runners.wake.save")}
+        </Button>
+      </div>
+    </form>
   );
 }
 
@@ -342,6 +441,12 @@ function Details({ runner: r }: { runner: ActionsRunner }) {
           </div>
         ))}
         <div><dt>{t("runners.scope")}</dt><dd>{r.scope === "instance" ? t("runners.d.instance") : <span className="ui-mono">{r.scope}</span>}</dd></div>
+        {r.wake && (
+          <div>
+            <dt>{t("runners.wake.lastCall")}</dt>
+            <dd>{r.wake.lastWakeAt ? <><When iso={r.wake.lastWakeAt} /> · {wakeOutcome(t, r.wake)}</> : t("runners.wake.never")}</dd>
+          </div>
+        )}
       </dl>
       {r.jobs.length > 0 ? (
         <ul className="rn-jobs" aria-label={t("runners.d.jobs")}>
