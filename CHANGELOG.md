@@ -6,6 +6,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-11-20
+
 ### Added
 
 - On-demand runners: an admin can give an instance runner a start URL (for example an AWS Lambda function URL that starts an EC2 instance), a token header and a token stored encrypted. While the runner is offline and a queued job needs it, the server POSTs to the URL at most once per cooldown and shows the outcome on the runner row; **Start now** calls it by hand. New endpoints `PUT`/`DELETE`/`POST /admin/actions/runners/{runnerId}/wake`, migration 00450.
