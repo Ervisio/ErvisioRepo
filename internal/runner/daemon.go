@@ -23,6 +23,10 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/runnerapi/runnerv1/runnerv1connect"
 )
 
+// ErrIdleShutdown is returned by Run when the runner stopped after
+// runner.idle_shutdown without jobs: the caller switches the machine off.
+var ErrIdleShutdown = errors.New("idle for runner.idle_shutdown: switching the machine off")
+
 // ErrUnauthorized means the server refused the runner credential.
 var ErrUnauthorized = errors.New("the server refused the runner credential (deleted or disabled runner?), register it again")
 
@@ -54,6 +58,11 @@ type Daemon struct {
 	updateErr  [2]string // version, text
 	failedVer  string    // hand-off failed at start (not retried)
 	failedErr  string
+
+	// Idle shutdown: lastActive is the unix nano time of the last job
+	// start or end; idleStop ends the poll loop like draining does.
+	lastActive atomic.Int64
+	idleStop   atomic.Bool
 }
 
 // NewDaemon prepares a daemon from the configuration and the state saved
@@ -119,6 +128,7 @@ func configureLogrus(level string) {
 // jobs get shutdown_timeout to finish before they are cancelled.
 func (d *Daemon) Run(ctx context.Context) error {
 	d.ctx = ctx
+	d.lastActive.Store(time.Now().UnixNano())
 	if err := d.declare(ctx); err != nil {
 		return err
 	}
@@ -148,6 +158,13 @@ func (d *Daemon) Run(ctx context.Context) error {
 			d.logger.Info("restarting on the updated binary", "version", re.Version)
 			return re
 		}
+	}
+
+	if d.idleStop.Load() && pollErr == nil && ctx.Err() == nil && d.waitJobs(ctx) {
+		stopHeartbeat()
+		<-hbDone
+		d.logger.Info("no jobs for runner.idle_shutdown, stopping", "idle_shutdown", d.cfg.Runner.IdleShutdown.D().String())
+		return ErrIdleShutdown
 	}
 
 	d.shutdown(cancelJobs)
@@ -288,6 +305,7 @@ func (d *Daemon) start(jobsCtx context.Context, task *runnerv1.Task, release fun
 	d.running[id] = cancel
 	d.mu.Unlock()
 
+	d.lastActive.Store(time.Now().UnixNano())
 	d.logger.Info("job started", "task_id", id, "label", task.GetLabel())
 	done := make(chan struct{})
 	d.wg.Add(1)
@@ -299,6 +317,7 @@ func (d *Daemon) start(jobsCtx context.Context, task *runnerv1.Task, release fun
 			d.mu.Lock()
 			delete(d.running, id)
 			d.mu.Unlock()
+			d.lastActive.Store(time.Now().UnixNano())
 			cancel()
 		}()
 		d.exec.run(jctx, task)
@@ -347,6 +366,7 @@ func (d *Daemon) heartbeatLoop(ctx context.Context) {
 			return
 		case <-t.C:
 		}
+		d.checkIdle()
 		metrics := d.metrics.collect(ctx)
 		failed := d.takeUpdateError()
 		hctx, cancel := context.WithTimeout(ctx, d.cfg.Runner.FetchTimeout.D())
@@ -378,6 +398,22 @@ func (d *Daemon) heartbeatLoop(ctx context.Context) {
 			}
 		}
 	}
+}
+
+// checkIdle stops taking jobs once the runner has been idle for
+// runner.idle_shutdown; Run then returns ErrIdleShutdown. A job claimed by
+// the fetch in flight still runs first.
+func (d *Daemon) checkIdle() {
+	idle := d.cfg.Runner.IdleShutdown.D()
+	if idle <= 0 || d.state.Ephemeral || d.idleStop.Load() || d.updating.Load() || d.runningCount() > 0 {
+		return
+	}
+	if time.Since(time.Unix(0, d.lastActive.Load())) < idle {
+		return
+	}
+	d.logger.Info("runner idle: no new jobs are taken, the machine is switched off next", "idle_shutdown", idle.String())
+	d.idleStop.Store(true)
+	d.draining.Store(true)
 }
 
 // shutdown waits shutdown_timeout for the running jobs, then cancels them

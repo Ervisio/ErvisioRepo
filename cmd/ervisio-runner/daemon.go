@@ -11,9 +11,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Ervisio/ErvisioRepo/internal/runner"
 	"github.com/Ervisio/ErvisioRepo/internal/runner/config"
+	"github.com/Ervisio/ErvisioRepo/internal/sys"
 )
 
 // tokenFileName is the registration token file looked up next to the
@@ -35,6 +37,11 @@ func daemonCmd(ctx context.Context, args []string, stderr io.Writer) error {
 		return err
 	}
 	logger := newLogger(cfg.Log, stderr)
+	// A request left by the previous run must not power the machine off
+	// right after it booted.
+	if err := os.Remove(poweroffRequestPath(cfg)); err != nil && !errors.Is(err, os.ErrNotExist) {
+		logger.Warn("remove stale poweroff request", "err", err)
+	}
 	// A binary staged by a self-update takes over before anything else.
 	failedVer, handoffErr := runner.Handoff(cfg.Runner.StateFile, version(), logger)
 	if handoffErr != nil {
@@ -58,7 +65,35 @@ func daemonCmd(ctx context.Context, args []string, stderr io.Writer) error {
 		// so the scheduled task starts the replaced executable.
 		return runner.Restart(re)
 	}
+	if errors.Is(err, runner.ErrIdleShutdown) {
+		return idleShutdown(cfg, logger)
+	}
 	return err
+}
+
+// idleShutdown switches the machine off once the daemon stopped for lack
+// of jobs: runner.idle_shutdown_command, or the request file watched by
+// the root unit of install.sh --idle-shutdown.
+func idleShutdown(cfg *config.Config, logger *slog.Logger) error {
+	if argv := cfg.Runner.IdleShutdownCommand; len(argv) > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		logger.Info("switching the machine off", "command", strings.Join(argv, " "))
+		if out, err := sys.Run(ctx, argv...); err != nil {
+			return fmt.Errorf("idle shutdown command: %w: %s", err, strings.TrimSpace(string(out)))
+		}
+		return nil
+	}
+	path := poweroffRequestPath(cfg)
+	logger.Info("asking for the machine to be switched off", "file", path)
+	if err := os.WriteFile(path, []byte(time.Now().UTC().Format(time.RFC3339)+"\n"), 0o600); err != nil {
+		return fmt.Errorf("write poweroff request: %w", err)
+	}
+	return nil
+}
+
+func poweroffRequestPath(cfg *config.Config) string {
+	return filepath.Join(filepath.Dir(cfg.Runner.StateFile), config.PoweroffRequestFile)
 }
 
 // ensureDaemonConfig writes a default configuration from the

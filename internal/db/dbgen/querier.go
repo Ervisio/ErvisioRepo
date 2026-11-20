@@ -64,6 +64,12 @@ type Querier interface {
 	// the runner labels, the repository inside the runner scope and the matrix
 	// max-parallel not reached.
 	ClaimActionsJob(ctx context.Context, arg ClaimActionsJobParams) (ActionsJob, error)
+	// Takes the on-demand runners to start now: enabled, not paused, not seen
+	// since seen_before and needed by a queued job in their scope. A job that
+	// an online runner could also take only counts once it waited past
+	// busy_before. The claim holds the runner for hold seconds so that one
+	// server process calls it.
+	ClaimActionsRunnerWakes(ctx context.Context, arg ClaimActionsRunnerWakesParams) ([]ActionsRunner, error)
 	ClaimDueActionsSchedules(ctx context.Context) ([]ActionsSchedule, error)
 	// Undispatched events, oldest first, locked for the dispatching transaction
 	// (concurrent dispatchers skip each other's rows).
@@ -472,6 +478,8 @@ type Querier interface {
 	GetWebAuthnHandle(ctx context.Context, userID uuid.UUID) ([]byte, error)
 	GetWebhook(ctx context.Context, id uuid.UUID) (Webhook, error)
 	GetWebhookDelivery(ctx context.Context, id uuid.UUID) (WebhookDelivery, error)
+	// Claims one runner for a manual start, whatever its queue.
+	HoldActionsRunnerWake(ctx context.Context, arg HoldActionsRunnerWakeParams) (ActionsRunner, error)
 	// Hot repositories, how many are pinned and the bytes they hold.
 	HotRepoStats(ctx context.Context) (HotRepoStatsRow, error)
 	// Hydration, eviction, prewarm and restore of the hot tier (PLAN §4.3, §4.5).
@@ -987,6 +995,7 @@ type Querier interface {
 	// Moves a thread (root and replies) to a new position on commit_sha, or
 	// marks it outdated (line NULL).
 	ReanchorPullReviewComment(ctx context.Context, arg ReanchorPullReviewCommentParams) error
+	RecordActionsRunnerWake(ctx context.Context, arg RecordActionsRunnerWakeParams) (ActionsRunner, error)
 	RecordWebhookAttempt(ctx context.Context, arg RecordWebhookAttemptParams) error
 	RecountIssueComments(ctx context.Context, repoID uuid.UUID) error
 	ReleaseAuthorNames(ctx context.Context, ids []uuid.UUID) ([]ReleaseAuthorNamesRow, error)
@@ -1062,6 +1071,7 @@ type Querier interface {
 	SetActionsRunnerDevicePoll(ctx context.Context, arg SetActionsRunnerDevicePollParams) error
 	SetActionsRunnerMetrics(ctx context.Context, arg SetActionsRunnerMetricsParams) error
 	SetActionsRunnerPaused(ctx context.Context, arg SetActionsRunnerPausedParams) (ActionsRunner, error)
+	SetActionsRunnerWake(ctx context.Context, arg SetActionsRunnerWakeParams) (ActionsRunner, error)
 	SetActionsScheduleNext(ctx context.Context, arg SetActionsScheduleNextParams) error
 	SetDeviceCodePoll(ctx context.Context, arg SetDeviceCodePollParams) error
 	SetEmailNotifications(ctx context.Context, arg SetEmailNotificationsParams) error

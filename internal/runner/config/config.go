@@ -63,6 +63,13 @@ type Runner struct {
 	ShutdownTimeout   Duration `toml:"shutdown_timeout"`
 	// JobTimeout caps a job when the task carries no timeout.
 	JobTimeout Duration `toml:"job_timeout"`
+	// IdleShutdown switches the machine off after this long without jobs
+	// (0 = never). For on-demand runners the server starts again when a
+	// job needs them. IdleShutdownCommand does it; when empty the daemon
+	// writes PoweroffRequestFile next to the state file for the root unit
+	// installed by install.sh --idle-shutdown.
+	IdleShutdown        Duration `toml:"idle_shutdown"`
+	IdleShutdownCommand []string `toml:"idle_shutdown_command"`
 	// CacheDir keeps the clones of remote actions between jobs.
 	CacheDir string `toml:"cache_dir"`
 
@@ -108,6 +115,10 @@ type Host struct {
 	Enabled       bool   `toml:"enabled"`
 	WorkdirParent string `toml:"workdir_parent"`
 }
+
+// PoweroffRequestFile is written next to the state file when the idle
+// runner asks a privileged unit to switch the machine off.
+const PoweroffRequestFile = "poweroff-requested"
 
 // Default returns the configuration used for missing keys.
 func Default() Config {
@@ -244,6 +255,9 @@ func (c *Config) validate() []error {
 		if d <= 0 {
 			add(path, "must be a positive duration")
 		}
+	}
+	if c.Runner.IdleShutdown < 0 || (c.Runner.IdleShutdown > 0 && c.Runner.IdleShutdown.D() < time.Minute) {
+		add("runner.idle_shutdown", "must be 0 (never) or at least 1m")
 	}
 	if c.Runner.FetchIntervalMax < c.Runner.FetchInterval {
 		add("runner.fetch_interval_max", "must not be lower than fetch_interval")

@@ -43,6 +43,14 @@ heartbeat_interval = "30s"
 shutdown_timeout = "10m"
 # Upper bound of a job when the server sends no timeout.
 job_timeout = "6h"
+# On-demand machines: switch off after this long without jobs ("0s" =
+# never). The server starts the machine again through the start URL set
+# on the runner page. With an empty command the runner writes
+# "poweroff-requested" next to state_file and the root unit installed by
+# "install.sh --idle-shutdown 15m" powers the machine off; otherwise the
+# command runs as the runner user.
+idle_shutdown = "0s"
+idle_shutdown_command = []
 # Log upload: every log_report_interval, or sooner when log_report_batch_size
 # rows are buffered or the oldest row waited log_report_max_latency.
 log_report_interval = "5s"

@@ -59,6 +59,9 @@ type Actions interface {
 	SetRunnerPaused(ctx context.Context, who auth.Principal, sc actions.Scope, id uuid.UUID, paused bool, ip string) (actions.Runner, error)
 	RequestRunnerUpdate(ctx context.Context, who auth.Principal, sc actions.Scope, id uuid.UUID, ip string) (actions.Runner, error)
 	RequestRunnerUpdates(ctx context.Context, who auth.Principal, sc actions.Scope, ip string) (int, string, error)
+	SetRunnerWake(ctx context.Context, who auth.Principal, sc actions.Scope, id uuid.UUID, in actions.RunnerWakeSettings, ip string) (actions.Runner, error)
+	DeleteRunnerWake(ctx context.Context, who auth.Principal, sc actions.Scope, id uuid.UUID, ip string) (actions.Runner, error)
+	WakeRunner(ctx context.Context, who auth.Principal, sc actions.Scope, id uuid.UUID, ip string) (actions.Runner, error)
 	LookupRunnerDevice(ctx context.Context, who auth.Principal, userCode, ip string) (actions.RunnerDevice, error)
 	DecideRunnerDevice(ctx context.Context, who auth.Principal, userCode string, d actions.RunnerDeviceDecision, ip string) error
 	CreateRegistrationToken(ctx context.Context, who auth.Principal, sc actions.Scope) (actions.RegistrationToken, error)
@@ -140,6 +143,9 @@ type actionsResponse interface {
 	v1gen.SetInstanceActionsRunnerPausedResponseObject
 	v1gen.UpdateInstanceActionsRunnerResponseObject
 	v1gen.UpdateInstanceActionsRunnersResponseObject
+	v1gen.SetInstanceActionsRunnerWakeResponseObject
+	v1gen.DeleteInstanceActionsRunnerWakeResponseObject
+	v1gen.WakeInstanceActionsRunnerResponseObject
 	v1gen.GetActionsRunnerDeviceResponseObject
 	v1gen.DecideActionsRunnerDeviceResponseObject
 }
@@ -209,7 +215,16 @@ func actionsDTORunner(r actions.Runner) v1gen.ActionsRunner {
 		Status: v1gen.ActionsRunnerStatus(r.Status), Running: r.Running, Capacity: r.Capacity,
 		LastSeenAt: r.LastSeenAt, CreatedAt: r.CreatedAt, Metrics: actionsDTORunnerMetrics(r.Metrics),
 		Jobs: mapList(r.Jobs, actionsDTORunnerJob), UpdateAvailable: r.UpdateAvailable, UpdatePending: r.UpdatePending,
-		UpdateVersion: optStr(r.UpdateVersion), UpdateError: optStr(r.UpdateError), SelfUpdate: r.SelfUpdate}
+		UpdateVersion: optStr(r.UpdateVersion), UpdateError: optStr(r.UpdateError), SelfUpdate: r.SelfUpdate,
+		Wake: actionsDTORunnerWake(r.Wake)}
+}
+
+func actionsDTORunnerWake(w *actions.RunnerWake) *v1gen.ActionsRunnerWake {
+	if w == nil {
+		return nil
+	}
+	return &v1gen.ActionsRunnerWake{Enabled: w.Enabled, Url: w.URL, Header: w.Header, HasToken: w.HasToken,
+		CooldownSeconds: w.Cooldown, LastWakeAt: w.LastWakeAt, LastStatus: w.LastStatus, LastError: optStr(w.LastError)}
 }
 
 func actionsDTORunnerMetrics(m *actions.RunnerMetrics) *v1gen.ActionsRunnerMetrics {
@@ -1251,6 +1266,24 @@ func (m movedResponse) VisitUpdateInstanceActionsRunnerResponse(w http.ResponseW
 	return m.write(w)
 }
 func (m movedResponse) VisitUpdateInstanceActionsRunnersResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (p problemResponse) VisitSetInstanceActionsRunnerWakeResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (m movedResponse) VisitSetInstanceActionsRunnerWakeResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (p problemResponse) VisitDeleteInstanceActionsRunnerWakeResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (m movedResponse) VisitDeleteInstanceActionsRunnerWakeResponse(w http.ResponseWriter) error {
+	return m.write(w)
+}
+func (p problemResponse) VisitWakeInstanceActionsRunnerResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+func (m movedResponse) VisitWakeInstanceActionsRunnerResponse(w http.ResponseWriter) error {
 	return m.write(w)
 }
 func (p problemResponse) VisitGetActionsRunnerDeviceResponse(w http.ResponseWriter) error {

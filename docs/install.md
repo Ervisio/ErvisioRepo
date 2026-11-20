@@ -107,6 +107,16 @@ The scripts are served at `/runner/install.sh` and `/runner/install.ps1` with th
 
 **Uninstall.** `curl -fsSL https://git.example.com/runner/install.sh | sudo sh -s -- --uninstall` stops and removes the service, the cleanup timer, the user, the binary, config and state, and removes the runner from the server (`ervisio-runner deregister`); if the server cannot be reached, delete it in Admin > Runners. `-Uninstall` on Windows; `docker rm -f ervisio-runner` for Docker (then delete it in the UI).
 
+### On-demand runners (machines switched off while idle)
+
+An expensive machine (for example an EC2 instance) can stay off and start only when a job needs it.
+
+1. Make something that starts the machine on an HTTPS call protected by a token, e.g. an AWS Lambda with a function URL that calls `ec2:StartInstances` and checks a header such as `x-token`.
+2. Install the runner on the machine with `--idle-shutdown 15m`: after 15 minutes without jobs it stops taking work, lets running jobs finish and powers the machine off (a root unit, `ervisio-runner-poweroff.path`, does the power-off; the runner user stays unprivileged). `--idle-shutdown 0` turns it off again.
+3. In Admin > Runners open the ⋯ menu of the runner, **On-demand start…**: start URL, token header (`x-token`; empty sends `Authorization: Bearer`), token (stored encrypted with the master key) and cooldown (default 180 s).
+
+While the runner is offline (no contact for 75 s) and a queued job matches its labels, the server POSTs to the start URL, at most once per cooldown; if an online runner could take the job, it waits 90 s first. A refused call (4xx such as 401/403, e.g. blocked hours) is retried after 10 minutes, other failures (409 while the machine is still stopping, network, 5xx) after a minute. **Start now** in the same menu calls the URL at once. The runner row shows an **On demand** chip and the outcome of the last call. Only instance runners can be on demand.
+
 ## Publishing behind Caddy
 
 ```sh

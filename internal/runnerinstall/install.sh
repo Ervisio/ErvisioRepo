@@ -20,6 +20,9 @@
 #   --no-docker        do not install or use Docker: run jobs on this machine
 #                      (no isolation, trusted repositories only; alias: --host)
 #   --version X.Y.Z    runner version (default: the server version)
+#   --idle-shutdown D  on-demand machine: power it off after D without jobs
+#                      (e.g. 15m; 0 turns it off). The server starts it again
+#                      through the start URL set on the runner (Admin > Runners)
 #   --upgrade          already installed: only replace the binary
 #   --reconfigure      already installed: register again (new approval)
 #   --yes              do not ask questions
@@ -34,9 +37,11 @@ SVC_USER="ervisio-runner"
 PRUNE_SCRIPT=/usr/local/libexec/ervisio-runner-prune
 PRUNE_UNIT=/etc/systemd/system/ervisio-runner-prune.service
 PRUNE_TIMER=/etc/systemd/system/ervisio-runner-prune.timer
+POWEROFF_UNIT=/etc/systemd/system/ervisio-runner-poweroff.service
+POWEROFF_PATH=/etc/systemd/system/ervisio-runner-poweroff.path
 
 url="$SERVER_URL"; token="${ERVISIO_RUNNER_TOKEN:-}"; name=""; labels=""; capacity=""
-host=0; version="$SERVER_VERSION"; yes=0; uninstall=0; mode=""
+host=0; version="$SERVER_VERSION"; yes=0; uninstall=0; mode=""; idle=""
 
 die() { echo "ervisio-runner install: $*" >&2; exit 1; }
 say() { echo "==> $*"; }
@@ -51,18 +56,23 @@ while [ $# -gt 0 ]; do
     --no-docker|--host) host=1 ;;
     --docker) ;; # accepted for compatibility: the service user joins the docker group
     --version) version="${2:?--version needs a value}"; shift ;;
+    --idle-shutdown) idle="${2:?--idle-shutdown needs a value}"; shift ;;
     --upgrade) mode=upgrade ;;
     --reconfigure) mode=reconfigure ;;
     --yes|-y) yes=1 ;;
     --uninstall) uninstall=1 ;;
     --purge) ;; # accepted for compatibility: --uninstall removes everything
-    -h|--help) echo "usage: install.sh [--url URL] [--token TOKEN] [--name N] [--labels A,B] [--capacity N] [--no-docker] [--version X.Y.Z] [--upgrade|--reconfigure] [--yes] | --uninstall"; exit 0 ;;
+    -h|--help) echo "usage: install.sh [--url URL] [--token TOKEN] [--name N] [--labels A,B] [--capacity N] [--no-docker] [--version X.Y.Z] [--idle-shutdown 15m] [--upgrade|--reconfigure] [--yes] | --uninstall"; exit 0 ;;
     *) die "unknown option $1" ;;
   esac
   shift
 done
 
 case "$capacity" in ""|[1-9]|[1-5][0-9]|6[0-4]) ;; *) die "--capacity must be between 1 and 64" ;; esac
+case "$idle" in
+  ""|0|0s) ;;
+  *[!0-9smh]*|[!0-9]*) die "--idle-shutdown takes a duration such as 15m or 1h (0 turns it off)" ;;
+esac
 
 os=$(uname -s); arch=$(uname -m)
 case "$os" in Linux) os=linux ;; Darwin) os=darwin ;; *) die "unsupported OS $os (use install.ps1 on Windows)" ;; esac
@@ -118,6 +128,12 @@ stop_service() {
   fi
 }
 
+remove_poweroff() {
+  [ $root -eq 1 ] && has_systemd || return 0
+  systemctl disable --now ervisio-runner-poweroff.path 2>/dev/null || true
+  rm -f "$POWEROFF_PATH" "$POWEROFF_UNIT"
+}
+
 remove_prune() {
   [ $root -eq 1 ] && has_systemd || return 0
   systemctl disable --now ervisio-runner-prune.timer 2>/dev/null || true
@@ -142,6 +158,7 @@ if [ $uninstall -eq 1 ]; then
     systemctl_ disable ervisio-runner.service 2>/dev/null || true
     rm -f "$unit"
     remove_prune
+    remove_poweroff
     systemctl_ daemon-reload 2>/dev/null || true
   fi
   rm -f "$bin"
@@ -306,6 +323,17 @@ else
   # $url/runner/approve and waits (up to 15 minutes); it needs no input.
   ERVISIO_RUNNER_TOKEN="$token" "$bin" "$@" </dev/null || die "registration failed"
 fi
+# ---- idle shutdown (on-demand machine) ----
+if [ -n "$idle" ]; then
+  case "$idle" in 0|0s) idle_value=0s ;; *) idle_value="$idle" ;; esac
+  if grep -q '^idle_shutdown *=' "$cfg"; then
+    sed -i.bak "s/^idle_shutdown *=.*/idle_shutdown = \"$idle_value\"/" "$cfg" && rm -f "$cfg.bak"
+  else
+    sed -i.bak "/^job_timeout *=/a\\
+idle_shutdown = \"$idle_value\"" "$cfg" && rm -f "$cfg.bak"
+  fi
+  grep -q "^idle_shutdown = \"$idle_value\"" "$cfg" || die "could not set idle_shutdown in $cfg"
+fi
 if [ $root -eq 1 ]; then
   chown -R "$SVC_USER:$SVC_USER" "$data_dir"
   chown root:"$SVC_USER" "$cfg"; chmod 0640 "$cfg"
@@ -466,11 +494,44 @@ elif [ $root -eq 1 ]; then
   remove_prune
 fi
 
+# ---- power-off unit (root): the idle runner cannot switch the machine off
+# itself (unprivileged service user, NoNewPrivileges); it writes a request
+# file that this unit watches. Only a fresh request counts.
+idle_cfg=$(sed -n 's/^idle_shutdown *= *"\(.*\)".*/\1/p' "$cfg" 2>/dev/null | head -n 1)
+if [ $root -eq 1 ] && [ -n "$idle_cfg" ] && [ "$idle_cfg" != 0s ] && [ "$idle_cfg" != 0 ]; then
+  req="$data_dir/poweroff-requested"
+  cat > "$POWEROFF_PATH" <<UNIT
+[Unit]
+Description=Ervisio runner idle power-off request
+
+[Path]
+PathExists=$req
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+  cat > "$POWEROFF_UNIT" <<UNIT
+[Unit]
+Description=Ervisio runner idle power-off
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'if [ -n "\$\$(find $req -mmin -5 2>/dev/null)" ]; then rm -f $req; exec systemctl poweroff; fi; rm -f $req'
+UNIT
+  poweroff_on=1
+else
+  remove_poweroff
+  poweroff_on=0
+fi
+
 systemctl_ daemon-reload
 systemctl_ enable ervisio-runner.service
 systemctl_ restart ervisio-runner.service
 if [ $root -eq 1 ] && [ $host -eq 0 ]; then
   systemctl enable --now ervisio-runner-prune.timer
+fi
+if [ $root -eq 1 ] && [ $poweroff_on -eq 1 ]; then
+  systemctl enable --now ervisio-runner-poweroff.path
 fi
 
 summary
@@ -478,6 +539,7 @@ if [ $root -eq 1 ]; then
   echo "   status:   systemctl status ervisio-runner"
   echo "   logs:     journalctl -u ervisio-runner -f"
   [ $host -eq 0 ] && echo "   cleanup:  ervisio-runner-prune.timer, daily (journalctl -u ervisio-runner-prune)"
+  [ $poweroff_on -eq 1 ] && echo "   idle:     powers the machine off after $idle_cfg without jobs (set the start URL in Admin > Runners)"
   echo "   remove:   curl -fsSL $url/runner/install.sh | sudo sh -s -- --uninstall"
 else
   echo "   status:   systemctl --user status ervisio-runner"

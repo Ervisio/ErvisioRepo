@@ -11816,6 +11816,98 @@ paths:
           $ref: "#/components/responses/Unavailable"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/actions/runners/{runnerId}/wake:
+    parameters:
+      - $ref: "#/components/parameters/ActionsRunnerId"
+    put:
+      operationId: setInstanceActionsRunnerWake
+      tags: [actions]
+      summary: Configure the on-demand start of a self-hosted runner
+      description: |
+        Makes the runner on-demand: while it is offline and a queued job
+        needs it, the server calls the start URL (POST, with the token in
+        the given header) at most once per cooldown. Meant for machines
+        switched off while idle, e.g. an EC2 instance started by an AWS
+        Lambda function URL. An omitted token keeps the stored one. Needs
+        the master key to store a token. Recorded in the audit log.
+      security:
+        - session: [admin]
+        - token: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActionsRunnerWakeSettings"
+      responses:
+        "200":
+          description: The runner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRunner"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+    delete:
+      operationId: deleteInstanceActionsRunnerWake
+      tags: [actions]
+      summary: Remove the on-demand start of a self-hosted runner
+      security:
+        - session: [admin]
+        - token: [admin]
+      responses:
+        "200":
+          description: The runner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRunner"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      operationId: wakeInstanceActionsRunner
+      tags: [actions]
+      summary: Start an on-demand runner now
+      description: |
+        Calls the start URL at once, without waiting for a queued job. The
+        answer carries the outcome in wake.lastStatus and wake.lastError.
+        409 when the runner has no start URL.
+      security:
+        - session: [admin]
+        - token: [admin]
+      responses:
+        "200":
+          description: The runner, with the outcome of the call
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionsRunner"
+        "403":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+        default:
+          $ref: "#/components/responses/Problem"
   /admin/actions/runners/update:
     post:
       operationId: updateInstanceActionsRunners
@@ -12737,6 +12829,8 @@ components:
             The runner can update itself from the admin panel (false for the
             built-in runner, runners in containers, ephemeral runners and
             versions without self-update)
+        wake:
+          $ref: '#/components/schemas/ActionsRunnerWake'
     ActionsRunnerUpdateAll:
       type: object
       required: [requested, version]
@@ -12794,6 +12888,30 @@ components:
         owner: {type: string}
         name: {type: string}
         fullName: {type: string, description: owner/name}
+    ActionsRunnerWake:
+      type: object
+      description: |
+        On-demand start of an instance runner (absent when none is set).
+        The token is write-only.
+      required: [enabled, url, header, hasToken, cooldownSeconds, lastStatus]
+      properties:
+        enabled: {type: boolean}
+        url: {type: string, description: Start URL called with POST}
+        header: {type: string, description: Header carrying the token; empty sends it as Authorization Bearer}
+        hasToken: {type: boolean}
+        cooldownSeconds: {type: integer, description: Minimum time between two calls}
+        lastWakeAt: {type: string, format: date-time, nullable: true}
+        lastStatus: {type: integer, description: HTTP status of the last call; 0 when the call failed or never ran}
+        lastError: {type: string, description: Why the last call failed}
+    ActionsRunnerWakeSettings:
+      type: object
+      required: [enabled, url]
+      properties:
+        enabled: {type: boolean}
+        url: {type: string, maxLength: 2048, description: "https:// start URL"}
+        header: {type: string, maxLength: 128, description: "Token header, e.g. x-token; empty means Authorization: Bearer"}
+        token: {type: string, maxLength: 4096, description: "Token sent in the header; omitted keeps the stored one, empty removes it"}
+        cooldownSeconds: {type: integer, minimum: 30, maximum: 3600, description: Minimum time between two calls (default 180)}
     ActionsRunnerPause:
       type: object
       required: [paused]

@@ -47,6 +47,55 @@ UPDATE actions_runners SET metrics = @metrics, metrics_at = now() WHERE id = @id
 -- name: SetActionsRunnerPaused :one
 UPDATE actions_runners SET paused = @paused, updated_at = now() WHERE id = @id RETURNING *;
 
+-- name: SetActionsRunnerWake :one
+UPDATE actions_runners
+SET wake_enabled = @enabled, wake_url = @url, wake_header = @header, wake_token = @token,
+    wake_cooldown = @cooldown, wake_next_at = NULL, wake_error = '', updated_at = now()
+WHERE id = @id
+RETURNING *;
+
+-- name: ClaimActionsRunnerWakes :many
+-- Takes the on-demand runners to start now: enabled, not paused, not seen
+-- since seen_before and needed by a queued job in their scope. A job that
+-- an online runner could also take only counts once it waited past
+-- busy_before. The claim holds the runner for hold seconds so that one
+-- server process calls it.
+UPDATE actions_runners rn
+SET wake_next_at = now() + make_interval(secs => @hold::int)
+WHERE rn.wake_enabled AND NOT rn.paused AND rn.wake_url <> ''
+  AND (NOT rn.online OR rn.last_seen_at IS NULL OR rn.last_seen_at < @seen_before)
+  AND (rn.wake_next_at IS NULL OR rn.wake_next_at <= now())
+  AND EXISTS (
+      SELECT 1 FROM actions_jobs j
+      JOIN repos r ON r.id = j.repo_id
+      WHERE j.status = 'queued'
+        AND j.runs_on <@ rn.labels
+        AND (rn.scope = 'instance'
+             OR (rn.scope = 'org' AND r.owner_id = rn.owner_id)
+             OR (rn.scope = 'repo' AND j.repo_id = rn.repo_id))
+        AND (j.updated_at < @busy_before OR NOT EXISTS (
+            SELECT 1 FROM actions_runners o
+            WHERE o.id <> rn.id AND o.online AND NOT o.paused AND o.last_seen_at >= @seen_before
+              AND j.runs_on <@ o.labels
+              AND (o.scope = 'instance'
+                   OR (o.scope = 'org' AND r.owner_id = o.owner_id)
+                   OR (o.scope = 'repo' AND j.repo_id = o.repo_id))))
+  )
+RETURNING rn.*;
+
+-- name: HoldActionsRunnerWake :one
+-- Claims one runner for a manual start, whatever its queue.
+UPDATE actions_runners SET wake_next_at = now() + make_interval(secs => @hold::int)
+WHERE id = @id AND wake_url <> ''
+RETURNING *;
+
+-- name: RecordActionsRunnerWake :one
+UPDATE actions_runners
+SET last_wake_at = now(), wake_status = @status, wake_error = @error,
+    wake_next_at = now() + make_interval(secs => @retry_after::int)
+WHERE id = @id
+RETURNING *;
+
 -- name: TouchActionsRunner :exec
 UPDATE actions_runners SET online = true, last_seen_at = now() WHERE id = @id;
 

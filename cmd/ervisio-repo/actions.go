@@ -54,6 +54,7 @@ func wireActions(ctx context.Context, a *actions.Service, d actions.Deps, bus *e
 	a.Wire(d)
 	bus.Register("actions.trigger", a.EventHandler(), actions.EventKinds...)
 	go a.Listen(ctx)
+	go a.WakeLoop(ctx)
 }
 
 // setupActionsResults builds the cache and artifact services the actions

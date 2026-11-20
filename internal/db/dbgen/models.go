@@ -204,6 +204,15 @@ type ActionsRunner struct {
 	UpdateRequestedAt pgtype.Timestamptz
 	UpdateError       string
 	SelfUpdate        bool
+	WakeEnabled       bool
+	WakeUrl           string
+	WakeHeader        string
+	WakeToken         []byte
+	WakeCooldown      int32
+	WakeNextAt        pgtype.Timestamptz
+	LastWakeAt        pgtype.Timestamptz
+	WakeStatus        int32
+	WakeError         string
 }
 
 type ActionsRunnerDevice struct {

@@ -107,6 +107,16 @@ Gli script sono serviti su `/runner/install.sh` e `/runner/install.ps1` con URL 
 
 **Disinstallazione.** `curl -fsSL https://git.example.com/runner/install.sh | sudo sh -s -- --uninstall` ferma e rimuove servizio, timer di pulizia, utente, binario, configurazione e stato, e toglie il runner dal server (`ervisio-runner deregister`); se il server non è raggiungibile, eliminalo in Admin > Runner. `-Uninstall` su Windows; `docker rm -f ervisio-runner` per Docker (poi eliminalo dall'interfaccia).
 
+### Runner on demand (macchine spente quando sono inattive)
+
+Una macchina costosa (per esempio un'istanza EC2) può restare spenta e accendersi solo quando un job ne ha bisogno.
+
+1. Prepara qualcosa che accenda la macchina con una chiamata HTTPS protetta da token, per esempio una Lambda AWS con Function URL che chiama `ec2:StartInstances` e controlla un header come `x-token`.
+2. Installa il runner sulla macchina con `--idle-shutdown 15m`: dopo 15 minuti senza job smette di prendere lavoro, lascia finire i job in corso e spegne la macchina (lo spegnimento lo fa un'unità root, `ervisio-runner-poweroff.path`; l'utente del runner resta senza privilegi). `--idle-shutdown 0` lo disattiva.
+3. In Admin > Runner apri il menu ⋯ del runner, **Avvio on demand…**: URL di avvio, header del token (`x-token`; vuoto invia `Authorization: Bearer`), token (salvato cifrato con la master key) e intervallo minimo (predefinito 180 s).
+
+Quando il runner è offline (nessun contatto da 75 s) e un job in coda corrisponde alle sue etichette, il server fa una POST all'URL di avvio, al massimo una volta per intervallo; se un runner online potrebbe prendere il job, aspetta prima 90 s. Una chiamata rifiutata (4xx come 401/403, per esempio fasce orarie bloccate) si riprova dopo 10 minuti, gli altri errori (409 mentre la macchina si sta ancora spegnendo, rete, 5xx) dopo un minuto. **Avvia ora** nello stesso menu chiama subito l'URL. La riga del runner mostra il chip **On demand** e l'esito dell'ultima chiamata. Solo i runner d'istanza possono essere on demand.
+
 ## Pubblicare dietro Caddy
 
 ```sh
