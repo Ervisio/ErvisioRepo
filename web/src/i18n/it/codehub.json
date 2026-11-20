@@ -121,7 +121,7 @@
   "collaboration.contributor": "Collaboratore {id}",
   "collaboration.replyToYou": "ErvisioCode · risposta per te",
   "collaboration.replyTo": "ErvisioCode · risposta per {author}",
-  "collaboration.unavailable": "Per scrivere in questa chat serve il PC del proprietario online, con una versione compatibile di ErvisioCode e la collaborazione attivata.",
+  "collaboration.unavailable": "Per scrivere in questa chat serve il PC del proprietario online con ErvisioCode 0.9.5 o successivo.",
   "collaboration.groupChat": "Chat di gruppo · L’agente lavora sul PC del proprietario",
   "collaboration.shareHint": "I collaboratori scrivono nella stessa chat e l’agente esegue anche le loro richieste sul tuo PC, con i tuoi strumenti e i tuoi permessi. Condividi solo con persone di cui ti fidi.",
   "collaboration.orgConsent": "Concedo l’accesso anche a chi entrerà in futuro nell’organizzazione.",

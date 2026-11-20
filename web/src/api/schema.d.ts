@@ -1637,7 +1637,7 @@ export interface paths {
         };
         /**
          * Read the visible transcript of a live shared session
-         * @description Returns the host's visible session transcript. Restricted grants require a host that applies the requested history boundary and never fall back to full history. On compatible hosts that opt in, an active direct grant can add attributed prompts to the same transcript, and the host's agent works on them. The service does not persist the transcript.
+         * @description Returns the host's visible session transcript. Restricted grants require a host that applies the requested history boundary and never fall back to full history. On compatible hosts, an active direct grant can add attributed prompts to the same transcript, and the host's agent works on them. The service does not persist the transcript.
          */
         get: operations["getErvisioCodeSharedState"];
         put?: never;

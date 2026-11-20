@@ -6,6 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.22.1] - 2026-11-20
+
+### Changed
+
+- Collaborator chats work with ErvisioCode 0.9.5 or later without any setting on the PC; sharing a chat as Collaborator is the owner's consent.
+
 ## [1.22.0] - 2026-11-20
 
 ### Added
