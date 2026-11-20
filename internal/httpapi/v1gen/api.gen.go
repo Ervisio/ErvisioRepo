@@ -62660,9 +62660,15 @@ type GetErvisioCodeHubSessionResponseObject interface {
 }
 
 type GetErvisioCodeHubSession200JSONResponse struct {
-	AccountId openapi_types.UUID  `json:"accountId"`
+	AccountId openapi_types.UUID `json:"accountId"`
+
+	// AvatarUrl Profile avatar URL, if set for the authenticated account.
+	AvatarUrl *string             `json:"avatarUrl,omitempty"`
 	Devices   []ErvisioCodeDevice `json:"devices"`
-	Username  string              `json:"username"`
+
+	// DisplayName Profile display name for the authenticated account.
+	DisplayName *string `json:"displayName,omitempty"`
+	Username    string  `json:"username"`
 }
 
 func (response GetErvisioCodeHubSession200JSONResponse) VisitGetErvisioCodeHubSessionResponse(w http.ResponseWriter) error {

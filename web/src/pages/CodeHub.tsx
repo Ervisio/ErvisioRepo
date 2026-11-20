@@ -65,11 +65,11 @@ export function MobileCodeHub({ accountId }: { accountId?: string }) {
       </main>
     );
   }
-  const { accountId: id, username, devices } = session.data;
+  const { accountId: id, username, displayName, avatarUrl, devices } = session.data;
   return (
     <CodeWorkspace
       key={id}
-      account={{ id, username }}
+      account={{ id, username, displayName, avatarUrl }}
       hubAccountId={id}
       devices={devices}
       manageDevices={

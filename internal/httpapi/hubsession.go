@@ -13,6 +13,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/auth"
 	"github.com/Ervisio/ErvisioRepo/internal/credentials"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+	"github.com/Ervisio/ErvisioRepo/internal/identity"
 )
 
 const (
@@ -219,7 +220,23 @@ func (s *v1Server) GetErvisioCodeHubSession(ctx context.Context, req v1gen.GetEr
 	if err != nil {
 		return nil, err
 	}
-	return v1gen.GetErvisioCodeHubSession200JSONResponse{
+	out := v1gen.GetErvisioCodeHubSession200JSONResponse{
 		AccountId: accountID, Username: username, Devices: ervisioCodeDevicesDTO(devices),
-	}, nil
+	}
+	if s.identity != nil {
+		user, err := s.identity.User(ctx, accountID)
+		if errors.Is(err, identity.ErrNotFound) {
+			return errAuthRequired, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		if user.DisplayName != "" {
+			out.DisplayName = &user.DisplayName
+		}
+		if user.AvatarURL != "" {
+			out.AvatarUrl = &user.AvatarURL
+		}
+	}
+	return out, nil
 }

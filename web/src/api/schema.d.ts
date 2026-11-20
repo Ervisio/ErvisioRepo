@@ -12955,6 +12955,10 @@ export interface operations {
                         /** Format: uuid */
                         accountId: string;
                         username: string;
+                        /** @description Profile display name for the authenticated account. */
+                        displayName?: string;
+                        /** @description Profile avatar URL, if set for the authenticated account. */
+                        avatarUrl?: string;
                         devices: components["schemas"]["ErvisioCodeDevice"][];
                     };
                 };

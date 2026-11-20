@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- The Android Code workspace shows the linked account's profile photo and display name, just like the browser workspace.
+
 ## [1.20.0] - 2026-11-20
 
 ### Added
