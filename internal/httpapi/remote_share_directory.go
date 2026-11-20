@@ -40,7 +40,8 @@ func (s *v1Server) SearchErvisioCodeRecipients(ctx context.Context, req v1gen.Se
 		out := v1gen.SearchErvisioCodeRecipients200JSONResponse{Recipients: make([]v1gen.ErvisioCodeRecipient, 0, len(orgs))}
 		for _, org := range orgs {
 			out.Recipients = append(out.Recipients, v1gen.ErvisioCodeRecipient{
-				Id: org.ID, Kind: v1gen.RecipientOrg, Name: org.Name, DisplayName: org.DisplayName,
+				Id: org.ID, Kind: v1gen.RecipientOrg, Name: org.Name,
+				DisplayName: shareOptional(org.DisplayName), AvatarUrl: shareOptional(org.AvatarURL),
 			})
 		}
 		return out, nil
@@ -72,7 +73,8 @@ func (s *v1Server) searchShareUsers(ctx context.Context, accountID uuid.UUID, pr
 			continue
 		}
 		out.Recipients = append(out.Recipients, v1gen.ErvisioCodeRecipient{
-			Id: user.ID, Kind: v1gen.RecipientUser, Name: user.Username, DisplayName: user.DisplayName,
+			Id: user.ID, Kind: v1gen.RecipientUser, Name: user.Username,
+			DisplayName: shareOptional(user.DisplayName), AvatarUrl: shareOptional(user.AvatarURL),
 		})
 		if len(out.Recipients) == sharingDirectoryLimit {
 			break

@@ -4624,7 +4624,8 @@ type ErvisioCodeProviderCatalogStatus string
 
 // ErvisioCodeRecipient defines model for ErvisioCodeRecipient.
 type ErvisioCodeRecipient struct {
-	DisplayName string                   `json:"displayName"`
+	AvatarUrl   *string                  `json:"avatarUrl,omitempty"`
+	DisplayName *string                  `json:"displayName,omitempty"`
 	Id          openapi_types.UUID       `json:"id"`
 	Kind        ErvisioCodeRecipientKind `json:"kind"`
 	Name        string                   `json:"name"`
@@ -4822,15 +4823,21 @@ type ErvisioCodeShare struct {
 	InviteExpiresAt *time.Time            `json:"inviteExpiresAt,omitempty"`
 
 	// NewOnly A private host cursor is stored for this grant.
-	NewOnly     *bool               `json:"newOnly,omitempty"`
-	OrgId       *openapi_types.UUID `json:"orgId,omitempty"`
-	OwnerId     openapi_types.UUID  `json:"ownerId"`
-	RecipientId *openapi_types.UUID `json:"recipientId,omitempty"`
-	RevokedAt   *time.Time          `json:"revokedAt,omitempty"`
+	NewOnly          *bool               `json:"newOnly,omitempty"`
+	OrgId            *openapi_types.UUID `json:"orgId,omitempty"`
+	OwnerAvatarUrl   *string             `json:"ownerAvatarUrl,omitempty"`
+	OwnerDisplayName *string             `json:"ownerDisplayName,omitempty"`
+	OwnerId          openapi_types.UUID  `json:"ownerId"`
+	OwnerUsername    *string             `json:"ownerUsername,omitempty"`
+	RecipientId      *openapi_types.UUID `json:"recipientId,omitempty"`
+	RevokedAt        *time.Time          `json:"revokedAt,omitempty"`
 
-	// Role Reader can read state; proposer and direct can also submit proposals. Direct requires full-history consent and does not authorize execution.
+	// Role Only reader grants are active or may be created. Proposer and direct may appear on historical revoked shares.
 	Role      ErvisioCodeShareRole `json:"role"`
 	SessionId string               `json:"sessionId"`
+
+	// SessionTitle The latest title published by the approved linked device for this session
+	SessionTitle *string `json:"sessionTitle,omitempty"`
 }
 
 // ErvisioCodeShareAccept defines model for ErvisioCodeShareAccept.
@@ -4855,7 +4862,7 @@ type ErvisioCodeShareCreate struct {
 	OrgId       *openapi_types.UUID            `json:"orgId,omitempty"`
 	RecipientId *openapi_types.UUID            `json:"recipientId,omitempty"`
 
-	// Role Reader can read state; proposer and direct can also submit proposals. Direct requires full-history consent and does not authorize execution.
+	// Role Only reader grants are active or may be created. Proposer and direct may appear on historical revoked shares.
 	Role      ErvisioCodeShareRole `json:"role"`
 	SessionId string               `json:"sessionId"`
 }
@@ -4866,7 +4873,7 @@ type ErvisioCodeShareCreateFullHistory bool
 // ErvisioCodeShareCreateNewOnly Start after the host's current history boundary.
 type ErvisioCodeShareCreateNewOnly bool
 
-// ErvisioCodeShareRole Reader can read state; proposer and direct can also submit proposals. Direct requires full-history consent and does not authorize execution.
+// ErvisioCodeShareRole Only reader grants are active or may be created. Proposer and direct may appear on historical revoked shares.
 type ErvisioCodeShareRole string
 
 // ExploreRepoList defines model for ExploreRepoList.
@@ -8528,6 +8535,12 @@ type ReviewErvisioCodeProposalParams struct {
 	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
 }
 
+// RejectErvisioCodeShareParams defines parameters for RejectErvisioCodeShare.
+type RejectErvisioCodeShareParams struct {
+	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
+	AccountId *ErvisioCodeShareAccountId `form:"accountId,omitempty" json:"accountId,omitempty"`
+}
+
 // GetErvisioCodeSharedStateParams defines parameters for GetErvisioCodeSharedState.
 type GetErvisioCodeSharedStateParams struct {
 	// AccountId Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session.
@@ -10191,6 +10204,9 @@ type ServerInterface interface {
 	// ReviewErvisioCodeProposal Record the session owner's decision on a pending proposal
 	// (POST /user/ervisiocode/shares/{shareId}/proposals/{proposalId}/review)
 	ReviewErvisioCodeProposal(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, proposalId openapi_types.UUID, params ReviewErvisioCodeProposalParams)
+	// RejectErvisioCodeShare Reject a pending personal invitation as its named recipient
+	// (POST /user/ervisiocode/shares/{shareId}/reject)
+	RejectErvisioCodeShare(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params RejectErvisioCodeShareParams)
 	// GetErvisioCodeSharedState Read the visible transcript of a live shared session
 	// (GET /user/ervisiocode/shares/{shareId}/state)
 	GetErvisioCodeSharedState(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params GetErvisioCodeSharedStateParams)
@@ -12528,6 +12544,12 @@ func (_ Unimplemented) CreateErvisioCodeProposal(w http.ResponseWriter, r *http.
 // ReviewErvisioCodeProposal Record the session owner's decision on a pending proposal
 // (POST /user/ervisiocode/shares/{shareId}/proposals/{proposalId}/review)
 func (_ Unimplemented) ReviewErvisioCodeProposal(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, proposalId openapi_types.UUID, params ReviewErvisioCodeProposalParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// RejectErvisioCodeShare Reject a pending personal invitation as its named recipient
+// (POST /user/ervisiocode/shares/{shareId}/reject)
+func (_ Unimplemented) RejectErvisioCodeShare(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params RejectErvisioCodeShareParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -29799,6 +29821,56 @@ func (siw *ServerInterfaceWrapper) ReviewErvisioCodeProposal(w http.ResponseWrit
 	handler.ServeHTTP(w, r)
 }
 
+// RejectErvisioCodeShare operation middleware
+func (siw *ServerInterfaceWrapper) RejectErvisioCodeShare(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ErvisioCodeShareId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", chi.URLParam(r, "shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "shareId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, HubSessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RejectErvisioCodeShareParams
+
+	// ------------- Optional query parameter "accountId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "accountId", r.URL.Query(), &params.AccountId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "accountId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "accountId", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RejectErvisioCodeShare(w, r, shareId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetErvisioCodeSharedState operation middleware
 func (siw *ServerInterfaceWrapper) GetErvisioCodeSharedState(w http.ResponseWriter, r *http.Request) {
 
@@ -31791,6 +31863,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/user/ervisiocode/shares/{shareId}/accept", wrapper.AcceptErvisioCodeShareById)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/user/ervisiocode/shares/{shareId}/reject", wrapper.RejectErvisioCodeShare)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/user/ervisiocode/shares/{shareId}/state", wrapper.GetErvisioCodeSharedState)
@@ -63711,7 +63786,10 @@ type ListErvisioCodeSharesResponseObject interface {
 
 type ListErvisioCodeShares200JSONResponse struct {
 	NextBeforeId *openapi_types.UUID `json:"nextBeforeId,omitempty"`
-	Shares       []ErvisioCodeShare  `json:"shares"`
+
+	// PendingInvitations Total valid pending personal invitations issued to the caller across all pages.
+	PendingInvitations int64              `json:"pendingInvitations"`
+	Shares             []ErvisioCodeShare `json:"shares"`
 }
 
 func (response ListErvisioCodeShares200JSONResponse) VisitListErvisioCodeSharesResponse(w http.ResponseWriter) error {
@@ -63984,6 +64062,22 @@ func (response ListErvisioCodeProposals200JSONResponse) VisitListErvisioCodeProp
 	return err
 }
 
+type ListErvisioCodeProposals403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListErvisioCodeProposals403ApplicationProblemPlusJSONResponse) VisitListErvisioCodeProposalsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListErvisioCodeProposalsdefaultApplicationProblemPlusJSONResponse struct {
 	Body       Problem
 	StatusCode int
@@ -64021,6 +64115,22 @@ func (response CreateErvisioCodeProposal201JSONResponse) VisitCreateErvisioCodeP
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateErvisioCodeProposal403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateErvisioCodeProposal403ApplicationProblemPlusJSONResponse) VisitCreateErvisioCodeProposalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -64067,12 +64177,62 @@ func (response ReviewErvisioCodeProposal200JSONResponse) VisitReviewErvisioCodeP
 	return err
 }
 
+type ReviewErvisioCodeProposal403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ReviewErvisioCodeProposal403ApplicationProblemPlusJSONResponse) VisitReviewErvisioCodeProposalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ReviewErvisioCodeProposaldefaultApplicationProblemPlusJSONResponse struct {
 	Body       Problem
 	StatusCode int
 }
 
 func (response ReviewErvisioCodeProposaldefaultApplicationProblemPlusJSONResponse) VisitReviewErvisioCodeProposalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RejectErvisioCodeShareRequestObject struct {
+	ShareId ErvisioCodeShareId `json:"shareId"`
+	Params  RejectErvisioCodeShareParams
+}
+
+type RejectErvisioCodeShareResponseObject interface {
+	VisitRejectErvisioCodeShareResponse(w http.ResponseWriter) error
+}
+
+type RejectErvisioCodeShare204Response struct {
+}
+
+func (response RejectErvisioCodeShare204Response) VisitRejectErvisioCodeShareResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RejectErvisioCodeSharedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response RejectErvisioCodeSharedefaultApplicationProblemPlusJSONResponse) VisitRejectErvisioCodeShareResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -68734,6 +68894,9 @@ type StrictServerInterface interface {
 	// ReviewErvisioCodeProposal Record the session owner's decision on a pending proposal
 	// (POST /user/ervisiocode/shares/{shareId}/proposals/{proposalId}/review)
 	ReviewErvisioCodeProposal(ctx context.Context, request ReviewErvisioCodeProposalRequestObject) (ReviewErvisioCodeProposalResponseObject, error)
+	// RejectErvisioCodeShare Reject a pending personal invitation as its named recipient
+	// (POST /user/ervisiocode/shares/{shareId}/reject)
+	RejectErvisioCodeShare(ctx context.Context, request RejectErvisioCodeShareRequestObject) (RejectErvisioCodeShareResponseObject, error)
 	// GetErvisioCodeSharedState Read the visible transcript of a live shared session
 	// (GET /user/ervisiocode/shares/{shareId}/state)
 	GetErvisioCodeSharedState(ctx context.Context, request GetErvisioCodeSharedStateRequestObject) (GetErvisioCodeSharedStateResponseObject, error)
@@ -79490,6 +79653,33 @@ func (sh *strictHandler) ReviewErvisioCodeProposal(w http.ResponseWriter, r *htt
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ReviewErvisioCodeProposalResponseObject); ok {
 		if err := validResponse.VisitReviewErvisioCodeProposalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RejectErvisioCodeShare operation middleware
+func (sh *strictHandler) RejectErvisioCodeShare(w http.ResponseWriter, r *http.Request, shareId ErvisioCodeShareId, params RejectErvisioCodeShareParams) {
+	var request RejectErvisioCodeShareRequestObject
+
+	request.ShareId = shareId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RejectErvisioCodeShare(ctx, request.(RejectErvisioCodeShareRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RejectErvisioCodeShare")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RejectErvisioCodeShareResponseObject); ok {
+		if err := validResponse.VisitRejectErvisioCodeShareResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

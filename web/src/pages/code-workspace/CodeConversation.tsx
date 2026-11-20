@@ -1,14 +1,14 @@
-import { useImperativeHandle, useLayoutEffect, useRef, useState, type FormEvent, type Ref } from "react";
+import { useId, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { sendRemoteCommand, useRemoteTranscript, type RemoteCommand, type RemoteMessage, type RemoteSession } from "../../api/codeWorkspace.ts";
 import { ApiError } from "../../api/http.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Icon } from "../../ui/Icon.tsx";
 
 type View = "expired" | "error" | "loading" | "live" | "offline" | "select" | "empty" | "opening" | "notPublished";
-export type CodeComposer = { adopt: (session: Pick<RemoteSession, "deviceId" | "sessionId">, body: string) => boolean; focus: () => void };
 const maxPromptLength = 16_384;
 const utf8 = new TextEncoder();
 const noMessages: RemoteMessage[] = [];
+const slashCommands = ["/help", "/new", "/share", "/stop"] as const;
 
 function commandError(error: unknown) {
   if (!(error instanceof ApiError) || error.status >= 500) return "composer.uncertain";
@@ -18,7 +18,7 @@ function commandError(error: unknown) {
   return "composer.failed";
 }
 
-export function CodeConversation({ accountId, hubAccountId, liveSession, pc, project, view, retryList, composer }: {
+export function CodeConversation({ accountId, hubAccountId, liveSession, pc, project, view, retryList, onNewChat, onShareChat }: {
   accountId: string;
   hubAccountId?: string;
   liveSession?: RemoteSession;
@@ -26,21 +26,31 @@ export function CodeConversation({ accountId, hubAccountId, liveSession, pc, pro
   project?: string;
   view: View;
   retryList: () => void;
-  composer?: Ref<CodeComposer>;
+  onNewChat: (trigger: HTMLElement | null) => void;
+  onShareChat: (trigger: HTMLElement | null) => void;
 }) {
   const t = useT("codehub");
   const common = useT("common");
   const transcript = useRemoteTranscript(accountId, hubAccountId, liveSession, view === "live");
   const [draft, setDraft] = useState("");
-  const [adopted, setAdopted] = useState(false);
+  const [showCommands, setShowCommands] = useState(false);
+  const [commandIndex, setCommandIndex] = useState(-1);
+  const commandListId = useId();
+  const prompt = useRef<HTMLTextAreaElement>(null);
   const [pending, setPending] = useState<RemoteCommand["op"]>();
   const [failure, setFailure] = useState<ReturnType<typeof commandError> | "composer.invalid">();
   const actionInFlight = useRef(false);
-  const prompt = useRef<HTMLTextAreaElement>(null);
   const isReady = view === "live" && transcript.isSuccess;
   const messages = isReady ? transcript.data.messages : noMessages;
   const busy = isReady && transcript.data.busy;
-  const canSend = isReady && !busy && !pending && !!draft.trim();
+  const shellMode = draft.trimStart().startsWith("!");
+  const slash = /^\/[a-z-]*(?=\s|$)/i.exec(draft)?.[0].toLowerCase();
+  const commands = slash && isReady && !pending && showCommands && slash === draft.toLowerCase()
+    ? slashCommands.filter((name) => name.startsWith(slash)) : [];
+  const activeCommand = commands[commandIndex];
+  const commandText = draft.trim().toLowerCase();
+  const runnableSlash = slashCommands.some((name) => name === commandText) && (commandText !== "/stop" || busy);
+  const canSend = isReady && !pending && !shellMode && !!draft.trim() && (slash ? runnableSlash : !busy);
   const unavailable = !isReady && view === "live" && transcript.error instanceof ApiError
     && transcript.error.status === 404;
   const expired = view === "expired" || (transcript.error instanceof ApiError && transcript.error.status === 401);
@@ -53,16 +63,6 @@ export function CodeConversation({ accountId, hubAccountId, liveSession, pc, pro
   const retry = expired ? undefined : view === "error" || view === "notPublished" ? retryList
     : transcript.isError && view === "live" ? () => void transcript.refetch() : undefined;
 
-  useImperativeHandle(composer, () => ({
-    adopt: ({ deviceId, sessionId }, body) => {
-      if (deviceId !== liveSession?.deviceId || sessionId !== liveSession.sessionId || !isReady || expired || actionInFlight.current || draft) return false;
-      setDraft(body);
-      setAdopted(true);
-      return true;
-    },
-    focus: () => prompt.current?.focus(),
-  }));
-
   async function command(input: RemoteCommand) {
     if (!liveSession || !isReady || actionInFlight.current) return;
     actionInFlight.current = true;
@@ -70,10 +70,7 @@ export function CodeConversation({ accountId, hubAccountId, liveSession, pc, pro
     setFailure(undefined);
     try {
       await sendRemoteCommand(liveSession, input, hubAccountId);
-      if (input.op === "prompt") {
-        setDraft("");
-        setAdopted(false);
-      }
+      if (input.op === "prompt") setDraft("");
     } catch (error) {
       setFailure(commandError(error));
     } finally {
@@ -83,15 +80,62 @@ export function CodeConversation({ accountId, hubAccountId, liveSession, pc, pro
     }
   }
 
+  function runSlash(name: typeof slashCommands[number]) {
+    if (name === "/help") {
+      setDraft("/");
+      setShowCommands(true);
+      setCommandIndex(-1);
+      prompt.current?.focus();
+      return;
+    }
+    if (name === "/stop" && !busy) return;
+    setDraft("");
+    setShowCommands(false);
+    if (name === "/new") onNewChat(prompt.current);
+    if (name === "/share") onShareChat(prompt.current);
+    if (name === "/stop") void command({ op: "interrupt" });
+  }
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canSend) return;
     const text = draft.trim();
+    if (slash) {
+      const name = slashCommands.find((candidate) => candidate === text.toLowerCase());
+      if (name) runSlash(name);
+      return;
+    }
     if (text.includes("\0") || utf8.encode(text).length > maxPromptLength) {
       setFailure("composer.invalid");
       return;
     }
     void command({ op: "prompt", text });
+  }
+
+  function handleKey(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.nativeEvent.isComposing) return;
+    if (event.key === "Escape" && commands.length) {
+      event.preventDefault();
+      event.stopPropagation();
+      setShowCommands(false);
+      return;
+    }
+    if (commands.length && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+      event.preventDefault();
+      const last = commands.length - 1;
+      setCommandIndex(event.key === "ArrowDown" ? (commandIndex >= last ? 0 : commandIndex + 1)
+        : (commandIndex <= 0 ? last : commandIndex - 1));
+      return;
+    }
+    if (event.key !== "Enter" || event.shiftKey) return;
+    event.preventDefault();
+    if (activeCommand) {
+      setDraft(activeCommand);
+      setShowCommands(false);
+      setCommandIndex(-1);
+      return;
+    }
+    event.currentTarget.form?.requestSubmit();
   }
 
   return (
@@ -106,21 +150,37 @@ export function CodeConversation({ accountId, hubAccountId, liveSession, pc, pro
             placeholder={t(isReady ? "composer.placeholder" : "composer.inactive")}
             autoComplete="off"
             rows={2}
+            aria-controls={commands.length ? commandListId : undefined}
+            aria-autocomplete="list"
             maxLength={maxPromptLength}
             aria-invalid={failure === "composer.invalid" || undefined}
             value={expired ? "" : draft}
             disabled={!isReady || !!pending}
             onChange={(event) => {
               setDraft(event.target.value);
-              if (!event.target.value) setAdopted(false);
+              setShowCommands(true);
+              setCommandIndex(-1);
               if (failure === "composer.invalid") setFailure(undefined);
             }}
-            onKeyDown={(event) => {
-              if (adopted || event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
-              event.preventDefault();
-              event.currentTarget.form?.requestSubmit();
-            }}
+            onKeyDown={handleKey}
           />
+          {commands.length > 0 && <ul id={commandListId} className="ec-slash-list" aria-label={t("composer.commands")}>
+            {commands.map((name, index) => <li key={name}>
+              <button type="button" className="ec-rail-row" data-active={commandIndex === index}
+                onClick={() => {
+                  setDraft(name);
+                  setShowCommands(false);
+                  setCommandIndex(-1);
+                  prompt.current?.focus();
+                }}>
+                <code>{name}</code><span>{t(`composer.command.${name.slice(1)}`)}</span>
+              </button>
+            </li>)}
+          </ul>}
+          {shellMode && <p className="ec-command-status ec-composer-mode"><code>!</code> {t("composer.shellLocalOnly")}</p>}
+          {slash && !commands.length && <p className="ec-command-status ec-composer-mode"><code>{slash}</code>
+            {!slashCommands.some((name) => name === slash) && slash !== "/" && ` ${t("composer.unknownCommand")}`}
+          </p>}
           <div className="ec-composer-toolbar">
             <span role="status" className="ec-command-status">
               {pending ? t(pending === "prompt" ? "composer.sending" : "composer.stopping") : busy ? t("composer.running") : null}
@@ -135,7 +195,6 @@ export function CodeConversation({ accountId, hubAccountId, liveSession, pc, pro
           </div>
         </form>
         {!expired && failure && <p className="ec-command-error" role="alert">{t(failure)}</p>}
-        {!expired && adopted && <p className="ec-context" role="status">{t("proposal.draftHint")}</p>}
         {liveSession && !expired && <div className="ec-context">
           <Icon name="monitor" />
           <span>{pc ? t("composer.pc", { name: pc }) : t("composer.linkedPC")}</span>

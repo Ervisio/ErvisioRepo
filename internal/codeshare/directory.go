@@ -12,6 +12,7 @@ type DirectoryOrg struct {
 	ID          uuid.UUID
 	Name        string
 	DisplayName string
+	AvatarURL   string
 }
 
 func (s *Service) DirectoryRole(ctx context.Context, accountID uuid.UUID) (string, error) {
@@ -28,7 +29,7 @@ func (s *Service) SearchGrantOrgs(ctx context.Context, accountID uuid.UUID, pref
 	}
 	out := make([]DirectoryOrg, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, DirectoryOrg{ID: row.ID, Name: row.Name, DisplayName: row.DisplayName})
+		out = append(out, DirectoryOrg{ID: row.ID, Name: row.Name, DisplayName: row.DisplayName, AvatarURL: row.AvatarUrl})
 	}
 	return out, nil
 }

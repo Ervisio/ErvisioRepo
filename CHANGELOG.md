@@ -11,10 +11,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 - On-demand runners: an admin can give an instance runner a start URL (for example an AWS Lambda function URL that starts an EC2 instance), a token header and a token stored encrypted. While the runner is offline and a queued job needs it, the server POSTs to the URL at most once per cooldown and shows the outcome on the runner row; **Start now** calls it by hand. New endpoints `PUT`/`DELETE`/`POST /admin/actions/runners/{runnerId}/wake`, migration 00450.
 - `ervisio-runner` option `runner.idle_shutdown` and installer flag `--idle-shutdown 15m`: after that long without jobs the runner drains and the machine is powered off by the root unit `ervisio-runner-poweroff.path`.
 - `deploy/runner-images/cross`: image for a runner label that cross-compiles Windows (mingw-w64, zig, NSIS, osslsigncode, wine) and macOS (zig, clang) binaries on a Linux runner. Build it on the runner machine and map a label to it, e.g. `highpriority-cross=docker://ervisio/runner-cross:24.04`.
+- In `/code`, accepted shared chats appear above personal Recents. Sharing has a pending invitation count, titled invitations with accept and decline, a shortcut to share an online chat, and type-ahead search for people and organizations.
+- The `/code` composer suggests workspace commands as you type `/`. It supports `/help`, `/new`, `/share`, and `/stop` without granting shell access.
 
 ### Changed
 
 - The daily Docker cleanup of the runner installer keeps images labelled `dev.ervisio.runner.keep=true`, so images built on the machine survive.
+- Paused proposals in `/code` and revoked old proposer grants. Reader access is unchanged; direct collaboration remains disabled.
 
 ### Fixed
 

@@ -17,8 +17,9 @@ import (
 
 var (
 	ErrInvalid       = errors.New("invalid ErvisioCode sharing input")
-	ErrNotFound      = errors.New("ErvisioCode share or proposal not available")
+	ErrNotFound      = errors.New("ErvisioCode share not available")
 	ErrInvalidInvite = errors.New("ErvisioCode invitation not available")
+	ErrRoleDisabled  = errors.New("only reader grants are enabled")
 
 	opaqueID = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)
 )
@@ -31,9 +32,7 @@ const (
 type Role string
 
 const (
-	Reader   Role = "reader"
-	Proposer Role = "proposer"
-	Direct   Role = "direct" // No shared role authorizes execution in this slice.
+	Reader Role = "reader"
 )
 
 type Target struct {
@@ -50,16 +49,30 @@ type History struct {
 }
 
 type Share struct {
-	ID              uuid.UUID
-	Target          Target
-	RecipientID     uuid.UUID // nil for an organization grant
-	OrgID           uuid.UUID // nil for a personal share
-	Role            Role
-	History         History
-	CreatedAt       time.Time
-	InviteExpiresAt time.Time
-	AcceptedAt      time.Time
-	RevokedAt       time.Time
+	ID               uuid.UUID
+	Target           Target
+	SessionTitle     string
+	OwnerUsername    string
+	OwnerDisplayName string
+	OwnerAvatarURL   string
+	RecipientID      uuid.UUID // nil for an organization grant
+	OrgID            uuid.UUID // nil for a personal share
+	Role             Role
+	History          History
+	CreatedAt        time.Time
+	InviteExpiresAt  time.Time
+	AcceptedAt       time.Time
+	RevokedAt        time.Time
+}
+
+type SharePage struct {
+	Shares             []Share
+	PendingInvitations int64
+}
+
+type SharedSession struct {
+	Target  Target
+	History History
 }
 
 type CreateShareInput struct {
@@ -107,13 +120,8 @@ func (s *Service) createShare(ctx context.Context, accountID, recipientID, orgID
 	if accountID == uuid.Nil || in.DeviceID == uuid.Nil || !opaqueID.MatchString(in.SessionID) || !in.History.valid() {
 		return Share{}, ErrInvalid
 	}
-	switch in.Role {
-	case Reader, Proposer, Direct:
-	default:
-		return Share{}, ErrInvalid
-	}
-	if in.Role == Direct && !in.History.FullHistory {
-		return Share{}, ErrInvalid
+	if in.Role != Reader {
+		return Share{}, ErrRoleDisabled
 	}
 	var expiresAt pgtype.Timestamptz
 	if recipientID != uuid.Nil {
@@ -130,7 +138,7 @@ func (s *Service) createShare(ctx context.Context, accountID, recipientID, orgID
 		AfterMessageID: nullableText(in.History.AfterMessageID), FromMessageID: nullableText(in.History.FromMessageID),
 		HostCursor: nullableText(in.History.HostCursor),
 	})
-	return shareFromRow(row), queryError("create share", err)
+	return shareFromRow(dbgen.ListErvisioCodeSharesRow(row)), queryError("create share", err)
 }
 
 func (s *Service) AcceptPersonalInvite(ctx context.Context, accountID uuid.UUID, token string) (Share, error) {
@@ -154,7 +162,15 @@ func (s *Service) acceptPersonalInvite(ctx context.Context, accountID, shareID u
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Share{}, ErrInvalidInvite
 	}
-	return shareFromRow(row), queryError("accept invite", err)
+	return shareFromRow(dbgen.ListErvisioCodeSharesRow(row)), queryError("accept invite", err)
+}
+
+func (s *Service) RejectPersonalInvite(ctx context.Context, accountID, shareID uuid.UUID) error {
+	n, err := s.q.RejectErvisioCodeShare(ctx, dbgen.RejectErvisioCodeShareParams{RecipientID: accountID, ID: shareID})
+	if err == nil && n == 0 {
+		return ErrInvalidInvite
+	}
+	return queryError("reject invite", err)
 }
 
 func (s *Service) RevokeShare(ctx context.Context, accountID, shareID uuid.UUID) error {
@@ -165,25 +181,32 @@ func (s *Service) RevokeShare(ctx context.Context, accountID, shareID uuid.UUID)
 	return queryError("revoke share", err)
 }
 
-// GetActiveShare rechecks membership and device validity without requiring the
+// GetActiveSession rechecks membership and device validity without requiring the
 // host to be online. The host must still enforce the stored history boundary.
-func (s *Service) GetActiveShare(ctx context.Context, accountID, shareID uuid.UUID) (Share, error) {
+func (s *Service) GetActiveSession(ctx context.Context, accountID, shareID uuid.UUID) (SharedSession, error) {
 	row, err := s.q.GetActiveErvisioCodeShare(ctx, dbgen.GetActiveErvisioCodeShareParams{ActorID: accountID, ID: shareID})
-	return shareFromRow(row), queryError("get active share", err)
+	return SharedSession{
+		Target:  Target{OwnerID: row.OwnerID, DeviceID: row.DeviceID, SessionID: row.SessionID},
+		History: shareHistory(row.FullHistory, row.AfterMessageID, row.FromMessageID, row.HostCursor),
+	}, queryError("get active share", err)
 }
 
 // ListShares includes owned shares, active received shares and valid incoming invites.
 // Use the last ID as beforeID for the next page.
-func (s *Service) ListShares(ctx context.Context, accountID, beforeID uuid.UUID) ([]Share, error) {
+func (s *Service) ListShares(ctx context.Context, accountID, beforeID uuid.UUID) (SharePage, error) {
 	rows, err := s.q.ListErvisioCodeShares(ctx, dbgen.ListErvisioCodeSharesParams{
 		ActorID: accountID, BeforeID: nullableID(beforeID), PageSize: PageSize,
 	})
 	if err != nil {
-		return nil, queryError("list shares", err)
+		return SharePage{}, queryError("list shares", err)
 	}
-	out := make([]Share, 0, len(rows))
+	count, err := s.q.CountErvisioCodePendingInvitations(ctx, accountID)
+	if err != nil {
+		return SharePage{}, queryError("count pending invitations", err)
+	}
+	out := SharePage{Shares: make([]Share, 0, len(rows)), PendingInvitations: count}
 	for _, row := range rows {
-		out = append(out, shareFromRow(row))
+		out.Shares = append(out.Shares, shareFromRow(row))
 	}
 	return out, nil
 }
@@ -204,15 +227,19 @@ func (h History) valid() bool {
 	return choices == 1
 }
 
-func shareFromRow(r dbgen.ErvisiocodeShare) Share {
+func shareFromRow(r dbgen.ListErvisioCodeSharesRow) Share {
 	return Share{
 		ID: r.ID, Target: Target{OwnerID: r.OwnerID, DeviceID: r.DeviceID, SessionID: r.SessionID},
+		SessionTitle: r.SessionTitle, OwnerUsername: r.OwnerUsername, OwnerDisplayName: r.OwnerDisplayName, OwnerAvatarURL: r.OwnerAvatarUrl,
 		RecipientID: r.RecipientID.UUID, OrgID: r.OrgID.UUID, Role: Role(r.Role),
-		History: History{FullHistory: r.FullHistory, AfterMessageID: r.AfterMessageID.String,
-			FromMessageID: r.FromMessageID.String, HostCursor: r.HostCursor.String},
+		History:   shareHistory(r.FullHistory, r.AfterMessageID, r.FromMessageID, r.HostCursor),
 		CreatedAt: r.CreatedAt.Time, InviteExpiresAt: r.InviteExpiresAt.Time,
 		AcceptedAt: r.AcceptedAt.Time, RevokedAt: r.RevokedAt.Time,
 	}
+}
+
+func shareHistory(full bool, after, from, cursor pgtype.Text) History {
+	return History{FullHistory: full, AfterMessageID: after.String, FromMessageID: from.String, HostCursor: cursor.String}
 }
 
 func nullableID(id uuid.UUID) uuid.NullUUID {

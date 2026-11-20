@@ -481,6 +481,11 @@ type ErvisiocodeActiveShare struct {
 	OrgID       uuid.NullUUID
 }
 
+type ErvisiocodePendingShareInvite struct {
+	ID          uuid.UUID
+	RecipientID uuid.NullUUID
+}
+
 type ErvisiocodeProposal struct {
 	ID         uuid.UUID
 	ShareID    uuid.UUID
@@ -514,6 +519,16 @@ type ErvisiocodeShare struct {
 type ErvisiocodeShareRecipient struct {
 	ShareID   uuid.UUID
 	AccountID uuid.UUID
+}
+
+type ErvisiocodeShareSessionDetail struct {
+	OwnerID          uuid.UUID
+	DeviceID         uuid.UUID
+	SessionID        interface{}
+	SessionTitle     interface{}
+	OwnerUsername    string
+	OwnerDisplayName string
+	OwnerAvatarUrl   string
 }
 
 type EventsOutbox struct {

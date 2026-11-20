@@ -12,7 +12,7 @@ import (
 )
 
 type Querier interface {
-	AcceptErvisioCodeShare(ctx context.Context, arg AcceptErvisioCodeShareParams) (ErvisiocodeShare, error)
+	AcceptErvisioCodeShare(ctx context.Context, arg AcceptErvisioCodeShareParams) (AcceptErvisioCodeShareRow, error)
 	// Users, emails, passwords, one-time tokens, invites and organizations.
 	// Serializes registrations inside a transaction, so that exactly one first
 	// user becomes the instance admin.
@@ -106,6 +106,7 @@ type Querier interface {
 	CountCheckRuns(ctx context.Context, arg CountCheckRunsParams) (int64, error)
 	CountCheckSuites(ctx context.Context, arg CountCheckSuitesParams) (int64, error)
 	CountCommitStatuses(ctx context.Context, arg CountCommitStatusesParams) (int64, error)
+	CountErvisioCodePendingInvitations(ctx context.Context, recipientID uuid.UUID) (int64, error)
 	CountExploreRepos(ctx context.Context, pattern string) (int64, error)
 	CountGitHubConnectionLinks(ctx context.Context, connectionID uuid.UUID) (int64, error)
 	CountHotCacheRepos(ctx context.Context, arg CountHotCacheReposParams) (int64, error)
@@ -156,8 +157,7 @@ type Querier interface {
 	// Creates an artifact, or restarts an upload not finalized yet. A
 	// finalized artifact of the same name returns no row.
 	CreateActionsArtifact(ctx context.Context, arg CreateActionsArtifactParams) (ActionsArtifact, error)
-	CreateErvisioCodeProposal(ctx context.Context, arg CreateErvisioCodeProposalParams) (ErvisiocodeProposal, error)
-	CreateErvisioCodeShare(ctx context.Context, arg CreateErvisioCodeShareParams) (ErvisiocodeShare, error)
+	CreateErvisioCodeShare(ctx context.Context, arg CreateErvisioCodeShareParams) (CreateErvisioCodeShareRow, error)
 	CreateLFSLock(ctx context.Context, arg CreateLFSLockParams) (LfsLock, error)
 	DatabaseSize(ctx context.Context) (int64, error)
 	DecideActionsRunnerDevice(ctx context.Context, arg DecideActionsRunnerDeviceParams) error
@@ -317,7 +317,7 @@ type Querier interface {
 	GetActionsRunnerByCredential(ctx context.Context, credentialHash []byte) (ActionsRunner, error)
 	GetActionsRunnerDeviceByHashForUpdate(ctx context.Context, deviceCodeHash []byte) (ActionsRunnerDevice, error)
 	GetActionsTasksVersion(ctx context.Context) (int64, error)
-	GetActiveErvisioCodeShare(ctx context.Context, arg GetActiveErvisioCodeShareParams) (ErvisiocodeShare, error)
+	GetActiveErvisioCodeShare(ctx context.Context, arg GetActiveErvisioCodeShareParams) (GetActiveErvisioCodeShareRow, error)
 	GetAppByClientID(ctx context.Context, clientID string) (GetAppByClientIDRow, error)
 	GetAppByID(ctx context.Context, id uuid.UUID) (GetAppByIDRow, error)
 	GetAppByNumID(ctx context.Context, numID pgtype.Int8) (GetAppByNumIDRow, error)
@@ -696,9 +696,8 @@ type Querier interface {
 	ListDueGitHubSyncLinks(ctx context.Context, limit int32) ([]GithubSyncLink, error)
 	// Compare against the same database clock used to record heartbeats.
 	ListErvisioCodeDevices(ctx context.Context, userID uuid.UUID) ([]ListErvisioCodeDevicesRow, error)
-	ListErvisioCodeProposals(ctx context.Context, arg ListErvisioCodeProposalsParams) ([]ErvisiocodeProposal, error)
 	ListErvisioCodeRemoteMetadata(ctx context.Context, userID uuid.UUID) ([]ListErvisioCodeRemoteMetadataRow, error)
-	ListErvisioCodeShares(ctx context.Context, arg ListErvisioCodeSharesParams) ([]ErvisiocodeShare, error)
+	ListErvisioCodeShares(ctx context.Context, arg ListErvisioCodeSharesParams) ([]ListErvisioCodeSharesRow, error)
 	ListEvictionCandidates(ctx context.Context, arg ListEvictionCandidatesParams) ([]ListEvictionCandidatesRow, error)
 	// Expired artifacts and uploads not finalized before stale_before.
 	ListExpiredActionsArtifacts(ctx context.Context, arg ListExpiredActionsArtifactsParams) ([]ActionsArtifact, error)
@@ -998,6 +997,7 @@ type Querier interface {
 	RecordActionsRunnerWake(ctx context.Context, arg RecordActionsRunnerWakeParams) (ActionsRunner, error)
 	RecordWebhookAttempt(ctx context.Context, arg RecordWebhookAttemptParams) error
 	RecountIssueComments(ctx context.Context, repoID uuid.UUID) error
+	RejectErvisioCodeShare(ctx context.Context, arg RejectErvisioCodeShareParams) (int64, error)
 	ReleaseAuthorNames(ctx context.Context, ids []uuid.UUID) ([]ReleaseAuthorNamesRow, error)
 	RemoveIssueAssignee(ctx context.Context, arg RemoveIssueAssigneeParams) (int64, error)
 	RemoveIssueLabel(ctx context.Context, arg RemoveIssueLabelParams) (int64, error)
@@ -1030,7 +1030,6 @@ type Querier interface {
 	ResolveProtectionTeams(ctx context.Context, arg ResolveProtectionTeamsParams) ([]ResolveProtectionTeamsRow, error)
 	// Usernames of the given user ids (unknown ids are omitted).
 	ResolveProtectionUsers(ctx context.Context, ids []uuid.UUID) ([]ResolveProtectionUsersRow, error)
-	ReviewErvisioCodeProposal(ctx context.Context, arg ReviewErvisioCodeProposalParams) (ErvisiocodeProposal, error)
 	RevokeErvisioCodeShare(ctx context.Context, arg RevokeErvisioCodeShareParams) (int64, error)
 	SSHKeyFingerprintTaken(ctx context.Context, fingerprint string) (bool, error)
 	// Oldest-verified first, random within the same age, so repeated runs cover

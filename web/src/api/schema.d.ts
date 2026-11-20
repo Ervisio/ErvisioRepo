@@ -1499,7 +1499,7 @@ export interface paths {
         put?: never;
         /**
          * Invite an account or grant current members of an organization access
-         * @description Browser writes require the CSRF header. All writes require the configured HTTPS origin. Personal invites expire after seven days and only the named account can accept. Organization grants require the host account to be a current owner or admin of the organization.
+         * @description Browser writes require the CSRF header. All writes require the configured HTTPS origin. Personal invites expire after seven days and only the named account can accept. Organization grants require the host account to be a current owner or admin of the organization. Only reader grants can be created.
          */
         post: operations["createErvisioCodeShare"];
         delete?: never;
@@ -1598,6 +1598,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/user/ervisiocode/shares/{shareId}/reject": {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject a pending personal invitation as its named recipient
+         * @description Only an unexpired, unrevoked personal invitation can be rejected. This does not revoke accepted shares or organization grants.
+         */
+        post: operations["rejectErvisioCodeShare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/user/ervisiocode/shares/{shareId}/state": {
         parameters: {
             query?: {
@@ -1637,13 +1662,13 @@ export interface paths {
         };
         /**
          * List proposals while the host is online or offline
-         * @description The host account can list all proposals. Other accounts see only those they submitted.
+         * @description Proposal access is paused. This operation currently returns 403.
          */
         get: operations["listErvisioCodeProposals"];
         put?: never;
         /**
          * Submit a proposal without executing it
-         * @description Requires the proposer or direct role. The host does not need to be online. Proposals expire seven days after submission, whether reviewed or not.
+         * @description Proposal submission is paused. This operation currently returns 403.
          */
         post: operations["createErvisioCodeProposal"];
         delete?: never;
@@ -1669,7 +1694,7 @@ export interface paths {
         put?: never;
         /**
          * Record the session owner's decision on a pending proposal
-         * @description Expired proposals cannot be reviewed. Approval is only a recorded decision; it never dispatches, queues, or schedules execution.
+         * @description Proposal review is paused. This operation currently returns 403.
          */
         post: operations["reviewErvisioCodeProposal"];
         delete?: never;
@@ -8108,10 +8133,11 @@ export interface components {
             id: string;
             kind: components["schemas"]["ErvisioCodeRecipientKind"];
             name: string;
-            displayName: string;
+            displayName?: string;
+            avatarUrl?: string;
         };
         /**
-         * @description Reader can read state; proposer and direct can also submit proposals. Direct requires full-history consent and does not authorize execution.
+         * @description Only reader grants are active or may be created. Proposer and direct may appear on historical revoked shares.
          * @enum {string}
          */
         ErvisioCodeShareRole: "reader" | "proposer" | "direct";
@@ -8123,6 +8149,11 @@ export interface components {
             /** Format: uuid */
             deviceId: string;
             sessionId: string;
+            /** @description The latest title published by the approved linked device for this session */
+            sessionTitle?: string;
+            ownerUsername?: string;
+            ownerDisplayName?: string;
+            ownerAvatarUrl?: string;
             /** Format: uuid */
             recipientId?: string;
             /** Format: uuid */
@@ -13296,6 +13327,11 @@ export interface operations {
                 content: {
                     "application/json": {
                         shares: components["schemas"]["ErvisioCodeShare"][];
+                        /**
+                         * Format: int64
+                         * @description Total valid pending personal invitations issued to the caller across all pages.
+                         */
+                        pendingInvitations: number;
                         /** Format: uuid */
                         nextBeforeId?: string;
                     };
@@ -13447,6 +13483,30 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    rejectErvisioCodeShare: {
+        parameters: {
+            query?: {
+                /** @description Required for the scoped hub cookie. When present, only the hub cookie can authenticate this account; there is no fallback to a browser session. */
+                accountId?: components["parameters"]["ErvisioCodeShareAccountId"];
+            };
+            header?: never;
+            path: {
+                shareId: components["parameters"]["ErvisioCodeShareId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Personal invitation rejected */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
     getErvisioCodeSharedState: {
         parameters: {
             query?: {
@@ -13507,6 +13567,7 @@ export interface operations {
                     };
                 };
             };
+            403: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };
@@ -13537,6 +13598,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErvisioCodeProposal"];
                 };
             };
+            403: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };
@@ -13568,6 +13630,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErvisioCodeProposal"];
                 };
             };
+            403: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

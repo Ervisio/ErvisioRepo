@@ -3,10 +3,9 @@ import { ApiError } from "../../api/http.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Transcript } from "./CodeConversation.tsx";
 
-export function SharedCodeConversation({ scope, share, onProposals }: {
+export function SharedCodeConversation({ scope, share }: {
   scope: CodeShareScope;
   share: CodeShare;
-  onProposals: (button: HTMLButtonElement) => void;
 }) {
   const t = useT("codehub");
   const common = useT("common");
@@ -21,8 +20,6 @@ export function SharedCodeConversation({ scope, share, onProposals }: {
       <Transcript messages={messages} notice={notice} isError={state.isError} retry={state.isError ? () => void state.refetch() : undefined} />
       <footer className="ec-compose-area ec-share-footer">
         <p>{t(`share.role.${share.role}`)} · {t("share.readOnly")}</p>
-        {share.role === "proposer" && status !== 401 && status !== 403 && <button type="button" className="ec-retry"
-          onClick={(event) => onProposals(event.currentTarget)}>{t("proposal.title")}</button>}
       </footer>
     </>
   );

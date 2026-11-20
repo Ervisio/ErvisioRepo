@@ -92,8 +92,8 @@ func remoteRequestHeaders(publicURL string) func(http.Handler) http.Handler {
 
 func remoteRequestBody(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if sharingRoute(r.URL.Path, r.Method) && r.Method == http.MethodDelete && r.ContentLength != 0 {
-			writeProblem(w, http.StatusBadRequest, "share revocation does not accept a request body")
+		if sharingRoute(r.URL.Path, r.Method) && (r.Method == http.MethodDelete || strings.HasSuffix(r.URL.Path, "/reject")) && r.ContentLength != 0 {
+			writeProblem(w, http.StatusBadRequest, "this share action does not accept a request body")
 			return
 		}
 		if r.Method != http.MethodPost {
@@ -134,13 +134,16 @@ func sharingPostBody(path string) any {
 	case remoteSharePath + "/accept":
 		return new(v1gen.ErvisioCodeShareAccept)
 	}
-	if strings.HasSuffix(path, "/review") {
-		return new(v1gen.ErvisioCodeProposalReview)
-	}
-	if strings.HasSuffix(path, "/accept") {
+	switch {
+	case strings.HasSuffix(path, "/accept"):
 		return new(struct{})
+	case strings.HasSuffix(path, "/proposals"):
+		return new(v1gen.ErvisioCodeProposalCreate)
+	case strings.HasSuffix(path, "/review"):
+		return new(v1gen.ErvisioCodeProposalReview)
+	default:
+		return nil
 	}
-	return new(v1gen.ErvisioCodeProposalCreate)
 }
 
 func validateRemoteBody(w http.ResponseWriter, r *http.Request, body any, limit int64) int {

@@ -52,7 +52,7 @@ func sharingRoute(path, method string) bool {
 		return method == http.MethodDelete
 	case 2:
 		return parts[1] == "state" && method == http.MethodGet ||
-			parts[1] == "accept" && method == http.MethodPost ||
+			(parts[1] == "accept" || parts[1] == "reject") && method == http.MethodPost ||
 			parts[1] == "proposals" && (method == http.MethodGet || method == http.MethodPost)
 	case 4:
 		return parts[1] == "proposals" && sharePathID(parts[2]) && parts[3] == "review" && method == http.MethodPost

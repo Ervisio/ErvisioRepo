@@ -9,8 +9,7 @@ import { useT } from "../../i18n/useT.ts";
 import { AvatarImg } from "../../ui/AvatarImg.tsx";
 import { Icon } from "../../ui/Icon.tsx";
 import { When } from "../code/common.tsx";
-import { CodeConversation, type CodeComposer } from "./CodeConversation.tsx";
-import { CodeProposals } from "./CodeProposals.tsx";
+import { CodeConversation } from "./CodeConversation.tsx";
 import { CodeShareCreate } from "./CodeShareCreate.tsx";
 import { CodeShareList } from "./CodeShareList.tsx";
 import { NewCodeSession, type CreatedSession } from "./NewCodeSession.tsx";
@@ -20,7 +19,7 @@ type Account = { id: string; username: string; displayName?: string; avatarUrl?:
 type Device = components["schemas"]["ErvisioCodeDevice"];
 type Recent = RemoteRecent & { key: string; live?: RemoteSession };
 type ListState = "loading" | "ready" | "error";
-type SharingView = { kind: "list" } | { kind: "create"; session: RemoteSession } | { kind: "proposals"; shareId: string };
+type SharingView = { kind: "list" } | { kind: "create"; session: RemoteSession };
 
 function sessionKey(session: Pick<RemoteSession, "deviceId" | "sessionId">) {
   return `${session.deviceId}:${session.sessionId}`;
@@ -40,6 +39,7 @@ export function CodeWorkspace({ account, hubAccountId, devices, manageDevices, a
   const shares = useCodeShares(scope);
   const [selectedKey, setSelectedKey] = useState("");
   const [sharedId, setSharedId] = useState("");
+  const [sharedExpanded, setSharedExpanded] = useState(true);
   const [sharingView, setSharingView] = useState<SharingView>();
   const [collapsed, setCollapsed] = useState(false);
   const [drawer, setDrawer] = useState(false);
@@ -49,21 +49,19 @@ export function CodeWorkspace({ account, hubAccountId, devices, manageDevices, a
   const desktopCollapse = useRef<HTMLButtonElement>(null);
   const mobileToggle = useRef<HTMLButtonElement>(null);
   const mainTitle = useRef<HTMLHeadingElement>(null);
-  const newTrigger = useRef<HTMLButtonElement>(null);
-  const sharingTrigger = useRef<HTMLButtonElement>(null);
-  const composer = useRef<CodeComposer>(null);
-  const focusDraft = useRef(false);
+  const newTrigger = useRef<HTMLElement>(null);
+  const sharingTrigger = useRef<HTMLElement>(null);
   const entries = remote.data ? recentSessions(remote.data.sessions, remote.data.recent, remote.isSuccess) : [];
   const selected = entries.find((entry) => entry.key === selectedKey);
   const currentShares = shares.isSuccess ? shares.data.pages.flatMap((page) => page.shares) : [];
-  const shared = currentShares.find((share) => share.id === sharedId && share.ownerId !== account.id && !share.revokedAt
-    && (share.orgId || (share.recipientId === account.id && share.acceptedAt)));
-  const proposalShare = sharingView?.kind === "proposals"
-    ? currentShares.find((share) => share.id === sharingView.shareId && !share.revokedAt && (share.orgId || share.acceptedAt))
-    : undefined;
+  const incoming = currentShares.filter((share) => share.ownerId !== account.id && !share.revokedAt && share.role !== "proposer");
+  const sharedChats = incoming.filter((share) => share.orgId || (share.recipientId === account.id && share.acceptedAt));
+  const shared = sharedChats.find((share) => share.id === sharedId);
+  const pendingInvitations = shares.isSuccess ? shares.data.pages[0]?.pendingInvitations ?? 0 : 0;
   const pc = devices.find((device) => device.id === selected?.live?.deviceId)?.name;
   const authExpired = remote.error instanceof ApiError && remote.error.status === 401;
   const listState: ListState = remote.isError ? "error" : remote.isPending ? "loading" : "ready";
+  const sharedState: ListState = shares.isError ? "error" : shares.isPending ? "loading" : "ready";
   const selectedTitle = shared ? shareTitle(shared) : selected && (selected.title || t("session.untitled"));
   const awaitingPublish = opening?.key === selectedKey && !selected?.live;
 
@@ -89,7 +87,11 @@ export function CodeWorkspace({ account, hubAccountId, devices, manageDevices, a
   }
 
   function openNew(event: MouseEvent<HTMLButtonElement>) {
-    newTrigger.current = event.currentTarget;
+    openNewFrom(event.currentTarget);
+  }
+
+  function openNewFrom(trigger: HTMLElement | null) {
+    newTrigger.current = trigger;
     setDrawer(false);
     setNewSession(true);
   }
@@ -108,25 +110,20 @@ export function CodeWorkspace({ account, hubAccountId, devices, manageDevices, a
     (trigger?.isConnected && trigger.offsetParent ? trigger : mobileToggle.current)?.focus();
   }
 
-  function openSharing(view: SharingView, trigger: HTMLButtonElement) {
+  function openSharing(view: SharingView, trigger: HTMLElement | null) {
     sharingTrigger.current = trigger;
     setDrawer(false);
     setSharingView(view);
   }
 
   function restoreSharingFocus() {
-    if (focusDraft.current) {
-      focusDraft.current = false;
-      composer.current?.focus();
-      return;
-    }
     const trigger = sharingTrigger.current;
     (trigger?.isConnected && trigger.offsetParent ? trigger : mobileToggle.current?.offsetParent ? mobileToggle.current : mainTitle.current)?.focus();
   }
 
   function shareTitle(share: CodeShare) {
     const ownTitle = entries.find((entry) => entry.key === sessionKey(share))?.title;
-    return ownTitle || t("share.sessionRef", { id: share.id.slice(0, 8) });
+    return ownTitle || share.sessionTitle || t("session.untitled");
   }
 
   function readShare(share: CodeShare) {
@@ -143,17 +140,14 @@ export function CodeWorkspace({ account, hubAccountId, devices, manageDevices, a
   }
 
   const rail = { account, devices, entries: authExpired ? [] : entries, selectedKey, listState, onSelect: select, onNew: authExpired ? undefined : openNew,
-    onSharing: authExpired ? undefined : (event: MouseEvent<HTMLButtonElement>) => openSharing({ kind: "list" }, event.currentTarget), manageDevices, authorizeDevice };
+    onSharing: authExpired ? undefined : (event: MouseEvent<HTMLButtonElement>) => openSharing({ kind: "list" }, event.currentTarget),
+    sharedChats: authExpired ? [] : sharedChats.map((share) => ({ share, title: shareTitle(share) })),
+    sharedState,
+    onMoreShares: !authExpired && shares.hasNextPage ? () => void shares.fetchNextPage() : undefined,
+    loadingMoreShares: shares.isFetching,
+    sharedId, sharedExpanded, setSharedExpanded, onRead: readShare, pendingInvitations, manageDevices, authorizeDevice };
   const closeSharing = () => setSharingView(undefined);
-  const reviewShare = (share: CodeShare) => setSharingView({ kind: "proposals", shareId: share.id });
   const live = selected?.live;
-  const useProposalDraft = proposalShare && proposalShare.ownerId === account.id && selected?.live
-    && sessionKey(proposalShare) === sessionKey(selected.live) ? (body: string) => {
-      if (!composer.current?.adopt(proposalShare, body)) return false;
-      focusDraft.current = true;
-      closeSharing();
-      return true;
-    } : undefined;
   return (
     <div className="ec-workspace" data-sidebar={collapsed ? "closed" : "open"}>
       <aside className="ec-desktop-rail ec-rail" hidden={collapsed} aria-label={t("sidebar.label")}>
@@ -186,8 +180,7 @@ export function CodeWorkspace({ account, hubAccountId, devices, manageDevices, a
           {!authExpired && live && <button type="button" className="ec-icon-button ec-share-open" aria-label={t("share.create")}
             title={t("share.create")} onClick={(event) => openSharing({ kind: "create", session: live }, event.currentTarget)}><Icon name="users" /></button>}
         </header>
-        {!authExpired && shared ? <SharedCodeConversation key={shared.id} scope={scope} share={shared}
-          onProposals={(button) => openSharing({ kind: "proposals", shareId: shared.id }, button)} />
+        {!authExpired && shared ? <SharedCodeConversation key={shared.id} scope={scope} share={shared} />
           : !authExpired && sharedId ? <div className="ec-transcript">
             <div className="ec-notice">
               <p role="status">{shares.isPending ? t("share.loading") : shares.isError ? t("share.listError") : t("share.unavailable")}</p>
@@ -195,12 +188,15 @@ export function CodeWorkspace({ account, hubAccountId, devices, manageDevices, a
             </div>
           </div> : <CodeConversation
           key={selectedKey}
-          composer={composer}
           accountId={account.id}
           hubAccountId={hubAccountId}
           liveSession={authExpired ? undefined : selected?.live}
           pc={pc}
-          project={opening?.key === selectedKey ? opening.projectLabel : undefined}
+           project={opening?.key === selectedKey ? opening.projectLabel : undefined}
+           onNewChat={openNewFrom}
+           onShareChat={(trigger) => {
+             if (live) openSharing({ kind: "create", session: live }, trigger);
+           }}
           view={authExpired ? "expired" : listState === "error" ? "error" : listState === "loading" ? "loading"
             : selected?.live ? "live" : awaitingPublish && !opening.expired ? "opening"
               : selected ? "offline" : awaitingPublish ? "notPublished"
@@ -217,14 +213,13 @@ export function CodeWorkspace({ account, hubAccountId, devices, manageDevices, a
         onRefreshSessions={() => void remote.refetch()}
         restoreFocus={restoreFocus}
       />}
-      {!authExpired && (sharingView?.kind === "list" || sharingView?.kind === "proposals" && !proposalShare) &&
-        <CodeShareList scope={scope} query={shares} titleOf={shareTitle} onRead={readShare} onReview={reviewShare}
+      {!authExpired && sharingView?.kind === "list" &&
+        <CodeShareList scope={scope} query={shares} titleOf={shareTitle} onRead={readShare}
+         sessions={remote.isSuccess ? remote.data.sessions : []} onShare={(session) => setSharingView({ kind: "create", session })}
         onRestoreFocus={restoreSharingFocus} onClose={closeSharing} />}
       {!authExpired && sharingView?.kind === "create" && <CodeShareCreate scope={scope} session={sharingView.session}
-        isLive={Boolean(live && sessionKey(live) === sessionKey(sharingView.session) && live.relayId === sharingView.session.relayId)}
+         isLive={remote.isSuccess && remote.data.sessions.some((session) => sessionKey(session) === sessionKey(sharingView.session) && session.relayId === sharingView.session.relayId)}
         refresh={shares.refetch} onRestoreFocus={restoreSharingFocus} onClose={closeSharing} />}
-      {!authExpired && proposalShare && <CodeProposals key={proposalShare.id} scope={scope} share={proposalShare}
-        onRestoreFocus={restoreSharingFocus} onClose={closeSharing} onUseDraft={useProposalDraft} />}
     </div>
   );
 }
@@ -251,7 +246,8 @@ function Brand({ home }: { home: boolean }) {
     : <div className="ec-brand">{content}</div>;
 }
 
-function SessionRail({ account, devices, entries, selectedKey, listState, onSelect, onNew, onSharing, manageDevices, authorizeDevice }: {
+function SessionRail({ account, devices, entries, selectedKey, listState, onSelect, onNew, onSharing, sharedChats, sharedState, onMoreShares, loadingMoreShares,
+  sharedId, sharedExpanded, setSharedExpanded, onRead, pendingInvitations, manageDevices, authorizeDevice }: {
   account: Account;
   devices: readonly Device[];
   entries: Recent[];
@@ -260,6 +256,15 @@ function SessionRail({ account, devices, entries, selectedKey, listState, onSele
   onSelect: (entry: Recent) => void;
   onNew?: (event: MouseEvent<HTMLButtonElement>) => void;
   onSharing?: (event: MouseEvent<HTMLButtonElement>) => void;
+  sharedChats: { share: CodeShare; title: string }[];
+  sharedState: ListState;
+  onMoreShares?: () => void;
+  loadingMoreShares: boolean;
+  sharedId: string;
+  sharedExpanded: boolean;
+  setSharedExpanded: (expanded: boolean) => void;
+  onRead: (share: CodeShare) => void;
+  pendingInvitations: number;
   manageDevices: ReactNode;
   authorizeDevice?: ReactNode;
 }) {
@@ -270,6 +275,7 @@ function SessionRail({ account, devices, entries, selectedKey, listState, onSele
   const toggle = useRef<HTMLButtonElement>(null);
   const needle = query.trim().toLocaleLowerCase();
   const visible = needle ? entries.filter(({ title }) => title.toLocaleLowerCase().includes(needle)) : entries;
+  const visibleShared = needle ? sharedChats.filter(({ title }) => title.toLocaleLowerCase().includes(needle)) : sharedChats;
 
   function toggleSearch() {
     setSearching(!searching);
@@ -285,6 +291,9 @@ function SessionRail({ account, devices, entries, selectedKey, listState, onSele
         </button>}
         {onSharing && <button type="button" className="ec-rail-row" onClick={onSharing}>
           <Icon name="users" /> {t("share.manage")}
+          {pendingInvitations > 0 && <span className="ec-share-badge">
+            <span aria-hidden="true">{pendingInvitations}</span><span className="ec-sr">{t("share.pendingCount", { count: pendingInvitations })}</span>
+          </span>}
         </button>}
         <button ref={toggle} type="button" className="ec-rail-row" aria-label={t("sidebar.search")} aria-expanded={searching} onClick={toggleSearch}>
           <Icon name="search" /> {t("sidebar.search")}
@@ -300,7 +309,33 @@ function SessionRail({ account, devices, entries, selectedKey, listState, onSele
           }}
         />}
       </div>
-      <nav className="ec-recent" aria-label={t("sidebar.recent")}>
+      <nav className="ec-recent" aria-label={t("sidebar.sessions")}>
+        <details className="ec-shared-group" open={sharedExpanded || !!needle} onToggle={(event) => {
+          if (!needle) setSharedExpanded(event.currentTarget.open);
+        }}>
+          <summary onClick={(event) => { if (needle) event.preventDefault(); }}>
+            <Icon name="down" />{t("sidebar.shared")}
+          </summary>
+          <ul>
+            {visibleShared.map(({ share, title }) => (
+              <li key={share.id}>
+                <button type="button" className="ec-rail-row ec-session-row" aria-current={sharedId === share.id || undefined}
+                  onClick={() => onRead(share)}>
+                  <Icon name="users" />
+                  <span className="ec-session-label">
+                    <span title={title}>{title}</span>
+                    <small>{t(share.orgId ? "share.org" : "share.personal")}</small>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {!visibleShared.length && <p>{t(sharedState === "loading" ? "share.loading" : sharedState === "error"
+            ? "share.listError" : needle ? "sidebar.noMatches" : "share.noReceived")}</p>}
+          {onMoreShares && <button type="button" className="ec-rail-row" disabled={loadingMoreShares} onClick={onMoreShares}>
+            {t("share.more")}
+          </button>}
+        </details>
         <h2>{t("sidebar.recent")}</h2>
         <ul>
           {visible.map((entry) => (

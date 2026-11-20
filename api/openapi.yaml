@@ -2239,11 +2239,12 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [shares]
+                required: [shares, pendingInvitations]
                 properties:
                   shares:
                     type: array
                     items: {$ref: "#/components/schemas/ErvisioCodeShare"}
+                  pendingInvitations: {type: integer, format: int64, minimum: 0, description: Total valid pending personal invitations issued to the caller across all pages.}
                   nextBeforeId: {type: string, format: uuid}
         default:
           $ref: "#/components/responses/Problem"
@@ -2251,7 +2252,7 @@ paths:
       operationId: createErvisioCodeShare
       tags: [users]
       summary: Invite an account or grant current members of an organization access
-      description: Browser writes require the CSRF header. All writes require the configured HTTPS origin. Personal invites expire after seven days and only the named account can accept. Organization grants require the host account to be a current owner or admin of the organization.
+      description: Browser writes require the CSRF header. All writes require the configured HTTPS origin. Personal invites expire after seven days and only the named account can accept. Organization grants require the host account to be a current owner or admin of the organization. Only reader grants can be created.
       security:
         - session: []
         - hubSession: []
@@ -2375,6 +2376,23 @@ paths:
               schema: {$ref: "#/components/schemas/ErvisioCodeShare"}
         default:
           $ref: "#/components/responses/Problem"
+  /user/ervisiocode/shares/{shareId}/reject:
+    parameters:
+      - $ref: "#/components/parameters/ErvisioCodeShareAccountId"
+      - $ref: "#/components/parameters/ErvisioCodeShareId"
+    post:
+      operationId: rejectErvisioCodeShare
+      tags: [users]
+      summary: Reject a pending personal invitation as its named recipient
+      description: Only an unexpired, unrevoked personal invitation can be rejected. This does not revoke accepted shares or organization grants.
+      security:
+        - session: []
+        - hubSession: []
+      responses:
+        "204":
+          description: Personal invitation rejected
+        default:
+          $ref: "#/components/responses/Problem"
   /user/ervisiocode/shares/{shareId}/state:
     parameters:
       - $ref: "#/components/parameters/ErvisioCodeShareAccountId"
@@ -2413,7 +2431,7 @@ paths:
       operationId: listErvisioCodeProposals
       tags: [users]
       summary: List proposals while the host is online or offline
-      description: The host account can list all proposals. Other accounts see only those they submitted.
+      description: Proposal access is paused. This operation currently returns 403.
       security:
         - session: []
         - hubSession: []
@@ -2432,13 +2450,15 @@ paths:
                     type: array
                     items: {$ref: "#/components/schemas/ErvisioCodeProposal"}
                   nextBeforeId: {type: string, format: uuid}
+        "403":
+          $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
     post:
       operationId: createErvisioCodeProposal
       tags: [users]
       summary: Submit a proposal without executing it
-      description: Requires the proposer or direct role. The host does not need to be online. Proposals expire seven days after submission, whether reviewed or not.
+      description: Proposal submission is paused. This operation currently returns 403.
       security:
         - session: []
         - hubSession: []
@@ -2453,6 +2473,8 @@ paths:
           content:
             application/json:
               schema: {$ref: "#/components/schemas/ErvisioCodeProposal"}
+        "403":
+          $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
   /user/ervisiocode/shares/{shareId}/proposals/{proposalId}/review:
@@ -2467,7 +2489,7 @@ paths:
       operationId: reviewErvisioCodeProposal
       tags: [users]
       summary: Record the session owner's decision on a pending proposal
-      description: Expired proposals cannot be reviewed. Approval is only a recorded decision; it never dispatches, queues, or schedules execution.
+      description: Proposal review is paused. This operation currently returns 403.
       security:
         - session: []
         - hubSession: []
@@ -2482,6 +2504,8 @@ paths:
           content:
             application/json:
               schema: {$ref: "#/components/schemas/ErvisioCodeProposal"}
+        "403":
+          $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
   /user/ervisiocode/relay:
@@ -13512,15 +13536,16 @@ components:
       x-enum-varnames: [RecipientUser, RecipientOrg]
     ErvisioCodeRecipient:
       type: object
-      required: [id, kind, name, displayName]
+      required: [id, kind, name]
       properties:
         id: {type: string, format: uuid}
         kind: {$ref: "#/components/schemas/ErvisioCodeRecipientKind"}
         name: {type: string}
         displayName: {type: string}
+        avatarUrl: {type: string}
     ErvisioCodeShareRole:
       type: string
-      description: Reader can read state; proposer and direct can also submit proposals. Direct requires full-history consent and does not authorize execution.
+      description: Only reader grants are active or may be created. Proposer and direct may appear on historical revoked shares.
       enum: [reader, proposer, direct]
       x-enum-varnames: [ShareReader, ShareProposer, ShareDirect]
     ErvisioCodeShare:
@@ -13531,6 +13556,10 @@ components:
         ownerId: {type: string, format: uuid}
         deviceId: {type: string, format: uuid}
         sessionId: {type: string}
+        sessionTitle: {type: string, description: The latest title published by the approved linked device for this session, when available.}
+        ownerUsername: {type: string}
+        ownerDisplayName: {type: string}
+        ownerAvatarUrl: {type: string}
         recipientId: {type: string, format: uuid}
         orgId: {type: string, format: uuid}
         role: {$ref: "#/components/schemas/ErvisioCodeShareRole"}

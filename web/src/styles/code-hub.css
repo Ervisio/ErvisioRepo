@@ -119,6 +119,36 @@
 }
 .ec-recent h2, .ec-recent p { padding: 4px 8px; color: var(--code-muted); font-size: 13px; font-weight: 500; }
 .ec-recent ul { list-style: none; margin: 4px 0; padding: 0; }
+.ec-share-badge {
+  margin-inline-start: auto;
+  min-inline-size: 1.5rem;
+  padding-inline: 5px;
+  border: 1px solid var(--code-focus);
+  border-radius: var(--b-rc);
+  color: var(--code-focus);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.ec-shared-group { margin-block-end: 8px; }
+.ec-shared-group summary {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  gap: 6px;
+  padding-inline: 8px;
+  cursor: pointer;
+  color: var(--code-muted);
+}
+.ec-shared-group summary .ui-icon { width: 14px; height: 14px; }
+.ec-shared-group:not([open]) summary .ui-icon { transform: rotate(-90deg); }
+.ec-share-start { display: inline-flex; align-items: center; gap: 6px; }
+.ec-share-chat-list, .ec-slash-list { list-style: none; margin: 0; padding: 0; }
+.ec-share-chat-list { max-block-size: 14rem; overflow: auto; }
+.ec-share-chat-list .ec-rail-row span { overflow-wrap: anywhere; }
+.ec-slash-list { border-block: 1px solid var(--code-line); padding: 4px; }
+.ec-slash-list .ec-rail-row[data-active="true"] { background: var(--code-hover); }
+.ec-slash-list code, .ec-composer-mode code { color: var(--code-focus); }
+.ec-composer-mode { padding-inline: 8px; }
 .ec-session-row { min-height: 44px; }
 .ec-dot {
   width: 7px;
@@ -270,6 +300,10 @@
 }
 .ec-new [role="alert"] { color: var(--code-error); }
 .ec-share-open { margin-inline-start: auto; }
+.ec-sharing { width: min(520px, calc(100% - 24px)); padding: clamp(14px, 4vw, 22px); }
+.ec-sharing .ec-new-head { align-items: start; border-block-end: 1px solid var(--code-line); padding-block-end: 12px; }
+.ec-sharing .ec-new-head > div { min-width: 0; overflow-wrap: anywhere; }
+.ec-sharing .ec-new-head p { margin-block-start: 4px; color: var(--code-muted); }
 .ec-sharing :is(input:not([type="checkbox"]), textarea) {
   width: 100%;
   min-width: 0;
@@ -282,6 +316,52 @@
   font: inherit;
 }
 .ec-sharing textarea { resize: vertical; }
+.ec-share-recipient { display: grid; gap: 6px; min-width: 0; }
+.ec-share-recipient-box {
+  padding: 5px;
+  border: 1px solid var(--code-control-line);
+  border-radius: var(--b-rc);
+  background: var(--code-canvas);
+}
+.ec-share-recipient-box > p, .ec-share-lookup-error { margin: 8px 6px 4px; }
+.ec-share-search { position: relative; }
+.ec-share-search > .ui-icon {
+  position: absolute;
+  inset-inline-start: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--code-muted);
+  pointer-events: none;
+}
+.ec-share-search input[type="search"] { padding-inline-start: 34px; }
+.ec-share-results {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-block-size: 14rem;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 0;
+}
+.ec-share-person {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 9px;
+  padding: 4px 7px;
+}
+.ec-share-person[role="option"] { cursor: pointer; border-radius: var(--b-rc); }
+.ec-share-person[aria-selected="true"] { background: var(--code-hover); }
+.ec-share-person[data-kind="org"] .ec-avatar { border-radius: var(--b-rc); }
+.ec-share-person > span:last-child { display: grid; min-width: 0; overflow-wrap: anywhere; }
+.ec-share-person small { color: var(--code-muted); }
+.ec-share-sender, .ec-share-invite-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ec-share-sender { color: var(--code-muted); }
+.ec-share-invite-actions { justify-content: flex-end; }
+.ec-share-options { display: grid; grid-template-columns: minmax(92px, 1fr) minmax(0, 2fr); gap: 12px; align-items: start; }
+.ec-share-access { display: grid; gap: 4px; }
+.ec-share-access p { min-height: 36px; padding: 6px 10px; color: var(--code-muted); }
+.ec-share-create-actions { justify-content: space-between; padding-block-start: 12px; border-block-start: 1px solid var(--code-line); }
 .ec-sharing .ec-share-check { display: flex; align-items: center; gap: 8px; min-height: 44px; }
 .ec-sharing input[type="checkbox"] { flex: none; }
 .ec-sharing h3 { margin: 0; font-size: 14px; }
@@ -303,5 +383,6 @@
   .ec-rail-row, .ec-icon-button, .ec-search, .ec-retry, .ec-new-form select, .ec-new-submit { min-height: 44px; }
   .ec-icon-button { width: 44px; }
   .ec-sharing :is(input:not([type="checkbox"]), textarea) { min-height: 44px; font-size: 16px; }
+  .ec-share-access p { min-height: 44px; padding-block: 10px; }
   .ec-share-preview summary { min-height: 44px; }
 }

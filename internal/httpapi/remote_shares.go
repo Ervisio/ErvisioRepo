@@ -28,6 +28,10 @@ func (p problemResponse) VisitAcceptErvisioCodeShareByIdResponse(w http.Response
 	return p.write(w)
 }
 
+func (p problemResponse) VisitRejectErvisioCodeShareResponse(w http.ResponseWriter) error {
+	return p.write(w)
+}
+
 func (p problemResponse) VisitRevokeErvisioCodeShareResponse(w http.ResponseWriter) error {
 	return p.write(w)
 }
@@ -70,16 +74,18 @@ func (s *v1Server) ListErvisioCodeShares(ctx context.Context, req v1gen.ListErvi
 	if err != nil || problem.status != 0 {
 		return problem, err
 	}
-	shares, err := s.shares.ListShares(ctx, accountID, shareValue(req.Params.BeforeId))
+	page, err := s.shares.ListShares(ctx, accountID, shareValue(req.Params.BeforeId))
 	if err != nil {
 		return shareProblem(err)
 	}
-	out := v1gen.ListErvisioCodeShares200JSONResponse{Shares: make([]v1gen.ErvisioCodeShare, 0, len(shares))}
-	for _, share := range shares {
+	out := v1gen.ListErvisioCodeShares200JSONResponse{
+		Shares: make([]v1gen.ErvisioCodeShare, 0, len(page.Shares)), PendingInvitations: page.PendingInvitations,
+	}
+	for _, share := range page.Shares {
 		out.Shares = append(out.Shares, shareDTO(share))
 	}
-	if len(shares) == codeshare.PageSize {
-		out.NextBeforeId = &shares[len(shares)-1].ID
+	if len(page.Shares) == codeshare.PageSize {
+		out.NextBeforeId = &page.Shares[len(page.Shares)-1].ID
 	}
 	return out, nil
 }
@@ -96,8 +102,8 @@ func (s *v1Server) CreateErvisioCodeShare(ctx context.Context, req v1gen.CreateE
 		body.DeviceId == uuid.Nil || !remoteSessionID.MatchString(body.SessionId) || !body.Role.Valid() {
 		return shareProblem(codeshare.ErrInvalid)
 	}
-	if body.Role == v1gen.ShareDirect {
-		return problemResponse{status: http.StatusUnprocessableEntity, detail: "direct collaboration is not enabled"}, nil
+	if body.Role != v1gen.ShareReader {
+		return shareProblem(codeshare.ErrRoleDisabled)
 	}
 	history, problem, err := s.shareCreateHistory(ctx, accountID, req.Params.AccountId, *body)
 	if err != nil || problem.status != 0 {
@@ -186,12 +192,23 @@ func (s *v1Server) RevokeErvisioCodeShare(ctx context.Context, req v1gen.RevokeE
 	return v1gen.RevokeErvisioCodeShare204Response{}, nil
 }
 
+func (s *v1Server) RejectErvisioCodeShare(ctx context.Context, req v1gen.RejectErvisioCodeShareRequestObject) (v1gen.RejectErvisioCodeShareResponseObject, error) {
+	accountID, problem, err := s.sharingAccount(ctx, req.Params.AccountId)
+	if err != nil || problem.status != 0 {
+		return problem, err
+	}
+	if err := s.shares.RejectPersonalInvite(ctx, accountID, req.ShareId); err != nil {
+		return shareProblem(err)
+	}
+	return v1gen.RejectErvisioCodeShare204Response{}, nil
+}
+
 func (s *v1Server) GetErvisioCodeSharedState(ctx context.Context, req v1gen.GetErvisioCodeSharedStateRequestObject) (v1gen.GetErvisioCodeSharedStateResponseObject, error) {
 	accountID, problem, err := s.sharingAccount(ctx, req.Params.AccountId)
 	if err != nil || problem.status != 0 {
 		return problem, err
 	}
-	share, err := s.shares.GetActiveShare(ctx, accountID, req.ShareId)
+	share, err := s.shares.GetActiveSession(ctx, accountID, req.ShareId)
 	if err != nil {
 		return shareProblem(err)
 	}
@@ -207,7 +224,7 @@ func (s *v1Server) GetErvisioCodeSharedState(ctx context.Context, req v1gen.GetE
 	if problem, err := s.recheckSharingAccount(ctx, accountID, req.Params.AccountId); err != nil || problem.status != 0 {
 		return problem, err
 	}
-	current, err := s.shares.GetActiveShare(ctx, accountID, share.ID)
+	current, err := s.shares.GetActiveSession(ctx, accountID, req.ShareId)
 	if err != nil {
 		return shareProblem(err)
 	}
@@ -249,6 +266,8 @@ func shareProblem(err error) (problemResponse, error) {
 	switch {
 	case errors.Is(err, codeshare.ErrInvalid):
 		return problemResponse{status: http.StatusBadRequest, detail: err.Error()}, nil
+	case errors.Is(err, codeshare.ErrRoleDisabled):
+		return problemResponse{status: http.StatusUnprocessableEntity, detail: err.Error()}, nil
 	case errors.Is(err, codeshare.ErrNotFound), errors.Is(err, codeshare.ErrInvalidInvite):
 		return problemResponse{status: http.StatusNotFound, detail: err.Error()}, nil
 	default:
@@ -259,6 +278,8 @@ func shareProblem(err error) (problemResponse, error) {
 func shareDTO(share codeshare.Share) v1gen.ErvisioCodeShare {
 	return v1gen.ErvisioCodeShare{
 		Id: share.ID, OwnerId: share.Target.OwnerID, DeviceId: share.Target.DeviceID, SessionId: share.Target.SessionID,
+		SessionTitle: shareOptional(share.SessionTitle), OwnerUsername: shareOptional(share.OwnerUsername),
+		OwnerDisplayName: shareOptional(share.OwnerDisplayName), OwnerAvatarUrl: shareOptional(share.OwnerAvatarURL),
 		Role: v1gen.ErvisioCodeShareRole(share.Role), CreatedAt: share.CreatedAt, FullHistory: share.History.FullHistory,
 		RecipientId: shareOptional(share.RecipientID), OrgId: shareOptional(share.OrgID),
 		AcceptedAt: shareOptional(share.AcceptedAt), InviteExpiresAt: shareOptional(share.InviteExpiresAt), RevokedAt: shareOptional(share.RevokedAt),

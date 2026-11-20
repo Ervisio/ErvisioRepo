@@ -13,18 +13,26 @@ import (
 )
 
 const acceptErvisioCodeShare = `-- name: AcceptErvisioCodeShare :one
+WITH share AS (
 UPDATE ervisiocode_shares s
 SET accepted_at = clock_timestamp(), invite_token_hash = NULL
 FROM tokens t, users owner, users recipient
 WHERE s.recipient_id = $1
   AND (s.id = $2::uuid OR s.invite_token_hash = $3::bytea)
-  AND s.accepted_at IS NULL AND s.revoked_at IS NULL AND s.invite_expires_at > clock_timestamp()
+  AND s.role = 'reader' AND s.accepted_at IS NULL AND s.revoked_at IS NULL AND s.invite_expires_at > clock_timestamp()
   AND owner.id = s.owner_id AND owner.suspended_at IS NULL
   AND recipient.id = s.recipient_id AND recipient.suspended_at IS NULL
   AND t.id = s.device_id AND t.user_id = s.owner_id
   AND t.is_ervisiocode_device AND t.expires_at > clock_timestamp()
   AND t.remote_session_metadata @> jsonb_build_array(jsonb_build_object('sessionId', s.session_id))
 RETURNING s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at
+)
+SELECT s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at, COALESCE(d.session_title, '')::text AS session_title,
+       COALESCE(d.owner_username, '')::text AS owner_username,
+       COALESCE(d.owner_display_name, '')::text AS owner_display_name,
+       COALESCE(d.owner_avatar_url, '')::text AS owner_avatar_url
+FROM share s
+LEFT JOIN ervisiocode_share_session_details d USING (owner_id, device_id, session_id)
 `
 
 type AcceptErvisioCodeShareParams struct {
@@ -33,9 +41,32 @@ type AcceptErvisioCodeShareParams struct {
 	TokenHash   []byte
 }
 
-func (q *Queries) AcceptErvisioCodeShare(ctx context.Context, arg AcceptErvisioCodeShareParams) (ErvisiocodeShare, error) {
+type AcceptErvisioCodeShareRow struct {
+	ID               uuid.UUID
+	OwnerID          uuid.UUID
+	DeviceID         uuid.UUID
+	SessionID        string
+	RecipientID      uuid.NullUUID
+	OrgID            uuid.NullUUID
+	Role             string
+	FullHistory      bool
+	AfterMessageID   pgtype.Text
+	FromMessageID    pgtype.Text
+	HostCursor       pgtype.Text
+	InviteTokenHash  []byte
+	InviteExpiresAt  pgtype.Timestamptz
+	AcceptedAt       pgtype.Timestamptz
+	RevokedAt        pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+	SessionTitle     string
+	OwnerUsername    string
+	OwnerDisplayName string
+	OwnerAvatarUrl   string
+}
+
+func (q *Queries) AcceptErvisioCodeShare(ctx context.Context, arg AcceptErvisioCodeShareParams) (AcceptErvisioCodeShareRow, error) {
 	row := q.db.QueryRow(ctx, acceptErvisioCodeShare, arg.RecipientID, arg.ShareID, arg.TokenHash)
-	var i ErvisiocodeShare
+	var i AcceptErvisioCodeShareRow
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerID,
@@ -53,50 +84,27 @@ func (q *Queries) AcceptErvisioCodeShare(ctx context.Context, arg AcceptErvisioC
 		&i.AcceptedAt,
 		&i.RevokedAt,
 		&i.CreatedAt,
+		&i.SessionTitle,
+		&i.OwnerUsername,
+		&i.OwnerDisplayName,
+		&i.OwnerAvatarUrl,
 	)
 	return i, err
 }
 
-const createErvisioCodeProposal = `-- name: CreateErvisioCodeProposal :one
-INSERT INTO ervisiocode_proposals (id, share_id, author_id, body)
-SELECT $1, s.id, r.account_id, $2
-FROM ervisiocode_shares s
-JOIN ervisiocode_share_recipients r ON r.share_id = s.id
-WHERE s.id = $3 AND r.account_id = $4
-  AND s.revoked_at IS NULL AND s.role IN ('proposer', 'direct')
-FOR SHARE OF s
-RETURNING id, share_id, author_id, body, status, created_at, expires_at, reviewed_at
+const countErvisioCodePendingInvitations = `-- name: CountErvisioCodePendingInvitations :one
+SELECT count(*) FROM ervisiocode_pending_share_invites WHERE recipient_id = $1::uuid
 `
 
-type CreateErvisioCodeProposalParams struct {
-	ID       uuid.UUID
-	Body     string
-	ShareID  uuid.UUID
-	AuthorID uuid.UUID
-}
-
-func (q *Queries) CreateErvisioCodeProposal(ctx context.Context, arg CreateErvisioCodeProposalParams) (ErvisiocodeProposal, error) {
-	row := q.db.QueryRow(ctx, createErvisioCodeProposal,
-		arg.ID,
-		arg.Body,
-		arg.ShareID,
-		arg.AuthorID,
-	)
-	var i ErvisiocodeProposal
-	err := row.Scan(
-		&i.ID,
-		&i.ShareID,
-		&i.AuthorID,
-		&i.Body,
-		&i.Status,
-		&i.CreatedAt,
-		&i.ExpiresAt,
-		&i.ReviewedAt,
-	)
-	return i, err
+func (q *Queries) CountErvisioCodePendingInvitations(ctx context.Context, recipientID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countErvisioCodePendingInvitations, recipientID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const createErvisioCodeShare = `-- name: CreateErvisioCodeShare :one
+WITH share AS (
 INSERT INTO ervisiocode_shares (
     id, owner_id, device_id, session_id, recipient_id, org_id, role, full_history,
     after_message_id, from_message_id, host_cursor, invite_token_hash, invite_expires_at
@@ -118,6 +126,13 @@ WHERE t.id = $12 AND t.user_id = $13
       WHERE m.org_id = $4::uuid AND m.user_id = t.user_id AND m.role IN ('owner', 'admin')
   ))
 RETURNING id, owner_id, device_id, session_id, recipient_id, org_id, role, full_history, after_message_id, from_message_id, host_cursor, invite_token_hash, invite_expires_at, accepted_at, revoked_at, created_at
+)
+SELECT s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at, COALESCE(d.session_title, '')::text AS session_title,
+       COALESCE(d.owner_username, '')::text AS owner_username,
+       COALESCE(d.owner_display_name, '')::text AS owner_display_name,
+       COALESCE(d.owner_avatar_url, '')::text AS owner_avatar_url
+FROM share s
+LEFT JOIN ervisiocode_share_session_details d USING (owner_id, device_id, session_id)
 `
 
 type CreateErvisioCodeShareParams struct {
@@ -136,7 +151,30 @@ type CreateErvisioCodeShareParams struct {
 	OwnerID         uuid.UUID
 }
 
-func (q *Queries) CreateErvisioCodeShare(ctx context.Context, arg CreateErvisioCodeShareParams) (ErvisiocodeShare, error) {
+type CreateErvisioCodeShareRow struct {
+	ID               uuid.UUID
+	OwnerID          uuid.UUID
+	DeviceID         uuid.UUID
+	SessionID        string
+	RecipientID      uuid.NullUUID
+	OrgID            uuid.NullUUID
+	Role             string
+	FullHistory      bool
+	AfterMessageID   pgtype.Text
+	FromMessageID    pgtype.Text
+	HostCursor       pgtype.Text
+	InviteTokenHash  []byte
+	InviteExpiresAt  pgtype.Timestamptz
+	AcceptedAt       pgtype.Timestamptz
+	RevokedAt        pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+	SessionTitle     string
+	OwnerUsername    string
+	OwnerDisplayName string
+	OwnerAvatarUrl   string
+}
+
+func (q *Queries) CreateErvisioCodeShare(ctx context.Context, arg CreateErvisioCodeShareParams) (CreateErvisioCodeShareRow, error) {
 	row := q.db.QueryRow(ctx, createErvisioCodeShare,
 		arg.ID,
 		arg.SessionID,
@@ -152,7 +190,7 @@ func (q *Queries) CreateErvisioCodeShare(ctx context.Context, arg CreateErvisioC
 		arg.DeviceID,
 		arg.OwnerID,
 	)
-	var i ErvisiocodeShare
+	var i CreateErvisioCodeShareRow
 	err := row.Scan(
 		&i.ID,
 		&i.OwnerID,
@@ -170,6 +208,10 @@ func (q *Queries) CreateErvisioCodeShare(ctx context.Context, arg CreateErvisioC
 		&i.AcceptedAt,
 		&i.RevokedAt,
 		&i.CreatedAt,
+		&i.SessionTitle,
+		&i.OwnerUsername,
+		&i.OwnerDisplayName,
+		&i.OwnerAvatarUrl,
 	)
 	return i, err
 }
@@ -187,10 +229,11 @@ func (q *Queries) DeleteExpiredErvisioCodeProposals(ctx context.Context) (int64,
 }
 
 const getActiveErvisioCodeShare = `-- name: GetActiveErvisioCodeShare :one
-SELECT s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at
+SELECT s.owner_id, s.device_id, s.session_id, s.full_history,
+       s.after_message_id, s.from_message_id, s.host_cursor
 FROM ervisiocode_shares s
 JOIN ervisiocode_active_shares a ON a.id = s.id
-WHERE s.id = $1 AND (
+WHERE s.id = $1 AND s.role = 'reader' AND (
     s.owner_id = $2::uuid OR EXISTS (
         SELECT 1 FROM ervisiocode_share_recipients r WHERE r.share_id = s.id AND r.account_id = $2::uuid
     )
@@ -202,26 +245,27 @@ type GetActiveErvisioCodeShareParams struct {
 	ActorID uuid.UUID
 }
 
-func (q *Queries) GetActiveErvisioCodeShare(ctx context.Context, arg GetActiveErvisioCodeShareParams) (ErvisiocodeShare, error) {
+type GetActiveErvisioCodeShareRow struct {
+	OwnerID        uuid.UUID
+	DeviceID       uuid.UUID
+	SessionID      string
+	FullHistory    bool
+	AfterMessageID pgtype.Text
+	FromMessageID  pgtype.Text
+	HostCursor     pgtype.Text
+}
+
+func (q *Queries) GetActiveErvisioCodeShare(ctx context.Context, arg GetActiveErvisioCodeShareParams) (GetActiveErvisioCodeShareRow, error) {
 	row := q.db.QueryRow(ctx, getActiveErvisioCodeShare, arg.ID, arg.ActorID)
-	var i ErvisiocodeShare
+	var i GetActiveErvisioCodeShareRow
 	err := row.Scan(
-		&i.ID,
 		&i.OwnerID,
 		&i.DeviceID,
 		&i.SessionID,
-		&i.RecipientID,
-		&i.OrgID,
-		&i.Role,
 		&i.FullHistory,
 		&i.AfterMessageID,
 		&i.FromMessageID,
 		&i.HostCursor,
-		&i.InviteTokenHash,
-		&i.InviteExpiresAt,
-		&i.AcceptedAt,
-		&i.RevokedAt,
-		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -237,78 +281,19 @@ func (q *Queries) GetErvisioCodeDirectoryRole(ctx context.Context, id uuid.UUID)
 	return role, err
 }
 
-const listErvisioCodeProposals = `-- name: ListErvisioCodeProposals :many
-SELECT p.id, p.share_id, p.author_id, p.body, p.status, p.created_at, p.expires_at, p.reviewed_at
-FROM ervisiocode_proposals p
-JOIN ervisiocode_active_shares s ON s.id = p.share_id
-WHERE p.share_id = $1 AND p.expires_at > statement_timestamp()
-  AND ($2::uuid IS NULL OR p.id < $2::uuid)
-  AND (s.owner_id = $3::uuid OR (
-      p.author_id = $3::uuid AND EXISTS (
-          SELECT 1 FROM ervisiocode_share_recipients r WHERE r.share_id = s.id AND r.account_id = p.author_id
-      )
-  ))
-ORDER BY p.id DESC
-LIMIT $4
-`
-
-type ListErvisioCodeProposalsParams struct {
-	ShareID  uuid.UUID
-	BeforeID uuid.NullUUID
-	ActorID  uuid.UUID
-	PageSize int32
-}
-
-func (q *Queries) ListErvisioCodeProposals(ctx context.Context, arg ListErvisioCodeProposalsParams) ([]ErvisiocodeProposal, error) {
-	rows, err := q.db.Query(ctx, listErvisioCodeProposals,
-		arg.ShareID,
-		arg.BeforeID,
-		arg.ActorID,
-		arg.PageSize,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ErvisiocodeProposal{}
-	for rows.Next() {
-		var i ErvisiocodeProposal
-		if err := rows.Scan(
-			&i.ID,
-			&i.ShareID,
-			&i.AuthorID,
-			&i.Body,
-			&i.Status,
-			&i.CreatedAt,
-			&i.ExpiresAt,
-			&i.ReviewedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listErvisioCodeShares = `-- name: ListErvisioCodeShares :many
-SELECT s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at
+SELECT s.id, s.owner_id, s.device_id, s.session_id, s.recipient_id, s.org_id, s.role, s.full_history, s.after_message_id, s.from_message_id, s.host_cursor, s.invite_token_hash, s.invite_expires_at, s.accepted_at, s.revoked_at, s.created_at, COALESCE(d.session_title, '')::text AS session_title,
+       COALESCE(d.owner_username, '')::text AS owner_username,
+       COALESCE(d.owner_display_name, '')::text AS owner_display_name,
+       COALESCE(d.owner_avatar_url, '')::text AS owner_avatar_url
 FROM ervisiocode_shares s
 JOIN users actor ON actor.id = $1 AND actor.suspended_at IS NULL
+LEFT JOIN ervisiocode_share_session_details d USING (owner_id, device_id, session_id)
 WHERE ($2::uuid IS NULL OR s.id < $2::uuid)
-  AND (s.owner_id = actor.id OR EXISTS (
+  AND (s.owner_id = actor.id OR (s.role = 'reader' AND EXISTS (
       SELECT 1 FROM ervisiocode_share_recipients r WHERE r.share_id = s.id AND r.account_id = actor.id
-  ) OR (
-      s.recipient_id = actor.id AND s.accepted_at IS NULL AND s.revoked_at IS NULL
-      AND s.invite_expires_at > statement_timestamp()
-      AND EXISTS (
-          SELECT 1 FROM tokens t JOIN users owner ON owner.id = t.user_id
-          WHERE t.id = s.device_id AND t.user_id = s.owner_id AND owner.suspended_at IS NULL
-          AND t.is_ervisiocode_device AND t.expires_at > statement_timestamp()
-          AND t.remote_session_metadata @> jsonb_build_array(jsonb_build_object('sessionId', s.session_id))
-      )
+  )) OR EXISTS (
+      SELECT 1 FROM ervisiocode_pending_share_invites p WHERE p.id = s.id AND p.recipient_id = actor.id
   ))
 ORDER BY s.id DESC
 LIMIT $3
@@ -320,15 +305,38 @@ type ListErvisioCodeSharesParams struct {
 	PageSize int32
 }
 
-func (q *Queries) ListErvisioCodeShares(ctx context.Context, arg ListErvisioCodeSharesParams) ([]ErvisiocodeShare, error) {
+type ListErvisioCodeSharesRow struct {
+	ID               uuid.UUID
+	OwnerID          uuid.UUID
+	DeviceID         uuid.UUID
+	SessionID        string
+	RecipientID      uuid.NullUUID
+	OrgID            uuid.NullUUID
+	Role             string
+	FullHistory      bool
+	AfterMessageID   pgtype.Text
+	FromMessageID    pgtype.Text
+	HostCursor       pgtype.Text
+	InviteTokenHash  []byte
+	InviteExpiresAt  pgtype.Timestamptz
+	AcceptedAt       pgtype.Timestamptz
+	RevokedAt        pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+	SessionTitle     string
+	OwnerUsername    string
+	OwnerDisplayName string
+	OwnerAvatarUrl   string
+}
+
+func (q *Queries) ListErvisioCodeShares(ctx context.Context, arg ListErvisioCodeSharesParams) ([]ListErvisioCodeSharesRow, error) {
 	rows, err := q.db.Query(ctx, listErvisioCodeShares, arg.ActorID, arg.BeforeID, arg.PageSize)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ErvisiocodeShare{}
+	items := []ListErvisioCodeSharesRow{}
 	for rows.Next() {
-		var i ErvisiocodeShare
+		var i ListErvisioCodeSharesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.OwnerID,
@@ -346,6 +354,10 @@ func (q *Queries) ListErvisioCodeShares(ctx context.Context, arg ListErvisioCode
 			&i.AcceptedAt,
 			&i.RevokedAt,
 			&i.CreatedAt,
+			&i.SessionTitle,
+			&i.OwnerUsername,
+			&i.OwnerDisplayName,
+			&i.OwnerAvatarUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -357,51 +369,26 @@ func (q *Queries) ListErvisioCodeShares(ctx context.Context, arg ListErvisioCode
 	return items, nil
 }
 
-const reviewErvisioCodeProposal = `-- name: ReviewErvisioCodeProposal :one
-WITH reviewable_share AS MATERIALIZED (
-    SELECT s.id
-    FROM ervisiocode_shares s
-    JOIN ervisiocode_active_shares a ON a.id = s.id
-    WHERE s.owner_id = $3 AND s.id = $4 AND s.revoked_at IS NULL
-    FOR SHARE OF s
-)
-UPDATE ervisiocode_proposals p
-SET status = $1, reviewed_at = statement_timestamp()
-FROM reviewable_share s
-WHERE p.id = $2 AND p.share_id = s.id AND p.status = 'pending'
-  AND p.expires_at > clock_timestamp()
-  AND ($1 = 'rejected' OR EXISTS (
-      SELECT 1 FROM ervisiocode_share_recipients r WHERE r.share_id = s.id AND r.account_id = p.author_id
-  ))
-RETURNING p.id, p.share_id, p.author_id, p.body, p.status, p.created_at, p.expires_at, p.reviewed_at
+const rejectErvisioCodeShare = `-- name: RejectErvisioCodeShare :execrows
+UPDATE ervisiocode_shares s
+SET revoked_at = statement_timestamp(), invite_token_hash = NULL
+FROM users recipient
+WHERE s.id = $1 AND s.recipient_id = recipient.id AND s.org_id IS NULL
+  AND recipient.id = $2 AND recipient.suspended_at IS NULL
+  AND s.accepted_at IS NULL AND s.revoked_at IS NULL AND s.invite_expires_at > clock_timestamp()
 `
 
-type ReviewErvisioCodeProposalParams struct {
-	Status  string
-	ID      uuid.UUID
-	OwnerID uuid.UUID
-	ShareID uuid.UUID
+type RejectErvisioCodeShareParams struct {
+	ID          uuid.UUID
+	RecipientID uuid.UUID
 }
 
-func (q *Queries) ReviewErvisioCodeProposal(ctx context.Context, arg ReviewErvisioCodeProposalParams) (ErvisiocodeProposal, error) {
-	row := q.db.QueryRow(ctx, reviewErvisioCodeProposal,
-		arg.Status,
-		arg.ID,
-		arg.OwnerID,
-		arg.ShareID,
-	)
-	var i ErvisiocodeProposal
-	err := row.Scan(
-		&i.ID,
-		&i.ShareID,
-		&i.AuthorID,
-		&i.Body,
-		&i.Status,
-		&i.CreatedAt,
-		&i.ExpiresAt,
-		&i.ReviewedAt,
-	)
-	return i, err
+func (q *Queries) RejectErvisioCodeShare(ctx context.Context, arg RejectErvisioCodeShareParams) (int64, error) {
+	result, err := q.db.Exec(ctx, rejectErvisioCodeShare, arg.ID, arg.RecipientID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const revokeErvisioCodeShare = `-- name: RevokeErvisioCodeShare :execrows
@@ -430,7 +417,7 @@ func (q *Queries) RevokeErvisioCodeShare(ctx context.Context, arg RevokeErvisioC
 }
 
 const searchErvisioCodeGrantOrgs = `-- name: SearchErvisioCodeGrantOrgs :many
-SELECT o.id, n.name, o.display_name
+SELECT o.id, n.name, o.display_name, o.avatar_url
 FROM org_members m
 JOIN orgs o ON o.id = m.org_id
 JOIN namespaces n ON n.id = o.id
@@ -451,6 +438,7 @@ type SearchErvisioCodeGrantOrgsRow struct {
 	ID          uuid.UUID
 	Name        string
 	DisplayName string
+	AvatarUrl   string
 }
 
 func (q *Queries) SearchErvisioCodeGrantOrgs(ctx context.Context, arg SearchErvisioCodeGrantOrgsParams) ([]SearchErvisioCodeGrantOrgsRow, error) {
@@ -462,7 +450,12 @@ func (q *Queries) SearchErvisioCodeGrantOrgs(ctx context.Context, arg SearchErvi
 	items := []SearchErvisioCodeGrantOrgsRow{}
 	for rows.Next() {
 		var i SearchErvisioCodeGrantOrgsRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.DisplayName); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.DisplayName,
+			&i.AvatarUrl,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

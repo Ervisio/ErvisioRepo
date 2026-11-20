@@ -69,6 +69,13 @@ export async function acceptCodeShareById(scope: CodeShareScope, shareId: string
   }));
 }
 
+export async function rejectCodeShare(scope: CodeShareScope, shareId: string) {
+  const { response } = await api.POST("/user/ervisiocode/shares/{shareId}/reject", {
+    ...privateFetch, params: { query: queryParams(scope), path: { shareId } },
+  });
+  if (!response.ok) throw new ApiError(response.status, "ErvisioCode invitation rejection did not complete");
+}
+
 export async function revokeCodeShare(scope: CodeShareScope, shareId: string) {
   const { response } = await api.DELETE("/user/ervisiocode/shares/{shareId}", {
     ...privateFetch, params: { query: queryParams(scope), path: { shareId } },

@@ -1,15 +1,16 @@
 import { Close, Content, Description, Overlay, Portal, Root, Title } from "@radix-ui/react-dialog";
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode, type RefObject } from "react";
 import { ApiError } from "../../api/http.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Icon } from "../../ui/Icon.tsx";
 
-export function SharingDialog({ title, description, busy, onClose, onRestoreFocus, children }: {
+export function SharingDialog({ title, description, busy, onClose, onRestoreFocus, initialFocus, children }: {
   title: string;
   description: string;
   busy: boolean;
   onClose: () => void;
   onRestoreFocus: () => void;
+  initialFocus?: RefObject<HTMLElement | null>;
   children: ReactNode;
 }) {
   const t = useT("codehub");
@@ -17,15 +18,21 @@ export function SharingDialog({ title, description, busy, onClose, onRestoreFocu
     <Root open onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
       <Portal>
         <Overlay className="ec-drawer-overlay ec-new-overlay" />
-        <Content className="ec-new ec-sharing" onCloseAutoFocus={(event) => {
+        <Content className="ec-new ec-sharing" onOpenAutoFocus={(event) => {
+          if (!initialFocus?.current) return;
+          event.preventDefault();
+          initialFocus.current.focus();
+        }} onCloseAutoFocus={(event) => {
           event.preventDefault();
           onRestoreFocus();
         }}>
           <div className="ec-new-head">
-            <Title>{title}</Title>
+            <div>
+              <Title>{title}</Title>
+              <Description>{description}</Description>
+            </div>
             <Close className="ec-icon-button" aria-label={t("share.close")} disabled={busy}><Icon name="x" /></Close>
           </div>
-          <Description>{description}</Description>
           {children}
         </Content>
       </Portal>
