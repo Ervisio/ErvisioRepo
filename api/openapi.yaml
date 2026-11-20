@@ -1962,6 +1962,12 @@ paths:
                     format: uuid
                   username:
                     type: string
+                  displayName:
+                    type: string
+                    description: Profile display name for the authenticated account.
+                  avatarUrl:
+                    type: string
+                    description: Profile avatar URL, if set for the authenticated account.
                   devices:
                     type: array
                     items:
