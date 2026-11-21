@@ -9,17 +9,20 @@ admin_email=""
 url=""
 ervisio=""
 runner=""
+updater=""
 
 usage() {
   cat <<USAGE
-Usage: ./setup.sh [--non-interactive] [--admin-email EMAIL] [--url PUBLIC_URL] [--ervisio yes|no] [--runner yes|no]
+Usage: ./setup.sh [--non-interactive] [--admin-email EMAIL] [--url PUBLIC_URL] [--ervisio yes|no] [--runner yes|no] [--updater yes|no]
 
   --non-interactive   never prompt; use flags and defaults
   --admin-email       contact address, shown in the next steps
   --url               public URL of the instance (default http://localhost:3400)
-  --ervisio yes|no    yes: enable the admin socket for the Caddy plugin
+  --ervisio yes|no    yes: enable the admin socket for the optional Ervisio Console plugin
   --runner yes|no     yes: start the built-in Actions runner (jobs in Docker
                       containers through the host Docker socket; default yes)
+  --updater yes|no    yes: start the updater, which installs new releases from
+                      Admin > Updates (it gets the Docker socket; default yes)
 USAGE
 }
 
@@ -30,6 +33,7 @@ while [[ $# -gt 0 ]]; do
     --url) url="${2:?--url needs a value}"; shift ;;
     --ervisio) ervisio="${2:?--ervisio needs yes or no}"; shift ;;
     --runner) runner="${2:?--runner needs yes or no}"; shift ;;
+    --updater) updater="${2:?--updater needs yes or no}"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -38,6 +42,7 @@ done
 
 case "$ervisio" in ""|yes|no) ;; *) echo "--ervisio must be yes or no" >&2; exit 2 ;; esac
 case "$runner" in ""|yes|no) ;; *) echo "--runner must be yes or no" >&2; exit 2 ;; esac
+case "$updater" in ""|yes|no) ;; *) echo "--updater must be yes or no" >&2; exit 2 ;; esac
 
 command -v docker >/dev/null || { echo 'Install Docker Engine / Docker Desktop and try again.' >&2; exit 1; }
 docker compose version >/dev/null
@@ -59,10 +64,21 @@ rand_hex() { # rand_hex BYTES
 }
 
 ask url "Public URL" "http://localhost:3400"
-ask ervisio "Enable the Caddy plugin socket (yes/no)" "no"
+# A re-run keeps the earlier answers as defaults.
+env_prev() { [[ -f .env ]] && sed -n "s/^$1=//p" .env | tail -n1 || true; }
+prev_ervisio=no
+[[ "$(env_prev ERVISIO_SOCKET_DIR)" == /run/ervisio-repo ]] && prev_ervisio=yes
+prev_profiles=",$(env_prev COMPOSE_PROFILES),"
+prev_runner=yes
+[[ -f .env && "$prev_profiles" != *,runner,* ]] && prev_runner=no
+prev_updater=yes
+[[ -f .env && "$prev_profiles" != *,updater,* ]] && prev_updater=no
+ask ervisio "Enable the admin socket for the Ervisio Console plugin (optional) (yes/no)" "$prev_ervisio"
 case "$ervisio" in yes|no) ;; *) echo "--ervisio must be yes or no" >&2; exit 2 ;; esac
-ask runner "Start the built-in Actions runner (jobs run in Docker containers) (yes/no)" "yes"
+ask runner "Start the built-in Actions runner (jobs run in Docker containers) (yes/no)" "$prev_runner"
 case "$runner" in yes|no) ;; *) echo "--runner must be yes or no" >&2; exit 2 ;; esac
+ask updater "Start the updater, for updates from Admin > Updates (it gets the Docker socket) (yes/no)" "$prev_updater"
+case "$updater" in yes|no) ;; *) echo "--updater must be yes or no" >&2; exit 2 ;; esac
 url="${url%/}"
 case "$url" in http://*|https://*) ;; *) echo "The URL must start with http:// or https://" >&2; exit 2 ;; esac
 
@@ -77,15 +93,16 @@ if [[ ! -s config/master.key ]]; then
 fi
 chmod 600 config/master.key
 
-# .env: keep the database password and the bind address across runs.
-pg_password=""
-bind_address=""
-if [[ -f .env ]]; then
-  pg_password=$(sed -n 's/^POSTGRES_PASSWORD=//p' .env | head -n1)
-  bind_address=$(sed -n 's/^BIND_ADDRESS=//p' .env | head -n1)
-fi
+# .env: the keys below are managed here; every other key of an existing .env
+# (ERVISIO_VERSION, RUNNER_*, custom ones) is kept as it is, and the
+# password, bind address and ports keep their earlier values.
+pg_password=$(env_prev POSTGRES_PASSWORD)
 pg_password="${pg_password:-$(rand_hex 24)}"
+bind_address=$(env_prev BIND_ADDRESS)
 bind_address="${bind_address:-127.0.0.1}"
+app_port=$(env_prev APP_PORT)
+ssh_port=$(env_prev SSH_PORT)
+data_dir=$(env_prev ERVISIO_DATA_DIR)
 # With the Ervisio Console plugin the socket must sit where the plugin looks for it.
 socket_dir=./run
 [[ "$ervisio" == yes ]] && socket_dir=/run/ervisio-repo
@@ -93,20 +110,38 @@ docker_gid=0
 if [[ -S /var/run/docker.sock ]]; then
   docker_gid=$(stat -c %g /var/run/docker.sock 2>/dev/null || stat -f %g /var/run/docker.sock 2>/dev/null || echo 0)
 fi
-(umask 077; cat > .env <<ENV
+# COMPOSE_PROFILES makes a plain `docker compose up` include the runner and
+# the updater; other profiles already listed are kept.
+profiles=()
+IFS=, read -r -a old_profiles <<<"$(env_prev COMPOSE_PROFILES)"
+for p in "${old_profiles[@]}"; do
+  [[ -n "$p" && "$p" != runner && "$p" != updater ]] && profiles+=("$p")
+done
+[[ "$runner" == yes ]] && profiles+=(runner)
+[[ "$updater" == yes ]] && profiles+=(updater)
+managed='^(POSTGRES_PASSWORD|ERVISIO_UID|ERVISIO_GID|ERVISIO_DATA_DIR|ERVISIO_SOCKET_DIR|ERVISIO_DEPLOY_DIR|BIND_ADDRESS|APP_PORT|SSH_PORT|DOCKER_GID|COMPOSE_PROFILES)='
+(umask 077
+{
+  cat <<ENV
 POSTGRES_PASSWORD=$pg_password
 ERVISIO_UID=$uid
 ERVISIO_GID=$gid
-ERVISIO_DATA_DIR=./data
+ERVISIO_DATA_DIR=${data_dir:-./data}
 ERVISIO_SOCKET_DIR=$socket_dir
+ERVISIO_DEPLOY_DIR=$(pwd)
 BIND_ADDRESS=$bind_address
-APP_PORT=3400
-SSH_PORT=2222
+APP_PORT=${app_port:-3400}
+SSH_PORT=${ssh_port:-2222}
 DOCKER_GID=$docker_gid
 ENV
+  if [[ ${#profiles[@]} -gt 0 ]]; then
+    (IFS=,; echo "COMPOSE_PROFILES=${profiles[*]}")
+  fi
+  [[ -f .env ]] && grep -Ev "$managed" .env | grep -v '^[[:space:]]*$' || true
+} > .env.new
+mv -f .env.new .env
 )
-# COMPOSE_PROFILES makes a plain `docker compose up` include the runner.
-[[ "$runner" == yes ]] && echo "COMPOSE_PROFILES=runner" >> .env
+chmod +x update.sh 2>/dev/null || true
 
 plugin_socket=""
 [[ "$ervisio" == yes ]] && plugin_socket="/run/ervisio-repo/api.sock"
@@ -184,3 +219,8 @@ else
   echo "  3. Actions runner: re-run ./setup.sh --runner yes, or add one from Admin > Runners."
 fi
 echo "  4. Stop with: docker compose stop. Optional: --profile backup."
+if [[ "$updater" == yes ]]; then
+  echo "  5. Updates: Admin > Updates installs new releases (the updater container is running)."
+else
+  echo "  5. Updates: ./update.sh, or re-run ./setup.sh --updater yes to update from Admin > Updates."
+fi

@@ -50,6 +50,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/statuses"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/storagecfg"
 	"github.com/Ervisio/ErvisioRepo/internal/storage/tier"
+	"github.com/Ervisio/ErvisioRepo/internal/updates"
 	"github.com/Ervisio/ErvisioRepo/internal/webhooks"
 	"github.com/Ervisio/ErvisioRepo/web"
 )
@@ -183,6 +184,10 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		return err
 	}
 	jobOpts = append(jobOpts, resultsJobs...)
+	updatesSvc := updates.New(updates.Options{Queries: dbgen.New(pool), Current: info.Version,
+		Check: cfg.Updates.Check, Repository: cfg.Updates.Repository, Dir: cfg.Updates.Dir,
+		Deploy: os.Getenv("ERVISIO_DEPLOY"), DeployDir: os.Getenv("ERVISIO_DEPLOY_DIR"), Log: log})
+	jobOpts = append(jobOpts, updatesSvc.JobsOption())
 	runner, err = jobs.New(pool, log, jobOpts...)
 	if err != nil {
 		return err
@@ -270,6 +275,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 			AppRegistration: cfg.Security.AppRegistration,
 		},
 		Settings:    settingsSvc,
+		Updates:     updatesSvc,
 		Web:         web.FS(),
 		HasIndex:    web.HasIndex(),
 		Registry:    registry,

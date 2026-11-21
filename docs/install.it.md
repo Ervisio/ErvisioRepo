@@ -42,7 +42,7 @@ cd deploy/docker
 ./setup.sh --non-interactive --url https://git.example.com --admin-email me@example.com --ervisio no
 ```
 
-`setup.sh` scrive `.env`, `config/config.toml` e `config/master.key`, costruisce l'immagine e avvia lo stack `ervisiorepo` (`postgres` e `app`). Rilanciarlo conserva segreti e configurazione. `--ervisio yes` abilita il socket di amministrazione usato dal plugin Caddy, condiviso in `${ERVISIO_SOCKET_DIR}` (montato in `/run/ervisio-repo`).
+`setup.sh` scrive `.env`, `config/config.toml` e `config/master.key`, costruisce l'immagine e avvia lo stack `ervisiorepo` (`postgres` e `app`). Rilanciarlo conserva segreti e configurazione. `--ervisio yes` abilita il socket di amministrazione usato dal plugin opzionale per Ervisio Console, condiviso in `${ERVISIO_SOCKET_DIR}` (montato in `/run/ervisio-repo`).
 
 L'app ascolta su `127.0.0.1:3400` (web e API) e `127.0.0.1:2222` (SSH); cambia `BIND_ADDRESS`, `APP_PORT` e `SSH_PORT` in `.env`. Le reti sono due: `private` (Postgres, interna) e `ervisiorepo_edge`, a cui si unisce solo `app` (alias `ervisiorepo-app`) perché un Caddy in container lo raggiunga.
 
@@ -51,6 +51,23 @@ L'app ascolta su `127.0.0.1:3400` (web e API) e `127.0.0.1:2222` (SSH); cambia `
 ```sh
 docker compose --profile backup up -d    # sidecar per l'archiviazione dei WAL (vedi docs/backup.it.md)
 ```
+
+### Aggiornamenti
+
+**Admin > Aggiornamenti** mostra la versione in esecuzione e le release pubblicate su GitHub da allora (controllo ogni 6 ore; `updates.check = false` lo disattiva). Con Docker l'aggiornamento parte da lì:
+
+- `setup.sh` avvia anche il servizio `updater` (`--updater yes|no`, predefinito yes, profilo `updater` in `COMPOSE_PROFILES`). È un container `docker:cli` ed è l'unico oltre al runner con il socket Docker, che sull'host equivale a root: non pubblica porte e non sta sulla rete del database. Il server non riceve mai il socket: scrive la versione richiesta in `run/updater/request.json`, verificata sulle release di GitHub.
+- L'updater esegue `update.sh`: backup di `.env`, `compose.yaml`, `config/config.toml` e dump del database in `backups/<ora>/` (restano i cinque più recenti), `compose.yaml` e script della nuova release, `ERVISIO_VERSION` in `.env` (tutte le altre chiavi restano), `docker compose pull` e `up --wait`. Se un passo fallisce, `.env` e `compose.yaml` tornano com'erano e ripartono i container precedenti. `config/master.key` non viene mai toccata.
+- **Aggiornamenti automatici** (interruttore nella stessa pagina): una nuova release viene installata un'ora dopo la pubblicazione; una versione che fallisce non viene ritentata per 24 ore.
+
+Senza updater, o da terminale, lo stesso aggiornamento è un solo comando sull'host:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Ervisio/ErvisioRepo/main/deploy/docker/update.sh | sh
+# opzioni: --dir /opt/ervisio-repo/deploy/docker  --version 1.2.3  --yes  --no-db-backup
+```
+
+In un checkout git `update.sh` non tocca `compose.yaml` e gli script (usa `git pull`) e cambia solo la versione dell'immagine. I pacchetti nativi si aggiornano con `install.sh` come sopra, poi `sudo systemctl restart ervisio-repo`; la pagina mostra anche questo comando. Le migrazioni girano all'avvio della nuova versione e un rollback non le annulla: per tornare indietro c'è il dump del database.
 
 ## Runner
 

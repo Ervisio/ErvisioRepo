@@ -481,6 +481,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/updates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Server updates
+         * @description Instance admins only. The running version, the releases found by the
+         *     last GitHub check (every 6 hours, unless updates.check is off), the
+         *     state of the Docker updater container and a terminal command that
+         *     updates the instance by hand.
+         */
+        get: operations["getUpdateStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check GitHub for new releases now */
+        post: operations["checkUpdates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/auto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Turn automatic updates on or off
+         * @description Instance admins only. When on, the updater installs a new release an
+         *     hour after it is published. Applies at once, no restart.
+         */
+        put: operations["setAutoUpdate"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Update the Docker installation
+         * @description Instance admins only. Hands the version to the updater container,
+         *     which backs up .env, the configuration and the database, pulls the
+         *     new image and recreates the containers, rolling back on failure. The
+         *     server restarts during the update. 409 when an update is already
+         *     running or the version is not a newer release; 503 when the
+         *     installation is not Docker or the updater is not running.
+         */
+        post: operations["applyUpdate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/register": {
         parameters: {
             query?: never;
@@ -8954,6 +9040,66 @@ export interface components {
             /** @description The running process uses another value */
             restartPending: boolean;
         };
+        AvailableRelease: {
+            /** @description x.y.z */
+            version: string;
+            name: string;
+            /** @description GitHub page of the release */
+            url: string;
+            /** @description Release notes (Markdown) */
+            notes: string;
+            /** Format: date-time */
+            publishedAt: string;
+        };
+        Updater: {
+            /** @description The updater container is running */
+            available: boolean;
+            /**
+             * @description Empty when it never ran
+             * @enum {string}
+             */
+            state: "" | "idle" | "running" | "done" | "failed";
+            /** @description Target of the last update */
+            version: string;
+            from: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            finishedAt?: string | null;
+            /** @description Last step reached: backup, fetch, pull, up or done */
+            step: string;
+            /** @description End of the log of the last update */
+            log: string[];
+            /** @description Version requested and not yet taken by the updater */
+            pending: string;
+        };
+        UpdateStatus: {
+            /** @description Version of the running server */
+            current: string;
+            /** @description current is a release version, not a development build */
+            release: boolean;
+            /** @description updates.check */
+            check: boolean;
+            /** @description GitHub owner/name of the releases */
+            repository: string;
+            /** Format: date-time */
+            checkedAt?: string | null;
+            checkError: string;
+            latest?: components["schemas"]["AvailableRelease"];
+            /** @description Releases newer than current, newest first */
+            newer: components["schemas"]["AvailableRelease"][];
+            /** @description Automatic updates are on */
+            auto: boolean;
+            /** @enum {string} */
+            deploy: "" | "docker" | "native";
+            /** @description Host folder of compose.yaml (Docker) */
+            deployDir: string;
+            updater: components["schemas"]["Updater"];
+            /** @description An update can be started from the web now */
+            canApply: boolean;
+            /** @description Terminal command that updates the instance by hand; empty when the deployment is unknown */
+            command: string;
+        };
         InstanceSettings: {
             settings: components["schemas"]["InstanceSetting"][];
             restartRequired: boolean;
@@ -11937,6 +12083,105 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ValidationProblem"];
                 };
             };
+            default: components["responses"]["Problem"];
+        };
+    };
+    getUpdateStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The update state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateStatus"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    checkUpdates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The update state after the check (a failed check is in checkError) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateStatus"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    setAutoUpdate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    enabled: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description The update state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateStatus"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    applyUpdate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description x.y.z */
+                    version: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The update was requested */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateStatus"];
+                };
+            };
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
             default: components["responses"]["Problem"];
         };
     };

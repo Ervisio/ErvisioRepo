@@ -116,25 +116,25 @@ func (e ActionsRunStatus) Valid() bool {
 
 // Defines values for ActionsRunnerStatus.
 const (
-	Busy    ActionsRunnerStatus = "busy"
-	Idle    ActionsRunnerStatus = "idle"
-	Offline ActionsRunnerStatus = "offline"
-	Online  ActionsRunnerStatus = "online"
-	Paused  ActionsRunnerStatus = "paused"
+	ActionsRunnerStatusBusy    ActionsRunnerStatus = "busy"
+	ActionsRunnerStatusIdle    ActionsRunnerStatus = "idle"
+	ActionsRunnerStatusOffline ActionsRunnerStatus = "offline"
+	ActionsRunnerStatusOnline  ActionsRunnerStatus = "online"
+	ActionsRunnerStatusPaused  ActionsRunnerStatus = "paused"
 )
 
 // Valid indicates whether the value is a known member of the ActionsRunnerStatus enum.
 func (e ActionsRunnerStatus) Valid() bool {
 	switch e {
-	case Busy:
+	case ActionsRunnerStatusBusy:
 		return true
-	case Idle:
+	case ActionsRunnerStatusIdle:
 		return true
-	case Offline:
+	case ActionsRunnerStatusOffline:
 		return true
-	case Online:
+	case ActionsRunnerStatusOnline:
 		return true
-	case Paused:
+	case ActionsRunnerStatusPaused:
 		return true
 	default:
 		return false
@@ -2469,6 +2469,54 @@ func (e TreeEntryType) Valid() bool {
 	}
 }
 
+// Defines values for UpdateStatusDeploy.
+const (
+	UpdateStatusDeployDocker UpdateStatusDeploy = "docker"
+	UpdateStatusDeployEmpty  UpdateStatusDeploy = ""
+	UpdateStatusDeployNative UpdateStatusDeploy = "native"
+)
+
+// Valid indicates whether the value is a known member of the UpdateStatusDeploy enum.
+func (e UpdateStatusDeploy) Valid() bool {
+	switch e {
+	case UpdateStatusDeployDocker:
+		return true
+	case UpdateStatusDeployEmpty:
+		return true
+	case UpdateStatusDeployNative:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdaterState.
+const (
+	UpdaterStateDone    UpdaterState = "done"
+	UpdaterStateEmpty   UpdaterState = ""
+	UpdaterStateFailed  UpdaterState = "failed"
+	UpdaterStateIdle    UpdaterState = "idle"
+	UpdaterStateRunning UpdaterState = "running"
+)
+
+// Valid indicates whether the value is a known member of the UpdaterState enum.
+func (e UpdaterState) Valid() bool {
+	switch e {
+	case UpdaterStateDone:
+		return true
+	case UpdaterStateEmpty:
+		return true
+	case UpdaterStateFailed:
+		return true
+	case UpdaterStateIdle:
+		return true
+	case UpdaterStateRunning:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for UserLocale.
 const (
 	UserLocaleEn UserLocale = "en"
@@ -4049,6 +4097,21 @@ type AuditPage struct {
 
 	// Next Cursor of the next page (pass as before); absent on the last page
 	Next *openapi_types.UUID `json:"next,omitempty"`
+}
+
+// AvailableRelease defines model for AvailableRelease.
+type AvailableRelease struct {
+	Name string `json:"name"`
+
+	// Notes Release notes (Markdown)
+	Notes       string    `json:"notes"`
+	PublishedAt time.Time `json:"publishedAt"`
+
+	// Url GitHub page of the release
+	Url string `json:"url"`
+
+	// Version x.y.z
+	Version string `json:"version"`
 }
 
 // AvatarStorage defines model for AvatarStorage.
@@ -7478,6 +7541,71 @@ type TreeEntry struct {
 // TreeEntryType defines model for TreeEntry.Type.
 type TreeEntryType string
 
+// UpdateStatus defines model for UpdateStatus.
+type UpdateStatus struct {
+	// Auto Automatic updates are on
+	Auto bool `json:"auto"`
+
+	// CanApply An update can be started from the web now
+	CanApply bool `json:"canApply"`
+
+	// Check updates.check
+	Check      bool       `json:"check"`
+	CheckError string     `json:"checkError"`
+	CheckedAt  *time.Time `json:"checkedAt,omitempty"`
+
+	// Command Terminal command that updates the instance by hand; empty when the deployment is unknown
+	Command string `json:"command"`
+
+	// Current Version of the running server
+	Current string             `json:"current"`
+	Deploy  UpdateStatusDeploy `json:"deploy"`
+
+	// DeployDir Host folder of compose.yaml (Docker)
+	DeployDir string            `json:"deployDir"`
+	Latest    *AvailableRelease `json:"latest,omitempty"`
+
+	// Newer Releases newer than current, newest first
+	Newer []AvailableRelease `json:"newer"`
+
+	// Release current is a release version, not a development build
+	Release bool `json:"release"`
+
+	// Repository GitHub owner/name of the releases
+	Repository string  `json:"repository"`
+	Updater    Updater `json:"updater"`
+}
+
+// UpdateStatusDeploy defines model for UpdateStatus.Deploy.
+type UpdateStatusDeploy string
+
+// Updater defines model for Updater.
+type Updater struct {
+	// Available The updater container is running
+	Available  bool       `json:"available"`
+	FinishedAt *time.Time `json:"finishedAt,omitempty"`
+	From       string     `json:"from"`
+
+	// Log End of the log of the last update
+	Log []string `json:"log"`
+
+	// Pending Version requested and not yet taken by the updater
+	Pending   string     `json:"pending"`
+	StartedAt *time.Time `json:"startedAt,omitempty"`
+
+	// State Empty when it never ran
+	State UpdaterState `json:"state"`
+
+	// Step Last step reached: backup, fetch, pull, up or done
+	Step string `json:"step"`
+
+	// Version Target of the last update
+	Version string `json:"version"`
+}
+
+// UpdaterState Empty when it never ran
+type UpdaterState string
+
 // User defines model for User.
 type User struct {
 	// AvatarUrl Absolute https URL of the avatar; empty when unset
@@ -7963,6 +8091,17 @@ type ListAdminHotReposParams struct {
 	All    *bool       `form:"all,omitempty" json:"all,omitempty"`
 	Offset *PageOffset `form:"offset,omitempty" json:"offset,omitempty"`
 	Limit  *PageLimit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ApplyUpdateJSONBody defines parameters for ApplyUpdate.
+type ApplyUpdateJSONBody struct {
+	// Version x.y.z
+	Version string `json:"version"`
+}
+
+// SetAutoUpdateJSONBody defines parameters for SetAutoUpdate.
+type SetAutoUpdateJSONBody struct {
+	Enabled bool `json:"enabled"`
 }
 
 // ListAdminUsersParams defines parameters for ListAdminUsers.
@@ -8790,6 +8929,12 @@ type PutAdminStorageTargetJSONRequestBody = StorageTargetInput
 // TestAdminStorageDraftJSONRequestBody defines body for TestAdminStorageDraft for application/json ContentType.
 type TestAdminStorageDraftJSONRequestBody = StorageTargetInput
 
+// ApplyUpdateJSONRequestBody defines body for ApplyUpdate for application/json ContentType.
+type ApplyUpdateJSONRequestBody ApplyUpdateJSONBody
+
+// SetAutoUpdateJSONRequestBody defines body for SetAutoUpdate for application/json ContentType.
+type SetAutoUpdateJSONRequestBody SetAutoUpdateJSONBody
+
 // UpdateAdminUserJSONRequestBody defines body for UpdateAdminUser for application/json ContentType.
 type UpdateAdminUserJSONRequestBody = AdminUserUpdate
 
@@ -9357,6 +9502,18 @@ type ServerInterface interface {
 	// TestAdminStorageTarget Run a write/read/list/delete round trip on a storage target
 	// (POST /admin/storage/{target}/test)
 	TestAdminStorageTarget(w http.ResponseWriter, r *http.Request, target string)
+	// GetUpdateStatus Server updates
+	// (GET /admin/updates)
+	GetUpdateStatus(w http.ResponseWriter, r *http.Request)
+	// ApplyUpdate Update the Docker installation
+	// (POST /admin/updates/apply)
+	ApplyUpdate(w http.ResponseWriter, r *http.Request)
+	// SetAutoUpdate Turn automatic updates on or off
+	// (PUT /admin/updates/auto)
+	SetAutoUpdate(w http.ResponseWriter, r *http.Request)
+	// CheckUpdates Check GitHub for new releases now
+	// (POST /admin/updates/check)
+	CheckUpdates(w http.ResponseWriter, r *http.Request)
 	// ListAdminUsers Users of the instance, newest first
 	// (GET /admin/users)
 	ListAdminUsers(w http.ResponseWriter, r *http.Request, params ListAdminUsersParams)
@@ -10710,6 +10867,30 @@ func (_ Unimplemented) TestAdminStorageDraft(w http.ResponseWriter, r *http.Requ
 // TestAdminStorageTarget Run a write/read/list/delete round trip on a storage target
 // (POST /admin/storage/{target}/test)
 func (_ Unimplemented) TestAdminStorageTarget(w http.ResponseWriter, r *http.Request, target string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetUpdateStatus Server updates
+// (GET /admin/updates)
+func (_ Unimplemented) GetUpdateStatus(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ApplyUpdate Update the Docker installation
+// (POST /admin/updates/apply)
+func (_ Unimplemented) ApplyUpdate(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// SetAutoUpdate Turn automatic updates on or off
+// (PUT /admin/updates/auto)
+func (_ Unimplemented) SetAutoUpdate(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CheckUpdates Check GitHub for new releases now
+// (POST /admin/updates/check)
+func (_ Unimplemented) CheckUpdates(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -14094,6 +14275,86 @@ func (siw *ServerInterfaceWrapper) TestAdminStorageTarget(w http.ResponseWriter,
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestAdminStorageTarget(w, r, target)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetUpdateStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetUpdateStatus(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUpdateStatus(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ApplyUpdate operation middleware
+func (siw *ServerInterfaceWrapper) ApplyUpdate(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ApplyUpdate(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetAutoUpdate operation middleware
+func (siw *ServerInterfaceWrapper) SetAutoUpdate(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetAutoUpdate(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CheckUpdates operation middleware
+func (siw *ServerInterfaceWrapper) CheckUpdates(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CheckUpdates(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -31922,6 +32183,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/admin/settings", wrapper.UpdateInstanceSettings)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/admin/updates", wrapper.GetUpdateStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/updates/check", wrapper.CheckUpdates)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/admin/updates/auto", wrapper.SetAutoUpdate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/updates/apply", wrapper.ApplyUpdate)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/auth/register", wrapper.Register)
 	})
 	r.Group(func(r chi.Router) {
@@ -35443,6 +35716,190 @@ type TestAdminStorageTargetdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response TestAdminStorageTargetdefaultApplicationProblemPlusJSONResponse) VisitTestAdminStorageTargetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUpdateStatusRequestObject struct {
+}
+
+type GetUpdateStatusResponseObject interface {
+	VisitGetUpdateStatusResponse(w http.ResponseWriter) error
+}
+
+type GetUpdateStatus200JSONResponse UpdateStatus
+
+func (response GetUpdateStatus200JSONResponse) VisitGetUpdateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUpdateStatusdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetUpdateStatusdefaultApplicationProblemPlusJSONResponse) VisitGetUpdateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyUpdateRequestObject struct {
+	Body *ApplyUpdateJSONRequestBody
+}
+
+type ApplyUpdateResponseObject interface {
+	VisitApplyUpdateResponse(w http.ResponseWriter) error
+}
+
+type ApplyUpdate202JSONResponse UpdateStatus
+
+func (response ApplyUpdate202JSONResponse) VisitApplyUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyUpdate409ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ApplyUpdate409ApplicationProblemPlusJSONResponse) VisitApplyUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyUpdate503ApplicationProblemPlusJSONResponse Problem
+
+func (response ApplyUpdate503ApplicationProblemPlusJSONResponse) VisitApplyUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApplyUpdatedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ApplyUpdatedefaultApplicationProblemPlusJSONResponse) VisitApplyUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetAutoUpdateRequestObject struct {
+	Body *SetAutoUpdateJSONRequestBody
+}
+
+type SetAutoUpdateResponseObject interface {
+	VisitSetAutoUpdateResponse(w http.ResponseWriter) error
+}
+
+type SetAutoUpdate200JSONResponse UpdateStatus
+
+func (response SetAutoUpdate200JSONResponse) VisitSetAutoUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetAutoUpdatedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response SetAutoUpdatedefaultApplicationProblemPlusJSONResponse) VisitSetAutoUpdateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CheckUpdatesRequestObject struct {
+}
+
+type CheckUpdatesResponseObject interface {
+	VisitCheckUpdatesResponse(w http.ResponseWriter) error
+}
+
+type CheckUpdates200JSONResponse UpdateStatus
+
+func (response CheckUpdates200JSONResponse) VisitCheckUpdatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CheckUpdatesdefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response CheckUpdatesdefaultApplicationProblemPlusJSONResponse) VisitCheckUpdatesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -68222,6 +68679,18 @@ type StrictServerInterface interface {
 	// TestAdminStorageTarget Run a write/read/list/delete round trip on a storage target
 	// (POST /admin/storage/{target}/test)
 	TestAdminStorageTarget(ctx context.Context, request TestAdminStorageTargetRequestObject) (TestAdminStorageTargetResponseObject, error)
+	// GetUpdateStatus Server updates
+	// (GET /admin/updates)
+	GetUpdateStatus(ctx context.Context, request GetUpdateStatusRequestObject) (GetUpdateStatusResponseObject, error)
+	// ApplyUpdate Update the Docker installation
+	// (POST /admin/updates/apply)
+	ApplyUpdate(ctx context.Context, request ApplyUpdateRequestObject) (ApplyUpdateResponseObject, error)
+	// SetAutoUpdate Turn automatic updates on or off
+	// (PUT /admin/updates/auto)
+	SetAutoUpdate(ctx context.Context, request SetAutoUpdateRequestObject) (SetAutoUpdateResponseObject, error)
+	// CheckUpdates Check GitHub for new releases now
+	// (POST /admin/updates/check)
+	CheckUpdates(ctx context.Context, request CheckUpdatesRequestObject) (CheckUpdatesResponseObject, error)
 	// ListAdminUsers Users of the instance, newest first
 	// (GET /admin/users)
 	ListAdminUsers(ctx context.Context, request ListAdminUsersRequestObject) (ListAdminUsersResponseObject, error)
@@ -70320,6 +70789,116 @@ func (sh *strictHandler) TestAdminStorageTarget(w http.ResponseWriter, r *http.R
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(TestAdminStorageTargetResponseObject); ok {
 		if err := validResponse.VisitTestAdminStorageTargetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUpdateStatus operation middleware
+func (sh *strictHandler) GetUpdateStatus(w http.ResponseWriter, r *http.Request) {
+	var request GetUpdateStatusRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUpdateStatus(ctx, request.(GetUpdateStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUpdateStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUpdateStatusResponseObject); ok {
+		if err := validResponse.VisitGetUpdateStatusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ApplyUpdate operation middleware
+func (sh *strictHandler) ApplyUpdate(w http.ResponseWriter, r *http.Request) {
+	var request ApplyUpdateRequestObject
+
+	var body ApplyUpdateJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ApplyUpdate(ctx, request.(ApplyUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ApplyUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ApplyUpdateResponseObject); ok {
+		if err := validResponse.VisitApplyUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetAutoUpdate operation middleware
+func (sh *strictHandler) SetAutoUpdate(w http.ResponseWriter, r *http.Request) {
+	var request SetAutoUpdateRequestObject
+
+	var body SetAutoUpdateJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetAutoUpdate(ctx, request.(SetAutoUpdateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetAutoUpdate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetAutoUpdateResponseObject); ok {
+		if err := validResponse.VisitSetAutoUpdateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CheckUpdates operation middleware
+func (sh *strictHandler) CheckUpdates(w http.ResponseWriter, r *http.Request) {
+	var request CheckUpdatesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CheckUpdates(ctx, request.(CheckUpdatesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CheckUpdates")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CheckUpdatesResponseObject); ok {
+		if err := validResponse.VisitCheckUpdatesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

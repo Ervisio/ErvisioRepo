@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Protected } from "./auth/Protected.tsx";
 import { AdminAudit } from "./pages/AdminAudit.tsx";
 import { AdminRunners } from "./pages/AdminRunners.tsx";
+import { AdminUpdates } from "./pages/admin/AdminUpdates.tsx";
 import { RunPage } from "./pages/actions/RunPage.tsx";
 import { RunsPage, type RunsSearch } from "./pages/actions/RunsPage.tsx";
 import { AdminStorage } from "./pages/AdminStorage.tsx";
@@ -476,6 +477,7 @@ const repoSettingsRoute = createRoute({
   },
 });
 const runnersRoute = createRoute({ getParentRoute: () => adminLayoutRoute, path: "/admin/runners", component: AdminRunners });
+const updatesRoute = createRoute({ getParentRoute: () => adminLayoutRoute, path: "/admin/updates", component: AdminUpdates });
 const actionsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/$owner/$name/actions",
@@ -501,7 +503,7 @@ export const router = createRouter({
   routeTree: rootRoute.addChildren([
     bareRoute.addChildren([loginRoute, twoFactorRoute, deviceRoute, runnerApproveRoute, oauthAuthorizeRoute, registerRoute, verifyRoute, forgotRoute, resetRoute]),
     codeHubRoute,
-    shellRoute.addChildren([homeRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, installAppRoute, reposRoute, exploreRoute, profileRoute,
+    shellRoute.addChildren([homeRoute, adminLayoutRoute.addChildren([adminRoute, adminUsersRoute, adminUserRoute, adminInvitesRoute, adminSettingsIndexRoute, adminSettingsRoute, storageRoute, auditRoute, runnersRoute, updatesRoute]), orgsRoute, settingsRoute, orgInviteRoute, orgRoute, installAppRoute, reposRoute, exploreRoute, profileRoute,
       repoRoute,
       issuesRoute,
       issueNewRoute,

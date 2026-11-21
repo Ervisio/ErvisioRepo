@@ -26,6 +26,7 @@
   "search.none": "No repositories found",
   "search.error": "Search failed",
   "nav.runners": "Runners",
+  "nav.updates": "Updates",
   "nav.home": "Home",
   "nav.orgs": "Organizations",
   "nav.adminUsers": "Users",

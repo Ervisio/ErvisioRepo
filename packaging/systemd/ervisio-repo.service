@@ -10,6 +10,8 @@ User=ervisio-repo
 Group=ervisio-repo
 Slice=ervisio-repo.slice
 ExecStart=/usr/lib/ervisio-repo/current/ervisio-repo serve --config /etc/ervisio-repo/config.toml
+# Admin > Updates shows the install.sh command for native installations.
+Environment=ERVISIO_DEPLOY=native
 Restart=on-failure
 RestartSec=3
 TimeoutStopSec=60

@@ -22,6 +22,7 @@ var Editable = []string{
 	"actions.unreleased_retention",
 	"webhooks.allow_private", "webhooks.allowed_cidrs", "webhooks.timeout", "webhooks.max_attempts",
 	"ui.default_layout",
+	"updates.check",
 }
 
 // EnvName returns the environment variable that overrides the "section.key"

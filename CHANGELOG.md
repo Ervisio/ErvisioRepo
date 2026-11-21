@@ -8,10 +8,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Admin > Updates**: the running version, the releases published on GitHub since (checked every 6 hours, `updates.check` turns it off, `updates.repository` and `updates.dir` in `[updates]`), release notes, and on Docker an **Update** button and an **Automatic updates** switch (a new release is installed an hour after it is published). New endpoints `GET /admin/updates`, `POST /admin/updates/check`, `PUT /admin/updates/auto`, `POST /admin/updates/apply`. The Ervisio Console plugin is no longer needed to update; it stays available as an option.
+- Optional compose service `updater` (`docker:28-cli`, profile `updater`, `./setup.sh --updater yes`, default yes): the only container besides the runner with the Docker socket. The server hands it the version through `run/updater/request.json` and never gets the socket.
+- `deploy/docker/update.sh`, also usable as one command on the host (`curl -fsSL https://raw.githubusercontent.com/Ervisio/ErvisioRepo/main/deploy/docker/update.sh | sh`): backup of `.env`, `compose.yaml`, `config.toml` and a database dump, the new release's compose files, `ERVISIO_VERSION` in `.env`, pull and `up --wait`, rollback of `.env` and `compose.yaml` on failure. `master.key` and every other `.env` key are kept.
 - `actions.unreleased_retention` (default `24h`, editable in Admin > Settings > Actions): artifacts and job logs of runs not tied to a release are deleted after that time. A run counts as released when a release triggered it, it ran on a tag, or a release points at its commit; those keep the normal `artifact_retention`. `0` turns it off. A deleted log shows a notice on the run page (`logExpired` on `ActionsJob`). Migration 00470.
 
 ### Changed
 
+- Re-running `setup.sh` no longer rewrites `.env` from scratch: `ERVISIO_VERSION`, the ports, `RUNNER_*`, extra profiles and custom keys are kept, and the earlier `--ervisio`, `--runner` and `--updater` answers are the defaults. It also writes `ERVISIO_DEPLOY_DIR`.
 - After upgrading, artifacts and logs older than 24 hours of runs not tied to a release are deleted within the hour. Set `actions.unreleased_retention = "0"` before upgrading to keep them.
 
 ## [1.22.1] - 2026-11-20

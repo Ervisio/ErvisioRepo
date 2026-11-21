@@ -70,9 +70,9 @@ type Job struct {
 	Runner          string
 	// Reusable is true for a job that calls a reusable workflow; its jobs
 	// follow it with Caller set.
-	Reusable    bool
-	Caller      string
-	LogLength   int64
+	Reusable  bool
+	Caller    string
+	LogLength int64
 	// LogExpired: the log was deleted because the run is not tied to a
 	// release (actions.unreleased_retention).
 	LogExpired  bool

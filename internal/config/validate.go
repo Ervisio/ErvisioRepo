@@ -21,6 +21,9 @@ var PolicyTypes = []string{"git", "lfs", "releases", "registry", "actions", "bac
 
 var targetName = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,62}$`)
 
+// githubRepo is a GitHub "owner/name".
+var githubRepo = regexp.MustCompile(`^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$`)
+
 type validator struct{ errs []error }
 
 func (v *validator) add(path, format string, args ...any) {
@@ -109,6 +112,10 @@ func (c *Config) validate() []error {
 	v.ssh(&c.SSH)
 	v.webhooks(&c.Webhooks)
 	v.oneOf("ui.default_layout", c.UI.DefaultLayout, LayoutConsole, LayoutFoglio, LayoutCorsie)
+	if !githubRepo.MatchString(c.Updates.Repository) {
+		v.add("updates.repository", "must be a GitHub owner/name, got %q", c.Updates.Repository)
+	}
+	v.absPath("updates.dir", c.Updates.Dir)
 	for i, k := range c.Settings.Locked {
 		if !slices.Contains(Editable, k) {
 			v.add(fmt.Sprintf("settings.locked[%d]", i), "%q is not an editable setting", k)

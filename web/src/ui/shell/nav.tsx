@@ -8,7 +8,7 @@ import type { IconName } from "../Icon.tsx";
 export type Section = "code" | "pr" | "issue" | "act" | "pkg";
 
 type GlobalTo = "/" | "/code" | "/explore" | "/repos" | "/orgs" | "/notifications" | "/settings" | "/login";
-type AdminTo = "/admin" | "/admin/users" | "/admin/settings" | "/admin/storage" | "/admin/runners" | "/admin/audit";
+type AdminTo = "/admin" | "/admin/users" | "/admin/settings" | "/admin/storage" | "/admin/runners" | "/admin/updates" | "/admin/audit";
 
 export type NavItem = { to: GlobalTo | AdminTo; icon: IconName; labelKey: string; section?: Section };
 
@@ -30,6 +30,7 @@ export const adminItems: readonly NavItem[] = [
   { to: "/admin/settings", icon: "gear", labelKey: "nav.adminSettings" },
   { to: "/admin/storage", icon: "db", labelKey: "nav.storage" },
   { to: "/admin/runners", icon: "cpu", labelKey: "nav.runners" },
+  { to: "/admin/updates", icon: "download", labelKey: "nav.updates" },
   { to: "/admin/audit", icon: "clock", labelKey: "nav.audit" },
 ];
 

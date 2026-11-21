@@ -42,7 +42,7 @@ cd deploy/docker
 ./setup.sh --non-interactive --url https://git.example.com --admin-email me@example.com --ervisio no
 ```
 
-`setup.sh` writes `.env`, `config/config.toml` and `config/master.key`, builds the image and starts the stack `ervisiorepo` (`postgres` and `app`). Re-running it keeps existing secrets and config. `--ervisio yes` enables the admin socket used by the Caddy plugin, shared at `${ERVISIO_SOCKET_DIR}` (mounted at `/run/ervisio-repo`).
+`setup.sh` writes `.env`, `config/config.toml` and `config/master.key`, builds the image and starts the stack `ervisiorepo` (`postgres` and `app`). Re-running it keeps existing secrets and config. `--ervisio yes` enables the admin socket used by the optional Ervisio Console plugin, shared at `${ERVISIO_SOCKET_DIR}` (mounted at `/run/ervisio-repo`).
 
 The app listens on `127.0.0.1:3400` (web and API) and `127.0.0.1:2222` (SSH); change `BIND_ADDRESS`, `APP_PORT` and `SSH_PORT` in `.env`. Two networks exist: `private` (Postgres, internal) and `ervisiorepo_edge`, which only the `app` joins (alias `ervisiorepo-app`) so a Caddy container can reach it.
 
@@ -51,6 +51,23 @@ The app listens on `127.0.0.1:3400` (web and API) and `127.0.0.1:2222` (SSH); ch
 ```sh
 docker compose --profile backup up -d    # Postgres WAL archiving sidecar (see docs/backup.md)
 ```
+
+### Updates
+
+**Admin > Updates** shows the running version and the releases published on GitHub since (checked every 6 hours; `updates.check = false` turns the check off). On Docker the update runs from there:
+
+- `setup.sh` also starts the `updater` service (`--updater yes|no`, default yes, profile `updater` in `COMPOSE_PROFILES`). It is a `docker:cli` container and the only one besides the runner with the Docker socket, which is root on the host: it publishes no port and is not on the database network. The server never gets the socket: it writes the requested version to `run/updater/request.json`, checked against the GitHub releases.
+- The updater runs `update.sh`: backup of `.env`, `compose.yaml`, `config/config.toml` and a database dump to `backups/<time>/` (the five newest are kept), `compose.yaml` and the scripts of the new release, `ERVISIO_VERSION` in `.env` (every other key is kept), `docker compose pull` and `up --wait`. If a step fails, `.env` and `compose.yaml` are restored and the previous containers start again. `config/master.key` is never touched.
+- **Automatic updates** (switch on the same page) install a new release an hour after it is published; a version that fails is not retried for 24 hours.
+
+Without the updater, or from a terminal, the same update is one command on the host:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/Ervisio/ErvisioRepo/main/deploy/docker/update.sh | sh
+# options: --dir /opt/ervisio-repo/deploy/docker  --version 1.2.3  --yes  --no-db-backup
+```
+
+In a git checkout `update.sh` leaves `compose.yaml` and the scripts alone (run `git pull`) and only changes the image version. Native packages update with `install.sh` as above, then `sudo systemctl restart ervisio-repo`; the page shows that command too. Migrations run when the new version starts and are not undone by a rollback: the database dump is the way back.
 
 ## Runners
 

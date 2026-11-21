@@ -35,6 +35,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/notify"
 	"github.com/Ervisio/ErvisioRepo/internal/runnerinstall"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
+	"github.com/Ervisio/ErvisioRepo/internal/updates"
 	"github.com/Ervisio/ErvisioRepo/internal/webhooks"
 )
 
@@ -156,6 +157,8 @@ type Deps struct {
 	// Presence serves the presence and file lock endpoints and their
 	// event stream; nil answers 503.
 	Presence Presence
+	// Updates serves /admin/updates; nil answers 503.
+	Updates *updates.Service
 }
 
 // NewRouter builds the root handler.
@@ -358,6 +361,7 @@ func mountV1(r chi.Router, d Deps) {
 	srv.avatars = d.Avatars
 	srv.apps = d.Apps
 	srv.presence = d.Presence
+	srv.updates = d.Updates
 	srv.db, _ = d.DB.(dbgen.DBTX)
 	if srv.db != nil {
 		srv.shares = codeshare.New(srv.db)

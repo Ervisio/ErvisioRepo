@@ -55,6 +55,10 @@ services:
       ERVISIO_UPSTREAM_PORT: ${APP_PORT:-3400}
       ERVISIO_UPSTREAM_CONTAINER: ervisiorepo-app
       ERVISIO_UPSTREAM_NETWORK: ervisiorepo_edge
+      # Admin > Updates: Docker installation, and its host folder for the
+      # manual update command.
+      ERVISIO_DEPLOY: docker
+      ERVISIO_DEPLOY_DIR: ${ERVISIO_DEPLOY_DIR:-}
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-3400}:3400"
       - "${BIND_ADDRESS:-127.0.0.1}:${SSH_PORT:-2222}:2222"
@@ -66,6 +70,33 @@ services:
       private:
       edge:
         aliases: [ervisiorepo-app]
+
+  # Optional updater (--profile updater; setup.sh adds it to COMPOSE_PROFILES).
+  # Admin > Updates hands it the version to install through
+  # run/updater/request.json; it runs update.sh (backup, pull, up, rollback on
+  # failure). It is the only service besides the runner with the Docker
+  # socket, which is root on the host: it publishes no port and is not on the
+  # database network. The deploy folder is mounted at its host path so the
+  # relative paths of this file resolve to the same host folders.
+  updater:
+    image: docker:28-cli
+    profiles: [updater]
+    restart: unless-stopped
+    working_dir: ${ERVISIO_DEPLOY_DIR:-/ervisio-deploy-dir-not-set}
+    entrypoint: ["sh", "${ERVISIO_DEPLOY_DIR:-/ervisio-deploy-dir-not-set}/updater.sh"]
+    environment:
+      ERVISIO_DEPLOY_DIR: ${ERVISIO_DEPLOY_DIR:-}
+      ERVISIO_UID: ${ERVISIO_UID:-1001}
+      ERVISIO_GID: ${ERVISIO_GID:-1001}
+    volumes:
+      - ${ERVISIO_DEPLOY_DIR:-.}:${ERVISIO_DEPLOY_DIR:-/ervisio-deploy-dir-not-set}
+      - ${ERVISIO_SOCKET_DIR:-./run}:/run/ervisio-repo
+      - /var/run/docker.sock:/var/run/docker.sock
+    # edge only: GitHub for the new compose files, the registry for images.
+    networks: [edge]
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging
 
   # Optional continuous WAL archiving and daily base backups: --profile backup.
   walg:

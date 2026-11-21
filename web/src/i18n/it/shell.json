@@ -26,6 +26,7 @@
   "search.none": "Nessun repository trovato",
   "search.error": "Ricerca non riuscita",
   "nav.runners": "Runner",
+  "nav.updates": "Aggiornamenti",
   "nav.home": "Home",
   "nav.orgs": "Organizzazioni",
   "nav.adminUsers": "Utenti",

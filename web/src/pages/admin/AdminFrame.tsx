@@ -1,6 +1,7 @@
 import { Link, Outlet } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useAdminOverview } from "../../api/admin.ts";
+import { useUpdateStatus } from "../../api/updates.ts";
 import { useMeta } from "../../api/useMeta.ts";
 import { useStorageStatus } from "../../api/useStorage.ts";
 import { useT } from "../../i18n/useT.ts";
@@ -21,6 +22,7 @@ function renderAdminLink(it: { id: string }, props: SettingsLinkProps): ReactNod
     case "invites": return <Link to="/admin/invites" {...props} />;
     case "storage": return <Link to="/admin/storage" {...props} />;
     case "runners": return <Link to="/admin/runners" {...props} />;
+    case "updates": return <Link to="/admin/updates" {...props} />;
     case "audit": return <Link to="/admin/audit" {...props} />;
     case "settings": return <Link to="/admin/settings/$section" params={{ section: generalSections[0] }} {...props} />;
     case "auth":
@@ -44,6 +46,7 @@ export function AdminFrame() {
   const meta = useMeta().data;
   const warnings = useStorageStatus().data?.warnings.length ?? 0;
   const counts = useAdminOverview("24h").data?.counts;
+  const newer = useUpdateStatus().data?.newer.length ?? 0;
   const n = (v: number | undefined) => (v === undefined ? undefined : String(v));
   const groups: SettingsNavGroup[] = [
     {
@@ -59,6 +62,7 @@ export function AdminFrame() {
       items: [
         { id: "storage", icon: "db", label: t("storage.title"), count: warnings > 0 ? t("nav.warnings", { count: warnings }) : undefined, warn: warnings > 0 },
         { id: "runners", icon: "cpu", label: t("nav.runners"), count: counts?.runners ? String(counts.runners) : undefined },
+        { id: "updates", icon: "download", label: t("nav.updates"), keywords: "upgrade version release docker", count: newer > 0 ? t("updates.navNew") : undefined, warn: newer > 0 },
       ],
     },
     {

@@ -763,6 +763,107 @@ paths:
                 $ref: "#/components/schemas/ValidationProblem"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/updates:
+    get:
+      operationId: getUpdateStatus
+      tags: [admin]
+      summary: Server updates
+      description: |
+        Instance admins only. The running version, the releases found by the
+        last GitHub check (every 6 hours, unless updates.check is off), the
+        state of the Docker updater container and a terminal command that
+        updates the instance by hand.
+      security:
+        - session: [admin]
+      responses:
+        "200":
+          description: The update state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateStatus"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/updates/check:
+    post:
+      operationId: checkUpdates
+      tags: [admin]
+      summary: Check GitHub for new releases now
+      security:
+        - session: [admin]
+      responses:
+        "200":
+          description: The update state after the check (a failed check is in checkError)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateStatus"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/updates/auto:
+    put:
+      operationId: setAutoUpdate
+      tags: [admin]
+      summary: Turn automatic updates on or off
+      description: |
+        Instance admins only. When on, the updater installs a new release an
+        hour after it is published. Applies at once, no restart.
+      security:
+        - session: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: {type: boolean}
+      responses:
+        "200":
+          description: The update state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateStatus"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/updates/apply:
+    post:
+      operationId: applyUpdate
+      tags: [admin]
+      summary: Update the Docker installation
+      description: |
+        Instance admins only. Hands the version to the updater container,
+        which backs up .env, the configuration and the database, pulls the
+        new image and recreates the containers, rolling back on failure. The
+        server restarts during the update. 409 when an update is already
+        running or the version is not a newer release; 503 when the
+        installation is not Docker or the updater is not running.
+      security:
+        - session: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                version: {type: string, description: "x.y.z"}
+      responses:
+        "202":
+          description: The update was requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateStatus"
+        "409":
+          $ref: "#/components/responses/Problem"
+        "503":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
   /auth/register:
     post:
       operationId: register
@@ -14709,6 +14810,55 @@ components:
         restartPending:
           type: boolean
           description: The running process uses another value
+    AvailableRelease:
+      type: object
+      required: [version, name, url, notes, publishedAt]
+      properties:
+        version: {type: string, description: "x.y.z"}
+        name: {type: string}
+        url: {type: string, description: GitHub page of the release}
+        notes: {type: string, description: Release notes (Markdown), truncated at 16 KiB}
+        publishedAt: {type: string, format: date-time}
+    Updater:
+      type: object
+      required: [available, state, version, from, step, log, pending]
+      properties:
+        available: {type: boolean, description: The updater container is running}
+        state: {type: string, enum: ["", idle, running, done, failed], description: "Empty when it never ran"}
+        version: {type: string, description: Target of the last update}
+        from: {type: string}
+        startedAt: {type: string, format: date-time, nullable: true}
+        finishedAt: {type: string, format: date-time, nullable: true}
+        step: {type: string, description: "Last step reached: backup, fetch, pull, up or done"}
+        log:
+          type: array
+          items: {type: string}
+          description: End of the log of the last update
+        pending: {type: string, description: Version requested and not yet taken by the updater}
+    UpdateStatus:
+      type: object
+      required: [current, release, check, repository, checkError, newer, auto, deploy, deployDir, updater, canApply, command]
+      properties:
+        current: {type: string, description: Version of the running server}
+        release: {type: boolean, description: "current is a release version, not a development build"}
+        check: {type: boolean, description: updates.check}
+        repository: {type: string, description: GitHub owner/name of the releases}
+        checkedAt: {type: string, format: date-time, nullable: true}
+        checkError: {type: string}
+        latest:
+          $ref: "#/components/schemas/AvailableRelease"
+        newer:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailableRelease"
+          description: Releases newer than current, newest first
+        auto: {type: boolean, description: Automatic updates are on}
+        deploy: {type: string, enum: ["", docker, native]}
+        deployDir: {type: string, description: Host folder of compose.yaml (Docker)}
+        updater:
+          $ref: "#/components/schemas/Updater"
+        canApply: {type: boolean, description: An update can be started from the web now}
+        command: {type: string, description: Terminal command that updates the instance by hand; empty when the deployment is unknown}
     InstanceSettings:
       type: object
       required: [settings, restartRequired]

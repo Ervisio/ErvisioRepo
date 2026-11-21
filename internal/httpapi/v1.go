@@ -19,6 +19,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/monitor"
 	"github.com/Ervisio/ErvisioRepo/internal/notify"
 	"github.com/Ervisio/ErvisioRepo/internal/sso"
+	"github.com/Ervisio/ErvisioRepo/internal/updates"
 	"github.com/Ervisio/ErvisioRepo/internal/webhooks"
 )
 
@@ -70,6 +71,8 @@ type v1Server struct {
 	apps *apps.Service
 	// presence serves the presence and file lock endpoints; nil answers 503.
 	presence Presence
+	// updates serves /admin/updates; nil answers 503.
+	updates *updates.Service
 	// db, jobs, monitor and mailHost feed the admin overview; nil parts are left out.
 	db       dbgen.DBTX
 	jobs     JobsStatus

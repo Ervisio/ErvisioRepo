@@ -10,6 +10,12 @@ coverage.out
 *.local.toml
 /plugin/dist/
 /deploy/dev/master.key
+# Docker install state when run from a checkout (setup.sh, update.sh).
+/deploy/docker/config/
+/deploy/docker/data/
+/deploy/docker/run/
+/deploy/docker/backups/
+/deploy/docker/.update.lock/
 __pycache__/
 /design/.variant-studio/
 /ervisio-repo

@@ -32,6 +32,21 @@ type Config struct {
 	Webhooks Webhooks `toml:"webhooks"`
 	UI       UI       `toml:"ui"`
 	Settings Settings `toml:"settings"`
+	Updates  Updates  `toml:"updates"`
+}
+
+// Updates configures the check for new ErvisioRepo releases and the
+// hand-off to the Docker updater (deploy/docker/updater.sh).
+type Updates struct {
+	// Check looks for new releases on GitHub every few hours; false never
+	// contacts GitHub (air-gapped instances).
+	Check bool `toml:"check"`
+	// Repository is the GitHub "owner/name" the releases come from.
+	Repository string `toml:"repository"`
+	// Dir is the folder shared with the updater container: the server
+	// writes request.json there, the updater writes status.json and
+	// update.log.
+	Dir string `toml:"dir"`
 }
 
 // Values of ui.default_layout.
@@ -357,6 +372,7 @@ func Default() Config {
 		Webhooks: Webhooks{Timeout: Duration(10 * time.Second), MaxAttempts: 8},
 		UI:       UI{DefaultLayout: LayoutConsole},
 		Storage:  Storage{HotCache: HotCache{Enabled: true}},
+		Updates:  Updates{Check: true, Repository: "Ervisio/ErvisioRepo", Dir: "/run/ervisio-repo/updater"},
 	}
 }
 
