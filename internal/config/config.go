@@ -136,6 +136,11 @@ type Actions struct {
 	CacheTTL Duration `toml:"cache_ttl"`
 	// ArtifactRetention is the default and maximum lifetime of artifacts.
 	ArtifactRetention Duration `toml:"artifact_retention"`
+	// UnreleasedRetention deletes the artifacts and job logs of runs not
+	// tied to a release (not triggered by a release, not on a tag, no
+	// release on their commit) once they are this old; 0 keeps them for
+	// ArtifactRetention like any other.
+	UnreleasedRetention Duration `toml:"unreleased_retention"`
 }
 
 type Log struct {
@@ -324,7 +329,7 @@ func Default() Config {
 		Actions: Actions{Enabled: true, DefaultActionsURL: "github", MaxJobTimeout: Duration(6 * time.Hour),
 			RunnerOfflineAfter: Duration(2 * time.Minute), RegistrationTokenTTL: Duration(time.Hour), MaxJobsPerRun: 512,
 			CacheMaxRepoSize: 10 << 30, CacheTTL: Duration(7 * 24 * time.Hour),
-			ArtifactRetention: Duration(90 * 24 * time.Hour)},
+			ArtifactRetention: Duration(90 * 24 * time.Hour), UnreleasedRetention: Duration(24 * time.Hour)},
 		Log: Log{Level: "info", Format: "json"},
 		Auth: Auth{
 			Argon2Memory:             64 << 20,

@@ -122,6 +122,7 @@ type ActionsJob struct {
 	LastUpdateAt      pgtype.Timestamptz
 	CreatedAt         pgtype.Timestamptz
 	UpdatedAt         pgtype.Timestamptz
+	LogExpiredAt      pgtype.Timestamptz
 }
 
 type ActionsLogRow struct {

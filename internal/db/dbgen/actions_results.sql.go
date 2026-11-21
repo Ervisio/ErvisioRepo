@@ -710,6 +710,58 @@ func (q *Queries) ListStaleActionsUploadOwners(ctx context.Context, arg ListStal
 	return items, nil
 }
 
+const listUnreleasedActionsArtifacts = `-- name: ListUnreleasedActionsArtifacts :many
+SELECT a.id, a.repo_id, a.run_id, a.job_id, a.name, a.mime_type, a.size, a.digest, a.storage_key, a.finalized, a.expires_at, a.created_at, a.finalized_at FROM actions_artifacts a
+JOIN actions_runs r ON r.id = a.run_id
+WHERE a.finalized AND a.created_at < $1
+  AND r.event <> 'release' AND r.ref NOT LIKE 'refs/tags/%'
+  AND NOT EXISTS (SELECT 1 FROM releases rel WHERE rel.repo_id = r.repo_id AND rel.commit_sha = r.sha)
+ORDER BY a.id
+LIMIT $2
+`
+
+type ListUnreleasedActionsArtifactsParams struct {
+	CreatedBefore pgtype.Timestamptz
+	Lim           int32
+}
+
+// Finalized artifacts created before created_before whose run is not tied
+// to a release: not triggered by one, not on a tag, and no release points at
+// its commit.
+func (q *Queries) ListUnreleasedActionsArtifacts(ctx context.Context, arg ListUnreleasedActionsArtifactsParams) ([]ActionsArtifact, error) {
+	rows, err := q.db.Query(ctx, listUnreleasedActionsArtifacts, arg.CreatedBefore, arg.Lim)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ActionsArtifact{}
+	for rows.Next() {
+		var i ActionsArtifact
+		if err := rows.Scan(
+			&i.ID,
+			&i.RepoID,
+			&i.RunID,
+			&i.JobID,
+			&i.Name,
+			&i.MimeType,
+			&i.Size,
+			&i.Digest,
+			&i.StorageKey,
+			&i.Finalized,
+			&i.ExpiresAt,
+			&i.CreatedAt,
+			&i.FinalizedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const reserveActionsCache = `-- name: ReserveActionsCache :one
 
 INSERT INTO actions_caches (repo_id, scope, key, version, run_id)

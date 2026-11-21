@@ -3267,9 +3267,12 @@ type ActionsJob struct {
 	Environment string             `json:"environment"`
 	Id          openapi_types.UUID `json:"id"`
 	Key         string             `json:"key"`
-	LogLength   int64              `json:"logLength"`
-	Name        string             `json:"name"`
-	Needs       []string           `json:"needs"`
+
+	// LogExpired The log was deleted because the run is not tied to a release (actions.unreleased_retention)
+	LogExpired bool     `json:"logExpired"`
+	LogLength  int64    `json:"logLength"`
+	Name       string   `json:"name"`
+	Needs      []string `json:"needs"`
 
 	// Reusable The job calls a reusable workflow; its jobs follow with caller set
 	Reusable bool               `json:"reusable"`

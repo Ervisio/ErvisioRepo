@@ -185,7 +185,7 @@ func actionsDTOJob(j actions.Job) v1gen.ActionsJob {
 	return v1gen.ActionsJob{Id: j.ID, RunId: j.RunID, Key: j.Key, Name: j.Name, Needs: nonNil(j.Needs),
 		Status: v1gen.ActionsJobStatus(j.Status), Conclusion: j.Conclusion, Environment: j.Environment,
 		CancelRequested: j.CancelRequested, Approved: j.Approved, RunsOn: nonNil(j.RunsOn), Runner: j.Runner,
-		Reusable: j.Reusable, Caller: j.Caller, LogLength: j.LogLength, Url: j.URL, StartedAt: j.StartedAt,
+		Reusable: j.Reusable, Caller: j.Caller, LogLength: j.LogLength, LogExpired: j.LogExpired, Url: j.URL, StartedAt: j.StartedAt,
 		CompletedAt: j.CompletedAt}
 }
 

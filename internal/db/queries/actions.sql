@@ -405,6 +405,21 @@ WHERE j.status = 'completed' AND j.log_key = '' AND j.completed_at < @before
   AND EXISTS (SELECT 1 FROM actions_log_rows l WHERE l.job_id = j.id)
 LIMIT 100;
 
+-- name: ListUnreleasedActionsJobLogs :many
+-- Completed jobs with a log, finished before completed_before, of runs not
+-- tied to a release (same rule as ListUnreleasedActionsArtifacts).
+SELECT j.id, j.log_key FROM actions_jobs j
+JOIN actions_runs r ON r.id = j.run_id
+WHERE j.status = 'completed' AND j.log_expired_at IS NULL AND j.completed_at < @completed_before
+  AND (j.log_key <> '' OR j.log_length > 0)
+  AND r.event <> 'release' AND r.ref NOT LIKE 'refs/tags/%'
+  AND NOT EXISTS (SELECT 1 FROM releases rel WHERE rel.repo_id = r.repo_id AND rel.commit_sha = r.sha)
+ORDER BY j.completed_at
+LIMIT @lim;
+
+-- name: ExpireActionsJobLog :exec
+UPDATE actions_jobs SET log_key = '', log_length = 0, log_expired_at = now() WHERE id = @id;
+
 -- name: ListActiveActionsJobsInGroup :many
 -- Jobs of a concurrency group that hold or wait for it.
 SELECT * FROM actions_jobs

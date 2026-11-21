@@ -7406,6 +7406,8 @@ export interface components {
             caller: string;
             /** Format: int64 */
             logLength: number;
+            /** @description The log was deleted because the run is not tied to a release (actions.unreleased_retention) */
+            logExpired: boolean;
             url: string;
             /** Format: date-time */
             startedAt?: string | null;

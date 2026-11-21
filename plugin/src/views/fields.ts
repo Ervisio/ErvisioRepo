@@ -79,6 +79,7 @@ export const FIELDS: Record<string, Field & { page: PageId }> = {
   'actions.cache_max_repo_size': { page: 'actions', kind: 'size', min: MiB },
   'actions.cache_ttl': { page: 'actions', kind: 'dur', min: H },
   'actions.artifact_retention': { page: 'actions', kind: 'dur', min: D, max: 400 * D },
+  'actions.unreleased_retention': { page: 'actions', kind: 'dur', min: 0, max: 400 * D },
 
   'log.level': { page: 'logs', kind: 'enum', options: ['debug', 'info', 'warn', 'error'] },
   'log.format': { page: 'logs', kind: 'enum', options: ['json', 'text'] },

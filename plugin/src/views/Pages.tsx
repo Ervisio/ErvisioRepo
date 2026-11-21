@@ -102,7 +102,7 @@ export function ActionsPage({ srv }: { srv: Server }) {
     <SettingsPage id="actions">
       <Cards cards={[
         ['card.actions', ['actions.enabled', 'actions.default_actions_url', 'actions.max_job_timeout', 'actions.max_jobs_per_run', 'actions.runner_offline_after', 'actions.registration_token_ttl']],
-        ['card.cache', ['actions.cache_max_repo_size', 'actions.cache_ttl', 'actions.artifact_retention']],
+        ['card.cache', ['actions.cache_max_repo_size', 'actions.cache_ttl', 'actions.artifact_retention', 'actions.unreleased_retention']],
       ]} />
       <Runners on={!!srv.status?.actionsEnabled} />
     </SettingsPage>

@@ -73,6 +73,9 @@ type Job struct {
 	Reusable    bool
 	Caller      string
 	LogLength   int64
+	// LogExpired: the log was deleted because the run is not tied to a
+	// release (actions.unreleased_retention).
+	LogExpired  bool
 	URL         string
 	StartedAt   *time.Time
 	CompletedAt *time.Time
@@ -139,7 +142,7 @@ func (s *Service) jobFrom(ctx context.Context, repo repos.Repo, run dbgen.Action
 	out := Job{ID: j.ID, RunID: j.RunID, Key: j.JobKey, Name: j.Name, Needs: j.Needs, Status: j.Status,
 		Conclusion: j.Conclusion, Environment: j.Environment, CancelRequested: j.CancelRequested,
 		Approved: j.ApprovedBy.Valid, RunsOn: j.RunsOn, Reusable: extra.Expanded, Caller: extra.Caller,
-		LogLength: j.LogLength, URL: s.JobURL(repo, run, j.ID),
+		LogLength: j.LogLength, LogExpired: j.LogExpiredAt.Valid, URL: s.JobURL(repo, run, j.ID),
 		StartedAt: timePtr(j.StartedAt.Time, j.StartedAt.Valid), CompletedAt: timePtr(j.CompletedAt.Time, j.CompletedAt.Valid)}
 	if j.RunnerID.Valid {
 		if rn, err := s.q.GetActionsRunner(ctx, j.RunnerID.UUID); err == nil {

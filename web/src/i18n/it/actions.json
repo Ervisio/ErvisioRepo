@@ -83,6 +83,7 @@
   "log.loading": "Caricamento del log…",
   "log.waiting": "In attesa del primo output…",
   "log.empty": "Questo job non ha prodotto output.",
+  "log.expired": "Il log è stato eliminato: i run non legati a una release conservano log e artefatti solo per un tempo limitato.",
   "log.failed": "Impossibile caricare il log.",
   "log.retry": "Riprova",
   "log.more": "Carica altre righe",

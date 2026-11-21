@@ -83,6 +83,7 @@
   "log.loading": "Loading the log…",
   "log.waiting": "Waiting for the first output…",
   "log.empty": "This job produced no output.",
+  "log.expired": "The log was deleted: runs not tied to a release keep their logs and artifacts only for a limited time.",
   "log.failed": "The log could not be loaded.",
   "log.retry": "Retry",
   "log.more": "Load more lines",

@@ -129,7 +129,7 @@ SET status = 'in_progress', runner_id = $1, label = COALESCE(j.runs_on[1], ''), 
     token_expires_at = now() + make_interval(mins => j.timeout_minutes + 30)
 FROM candidate
 WHERE j.id = candidate.id
-RETURNING j.id, j.run_id, j.repo_id, j.attempt, j.job_key, j.name, j.needs, j.matrix, j.payload, j.if_expr, j.runs_on, j.timeout_minutes, j.permissions, j.inputs, j.environment, j.status, j.conclusion, j.cancel_requested, j.approved_by, j.approved_at, j.concurrency_group, j.concurrency_cancel, j.fail_fast, j.max_parallel, j.runner_id, j.label, j.outputs, j.token_hash, j.token_expires_at, j.log_length, j.log_key, j.check_run_id, j.started_at, j.completed_at, j.last_update_at, j.created_at, j.updated_at
+RETURNING j.id, j.run_id, j.repo_id, j.attempt, j.job_key, j.name, j.needs, j.matrix, j.payload, j.if_expr, j.runs_on, j.timeout_minutes, j.permissions, j.inputs, j.environment, j.status, j.conclusion, j.cancel_requested, j.approved_by, j.approved_at, j.concurrency_group, j.concurrency_cancel, j.fail_fast, j.max_parallel, j.runner_id, j.label, j.outputs, j.token_hash, j.token_expires_at, j.log_length, j.log_key, j.check_run_id, j.started_at, j.completed_at, j.last_update_at, j.created_at, j.updated_at, j.log_expired_at
 `
 
 type ClaimActionsJobParams struct {
@@ -192,6 +192,7 @@ func (q *Queries) ClaimActionsJob(ctx context.Context, arg ClaimActionsJobParams
 		&i.LastUpdateAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LogExpiredAt,
 	)
 	return i, err
 }
@@ -716,6 +717,15 @@ func (q *Queries) DeleteUsedEphemeralActionsRunners(ctx context.Context, before 
 	return result.RowsAffected(), nil
 }
 
+const expireActionsJobLog = `-- name: ExpireActionsJobLog :exec
+UPDATE actions_jobs SET log_key = '', log_length = 0, log_expired_at = now() WHERE id = $1
+`
+
+func (q *Queries) ExpireActionsJobLog(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, expireActionsJobLog, id)
+	return err
+}
+
 const failActionsRunnerUpdate = `-- name: FailActionsRunnerUpdate :exec
 UPDATE actions_runners SET update_version = '', update_requested_at = NULL, update_error = $1
 WHERE id = $2 AND update_version = $3
@@ -779,7 +789,7 @@ func (q *Queries) GetActionsGitHubImport(ctx context.Context, repoID uuid.UUID) 
 }
 
 const getActionsJob = `-- name: GetActionsJob :one
-SELECT id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at FROM actions_jobs WHERE id = $1
+SELECT id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at, log_expired_at FROM actions_jobs WHERE id = $1
 `
 
 func (q *Queries) GetActionsJob(ctx context.Context, id uuid.UUID) (ActionsJob, error) {
@@ -823,6 +833,7 @@ func (q *Queries) GetActionsJob(ctx context.Context, id uuid.UUID) (ActionsJob, 
 		&i.LastUpdateAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LogExpiredAt,
 	)
 	return i, err
 }
@@ -867,7 +878,7 @@ func (q *Queries) GetActionsJobByToken(ctx context.Context, tokenHash []byte) (G
 }
 
 const getActionsJobForUpdate = `-- name: GetActionsJobForUpdate :one
-SELECT id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at FROM actions_jobs WHERE id = $1 FOR UPDATE
+SELECT id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at, log_expired_at FROM actions_jobs WHERE id = $1 FOR UPDATE
 `
 
 func (q *Queries) GetActionsJobForUpdate(ctx context.Context, id uuid.UUID) (ActionsJob, error) {
@@ -911,6 +922,7 @@ func (q *Queries) GetActionsJobForUpdate(ctx context.Context, id uuid.UUID) (Act
 		&i.LastUpdateAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LogExpiredAt,
 	)
 	return i, err
 }
@@ -1292,7 +1304,7 @@ INSERT INTO actions_jobs (id, run_id, repo_id, attempt, job_key, name, needs, ma
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
     $12, $13, $14, $15, $16, $17, $18,
     $19, $20, $21, $22, $23, $24, $25, $26)
-RETURNING id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at
+RETURNING id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at, log_expired_at
 `
 
 type InsertActionsJobParams struct {
@@ -1393,6 +1405,7 @@ func (q *Queries) InsertActionsJob(ctx context.Context, arg InsertActionsJobPara
 		&i.LastUpdateAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LogExpiredAt,
 	)
 	return i, err
 }
@@ -1872,7 +1885,7 @@ func (q *Queries) ListActionsExternalWorkflows(ctx context.Context, repoID uuid.
 }
 
 const listActionsJobs = `-- name: ListActionsJobs :many
-SELECT id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at FROM actions_jobs WHERE run_id = $1 AND attempt = $2 ORDER BY created_at, id
+SELECT id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at, log_expired_at FROM actions_jobs WHERE run_id = $1 AND attempt = $2 ORDER BY created_at, id
 `
 
 type ListActionsJobsParams struct {
@@ -1927,6 +1940,7 @@ func (q *Queries) ListActionsJobs(ctx context.Context, arg ListActionsJobsParams
 			&i.LastUpdateAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.LogExpiredAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1939,7 +1953,7 @@ func (q *Queries) ListActionsJobs(ctx context.Context, arg ListActionsJobsParams
 }
 
 const listActionsJobsForUpdate = `-- name: ListActionsJobsForUpdate :many
-SELECT id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at FROM actions_jobs WHERE run_id = $1 AND attempt = $2 ORDER BY created_at, id FOR UPDATE
+SELECT id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at, log_expired_at FROM actions_jobs WHERE run_id = $1 AND attempt = $2 ORDER BY created_at, id FOR UPDATE
 `
 
 type ListActionsJobsForUpdateParams struct {
@@ -1994,6 +2008,7 @@ func (q *Queries) ListActionsJobsForUpdate(ctx context.Context, arg ListActionsJ
 			&i.LastUpdateAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.LogExpiredAt,
 		); err != nil {
 			return nil, err
 		}
@@ -2749,7 +2764,7 @@ func (q *Queries) ListActionsWorkflows(ctx context.Context, repoID uuid.UUID) ([
 }
 
 const listActiveActionsJobsInGroup = `-- name: ListActiveActionsJobsInGroup :many
-SELECT id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at FROM actions_jobs
+SELECT id, run_id, repo_id, attempt, job_key, name, needs, matrix, payload, if_expr, runs_on, timeout_minutes, permissions, inputs, environment, status, conclusion, cancel_requested, approved_by, approved_at, concurrency_group, concurrency_cancel, fail_fast, max_parallel, runner_id, label, outputs, token_hash, token_expires_at, log_length, log_key, check_run_id, started_at, completed_at, last_update_at, created_at, updated_at, log_expired_at FROM actions_jobs
 WHERE repo_id = $1 AND concurrency_group = $2 AND status IN ('waiting', 'queued', 'in_progress')
   AND id <> $3
 ORDER BY created_at, id
@@ -2809,6 +2824,7 @@ func (q *Queries) ListActiveActionsJobsInGroup(ctx context.Context, arg ListActi
 			&i.LastUpdateAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.LogExpiredAt,
 		); err != nil {
 			return nil, err
 		}
@@ -3009,6 +3025,49 @@ func (q *Queries) ListUnarchivedActionsJobs(ctx context.Context, before pgtype.T
 			return nil, err
 		}
 		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUnreleasedActionsJobLogs = `-- name: ListUnreleasedActionsJobLogs :many
+SELECT j.id, j.log_key FROM actions_jobs j
+JOIN actions_runs r ON r.id = j.run_id
+WHERE j.status = 'completed' AND j.log_expired_at IS NULL AND j.completed_at < $1
+  AND (j.log_key <> '' OR j.log_length > 0)
+  AND r.event <> 'release' AND r.ref NOT LIKE 'refs/tags/%'
+  AND NOT EXISTS (SELECT 1 FROM releases rel WHERE rel.repo_id = r.repo_id AND rel.commit_sha = r.sha)
+ORDER BY j.completed_at
+LIMIT $2
+`
+
+type ListUnreleasedActionsJobLogsParams struct {
+	CompletedBefore pgtype.Timestamptz
+	Lim             int32
+}
+
+type ListUnreleasedActionsJobLogsRow struct {
+	ID     uuid.UUID
+	LogKey string
+}
+
+// Completed jobs with a log, finished before completed_before, of runs not
+// tied to a release (same rule as ListUnreleasedActionsArtifacts).
+func (q *Queries) ListUnreleasedActionsJobLogs(ctx context.Context, arg ListUnreleasedActionsJobLogsParams) ([]ListUnreleasedActionsJobLogsRow, error) {
+	rows, err := q.db.Query(ctx, listUnreleasedActionsJobLogs, arg.CompletedBefore, arg.Lim)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListUnreleasedActionsJobLogsRow{}
+	for rows.Next() {
+		var i ListUnreleasedActionsJobLogsRow
+		if err := rows.Scan(&i.ID, &i.LogKey); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

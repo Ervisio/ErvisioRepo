@@ -6,6 +6,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `actions.unreleased_retention` (default `24h`, editable in Admin > Settings > Actions): artifacts and job logs of runs not tied to a release are deleted after that time. A run counts as released when a release triggered it, it ran on a tag, or a release points at its commit; those keep the normal `artifact_retention`. `0` turns it off. A deleted log shows a notice on the run page (`logExpired` on `ActionsJob`). Migration 00470.
+
+### Changed
+
+- After upgrading, artifacts and logs older than 24 hours of runs not tied to a release are deleted within the hour. Set `actions.unreleased_retention = "0"` before upgrading to keep them.
+
 ## [1.22.1] - 2026-11-20
 
 ### Changed

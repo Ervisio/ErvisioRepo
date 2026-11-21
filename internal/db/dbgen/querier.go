@@ -278,6 +278,7 @@ type Querier interface {
 	DismissPullReview(ctx context.Context, arg DismissPullReviewParams) (PullReview, error)
 	EmailTaken(ctx context.Context, address string) (bool, error)
 	EnsureUsageCounter(ctx context.Context, namespaceID uuid.UUID) error
+	ExpireActionsJobLog(ctx context.Context, id uuid.UUID) error
 	// Public repositories, optionally filtered by a lower-cased name or
 	// description fragment (LIKE metacharacters escaped). sort is updated, name
 	// or stars.
@@ -844,6 +845,13 @@ type Querier interface {
 	// lfs/sha256/ is considered: the class also holds release assets
 	// (lfs/releases/), which are collected by internal/releases.
 	ListUnreferencedLFSStorage(ctx context.Context, arg ListUnreferencedLFSStorageParams) ([]ListUnreferencedLFSStorageRow, error)
+	// Finalized artifacts created before created_before whose run is not tied
+	// to a release: not triggered by one, not on a tag, and no release points at
+	// its commit.
+	ListUnreleasedActionsArtifacts(ctx context.Context, arg ListUnreleasedActionsArtifactsParams) ([]ActionsArtifact, error)
+	// Completed jobs with a log, finished before completed_before, of runs not
+	// tied to a release (same rule as ListUnreleasedActionsArtifacts).
+	ListUnreleasedActionsJobLogs(ctx context.Context, arg ListUnreleasedActionsJobLogsParams) ([]ListUnreleasedActionsJobLogsRow, error)
 	// Repositories a user can reach without public or internal visibility: his
 	// own, those of organizations he owns or administers or whose base
 	// permission he receives, and those granted through teams or directly.

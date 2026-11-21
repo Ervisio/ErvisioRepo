@@ -252,6 +252,8 @@
   "set.actions.cache_ttl.d": "Cache entries unused for this long are removed.",
   "set.actions.artifact_retention": "Artifact retention",
   "set.actions.artifact_retention.d": "How long workflow artifacts are kept.",
+  "set.actions.unreleased_retention": "Results of unreleased runs",
+  "set.actions.unreleased_retention.d": "Artifacts and logs of runs not tied to a release (not triggered by a release, not on a tag, no release on their commit) are deleted after this time. 0 turns it off.",
   "set.webhooks.allow_private": "Allow private addresses",
   "set.webhooks.allow_private.d": "Let webhooks call internal network addresses. Off protects against server-side request forgery.",
   "set.webhooks.allowed_cidrs": "Allowed networks",

@@ -252,6 +252,8 @@
   "set.actions.cache_ttl.d": "Le voci di cache non usate per questo tempo vengono rimosse.",
   "set.actions.artifact_retention": "Conservazione degli artefatti",
   "set.actions.artifact_retention.d": "Per quanto tempo si conservano gli artefatti dei workflow.",
+  "set.actions.unreleased_retention": "Risultati dei run non rilasciati",
+  "set.actions.unreleased_retention.d": "Artefatti e log dei run non legati a una release (non avviati da una release, non su un tag, nessuna release sul loro commit) vengono eliminati dopo questo tempo. 0 lo disattiva.",
   "set.webhooks.allow_private": "Consenti indirizzi privati",
   "set.webhooks.allow_private.d": "Permette ai webhook di chiamare indirizzi di rete interni. Disattivato protegge dal server-side request forgery.",
   "set.webhooks.allowed_cidrs": "Reti consentite",

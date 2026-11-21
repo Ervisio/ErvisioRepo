@@ -302,6 +302,9 @@ func (v *validator) actions(a *Actions) {
 	if a.ArtifactRetention < Duration(24*time.Hour) || a.ArtifactRetention > Duration(400*24*time.Hour) {
 		v.add("actions.artifact_retention", "must be between 1d and 400d")
 	}
+	if u := a.UnreleasedRetention; u != 0 && (u < Duration(time.Hour) || u > a.ArtifactRetention) {
+		v.add("actions.unreleased_retention", "must be 0 (off) or between 1h and actions.artifact_retention")
+	}
 }
 
 func (v *validator) auth(a *Auth) {

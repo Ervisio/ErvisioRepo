@@ -19,6 +19,7 @@ var Editable = []string{
 	"actions.enabled", "actions.default_actions_url", "actions.max_job_timeout",
 	"actions.runner_offline_after", "actions.registration_token_ttl", "actions.max_jobs_per_run",
 	"actions.cache_max_repo_size", "actions.cache_ttl", "actions.artifact_retention",
+	"actions.unreleased_retention",
 	"webhooks.allow_private", "webhooks.allowed_cidrs", "webhooks.timeout", "webhooks.max_attempts",
 	"ui.default_layout",
 }

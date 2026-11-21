@@ -44,7 +44,7 @@ Whitelist:
 - git: max_push_size, idle_timeout, max_duration, requests_per_hour
 - ssh: enabled, max_connections, login_grace_time
 - actions: enabled, default_actions_url, max_job_timeout, runner_offline_after, registration_token_ttl,
-  max_jobs_per_run, cache_max_repo_size, cache_ttl, artifact_retention
+  max_jobs_per_run, cache_max_repo_size, cache_ttl, artifact_retention, unreleased_retention
 - webhooks: allow_private, allowed_cidrs (list), timeout, max_attempts
 
 `server.public_url`: any absolute http(s) URL (the old https-or-loopback rule is dropped).

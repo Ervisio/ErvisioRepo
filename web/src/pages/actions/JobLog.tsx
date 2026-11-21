@@ -156,6 +156,7 @@ export function JobLog({ owner, name, job, actions }: { owner: string; name: str
         </span>
       </header>
       {actions}
+      {job.logExpired && <p role="status" className="ax-logmsg">{t("log.expired")}</p>}
       <div className="ui-in">
         {!flat && (
           <ol className="ax-steps" aria-label={t("log.steps")}>

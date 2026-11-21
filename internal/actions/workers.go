@@ -2,13 +2,16 @@ package actions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/riverqueue/river"
 
+	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 	"github.com/Ervisio/ErvisioRepo/internal/jobs"
+	"github.com/Ervisio/ErvisioRepo/internal/storage/blob"
 )
 
 // tasksChannel is the NOTIFY channel that wakes runners polling for tasks;
@@ -60,6 +63,19 @@ type ScheduleArgs struct{}
 
 func (ScheduleArgs) Kind() string { return "actions_schedule" }
 
+// RetentionArgs deletes the job logs of runs not tied to a release once
+// they are older than actions.unreleased_retention.
+type RetentionArgs struct{}
+
+func (RetentionArgs) Kind() string { return "actions_log_retention" }
+
+// retentionInterval is how often RetentionArgs runs; retentionBatch bounds
+// one pass so a large backlog is spread over several runs.
+const (
+	retentionInterval = time.Hour
+	retentionBatch    = 500
+)
+
 // JobsOption registers the Actions workers and periodic jobs.
 func (s *Service) JobsOption() jobs.Option {
 	return func(r *jobs.Registry) {
@@ -67,7 +83,11 @@ func (s *Service) JobsOption() jobs.Option {
 		river.AddWorker(r.Workers, &archiveWorker{s: s})
 		river.AddWorker(r.Workers, &sweepWorker{s: s})
 		river.AddWorker(r.Workers, &scheduleWorker{s: s})
+		river.AddWorker(r.Workers, &retentionWorker{s: s})
 		r.Periodic = append(r.Periodic,
+			river.NewPeriodicJob(river.PeriodicInterval(retentionInterval),
+				func() (river.JobArgs, *river.InsertOpts) { return RetentionArgs{}, nil },
+				&river.PeriodicJobOpts{RunOnStart: true}),
 			river.NewPeriodicJob(river.PeriodicInterval(sweepInterval),
 				func() (river.JobArgs, *river.InsertOpts) { return SweepArgs{}, nil },
 				&river.PeriodicJobOpts{RunOnStart: true}),
@@ -114,6 +134,51 @@ type scheduleWorker struct {
 
 func (w *scheduleWorker) Work(ctx context.Context, _ *river.Job[ScheduleArgs]) error {
 	return w.s.runSchedules(ctx)
+}
+
+type retentionWorker struct {
+	river.WorkerDefaults[RetentionArgs]
+	s *Service
+}
+
+func (*retentionWorker) Timeout(*river.Job[RetentionArgs]) time.Duration { return 30 * time.Minute }
+
+func (w *retentionWorker) Work(ctx context.Context, _ *river.Job[RetentionArgs]) error {
+	return w.s.expireUnreleasedLogs(ctx)
+}
+
+// expireUnreleasedLogs deletes the logs of completed jobs of runs not tied
+// to a release, archived or still in the database, and marks them expired.
+func (s *Service) expireUnreleasedLogs(ctx context.Context) error {
+	keep := time.Duration(s.cfg.UnreleasedRetention)
+	if keep <= 0 {
+		return nil
+	}
+	rows, err := s.q.ListUnreleasedActionsJobLogs(ctx, dbgen.ListUnreleasedActionsJobLogsParams{
+		CompletedBefore: ts(s.now().Add(-keep)), Lim: retentionBatch})
+	if err != nil {
+		return fmt.Errorf("list unreleased job logs: %w", err)
+	}
+	for _, j := range rows {
+		if err := s.q.DeleteActionsLogRows(ctx, j.ID); err != nil {
+			return fmt.Errorf("delete log rows: %w", err)
+		}
+		if j.LogKey != "" && s.logs != nil {
+			if err := s.logs.Delete(ctx, j.LogKey); err != nil && !errors.Is(err, blob.ErrNotFound) {
+				return fmt.Errorf("delete archived log: %w", err)
+			}
+		}
+		if err := s.q.ExpireActionsJobLog(ctx, j.ID); err != nil {
+			return fmt.Errorf("expire job log: %w", err)
+		}
+	}
+	if len(rows) > 0 {
+		s.log.Info("deleted logs of unreleased runs", "count", len(rows), "older_than", keep)
+	}
+	if len(rows) == retentionBatch {
+		s.enqueue(ctx, RetentionArgs{})
+	}
+	return nil
 }
 
 // sweep is the periodic clean-up of the job queue.

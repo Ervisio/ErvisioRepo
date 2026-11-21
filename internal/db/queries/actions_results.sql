@@ -129,6 +129,18 @@ WHERE expires_at < now() OR (NOT finalized AND created_at < @stale_before)
 ORDER BY id
 LIMIT @lim;
 
+-- name: ListUnreleasedActionsArtifacts :many
+-- Finalized artifacts created before created_before whose run is not tied
+-- to a release: not triggered by one, not on a tag, and no release points at
+-- its commit.
+SELECT a.* FROM actions_artifacts a
+JOIN actions_runs r ON r.id = a.run_id
+WHERE a.finalized AND a.created_at < @created_before
+  AND r.event <> 'release' AND r.ref NOT LIKE 'refs/tags/%'
+  AND NOT EXISTS (SELECT 1 FROM releases rel WHERE rel.repo_id = r.repo_id AND rel.commit_sha = r.sha)
+ORDER BY a.id
+LIMIT @lim;
+
 -- ---- upload parts ----
 
 -- name: UpsertActionsUploadPart :exec

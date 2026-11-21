@@ -83,7 +83,8 @@ func setupActionsResults(cfg *config.Config, pool *pgxpool.Pool, storage *tier.T
 		return nil, nil, nil, err
 	}
 	artSvc, err := artifacts.New(artifacts.Options{Pool: pool, Storage: storage, Verifier: a, Signer: signer,
-		Log: log, Retention: time.Duration(cfg.Actions.ArtifactRetention)})
+		Log: log, Retention: time.Duration(cfg.Actions.ArtifactRetention),
+		Unreleased: time.Duration(cfg.Actions.UnreleasedRetention)})
 	if err != nil {
 		return nil, nil, nil, err
 	}

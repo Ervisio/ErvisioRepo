@@ -53,17 +53,21 @@ type Options struct {
 	Log      *slog.Logger
 	// Retention is the default and maximum lifetime of an artifact.
 	Retention time.Duration
+	// Unreleased deletes the artifacts of runs not tied to a release once
+	// they are this old; 0 disables it.
+	Unreleased time.Duration
 }
 
 // Service serves the artifact API.
 type Service struct {
-	q         *dbgen.Queries
-	class     *tier.Class
-	auth      *blobsvc.Auth
-	stage     *blobsvc.Stager
-	signer    *blobsvc.Signer
-	log       *slog.Logger
-	retention time.Duration
+	q          *dbgen.Queries
+	class      *tier.Class
+	auth       *blobsvc.Auth
+	stage      *blobsvc.Stager
+	signer     *blobsvc.Signer
+	log        *slog.Logger
+	retention  time.Duration
+	unreleased time.Duration
 }
 
 // New builds the artifact service; it needs the "actions" storage policy.
@@ -76,7 +80,7 @@ func New(o Options) (*Service, error) {
 	log := o.Log.With("component", "actions.artifacts")
 	return &Service{q: q, class: class, auth: &blobsvc.Auth{V: o.Verifier, Q: q, Log: log},
 		stage: &blobsvc.Stager{Q: q, Class: class, Log: log}, signer: o.Signer, log: log,
-		retention: o.Retention}, nil
+		retention: o.Retention, unreleased: o.Unreleased}, nil
 }
 
 // Handler serves the Twirp service and the signed blob URLs. Uploads are
@@ -142,7 +146,8 @@ func (s *Service) remove(ctx context.Context, a dbgen.ActionsArtifact) error {
 	return nil
 }
 
-// Sweep deletes expired artifacts and uploads never finalized.
+// Sweep deletes expired artifacts, uploads never finalized and, when
+// enabled, the artifacts of runs not tied to a release.
 func (s *Service) Sweep(ctx context.Context) error {
 	for {
 		list, err := s.q.ListExpiredActionsArtifacts(ctx, dbgen.ListExpiredActionsArtifactsParams{
@@ -156,9 +161,33 @@ func (s *Service) Sweep(ctx context.Context) error {
 			}
 		}
 		if len(list) < sweepBatch {
-			return nil
+			break
 		}
 	}
+	if s.unreleased <= 0 {
+		return nil
+	}
+	removed := 0
+	for {
+		list, err := s.q.ListUnreleasedActionsArtifacts(ctx, dbgen.ListUnreleasedActionsArtifactsParams{
+			CreatedBefore: blobsvc.Timestamp(time.Now().Add(-s.unreleased)), Lim: sweepBatch})
+		if err != nil {
+			return fmt.Errorf("list unreleased artifacts: %w", err)
+		}
+		for _, a := range list {
+			if err := s.remove(ctx, a); err != nil {
+				return err
+			}
+		}
+		removed += len(list)
+		if len(list) < sweepBatch {
+			break
+		}
+	}
+	if removed > 0 {
+		s.log.InfoContext(ctx, "deleted artifacts of unreleased runs", "count", removed, "older_than", s.unreleased)
+	}
+	return nil
 }
 
 // SweepArgs runs Sweep.

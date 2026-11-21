@@ -12735,7 +12735,7 @@ components:
     ActionsJob:
       type: object
       required: [id, runId, key, name, needs, status, conclusion, environment, cancelRequested, approved, runsOn,
-        runner, reusable, caller, logLength, url]
+        runner, reusable, caller, logLength, logExpired, url]
       properties:
         id: {type: string, format: uuid}
         runId: {type: string, format: uuid}
@@ -12756,6 +12756,7 @@ components:
         reusable: {type: boolean, description: The job calls a reusable workflow; its jobs follow with caller set}
         caller: {type: string}
         logLength: {type: integer, format: int64}
+        logExpired: {type: boolean, description: "The log was deleted because the run is not tied to a release (actions.unreleased_retention)"}
         url: {type: string}
         startedAt: {type: string, format: date-time, nullable: true}
         completedAt: {type: string, format: date-time, nullable: true}
