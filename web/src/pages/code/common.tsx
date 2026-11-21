@@ -1,7 +1,7 @@
 import type { UseQueryResult } from "@tanstack/react-query";
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useParams } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { isHydrating, useBranches, useTags, type CommitUser } from "../../api/code.ts";
+import { isHydrating, useBranches, useHydration, useTags, type CommitUser } from "../../api/code.ts";
 import { ApiError } from "../../api/http.ts";
 import { isUnauthenticated, useSession } from "../../api/identity.ts";
 import { useRepo, type Repo } from "../../api/repos.ts";
@@ -132,6 +132,22 @@ function SignInToView() {
   );
 }
 
+/** "Preparing the repository…" with the hydration progress of the repository in the URL. */
+function Hydrating({ slow }: { slow?: boolean }) {
+  const t = useT("code");
+  const params = useParams({ strict: false }) as { owner?: string; name?: string };
+  const ev = useHydration(params.owner ?? "", params.name ?? "", true);
+  const pct = ev && ev.phase !== "start" && ev.phase !== "done" ? ev.percent ?? 0 : undefined;
+  const label = slow ? t("state.hydratingSlow") : t("state.hydrating");
+  return (
+    <div role="status" className="ui-note acc-pad">
+      <p>{pct !== undefined ? t("state.hydratingPct", { percent: pct }) : label}</p>
+      {pct !== undefined && <progress max={100} value={pct} aria-label={label} />}
+      <p>{t("state.hydratingHint")}</p>
+    </div>
+  );
+}
+
 export function Gate<T>({ query, notFound, children }: {
   query: UseQueryResult<T>;
   notFound?: ReactNode;
@@ -142,11 +158,8 @@ export function Gate<T>({ query, notFound, children }: {
   const problem = useProblemText();
   if (query.isPending) {
     if (query.fetchStatus === "idle") return null;
-    return (
-      <p role="status" className="ui-note acc-pad">
-        {isHydrating(query.failureReason) ? t("state.hydrating") : tc("state.loading")}
-      </p>
-    );
+    if (isHydrating(query.failureReason)) return <Hydrating />;
+    return <p role="status" className="ui-note acc-pad">{tc("state.loading")}</p>;
   }
   if (query.isError) {
     if (notFound !== undefined && query.error instanceof ApiError && query.error.status === 404) return <>{notFound}</>;

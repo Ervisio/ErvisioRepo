@@ -330,6 +330,9 @@ type Querier interface {
 	GetAppTokenByHash(ctx context.Context, arg GetAppTokenByHashParams) (GetAppTokenByHashRow, error)
 	GetAppWebhook(ctx context.Context, appID uuid.NullUUID) (Webhook, error)
 	GetBranchProtection(ctx context.Context, arg GetBranchProtectionParams) (BranchProtection, error)
+	GetBrowseBlob(ctx context.Context, arg GetBrowseBlobParams) ([]byte, error)
+	GetBrowseCommit(ctx context.Context, arg GetBrowseCommitParams) (GetBrowseCommitRow, error)
+	GetBrowseTree(ctx context.Context, arg GetBrowseTreeParams) (GetBrowseTreeRow, error)
 	GetCheckRun(ctx context.Context, arg GetCheckRunParams) (GetCheckRunRow, error)
 	GetCheckRunForUpdate(ctx context.Context, arg GetCheckRunForUpdateParams) (CheckRun, error)
 	GetCheckSuite(ctx context.Context, arg GetCheckSuiteParams) (CheckSuite, error)
@@ -984,6 +987,9 @@ type Querier interface {
 	PinRepo(ctx context.Context, arg PinRepoParams) error
 	// Keeps the newest external runs of a repository (keep of them).
 	PruneActionsExternalRuns(ctx context.Context, arg PruneActionsExternalRunsParams) error
+	PruneBrowseBlobs(ctx context.Context, before pgtype.Timestamptz) (int64, error)
+	PruneBrowseCommits(ctx context.Context, before pgtype.Timestamptz) (int64, error)
+	PruneBrowseTrees(ctx context.Context, before pgtype.Timestamptz) (int64, error)
 	// Dispatched events older than "before" (their delivery jobs are done or
 	// have given up).
 	PruneOutboxEvents(ctx context.Context, before pgtype.Timestamptz) (int64, error)
@@ -993,6 +999,9 @@ type Querier interface {
 	// Open pull requests of other repositories whose head lives in head_repo_id,
 	// locked for the deletion of that repository.
 	PullsWithHeadRepoForDelete(ctx context.Context, headRepoID uuid.NullUUID) ([]PullRequest, error)
+	PutBrowseBlob(ctx context.Context, arg PutBrowseBlobParams) error
+	PutBrowseCommit(ctx context.Context, arg PutBrowseCommitParams) error
+	PutBrowseTree(ctx context.Context, arg PutBrowseTreeParams) error
 	// ---- issues ----
 	// Makes the next allocated number greater than number.
 	RaiseIssueCounter(ctx context.Context, arg RaiseIssueCounterParams) error

@@ -15,6 +15,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Code pages of a repository that is only on remote storage (cold) no longer wait for the whole hydration. Branches and tags come from the refs snapshot of the journal, file lists and READMEs from a new metadata cache (`git_browse_*` tables, keyed by object id, filled while the repository is on disk, pruned after 30 days, migration 00480) and, for repositories linked to or imported from GitHub, from the GitHub git API addressed by object id. Hydration starts in the background; other code reads wait at most 8 seconds and then answer 503 with `Retry-After: 10`, and the page shows the hydration progress (the existing `/hydration` stream) and reloads when it ends.
 - Re-running `setup.sh` no longer rewrites `.env` from scratch: `ERVISIO_VERSION`, the ports, `RUNNER_*`, extra profiles and custom keys are kept, and the earlier `--ervisio`, `--runner` and `--updater` answers are the defaults. It also writes `ERVISIO_DEPLOY_DIR`.
 - After upgrading, artifacts and logs older than 24 hours of runs not tied to a release are deleted within the hour. Set `actions.unreleased_retention = "0"` before upgrading to keep them.
 

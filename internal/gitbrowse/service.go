@@ -97,7 +97,13 @@ type Options struct {
 	MaxGrepResults int
 	GrepTimeout    time.Duration
 	ArchiveTimeout time.Duration
-	Log            *slog.Logger
+	// Hydrator starts the hydration of a cold repository opened by an
+	// interactive read; nil leaves it to Acquire.
+	Hydrator Hydrator
+	// Remote reads git objects of linked repositories from GitHub for cold
+	// reads; nil uses the metadata cache only.
+	Remote Remote
+	Log    *slog.Logger
 }
 
 // Service implements the code browsing operations.
@@ -107,7 +113,11 @@ type Service struct {
 	cat   *git.Pool
 	owned bool
 	cache *lastCommitCache
-	log   *slog.Logger
+	refs  refsCache
+	// written dedupes the browse cache writes.
+	written written
+	stop    chan struct{}
+	log     *slog.Logger
 	// authors caches the accounts of commit addresses (Authors).
 	authors authorCache
 }
@@ -150,9 +160,11 @@ func New(o Options) (*Service, error) {
 	if o.Log == nil {
 		o.Log = slog.New(slog.DiscardHandler)
 	}
-	s := &Service{o: o, cat: o.CatFile, cache: newLastCommitCache(512), log: o.Log, authors: authorCache{m: map[string]authorEntry{}}}
+	s := &Service{o: o, cat: o.CatFile, cache: newLastCommitCache(512), log: o.Log, authors: authorCache{m: map[string]authorEntry{}},
+		refs: refsCache{m: map[uuid.UUID]refsEntry{}}, stop: make(chan struct{})}
 	if o.DB != nil {
 		s.q = dbgen.New(o.DB)
+		go s.pruneLoop(s.stop)
 	}
 	if s.cat == nil {
 		s.cat = git.NewPool(git.PoolOptions{})
@@ -161,8 +173,9 @@ func New(o Options) (*Service, error) {
 	return s, nil
 }
 
-// Close stops the cat-file processes the Service owns.
+// Close stops the cat-file processes the Service owns and the cache pruning.
 func (s *Service) Close() {
+	close(s.stop)
 	if s.owned {
 		s.cat.Close()
 	}
@@ -177,10 +190,21 @@ type Repo struct {
 	DefaultBranch string
 }
 
-// read runs fn with the hot path of repo held by a Read lease.
+// read runs fn with the hot path of repo held by a Read lease. An
+// interactive read (Interactive) waits at most interactiveWait for a
+// hydration, then answers gitstore.ErrBusy; the hydration goes on.
 func (s *Service) read(ctx context.Context, repo Repo, fn func(path string) error) error {
-	l, err := s.o.Tier.Acquire(ctx, repo.ID, gitstore.Read)
+	actx := ctx
+	if isInteractive(ctx) {
+		var cancel context.CancelFunc
+		actx, cancel = context.WithTimeout(ctx, interactiveWait)
+		defer cancel()
+	}
+	l, err := s.o.Tier.Acquire(actx, repo.ID, gitstore.Read)
 	if err != nil {
+		if ctx.Err() == nil && errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("acquire repository: %w", gitstore.ErrBusy)
+		}
 		return fmt.Errorf("acquire repository: %w", err)
 	}
 	defer l.Release()

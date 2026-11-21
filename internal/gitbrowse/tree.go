@@ -63,6 +63,9 @@ func (s *Service) Tree(ctx context.Context, repo Repo, ref, path string, lastCom
 	if err := git.ValidateTreePath(path); err != nil {
 		return Tree{}, fmt.Errorf("%w: %w", ErrInvalid, err)
 	}
+	if t, ok, err := s.coldTreeRead(ctx, repo, ref, path); ok {
+		return t, err
+	}
 	t := Tree{Path: path}
 	err := s.read(ctx, repo, func(rp string) error {
 		r, err := s.resolve(ctx, rp, repo, ref)
@@ -70,11 +73,12 @@ func (s *Service) Tree(ctx context.Context, repo Repo, ref, path string, lastCom
 			return err
 		}
 		t.Ref = r
-		entries, truncated, err := s.listTree(ctx, rp, r.Commit, path)
+		entries, truncated, oid, err := s.listTree(ctx, rp, r.Commit, path)
 		if err != nil {
 			return err
 		}
 		t.Entries, t.Truncated = entries, truncated
+		s.rememberListing(ctx, rp, repo.ID, r, path, oid, entries, truncated)
 		t.Readme = readmeOf(entries)
 		if lastCommits && len(entries) > 0 {
 			s.fillLastCommits(ctx, rp, repo, r.Commit, path, t.Entries)
@@ -100,17 +104,39 @@ func (s *Service) object(ctx context.Context, rp, commit, path string) (git.Obje
 	return info, nil
 }
 
-func (s *Service) listTree(ctx context.Context, rp, commit, path string) ([]Entry, bool, error) {
+// rememberListing stores a hot listing and the commit's root tree in the
+// browse cache, for the cold reads after the next eviction.
+func (s *Service) rememberListing(ctx context.Context, rp string, repoID uuid.UUID, r Resolved, path, oid string, entries []Entry, truncated bool) {
+	if s.q == nil {
+		return
+	}
+	s.rememberTree(repoID, oid, entries, truncated)
+	root := oid
+	if path != "" {
+		info, err := s.cat.Info(ctx, rp, r.Commit+"^{tree}")
+		if err != nil {
+			return
+		}
+		root = info.OID
+	}
+	s.rememberCommit(repoID, r.Commit, r.Commit, root)
+	if r.target != "" && r.target != r.Commit {
+		s.rememberCommit(repoID, r.target, r.Commit, root)
+	}
+}
+
+// listTree lists commit:path; it also returns the tree id.
+func (s *Service) listTree(ctx context.Context, rp, commit, path string) ([]Entry, bool, string, error) {
 	info, err := s.object(ctx, rp, commit, path)
 	if err != nil {
-		return nil, false, err
+		return nil, false, "", err
 	}
 	if info.Type != "tree" {
-		return nil, false, invalidf("%q is not a directory", path)
+		return nil, false, "", invalidf("%q is not a directory", path)
 	}
 	out, err := run(ctx, rp, readTimeout, "ls-tree", "-z", "--long", info.OID)
 	if err != nil {
-		return nil, false, fmt.Errorf("list tree: %w", err)
+		return nil, false, "", fmt.Errorf("list tree: %w", err)
 	}
 	var entries []Entry
 	truncated := false
@@ -148,6 +174,12 @@ func (s *Service) listTree(ctx context.Context, rp, commit, path string) ([]Entr
 		}
 		entries = append(entries, e)
 	}
+	sortEntries(entries)
+	return entries, truncated, info.OID, nil
+}
+
+// sortEntries puts directories first, then sorts by name ignoring case.
+func sortEntries(entries []Entry) {
 	slices.SortStableFunc(entries, func(a, b Entry) int {
 		if (a.Type == TypeTree) != (b.Type == TypeTree) {
 			if a.Type == TypeTree {
@@ -157,7 +189,6 @@ func (s *Service) listTree(ctx context.Context, rp, commit, path string) ([]Entr
 		}
 		return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
-	return entries, truncated, nil
 }
 
 // fillLastCommits walks the history of dir from commit and sets the newest

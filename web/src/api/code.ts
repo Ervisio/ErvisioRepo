@@ -1,4 +1,5 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { ApiError, request } from "./http.ts";
 import type { Repo } from "./repos.ts";
 import type { components } from "./schema";
@@ -52,16 +53,50 @@ export const rawUrl = (owner: string, name: string, ref: string, path: string) =
 export const archiveUrl = (owner: string, name: string, ref: string, format: "zip" | "tar.gz") =>
   `/api/v1${repoBase(owner, name)}/archive${qs({ ref, format })}`;
 
-// A cold repository is hydrated on demand: the API answers 503 with Retry-After
-// until it is ready. Retry those (and only those) a few times, honouring the header.
+// A cold repository is hydrated in the background: the API answers 503 with
+// Retry-After until it is ready (file lists and READMEs often come earlier, from
+// the metadata cache or GitHub). Retry those (and only those), honouring the
+// header, for up to about ten minutes; useHydration refetches as soon as it ends.
 const hydrationRetry = {
-  retry: (count: number, err: Error) => err instanceof ApiError && err.status === 503 && count < 6,
+  retry: (count: number, err: Error) => err instanceof ApiError && err.status === 503 && count < 60,
   retryDelay: (_count: number, err: Error) =>
-    Math.min(err instanceof ApiError && err.retryAfter ? err.retryAfter : 5, 30) * 1000,
+    Math.min(err instanceof ApiError && err.retryAfter ? err.retryAfter : 5, 10) * 1000,
 };
 
 /** True while a query is waiting for the repository to become available. */
 export const isHydrating = (err: Error | null | undefined) => err instanceof ApiError && err.status === 503;
+
+/** One event of the hydration progress stream (gittier.Event). */
+export type HydrationEvent = { phase: string; percent?: number; done?: number; total?: number; state?: string; error?: string };
+
+/**
+ * Follows the hydration of a repository while `active` (a page is waiting for it):
+ * the latest progress event, and a refetch of the repository's code queries when it ends.
+ */
+export function useHydration(owner: string, name: string, active: boolean): HydrationEvent | null {
+  const qc = useQueryClient();
+  const [ev, setEv] = useState<HydrationEvent | null>(null);
+  useEffect(() => {
+    if (!active || !owner || !name || typeof EventSource === "undefined") return;
+    const es = new EventSource(`/api/v1${repoBase(owner, name)}/hydration`);
+    es.addEventListener("progress", (m) => {
+      let e: HydrationEvent;
+      try {
+        e = JSON.parse((m as MessageEvent<string>).data) as HydrationEvent;
+      } catch {
+        return;
+      }
+      setEv(e);
+      if (e.phase === "done" || e.phase === "failed") {
+        es.close();
+        void qc.invalidateQueries({ queryKey: ["code", owner, name] });
+      }
+    });
+    es.onerror = () => es.close();
+    return () => es.close();
+  }, [active, owner, name, qc]);
+  return active ? ev : null;
+}
 
 const key = (owner: string, name: string, ...rest: unknown[]) => ["code", owner, name, ...rest];
 

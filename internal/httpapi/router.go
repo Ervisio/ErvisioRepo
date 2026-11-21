@@ -371,7 +371,7 @@ func mountV1(r chi.Router, d Deps) {
 	if d.Jobs != nil {
 		srv.jobs = d.Jobs
 	}
-	strict := v1gen.NewStrictHandlerWithOptions(srv, nil, v1gen.StrictHTTPServerOptions{
+	strict := v1gen.NewStrictHandlerWithOptions(srv, []v1gen.StrictMiddlewareFunc{interactiveBrowse}, v1gen.StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())
 		},

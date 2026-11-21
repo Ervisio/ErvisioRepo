@@ -32,8 +32,9 @@ var _ RepoSearcher = (*repos.Service)(nil)
 
 var errBrowseUnavailable = problemResponse{status: http.StatusServiceUnavailable, detail: "code browsing is not available"}
 
-// retryHydrating is the Retry-After of a repository being restored or busy.
-const retryHydrating = 30
+// retryHydrating is the Retry-After of a repository being restored or busy;
+// the web page also follows the hydration stream and refetches when it ends.
+const retryHydrating = 10
 
 // browseFail maps a repository or code browsing error to a response.
 func browseFail(err error, method, suffix string) (browseResponse, error) {

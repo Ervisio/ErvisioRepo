@@ -24,11 +24,17 @@ type Resolved struct {
 	Kind   string // KindBranch, KindTag or KindCommit
 	Name   string // full ref name; empty for KindCommit
 	Commit string // full commit id
+	// target is the object the ref points at when it differs from Commit
+	// (an annotated tag), for the browse cache.
+	target string
 }
 
 // Resolve resolves ref (a branch, a tag, a full or abbreviated commit id,
 // a full ref name; empty = the default branch) to a commit.
 func (s *Service) Resolve(ctx context.Context, repo Repo, ref string) (Resolved, error) {
+	if r, ok, err := s.coldResolveRead(ctx, repo, ref); ok {
+		return r, err
+	}
 	var r Resolved
 	err := s.read(ctx, repo, func(path string) error {
 		var err error
@@ -100,6 +106,7 @@ func (s *Service) resolve(ctx context.Context, path string, repo Repo, ref strin
 					continue // a tag of a tree or blob
 				}
 				commit = f[2]
+				r.target = f[1]
 			} else if f[0] != "commit" {
 				continue
 			}

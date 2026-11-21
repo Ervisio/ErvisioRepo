@@ -308,7 +308,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		deps.Git = git.HTTP
 		deps.Tiering = tiering.Admin
 		deps.Hydration = tiering.Hydrator
-		browse, err := setupBrowse(cfg, pool, gitTier, journal, log)
+		browse, err := setupBrowse(cfg, pool, gitTier, journal, tiering.Hydrator, log)
 		if err != nil {
 			return err
 		}
@@ -525,7 +525,7 @@ func (p pluginRunners) DeleteInstanceRunner(ctx context.Context, id uuid.UUID) e
 
 // setupBrowse builds the code browsing service. Web edits go through the
 // hook server, so that the journal records them like pushes.
-func setupBrowse(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, j *gitJournal, log *slog.Logger) (*gitbrowse.Service, error) {
+func setupBrowse(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, j *gitJournal, hydrator gitbrowse.Hydrator, log *slog.Logger) (*gitbrowse.Service, error) {
 	var hooks *githooks.Server
 	if j != nil {
 		hooks = j.Hooks
@@ -534,8 +534,14 @@ func setupBrowse(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, j *gi
 	if u, err := url.Parse(cfg.Server.PublicURL); err == nil && u.Hostname() != "" {
 		host = u.Hostname()
 	}
-	s, err := gitbrowse.New(gitbrowse.Options{Tier: t, Hooks: hooks, DB: pool, NoReplyDomain: "users.noreply." + host,
-		Log: log.With("component", "git-browse")})
+	opt := gitbrowse.Options{Tier: t, Hooks: hooks, DB: pool, NoReplyDomain: "users.noreply." + host,
+		Hydrator: hydrator, Log: log.With("component", "git-browse")}
+	if j != nil && j.GitHub != nil {
+		// Cold repositories linked to GitHub list their files from there
+		// while they are hydrated.
+		opt.Remote = newGitHubObjects(j.GitHub)
+	}
+	s, err := gitbrowse.New(opt)
 	if err != nil {
 		return nil, fmt.Errorf("code browsing: %w", err)
 	}

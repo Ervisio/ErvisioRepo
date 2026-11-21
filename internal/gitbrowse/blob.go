@@ -119,22 +119,8 @@ func (s *Service) Blob(ctx context.Context, repo Repo, ref, path string) (Blob, 
 	if err := git.ValidateTreePath(path); err != nil {
 		return Blob{}, fmt.Errorf("%w: %w", ErrInvalid, err)
 	}
-	var b Blob
-	err := s.read(ctx, repo, func(rp string) error {
-		r, err := s.resolve(ctx, rp, repo, ref)
-		if err != nil {
-			return err
-		}
-		b, err = s.blob(ctx, rp, r, path)
-		return err
-	})
-	return b, err
-}
-
-// Readme returns the README of the directory at path of ref.
-func (s *Service) Readme(ctx context.Context, repo Repo, ref, path string) (Blob, error) {
-	if err := git.ValidateTreePath(path); err != nil {
-		return Blob{}, fmt.Errorf("%w: %w", ErrInvalid, err)
+	if b, ok, err := s.coldBlobRead(ctx, repo, ref, path, false); ok {
+		return b, err
 	}
 	var b Blob
 	err := s.read(ctx, repo, func(rp string) error {
@@ -142,15 +128,49 @@ func (s *Service) Readme(ctx context.Context, repo Repo, ref, path string) (Blob
 		if err != nil {
 			return err
 		}
-		entries, _, err := s.listTree(ctx, rp, r.Commit, path)
+		b, err = s.blob(ctx, rp, r, path)
+		if err == nil && b.Content != nil && isReadme(pathBase(path)) {
+			s.rememberBlob(repo.ID, b.OID, b.Content)
+		}
+		return err
+	})
+	return b, err
+}
+
+func pathBase(p string) string {
+	if i := strings.LastIndexByte(p, '/'); i >= 0 {
+		return p[i+1:]
+	}
+	return p
+}
+
+// Readme returns the README of the directory at path of ref.
+func (s *Service) Readme(ctx context.Context, repo Repo, ref, path string) (Blob, error) {
+	if err := git.ValidateTreePath(path); err != nil {
+		return Blob{}, fmt.Errorf("%w: %w", ErrInvalid, err)
+	}
+	if b, ok, err := s.coldBlobRead(ctx, repo, ref, path, true); ok {
+		return b, err
+	}
+	var b Blob
+	err := s.read(ctx, repo, func(rp string) error {
+		r, err := s.resolve(ctx, rp, repo, ref)
 		if err != nil {
 			return err
 		}
+		entries, truncated, oid, err := s.listTree(ctx, rp, r.Commit, path)
+		if err != nil {
+			return err
+		}
+		s.rememberListing(ctx, rp, repo.ID, r, path, oid, entries, truncated)
 		name := readmeOf(entries)
 		if name == "" {
 			return notFoundf("no README in %q", path)
 		}
 		b, err = s.blob(ctx, rp, r, name)
+		if err == nil && b.Content != nil {
+			s.rememberBlob(repo.ID, b.OID, b.Content)
+		}
 		return err
 	})
 	return b, err

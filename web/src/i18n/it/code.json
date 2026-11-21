@@ -10,6 +10,8 @@
   "nav.search": "Cerca",
   "state.hydrating": "Preparazione del repository…",
   "state.hydratingSlow": "Il repository è ancora in preparazione",
+  "state.hydratingPct": "Preparazione del repository: {percent}%",
+  "state.hydratingHint": "È sullo storage remoto e viene copiato su questo server; la pagina si aggiorna da sola.",
   "state.error": "Impossibile caricare il contenuto",
   "state.notFound": "Repository non trovato",
   "state.signInTitle": "Questo repository non esiste o è privato",

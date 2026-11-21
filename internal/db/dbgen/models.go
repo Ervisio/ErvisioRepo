@@ -564,6 +564,29 @@ type GhapiID struct {
 	ID   int64
 }
 
+type GitBrowseBlob struct {
+	RepoID    uuid.UUID
+	Oid       string
+	Content   []byte
+	CreatedAt pgtype.Timestamptz
+}
+
+type GitBrowseCommit struct {
+	RepoID    uuid.UUID
+	Oid       string
+	CommitSha string
+	TreeOid   string
+	CreatedAt pgtype.Timestamptz
+}
+
+type GitBrowseTree struct {
+	RepoID    uuid.UUID
+	Oid       string
+	Entries   []byte
+	Truncated bool
+	CreatedAt pgtype.Timestamptz
+}
+
 type GitGenerationsRetired struct {
 	RepoID     uuid.UUID
 	Generation int64
