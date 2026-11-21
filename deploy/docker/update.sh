@@ -2,8 +2,8 @@
 # Ervisio Repo Docker update: moves an existing installation to a new
 # release without touching its secrets or settings.
 #
-#   curl -fsSL https://raw.githubusercontent.com/Ervisio/ErvisioRepo/main/deploy/docker/update.sh | sh
-#   curl -fsSL .../update.sh | sh -s -- --dir /opt/ervisio-repo/deploy/docker --version 1.23.0
+#   curl -fsSL https://raw.githubusercontent.com/Ervisio/ErvisioRepo/main/deploy/docker/update.sh | sudo sh
+#   curl -fsSL .../update.sh | sudo sh -s -- --dir /opt/ervisio-repo/deploy/docker --version 1.23.0
 #
 # Steps (each prints a "==> step" marker, read by Admin > Updates):
 #   backup  copies .env, compose.yaml and config/config.toml to backups/<time>/
@@ -85,6 +85,11 @@ fi
 cd "$dir" || die "cannot enter $dir"
 dir=$(pwd)
 looks_installed . || die "$dir has no compose.yaml and .env: run setup.sh first"
+# An installation made by root (the Ervisio Console plugin, sudo ./setup.sh)
+# is not readable by other users: say so instead of "missing".
+if { [ -d config ] && { ! [ -r config ] || ! [ -x config ]; }; } || ! [ -r .env ] || ! [ -w .env ]; then
+  die "no access to $dir (owned by $(stat -c %U . 2>/dev/null || echo another user)): run it with sudo, e.g. curl -fsSL https://raw.githubusercontent.com/$REPO/main/deploy/docker/update.sh | sudo sh"
+fi
 [ -s config/master.key ] || die "$dir/config/master.key is missing: refusing to update"
 [ -f config/config.toml ] || die "$dir/config/config.toml is missing: refusing to update"
 

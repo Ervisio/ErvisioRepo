@@ -63,7 +63,7 @@ docker compose --profile backup up -d    # sidecar per l'archiviazione dei WAL (
 Senza updater, o da terminale, lo stesso aggiornamento è un solo comando sull'host:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Ervisio/ErvisioRepo/main/deploy/docker/update.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Ervisio/ErvisioRepo/main/deploy/docker/update.sh | sudo sh
 # opzioni: --dir /opt/ervisio-repo/deploy/docker  --version 1.2.3  --yes  --no-db-backup
 ```
 

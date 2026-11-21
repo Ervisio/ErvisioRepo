@@ -320,7 +320,7 @@
   "updates.noNotes": "No release notes.",
   "updates.onGitHub": "Open on GitHub",
   "updates.terminal": "Update from a terminal",
-  "updates.terminal.docker": "On the host, as a user with Docker access. Keeps .env, config.toml and master.key, makes a backup and goes back if anything fails.",
+  "updates.terminal.docker": "On the host, with sudo (the files of a Docker installation usually belong to root). Keeps .env, config.toml and master.key, makes a backup and goes back if anything fails.",
   "updates.terminal.native": "On the host, as a user with sudo. Checks the package signature and keeps the configuration.",
   "nav.settings": "Settings",
   "section.auth": "Authentication",

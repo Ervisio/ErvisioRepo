@@ -63,7 +63,7 @@ docker compose --profile backup up -d    # Postgres WAL archiving sidecar (see d
 Without the updater, or from a terminal, the same update is one command on the host:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Ervisio/ErvisioRepo/main/deploy/docker/update.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Ervisio/ErvisioRepo/main/deploy/docker/update.sh | sudo sh
 # options: --dir /opt/ervisio-repo/deploy/docker  --version 1.2.3  --yes  --no-db-backup
 ```
 

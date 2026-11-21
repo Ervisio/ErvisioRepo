@@ -204,7 +204,7 @@ func (s *Service) command(st Status) string {
 	}
 	switch s.o.Deploy {
 	case DeployDocker:
-		cmd := "curl -fsSL " + raw + "docker/update.sh | sh -s --"
+		cmd := "curl -fsSL " + raw + "docker/update.sh | sudo sh -s --"
 		if s.o.DeployDir != "" {
 			cmd += " --dir " + shellQuote(s.o.DeployDir)
 		}
