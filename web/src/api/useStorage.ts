@@ -140,3 +140,18 @@ export function useHotRepos(q: string, all: boolean, offset: number, limit: numb
     },
   });
 }
+
+export type StorageJobStarted = components["schemas"]["StorageJobStarted"];
+
+/** Copies every object of a data type to its replicas again (POST /admin/storage/policies/{policy}/resync). */
+export function useResyncPolicy() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (policy: string) => request<StorageJobStarted>("POST", `/admin/storage/policies/${encodeURIComponent(policy)}/resync`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "storage"] }),
+  });
+}
+
+/** Verifies every stored object on every copy, in the background (POST /admin/storage/verify). */
+export const useVerifyStorage = () =>
+  useMutation({ mutationFn: () => request<StorageJobStarted>("POST", "/admin/storage/verify") });

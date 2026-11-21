@@ -11,6 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countStorageObjects = `-- name: CountStorageObjects :one
+SELECT count(*)::bigint FROM storage_objects
+`
+
+func (q *Queries) CountStorageObjects(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countStorageObjects)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const deleteStorageObject = `-- name: DeleteStorageObject :exec
 DELETE FROM storage_objects WHERE target = $1 AND key = $2
 `
@@ -144,6 +155,22 @@ SELECT pg_advisory_xact_lock(hashtext('storage.overlay'))
 func (q *Queries) LockStorageOverlay(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, lockStorageOverlay)
 	return err
+}
+
+const markPolicyReplicasPending = `-- name: MarkPolicyReplicasPending :execrows
+UPDATE storage_objects SET replicas_ok = false, updated_at = now()
+WHERE policy = $1 AND replicas_ok
+`
+
+// Queues every object of a policy for replication again (a replica was
+// added, or an admin asked for a full sync). Replicas already holding an
+// object are only re-hashed by the copy.
+func (q *Queries) MarkPolicyReplicasPending(ctx context.Context, policy string) (int64, error) {
+	result, err := q.db.Exec(ctx, markPolicyReplicasPending, policy)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const markStorageObjectReplicated = `-- name: MarkStorageObjectReplicated :exec

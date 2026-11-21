@@ -77,6 +77,16 @@ FROM storage_objects
 GROUP BY policy, target
 ORDER BY policy, target;
 
+-- name: MarkPolicyReplicasPending :execrows
+-- Queues every object of a policy for replication again (a replica was
+-- added, or an admin asked for a full sync). Replicas already holding an
+-- object are only re-hashed by the copy.
+UPDATE storage_objects SET replicas_ok = false, updated_at = now()
+WHERE policy = @policy AND replicas_ok;
+
+-- name: CountStorageObjects :one
+SELECT count(*)::bigint FROM storage_objects;
+
 -- name: LockStorageOverlay :exec
 -- Serialises read-modify-write of the storage overlay across server instances
 -- until the end of the transaction.

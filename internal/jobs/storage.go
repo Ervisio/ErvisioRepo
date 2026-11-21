@@ -32,7 +32,9 @@ const (
 	// EvictInterval is how often the cache watermarks and TTLs are enforced.
 	EvictInterval = 15 * time.Minute
 
-	sweepBatch = 500
+	// sweepBatch bounds the replication jobs one sweep enqueues; a full sync
+	// of a large policy spreads over several sweeps.
+	sweepBatch = 5000
 )
 
 // StorageTier is the subset of *tier.Tier used by the storage jobs.
@@ -161,8 +163,38 @@ func (w *ReplicaSweepWorker) Work(ctx context.Context, _ *river.Job[ReplicaSweep
 	return EnqueueReplication(ctx, ins, refs...)
 }
 
-// StorageVerifyArgs is the weekly sample verification.
-type StorageVerifyArgs struct{}
+// StorageVerifyArgs is the weekly sample verification. All, set by a
+// verification asked from the admin, checks up to Limit objects whatever
+// their last verification.
+type StorageVerifyArgs struct {
+	All   bool  `json:"all,omitempty"`
+	Limit int32 `json:"limit,omitempty"`
+}
+
+// InsertOpts keeps one verification queued or running at a time.
+func (StorageVerifyArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{UniqueOpts: river.UniqueOpts{ByArgs: true,
+		ByState: []rivertype.JobState{rivertype.JobStateAvailable, rivertype.JobStatePending, rivertype.JobStateRunning,
+			rivertype.JobStateRetryable, rivertype.JobStateScheduled}}}
+}
+
+// EnqueueReplicaSweep runs the replica sweep now.
+func (r *Runner) EnqueueReplicaSweep(ctx context.Context) error {
+	if r == nil || r.client == nil {
+		return errors.New("replica sweep: job runner not configured")
+	}
+	_, err := r.client.Insert(ctx, ReplicaSweepArgs{}, nil)
+	return err
+}
+
+// EnqueueFullVerify verifies up to limit objects on every copy, now.
+func (r *Runner) EnqueueFullVerify(ctx context.Context, limit int32) error {
+	if r == nil || r.client == nil {
+		return errors.New("storage verification: job runner not configured")
+	}
+	_, err := r.client.Insert(ctx, StorageVerifyArgs{All: true, Limit: limit}, nil)
+	return err
+}
 
 func (StorageVerifyArgs) Kind() string { return "storage_verify" }
 
@@ -180,7 +212,7 @@ func (*StorageVerifyWorker) Timeout(*river.Job[StorageVerifyArgs]) time.Duration
 	return 12 * time.Hour
 }
 
-func (w *StorageVerifyWorker) Work(ctx context.Context, _ *river.Job[StorageVerifyArgs]) error {
+func (w *StorageVerifyWorker) Work(ctx context.Context, job *river.Job[StorageVerifyArgs]) error {
 	now := time.Now
 	if w.Now != nil {
 		now = w.Now
@@ -189,7 +221,14 @@ func (w *StorageVerifyWorker) Work(ctx context.Context, _ *river.Job[StorageVeri
 	if n <= 0 {
 		n = VerifySampleSize
 	}
-	rep, err := w.Tier.VerifySample(ctx, pgtype.Timestamptz{Time: now().Add(-VerifyAge), Valid: true}, n)
+	before := now().Add(-VerifyAge)
+	if job.Args.All {
+		before = job.CreatedAt
+		if job.Args.Limit > 0 {
+			n = job.Args.Limit
+		}
+	}
+	rep, err := w.Tier.VerifySample(ctx, pgtype.Timestamptz{Time: before, Valid: true}, n)
 	log := w.Log
 	if log == nil {
 		log = slog.New(slog.DiscardHandler)

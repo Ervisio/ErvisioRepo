@@ -7154,6 +7154,12 @@ type StorageHotCacheInput struct {
 	TtlSeconds int64 `json:"ttlSeconds"`
 }
 
+// StorageJobStarted defines model for StorageJobStarted.
+type StorageJobStarted struct {
+	// Objects Objects the job will copy or check
+	Objects int64 `json:"objects"`
+}
+
 // StoragePolicy defines model for StoragePolicy.
 type StoragePolicy struct {
 	Bytes           int64   `json:"bytes"`
@@ -9490,6 +9496,9 @@ type ServerInterface interface {
 	// PutAdminStoragePolicy Change where a data type is stored
 	// (PUT /admin/storage/policies/{policy})
 	PutAdminStoragePolicy(w http.ResponseWriter, r *http.Request, policy string)
+	// ResyncAdminStoragePolicy Copy every object of a data type to its replicas again
+	// (POST /admin/storage/policies/{policy}/resync)
+	ResyncAdminStoragePolicy(w http.ResponseWriter, r *http.Request, policy string)
 	// DeleteAdminStorageTarget Delete a storage target created in the web admin
 	// (DELETE /admin/storage/targets/{name})
 	DeleteAdminStorageTarget(w http.ResponseWriter, r *http.Request, name string)
@@ -9499,6 +9508,9 @@ type ServerInterface interface {
 	// TestAdminStorageDraft Run the connection test on a target definition that is not saved
 	// (POST /admin/storage/test)
 	TestAdminStorageDraft(w http.ResponseWriter, r *http.Request)
+	// VerifyAdminStorage Verify every stored object
+	// (POST /admin/storage/verify)
+	VerifyAdminStorage(w http.ResponseWriter, r *http.Request)
 	// TestAdminStorageTarget Run a write/read/list/delete round trip on a storage target
 	// (POST /admin/storage/{target}/test)
 	TestAdminStorageTarget(w http.ResponseWriter, r *http.Request, target string)
@@ -10846,6 +10858,12 @@ func (_ Unimplemented) PutAdminStoragePolicy(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ResyncAdminStoragePolicy Copy every object of a data type to its replicas again
+// (POST /admin/storage/policies/{policy}/resync)
+func (_ Unimplemented) ResyncAdminStoragePolicy(w http.ResponseWriter, r *http.Request, policy string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // DeleteAdminStorageTarget Delete a storage target created in the web admin
 // (DELETE /admin/storage/targets/{name})
 func (_ Unimplemented) DeleteAdminStorageTarget(w http.ResponseWriter, r *http.Request, name string) {
@@ -10861,6 +10879,12 @@ func (_ Unimplemented) PutAdminStorageTarget(w http.ResponseWriter, r *http.Requ
 // TestAdminStorageDraft Run the connection test on a target definition that is not saved
 // (POST /admin/storage/test)
 func (_ Unimplemented) TestAdminStorageDraft(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// VerifyAdminStorage Verify every stored object
+// (POST /admin/storage/verify)
+func (_ Unimplemented) VerifyAdminStorage(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -14168,6 +14192,38 @@ func (siw *ServerInterfaceWrapper) PutAdminStoragePolicy(w http.ResponseWriter, 
 	handler.ServeHTTP(w, r)
 }
 
+// ResyncAdminStoragePolicy operation middleware
+func (siw *ServerInterfaceWrapper) ResyncAdminStoragePolicy(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "policy" -------------
+	var policy string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "policy", chi.URLParam(r, "policy"), &policy, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "policy", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResyncAdminStoragePolicy(w, r, policy)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteAdminStorageTarget operation middleware
 func (siw *ServerInterfaceWrapper) DeleteAdminStorageTarget(w http.ResponseWriter, r *http.Request) {
 
@@ -14243,6 +14299,26 @@ func (siw *ServerInterfaceWrapper) TestAdminStorageDraft(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestAdminStorageDraft(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// VerifyAdminStorage operation middleware
+func (siw *ServerInterfaceWrapper) VerifyAdminStorage(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{"admin"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.VerifyAdminStorage(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -32129,6 +32205,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/admin/storage/targets/{name}", wrapper.PutAdminStorageTarget)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/storage/policies/{policy}/resync", wrapper.ResyncAdminStoragePolicy)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/admin/storage/verify", wrapper.VerifyAdminStorage)
+	})
+	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/admin/storage/policies/{policy}", wrapper.PutAdminStoragePolicy)
 	})
 	r.Group(func(r chi.Router) {
@@ -35436,6 +35518,75 @@ func (response PutAdminStoragePolicydefaultApplicationProblemPlusJSONResponse) V
 	return err
 }
 
+type ResyncAdminStoragePolicyRequestObject struct {
+	Policy string `json:"policy"`
+}
+
+type ResyncAdminStoragePolicyResponseObject interface {
+	VisitResyncAdminStoragePolicyResponse(w http.ResponseWriter) error
+}
+
+type ResyncAdminStoragePolicy202JSONResponse StorageJobStarted
+
+func (response ResyncAdminStoragePolicy202JSONResponse) VisitResyncAdminStoragePolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResyncAdminStoragePolicy404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ResyncAdminStoragePolicy404ApplicationProblemPlusJSONResponse) VisitResyncAdminStoragePolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResyncAdminStoragePolicy409ApplicationProblemPlusJSONResponse Problem
+
+func (response ResyncAdminStoragePolicy409ApplicationProblemPlusJSONResponse) VisitResyncAdminStoragePolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResyncAdminStoragePolicydefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response ResyncAdminStoragePolicydefaultApplicationProblemPlusJSONResponse) VisitResyncAdminStoragePolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type DeleteAdminStorageTargetRequestObject struct {
 	Name string `json:"name"`
 }
@@ -35661,6 +35812,44 @@ type TestAdminStorageDraftdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response TestAdminStorageDraftdefaultApplicationProblemPlusJSONResponse) VisitTestAdminStorageDraftResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyAdminStorageRequestObject struct {
+}
+
+type VerifyAdminStorageResponseObject interface {
+	VisitVerifyAdminStorageResponse(w http.ResponseWriter) error
+}
+
+type VerifyAdminStorage202JSONResponse StorageJobStarted
+
+func (response VerifyAdminStorage202JSONResponse) VisitVerifyAdminStorageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyAdminStoragedefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response VerifyAdminStoragedefaultApplicationProblemPlusJSONResponse) VisitVerifyAdminStorageResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -68667,6 +68856,9 @@ type StrictServerInterface interface {
 	// PutAdminStoragePolicy Change where a data type is stored
 	// (PUT /admin/storage/policies/{policy})
 	PutAdminStoragePolicy(ctx context.Context, request PutAdminStoragePolicyRequestObject) (PutAdminStoragePolicyResponseObject, error)
+	// ResyncAdminStoragePolicy Copy every object of a data type to its replicas again
+	// (POST /admin/storage/policies/{policy}/resync)
+	ResyncAdminStoragePolicy(ctx context.Context, request ResyncAdminStoragePolicyRequestObject) (ResyncAdminStoragePolicyResponseObject, error)
 	// DeleteAdminStorageTarget Delete a storage target created in the web admin
 	// (DELETE /admin/storage/targets/{name})
 	DeleteAdminStorageTarget(ctx context.Context, request DeleteAdminStorageTargetRequestObject) (DeleteAdminStorageTargetResponseObject, error)
@@ -68676,6 +68868,9 @@ type StrictServerInterface interface {
 	// TestAdminStorageDraft Run the connection test on a target definition that is not saved
 	// (POST /admin/storage/test)
 	TestAdminStorageDraft(ctx context.Context, request TestAdminStorageDraftRequestObject) (TestAdminStorageDraftResponseObject, error)
+	// VerifyAdminStorage Verify every stored object
+	// (POST /admin/storage/verify)
+	VerifyAdminStorage(ctx context.Context, request VerifyAdminStorageRequestObject) (VerifyAdminStorageResponseObject, error)
 	// TestAdminStorageTarget Run a write/read/list/delete round trip on a storage target
 	// (POST /admin/storage/{target}/test)
 	TestAdminStorageTarget(ctx context.Context, request TestAdminStorageTargetRequestObject) (TestAdminStorageTargetResponseObject, error)
@@ -70680,6 +70875,32 @@ func (sh *strictHandler) PutAdminStoragePolicy(w http.ResponseWriter, r *http.Re
 	}
 }
 
+// ResyncAdminStoragePolicy operation middleware
+func (sh *strictHandler) ResyncAdminStoragePolicy(w http.ResponseWriter, r *http.Request, policy string) {
+	var request ResyncAdminStoragePolicyRequestObject
+
+	request.Policy = policy
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResyncAdminStoragePolicy(ctx, request.(ResyncAdminStoragePolicyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResyncAdminStoragePolicy")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResyncAdminStoragePolicyResponseObject); ok {
+		if err := validResponse.VisitResyncAdminStoragePolicyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeleteAdminStorageTarget operation middleware
 func (sh *strictHandler) DeleteAdminStorageTarget(w http.ResponseWriter, r *http.Request, name string) {
 	var request DeleteAdminStorageTargetRequestObject
@@ -70763,6 +70984,30 @@ func (sh *strictHandler) TestAdminStorageDraft(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(TestAdminStorageDraftResponseObject); ok {
 		if err := validResponse.VisitTestAdminStorageDraftResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// VerifyAdminStorage operation middleware
+func (sh *strictHandler) VerifyAdminStorage(w http.ResponseWriter, r *http.Request) {
+	var request VerifyAdminStorageRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.VerifyAdminStorage(ctx, request.(VerifyAdminStorageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "VerifyAdminStorage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(VerifyAdminStorageResponseObject); ok {
+		if err := validResponse.VisitVerifyAdminStorageResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -68,6 +68,7 @@ type Service struct {
 	opt    Options
 	q      *dbgen.Queries
 	sealer *sealer
+	jobs   Jobs
 }
 
 // NewService returns a Service.

@@ -24,6 +24,8 @@ type StorageConfig interface {
 	PutHotCache(ctx context.Context, actor uuid.UUID, ip string, in storagecfg.HotCacheInput) (storagecfg.View, error)
 	Test(ctx context.Context, in storagecfg.TargetInput) (tier.CheckResult, error)
 	ScanHostKeys(ctx context.Context, host string, port int) ([]tier.HostKey, error)
+	Resync(ctx context.Context, actor uuid.UUID, ip, policy string) (int64, error)
+	VerifyAll(ctx context.Context, actor uuid.UUID, ip string) (int64, error)
 }
 
 // maxStorageBody bounds the JSON bodies of the storage configuration

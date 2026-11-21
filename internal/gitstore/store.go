@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 
 	"github.com/google/uuid"
@@ -34,7 +35,13 @@ type Store struct {
 	class   *tier.Class
 	primary blob.Store
 	cas     blob.ConditionalPutter
+	// mirror copies saved manifests to the replicas; log reports failures.
+	mirror manifestMirror
+	log    *slog.Logger
 }
+
+// SetLogger sets where manifest replica copy failures are reported.
+func (s *Store) SetLogger(l *slog.Logger) { s.log = l }
 
 // NewStore binds the store to the "git" class of t. The class primary must
 // implement blob.ConditionalPutter (local and s3 do; sftp does not).
@@ -125,6 +132,7 @@ func (s *Store) SaveManifest(ctx context.Context, m *Manifest) error {
 		return fmt.Errorf("save manifest %s: %w", m.Repo, err)
 	}
 	m.ETag = info.ETag
+	s.mirrorManifest(s.class.FullKey(ManifestKey(m.Repo)), data)
 	return nil
 }
 

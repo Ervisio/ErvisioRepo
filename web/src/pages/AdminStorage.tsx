@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  useDeleteStorageTarget, useStorageConfig, useStorageDraftTest, useStorageStatus, useStorageTest,
+  useDeleteStorageTarget, useResyncPolicy, useStorageConfig, useStorageDraftTest, useStorageStatus, useStorageTest, useVerifyStorage,
   type StorageConfig, type StorageStatus, type StorageTargetConfig, type StorageTargetInput,
 } from "../api/useStorage.ts";
 import { useT } from "../i18n/useT.ts";
@@ -164,6 +164,8 @@ export function AdminStorage() {
   const config = useStorageConfig();
   const [targetDialog, setTargetDialog] = useState<{ open: boolean; existing?: StorageTargetConfig }>({ open: false });
   const [policyName, setPolicyName] = useState<string | undefined>();
+  const resync = useResyncPolicy();
+  const verify = useVerifyStorage();
   const title = t("storage.title");
 
   if (status.isPending || config.isPending) {
@@ -228,6 +230,13 @@ export function AdminStorage() {
 
       <section aria-labelledby="as-pol">
         <h3 id="as-pol" className="ao-h3">{t("storage.policies")}</h3>
+        <p className="ui-note">
+          {t("storage.backup.hint")}{" "}
+          <Button size="sm" variant="ghost" icon="shield" disabled={verify.isPending}
+            onClick={() => verify.mutate(undefined, { onSuccess: (r) => notify.ok(t("storage.verify.started", { n: r.objects })), onError: notify.fail })}>
+            {t("storage.verify")}
+          </Button>
+        </p>
         {s.policies.length === 0 ? (
           <EmptyState icon="layers" title={t("storage.policies.empty")} />
         ) : (
@@ -269,6 +278,12 @@ export function AdminStorage() {
                     ) : p.pendingReplicas > 0 ? (
                       <span className="ui-chip ui-chip-warn">{t("storage.pendingN", { n: p.pendingReplicas })}</span>
                     ) : null}
+                    {p.replicas.length > 0 && (
+                      <Button size="sm" variant="ghost" disabled={resync.isPending} title={t("storage.resync.hint")}
+                        onClick={() => resync.mutate(p.name, { onSuccess: (r) => notify.ok(t("storage.resync.started", { n: r.objects })), onError: notify.fail })}>
+                        {t("storage.resync")}
+                      </Button>
+                    )}
                     {next && <Button size="sm" variant="ghost" icon="edit" aria-label={t("storage.policy.edit", { policy: p.name })} onClick={() => setPolicyName(p.name)} />}
                   </span>
                 </li>

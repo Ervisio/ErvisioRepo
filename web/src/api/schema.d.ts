@@ -158,6 +158,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/storage/policies/{policy}/resync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Copy every object of a data type to its replicas again
+         * @description Instance admins only. Queues every stored object of the running
+         *     policy for replication (copies already complete are only re-hashed)
+         *     and, for git, copies the repository manifests. Runs in the
+         *     background; the pending count of the storage page shows progress.
+         *     409 when the policy has no replica.
+         */
+        post: operations["resyncAdminStoragePolicy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/storage/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify every stored object
+         * @description Instance admins only. Re-hashes every object on its primary and on
+         *     every replica in the background (up to one million per run); a bad
+         *     primary copy is repaired from a good replica and a bad replica is
+         *     copied again. Results go to the server log and to the error counts
+         *     of the storage page.
+         */
+        post: operations["verifyAdminStorage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/storage/policies/{policy}": {
         parameters: {
             query?: never;
@@ -9040,6 +9090,13 @@ export interface components {
             /** @description The running process uses another value */
             restartPending: boolean;
         };
+        StorageJobStarted: {
+            /**
+             * Format: int64
+             * @description Objects the job will copy or check
+             */
+            objects: number;
+        };
         AvailableRelease: {
             /** @description x.y.z */
             version: string;
@@ -11585,6 +11642,52 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ValidationProblem"];
+                };
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
+    resyncAdminStoragePolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Objects queued */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageJobStarted"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    verifyAdminStorage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Verification started */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageJobStarted"];
                 };
             };
             default: components["responses"]["Problem"];

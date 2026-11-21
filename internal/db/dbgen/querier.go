@@ -130,6 +130,7 @@ type Querier interface {
 	// Events per repository and week since since (week 0 = the oldest), for
 	// the readable repositories among ids.
 	CountRepoWeeklyActivity(ctx context.Context, arg CountRepoWeeklyActivityParams) ([]CountRepoWeeklyActivityRow, error)
+	CountStorageObjects(ctx context.Context) (int64, error)
 	// Number of distinct run names of each suite.
 	CountSuiteRuns(ctx context.Context, suiteIds []uuid.UUID) ([]CountSuiteRunsRow, error)
 	CountTeamsInOrg(ctx context.Context, arg CountTeamsInOrgParams) (int64, error)
@@ -944,6 +945,10 @@ type Querier interface {
 	MarkNotificationsRead(ctx context.Context, arg MarkNotificationsReadParams) (int64, error)
 	MarkOrgInviteAccepted(ctx context.Context, arg MarkOrgInviteAcceptedParams) (int64, error)
 	MarkOutboxDispatched(ctx context.Context, ids []uuid.UUID) error
+	// Queues every object of a policy for replication again (a replica was
+	// added, or an admin asked for a full sync). Replicas already holding an
+	// object are only re-hashed by the copy.
+	MarkPolicyReplicasPending(ctx context.Context, policy string) (int64, error)
 	// Write path of the git journal: durability, compaction, maintenance and
 	// garbage collection (PLAN §4.3).
 	// Records that the hot copy is ahead of the remote manifest; the first

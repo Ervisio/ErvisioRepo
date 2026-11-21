@@ -250,6 +250,61 @@ paths:
                 $ref: "#/components/schemas/ValidationProblem"
         default:
           $ref: "#/components/responses/Problem"
+  /admin/storage/policies/{policy}/resync:
+    parameters:
+      - name: policy
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: "^[a-z]{1,32}$"
+    post:
+      operationId: resyncAdminStoragePolicy
+      tags: [admin]
+      summary: Copy every object of a data type to its replicas again
+      description: |
+        Instance admins only. Queues every stored object of the running
+        policy for replication (copies already complete are only re-hashed)
+        and, for git, copies the repository manifests. Runs in the
+        background; the pending count of the storage page shows progress.
+        409 when the policy has no replica.
+      security:
+        - session: [admin]
+      responses:
+        "202":
+          description: Objects queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageJobStarted"
+        "404":
+          $ref: "#/components/responses/Problem"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /admin/storage/verify:
+    post:
+      operationId: verifyAdminStorage
+      tags: [admin]
+      summary: Verify every stored object
+      description: |
+        Instance admins only. Re-hashes every object on its primary and on
+        every replica in the background (up to one million per run); a bad
+        primary copy is repaired from a good replica and a bad replica is
+        copied again. Results go to the server log and to the error counts
+        of the storage page.
+      security:
+        - session: [admin]
+      responses:
+        "202":
+          description: Verification started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageJobStarted"
+        default:
+          $ref: "#/components/responses/Problem"
   /admin/storage/policies/{policy}:
     parameters:
       - name: policy
@@ -14810,6 +14865,11 @@ components:
         restartPending:
           type: boolean
           description: The running process uses another value
+    StorageJobStarted:
+      type: object
+      required: [objects]
+      properties:
+        objects: {type: integer, format: int64, description: Objects the job will copy or check}
     AvailableRelease:
       type: object
       required: [version, name, url, notes, publishedAt]

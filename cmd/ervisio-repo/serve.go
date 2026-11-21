@@ -224,6 +224,10 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 	if err := runner.Start(ctx); err != nil {
 		return err
 	}
+	storageCfg.SetJobs(storageJobs{runner: runner, git: gitTier, log: log})
+	if err := storageCfg.BackfillNewReplicas(ctx); err != nil {
+		log.Warn("storage replicas", "error", err)
+	}
 	defer func() {
 		stopCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownTimeout)
 		defer cancel()

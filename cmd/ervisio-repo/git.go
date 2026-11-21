@@ -40,6 +40,7 @@ func openGitTier(cfg *config.Config, pool *pgxpool.Pool, storage *tier.Tier, hyd
 		if err != nil {
 			return nil, err
 		}
+		s.SetLogger(log.With("component", "git-journal"))
 		store = s
 	}
 	t, err := gitstore.NewTier(gitstore.Options{Pool: pool, HotPath: cfg.Storage.HotPath, Store: store,
