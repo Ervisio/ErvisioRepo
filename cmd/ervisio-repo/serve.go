@@ -318,6 +318,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		}
 		defer browse.Close()
 		deps.Browse = browse
+		deps.LFS = lfsSrv
 		issueSvc := issues.New(issues.Options{Pool: pool, Repos: repoSvc, Browse: browse, Storage: storage, Bus: bus,
 			MaxAttachmentSize: issues.DefaultMaxAttachmentSize, Log: log.With("component", "issues")})
 		bus.Register("issues.autoclose", issueSvc.PushHandler(), events.KindPush)

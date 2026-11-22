@@ -590,6 +590,45 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) error {
 	return err
 }
 
+const listActiveUserSummariesByIDs = `-- name: ListActiveUserSummariesByIDs :many
+SELECT u.id, n.name AS username, u.display_name, u.avatar_url
+FROM users u
+JOIN namespaces n ON n.id = u.id
+WHERE u.id = ANY($1::uuid[]) AND u.suspended_at IS NULL
+`
+
+type ListActiveUserSummariesByIDsRow struct {
+	ID          uuid.UUID
+	Username    string
+	DisplayName string
+	AvatarUrl   string
+}
+
+func (q *Queries) ListActiveUserSummariesByIDs(ctx context.Context, ids []uuid.UUID) ([]ListActiveUserSummariesByIDsRow, error) {
+	rows, err := q.db.Query(ctx, listActiveUserSummariesByIDs, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListActiveUserSummariesByIDsRow{}
+	for rows.Next() {
+		var i ListActiveUserSummariesByIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.DisplayName,
+			&i.AvatarUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listActiveUsersByNames = `-- name: ListActiveUsersByNames :many
 SELECT n.name_lower::text AS name_lower, n.name AS username, u.avatar_url
 FROM users u

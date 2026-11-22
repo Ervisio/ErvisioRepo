@@ -21,7 +21,9 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/gitstore"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+	"github.com/Ervisio/ErvisioRepo/internal/lfs"
 	"github.com/Ervisio/ErvisioRepo/internal/repos"
+	"github.com/Ervisio/ErvisioRepo/internal/storage/blob"
 )
 
 // RepoSearcher searches the repositories visible to a caller (satisfied
@@ -528,7 +530,7 @@ const (
 	archivePath = "/api/v1/repos/{owner}/{name}/archive"
 )
 
-// mountBrowse mounts the raw file (?ref=&path=) and archive
+// mountBrowse mounts the raw file (?ref=&path=, optional preview=1) and archive
 // (?ref=&format=zip|tar.gz) downloads. They stream, so they sit outside the
 // request timeout and the generated router.
 func mountBrowse(r chi.Router, d Deps) {
@@ -542,22 +544,22 @@ func mountBrowse(r chi.Router, d Deps) {
 
 // browseStreamRepo loads the repository of a streaming route; ok is false
 // when the answer was already written.
-func browseStreamRepo(w http.ResponseWriter, req *http.Request, d Deps, suffix string) (gitbrowse.Repo, bool) {
+func browseStreamRepo(w http.ResponseWriter, req *http.Request, d Deps, suffix string) (repos.Repo, bool) {
 	if d.Repos == nil || d.Browse == nil {
 		writeProblem(w, http.StatusServiceUnavailable, "code browsing is not available")
-		return gitbrowse.Repo{}, false
+		return repos.Repo{}, false
 	}
 	p, _ := auth.PrincipalFrom(req.Context())
 	if p.Method == auth.MethodToken && !p.HasScope("repo:read") {
 		writeProblem(w, http.StatusForbidden, "the token lacks the repo:read scope")
-		return gitbrowse.Repo{}, false
+		return repos.Repo{}, false
 	}
 	repo, err := d.Repos.Get(req.Context(), p, chi.URLParam(req, "owner"), chi.URLParam(req, "name"))
 	if err != nil {
 		browseStreamFail(w, req, d, err, suffix)
-		return gitbrowse.Repo{}, false
+		return repos.Repo{}, false
 	}
-	return gitRepo(repo), true
+	return repo, true
 }
 
 // browseStreamFail answers an error of a streaming route before the
@@ -597,19 +599,100 @@ func serveRaw(w http.ResponseWriter, req *http.Request, d Deps) {
 	if !ok {
 		return
 	}
-	err := d.Browse.RawContent(req.Context(), repo, q.Get("ref"), q.Get("path"), func(b gitbrowse.Blob, write gitbrowse.RawWrite) error {
+	var pointer gitbrowse.Blob
+	err := d.Browse.RawContent(req.Context(), gitRepo(repo), q.Get("ref"), q.Get("path"), func(b gitbrowse.Blob, write gitbrowse.RawWrite) error {
+		if preview && (b.Binary || b.LFS != nil) {
+			if contentType := gitbrowse.MediaType(b.Path); contentType != "" {
+				b.ContentType = contentType
+				if b.LFS != nil {
+					pointer = b
+					return nil
+				}
+			}
+		}
 		return writeRaw(w, req, b, write, preview)
 	})
+	// The Git lease is no longer needed when the bytes live in LFS.
+	if err == nil && pointer.LFS != nil {
+		err = serveLFSPreview(w, req, d, repo, pointer)
+	}
+	if errors.Is(err, lfs.ErrPreviewNotFound) {
+		writeProblem(w, http.StatusNotFound, err.Error())
+		return
+	}
 	if err != nil {
 		browseStreamFail(w, req, d, err, suffix)
 	}
 }
 
-func writeRaw(w http.ResponseWriter, req *http.Request, b gitbrowse.Blob, write gitbrowse.RawWrite, preview bool) error {
-	h := w.Header()
+func serveLFSPreview(w http.ResponseWriter, req *http.Request, d Deps, repo repos.Repo, b gitbrowse.Blob) error {
+	if d.LFS == nil {
+		return lfs.ErrPreviewNotFound
+	}
+	ctx := req.Context()
+	open, err := d.LFS.Preview(ctx, repo, principal(ctx), b.LFS.OID, b.LFS.Size)
+	if err != nil {
+		return err
+	}
+	b.OID, b.Size, b.Binary = b.LFS.OID, b.LFS.Size, true
 	etag := `"` + b.OID + `"`
-	contentType := b.ContentType
-	av := strings.HasPrefix(contentType, "audio/") || strings.HasPrefix(contentType, "video/")
+	span, status := rawSpan(req, b.Size, etag, true)
+	if status == http.StatusNotModified || status == http.StatusRequestedRangeNotSatisfiable {
+		writeRawHeader(w, b, etag, span, status, true)
+		return nil
+	}
+	var rng *blob.Range
+	if status == http.StatusPartialContent {
+		rng = &span
+	}
+	rc, err := open(rng)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = rc.Close() }()
+	writeRawHeader(w, b, etag, span, status, true)
+	if _, err := io.Copy(w, rc); err != nil && ctx.Err() == nil {
+		d.Log.WarnContext(ctx, "LFS preview interrupted", "repo", repo.ID, "error", err)
+	}
+	return nil
+}
+
+func writeRaw(w http.ResponseWriter, req *http.Request, b gitbrowse.Blob, write gitbrowse.RawWrite, preview bool) error {
+	etag := `"` + b.OID + `"`
+	span, status := rawSpan(req, b.Size, etag, preview && isMedia(b.ContentType))
+	writeRawHeader(w, b, etag, span, status, preview)
+	if status == http.StatusNotModified || status == http.StatusRequestedRangeNotSatisfiable {
+		return nil
+	}
+	return write(w, span.Offset, span.Length)
+}
+
+func isMedia(contentType string) bool {
+	return strings.HasPrefix(contentType, "image/") || isAudioVideo(contentType)
+}
+
+func isAudioVideo(contentType string) bool {
+	return strings.HasPrefix(contentType, "audio/") || strings.HasPrefix(contentType, "video/")
+}
+
+func rawSpan(req *http.Request, size int64, etag string, ranges bool) (blob.Range, int) {
+	span := blob.Range{Length: size}
+	if req.Header.Get("If-None-Match") == etag {
+		return span, http.StatusNotModified
+	}
+	if match := req.Header.Get("If-Range"); ranges && (match == "" || match == etag) {
+		if rng, ok, unsat := parseRange(req.Header.Get("Range"), size); unsat {
+			return span, http.StatusRequestedRangeNotSatisfiable
+		} else if ok {
+			return rng, http.StatusPartialContent
+		}
+	}
+	return span, http.StatusOK
+}
+
+func writeRawHeader(w http.ResponseWriter, b gitbrowse.Blob, etag string, span blob.Range, status int, preview bool) {
+	h := w.Header()
+	contentType, av := b.ContentType, isAudioVideo(b.ContentType)
 	if av && !preview {
 		contentType = "application/octet-stream"
 	}
@@ -618,25 +701,19 @@ func writeRaw(w http.ResponseWriter, req *http.Request, b gitbrowse.Blob, write 
 	h.Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
 	h.Set("Cache-Control", "private, no-cache")
 	h.Set("ETag", etag)
-	offset, length, status := int64(0), b.Size, http.StatusOK
-	if av && preview {
+	if preview && isMedia(contentType) {
 		h.Set("Accept-Ranges", "bytes")
 	}
-	if req.Header.Get("If-None-Match") == etag {
-		w.WriteHeader(http.StatusNotModified)
-		return nil
-	}
-	if match := req.Header.Get("If-Range"); av && preview && (match == "" || match == etag) {
-		rng, ok, unsat := parseRange(req.Header.Get("Range"), b.Size)
-		if unsat {
-			h.Set("Content-Range", fmt.Sprintf("bytes */%d", b.Size))
-			writeProblem(w, http.StatusRequestedRangeNotSatisfiable, "requested byte range is outside the file")
-			return nil
-		}
-		if ok {
-			offset, length, status = rng.Offset, rng.Length, http.StatusPartialContent
-			h.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", offset, offset+length-1, b.Size))
-		}
+	switch status {
+	case http.StatusNotModified:
+		w.WriteHeader(status)
+		return
+	case http.StatusRequestedRangeNotSatisfiable:
+		h.Set("Content-Range", fmt.Sprintf("bytes */%d", b.Size))
+		writeProblem(w, status, "requested byte range is outside the file")
+		return
+	case http.StatusPartialContent:
+		h.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", span.Offset, span.Offset+span.Length-1, b.Size))
 	}
 	disposition := "attachment"
 	if !b.Binary || strings.HasPrefix(contentType, "image/") || av && preview {
@@ -644,9 +721,8 @@ func writeRaw(w http.ResponseWriter, req *http.Request, b gitbrowse.Blob, write 
 	}
 	name := b.Path[strings.LastIndexByte(b.Path, '/')+1:]
 	h.Set("Content-Disposition", mime.FormatMediaType(disposition, map[string]string{"filename": name}))
-	h.Set("Content-Length", strconv.FormatInt(length, 10))
+	h.Set("Content-Length", strconv.FormatInt(span.Length, 10))
 	w.WriteHeader(status)
-	return write(w, offset, length)
 }
 
 func serveArchive(w http.ResponseWriter, req *http.Request, d Deps) {
@@ -660,7 +736,7 @@ func serveArchive(w http.ResponseWriter, req *http.Request, d Deps) {
 	if !ok {
 		return
 	}
-	err := d.Browse.Archive(req.Context(), repo, q.Get("ref"), format, func(_ gitbrowse.Resolved, filename string) (io.Writer, error) {
+	err := d.Browse.Archive(req.Context(), gitRepo(repo), q.Get("ref"), format, func(_ gitbrowse.Resolved, filename string) (io.Writer, error) {
 		h := w.Header()
 		ct := "application/zip"
 		if format == gitbrowse.FormatTarGz {

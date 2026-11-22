@@ -9,18 +9,19 @@ export type DialogProps = {
   onOpenChange?: (open: boolean) => void;
   title: string;
   description?: string;
+  className?: string;
   children?: ReactNode;
   footer?: ReactNode;
 };
 
-export function Dialog({ trigger, open, onOpenChange, title, description, children, footer }: DialogProps) {
+export function Dialog({ trigger, open, onOpenChange, title, description, className, children, footer }: DialogProps) {
   const t = useT("ui");
   return (
     <RDialog.Root open={open} onOpenChange={onOpenChange}>
       {trigger && <RDialog.Trigger asChild>{trigger}</RDialog.Trigger>}
       <RDialog.Portal>
         <RDialog.Overlay className="ui-overlay" />
-        <RDialog.Content className="ui-dialog" {...(description ? {} : { "aria-describedby": undefined })}>
+        <RDialog.Content className={className ? `ui-dialog ${className}` : "ui-dialog"} {...(description ? {} : { "aria-describedby": undefined })}>
           <div className="ui-dialog-head">
             <RDialog.Title>{title}</RDialog.Title>
             <RDialog.Close className="ui-iconbtn" aria-label={t("dialog.close")}>

@@ -31,6 +31,7 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/ghsync"
 	"github.com/Ervisio/ErvisioRepo/internal/gitbrowse"
 	"github.com/Ervisio/ErvisioRepo/internal/httpapi/v1gen"
+	"github.com/Ervisio/ErvisioRepo/internal/lfs"
 	"github.com/Ervisio/ErvisioRepo/internal/monitor"
 	"github.com/Ervisio/ErvisioRepo/internal/notify"
 	"github.com/Ervisio/ErvisioRepo/internal/runnerinstall"
@@ -99,6 +100,8 @@ type Deps struct {
 	// Browse serves the code browsing endpoints, raw files and archives;
 	// nil answers 503.
 	Browse *gitbrowse.Service
+	// LFS resolves pointers for file previews; nil leaves raw pointers available.
+	LFS *lfs.Server
 	// Protection serves the branch protection and tag rule endpoints; nil
 	// answers 503.
 	Protection Protection

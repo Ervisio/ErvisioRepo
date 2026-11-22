@@ -9,6 +9,14 @@ export type TodoCategory = Schemas["TodoCategory"];
 export type TodoView = Schemas["TodoView"];
 export type TodoScope = { owner: string; name: string } | { org: string };
 
+function writeBoard({ revision, categories, items }: TodoBoard) {
+  return {
+    revision,
+    categories,
+    items: items.map(({ id, categoryId, title, completed }) => ({ id, categoryId, title, completed })),
+  };
+}
+
 export function todoAccessDenied(error: unknown) {
   return error instanceof ApiError && [401, 403, 404].includes(error.status);
 }
@@ -27,7 +35,7 @@ export function useTodo(scope: TodoScope, viewer: string | undefined) {
     gcTime: 0,
   });
   const save = useMutation({
-    mutationFn: (board: TodoBoard) => request<TodoBoard>("PUT", path, board),
+    mutationFn: (board: TodoBoard) => request<TodoBoard>("PUT", path, writeBoard(board)),
     onMutate: () => client.cancelQueries({ queryKey: key }),
     onSuccess: (board) => client.setQueryData<TodoView>(key, (view) => view && { ...view, board }),
     onError: (error) => {

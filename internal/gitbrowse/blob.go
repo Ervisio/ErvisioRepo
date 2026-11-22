@@ -90,28 +90,68 @@ func ParseLFSPointer(b []byte) (*LFSPointer, bool) {
 	return p, true
 }
 
-// safeBinaryTypes is an explicit allowlist; SVG and HTML are never served as such.
-var safeBinaryTypes = map[string]string{
+// rawBinaryTypes preserves Raw's existing MIME types. SVG is active content
+// when navigated to directly and is never allowed as a preview.
+var rawBinaryTypes = map[string]string{
 	".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif",
 	".webp": "image/webp", ".bmp": "image/bmp", ".ico": "image/x-icon", ".avif": "image/avif",
 	".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".aac": "audio/aac", ".wav": "audio/wav",
 	".ogg": "audio/ogg", ".oga": "audio/ogg", ".opus": "audio/ogg", ".flac": "audio/flac",
 	".mp4": "video/mp4", ".m4v": "video/mp4", ".webm": "video/webm", ".ogv": "video/ogg",
-	".mov": "video/quicktime",
-	".pdf": "application/pdf",
+	".mov": "video/quicktime", ".pdf": "application/pdf",
 }
 
-// ContentType returns the type served for a blob: text is always
+var additionalMediaTypes = map[string]string{
+	".apng": "image/apng", ".jpe": "image/jpeg", ".jfif": "image/jpeg", ".cur": "image/x-icon",
+	".tif": "image/tiff", ".tiff": "image/tiff", ".jxl": "image/jxl",
+	".heic": "image/heic", ".heif": "image/heif",
+	".mp2": "audio/mpeg", ".m4b": "audio/mp4", ".wave": "audio/wav", ".weba": "audio/webm",
+	".aif": "audio/aiff", ".aiff": "audio/aiff", ".mpeg": "video/mpeg", ".mpg": "video/mpeg",
+	".avi": "video/x-msvideo", ".mkv": "video/x-matroska", ".3gp": "video/3gpp", ".3g2": "video/3gpp2",
+}
+
+// MediaType is the allowlisted MIME type for name, or empty for other files.
+func MediaType(name string) string {
+	ext := strings.ToLower(path.Ext(name))
+	if t := additionalMediaTypes[ext]; t != "" {
+		return t
+	}
+	if ext == ".pdf" {
+		return ""
+	}
+	return rawBinaryTypes[ext]
+}
+
+// ContentType returns the raw type served for a blob: text is always
 // text/plain (never HTML or SVG, which could run scripts), known media
 // keep their type, anything else is application/octet-stream.
 func ContentType(name string, binary bool) string {
 	if !binary {
 		return "text/plain; charset=utf-8"
 	}
-	if t, ok := safeBinaryTypes[strings.ToLower(path.Ext(name))]; ok {
+	if t := rawBinaryTypes[strings.ToLower(path.Ext(name))]; t != "" {
 		return t
 	}
 	return "application/octet-stream"
+}
+
+func (b *Blob) classify(data []byte) {
+	b.LFS, _ = ParseLFSPointer(data)
+	b.Binary = IsBinary(data)
+	if !b.Binary {
+		b.Content = data
+	}
+	b.setPreviewType()
+}
+
+func (b *Blob) setPreviewType() {
+	if b.Binary || b.LFS != nil {
+		if t := MediaType(b.Path); t != "" {
+			b.ContentType = t
+			return
+		}
+	}
+	b.ContentType = ContentType(b.Path, b.Binary)
 }
 
 // Blob returns the file at path of ref.
@@ -197,21 +237,14 @@ func (s *Service) blob(ctx context.Context, rp string, r Resolved, p string) (Bl
 			return b, err
 		}
 		b.Binary, b.Truncated = IsBinary(head), true
-		b.ContentType = ContentType(p, b.Binary)
+		b.setPreviewType()
 		return b, nil
 	}
 	_, data, err := s.cat.Object(ctx, rp, info.OID, s.o.MaxBlobSize)
 	if err != nil {
 		return b, fmt.Errorf("read blob: %w", err)
 	}
-	if ptr, ok := ParseLFSPointer(data); ok {
-		b.LFS = ptr
-	}
-	b.Binary = IsBinary(data)
-	if !b.Binary {
-		b.Content = data
-	}
-	b.ContentType = ContentType(p, b.Binary)
+	b.classify(data)
 	return b, nil
 }
 

@@ -98,13 +98,16 @@ function BlobBox({ repo, blob: b, refName, path, view, onView }: { repo: Repo; b
   const editable = writable && !b.binary && !b.truncated && !b.lfs;
   const raw = rawUrl(owner, name, refName, path);
   const media = mediaKind(b);
-  const meta = [text ? t("blob.lines", { count: splitLines(b.content ?? "").length }) : "", formatBytes(b.size)].filter(Boolean).join(" · ");
+  const preview = rawUrl(owner, name, b.ref.commit, b.path, { preview: true });
+  const download = media && b.lfs ? preview : raw;
+  const showSource = text && !media;
+  const meta = [showSource && !b.lfs ? t("blob.lines", { count: splitLines(b.content ?? "").length }) : "", formatBytes(b.lfs?.size ?? b.size)].filter(Boolean).join(" · ");
   return (
     <div className="ui-box rp-blob">
       <FileCommit repo={repo} refName={refName} path={path} />
       <div className="cx-code">
         <div className="cx-tb">
-          {text && (
+          {showSource && (
             <div className="ui-seg" role="group" aria-label={t("blob.viewLabel")}>
               {(isMarkdown(path) ? (["preview", "code", "blame"] as const) : (["code", "blame"] as const)).map((m) => (
                 <button key={m} type="button" className="ui-segi" aria-pressed={view === m} onClick={() => onView(m)}>
@@ -118,8 +121,8 @@ function BlobBox({ repo, blob: b, refName, path, view, onView }: { repo: Repo; b
           <a className="ui-btn ui-btn-ghost" href={raw} target="_blank" rel="noopener">
             {t("blob.raw")}
           </a>
-          {text && b.content !== undefined && <CopyButton value={b.content} label={t("blob.copyContent")} />}
-          <a className="ui-btn ui-btn-ghost rp-ib" href={raw} download={path.split("/").pop()} aria-label={t("blob.download")} title={t("blob.download")}>
+          {showSource && b.content !== undefined && <CopyButton value={b.content} label={t("blob.copyContent")} />}
+          <a className="ui-btn ui-btn-ghost rp-ib" href={download} download={path.split("/").pop()} aria-label={t("blob.download")} title={t("blob.download")}>
             <Icon name="download" />
           </a>
           {editable && (
@@ -145,7 +148,7 @@ function BlobBox({ repo, blob: b, refName, path, view, onView }: { repo: Repo; b
           </Menu>
         </div>
         {media ? (
-          <MediaPreview key={`${b.path}:${b.oid}`} kind={media} blob={b} raw={rawUrl(owner, name, b.ref.commit, b.path, { preview: true })} download={raw} />
+          <MediaPreview key={preview} kind={media} blob={b} src={preview} download={download} />
         ) : (
           <BlobContent repo={repo} blob={b} refName={refName} view={view} />
         )}
@@ -198,12 +201,11 @@ function BlobContent({ repo, blob: b, refName, view }: { repo: Repo; blob: BlobF
 }
 
 function mediaKind(b: BlobFile): "image" | "audio" | "video" | undefined {
-  if (!b.binary || b.lfs) return;
   const kind = b.contentType.split("/", 1)[0];
   if (kind === "image" || kind === "audio" || kind === "video") return kind;
 }
 
-function MediaPreview({ kind, blob, raw, download }: { kind: "image" | "audio" | "video"; blob: BlobFile; raw: string; download: string }) {
+function MediaPreview({ kind, blob, src, download }: { kind: "image" | "audio" | "video"; blob: BlobFile; src: string; download: string }) {
   const t = useT("code");
   const [failed, setFailed] = useState(false);
   const [showGIF, setShowGIF] = useState(false);
@@ -223,16 +225,16 @@ function MediaPreview({ kind, blob, raw, download }: { kind: "image" | "audio" |
           <Button onClick={() => setShowGIF(!showGIF)}>{t(showGIF ? "blob.hideGIF" : "blob.showGIF")}</Button>
         )}
         {failed ? fallback : kind === "video" ? (
-          <video src={raw} controls playsInline preload="metadata" aria-label={filename} onError={onError}>{fallback}</video>
+          <video src={src} controls playsInline preload="metadata" aria-label={filename} onError={onError}>{fallback}</video>
         ) : kind === "audio" ? (
-          <audio src={raw} controls preload="metadata" aria-label={filename} onError={onError}>{fallback}</audio>
+          <audio src={src} controls preload="metadata" aria-label={filename} onError={onError}>{fallback}</audio>
         ) : (!gif || showGIF) && (
-          <img src={raw} alt={blob.path} onError={onError} />
+          <img src={src} alt={blob.path} onError={onError} />
         )}
       </div>
       <dl className="cx-media-details">
         <div><dt>{t("blob.mediaType")}</dt><dd>{format}</dd></div>
-        <div><dt>{t("blob.mediaSize")}</dt><dd>{formatBytes(blob.size)}</dd></div>
+        <div><dt>{t("blob.mediaSize")}</dt><dd>{formatBytes(blob.lfs?.size ?? blob.size)}</dd></div>
       </dl>
     </div>
   );

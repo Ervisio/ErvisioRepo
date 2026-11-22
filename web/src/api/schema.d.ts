@@ -7385,7 +7385,7 @@ export interface components {
             id: string;
             name: string;
         };
-        TodoItem: {
+        TodoItemWrite: {
             /** Format: uuid */
             id: string;
             title: string;
@@ -7396,10 +7396,24 @@ export interface components {
              */
             categoryId?: string;
         };
-        TodoBoard: {
+        TodoItem: components["schemas"]["TodoItemWrite"] & {
+            /** @description The member who checked this item. Absent when unchecked or attribution is unavailable. */
+            readonly completedBy?: components["schemas"]["UserSummary"];
+        };
+        TodoBoardWrite: {
             /**
              * Format: int64
              * @description Pass back the last seen revision to avoid overwriting another member's changes.
+             */
+            revision: number;
+            categories: components["schemas"]["TodoCategory"][];
+            /** @description Category and item arrays are in display order. */
+            items: components["schemas"]["TodoItemWrite"][];
+        };
+        TodoBoard: {
+            /**
+             * Format: int64
+             * @description Use this revision when saving changes.
              */
             revision: number;
             categories: components["schemas"]["TodoCategory"][];
@@ -11539,9 +11553,9 @@ export interface components {
         SubjectRelease: string;
     };
     requestBodies: {
-        TodoBoard: {
+        TodoBoardWrite: {
             content: {
-                "application/json": components["schemas"]["TodoBoard"];
+                "application/json": components["schemas"]["TodoBoardWrite"];
             };
         };
         TodoPreference: {
@@ -15658,7 +15672,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: components["requestBodies"]["TodoBoard"];
+        requestBody: components["requestBodies"]["TodoBoardWrite"];
         responses: {
             200: components["responses"]["TodoBoard"];
             409: components["responses"]["Problem"];
@@ -16819,7 +16833,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: components["requestBodies"]["TodoBoard"];
+        requestBody: components["requestBodies"]["TodoBoardWrite"];
         responses: {
             200: components["responses"]["TodoBoard"];
             409: components["responses"]["Problem"];

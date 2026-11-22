@@ -6,6 +6,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.23.1] - 2026-11-22
+
+### Changed
+
+- Matched the browser favicon to the original horizontal logo and reduced the top-bar logo slightly without shrinking its click target.
+- The repository Code page keeps its original file layout and opens the shared Todo from a compact progress button. Organization Todo sits below languages. Completed tasks show who checked them, with an avatar when available.
+
+### Fixed
+
+- Audio, video and image previews now open the actual Git LFS object, when available to the viewer, rather than the pointer. Expanded media format detection; decoding still depends on the browser.
+
 ## [1.23.0] - 2026-11-22
 
 ### Added

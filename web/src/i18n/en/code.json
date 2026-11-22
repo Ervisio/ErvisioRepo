@@ -51,7 +51,7 @@
   "blob.binary": "Binary file not shown.",
   "blob.mediaType": "Type",
   "blob.mediaSize": "Size",
-  "blob.mediaUnavailable": "Preview unavailable.",
+  "blob.mediaUnavailable": "This file could not be previewed. It may be unavailable or use a format or codec your browser does not support.",
   "blob.showGIF": "Show GIF",
   "blob.hideGIF": "Hide GIF",
   "blob.lfs": "Stored with Git LFS ({size}).",

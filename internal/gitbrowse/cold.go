@@ -387,14 +387,7 @@ func (s *Service) coldBlob(ctx context.Context, repoID uuid.UUID, r Resolved, ro
 			s.rememberBlob(repoID, e.OID, data)
 		}
 	}
-	if ptr, ok := ParseLFSPointer(data); ok {
-		b.LFS = ptr
-	}
-	b.Binary = IsBinary(data)
-	if !b.Binary {
-		b.Content = data
-	}
-	b.ContentType = ContentType(p, b.Binary)
+	b.classify(data)
 	return b, nil
 }
 

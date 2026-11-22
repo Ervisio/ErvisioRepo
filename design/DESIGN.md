@@ -26,7 +26,7 @@ Variante approvata: **Scheda file** (`001-file-preview`, B). La vista mantiene i
 
 ### Todo condivisa
 
-Variante approvata: **Sezioni in fila** (`002-shared-todo`, A). Il riquadro sta nella colonna sinistra della radice Codice del repository e sotto Membri nella panoramica dell’organizzazione. Le categorie restano tutte visibili mentre il riquadro è aperto; la chiusura è una preferenza personale. Dettagli e stati in [todo.md](todo.md).
+Variante approvata con correzione (`002-todo-overview`, A): nella radice Codice resta la griglia originale, con il solo pulsante `ToDo 3/12` nella barra file. Nell’organizzazione il riquadro sta sotto Linguaggi principali. Le categorie restano in fila, con titolo centrato, campo categoria visibile a riposo e avatar del completatore sulla singola attività. Dettagli e stati in [todo.md](todo.md).
 
 I nomi seguono il contratto dello SDK plugin (docs/sdk.md, Styling): `--bg --surface --sunk --ink --ink2 --ink3`, `--h-<sezione>` e `--h-<sezione>-s`, `--ok --warn --err --info` con `-s`, font Figtree e JetBrains Mono.
 

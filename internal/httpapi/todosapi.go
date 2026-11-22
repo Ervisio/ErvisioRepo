@@ -26,6 +26,11 @@ type todoScope struct {
 	user uuid.UUID
 }
 
+type storedTodoItem struct {
+	v1gen.TodoItemWrite
+	CompletedByID *uuid.UUID `json:"completedByUserId,omitempty"`
+}
+
 func boundTodoRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
@@ -127,20 +132,77 @@ func (s *v1Server) todoScope(ctx context.Context, owner, name string, repository
 	return scope, nil
 }
 
-func (s todoScope) get(ctx context.Context) (v1gen.TodoViewJSONResponse, error) {
-	board := v1gen.TodoBoard{Categories: []v1gen.TodoCategory{}, Items: []v1gen.TodoItem{}}
+func (s todoScope) snapshot(ctx context.Context) (dbgen.GetSharedTodoRow, error) {
 	row, err := s.q.GetSharedTodo(ctx, dbgen.GetSharedTodoParams{RepoID: s.repo, OrgID: s.org})
-	switch {
-	case err == nil:
-		board.Revision = row.Revision
+	if errors.Is(err, pgx.ErrNoRows) {
+		return dbgen.GetSharedTodoRow{}, nil
+	}
+	if err != nil {
+		return dbgen.GetSharedTodoRow{}, fmt.Errorf("get shared todo: %w", err)
+	}
+	return row, nil
+}
+
+func decodeTodoItems(row dbgen.GetSharedTodoRow) ([]storedTodoItem, error) {
+	var items []storedTodoItem
+	if row.Revision != 0 {
+		if err := json.Unmarshal(row.Items, &items); err != nil {
+			return nil, fmt.Errorf("decode todo items: %w", err)
+		}
+	}
+	return items, nil
+}
+
+func (s todoScope) publicItems(ctx context.Context, items []storedTodoItem) ([]v1gen.TodoItem, error) {
+	authors := make(map[uuid.UUID]*v1gen.UserSummary)
+	var ids []uuid.UUID
+	for _, item := range items {
+		if !item.Completed || item.CompletedByID == nil {
+			continue
+		}
+		id := *item.CompletedByID
+		if _, seen := authors[id]; !seen {
+			authors[id] = nil
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) > 0 {
+		rows, err := s.q.ListActiveUserSummariesByIDs(ctx, ids)
+		if err != nil {
+			return nil, fmt.Errorf("get todo completion profiles: %w", err)
+		}
+		for _, row := range rows {
+			authors[row.ID] = &v1gen.UserSummary{Username: row.Username, DisplayName: row.DisplayName, AvatarUrl: row.AvatarUrl}
+		}
+	}
+	out := make([]v1gen.TodoItem, len(items))
+	for i, item := range items {
+		out[i] = v1gen.TodoItem{Id: item.Id, Title: item.Title, Completed: item.Completed, CategoryId: item.CategoryId}
+		if item.Completed && item.CompletedByID != nil {
+			out[i].CompletedBy = authors[*item.CompletedByID]
+		}
+	}
+	return out, nil
+}
+
+func (s todoScope) get(ctx context.Context) (v1gen.TodoViewJSONResponse, error) {
+	row, err := s.snapshot(ctx)
+	if err != nil {
+		return v1gen.TodoViewJSONResponse{}, err
+	}
+	board := v1gen.TodoBoard{Revision: row.Revision, Categories: []v1gen.TodoCategory{}}
+	if row.Revision != 0 {
 		if err := json.Unmarshal(row.Categories, &board.Categories); err != nil {
 			return v1gen.TodoViewJSONResponse{}, fmt.Errorf("decode todo categories: %w", err)
 		}
-		if err := json.Unmarshal(row.Items, &board.Items); err != nil {
-			return v1gen.TodoViewJSONResponse{}, fmt.Errorf("decode todo items: %w", err)
-		}
-	case !errors.Is(err, pgx.ErrNoRows):
-		return v1gen.TodoViewJSONResponse{}, fmt.Errorf("get shared todo: %w", err)
+	}
+	items, err := decodeTodoItems(row)
+	if err != nil {
+		return v1gen.TodoViewJSONResponse{}, err
+	}
+	board.Items, err = s.publicItems(ctx, items)
+	if err != nil {
+		return v1gen.TodoViewJSONResponse{}, err
 	}
 	collapsed, err := s.q.GetSharedTodoPreference(ctx, dbgen.GetSharedTodoPreferenceParams{
 		RepoID: s.repo, OrgID: s.org, UserID: s.user,
@@ -159,7 +221,7 @@ func todoTextValid(text string, maxLength int) bool {
 	return text != "" && utf8.RuneCountInString(text) <= maxLength && strings.IndexFunc(text, unicode.IsControl) < 0
 }
 
-func validateTodoBoard(board *v1gen.TodoBoard) string {
+func validateTodoBoard(board *v1gen.TodoBoardWrite) string {
 	if board == nil || board.Revision < 0 || board.Categories == nil || board.Items == nil {
 		return "revision, categories and items are required"
 	}
@@ -198,30 +260,76 @@ func validateTodoBoard(board *v1gen.TodoBoard) string {
 	return ""
 }
 
-func (s todoScope) put(ctx context.Context, board v1gen.TodoBoard) (v1gen.TodoBoardJSONResponse, error) {
+func attributeTodoItems(items []v1gen.TodoItemWrite, previous []storedTodoItem, actor uuid.UUID) []storedTodoItem {
+	checked := make(map[uuid.UUID]*uuid.UUID)
+	for _, item := range previous {
+		if item.Completed {
+			checked[item.Id] = item.CompletedByID
+		}
+	}
+	out := make([]storedTodoItem, len(items))
+	for i, item := range items {
+		out[i].TodoItemWrite = item
+		if !item.Completed {
+			continue
+		}
+		author, wasChecked := checked[item.Id]
+		if !wasChecked {
+			author = &actor
+		}
+		out[i].CompletedByID = author
+	}
+	return out
+}
+
+func (s todoScope) put(ctx context.Context, board v1gen.TodoBoardWrite) (v1gen.TodoBoardJSONResponse, error) {
+	row, err := s.snapshot(ctx)
+	if err != nil {
+		return v1gen.TodoBoardJSONResponse{}, err
+	}
+	if row.Revision != board.Revision {
+		return v1gen.TodoBoardJSONResponse{}, errTodoConflict
+	}
+	previous, err := decodeTodoItems(row)
+	if err != nil {
+		return v1gen.TodoBoardJSONResponse{}, err
+	}
+	attributed := attributeTodoItems(board.Items, previous, s.user)
+	public, err := s.publicItems(ctx, attributed)
+	if err != nil {
+		return v1gen.TodoBoardJSONResponse{}, err
+	}
+	revision, err := s.save(ctx, board, attributed)
+	if err != nil {
+		return v1gen.TodoBoardJSONResponse{}, err
+	}
+	cacheControl := "no-store"
+	return v1gen.TodoBoardJSONResponse{
+		Body:    v1gen.TodoBoard{Revision: revision, Categories: board.Categories, Items: public},
+		Headers: v1gen.TodoBoardResponseHeaders{CacheControl: &cacheControl},
+	}, nil
+}
+
+func (s todoScope) save(ctx context.Context, board v1gen.TodoBoardWrite, attributed []storedTodoItem) (int64, error) {
 	categories, err := json.Marshal(board.Categories)
 	if err != nil {
-		return v1gen.TodoBoardJSONResponse{}, fmt.Errorf("encode todo categories: %w", err)
+		return 0, fmt.Errorf("encode todo categories: %w", err)
 	}
-	items, err := json.Marshal(board.Items)
+	items, err := json.Marshal(attributed)
 	if err != nil {
-		return v1gen.TodoBoardJSONResponse{}, fmt.Errorf("encode todo items: %w", err)
+		return 0, fmt.Errorf("encode todo items: %w", err)
 	}
+	// Attribution is derived from the expected revision and committed with the items in the same CAS.
 	revision, err := s.q.SaveSharedTodo(ctx, dbgen.SaveSharedTodoParams{
 		RepoID: s.repo, OrgID: s.org, ExpectedRevision: board.Revision, Categories: categories, Items: items,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return v1gen.TodoBoardJSONResponse{}, errTodoConflict
+		return 0, errTodoConflict
 	}
 	if err != nil {
-		return v1gen.TodoBoardJSONResponse{}, fmt.Errorf("save shared todo: %w", err)
+		return 0, fmt.Errorf("save shared todo: %w", err)
 	}
-	board.Revision = revision
-	cacheControl := "no-store"
-	return v1gen.TodoBoardJSONResponse{
-		Body:    board,
-		Headers: v1gen.TodoBoardResponseHeaders{CacheControl: &cacheControl},
-	}, nil
+	return revision, nil
 }
 
 func (s todoScope) patch(ctx context.Context, collapsed bool) error {

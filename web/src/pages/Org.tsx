@@ -464,7 +464,6 @@ function OrgAside({ org, canManage, onTab, showTodo }: { org: string; canManage:
           {members.data.length > 24 && <button type="button" className="oh-link" onClick={() => onTab("members")}>{t("members.all", { count: members.data.length })}</button>}
         </section>
       )}
-      {showTodo && <SharedTodo scope={{ org }} />}
       {shown.length > 0 && (
         <section className="oh-side" aria-labelledby="oh-lang-h">
           <h2 id="oh-lang-h">{t("languages.title")}</h2>
@@ -489,6 +488,7 @@ function OrgAside({ org, canManage, onTab, showTodo }: { org: string; canManage:
           </ul>
         </section>
       )}
+      {showTodo && <SharedTodo scope={{ org }} />}
       {teams.data && teams.data.length > 0 && (
         <section className="oh-side" aria-labelledby="oh-teams-h">
           <h2 id="oh-teams-h">{t("teams.title")} <span className="ui-n">{teams.data.length}</span></h2>

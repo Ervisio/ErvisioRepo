@@ -45,7 +45,7 @@ h1, h2, h3 { letter-spacing: -.01em; }
 }
 .tb-row { display: flex; align-items: center; gap: 14px; height: 60px; max-width: 1340px; margin: 0 auto; padding: 0 28px; }
 .tb-menu { margin-left: -8px; }
-.tb-logo { --brand-width: 42px; flex: none; min-width: 44px; height: 44px; border-radius: var(--b-rc); display: grid; place-items: center; }
+.tb-logo { --brand-width: 34px; flex: none; min-width: 44px; height: 44px; border-radius: var(--b-rc); display: grid; place-items: center; }
 .tb-where { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 8px; margin-left: -8px; border-radius: var(--b-rc); min-width: 0; white-space: nowrap; font-size: 14px; }
 .tb-where b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
 .tb-where .ui-icon { width: 15px; height: 15px; color: var(--ink2); flex: none; }
@@ -143,7 +143,7 @@ h1, h2, h3 { letter-spacing: -.01em; }
 
 @media (max-width: 720px) {
   .tb-row { padding: 0 14px; gap: 6px; height: 56px; }
-  .tb-logo { --brand-width: 38px; min-width: 38px; }
+  .tb-logo { --brand-width: 32px; min-width: 38px; }
   .tb-owner, .tb-find, .tb-new > span, .tb-pill { display: none; }
   .tb-mob { display: grid; }
   .tb-tabs { padding: 0 10px 10px; }

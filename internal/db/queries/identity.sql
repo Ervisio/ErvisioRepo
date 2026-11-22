@@ -188,3 +188,9 @@ SELECT n.name_lower::text AS name_lower, n.name AS username, u.avatar_url
 FROM users u
 JOIN namespaces n ON n.id = u.id
 WHERE n.name_lower = ANY(sqlc.arg(names)::text[]) AND u.suspended_at IS NULL;
+
+-- name: ListActiveUserSummariesByIDs :many
+SELECT u.id, n.name AS username, u.display_name, u.avatar_url
+FROM users u
+JOIN namespaces n ON n.id = u.id
+WHERE u.id = ANY(sqlc.arg(ids)::uuid[]) AND u.suspended_at IS NULL;

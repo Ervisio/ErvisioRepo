@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useId, useState, type FormEvent, type ReactNode } from "react";
 import { ApiError } from "../../api/http.ts";
 import { useSession } from "../../api/identity.ts";
@@ -5,7 +6,9 @@ import {
   todoAccessDenied, useTodo, type TodoBoard, type TodoCategory, type TodoItem, type TodoScope,
 } from "../../api/todos.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Button, Dialog, DialogClose, Input, Menu, MenuItem, MenuSeparator, Select } from "../../ui/index.ts";
+import { AvatarImg } from "../../ui/AvatarImg.tsx";
+import { Button, Dialog, DialogClose, Icon, Input, Menu, MenuItem, MenuSeparator, Select } from "../../ui/index.ts";
+import { Avatar } from "../work/common.tsx";
 import "./todo.css";
 
 type Edit = { kind: "item"; item: TodoItem } | { kind: "category"; category?: TodoCategory };
@@ -57,16 +60,17 @@ function TodoPanel({ scope, viewer }: { scope: TodoScope; viewer: string }) {
   const t = useT("todo");
   const { query, save, preference } = useTodo(scope, viewer);
   const contentId = useId();
-  const titleId = useId();
   const [edit, setEdit] = useState<Draft<Edit>>();
   const [deletion, setDeletion] = useState<Draft<Delete>>();
+  const [repoOpen, setRepoOpen] = useState(false);
 
   if (todoAccessDenied(query.error) || todoAccessDenied(save.error) || todoAccessDenied(preference.error)) return null;
   if (!query.data) return null;
 
   const { board, collapsed } = query.data;
-  const Panel = "org" in scope ? "section" : "aside";
   const completed = board.items.filter((item) => item.completed).length;
+  const count = { completed, total: board.items.length };
+  const summary = t("compact", count);
   const busy = save.isPending || preference.isPending;
   const error = save.error ?? preference.error ?? query.error;
   const message = error instanceof ApiError && error.status === 409 ? t("conflict") : t("failed");
@@ -96,24 +100,14 @@ function TodoPanel({ scope, viewer }: { scope: TodoScope; viewer: string }) {
     else categorized.set(category, [item]);
   }
 
-  return (
-    <Panel className="ui-box todo-panel" aria-labelledby={titleId}>
-      <header className="todo-head">
-        <h2 id={titleId}>{t("title")}</h2>
+  const content = (
+    <>
+      <div className="todo-meta">
         <span className="todo-members">{t("members")}</span>
-        <span className="todo-count">{t("progress", { completed, total: board.items.length })}</span>
-        <Button
-          className="todo-icon todo-fold"
-          icon={collapsed ? "right" : "down"}
-          aria-label={t(collapsed ? "expand" : "collapse")}
-          aria-expanded={!collapsed}
-          aria-controls={contentId}
-          disabled={busy}
-          onClick={() => { save.reset(); preference.mutate(!collapsed); }}
-        />
-      </header>
+        <span className="todo-count">{t("progress", count)}</span>
+      </div>
       {error && <p className="todo-error" role="alert">{message}</p>}
-      <div id={contentId} hidden={collapsed} aria-busy={busy}>
+      <div aria-busy={busy}>
         {!board.items.length && !board.categories.length && <p className="todo-empty">{t("empty")}</p>}
         {board.categories.map((category, index) => (
           <TodoGroup
@@ -181,7 +175,46 @@ function TodoPanel({ scope, viewer }: { scope: TodoScope; viewer: string }) {
           {(staleDeletion || error) && <p className="todo-error" role="alert">{staleDeletion ? t("staleDraft") : message}</p>}
         </Dialog>
       )}
-    </Panel>
+    </>
+  );
+
+  if (!("org" in scope)) {
+    return (
+      <Dialog
+        trigger={<Button className="todo-compact">{summary}</Button>}
+        open={repoOpen}
+        onOpenChange={(open) => {
+          if (!open) { setEdit(undefined); setDeletion(undefined); }
+          setRepoOpen(open);
+        }}
+        title={t("title")}
+        className="todo-dialog"
+      >
+        {content}
+      </Dialog>
+    );
+  }
+
+  const toggle = () => { save.reset(); preference.mutate(!collapsed); };
+  return (
+    <section className="todo-panel" aria-label={t("title")}>
+      <header className="todo-head">
+        {!collapsed && <h2>{t("title")}</h2>}
+        <Button
+          className={collapsed ? "todo-compact todo-disclosure" : "todo-icon"}
+          aria-label={collapsed ? undefined : t("collapse")}
+          aria-expanded={!collapsed}
+          aria-controls={contentId}
+          aria-disabled={busy || undefined}
+          onClick={() => { if (!busy) toggle(); }}
+        >
+          {collapsed && summary}
+          <Icon name="down" />
+        </Button>
+      </header>
+      {collapsed && error && <p className="todo-error" role="alert">{message}</p>}
+      <div id={contentId} hidden={collapsed}>{!collapsed && content}</div>
+    </section>
   );
 }
 
@@ -242,6 +275,19 @@ function TodoGroup({ title, items, disabled, board, save, onEdit, onDelete, head
                 }} />
                 <span>{item.title}</span>
               </label>
+              {item.completed && item.completedBy && (
+                <Link
+                  className="todo-completer"
+                  to="/$owner"
+                  params={{ owner: item.completedBy.username }}
+                  title={t("completedBy", { name: item.completedBy.displayName || item.completedBy.username })}
+                  aria-label={t("completedBy", { name: item.completedBy.displayName || item.completedBy.username })}
+                >
+                  <AvatarImg src={item.completedBy.avatarUrl} size={20} radius="50%">
+                    <Avatar user={item.completedBy.username} size={20} />
+                  </AvatarImg>
+                </Link>
+              )}
               <TodoMenu
                 name={item.title}
                 disabled={disabled}
@@ -307,13 +353,14 @@ function TodoEdit({ edit, board, busy, stale, message, close, save }: {
       open
       onOpenChange={(open) => { if (!open) close(); }}
       title={t(edit.kind === "item" ? "editItem" : edit.category ? "editCategory" : "newCategory")}
+      className="todo-edit-dialog"
       footer={<>
         <DialogClose asChild><Button disabled={busy}>{t("cancel")}</Button></DialogClose>
         <Button type="submit" form={formId} variant="primary" disabled={!canSave}>{t("save")}</Button>
       </>}
     >
       <form className="todo-edit" id={formId} onSubmit={submit}>
-        <Input label={t(edit.kind === "item" ? "itemTitle" : "categoryName")} value={name} maxLength={edit.kind === "item" ? 240 : 80} disabled={busy || missing} onChange={(event) => setName(event.target.value)} />
+        <Input label={t(edit.kind === "item" ? "itemTitle" : "categoryName")} placeholder={edit.kind === "category" ? t("categoryPlaceholder") : undefined} value={name} maxLength={edit.kind === "item" ? 240 : 80} disabled={busy || missing} onChange={(event) => setName(event.target.value)} />
         {edit.kind === "item" && <Select label={t("category")} value={selected} options={options} disabled={busy || missing} onValueChange={setCategory} />}
         {notice && <p className="todo-error" role="alert">{notice}</p>}
       </form>

@@ -680,6 +680,7 @@ type Querier interface {
 	ListActiveActionsJobsInGroup(ctx context.Context, arg ListActiveActionsJobsInGroupParams) ([]ActionsJob, error)
 	// Runs of a concurrency group that are not completed, oldest first.
 	ListActiveActionsRunsInGroup(ctx context.Context, arg ListActiveActionsRunsInGroupParams) ([]ActionsRun, error)
+	ListActiveUserSummariesByIDs(ctx context.Context, ids []uuid.UUID) ([]ListActiveUserSummariesByIDsRow, error)
 	// Active users by lower-case username (no-reply commit addresses).
 	ListActiveUsersByNames(ctx context.Context, names []string) ([]ListActiveUsersByNamesRow, error)
 	// Newest first events of one actor in the readable repositories.

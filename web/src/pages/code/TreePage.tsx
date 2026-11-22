@@ -91,6 +91,7 @@ function TreeBody({ repo, refName, path }: { repo: Repo; refName: string; path: 
         <div className="rp-bar">
           {switcher}
           <span className="acc-grow" />
+          <SharedTodo scope={{ owner, name }} />
           <CloneMenu repo={repo} refName={refName} />
           <RepoMore repo={repo} refName={refName} path={path} />
         </div>
@@ -102,26 +103,16 @@ function TreeBody({ repo, refName, path }: { repo: Repo; refName: string; path: 
           <Link to="/$owner/$name/commits" params={{ owner, name }} search={{ ref: refName, path: path || undefined }}>
             <Button icon="clock">{t("tree.history")}</Button>
           </Link>
+          <SharedTodo scope={{ owner, name }} />
           <CloneMenu repo={repo} refName={refName} />
         </div>
       )}
       {files}
     </>
   );
-  const todo = <SharedTodo scope={{ owner, name }} />;
-  if (!console_) {
-    return (
-      <div className="repo-todo-container">
-        <div className="repo-todo-home">
-          {todo}
-          <div className="rp-main">{content}</div>
-        </div>
-      </div>
-    );
-  }
+  if (!console_) return content;
   return (
-    <div className="rp-home repo-todo-home">
-      {todo}
+    <div className="rp-home">
       <div className="rp-main">{content}</div>
       <RepoSidebar repo={repo} refName={refName} hasReadme={!!tree.data?.readme} />
     </div>

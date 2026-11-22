@@ -3882,7 +3882,7 @@ paths:
       security:
         - session: []
       requestBody:
-        $ref: "#/components/requestBodies/TodoBoard"
+        $ref: "#/components/requestBodies/TodoBoardWrite"
       responses:
         "200":
           $ref: "#/components/responses/TodoBoard"
@@ -4983,7 +4983,7 @@ paths:
         - session: []
         - token: [repo:write]
       requestBody:
-        $ref: "#/components/requestBodies/TodoBoard"
+        $ref: "#/components/requestBodies/TodoBoardWrite"
       responses:
         "200":
           $ref: "#/components/responses/TodoBoard"
@@ -12768,12 +12768,12 @@ components:
         type: string
         enum: ["true", "false"]
   requestBodies:
-    TodoBoard:
+    TodoBoardWrite:
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/TodoBoard"
+            $ref: "#/components/schemas/TodoBoardWrite"
     TodoPreference:
       required: true
       content:
@@ -12848,7 +12848,7 @@ components:
       properties:
         id: {type: string, format: uuid}
         name: {type: string, minLength: 1, maxLength: 80}
-    TodoItem:
+    TodoItemWrite:
       type: object
       required: [id, title, completed]
       properties:
@@ -12856,7 +12856,17 @@ components:
         title: {type: string, minLength: 1, maxLength: 240}
         completed: {type: boolean}
         categoryId: {type: string, format: uuid, description: Absent for uncategorized items}
-    TodoBoard:
+    TodoItem:
+      allOf:
+        - $ref: "#/components/schemas/TodoItemWrite"
+        - type: object
+          properties:
+            completedBy:
+              description: The member who checked this item. Absent when unchecked or attribution is unavailable.
+              readOnly: true
+              allOf:
+                - $ref: "#/components/schemas/UserSummary"
+    TodoBoardWrite:
       type: object
       required: [revision, categories, items]
       properties:
@@ -12865,6 +12875,26 @@ components:
           format: int64
           minimum: 0
           description: Pass back the last seen revision to avoid overwriting another member's changes.
+        categories:
+          type: array
+          maxItems: 64
+          items:
+            $ref: "#/components/schemas/TodoCategory"
+        items:
+          type: array
+          maxItems: 500
+          description: Category and item arrays are in display order.
+          items:
+            $ref: "#/components/schemas/TodoItemWrite"
+    TodoBoard:
+      type: object
+      required: [revision, categories, items]
+      properties:
+        revision:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Use this revision when saving changes.
         categories:
           type: array
           maxItems: 64

@@ -27,6 +27,9 @@ var (
 	errForbidden  = errors.New("operation not permitted")
 )
 
+// ErrPreviewNotFound does not distinguish a missing object from one not linked to the repository.
+var ErrPreviewNotFound = errors.New("the Git LFS object is not available in this repository")
+
 // canRead reports whether the caller may download from repo.
 func canRead(repo repos.Repo, who auth.Principal) bool {
 	return authz.Allowed(repo.Permission, authz.ActRead) &&
@@ -128,14 +131,46 @@ func (s *Server) open(ctx context.Context, repo repos.Repo, oid string, rng *blo
 	if err != nil {
 		return nil, 0, err
 	}
-	rc, _, err := s.o.Storage.Get(ctx, objectKey(oid), rng)
-	if errors.Is(err, blob.ErrNotFound) {
-		return nil, 0, errNotFound
-	}
+	rc, err := s.openObject(ctx, oid, rng)
 	if err != nil {
-		return nil, 0, fmt.Errorf("open lfs object: %w", err)
+		return nil, 0, err
 	}
 	return rc, row.Size, nil
+}
+
+func (s *Server) openObject(ctx context.Context, oid string, rng *blob.Range) (io.ReadCloser, error) {
+	rc, _, err := s.o.Storage.Get(ctx, objectKey(oid), rng)
+	if errors.Is(err, blob.ErrNotFound) {
+		return nil, errNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("open lfs object: %w", err)
+	}
+	return rc, nil
+}
+
+// Preview authorizes a pointer before serving metadata or opening a byte range.
+func (s *Server) Preview(ctx context.Context, repo repos.Repo, who auth.Principal, oid string, size int64) (func(*blob.Range) (io.ReadCloser, error), error) {
+	if !canRead(repo, who) || !validOID(oid) {
+		return nil, ErrPreviewNotFound
+	}
+	if perms, ok := who.AppPermissions(); ok && !perms.Has(authz.AppContents, authz.AppRead) {
+		return nil, ErrPreviewNotFound
+	}
+	row, err := s.lookup(ctx, repo, oid)
+	if errors.Is(err, errNotFound) || err == nil && row.Size != size {
+		return nil, ErrPreviewNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return func(rng *blob.Range) (io.ReadCloser, error) {
+		rc, err := s.openObject(ctx, oid, rng)
+		if errors.Is(err, errNotFound) {
+			return nil, ErrPreviewNotFound
+		}
+		return rc, err
+	}, nil
 }
 
 // verify confirms that oid is available to repo with the given size. After

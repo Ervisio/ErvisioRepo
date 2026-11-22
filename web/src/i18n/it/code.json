@@ -51,7 +51,7 @@
   "blob.binary": "File binario non mostrato.",
   "blob.mediaType": "Tipo",
   "blob.mediaSize": "Dimensione",
-  "blob.mediaUnavailable": "Anteprima non disponibile.",
+  "blob.mediaUnavailable": "Impossibile mostrare l’anteprima. Il file potrebbe non essere disponibile o usare un formato o un codec non supportato dal browser.",
   "blob.showGIF": "Mostra GIF",
   "blob.hideGIF": "Nascondi GIF",
   "blob.lfs": "Salvato con Git LFS ({size}).",

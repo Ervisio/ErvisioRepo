@@ -7537,6 +7537,17 @@ type TodoBoard struct {
 	// Items Category and item arrays are in display order.
 	Items []TodoItem `json:"items"`
 
+	// Revision Use this revision when saving changes.
+	Revision int64 `json:"revision"`
+}
+
+// TodoBoardWrite defines model for TodoBoardWrite.
+type TodoBoardWrite struct {
+	Categories []TodoCategory `json:"categories"`
+
+	// Items Category and item arrays are in display order.
+	Items []TodoItemWrite `json:"items"`
+
 	// Revision Pass back the last seen revision to avoid overwriting another member's changes.
 	Revision int64 `json:"revision"`
 }
@@ -7549,6 +7560,18 @@ type TodoCategory struct {
 
 // TodoItem defines model for TodoItem.
 type TodoItem struct {
+	// CategoryId Absent for uncategorized items
+	CategoryId *openapi_types.UUID `json:"categoryId,omitempty"`
+	Completed  bool                `json:"completed"`
+
+	// CompletedBy The member who checked this item. Absent when unchecked or attribution is unavailable.
+	CompletedBy *UserSummary       `json:"completedBy,omitempty"`
+	Id          openapi_types.UUID `json:"id"`
+	Title       string             `json:"title"`
+}
+
+// TodoItemWrite defines model for TodoItemWrite.
+type TodoItemWrite struct {
 	// CategoryId Absent for uncategorized items
 	CategoryId *openapi_types.UUID `json:"categoryId,omitempty"`
 	Completed  bool                `json:"completed"`
@@ -9125,7 +9148,7 @@ type SetTeamMemberJSONRequestBody = TeamRoleRequest
 type PatchOrgTodoJSONRequestBody = TodoPreference
 
 // PutOrgTodoJSONRequestBody defines body for PutOrgTodo for application/json ContentType.
-type PutOrgTodoJSONRequestBody = TodoBoard
+type PutOrgTodoJSONRequestBody = TodoBoardWrite
 
 // UpdateRepoJSONRequestBody defines body for UpdateRepo for application/json ContentType.
 type UpdateRepoJSONRequestBody = RepoUpdate
@@ -9293,7 +9316,7 @@ type UpdateTagRuleJSONRequestBody = TagRuleInput
 type PatchRepoTodoJSONRequestBody = TodoPreference
 
 // PutRepoTodoJSONRequestBody defines body for PutRepoTodo for application/json ContentType.
-type PutRepoTodoJSONRequestBody = TodoBoard
+type PutRepoTodoJSONRequestBody = TodoBoardWrite
 
 // TransferRepoJSONRequestBody defines body for TransferRepo for application/json ContentType.
 type TransferRepoJSONRequestBody = RepoTransfer
