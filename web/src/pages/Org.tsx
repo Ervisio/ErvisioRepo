@@ -78,6 +78,7 @@ import { OAuthAppsSection, type AppsNav, type AppTarget } from "./oauth/OAuthApp
 import { AppsSection, type AppsNav as GhAppsNav, type AppTarget as GhAppTarget } from "./apps/Apps.tsx";
 import { InstalledApps, type InstalledNav } from "./apps/Installed.tsx";
 import { isOrgSettingsTab, orgTabs, type OrgSettingsTab, type OrgTab } from "../ui/shell/nav.tsx";
+import { SharedTodo } from "./todo/SharedTodo.tsx";
 
 const roles: OrgRole[] = ["owner", "admin", "member"];
 const permissions: Permission[] = ["none", "read", "triage", "write", "maintain", "admin"];
@@ -435,7 +436,7 @@ function OrgHead({ org, isOwner, canCreate, onTab }: { org: Org; isOwner: boolea
 }
 
 /** Side column of the repositories tab: people in a row, top languages with a split bar, teams with member counts. */
-function OrgAside({ org, canManage, onTab }: { org: string; canManage: boolean; onTab: (tab: OrgTab) => void }) {
+function OrgAside({ org, canManage, onTab, showTodo }: { org: string; canManage: boolean; onTab: (tab: OrgTab) => void; showTodo: boolean }) {
   const t = useT("org");
   const members = useOrgMembers(org);
   const teams = useOrgTeams(org);
@@ -463,6 +464,7 @@ function OrgAside({ org, canManage, onTab }: { org: string; canManage: boolean; 
           {members.data.length > 24 && <button type="button" className="oh-link" onClick={() => onTab("members")}>{t("members.all", { count: members.data.length })}</button>}
         </section>
       )}
+      {showTodo && <SharedTodo scope={{ org }} />}
       {shown.length > 0 && (
         <section className="oh-side" aria-labelledby="oh-lang-h">
           <h2 id="oh-lang-h">{t("languages.title")}</h2>
@@ -689,7 +691,7 @@ export function OrgPage({ name, tab, app, installation, onTab }: { name: string;
       <div className="oa">
         <aside className="oa-id">
           <OrgHead org={o} isOwner={isOwner} canCreate={o.role !== undefined || instanceAdmin} onTab={onTab} />
-          <OrgAside org={o.name} canManage={canManage} onTab={onTab} />
+          <OrgAside org={o.name} canManage={canManage} onTab={onTab} showTodo={current === "repos"} />
         </aside>
         <Tabs value={current} onValueChange={(v) => onTab(v as OrgTab)}>
           {/* The console sidebar already lists these sections. */}

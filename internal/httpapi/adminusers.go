@@ -70,10 +70,15 @@ func adminProblem(err error) (problemResponse, bool) {
 	return problemResponse{}, false
 }
 
-func adminUserDTO(u identity.AdminUser) v1gen.AdminUser {
+func (s *v1Server) adminUserDTO(u identity.AdminUser) v1gen.AdminUser {
+	avatar := u.AvatarURL
+	if avatar == "" && s.browse != nil {
+		avatar = s.browse.ProfileAliasAvatar(u.ID)
+	}
 	out := v1gen.AdminUser{
 		Id: u.ID, Username: u.Username, DisplayName: u.DisplayName, Role: v1gen.AdminUserRole(u.Role),
-		IsBot: u.IsBot, SuspendedAt: u.SuspendedAt, Has2fa: u.Has2FA, CreatedAt: u.CreatedAt, LastActivity: u.LastActivity,
+		AvatarUrl: nonEmpty(avatar),
+		IsBot:     u.IsBot, SuspendedAt: u.SuspendedAt, Has2fa: u.Has2FA, CreatedAt: u.CreatedAt, LastActivity: u.LastActivity,
 	}
 	if u.Email != "" {
 		out.Email = &u.Email
@@ -126,7 +131,7 @@ func (s *v1Server) ListAdminUsers(ctx context.Context, req v1gen.ListAdminUsersR
 		All: c.All, Admins: c.Admins, Suspended: c.Suspended, Without2fa: c.Without2FA, Bots: c.Bots,
 	}}
 	for _, u := range users {
-		out.Items = append(out.Items, adminUserDTO(u))
+		out.Items = append(out.Items, s.adminUserDTO(u))
 	}
 	return v1gen.ListAdminUsers200JSONResponse(out), nil
 }
@@ -143,7 +148,7 @@ func (s *v1Server) GetAdminUser(ctx context.Context, req v1gen.GetAdminUserReque
 	if err != nil {
 		return nil, err
 	}
-	return v1gen.GetAdminUser200JSONResponse(adminUserDTO(u)), nil
+	return v1gen.GetAdminUser200JSONResponse(s.adminUserDTO(u)), nil
 }
 
 func (s *v1Server) UpdateAdminUser(ctx context.Context, req v1gen.UpdateAdminUserRequestObject) (v1gen.UpdateAdminUserResponseObject, error) {
@@ -166,7 +171,7 @@ func (s *v1Server) UpdateAdminUser(ctx context.Context, req v1gen.UpdateAdminUse
 	if err != nil {
 		return nil, err
 	}
-	return v1gen.UpdateAdminUser200JSONResponse(adminUserDTO(u)), nil
+	return v1gen.UpdateAdminUser200JSONResponse(s.adminUserDTO(u)), nil
 }
 
 func (s *v1Server) ResetAdminUser2fa(ctx context.Context, req v1gen.ResetAdminUser2faRequestObject) (v1gen.ResetAdminUser2faResponseObject, error) {

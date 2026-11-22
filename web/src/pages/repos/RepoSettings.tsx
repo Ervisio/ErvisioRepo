@@ -37,6 +37,7 @@ import {
 } from "../../ui/index.ts";
 import { useLayout } from "../../ui/shell/layout.ts";
 import { useNotify } from "../account/common.tsx";
+import { formatBytes } from "../code/common.tsx";
 import { repoHooks } from "../../api/settings.ts";
 import { Entries, Environments, GitHubActionsImport } from "../actions/Settings.tsx";
 import { Runners } from "../actions/Runners.tsx";
@@ -78,6 +79,9 @@ function General({ repo }: { repo: Repo }) {
   return (
     <SettingsSection title={t("settings.general")}>
       <SettingsCard>
+        <SettingRow label={t("size.total")} description={t("size.total.hint")}>
+          <span className="ui-num">{formatBytes(repo.totalSizeBytes)}</span>
+        </SettingRow>
         <SettingRow label={t("settings.image")} description={t("settings.image.hint")}>
           <ImagePicker
             preview={<AvatarImg src={repo.avatarUrl} className="st-ph-org">{repo.name.slice(0, 1).toUpperCase()}</AvatarImg>}

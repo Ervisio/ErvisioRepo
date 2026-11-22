@@ -69,6 +69,7 @@ func queryFields() map[string]resolver {
 				}
 				out[i] = n
 			}
+			rq.queueRepoFootprints(out)
 			return out, nil
 		},
 		"search": func(rq *request, src any, a args) (any, error) { return rq.search(a) },

@@ -73,6 +73,11 @@ export function RepoFrame({ owner, name, tab, section = "code", actions, head = 
       actions={
         <>
           <Badge tone={r.visibility === "public" ? "ok" : "neutral"}>{tr(`visibility.${r.visibility}`)}</Badge>
+          {tab === "code" && head && (
+            <span title={tr("size.total.hint")}>
+              <Badge tone="neutral">{tr("size.totalValue", { size: formatBytes(r.totalSizeBytes) })}</Badge>
+            </span>
+          )}
           {actions}
           <StarButton repo={r} />
           <PinButton owner={r.owner} name={r.name} />

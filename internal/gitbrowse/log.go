@@ -11,8 +11,8 @@ import (
 	"github.com/Ervisio/ErvisioRepo/internal/git"
 )
 
-// commitFormat is the pretty format parsed by parseCommits (with -z).
-const commitFormat = "--format=format:%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%cn%x1f%ce%x1f%ct%x1f%B"
+// Each -z record contains the untouched message and a separate Git-parsed trailer field.
+const commitFormat = "--format=format:%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%cn%x1f%ce%x1f%ct%x1f%B%x00%(trailers:key=Co-authored-by,valueonly,unfold)"
 
 // MaxLogLimit bounds a history page.
 const MaxLogLimit = 100
@@ -46,8 +46,10 @@ func parseCommit(rec string) (Commit, bool) {
 
 func parseCommits(out []byte) []Commit {
 	var list []Commit
-	for _, rec := range bytes.Split(out, []byte{0}) {
-		if c, ok := parseCommit(string(rec)); ok {
+	fields := bytes.Split(out, []byte{0})
+	for i := 0; i+1 < len(fields); i += 2 {
+		if c, ok := parseCommit(string(fields[i])); ok {
+			c.ClaudeCoauthor = hasClaudeCoauthor(string(fields[i+1]))
 			list = append(list, c)
 		}
 	}

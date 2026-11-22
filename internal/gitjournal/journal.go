@@ -80,13 +80,10 @@ type Journal struct {
 
 type enqueuerBox struct{ e Enqueuer }
 
-// New builds a Journal. The tier must have a remote store.
+// New builds a Journal. Without a remote store it records local Git size only.
 func New(o Options) (*Journal, error) {
 	if o.Pool == nil || o.Tier == nil {
 		return nil, errors.New("gitjournal: pool and tier are required")
-	}
-	if o.Tier.Store() == nil {
-		return nil, errors.New("gitjournal: the git tier has no remote store")
 	}
 	switch o.Durability {
 	case "":
@@ -186,6 +183,9 @@ func (j *Journal) flush(ctx context.Context, repo uuid.UUID, path string, pre *p
 			return err
 		}
 		if cur.equal(h.refs) {
+			if err := j.recordManifestSize(ctx, repo, h.m); err != nil {
+				return err
+			}
 			return j.recordClean(ctx, repo)
 		}
 		seq := h.m.RefsSeq + 1
@@ -226,17 +226,27 @@ func (j *Journal) flush(ctx context.Context, repo uuid.UUID, path string, pre *p
 	}
 }
 
-// size is the remote size of a manifest: every pack it references.
+// size counts the current manifest's packed objects once, without indexes,
+// retired generations or replica copies.
 func size(m *gitstore.Manifest) int64 {
 	var n int64
+	seen := make(map[string]bool)
 	for _, p := range m.Packs() {
+		if seen[p.SHA] {
+			continue
+		}
+		seen[p.SHA] = true
 		n += p.Size
 	}
 	return n
 }
 
-// recordSize stores the repository size and adjusts the owner's usage.
-func (j *Journal) recordSize(ctx context.Context, repo uuid.UUID, m *gitstore.Manifest) error {
+func (j *Journal) recordManifestSize(ctx context.Context, repo uuid.UUID, m *gitstore.Manifest) error {
+	return j.recordSize(ctx, repo, size(m), m.RefsSeq)
+}
+
+// The caller holds the Write or Exclusive lease to serialize size and ownership changes.
+func (j *Journal) recordSize(ctx context.Context, repo uuid.UUID, bytes, seq int64) error {
 	tx, err := j.o.Pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("record size: %w", err)
@@ -247,15 +257,19 @@ func (j *Journal) recordSize(ctx context.Context, repo uuid.UUID, m *gitstore.Ma
 	if err != nil {
 		return fmt.Errorf("record size: %w", err)
 	}
-	if err := q.SetRepoManifestSeq(ctx, dbgen.SetRepoManifestSeqParams{ID: repo, Seq: m.RefsSeq}); err != nil {
-		return fmt.Errorf("record manifest seq: %w", err)
+	if seq > row.ManifestSeq {
+		if err := q.SetRepoManifestSeq(ctx, dbgen.SetRepoManifestSeqParams{ID: repo, Seq: seq}); err != nil {
+			return fmt.Errorf("record manifest seq: %w", err)
+		}
 	}
-	prev, err := q.SetRepoSize(ctx, dbgen.SetRepoSizeParams{ID: repo, SizeBytes: size(m)})
-	if err != nil {
-		return fmt.Errorf("record size: %w", err)
-	}
-	if err := quota.Adjust(ctx, q, row.OwnerID, quota.Delta{Bytes: size(m) - prev}); err != nil {
-		return err
+	if bytes != row.SizeBytes {
+		prev, err := q.SetRepoSize(ctx, dbgen.SetRepoSizeParams{ID: repo, SizeBytes: bytes})
+		if err != nil {
+			return fmt.Errorf("record size: %w", err)
+		}
+		if err := quota.Adjust(ctx, q, row.OwnerID, quota.Delta{Bytes: bytes - prev}); err != nil {
+			return err
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("record size: %w", err)
@@ -266,7 +280,7 @@ func (j *Journal) recordSize(ctx context.Context, repo uuid.UUID, m *gitstore.Ma
 // recordPush updates the database after a manifest commit and schedules
 // maintenance and compaction when due.
 func (j *Journal) recordPush(ctx context.Context, repo uuid.UUID, m *gitstore.Manifest) error {
-	if err := j.recordSize(ctx, repo, m); err != nil {
+	if err := j.recordManifestSize(ctx, repo, m); err != nil {
 		return err
 	}
 	if err := j.recordClean(ctx, repo); err != nil {

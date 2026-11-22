@@ -179,8 +179,6 @@ a.rp-msg:hover { color: var(--ink); text-decoration: underline; }
 .rp-rb .rp-pre { padding: 0; background: none; }
 .rp-fh { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; padding: 6px 6px 10px; font-size: 13px; }
 .rp-fh a.ui-btn { text-decoration: none; }
-.rp-img { display: grid; place-items: center; padding: 20px; background: var(--bg); border-radius: calc(var(--r-card) - 4px); }
-.rp-img img { max-width: 100%; height: auto; }
 
 .rp-search { max-width: none; }
 .rp-search .rp-bar { margin-bottom: 0; }
@@ -338,6 +336,46 @@ button.cs-ri { border: 0; cursor: pointer; padding: 0; font: inherit; }
 .cx-tb .ui-btn { height: 30px; }
 .cx-tb .ui-btn-ghost:hover { background: var(--surface); }
 .cx-meta { font-size: 12.5px; color: var(--ink3); }
+.cx-media { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 170px); }
+.cx-media-stage {
+  display: grid;
+  place-content: center stretch;
+  justify-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: clamp(12px, 3vw, 24px);
+}
+.cx-media-stage img, .cx-media-stage video {
+  display: block;
+  max-width: 100%;
+  max-height: 65dvh;
+  object-fit: contain;
+}
+.cx-media-stage video {
+  width: min(100%, 720px);
+  aspect-ratio: 16 / 9;
+  background: var(--sunk);
+  border-radius: calc(var(--b-r) - 4px);
+}
+.cx-media-stage audio { width: min(100%, 480px); }
+.cx-media-stage .ui-note { margin: 0; }
+.cx-media-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: clamp(12px, 3vw, 24px);
+  border-inline-start: 1px solid var(--line);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.cx-media-details dt { color: var(--ink2); font-size: 13px; }
+.cx-media-details dd { margin: 0; }
+@media (max-width: 650px) {
+  .cx-media { grid-template-columns: minmax(0, 1fr); }
+  .cx-media-details { flex-flow: row wrap; gap: 8px 20px; border-inline-start: 0; border-block-start: 1px solid var(--line); }
+  .cx-media-stage .ui-btn { min-height: 44px; }
+}
 .cx-code .cv { border-radius: 0; padding: 8px 0; }
 .cx-code .dv { border-radius: 0; }
 .cx-code .ed, .cx-code .ed .cm-editor { border-radius: 0; }
@@ -382,6 +420,7 @@ button.cs-ri { border: 0; cursor: pointer; padding: 0; font: inherit; }
 .cm-mt { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink2); }
 .cm-mt b { color: var(--ink); font-weight: 600; }
 .cm-mt .rp-when { color: inherit; font-size: inherit; }
+.cm-coauthor { display: inline-flex; align-items: center; gap: 4px; }
 .cm-act { display: flex; align-items: center; gap: 6px; }
 .cm-act .ui-btn { height: 28px; width: 28px; background: var(--bg); }
 .cm-sha, .cd-sha { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border-radius: 8px; background: var(--bg); color: var(--ink2); font: 12px var(--mono); }

@@ -31,7 +31,7 @@ type HotRepo struct {
 
 // HotSummary is the usage of the hot tier.
 type HotSummary struct {
-	Repos, Pinned, Bytes int64
+	Repos, Pinned, Bytes, TotalGitBytes int64
 	// Budget is the space of the hot tier in bytes (0: no watermark), High
 	// and Low its watermarks, TTL the idle TTL (0: none), and Remote whether
 	// a remote journal exists (without one nothing is ever evicted).
@@ -115,7 +115,7 @@ func (a *Admin) HotSummary(ctx context.Context) (HotSummary, error) {
 	if err != nil {
 		return HotSummary{}, fmt.Errorf("hot repository stats: %w", err)
 	}
-	s := HotSummary{Repos: st.Repos, Pinned: st.Pinned, Bytes: st.Bytes}
+	s := HotSummary{Repos: st.Repos, Pinned: st.Pinned, Bytes: st.Bytes, TotalGitBytes: st.TotalGitBytes}
 	if a.evictor != nil {
 		s.TTL, s.Budget, s.High, s.Low = a.evictor.Settings()
 		s.Remote = a.evictor.o.Tier.Store() != nil

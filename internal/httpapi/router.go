@@ -383,7 +383,7 @@ func mountV1(r chi.Router, d Deps) {
 	})
 	v1gen.HandlerWithOptions(strict, v1gen.ChiServerOptions{
 		BaseRouter:  r,
-		Middlewares: []v1gen.MiddlewareFunc{remoteRequestBody, authorizeHubSession(d.Auth.Authorize(operationScopes, operationTokenScopes))},
+		Middlewares: []v1gen.MiddlewareFunc{remoteRequestBody, boundTodoRequest, authorizeHubSession(d.Auth.Authorize(operationScopes, operationTokenScopes))},
 		ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
 			writeProblem(w, http.StatusBadRequest, err.Error())
 		},

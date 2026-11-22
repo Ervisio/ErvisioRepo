@@ -26,6 +26,7 @@ type Repos interface {
 	AuthorizeAdmin(ctx context.Context, who auth.Principal, owner, name string) (repos.Repo, error)
 	SetAvatar(ctx context.Context, who auth.Principal, owner, name, avatarURL string, c identity.Client) (repos.Repo, error)
 	MarkOwnerAvatars(ctx context.Context, list []repos.Repo) error
+	StorageFootprints(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]int64, error)
 	ListMine(ctx context.Context, who auth.Principal, offset, limit int) ([]repos.Repo, error)
 	AuthorizeLinkedRepository(ctx context.Context, who auth.Principal, owner, name string) error
 	Update(ctx context.Context, who auth.Principal, owner, name string, in repos.UpdateInput, c identity.Client) (repos.Repo, error)
@@ -110,40 +111,53 @@ type repoResponse interface {
 }
 
 // repoDTO converts a repository for the caller. Storage is instance
-// infrastructure: only instance admins see the real storage state, every
-// other caller gets "hot".
-func repoDTO(ctx context.Context, r repos.Repo) v1gen.Repo {
+// infrastructure: only instance admins see the Git-only size and real state.
+func repoDTO(ctx context.Context, r repos.Repo, totalSize int64) v1gen.Repo {
 	state := v1gen.RepoStorageStateHot
+	var gitSize *int64
 	if principal(ctx).IsAdmin() {
 		state = v1gen.RepoStorageState(r.StorageState)
+		gitSize = &r.SizeBytes
 	}
 	return v1gen.Repo{Id: r.ID, Owner: r.Owner, OwnerKind: v1gen.RepoOwnerKind(r.OwnerKind), Name: r.Name,
 		FullName: r.FullName(), Description: r.Description, Visibility: v1gen.Visibility(r.Visibility),
-		DefaultBranch: r.DefaultBranch, StorageState: state, SizeBytes: r.SizeBytes,
+		DefaultBranch: r.DefaultBranch, StorageState: state, SizeBytes: gitSize, TotalSizeBytes: totalSize,
 		StarsCount: r.StarsCount, Starred: r.Starred, Permission: v1gen.Permission(r.Permission.String()),
 		AvatarUrl: r.AvatarURL, OwnerAvatarUrl: r.OwnerAvatarURL, CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt}
 }
 
-func repoList(ctx context.Context, list []repos.Repo) []v1gen.Repo {
+func (s *v1Server) repoList(ctx context.Context, list []repos.Repo) ([]v1gen.Repo, error) {
 	out := make([]v1gen.Repo, 0, len(list))
-	for _, r := range list {
-		out = append(out, repoDTO(ctx, r))
+	if len(list) == 0 {
+		return out, nil
 	}
-	return out
+	ids := make([]uuid.UUID, len(list))
+	for i, r := range list {
+		ids[i] = r.ID
+	}
+	sizes, err := s.repos.StorageFootprints(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range list {
+		out = append(out, repoDTO(ctx, r, sizes[r.ID]))
+	}
+	return out, nil
 }
 
 // reposOut converts repositories for the caller, with their starred flag
 // loaded in one query.
 func (s *v1Server) reposOut(ctx context.Context, list []repos.Repo) ([]v1gen.Repo, error) {
-	if s.repos != nil {
-		if err := s.repos.MarkStarred(ctx, principal(ctx), list); err != nil {
-			return nil, err
-		}
-		if err := s.repos.MarkOwnerAvatars(ctx, list); err != nil {
-			return nil, err
-		}
+	if s.repos == nil {
+		return nil, repos.ErrNotFound
 	}
-	return repoList(ctx, list), nil
+	if err := s.repos.MarkStarred(ctx, principal(ctx), list); err != nil {
+		return nil, err
+	}
+	if err := s.repos.MarkOwnerAvatars(ctx, list); err != nil {
+		return nil, err
+	}
+	return s.repoList(ctx, list)
 }
 
 // repoOut is reposOut for one repository.

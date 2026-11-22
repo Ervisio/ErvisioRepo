@@ -119,7 +119,8 @@ type Service struct {
 	stop    chan struct{}
 	log     *slog.Logger
 	// authors caches the accounts of commit addresses (Authors).
-	authors authorCache
+	authors      authorCache
+	claudeAuthor *uuid.UUID
 }
 
 // New builds a Service.
@@ -220,12 +221,13 @@ type Person struct {
 
 // Commit is the metadata of a commit.
 type Commit struct {
-	SHA       string
-	Parents   []string
-	Author    Person
-	Committer Person
-	Summary   string
-	Message   string
+	SHA            string
+	Parents        []string
+	Author         Person
+	Committer      Person
+	Summary        string
+	Message        string
+	ClaudeCoauthor bool
 }
 
 // run runs git in the repository at path with a timeout and returns stdout.

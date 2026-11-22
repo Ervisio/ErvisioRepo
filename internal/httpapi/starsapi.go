@@ -67,9 +67,13 @@ func (s *v1Server) ListUserStarred(ctx context.Context, req v1gen.ListUserStarre
 	if err := s.repos.MarkOwnerAvatars(ctx, starred); err != nil {
 		return nil, err
 	}
+	items, err := s.repoList(ctx, starred)
+	if err != nil {
+		return nil, err
+	}
 	out := make(v1gen.ListUserStarred200JSONResponse, 0, len(list))
 	for i, r := range list {
-		out = append(out, v1gen.StarredRepo{Repo: repoDTO(ctx, starred[i]), StarredAt: r.StarredAt})
+		out = append(out, v1gen.StarredRepo{Repo: items[i], StarredAt: r.StarredAt})
 	}
 	return out, nil
 }

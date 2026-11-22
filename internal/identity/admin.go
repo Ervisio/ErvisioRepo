@@ -36,6 +36,7 @@ type AdminUser struct {
 	ID           uuid.UUID
 	Username     string
 	DisplayName  string
+	AvatarURL    string
 	Email        string
 	Role         string
 	IsBot        bool
@@ -115,7 +116,7 @@ func (s *Service) AdminListUsers(ctx context.Context, f AdminUserFilter) ([]Admi
 	var total int64
 	for _, r := range rows {
 		total = r.Total
-		out = append(out, AdminUser{ID: r.ID, Username: r.Username, DisplayName: r.DisplayName, Email: r.Email,
+		out = append(out, AdminUser{ID: r.ID, Username: r.Username, DisplayName: r.DisplayName, AvatarURL: r.AvatarUrl, Email: r.Email,
 			Role: r.Role, IsBot: r.IsBot, SuspendedAt: timePtr(r.SuspendedAt), Has2FA: r.Has2fa, CreatedAt: r.CreatedAt.Time,
 			LastActivity: timePtr(r.LastActivity)})
 	}
@@ -152,7 +153,7 @@ func (s *Service) AdminGetUser(ctx context.Context, username string) (AdminUser,
 	if err != nil {
 		return AdminUser{}, fmt.Errorf("get user: %w", err)
 	}
-	return AdminUser{ID: r.ID, Username: r.Username, DisplayName: r.DisplayName, Email: r.Email,
+	return AdminUser{ID: r.ID, Username: r.Username, DisplayName: r.DisplayName, AvatarURL: r.AvatarUrl, Email: r.Email,
 		Role: r.Role, IsBot: r.IsBot, SuspendedAt: timePtr(r.SuspendedAt), Has2FA: r.Has2fa, CreatedAt: r.CreatedAt.Time,
 		LastActivity: timePtr(r.LastActivity)}, nil
 }

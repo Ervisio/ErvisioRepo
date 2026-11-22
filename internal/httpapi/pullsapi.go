@@ -185,7 +185,7 @@ func (s *v1Server) ListPullCommits(ctx context.Context, req v1gen.ListPullCommit
 	if err != nil {
 		return pullsFail(err, http.MethodGet, pullSuffix(req.Number, "/commits"))
 	}
-	return v1gen.ListPullCommits200JSONResponse{HasMore: more, Items: s.linkCommits(ctx, commitsDTO(list))}, nil
+	return v1gen.ListPullCommits200JSONResponse{HasMore: more, Items: s.linkCommits(ctx, list)}, nil
 }
 
 func (s *v1Server) ListPullFiles(ctx context.Context, req v1gen.ListPullFilesRequestObject) (v1gen.ListPullFilesResponseObject, error) {

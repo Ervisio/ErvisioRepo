@@ -36,17 +36,16 @@ func hookCmd(ctx context.Context, args []string, stdin io.Reader, stderr io.Writ
 // branch protection rules it enforces and the journal jobs. Close it after
 // the transports have stopped.
 type gitJournal struct {
-	// Journal is nil when the git tier has no remote store.
 	Journal    *gitjournal.Journal
 	Hooks      *githooks.Server
 	Protection *protection.Engine
-	Jobs       jobs.Option // nil without a journal
+	Jobs       jobs.Option
 	// GitHub is the GitHub sync service; its hooks refuse pushes to mirrors.
 	GitHub *ghsync.Service
 }
 
-// setupGitJournal builds the journal (when the git tier has a remote
-// store) and starts the hook server, which enforces the branch protection
+// setupGitJournal configures Git size accounting, remote journaling when configured,
+// and the hook server, which enforces the branch protection
 // rules and publishes push events on bus; it returns nil without a git tier. Call Journal.SetEnqueuer once
 // the job runner exists.
 func setupGitJournal(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, bus *events.Bus,
@@ -71,18 +70,16 @@ func setupGitJournal(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool
 	// File locks are checked after the branch protection rules.
 	locks := &presence.Hooks{Service: pres}
 	chain := &protection.Hooks{Engine: prot, Next: locks, Log: log.With("component", "protection")}
-	if t.Store() != nil {
-		j, err := gitjournal.New(gitjournal.Options{
-			Pool: pool, Tier: t,
-			Durability:  cfg.Storage.Policy[gitstore.Policy].Durability,
-			MaxPushSize: int64(cfg.Git.MaxPushSize),
-			Log:         log.With("component", "git-journal"),
-		})
-		if err != nil {
-			return nil, err
-		}
-		g.Journal, g.Jobs, locks.Next = j, gitjournal.JobsOption(j), j
+	j, err := gitjournal.New(gitjournal.Options{
+		Pool: pool, Tier: t,
+		Durability:  cfg.Storage.Policy[gitstore.Policy].Durability,
+		MaxPushSize: int64(cfg.Git.MaxPushSize),
+		Log:         log.With("component", "git-journal"),
+	})
+	if err != nil {
+		return nil, err
 	}
+	g.Journal, g.Jobs, locks.Next = j, gitjournal.JobsOption(j), j
 	exe, err := os.Executable()
 	if err != nil {
 		return nil, fmt.Errorf("git hooks: locate executable: %w", err)

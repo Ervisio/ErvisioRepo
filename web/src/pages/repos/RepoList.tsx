@@ -81,7 +81,7 @@ export function RepoRow({ repo: r, showOwner, pin = true, lang, weeks }: { repo:
             </span>
           )}
           <span>{t("list.updated")} <When iso={r.updatedAt} /></span>
-          {r.sizeBytes > 0 && <span>{formatBytes(r.sizeBytes)}</span>}
+          <span title={t("size.total.hint")}>{t("size.totalValue", { size: formatBytes(r.totalSizeBytes) })}</span>
         </p>
       </div>
       <div className="rl-side">

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useMeta } from "../../api/useMeta.ts";
 import { useT } from "../../i18n/useT.ts";
+import { BrandMark } from "../../ui/BrandMark.tsx";
 
 /**
  * Page chrome for everything visible before sign-in: logo, title, the form in a card, a box with
@@ -20,7 +21,7 @@ export function AuthFrame({ title, subtitle, children, footer, wide }: {
   return (
     <div className="auth sec-act">
       <main className={wide ? "auth-pg auth-wide" : "auth-pg"}>
-        <Link to="/" className="auth-logo" aria-label={t("brand.home")}>E</Link>
+        <Link to="/" className="auth-logo" aria-label={t("brand.home")}><BrandMark /></Link>
         <div className="auth-at">
           <h1>{title}</h1>
           {subtitle && <p className="auth-sub">{subtitle}</p>}

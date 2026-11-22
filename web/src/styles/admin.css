@@ -72,11 +72,13 @@
 .au-r.on { background: var(--raise); }
 .au-h { padding-top: 4px; padding-bottom: 8px; font-size: 12px; color: var(--ink2); font-weight: 500; }
 .au-cb { width: 16px; height: 16px; margin: 0; accent-color: var(--acc-fill); }
-.au-u { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.au-n { min-width: 0; display: flex; flex-direction: column; color: var(--ink); text-decoration: none; }
+.au-u { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.au-id { display: flex; align-items: center; flex: 1; gap: 10px; min-width: 0; color: var(--ink); text-decoration: none; }
+.au-n { min-width: 0; display: flex; flex-direction: column; }
+.au-n b, .au-n small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .au-n b { font-weight: 600; }
-.au-n:hover b { text-decoration: underline; }
-.au-n small { color: var(--ink2); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+a.au-id:hover b { text-decoration: underline; }
+.au-n small { color: var(--ink2); font-size: 12.5px; }
 
 /* Storage: each policy as a chain of mono nodes; destinations as a table. */
 .as-flow { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }

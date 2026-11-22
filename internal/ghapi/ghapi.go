@@ -551,10 +551,23 @@ func (c *call) moved(m *repos.MovedError) {
 		"documentation_url": docsURL})
 }
 
-// ok writes v, unless resolving the numeric ids of v failed.
+// ok fills in repository sizes and writes v after resolving its numeric IDs.
 func (c *call) ok(status int, v any) error {
 	if c.ids.err != nil {
 		return c.ids.err
+	}
+	if len(c.repos) > 0 {
+		ids := make([]uuid.UUID, 0, len(c.repos))
+		for id := range c.repos {
+			ids = append(ids, id)
+		}
+		sizes, err := c.s.d.Repos.StorageFootprints(c.ctx, ids)
+		if err != nil {
+			return err
+		}
+		for id, r := range c.repos {
+			r.Size = sizes[id] / 1024
+		}
 	}
 	writeJSON(c.w, status, v)
 	return nil

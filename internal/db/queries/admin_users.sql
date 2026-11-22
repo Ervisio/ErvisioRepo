@@ -2,7 +2,7 @@
 -- Users for the instance admin, newest first. search matches the username,
 -- display name or any email address (case-insensitive substring); role and
 -- suspended filter when set. total is the count before paging.
-SELECT u.id, n.name AS username, u.display_name, u.role, u.suspended_at, u.created_at,
+SELECT u.id, n.name AS username, u.display_name, u.avatar_url, u.role, u.suspended_at, u.created_at,
        COALESCE(e.address, '')::text AS email, (n.kind = 'bot')::boolean AS is_bot,
        (EXISTS (SELECT 1 FROM mfa_totp t WHERE t.user_id = u.id AND t.confirmed_at IS NOT NULL)
         OR EXISTS (SELECT 1 FROM webauthn_credentials w WHERE w.user_id = u.id))::boolean AS has_2fa,
@@ -46,7 +46,7 @@ SELECT (SELECT count(*) FROM users)::bigint AS users,
 SELECT pg_database_size(current_database())::bigint;
 
 -- name: AdminGetUser :one
-SELECT u.id, n.name AS username, u.display_name, u.role, u.suspended_at, u.created_at,
+SELECT u.id, n.name AS username, u.display_name, u.avatar_url, u.role, u.suspended_at, u.created_at,
        COALESCE(e.address, '')::text AS email, (n.kind = 'bot')::boolean AS is_bot,
        (EXISTS (SELECT 1 FROM mfa_totp t WHERE t.user_id = u.id AND t.confirmed_at IS NOT NULL)
         OR EXISTS (SELECT 1 FROM webauthn_credentials w WHERE w.user_id = u.id))::boolean AS has_2fa,

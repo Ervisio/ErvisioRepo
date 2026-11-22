@@ -1,0 +1,90 @@
+.repo-todo-container { container: repo-overview / inline-size; }
+
+@container repo-overview (min-width: 720px) {
+  .repo-todo-container .repo-todo-home:has(> .todo-panel) {
+    display: grid;
+    grid-template-columns: minmax(238px, 29%) minmax(0, 1fr);
+    align-items: start;
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1001px) {
+  .rp-home.repo-todo-home:has(> .todo-panel) {
+    grid-template-columns: clamp(238px, 23%, 296px) minmax(0, 1fr) clamp(230px, 24%, 296px);
+    gap: clamp(16px, 2vw, 32px);
+  }
+}
+
+.oa-id:has(> .todo-panel) { position: static; min-width: 0; }
+
+@media (max-width: 900px) {
+  .oa-id:has(> .todo-panel) > .oh-side ~ .oh-side { display: none; }
+}
+
+.ui-box.todo-panel {
+  margin-block: 12px;
+  padding: 16px;
+  container: todo-panel / inline-size;
+}
+
+.repo-todo-home > .todo-panel { margin-block-start: 0; }
+
+.todo-head, .todo-group-head, .todo-row, .todo-add {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.todo-head { flex-wrap: wrap; }
+.todo-head h2, .todo-group-head h3 { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.todo-head h2 { font-size: 18px; }
+.todo-group-head h3 { font-size: 14px; }
+.todo-members, .todo-count, .todo-empty { color: var(--ink2); font-size: 13px; }
+.todo-head .todo-count { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+
+.todo-group { margin-block-start: 12px; }
+.todo-group-head { min-height: 34px; margin-block-end: 4px; }
+.todo-group-head .todo-icon { margin-inline-start: auto; }
+.ui-in.todo-rows { margin: 0; padding: 0 12px; list-style: none; }
+.todo-row { min-height: 42px; padding-block: 2px; justify-content: space-between; }
+.todo-row + .todo-row { border-block-start: 1px solid var(--line); }
+.todo-row label { display: flex; gap: 10px; align-items: center; align-self: stretch; flex: 1; min-width: 0; cursor: pointer; }
+.todo-row label span { overflow-wrap: anywhere; }
+.todo-row input { flex: none; margin: 0; width: 16px; height: 16px; accent-color: var(--acc-fill); }
+.todo-row input:checked + span { color: var(--ink2); text-decoration: line-through; }
+.todo-row input:focus-visible, .todo-panel .ui-btn:focus-visible, .todo-panel .ui-input:focus-visible,
+.todo-panel .ui-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.todo-panel .todo-icon { flex: none; padding-inline: 8px; min-width: 34px; min-height: 34px; }
+
+.todo-add { flex-wrap: wrap; margin-block-start: 12px; }
+.todo-add > .ui-field:first-child { flex: 1 1 200px; min-width: 0; }
+.todo-add > .ui-field:nth-child(2) { flex: 0 1 180px; min-width: 0; }
+.todo-add :is(.ui-input, .ui-select) { width: 100%; min-width: 0; }
+.todo-add .ui-select > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.todo-edit { display: grid; gap: 12px; }
+.todo-empty, .todo-error { margin: 8px 0 0; }
+.todo-error { color: var(--err); }
+
+@container todo-panel (max-width: 320px) {
+  .todo-head {
+    display: grid;
+    grid-template: "title fold" auto "members progress" auto / minmax(0, 1fr) auto;
+    gap: 2px 10px;
+  }
+  .todo-head h2 { grid-area: title; }
+  .todo-head .todo-fold { grid-area: fold; justify-self: end; }
+  .todo-head .todo-members { grid-area: members; }
+  .todo-head .todo-count { grid-area: progress; max-width: 120px; text-align: end; }
+  .todo-add > .ui-field { flex: 1 1 100%; }
+  .ui-in.todo-rows { padding-inline: 8px; }
+}
+
+@media (max-width: 600px) {
+  .ui-box.todo-panel { padding: 12px; }
+  .todo-members { order: 1; flex-basis: 100%; }
+  .todo-row { min-height: 44px; }
+  .todo-panel .todo-icon, .todo-add .ui-btn, .todo-add :is(.ui-input, .ui-select) { min-height: 44px; }
+  .todo-panel .todo-icon { min-width: 44px; }
+  .todo-add > .ui-field:first-child { flex-basis: 100%; }
+}

@@ -42,7 +42,7 @@ type Blob struct {
 	// otherwise (Truncated tells which).
 	Content   []byte
 	Truncated bool
-	// ContentType is the type the raw endpoint serves.
+	// ContentType is the blob's safe MIME type for previews.
 	ContentType string
 }
 
@@ -90,22 +90,25 @@ func ParseLFSPointer(b []byte) (*LFSPointer, bool) {
 	return p, true
 }
 
-// safeImages are the binary types served inline by the raw endpoint; any
-// other binary is an attachment. SVG and HTML are never served as such.
-var safeImages = map[string]string{
+// safeBinaryTypes is an explicit allowlist; SVG and HTML are never served as such.
+var safeBinaryTypes = map[string]string{
 	".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif",
 	".webp": "image/webp", ".bmp": "image/bmp", ".ico": "image/x-icon", ".avif": "image/avif",
+	".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".aac": "audio/aac", ".wav": "audio/wav",
+	".ogg": "audio/ogg", ".oga": "audio/ogg", ".opus": "audio/ogg", ".flac": "audio/flac",
+	".mp4": "video/mp4", ".m4v": "video/mp4", ".webm": "video/webm", ".ogv": "video/ogg",
+	".mov": "video/quicktime",
 	".pdf": "application/pdf",
 }
 
 // ContentType returns the type served for a blob: text is always
-// text/plain (never HTML or SVG, which could run scripts), known images
+// text/plain (never HTML or SVG, which could run scripts), known media
 // keep their type, anything else is application/octet-stream.
 func ContentType(name string, binary bool) string {
 	if !binary {
 		return "text/plain; charset=utf-8"
 	}
-	if t, ok := safeImages[strings.ToLower(path.Ext(name))]; ok {
+	if t, ok := safeBinaryTypes[strings.ToLower(path.Ext(name))]; ok {
 		return t
 	}
 	return "application/octet-stream"
@@ -243,6 +246,20 @@ type RawStart func(b Blob) (io.Writer, error)
 // Raw streams the file at path of ref. The Read lease is held until the
 // copy ends.
 func (s *Service) Raw(ctx context.Context, repo Repo, ref, path string, start RawStart) error {
+	return s.RawContent(ctx, repo, ref, path, func(b Blob, write RawWrite) error {
+		w, err := start(b)
+		if err != nil {
+			return err
+		}
+		return write(w, 0, b.Size)
+	})
+}
+
+// RawWrite streams the selected span of a blob while the read lease is held.
+type RawWrite func(w io.Writer, offset, length int64) error
+
+// RawContent serves blob metadata and lets the caller stream all or part of it.
+func (s *Service) RawContent(ctx context.Context, repo Repo, ref, path string, serve func(Blob, RawWrite) error) error {
 	if path == "" {
 		return invalidf("path is required")
 	}
@@ -270,16 +287,32 @@ func (s *Service) Raw(ctx context.Context, repo Repo, ref, path string, start Ra
 		if ptr, ok := ParseLFSPointer(head); ok && info.Size <= lfsPointerMax {
 			b.LFS = ptr
 		}
-		w, err := start(b)
-		if err != nil {
+		return serve(b, func(w io.Writer, offset, length int64) error {
+			if err := s.writeRaw(ctx, rp, b, w, offset, length); err != nil {
+				return fmt.Errorf("%w: stream blob: %w", errStreaming, err)
+			}
+			return nil
+		})
+	})
+}
+
+func (s *Service) writeRaw(ctx context.Context, rp string, b Blob, w io.Writer, offset, length int64) error {
+	args := []string{"cat-file", "blob", b.OID}
+	if offset == 0 && length == b.Size {
+		return git.Exec(ctx, git.Cmd{RepoPath: rp, Args: args, Stdout: w, Timeout: s.o.ArchiveTimeout})
+	}
+	st, err := startStream(ctx, rp, s.o.ArchiveTimeout, args...)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = st.Close() }() // Stop git if the selected span ends before EOF.
+	if offset > 0 {
+		if _, err := io.CopyN(io.Discard, st, offset); err != nil {
 			return err
 		}
-		if err := git.Exec(ctx, git.Cmd{RepoPath: rp, Args: []string{"cat-file", "blob", info.OID},
-			Stdout: w, Timeout: s.o.ArchiveTimeout}); err != nil {
-			return fmt.Errorf("%w: stream blob: %w", errStreaming, err)
-		}
-		return nil
-	})
+	}
+	_, err = io.CopyN(w, st, length)
+	return err
 }
 
 // errStreaming marks a failure after the response has started.

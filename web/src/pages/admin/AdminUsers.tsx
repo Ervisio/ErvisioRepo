@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ADMIN_PAGE_SIZE, useAdminUsers, useBulkUpdateAdminUsers, type AdminUser, type UserRole } from "../../api/admin.ts";
 import { useT } from "../../i18n/useT.ts";
-import { Badge, BotMark, Button, EmptyState, Input } from "../../ui/index.ts";
+import { AvatarImg } from "../../ui/AvatarImg.tsx";
+import { Badge, BotMark, Button, EmptyState, Icon, Input } from "../../ui/index.ts";
 import { useNotify } from "../account/common.tsx";
 import { When } from "../code/common.tsx";
 import { Avatar } from "../work/common.tsx";
@@ -41,6 +42,32 @@ function searchOf(v: View, q: string | undefined): UsersSearch {
 }
 
 const roleChip: Record<UserRole, string> = { admin: "ui-chip ui-chip-acc", user: "ui-chip", restricted: "ui-chip ui-chip-warn" };
+
+function UserIdentity({ user: u }: { user: AdminUser }) {
+  const t = useT("admin");
+  const manage = t("users.manage", { login: u.username });
+  const identity = (
+    <>
+      <AvatarImg src={u.avatarUrl} size={32} radius="50%">
+        <Avatar user={u.username} size={32} />
+      </AvatarImg>
+      <span className="au-n">
+        <b>{u.displayName || u.username} <BotMark login={u.username} /></b>
+        <small>{[u.username, u.email].filter(Boolean).join(" · ")}</small>
+      </span>
+    </>
+  );
+  return (
+    <span role="cell" className="au-u">
+      {u.suspendedAt ? <span className="au-id">{identity}</span> : (
+        <Link to="/$owner" params={{ owner: u.username }} className="au-id">{identity}</Link>
+      )}
+      <Link to="/admin/users/$login" params={{ login: u.username }} className="ui-iconbtn" aria-label={manage} title={manage}>
+        <Icon name="gear" />
+      </Link>
+    </span>
+  );
+}
 
 /** Admin: users with filter shortcuts and counts, search, and selection for bulk suspend or reactivate. Filters live in the URL. */
 export function AdminUsers({ search, onSearch }: { search: UsersSearch; onSearch: (s: UsersSearch) => void }) {
@@ -151,13 +178,7 @@ export function AdminUsers({ search, onSearch }: { search: UsersSearch; onSearch
                   <input type="checkbox" className="au-cb" aria-label={t("users.bulk.pick", { login: u.username })} checked={picked.has(u.username)} onChange={() => toggle(u.username)} />
                 )}
               </span>
-              <span role="cell" className="au-u">
-                <Avatar user={u.username} size={32} />
-                <Link to="/admin/users/$login" params={{ login: u.username }} className="au-n">
-                  <b>{u.displayName || u.username} <BotMark login={u.username} /></b>
-                  <small>{[u.username, u.email ?? ""].filter(Boolean).join(" · ")}</small>
-                </Link>
-              </span>
+              <UserIdentity user={u} />
               <span role="cell"><span className={u.isBot ? "ui-chip" : roleChip[u.role]}>{u.isBot ? t("users.role.bot") : t(`users.role.${u.role}`)}</span></span>
               <span role="cell">
                 <span className={u.suspendedAt ? "ui-chip ui-chip-err" : "ui-chip ui-chip-ok"}>{t(u.suspendedAt ? "users.status.suspended" : "users.status.active")}</span>

@@ -60,6 +60,6 @@
   "dash.runnersOnline": "Runners online",
   "dash.ofTotal": "{count} of {total}",
   "dash.jobsRunning": "Jobs running",
-  "dash.storage": "Storage",
+  "dash.storage": "Managed storage objects",
   "dash.used": "{size} used"
 }

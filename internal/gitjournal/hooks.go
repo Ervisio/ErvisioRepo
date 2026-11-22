@@ -35,6 +35,9 @@ var _ githooks.Handler = (*Journal)(nil)
 // quota) and, with sync durability, uploads them as the next segment
 // before git updates any ref.
 func (j *Journal) PreReceive(ctx context.Context, s *githooks.Session, updates []githooks.RefUpdate, q githooks.Quarantine, out io.Writer) error {
+	if j.store == nil {
+		return nil
+	}
 	st := state(s)
 	env := q.Env()
 	var newTips []string
@@ -123,6 +126,13 @@ func (j *Journal) Committed(ctx context.Context, s *githooks.Session, _ []githoo
 			return err
 		}
 		st.marked = true
+	}
+	if j.store == nil {
+		if err := j.flushLocal(ctx, s.RepoID, s.RepoPath); err != nil {
+			return err
+		}
+		st.flushed = true
+		return nil
 	}
 	if j.o.Durability == DurabilityAsync {
 		st.needSync = true

@@ -17,7 +17,7 @@ import { isMarkdown, useInAppLinks, useMarkdownContext } from "./Readme.tsx";
 
 export type BlobMode = "code" | "blame" | "preview";
 
-/** One file: highlighted source, blame, or rendered Markdown; raw and download links. */
+/** One file: source, blame, Markdown or media; raw and download links. */
 export function BlobPage({ owner, name, refName, path, view }: { owner: string; name: string; refName?: string; path: string; view?: BlobMode }) {
   return (
     <RepoFrame owner={owner} name={name} tab="code" head={false}>
@@ -97,6 +97,7 @@ function BlobBox({ repo, blob: b, refName, path, view, onView }: { repo: Repo; b
   const writable = canWrite(repo.permission) && b.ref.kind === "branch";
   const editable = writable && !b.binary && !b.truncated && !b.lfs;
   const raw = rawUrl(owner, name, refName, path);
+  const media = mediaKind(b);
   const meta = [text ? t("blob.lines", { count: splitLines(b.content ?? "").length }) : "", formatBytes(b.size)].filter(Boolean).join(" · ");
   return (
     <div className="ui-box rp-blob">
@@ -112,7 +113,7 @@ function BlobBox({ repo, blob: b, refName, path, view, onView }: { repo: Repo; b
               ))}
             </div>
           )}
-          <span className="cx-meta">{meta}</span>
+          {!media && <span className="cx-meta">{meta}</span>}
           <span className="acc-grow" />
           <a className="ui-btn ui-btn-ghost" href={raw} target="_blank" rel="noopener">
             {t("blob.raw")}
@@ -143,7 +144,11 @@ function BlobBox({ repo, blob: b, refName, path, view, onView }: { repo: Repo; b
             )}
           </Menu>
         </div>
-        <BlobContent repo={repo} blob={b} refName={refName} view={view} />
+        {media ? (
+          <MediaPreview key={`${b.path}:${b.oid}`} kind={media} blob={b} raw={rawUrl(owner, name, b.ref.commit, b.path, { preview: true })} download={raw} />
+        ) : (
+          <BlobContent repo={repo} blob={b} refName={refName} view={view} />
+        )}
       </div>
       {writable && <DeleteFile repo={repo} blob={b} branch={b.ref.name.replace(/^refs\/heads\//, "")} open={deleting} onOpenChange={setDeleting} />}
     </div>
@@ -162,13 +167,6 @@ function BlobContent({ repo, blob: b, refName, view }: { repo: Repo; blob: BlobF
     );
   }
   if (b.binary || b.content === undefined) {
-    if (b.contentType.startsWith("image/")) {
-      return (
-        <div className="rp-img">
-          <img src={raw} alt={b.path} />
-        </div>
-      );
-    }
     return (
       <p className="ui-note acc-pad">
         {t("blob.binary")}{" "}
@@ -196,6 +194,47 @@ function BlobContent({ repo, blob: b, refName, view }: { repo: Repo; blob: BlobF
         <Source content={b.content} path={b.path} />
       )}
     </>
+  );
+}
+
+function mediaKind(b: BlobFile): "image" | "audio" | "video" | undefined {
+  if (!b.binary || b.lfs) return;
+  const kind = b.contentType.split("/", 1)[0];
+  if (kind === "image" || kind === "audio" || kind === "video") return kind;
+}
+
+function MediaPreview({ kind, blob, raw, download }: { kind: "image" | "audio" | "video"; blob: BlobFile; raw: string; download: string }) {
+  const t = useT("code");
+  const [failed, setFailed] = useState(false);
+  const [showGIF, setShowGIF] = useState(false);
+  const gif = blob.contentType === "image/gif";
+  const filename = blob.path.split("/").pop();
+  const format = filename?.split(".").pop()?.toUpperCase();
+  const onError = () => setFailed(true);
+  const fallback = (
+    <p className="ui-note" role="status">
+      {t("blob.mediaUnavailable")} <a href={download} download={filename}>{t("blob.download")}</a>
+    </p>
+  );
+  return (
+    <div className="cx-media">
+      <div className="cx-media-stage">
+        {gif && !failed && (
+          <Button onClick={() => setShowGIF(!showGIF)}>{t(showGIF ? "blob.hideGIF" : "blob.showGIF")}</Button>
+        )}
+        {failed ? fallback : kind === "video" ? (
+          <video src={raw} controls playsInline preload="metadata" aria-label={filename} onError={onError}>{fallback}</video>
+        ) : kind === "audio" ? (
+          <audio src={raw} controls preload="metadata" aria-label={filename} onError={onError}>{fallback}</audio>
+        ) : (!gif || showGIF) && (
+          <img src={raw} alt={blob.path} onError={onError} />
+        )}
+      </div>
+      <dl className="cx-media-details">
+        <div><dt>{t("blob.mediaType")}</dt><dd>{format}</dd></div>
+        <div><dt>{t("blob.mediaSize")}</dt><dd>{formatBytes(blob.size)}</dd></div>
+      </dl>
+    </div>
   );
 }
 

@@ -66,6 +66,8 @@ or `501`.
 | `GET /licenses`, `GET /licenses/{license}` | yes | Embedded: `mit`, `apache-2.0`, `gpl-3.0`, `bsd-3-clause`, `mpl-2.0`, `unlicense`. |
 | `GET/PUT /repos/{owner}/{repo}/topics`, `POST .../generate` | no | Topics and template repositories are not modelled. |
 
+Repository `size` in REST and `diskUsage` in GraphQL report the same total logical payload as the web interface, rounded down to KiB. See [total repository size](install.md#hot-cache).
+
 ### Search
 
 | Endpoint | Status | Notes |

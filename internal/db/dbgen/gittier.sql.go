@@ -50,23 +50,30 @@ func (q *Queries) ForceRepoStorageState(ctx context.Context, arg ForceRepoStorag
 }
 
 const hotRepoStats = `-- name: HotRepoStats :one
-SELECT count(*)::bigint AS repos,
-       count(*) FILTER (WHERE pinned)::bigint AS pinned,
-       COALESCE(sum(size_bytes), 0)::bigint AS bytes
-FROM repos WHERE storage_state = 'hot'
+SELECT count(*) FILTER (WHERE storage_state = 'hot')::bigint AS repos,
+       count(*) FILTER (WHERE storage_state = 'hot' AND pinned)::bigint AS pinned,
+       COALESCE(sum(size_bytes) FILTER (WHERE storage_state = 'hot'), 0)::bigint AS bytes,
+       COALESCE(sum(size_bytes), 0)::bigint AS total_git_bytes
+FROM repos
 `
 
 type HotRepoStatsRow struct {
-	Repos  int64
-	Pinned int64
-	Bytes  int64
+	Repos         int64
+	Pinned        int64
+	Bytes         int64
+	TotalGitBytes int64
 }
 
-// Hot repositories, how many are pinned and the bytes they hold.
+// Recorded Git bytes across the instance and for the hot subset.
 func (q *Queries) HotRepoStats(ctx context.Context) (HotRepoStatsRow, error) {
 	row := q.db.QueryRow(ctx, hotRepoStats)
 	var i HotRepoStatsRow
-	err := row.Scan(&i.Repos, &i.Pinned, &i.Bytes)
+	err := row.Scan(
+		&i.Repos,
+		&i.Pinned,
+		&i.Bytes,
+		&i.TotalGitBytes,
+	)
 	return i, err
 }
 

@@ -3818,6 +3818,8 @@ type AdminServiceStatus string
 
 // AdminUser defines model for AdminUser.
 type AdminUser struct {
+	// AvatarUrl Profile image URL, omitted when unset
+	AvatarUrl   *string   `json:"avatarUrl,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
 	DisplayName string    `json:"displayName"`
 
@@ -4488,9 +4490,8 @@ type CommitStatusCreate struct {
 // CommitStatusCreateState defines model for CommitStatusCreate.State.
 type CommitStatusCreateState string
 
-// CommitUser The account a commit address belongs to: a verified address of the
-// user or the no-reply address of a web edit. Only the username and
-// avatar are given, never the user's addresses.
+// CommitUser An account linked to a commit address for display, not verification
+// of authorship. Only the username and avatar are given.
 type CommitUser struct {
 	// AvatarUrl Absolute https URL of the avatar; empty when unset
 	AvatarUrl string `json:"avatarUrl"`
@@ -5147,12 +5148,15 @@ type ForkCreate struct {
 
 // GitCommit defines model for GitCommit.
 type GitCommit struct {
-	Author    GitPerson `json:"author"`
-	Committer GitPerson `json:"committer"`
-	Message   string    `json:"message"`
-	Parents   []string  `json:"parents"`
-	Sha       string    `json:"sha"`
-	Summary   string    `json:"summary"`
+	Author GitPerson `json:"author"`
+
+	// ClaudeCoauthor Display-only account for a matching Claude co-author trailer.
+	ClaudeCoauthor *CommitUser `json:"claudeCoauthor,omitempty"`
+	Committer      GitPerson   `json:"committer"`
+	Message        string      `json:"message"`
+	Parents        []string    `json:"parents"`
+	Sha            string      `json:"sha"`
+	Summary        string      `json:"summary"`
 }
 
 // GitCommitSummary defines model for GitCommitSummary.
@@ -5160,9 +5164,8 @@ type GitCommitSummary struct {
 	// Author Author name
 	Author string `json:"author"`
 
-	// AuthorUser The account a commit address belongs to: a verified address of the
-	// user or the no-reply address of a web edit. Only the username and
-	// avatar are given, never the user's addresses.
+	// AuthorUser An account linked to a commit address for display, not verification
+	// of authorship. Only the username and avatar are given.
 	AuthorUser *CommitUser `json:"authorUser,omitempty"`
 	Date       time.Time   `json:"date"`
 	Sha        string      `json:"sha"`
@@ -5374,9 +5377,8 @@ type GitPerson struct {
 	Email string    `json:"email"`
 	Name  string    `json:"name"`
 
-	// User The account a commit address belongs to: a verified address of the
-	// user or the no-reply address of a web edit. Only the username and
-	// avatar are given, never the user's addresses.
+	// User An account linked to a commit address for display, not verification
+	// of authorship. Only the username and avatar are given.
 	User *CommitUser `json:"user,omitempty"`
 }
 
@@ -5421,12 +5423,19 @@ type HotRepo struct {
 	Id       openapi_types.UUID `json:"id"`
 
 	// LastAccessAt Last read or write (fetch, clone, push, browsing), recorded at most once a minute
-	LastAccessAt time.Time    `json:"lastAccessAt"`
-	Name         string       `json:"name"`
-	Owner        string       `json:"owner"`
-	Pinned       bool         `json:"pinned"`
-	SizeBytes    int64        `json:"sizeBytes"`
-	State        HotRepoState `json:"state"`
+	LastAccessAt time.Time `json:"lastAccessAt"`
+	Name         string    `json:"name"`
+	Owner        string    `json:"owner"`
+	Pinned       bool      `json:"pinned"`
+
+	// SizeBytes Recorded Git object bytes, excluding auxiliary storage and replica copies
+	SizeBytes int64        `json:"sizeBytes"`
+	State     HotRepoState `json:"state"`
+
+	// TotalSizeBytes Recorded logical payload bytes for this repository: Git objects, linked LFS objects,
+	// release assets, issue attachments, and retained Actions artifacts, logs and build caches.
+	// Excludes in-flight uploads, replicas, storage caches, shared avatars and database overhead.
+	TotalSizeBytes RepoTotalSizeBytes `json:"totalSizeBytes"`
 }
 
 // HotRepoState defines model for HotRepo.State.
@@ -5442,7 +5451,9 @@ type HotRepoPage struct {
 // HotRepoSummary defines model for HotRepoSummary.
 type HotRepoSummary struct {
 	// Budget Space of the hot repositories in bytes, 0 means no limit
-	Budget        int64   `json:"budget"`
+	Budget int64 `json:"budget"`
+
+	// Bytes Recorded Git object bytes of hot repositories, not cache disk occupancy
 	Bytes         int64   `json:"bytes"`
 	CacheEnabled  bool    `json:"cacheEnabled"`
 	HighWatermark float64 `json:"highWatermark"`
@@ -5463,6 +5474,9 @@ type HotRepoSummary struct {
 
 	// Repos Hot repositories
 	Repos int64 `json:"repos"`
+
+	// TotalGitBytes Recorded Git object bytes across all repositories, counted once per repository regardless of storage state or replication
+	TotalGitBytes int64 `json:"totalGitBytes"`
 
 	// TtlSeconds Idle TTL of the repositories, 0 means none
 	TtlSeconds int64 `json:"ttlSeconds"`
@@ -6826,7 +6840,9 @@ type Repo struct {
 	OwnerAvatarUrl string        `json:"ownerAvatarUrl"`
 	OwnerKind      RepoOwnerKind `json:"ownerKind"`
 	Permission     Permission    `json:"permission"`
-	SizeBytes      int64         `json:"sizeBytes"`
+
+	// SizeBytes Recorded Git object bytes, present only for instance administrators
+	SizeBytes *int64 `json:"sizeBytes,omitempty"`
 
 	// Starred Whether the caller starred the repository; false when anonymous
 	Starred bool `json:"starred"`
@@ -6838,8 +6854,13 @@ type Repo struct {
 	// access. Storage is instance infrastructure: only instance admins
 	// see the real state, other callers always get "hot".
 	StorageState RepoStorageState `json:"storageState"`
-	UpdatedAt    time.Time        `json:"updatedAt"`
-	Visibility   Visibility       `json:"visibility"`
+
+	// TotalSizeBytes Recorded logical payload bytes for this repository: Git objects, linked LFS objects,
+	// release assets, issue attachments, and retained Actions artifacts, logs and build caches.
+	// Excludes in-flight uploads, replicas, storage caches, shared avatars and database overhead.
+	TotalSizeBytes RepoTotalSizeBytes `json:"totalSizeBytes"`
+	UpdatedAt      time.Time          `json:"updatedAt"`
+	Visibility     Visibility         `json:"visibility"`
 }
 
 // RepoOwnerKind defines model for Repo.OwnerKind.
@@ -6914,6 +6935,11 @@ type RepoTiering struct {
 
 // RepoTieringState defines model for RepoTiering.State.
 type RepoTieringState string
+
+// RepoTotalSizeBytes Recorded logical payload bytes for this repository: Git objects, linked LFS objects,
+// release assets, issue attachments, and retained Actions artifacts, logs and build caches.
+// Excludes in-flight uploads, replicas, storage caches, shared avatars and database overhead.
+type RepoTotalSizeBytes = int64
 
 // RepoTransfer defines model for RepoTransfer.
 type RepoTransfer struct {
@@ -7503,6 +7529,43 @@ type TimelineSource struct {
 
 // TimelineSourceKind defines model for TimelineSource.Kind.
 type TimelineSourceKind string
+
+// TodoBoard defines model for TodoBoard.
+type TodoBoard struct {
+	Categories []TodoCategory `json:"categories"`
+
+	// Items Category and item arrays are in display order.
+	Items []TodoItem `json:"items"`
+
+	// Revision Pass back the last seen revision to avoid overwriting another member's changes.
+	Revision int64 `json:"revision"`
+}
+
+// TodoCategory defines model for TodoCategory.
+type TodoCategory struct {
+	Id   openapi_types.UUID `json:"id"`
+	Name string             `json:"name"`
+}
+
+// TodoItem defines model for TodoItem.
+type TodoItem struct {
+	// CategoryId Absent for uncategorized items
+	CategoryId *openapi_types.UUID `json:"categoryId,omitempty"`
+	Completed  bool                `json:"completed"`
+	Id         openapi_types.UUID  `json:"id"`
+	Title      string              `json:"title"`
+}
+
+// TodoPreference defines model for TodoPreference.
+type TodoPreference struct {
+	Collapsed bool `json:"collapsed"`
+}
+
+// TodoView defines model for TodoView.
+type TodoView struct {
+	Board     TodoBoard `json:"board"`
+	Collapsed bool      `json:"collapsed"`
+}
 
 // TokenRequest defines model for TokenRequest.
 type TokenRequest struct {
@@ -9058,6 +9121,12 @@ type UpdateTeamJSONRequestBody = TeamUpdate
 // SetTeamMemberJSONRequestBody defines body for SetTeamMember for application/json ContentType.
 type SetTeamMemberJSONRequestBody = TeamRoleRequest
 
+// PatchOrgTodoJSONRequestBody defines body for PatchOrgTodo for application/json ContentType.
+type PatchOrgTodoJSONRequestBody = TodoPreference
+
+// PutOrgTodoJSONRequestBody defines body for PutOrgTodo for application/json ContentType.
+type PutOrgTodoJSONRequestBody = TodoBoard
+
 // UpdateRepoJSONRequestBody defines body for UpdateRepo for application/json ContentType.
 type UpdateRepoJSONRequestBody = RepoUpdate
 
@@ -9219,6 +9288,12 @@ type CreateTagRuleJSONRequestBody = TagRuleInput
 
 // UpdateTagRuleJSONRequestBody defines body for UpdateTagRule for application/json ContentType.
 type UpdateTagRuleJSONRequestBody = TagRuleInput
+
+// PatchRepoTodoJSONRequestBody defines body for PatchRepoTodo for application/json ContentType.
+type PatchRepoTodoJSONRequestBody = TodoPreference
+
+// PutRepoTodoJSONRequestBody defines body for PutRepoTodo for application/json ContentType.
+type PutRepoTodoJSONRequestBody = TodoBoard
 
 // TransferRepoJSONRequestBody defines body for TransferRepo for application/json ContentType.
 type TransferRepoJSONRequestBody = RepoTransfer
@@ -9889,6 +9964,15 @@ type ServerInterface interface {
 	// SetTeamMember Add a member of the organization to a team, or change its team role
 	// (PUT /orgs/{org}/teams/{team}/members/{username})
 	SetTeamMember(w http.ResponseWriter, r *http.Request, org OrgName, team TeamName, username Username)
+	// GetOrgTodo Get the organization Todo list and the viewer's display preference
+	// (GET /orgs/{org}/todo)
+	GetOrgTodo(w http.ResponseWriter, r *http.Request, org OrgName)
+	// PatchOrgTodo Change only this viewer's Todo display preference
+	// (PATCH /orgs/{org}/todo)
+	PatchOrgTodo(w http.ResponseWriter, r *http.Request, org OrgName)
+	// PutOrgTodo Replace the shared Todo contents at the specified revision
+	// (PUT /orgs/{org}/todo)
+	PutOrgTodo(w http.ResponseWriter, r *http.Request, org OrgName)
 	// DeleteRepo Delete a repository
 	// (DELETE /repos/{owner}/{name})
 	DeleteRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
@@ -10399,6 +10483,15 @@ type ServerInterface interface {
 	// ListTags Tags of commits, newest first
 	// (GET /repos/{owner}/{name}/tags)
 	ListTags(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListTagsParams)
+	// GetRepoTodo Get the repository Todo list and the viewer's display preference
+	// (GET /repos/{owner}/{name}/todo)
+	GetRepoTodo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// PatchRepoTodo Change only this viewer's Todo display preference
+	// (PATCH /repos/{owner}/{name}/todo)
+	PatchRepoTodo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
+	// PutRepoTodo Replace the shared Todo contents at the specified revision
+	// (PUT /repos/{owner}/{name}/todo)
+	PutRepoTodo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
 	// TransferRepo Move a repository to another user or organization
 	// (POST /repos/{owner}/{name}/transfer)
 	TransferRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName)
@@ -11644,6 +11737,24 @@ func (_ Unimplemented) SetTeamMember(w http.ResponseWriter, r *http.Request, org
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetOrgTodo Get the organization Todo list and the viewer's display preference
+// (GET /orgs/{org}/todo)
+func (_ Unimplemented) GetOrgTodo(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PatchOrgTodo Change only this viewer's Todo display preference
+// (PATCH /orgs/{org}/todo)
+func (_ Unimplemented) PatchOrgTodo(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PutOrgTodo Replace the shared Todo contents at the specified revision
+// (PUT /orgs/{org}/todo)
+func (_ Unimplemented) PutOrgTodo(w http.ResponseWriter, r *http.Request, org OrgName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // DeleteRepo Delete a repository
 // (DELETE /repos/{owner}/{name})
 func (_ Unimplemented) DeleteRepo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
@@ -12661,6 +12772,24 @@ func (_ Unimplemented) UpdateTagRule(w http.ResponseWriter, r *http.Request, own
 // ListTags Tags of commits, newest first
 // (GET /repos/{owner}/{name}/tags)
 func (_ Unimplemented) ListTags(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName, params ListTagsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetRepoTodo Get the repository Todo list and the viewer's display preference
+// (GET /repos/{owner}/{name}/todo)
+func (_ Unimplemented) GetRepoTodo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PatchRepoTodo Change only this viewer's Todo display preference
+// (PATCH /repos/{owner}/{name}/todo)
+func (_ Unimplemented) PatchRepoTodo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// PutRepoTodo Replace the shared Todo contents at the specified revision
+// (PUT /repos/{owner}/{name}/todo)
+func (_ Unimplemented) PutRepoTodo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -18688,6 +18817,102 @@ func (siw *ServerInterfaceWrapper) SetTeamMember(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SetTeamMember(w, r, org, team, username)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOrgTodo operation middleware
+func (siw *ServerInterfaceWrapper) GetOrgTodo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOrgTodo(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PatchOrgTodo operation middleware
+func (siw *ServerInterfaceWrapper) PatchOrgTodo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PatchOrgTodo(w, r, org)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutOrgTodo operation middleware
+func (siw *ServerInterfaceWrapper) PutOrgTodo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "org" -------------
+	var org OrgName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "org", chi.URLParam(r, "org"), &org, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "org", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutOrgTodo(w, r, org)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -28750,6 +28975,135 @@ func (siw *ServerInterfaceWrapper) ListTags(w http.ResponseWriter, r *http.Reque
 	handler.ServeHTTP(w, r)
 }
 
+// GetRepoTodo operation middleware
+func (siw *ServerInterfaceWrapper) GetRepoTodo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRepoTodo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PatchRepoTodo operation middleware
+func (siw *ServerInterfaceWrapper) PatchRepoTodo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:read"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PatchRepoTodo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutRepoTodo operation middleware
+func (siw *ServerInterfaceWrapper) PutRepoTodo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "owner" -------------
+	var owner RepoOwner
+
+	err = runtime.BindStyledParameterWithOptions("simple", "owner", chi.URLParam(r, "owner"), &owner, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "name" -------------
+	var name RepoName
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionScopes, []string{})
+
+	ctx = context.WithValue(ctx, TokenScopes, []string{"repo:write"})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutRepoTodo(w, r, owner, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // TransferRepo operation middleware
 func (siw *ServerInterfaceWrapper) TransferRepo(w http.ResponseWriter, r *http.Request) {
 
@@ -32643,6 +32997,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Patch(options.BaseURL+"/orgs/{org}", wrapper.UpdateOrg)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/orgs/{org}/todo", wrapper.GetOrgTodo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/orgs/{org}/todo", wrapper.PatchOrgTodo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/orgs/{org}/todo", wrapper.PutOrgTodo)
+	})
+	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/orgs/{org}/avatar", wrapper.DeleteOrgAvatar)
 	})
 	r.Group(func(r chi.Router) {
@@ -32764,6 +33127,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/orgs/{org}/repos", wrapper.CreateOrgRepo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/repos/{owner}/{name}/todo", wrapper.GetRepoTodo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/repos/{owner}/{name}/todo", wrapper.PatchRepoTodo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/repos/{owner}/{name}/todo", wrapper.PutRepoTodo)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/repos/{owner}/{name}", wrapper.DeleteRepo)
@@ -33463,6 +33835,24 @@ type MovedApplicationProblemPlusJSONResponse struct {
 }
 
 type ProblemApplicationProblemPlusJSONResponse Problem
+
+type TodoBoardResponseHeaders struct {
+	CacheControl *string
+}
+type TodoBoardJSONResponse struct {
+	Body TodoBoard
+
+	Headers TodoBoardResponseHeaders
+}
+
+type TodoViewResponseHeaders struct {
+	CacheControl *string
+}
+type TodoViewJSONResponse struct {
+	Body TodoView
+
+	Headers TodoViewResponseHeaders
+}
 
 type TooManyRequestsResponseHeaders struct {
 	RetryAfter int
@@ -45302,6 +45692,141 @@ type SetTeamMemberdefaultApplicationProblemPlusJSONResponse struct {
 }
 
 func (response SetTeamMemberdefaultApplicationProblemPlusJSONResponse) VisitSetTeamMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgTodoRequestObject struct {
+	Org OrgName `json:"org"`
+}
+
+type GetOrgTodoResponseObject interface {
+	VisitGetOrgTodoResponse(w http.ResponseWriter) error
+}
+
+type GetOrgTodo200JSONResponse struct{ TodoViewJSONResponse }
+
+func (response GetOrgTodo200JSONResponse) VisitGetOrgTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.CacheControl != nil {
+		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrgTododefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetOrgTododefaultApplicationProblemPlusJSONResponse) VisitGetOrgTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PatchOrgTodoRequestObject struct {
+	Org  OrgName `json:"org"`
+	Body *PatchOrgTodoJSONRequestBody
+}
+
+type PatchOrgTodoResponseObject interface {
+	VisitPatchOrgTodoResponse(w http.ResponseWriter) error
+}
+
+type PatchOrgTodo204Response struct {
+}
+
+func (response PatchOrgTodo204Response) VisitPatchOrgTodoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type PatchOrgTododefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PatchOrgTododefaultApplicationProblemPlusJSONResponse) VisitPatchOrgTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgTodoRequestObject struct {
+	Org  OrgName `json:"org"`
+	Body *PutOrgTodoJSONRequestBody
+}
+
+type PutOrgTodoResponseObject interface {
+	VisitPutOrgTodoResponse(w http.ResponseWriter) error
+}
+
+type PutOrgTodo200JSONResponse struct{ TodoBoardJSONResponse }
+
+func (response PutOrgTodo200JSONResponse) VisitPutOrgTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.CacheControl != nil {
+		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgTodo409ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutOrgTodo409ApplicationProblemPlusJSONResponse) VisitPutOrgTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutOrgTododefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PutOrgTododefaultApplicationProblemPlusJSONResponse) VisitPutOrgTodoResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -62421,6 +62946,144 @@ func (response ListTagsdefaultApplicationProblemPlusJSONResponse) VisitListTagsR
 	return err
 }
 
+type GetRepoTodoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+}
+
+type GetRepoTodoResponseObject interface {
+	VisitGetRepoTodoResponse(w http.ResponseWriter) error
+}
+
+type GetRepoTodo200JSONResponse struct{ TodoViewJSONResponse }
+
+func (response GetRepoTodo200JSONResponse) VisitGetRepoTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.CacheControl != nil {
+		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRepoTododefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response GetRepoTododefaultApplicationProblemPlusJSONResponse) VisitGetRepoTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PatchRepoTodoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *PatchRepoTodoJSONRequestBody
+}
+
+type PatchRepoTodoResponseObject interface {
+	VisitPatchRepoTodoResponse(w http.ResponseWriter) error
+}
+
+type PatchRepoTodo204Response struct {
+}
+
+func (response PatchRepoTodo204Response) VisitPatchRepoTodoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type PatchRepoTododefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PatchRepoTododefaultApplicationProblemPlusJSONResponse) VisitPatchRepoTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoTodoRequestObject struct {
+	Owner RepoOwner `json:"owner"`
+	Name  RepoName  `json:"name"`
+	Body  *PutRepoTodoJSONRequestBody
+}
+
+type PutRepoTodoResponseObject interface {
+	VisitPutRepoTodoResponse(w http.ResponseWriter) error
+}
+
+type PutRepoTodo200JSONResponse struct{ TodoBoardJSONResponse }
+
+func (response PutRepoTodo200JSONResponse) VisitPutRepoTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.CacheControl != nil {
+		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoTodo409ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutRepoTodo409ApplicationProblemPlusJSONResponse) VisitPutRepoTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutRepoTododefaultApplicationProblemPlusJSONResponse struct {
+	Body       Problem
+	StatusCode int
+}
+
+func (response PutRepoTododefaultApplicationProblemPlusJSONResponse) VisitPutRepoTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(response.StatusCode)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type TransferRepoRequestObject struct {
 	Owner RepoOwner `json:"owner"`
 	Name  RepoName  `json:"name"`
@@ -69249,6 +69912,15 @@ type StrictServerInterface interface {
 	// SetTeamMember Add a member of the organization to a team, or change its team role
 	// (PUT /orgs/{org}/teams/{team}/members/{username})
 	SetTeamMember(ctx context.Context, request SetTeamMemberRequestObject) (SetTeamMemberResponseObject, error)
+	// GetOrgTodo Get the organization Todo list and the viewer's display preference
+	// (GET /orgs/{org}/todo)
+	GetOrgTodo(ctx context.Context, request GetOrgTodoRequestObject) (GetOrgTodoResponseObject, error)
+	// PatchOrgTodo Change only this viewer's Todo display preference
+	// (PATCH /orgs/{org}/todo)
+	PatchOrgTodo(ctx context.Context, request PatchOrgTodoRequestObject) (PatchOrgTodoResponseObject, error)
+	// PutOrgTodo Replace the shared Todo contents at the specified revision
+	// (PUT /orgs/{org}/todo)
+	PutOrgTodo(ctx context.Context, request PutOrgTodoRequestObject) (PutOrgTodoResponseObject, error)
 	// DeleteRepo Delete a repository
 	// (DELETE /repos/{owner}/{name})
 	DeleteRepo(ctx context.Context, request DeleteRepoRequestObject) (DeleteRepoResponseObject, error)
@@ -69759,6 +70431,15 @@ type StrictServerInterface interface {
 	// ListTags Tags of commits, newest first
 	// (GET /repos/{owner}/{name}/tags)
 	ListTags(ctx context.Context, request ListTagsRequestObject) (ListTagsResponseObject, error)
+	// GetRepoTodo Get the repository Todo list and the viewer's display preference
+	// (GET /repos/{owner}/{name}/todo)
+	GetRepoTodo(ctx context.Context, request GetRepoTodoRequestObject) (GetRepoTodoResponseObject, error)
+	// PatchRepoTodo Change only this viewer's Todo display preference
+	// (PATCH /repos/{owner}/{name}/todo)
+	PatchRepoTodo(ctx context.Context, request PatchRepoTodoRequestObject) (PatchRepoTodoResponseObject, error)
+	// PutRepoTodo Replace the shared Todo contents at the specified revision
+	// (PUT /repos/{owner}/{name}/todo)
+	PutRepoTodo(ctx context.Context, request PutRepoTodoRequestObject) (PutRepoTodoResponseObject, error)
 	// TransferRepo Move a repository to another user or organization
 	// (POST /repos/{owner}/{name}/transfer)
 	TransferRepo(ctx context.Context, request TransferRepoRequestObject) (TransferRepoResponseObject, error)
@@ -74547,6 +75228,98 @@ func (sh *strictHandler) SetTeamMember(w http.ResponseWriter, r *http.Request, o
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SetTeamMemberResponseObject); ok {
 		if err := validResponse.VisitSetTeamMemberResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOrgTodo operation middleware
+func (sh *strictHandler) GetOrgTodo(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request GetOrgTodoRequestObject
+
+	request.Org = org
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOrgTodo(ctx, request.(GetOrgTodoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOrgTodo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOrgTodoResponseObject); ok {
+		if err := validResponse.VisitGetOrgTodoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PatchOrgTodo operation middleware
+func (sh *strictHandler) PatchOrgTodo(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request PatchOrgTodoRequestObject
+
+	request.Org = org
+
+	var body PatchOrgTodoJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PatchOrgTodo(ctx, request.(PatchOrgTodoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PatchOrgTodo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PatchOrgTodoResponseObject); ok {
+		if err := validResponse.VisitPatchOrgTodoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutOrgTodo operation middleware
+func (sh *strictHandler) PutOrgTodo(w http.ResponseWriter, r *http.Request, org OrgName) {
+	var request PutOrgTodoRequestObject
+
+	request.Org = org
+
+	var body PutOrgTodoJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutOrgTodo(ctx, request.(PutOrgTodoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutOrgTodo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutOrgTodoResponseObject); ok {
+		if err := validResponse.VisitPutOrgTodoResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -79686,6 +80459,101 @@ func (sh *strictHandler) ListTags(w http.ResponseWriter, r *http.Request, owner 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListTagsResponseObject); ok {
 		if err := validResponse.VisitListTagsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetRepoTodo operation middleware
+func (sh *strictHandler) GetRepoTodo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request GetRepoTodoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetRepoTodo(ctx, request.(GetRepoTodoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRepoTodo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetRepoTodoResponseObject); ok {
+		if err := validResponse.VisitGetRepoTodoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PatchRepoTodo operation middleware
+func (sh *strictHandler) PatchRepoTodo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request PatchRepoTodoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body PatchRepoTodoJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PatchRepoTodo(ctx, request.(PatchRepoTodoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PatchRepoTodo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PatchRepoTodoResponseObject); ok {
+		if err := validResponse.VisitPatchRepoTodoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutRepoTodo operation middleware
+func (sh *strictHandler) PutRepoTodo(w http.ResponseWriter, r *http.Request, owner RepoOwner, name RepoName) {
+	var request PutRepoTodoRequestObject
+
+	request.Owner = owner
+	request.Name = name
+
+	var body PutRepoTodoJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutRepoTodo(ctx, request.(PutRepoTodoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutRepoTodo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutRepoTodoResponseObject); ok {
+		if err := validResponse.VisitPutRepoTodoResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

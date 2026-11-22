@@ -1,0 +1,9 @@
+# Shared Todo
+
+Variant Studio `002-shared-todo`, decision `0a7c5ea5ff33`: **A — Sezioni in fila**. The user chose a single vertical list with every category visible over a category index or separate open/completed blocks. [GitHub task lists](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/about-task-lists) informed the checkbox rows and completion count; [Todoist sections](https://www.todoist.com/help/todoist/features/introduction-to-sections-rOrK0aEn) informed the ordered section headings and their action menus.
+
+The panel sits to the left of the repository's root Code view. Console keeps its existing metadata on the right. On narrow layouts Todo, files, and metadata stack in that order; no Todo column is reserved if the viewer has no access. In the organization overview, the panel sits in the existing aside immediately below Members and above languages and teams. It does not introduce a route, tab, or shell. The heading retains visibility, progress, and the disclosure button when the body is collapsed; the preference belongs to the viewer, not the list.
+
+Sections use the existing `ui-box` / `ui-in` kit, `--surface`, `--bg`, `--line`, `--ink2`, `--accent`, and `--acc-fill`, with no palette overrides. Use native checkboxes with clickable labels, a compact progress count, Radix menus for move/edit/delete, and an inline quick-add form. On mobile, controls grow to 44 px and the quick-add form wraps. No animation is needed for the disclosure.
+
+The React component is `web/src/pages/todo/SharedTodo.tsx`; `todo.css` scopes its layout and `todo.json` holds EN/IT copy. A deleted category leaves its tasks uncategorized. Save conflicts refresh the list and require reopening stale edit and delete dialogs rather than overwriting concurrent changes.

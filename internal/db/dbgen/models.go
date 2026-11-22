@@ -564,6 +564,11 @@ type GhapiID struct {
 	ID   int64
 }
 
+type GitAuthorAlias struct {
+	EmailLower string
+	UserID     uuid.NullUUID
+}
+
 type GitBrowseBlob struct {
 	RepoID    uuid.UUID
 	Oid       string
@@ -1264,6 +1269,21 @@ type Setting struct {
 	Key       string
 	Value     []byte
 	UpdatedAt pgtype.Timestamptz
+}
+
+type SharedTodo struct {
+	RepoID     uuid.NullUUID
+	OrgID      uuid.NullUUID
+	Revision   int64
+	Categories []byte
+	Items      []byte
+}
+
+type SharedTodoPreference struct {
+	UserID    uuid.UUID
+	RepoID    uuid.NullUUID
+	OrgID     uuid.NullUUID
+	Collapsed bool
 }
 
 type SshKey struct {

@@ -4,6 +4,7 @@
    section hue with black text; transitions 150-200 ms. */
 
 .ui-icon { width: 16px; height: 16px; flex: none; display: inline-block; vertical-align: -3px; }
+.ui-brand-mark { display: block; flex: none; width: var(--brand-width, 38px); height: auto; }
 .ui-mono { font-family: var(--mono); font-size: 12.5px; font-variant-ligatures: none; }
 
 /* Button */
@@ -386,7 +387,6 @@ img[data-zoom]:focus-visible { outline: 2px solid var(--hue); outline-offset: 2p
 :root:not([data-palette="classic"]) .st-tg[aria-checked="true"] .st-tg-k::after { background: var(--on-accent); }
 :root:not([data-palette="classic"]) .rs-segi[aria-current] { background: var(--acc-fill); color: var(--on-accent); }
 :root:not([data-palette="classic"]) .rs-segi[aria-current] .ui-icon { color: var(--on-accent); }
-:root:not([data-palette="classic"]) .rs-logo { color: var(--bg); }
 :root:not([data-palette="classic"]) :is(.ui-iconbtn, .ui-item, .ui-tab, .tb-where, .tb-ib, .tb-signin, .wk-hunk, .wk-dl-row, .tb-logo) { border-radius: var(--r-ctl); }
 :root:not([data-palette="classic"]) .ui-pop { border-radius: var(--r-card); }
 /* Settings: secondary danger buttons that fill only in the confirm dialog. */

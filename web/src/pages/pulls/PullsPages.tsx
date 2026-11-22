@@ -924,7 +924,7 @@ function PullCommits({ repo, pr, page }: { repo: Repo; pr: PullRequest; page: nu
           <>
             <ul className="rp-list ui-box wk-commits">
               {res.items.map((c) => (
-                <CommitRow key={c.sha} repo={repo} c={{ sha: c.sha, summary: c.summary, message: c.message, author: c.author.name, user: c.author.user, date: c.author.date }} />
+                <CommitRow key={c.sha} repo={repo} c={c} />
               ))}
             </ul>
             <Pager

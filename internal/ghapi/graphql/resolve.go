@@ -24,10 +24,12 @@ type request struct {
 	who      auth.Principal
 	mutation bool
 
-	num   map[uuid.UUID]int64
-	ns    map[string]*namespace // by lowercase name; nil = unknown
-	users map[uuid.UUID]*identity.User
-	repos map[string]repos.Repo // by lowercase owner/name
+	num               map[uuid.UUID]int64
+	ns                map[string]*namespace // by lowercase name; nil = unknown
+	users             map[uuid.UUID]*identity.User
+	repos             map[string]repos.Repo // by lowercase owner/name
+	footprints        map[uuid.UUID]int64
+	pendingFootprints map[uuid.UUID]struct{}
 }
 
 // namespace is a user or an organization.
@@ -39,7 +41,45 @@ type namespace struct {
 
 func newRequest(ctx context.Context, s *Server, who auth.Principal) *request {
 	return &request{ctx: ctx, s: s, who: who, num: map[uuid.UUID]int64{},
-		ns: map[string]*namespace{}, users: map[uuid.UUID]*identity.User{}, repos: map[string]repos.Repo{}}
+		ns: map[string]*namespace{}, users: map[uuid.UUID]*identity.User{}, repos: map[string]repos.Repo{},
+		footprints: map[uuid.UUID]int64{}, pendingFootprints: map[uuid.UUID]struct{}{}}
+}
+
+func (rq *request) repoFootprint(id uuid.UUID) (int64, error) {
+	if bytes, ok := rq.footprints[id]; ok {
+		return bytes, nil
+	}
+	rq.pendingFootprints[id] = struct{}{}
+	ids := make([]uuid.UUID, 0, len(rq.pendingFootprints))
+	for pending := range rq.pendingFootprints {
+		ids = append(ids, pending)
+	}
+	sizes, err := rq.s.d.Repos.StorageFootprints(rq.ctx, ids)
+	if err != nil {
+		return 0, err
+	}
+	for _, pending := range ids {
+		rq.footprints[pending] = sizes[pending]
+	}
+	clear(rq.pendingFootprints)
+	return rq.footprints[id], nil
+}
+
+// Queue only the output page, not the potentially large set scanned for pagination.
+func (rq *request) queueRepoFootprints(items []any) {
+	for _, item := range items {
+		node, ok := item.(obj)
+		if !ok {
+			continue
+		}
+		r, ok := node.v.(repos.Repo)
+		if !ok {
+			continue
+		}
+		if _, loaded := rq.footprints[r.ID]; !loaded {
+			rq.pendingFootprints[r.ID] = struct{}{}
+		}
+	}
 }
 
 // read checks the token scope of a read of repository data.
@@ -408,6 +448,7 @@ func connFields() map[string]resolver {
 			if err := c.load(); err != nil {
 				return nil, err
 			}
+			rq.queueRepoFootprints(c.items)
 			return c.items, nil
 		},
 		"edges": func(rq *request, src any, a args) (any, error) {
@@ -415,6 +456,7 @@ func connFields() map[string]resolver {
 			if err := c.load(); err != nil {
 				return nil, err
 			}
+			rq.queueRepoFootprints(c.items)
 			out := make([]any, len(c.items))
 			for i, it := range c.items {
 				out[i] = obj{c.node + "Edge", edge{node: it, cursor: cursor(c.start + i)}}

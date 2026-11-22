@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"mime"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -232,7 +234,7 @@ func (s *v1Server) ListCommits(ctx context.Context, req v1gen.ListCommitsRequest
 	if err != nil {
 		return browseFail(err, http.MethodGet, suffix)
 	}
-	return v1gen.ListCommits200JSONResponse(v1gen.CommitPage{Ref: resolvedDTO(p.Ref), Commits: s.linkCommits(ctx, commitsDTO(p.Commits)), HasMore: p.HasMore}), nil
+	return v1gen.ListCommits200JSONResponse(v1gen.CommitPage{Ref: resolvedDTO(p.Ref), Commits: s.linkCommits(ctx, p.Commits), HasMore: p.HasMore}), nil
 }
 
 func (s *v1Server) ListContributors(ctx context.Context, req v1gen.ListContributorsRequestObject) (v1gen.ListContributorsResponseObject, error) {
@@ -286,7 +288,7 @@ func (s *v1Server) GetCommit(ctx context.Context, req v1gen.GetCommitRequestObje
 	if err != nil {
 		return browseFail(err, http.MethodGet, suffix)
 	}
-	return v1gen.GetCommit200JSONResponse(v1gen.CommitDetail{Commit: s.linkCommits(ctx, []v1gen.GitCommit{commitDTO(c.Commit)})[0], Diff: diffDTO(c.Diff)}), nil
+	return v1gen.GetCommit200JSONResponse(v1gen.CommitDetail{Commit: s.linkCommits(ctx, []gitbrowse.Commit{c.Commit})[0], Diff: diffDTO(c.Diff)}), nil
 }
 
 func (s *v1Server) ListBranches(ctx context.Context, req v1gen.ListBranchesRequestObject) (v1gen.ListBranchesResponseObject, error) {
@@ -340,7 +342,7 @@ func (s *v1Server) CompareRefs(ctx context.Context, req v1gen.CompareRefsRequest
 		return browseFail(err, http.MethodGet, suffix)
 	}
 	return v1gen.CompareRefs200JSONResponse(v1gen.Comparison{Base: resolvedDTO(c.Base), Head: resolvedDTO(c.Head),
-		MergeBase: c.MergeBase, Ahead: c.Ahead, Behind: c.Behind, Commits: s.linkCommits(ctx, commitsDTO(c.Commits)),
+		MergeBase: c.MergeBase, Ahead: c.Ahead, Behind: c.Behind, Commits: s.linkCommits(ctx, c.Commits),
 		CommitsTruncated: c.CommitsTruncated, Diff: diffDTO(c.Diff)}), nil
 }
 
@@ -457,24 +459,31 @@ func commitUser(acc map[string]gitbrowse.Account, email string) *v1gen.CommitUse
 	return &v1gen.CommitUser{Username: a.Username, AvatarUrl: a.AvatarURL}
 }
 
-// linkCommits sets author.user and committer.user of list and returns it.
-func (s *v1Server) linkCommits(ctx context.Context, list []v1gen.GitCommit) []v1gen.GitCommit {
-	emails := make([]string, 0, 2*len(list))
+func (s *v1Server) linkCommits(ctx context.Context, list []gitbrowse.Commit) []v1gen.GitCommit {
+	emails := make([]string, 0, 2*len(list)+1)
+	var hasClaude bool
 	for _, c := range list {
 		emails = append(emails, c.Author.Email, c.Committer.Email)
+		hasClaude = hasClaude || c.ClaudeCoauthor
+	}
+	var alias string
+	if hasClaude && s.browse != nil {
+		alias = s.browse.ClaudeAliasEmail()
+		if alias != "" {
+			emails = append(emails, alias)
+		}
 	}
 	acc := s.commitAccounts(ctx, emails)
-	for i := range list {
-		list[i].Author.User = commitUser(acc, list[i].Author.Email)
-		list[i].Committer.User = commitUser(acc, list[i].Committer.Email)
-	}
-	return list
-}
-
-func commitsDTO(list []gitbrowse.Commit) []v1gen.GitCommit {
+	claude := commitUser(acc, alias)
 	out := make([]v1gen.GitCommit, 0, len(list))
 	for _, c := range list {
-		out = append(out, commitDTO(c))
+		item := commitDTO(c)
+		item.Author.User = commitUser(acc, c.Author.Email)
+		item.Committer.User = commitUser(acc, c.Committer.Email)
+		if c.ClaudeCoauthor {
+			item.ClaudeCoauthor = claude
+		}
+		out = append(out, item)
 	}
 	return out
 }
@@ -578,34 +587,66 @@ func browseStreamFail(w http.ResponseWriter, req *http.Request, d Deps, err erro
 
 func serveRaw(w http.ResponseWriter, req *http.Request, d Deps) {
 	q := req.URL.Query()
-	suffix := withQuery("/raw", url.Values{"ref": {q.Get("ref")}, "path": {q.Get("path")}})
+	params := url.Values{"ref": {q.Get("ref")}, "path": {q.Get("path")}}
+	preview := q.Get("preview") == "1"
+	if preview {
+		params.Set("preview", "1")
+	}
+	suffix := withQuery("/raw", params)
 	repo, ok := browseStreamRepo(w, req, d, suffix)
 	if !ok {
 		return
 	}
-	err := d.Browse.Raw(req.Context(), repo, q.Get("ref"), q.Get("path"), func(b gitbrowse.Blob) (io.Writer, error) {
-		h := w.Header()
-		h.Set("Content-Type", b.ContentType)
-		h.Set("X-Content-Type-Options", "nosniff")
-		h.Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
-		h.Set("Cache-Control", "private, no-cache")
-		h.Set("ETag", `"`+b.OID+`"`)
-		disposition := "attachment"
-		if !b.Binary || strings.HasPrefix(b.ContentType, "image/") {
-			disposition = "inline"
-		}
-		name := b.Path[strings.LastIndexByte(b.Path, '/')+1:]
-		h.Set("Content-Disposition", mime.FormatMediaType(disposition, map[string]string{"filename": name}))
-		if match := req.Header.Get("If-None-Match"); match != "" && match == `"`+b.OID+`"` {
-			w.WriteHeader(http.StatusNotModified)
-			return io.Discard, nil
-		}
-		w.WriteHeader(http.StatusOK)
-		return w, nil
+	err := d.Browse.RawContent(req.Context(), repo, q.Get("ref"), q.Get("path"), func(b gitbrowse.Blob, write gitbrowse.RawWrite) error {
+		return writeRaw(w, req, b, write, preview)
 	})
 	if err != nil {
 		browseStreamFail(w, req, d, err, suffix)
 	}
+}
+
+func writeRaw(w http.ResponseWriter, req *http.Request, b gitbrowse.Blob, write gitbrowse.RawWrite, preview bool) error {
+	h := w.Header()
+	etag := `"` + b.OID + `"`
+	contentType := b.ContentType
+	av := strings.HasPrefix(contentType, "audio/") || strings.HasPrefix(contentType, "video/")
+	if av && !preview {
+		contentType = "application/octet-stream"
+	}
+	h.Set("Content-Type", contentType)
+	h.Set("X-Content-Type-Options", "nosniff")
+	h.Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; sandbox")
+	h.Set("Cache-Control", "private, no-cache")
+	h.Set("ETag", etag)
+	offset, length, status := int64(0), b.Size, http.StatusOK
+	if av && preview {
+		h.Set("Accept-Ranges", "bytes")
+	}
+	if req.Header.Get("If-None-Match") == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return nil
+	}
+	if match := req.Header.Get("If-Range"); av && preview && (match == "" || match == etag) {
+		rng, ok, unsat := parseRange(req.Header.Get("Range"), b.Size)
+		if unsat {
+			h.Set("Content-Range", fmt.Sprintf("bytes */%d", b.Size))
+			writeProblem(w, http.StatusRequestedRangeNotSatisfiable, "requested byte range is outside the file")
+			return nil
+		}
+		if ok {
+			offset, length, status = rng.Offset, rng.Length, http.StatusPartialContent
+			h.Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", offset, offset+length-1, b.Size))
+		}
+	}
+	disposition := "attachment"
+	if !b.Binary || strings.HasPrefix(contentType, "image/") || av && preview {
+		disposition = "inline"
+	}
+	name := b.Path[strings.LastIndexByte(b.Path, '/')+1:]
+	h.Set("Content-Disposition", mime.FormatMediaType(disposition, map[string]string{"filename": name}))
+	h.Set("Content-Length", strconv.FormatInt(length, 10))
+	w.WriteHeader(status)
+	return write(w, offset, length)
 }
 
 func serveArchive(w http.ResponseWriter, req *http.Request, d Deps) {

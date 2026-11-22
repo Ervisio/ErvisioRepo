@@ -547,7 +547,10 @@ func repositoryFields() map[string]resolver {
 			}
 			return n, nil
 		},
-		"diskUsage": f(func(rq *request, r repos.Repo) any { return r.SizeBytes / 1024 }),
+		"diskUsage": func(rq *request, src any, a args) (any, error) {
+			bytes, err := rq.repoFootprint(r(src).ID)
+			return bytes / 1024, err
+		},
 		"createdAt": f(func(rq *request, r repos.Repo) any { return r.CreatedAt }),
 		"updatedAt": f(func(rq *request, r repos.Repo) any { return r.UpdatedAt }),
 		"pushedAt":  f(func(rq *request, r repos.Repo) any { return r.UpdatedAt }),

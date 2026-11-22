@@ -25,6 +25,7 @@ tags:
   - name: oauth
   - name: apps
   - name: presence
+  - name: todo
 # Every operation needs a session unless it declares `security: []`. The
 # "admin" scope means an instance admin. Unsafe methods also need the
 # X-CSRF-Token header (see components.securitySchemes.session).
@@ -3859,6 +3860,49 @@ paths:
           $ref: "#/components/responses/Problem"
         default:
           $ref: "#/components/responses/Problem"
+  /orgs/{org}/todo:
+    parameters:
+      - $ref: "#/components/parameters/OrgName"
+    get:
+      operationId: getOrgTodo
+      tags: [todo]
+      summary: Get the organization Todo list and the viewer's display preference
+      description: Only organization members can access this list. Everyone else gets 404.
+      security:
+        - session: []
+      responses:
+        "200":
+          $ref: "#/components/responses/TodoView"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: putOrgTodo
+      tags: [todo]
+      summary: Replace the shared Todo contents at the specified revision
+      security:
+        - session: []
+      requestBody:
+        $ref: "#/components/requestBodies/TodoBoard"
+      responses:
+        "200":
+          $ref: "#/components/responses/TodoBoard"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: patchOrgTodo
+      tags: [todo]
+      summary: Change only this viewer's Todo display preference
+      security:
+        - session: []
+      requestBody:
+        $ref: "#/components/requestBodies/TodoPreference"
+      responses:
+        "204":
+          description: Preference saved
+        default:
+          $ref: "#/components/responses/Problem"
   /orgs/{org}/avatar:
     parameters:
       - $ref: "#/components/parameters/OrgName"
@@ -4912,6 +4956,53 @@ paths:
           $ref: "#/components/responses/Problem"
         "409":
           $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+  /repos/{owner}/{name}/todo:
+    parameters:
+      - $ref: "#/components/parameters/RepoOwner"
+      - $ref: "#/components/parameters/RepoName"
+    get:
+      operationId: getRepoTodo
+      tags: [todo]
+      summary: Get the repository Todo list and the viewer's display preference
+      description: Requires repository access through ownership, collaboration, a team or organization membership, regardless of visibility. Everyone else gets 404.
+      security:
+        - session: []
+        - token: [repo:read]
+      responses:
+        "200":
+          $ref: "#/components/responses/TodoView"
+        default:
+          $ref: "#/components/responses/Problem"
+    put:
+      operationId: putRepoTodo
+      tags: [todo]
+      summary: Replace the shared Todo contents at the specified revision
+      security:
+        - session: []
+        - token: [repo:write]
+      requestBody:
+        $ref: "#/components/requestBodies/TodoBoard"
+      responses:
+        "200":
+          $ref: "#/components/responses/TodoBoard"
+        "409":
+          $ref: "#/components/responses/Problem"
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      operationId: patchRepoTodo
+      tags: [todo]
+      summary: Change only this viewer's Todo display preference
+      security:
+        - session: []
+        - token: [repo:read]
+      requestBody:
+        $ref: "#/components/requestBodies/TodoPreference"
+      responses:
+        "204":
+          description: Preference saved
         default:
           $ref: "#/components/responses/Problem"
   /repos/{owner}/{name}:
@@ -12676,7 +12767,38 @@ components:
       schema:
         type: string
         enum: ["true", "false"]
+  requestBodies:
+    TodoBoard:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TodoBoard"
+    TodoPreference:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TodoPreference"
   responses:
+    TodoBoard:
+      description: Updated shared list
+      headers:
+        Cache-Control:
+          schema: {type: string, enum: [no-store]}
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TodoBoard"
+    TodoView:
+      description: Shared list with the viewer's private display preference
+      headers:
+        Cache-Control:
+          schema: {type: string, enum: [no-store]}
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/TodoView"
     Moved:
       description: |
         The repository was renamed or transferred; Location is its new URL
@@ -12720,6 +12842,52 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
   schemas:
+    TodoCategory:
+      type: object
+      required: [id, name]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 80}
+    TodoItem:
+      type: object
+      required: [id, title, completed]
+      properties:
+        id: {type: string, format: uuid}
+        title: {type: string, minLength: 1, maxLength: 240}
+        completed: {type: boolean}
+        categoryId: {type: string, format: uuid, description: Absent for uncategorized items}
+    TodoBoard:
+      type: object
+      required: [revision, categories, items]
+      properties:
+        revision:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Pass back the last seen revision to avoid overwriting another member's changes.
+        categories:
+          type: array
+          maxItems: 64
+          items:
+            $ref: "#/components/schemas/TodoCategory"
+        items:
+          type: array
+          maxItems: 500
+          description: Category and item arrays are in display order.
+          items:
+            $ref: "#/components/schemas/TodoItem"
+    TodoPreference:
+      type: object
+      required: [collapsed]
+      properties:
+        collapsed: {type: boolean}
+    TodoView:
+      type: object
+      required: [board, collapsed]
+      properties:
+        board:
+          $ref: "#/components/schemas/TodoBoard"
+        collapsed: {type: boolean}
     # --- actions schemas ---
     ActionsWorkflow:
       type: object
@@ -14622,6 +14790,9 @@ components:
           type: string
         displayName:
           type: string
+        avatarUrl:
+          type: string
+          description: Profile image URL, omitted when unset
         isBot:
           type: boolean
           description: A bot account (login ending in "[bot]"); bots cannot sign in and cannot be changed
@@ -15549,7 +15720,7 @@ components:
           $ref: "#/components/schemas/HotRepoSummary"
     HotRepo:
       type: object
-      required: [id, owner, name, fullName, state, pinned, sizeBytes, lastAccessAt, ephemeral]
+      required: [id, owner, name, fullName, state, pinned, sizeBytes, totalSizeBytes, lastAccessAt, ephemeral]
       properties:
         ephemeral:
           type: boolean
@@ -15571,6 +15742,9 @@ components:
         sizeBytes:
           type: integer
           format: int64
+          description: Recorded Git object bytes, excluding auxiliary storage and replica copies
+        totalSizeBytes:
+          $ref: "#/components/schemas/RepoTotalSizeBytes"
         lastAccessAt:
           type: string
           format: date-time
@@ -15581,7 +15755,7 @@ components:
           description: When the idle TTL moves the repository to the remote storage
     HotRepoSummary:
       type: object
-      required: [repos, pinned, bytes, budget, highWatermark, lowWatermark, ttlSeconds, remote, primary, replicas, cacheEnabled, largeRepoBytes]
+      required: [repos, pinned, bytes, totalGitBytes, budget, highWatermark, lowWatermark, ttlSeconds, remote, primary, replicas, cacheEnabled, largeRepoBytes]
       properties:
         primary:
           type: string
@@ -15606,6 +15780,11 @@ components:
         bytes:
           type: integer
           format: int64
+          description: Recorded Git object bytes of hot repositories, not cache disk occupancy
+        totalGitBytes:
+          type: integer
+          format: int64
+          description: Recorded Git object bytes across all repositories, counted once per repository regardless of storage state or replication
         budget:
           type: integer
           format: int64
@@ -15895,10 +16074,18 @@ components:
     Visibility:
       type: string
       enum: [public, internal, private]
+    RepoTotalSizeBytes:
+      type: integer
+      format: int64
+      minimum: 0
+      description: |
+        Recorded logical payload bytes for this repository: Git objects, linked LFS objects,
+        release assets, issue attachments, and retained Actions artifacts, logs and build caches.
+        Excludes in-flight uploads, replicas, storage caches, shared avatars and database overhead.
     Repo:
       type: object
       required: [id, owner, ownerKind, name, fullName, description, visibility, defaultBranch, storageState,
-        sizeBytes, starsCount, starred, permission, avatarUrl, ownerAvatarUrl, createdAt, updatedAt]
+        totalSizeBytes, starsCount, starred, permission, avatarUrl, ownerAvatarUrl, createdAt, updatedAt]
       properties:
         id:
           type: string
@@ -15929,6 +16116,9 @@ components:
         sizeBytes:
           type: integer
           format: int64
+          description: Recorded Git object bytes, present only for instance administrators
+        totalSizeBytes:
+          $ref: "#/components/schemas/RepoTotalSizeBytes"
         starsCount:
           type: integer
           description: Number of users who starred the repository
@@ -16491,9 +16681,8 @@ components:
     CommitUser:
       type: object
       description: |
-        The account a commit address belongs to: a verified address of the
-        user or the no-reply address of a web edit. Only the username and
-        avatar are given, never the user's addresses.
+        An account linked to a commit address for display, not verification
+        of authorship. Only the username and avatar are given.
       required: [username, avatarUrl]
       properties:
         username: {type: string}
@@ -16518,6 +16707,10 @@ components:
         committer: {$ref: "#/components/schemas/GitPerson"}
         summary: {type: string}
         message: {type: string}
+        claudeCoauthor:
+          description: Display-only account for a matching Claude co-author trailer.
+          allOf:
+            - $ref: "#/components/schemas/CommitUser"
     GitCommitSummary:
       type: object
       required: [sha, summary, author, date]

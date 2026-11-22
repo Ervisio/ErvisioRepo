@@ -3,15 +3,10 @@ package gitbrowse
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"strconv"
 	"strings"
-
-	"github.com/jackc/pgx/v5"
-
-	"github.com/Ervisio/ErvisioRepo/internal/db/dbgen"
 )
 
 // contributorScan bounds how many of the newest commits are grouped.
@@ -21,7 +16,7 @@ const contributorScan = 50000
 type Contributor struct {
 	Name    string
 	Commits int
-	// Username and AvatarURL are set when a verified address of a user matches.
+	// Username and AvatarURL are set when the author's address resolves.
 	Username  string
 	AvatarURL string
 }
@@ -52,17 +47,23 @@ func (s *Service) Contributors(ctx context.Context, repo Repo, ref string, limit
 			return err
 		}
 		res.Ref = r
-		out, err := run(ctx, rp, readTimeout, "log", "--format=%aN%x1f%aE", "--max-count="+strconv.Itoa(contributorScan), r.Commit, "--")
+		out, err := run(ctx, rp, readTimeout, "log", "--format=%aN%x1f%aE%x1f%ae", "--max-count="+strconv.Itoa(contributorScan), r.Commit, "--")
 		if err != nil {
 			return fmt.Errorf("log authors: %w", err)
 		}
 		byEmail := map[string]*tally{}
 		for _, line := range bytes.Split(out, []byte{'\n'}) {
-			name, email, ok := strings.Cut(string(line), "\x1f")
-			if !ok {
+			f := strings.SplitN(string(line), "\x1f", 3)
+			if len(f) != 3 {
 				continue
 			}
-			key := strings.ToLower(email)
+			name := f[0]
+			key := strings.ToLower(strings.TrimSpace(f[1]))
+			raw := strings.ToLower(strings.TrimSpace(f[2]))
+			// A repository mailmap cannot add or remove the instance alias.
+			if s.claudeAuthor != nil && (key == claudeAuthorEmail || raw == claudeAuthorEmail) {
+				key = raw
+			}
 			t := byEmail[key]
 			if t == nil {
 				t = &tally{name: name, email: key}
@@ -78,55 +79,19 @@ func (s *Service) Contributors(ctx context.Context, repo Repo, ref string, limit
 	}
 	slices.SortStableFunc(all, func(a, b *tally) int { return b.commits - a.commits })
 	res.Total = len(all)
-	for _, t := range all[:min(limit, len(all))] {
-		c := Contributor{Name: t.name, Commits: t.commits}
-		c.Username, c.AvatarURL = s.contributorUser(ctx, t.email)
-		res.Items = append(res.Items, c)
+	selected := all[:min(limit, len(all))]
+	emails := make([]string, 0, len(selected))
+	for _, t := range selected {
+		emails = append(emails, t.email)
 	}
-	return res, nil
-}
-
-// contributorUser maps a commit address to an active user: a verified address
-// of the user, or the no-reply address of a web edit. A failed lookup leaves
-// the contributor anonymous.
-func (s *Service) contributorUser(ctx context.Context, email string) (username, avatar string) {
-	if s.q == nil {
-		return "", ""
-	}
-	var u dbgen.GetUserByIDRow
-	if local, ok := strings.CutSuffix(email, "@"+strings.ToLower(s.o.NoReplyDomain)); ok {
-		// A bot address is <numeric id>+<login>: usernames have no "+".
-		if _, login, ok := strings.Cut(local, "+"); ok {
-			local = login
-		}
-		byName, err := s.q.GetUserByUsername(ctx, local)
-		if err != nil {
-			s.logLookup(ctx, err)
-			return "", ""
-		}
-		if u, err = s.q.GetUserByID(ctx, byName.ID); err != nil {
-			s.logLookup(ctx, err)
-			return "", ""
-		}
-	} else {
-		e, err := s.q.GetEmailByAddress(ctx, email)
-		if err != nil || !e.VerifiedAt.Valid {
-			s.logLookup(ctx, err)
-			return "", ""
-		}
-		if u, err = s.q.GetUserByID(ctx, e.UserID); err != nil {
-			s.logLookup(ctx, err)
-			return "", ""
-		}
-	}
-	if u.SuspendedAt.Valid {
-		return "", ""
-	}
-	return u.Username, u.AvatarUrl
-}
-
-func (s *Service) logLookup(ctx context.Context, err error) {
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+	accounts, err := s.Authors(ctx, emails)
+	if err != nil {
 		s.log.WarnContext(ctx, "contributor user lookup failed", "err", err)
 	}
+	for _, t := range selected {
+		account := accounts[t.email]
+		res.Items = append(res.Items, Contributor{Name: t.name, Commits: t.commits,
+			Username: account.Username, AvatarURL: account.AvatarURL})
+	}
+	return res, nil
 }

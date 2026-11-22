@@ -352,6 +352,7 @@ type Querier interface {
 	GetErvisioCodeRemoteMetadata(ctx context.Context, arg GetErvisioCodeRemoteMetadataParams) ([]byte, error)
 	// ---- fork networks ----
 	GetForkNetworkMember(ctx context.Context, repoID uuid.UUID) (ForkNetworkMember, error)
+	GetGitAuthorAlias(ctx context.Context, emailLower string) (uuid.NullUUID, error)
 	// The release of an asset: the asset URLs of /api/v3 carry no release id.
 	// The release service still checks access with the repository.
 	GetGitHubAPIAssetRelease(ctx context.Context, id uuid.UUID) (uuid.UUID, error)
@@ -453,6 +454,8 @@ type Querier interface {
 	GetSSHKeyByFingerprint(ctx context.Context, fingerprint string) (GetSSHKeyByFingerprintRow, error)
 	GetSessionByTokenHash(ctx context.Context, tokenHash []byte) (GetSessionByTokenHashRow, error)
 	GetSetting(ctx context.Context, key string) (Setting, error)
+	GetSharedTodo(ctx context.Context, arg GetSharedTodoParams) (GetSharedTodoRow, error)
+	GetSharedTodoPreference(ctx context.Context, arg GetSharedTodoPreferenceParams) (bool, error)
 	GetStorageObject(ctx context.Context, arg GetStorageObjectParams) (StorageObject, error)
 	// Second factors and two-step login (PLAN §8.1).
 	GetTOTP(ctx context.Context, userID uuid.UUID) (MfaTotp, error)
@@ -485,7 +488,7 @@ type Querier interface {
 	GetWebhookDelivery(ctx context.Context, id uuid.UUID) (WebhookDelivery, error)
 	// Claims one runner for a manual start, whatever its queue.
 	HoldActionsRunnerWake(ctx context.Context, arg HoldActionsRunnerWakeParams) (ActionsRunner, error)
-	// Hot repositories, how many are pinned and the bytes they hold.
+	// Recorded Git bytes across the instance and for the hot subset.
 	HotRepoStats(ctx context.Context) (HotRepoStatsRow, error)
 	// Hydration, eviction, prewarm and restore of the hot tier (PLAN §4.3, §4.5).
 	// Bytes held by the hot repositories, as recorded in repos.size_bytes.
@@ -818,6 +821,8 @@ type Querier interface {
 	ListRepoRedirects(ctx context.Context, repoID uuid.UUID) ([]ListRepoRedirectsRow, error)
 	// Every asset of a repository, to clean up its objects.
 	ListRepoReleaseAssets(ctx context.Context, repoID uuid.UUID) ([]ReleaseAsset, error)
+	// Callers supply only repository IDs that they have already authorized.
+	ListRepoStorageFootprints(ctx context.Context, repoIds []uuid.UUID) ([]ListRepoStorageFootprintsRow, error)
 	// Every repository with its journal sequence, for restore.
 	ListRepoTiering(ctx context.Context) ([]ListRepoTieringRow, error)
 	ListRepoWebhooks(ctx context.Context, repoID uuid.NullUUID) ([]Webhook, error)
@@ -988,6 +993,7 @@ type Querier interface {
 	OpenPullsByHead(ctx context.Context, arg OpenPullsByHeadParams) ([]PullRequest, error)
 	// Open pull requests whose head lives in another repository.
 	OpenPullsWithHeadRepo(ctx context.Context, headRepoID uuid.NullUUID) ([]PullRequest, error)
+	PinGitAuthorAlias(ctx context.Context, arg PinGitAuthorAliasParams) error
 	// Appends the repository after the last pin; a repeated pin changes nothing.
 	PinRepo(ctx context.Context, arg PinRepoParams) error
 	// Keeps the newest external runs of a repository (keep of them).
@@ -1058,6 +1064,8 @@ type Querier interface {
 	// every object over time.
 	SampleStorageObjectsForVerify(ctx context.Context, arg SampleStorageObjectsForVerifyParams) ([]StorageObject, error)
 	SaveActionsGitHubImport(ctx context.Context, arg SaveActionsGitHubImportParams) error
+	SaveSharedTodo(ctx context.Context, arg SaveSharedTodoParams) (int64, error)
+	SaveSharedTodoPreference(ctx context.Context, arg SaveSharedTodoPreferenceParams) error
 	SearchErvisioCodeGrantOrgs(ctx context.Context, arg SearchErvisioCodeGrantOrgsParams) ([]SearchErvisioCodeGrantOrgsRow, error)
 	// Issues of a repository matching every given filter. Modes: milestone_mode
 	// and assignee_mode are '' (no filter), 'none', 'any' or 'id'. query is a

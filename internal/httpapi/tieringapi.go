@@ -108,7 +108,7 @@ func (s *v1Server) EvictAdminRepo(ctx context.Context, req v1gen.EvictAdminRepoR
 }
 
 func (s *v1Server) ListAdminHotRepos(ctx context.Context, req v1gen.ListAdminHotReposRequestObject) (v1gen.ListAdminHotReposResponseObject, error) {
-	if s.tiering == nil {
+	if s.tiering == nil || s.repos == nil {
 		return v1gen.ListAdminHotReposdefaultApplicationProblemPlusJSONResponse{Body: errTieringUnavailable, StatusCode: http.StatusServiceUnavailable}, nil
 	}
 	p := req.Params
@@ -118,12 +118,20 @@ func (s *v1Server) ListAdminHotRepos(ctx context.Context, req v1gen.ListAdminHot
 	if err != nil {
 		return nil, err
 	}
+	ids := make([]uuid.UUID, len(list))
+	for i, r := range list {
+		ids[i] = r.ID
+	}
+	sizes, err := s.repos.StorageFootprints(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
 	sum, err := s.tiering.HotSummary(ctx)
 	if err != nil {
 		return nil, err
 	}
 	out := v1gen.HotRepoPage{Items: make([]v1gen.HotRepo, 0, len(list)), Total: total, Summary: v1gen.HotRepoSummary{
-		Repos: sum.Repos, Pinned: sum.Pinned, Bytes: sum.Bytes, Budget: sum.Budget,
+		Repos: sum.Repos, Pinned: sum.Pinned, Bytes: sum.Bytes, TotalGitBytes: sum.TotalGitBytes, Budget: sum.Budget,
 		HighWatermark: sum.High, LowWatermark: sum.Low, TtlSeconds: int64(sum.TTL.Seconds()), Remote: sum.Remote,
 		Primary: sum.Primary, Replicas: sum.Replicas, CacheEnabled: sum.CacheEnabled, LargeRepoBytes: sum.LargeRepo,
 	}}
@@ -133,7 +141,7 @@ func (s *v1Server) ListAdminHotRepos(ctx context.Context, req v1gen.ListAdminHot
 	for _, r := range list {
 		h := v1gen.HotRepo{Id: r.ID, Owner: r.Owner, Name: r.Name, FullName: r.Owner + "/" + r.Name,
 			State: v1gen.HotRepoState(r.State), Pinned: r.Pinned, SizeBytes: r.SizeBytes, LastAccessAt: r.LastAccess,
-			Ephemeral: r.Ephemeral}
+			Ephemeral: r.Ephemeral, TotalSizeBytes: sizes[r.ID]}
 		if !r.EvictAt.IsZero() {
 			h.EvictAt = &r.EvictAt
 		}

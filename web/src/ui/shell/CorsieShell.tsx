@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useT } from "../../i18n/useT.ts";
+import { BrandMark } from "../BrandMark.tsx";
 import { Icon } from "../Icon.tsx";
 import { NavLink, useNavItems } from "./nav.tsx";
 import { SearchTrigger } from "./SearchPalette.tsx";
@@ -13,7 +14,7 @@ export function CorsieShell({ children }: { children: ReactNode }) {
     <div className="rs">
       <header className="rs-band">
         <Link to="/" className="rs-brand">
-          <span className="rs-logo" aria-hidden="true">E</span>
+          <BrandMark />
           <b>{t("brand.name")}</b>
         </Link>
         <nav className="rs-seg" aria-label={t("nav.main")}>

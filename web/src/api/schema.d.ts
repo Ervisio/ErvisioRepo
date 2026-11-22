@@ -2627,6 +2627,30 @@ export interface paths {
         patch: operations["updateOrg"];
         trace?: never;
     };
+    "/orgs/{org}/todo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get the organization Todo list and the viewer's display preference
+         * @description Only organization members can access this list. Everyone else gets 404.
+         */
+        get: operations["getOrgTodo"];
+        /** Replace the shared Todo contents at the specified revision */
+        put: operations["putOrgTodo"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change only this viewer's Todo display preference */
+        patch: operations["patchOrgTodo"];
+        trace?: never;
+    };
     "/orgs/{org}/avatar": {
         parameters: {
             query?: never;
@@ -3304,6 +3328,32 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/repos/{owner}/{name}/todo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get the repository Todo list and the viewer's display preference
+         * @description Requires repository access through ownership, collaboration, a team or organization membership, regardless of visibility. Everyone else gets 404.
+         */
+        get: operations["getRepoTodo"];
+        /** Replace the shared Todo contents at the specified revision */
+        put: operations["putRepoTodo"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change only this viewer's Todo display preference */
+        patch: operations["patchRepoTodo"];
         trace?: never;
     };
     "/repos/{owner}/{name}": {
@@ -7330,6 +7380,39 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        TodoCategory: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        TodoItem: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            completed: boolean;
+            /**
+             * Format: uuid
+             * @description Absent for uncategorized items
+             */
+            categoryId?: string;
+        };
+        TodoBoard: {
+            /**
+             * Format: int64
+             * @description Pass back the last seen revision to avoid overwriting another member's changes.
+             */
+            revision: number;
+            categories: components["schemas"]["TodoCategory"][];
+            /** @description Category and item arrays are in display order. */
+            items: components["schemas"]["TodoItem"][];
+        };
+        TodoPreference: {
+            collapsed: boolean;
+        };
+        TodoView: {
+            board: components["schemas"]["TodoBoard"];
+            collapsed: boolean;
+        };
         ActionsWorkflow: {
             path: string;
             name: string;
@@ -8926,6 +9009,8 @@ export interface components {
             id: string;
             username: string;
             displayName: string;
+            /** @description Profile image URL, omitted when unset */
+            avatarUrl?: string;
             /** @description A bot account (login ending in "[bot]"); bots cannot sign in and cannot be changed */
             isBot: boolean;
             /** @description Primary address */
@@ -9532,8 +9617,12 @@ export interface components {
             /** @enum {string} */
             state: "hot" | "cold" | "hydrating" | "evicting" | "degraded";
             pinned: boolean;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Recorded Git object bytes, excluding auxiliary storage and replica copies
+             */
             sizeBytes: number;
+            totalSizeBytes: components["schemas"]["RepoTotalSizeBytes"];
             /**
              * Format: date-time
              * @description Last read or write (fetch, clone, push, browsing), recorded at most once a minute
@@ -9563,8 +9652,16 @@ export interface components {
             repos: number;
             /** Format: int64 */
             pinned: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Recorded Git object bytes of hot repositories, not cache disk occupancy
+             */
             bytes: number;
+            /**
+             * Format: int64
+             * @description Recorded Git object bytes across all repositories, counted once per repository regardless of storage state or replication
+             */
+            totalGitBytes: number;
             /**
              * Format: int64
              * @description Space of the hot repositories in bytes, 0 means no limit
@@ -9745,6 +9842,13 @@ export interface components {
         };
         /** @enum {string} */
         Visibility: "public" | "internal" | "private";
+        /**
+         * Format: int64
+         * @description Recorded logical payload bytes for this repository: Git objects, linked LFS objects,
+         *     release assets, issue attachments, and retained Actions artifacts, logs and build caches.
+         *     Excludes in-flight uploads, replicas, storage caches, shared avatars and database overhead.
+         */
+        RepoTotalSizeBytes: number;
         Repo: {
             /** Format: uuid */
             id: string;
@@ -9764,8 +9868,12 @@ export interface components {
              * @enum {string}
              */
             storageState: "hot" | "cold" | "hydrating" | "evicting" | "degraded";
-            /** Format: int64 */
-            sizeBytes: number;
+            /**
+             * Format: int64
+             * @description Recorded Git object bytes, present only for instance administrators
+             */
+            sizeBytes?: number;
+            totalSizeBytes: components["schemas"]["RepoTotalSizeBytes"];
             /** @description Number of users who starred the repository */
             starsCount: number;
             /** @description Whether the caller starred the repository; false when anonymous */
@@ -10152,9 +10260,8 @@ export interface components {
             commit: string;
         };
         /**
-         * @description The account a commit address belongs to: a verified address of the
-         *     user or the no-reply address of a web edit. Only the username and
-         *     avatar are given, never the user's addresses.
+         * @description An account linked to a commit address for display, not verification
+         *     of authorship. Only the username and avatar are given.
          */
         CommitUser: {
             username: string;
@@ -10175,6 +10282,8 @@ export interface components {
             committer: components["schemas"]["GitPerson"];
             summary: string;
             message: string;
+            /** @description Display-only account for a matching Claude co-author trailer. */
+            claudeCoauthor?: components["schemas"]["CommitUser"];
         };
         GitCommitSummary: {
             sha: string;
@@ -11281,6 +11390,26 @@ export interface components {
         };
     };
     responses: {
+        /** @description Updated shared list */
+        TodoBoard: {
+            headers: {
+                "Cache-Control"?: "no-store";
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["TodoBoard"];
+            };
+        };
+        /** @description Shared list with the viewer's private display preference */
+        TodoView: {
+            headers: {
+                "Cache-Control"?: "no-store";
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["TodoView"];
+            };
+        };
         /**
          * @description The repository was renamed or transferred; Location is its new URL
          *     (301 for GET, 307 for the other methods, which must be repeated there).
@@ -11409,7 +11538,18 @@ export interface components {
         /** @description Release id (exactly one of number and release) */
         SubjectRelease: string;
     };
-    requestBodies: never;
+    requestBodies: {
+        TodoBoard: {
+            content: {
+                "application/json": components["schemas"]["TodoBoard"];
+            };
+        };
+        TodoPreference: {
+            content: {
+                "application/json": components["schemas"]["TodoPreference"];
+            };
+        };
+    };
     headers: {
         /** @description "true" when there is a page after this one, "false" otherwise */
         HasMore: "true" | "false";
@@ -15494,6 +15634,58 @@ export interface operations {
             default: components["responses"]["Problem"];
         };
     };
+    getOrgTodo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["TodoView"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    putOrgTodo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["TodoBoard"];
+        responses: {
+            200: components["responses"]["TodoBoard"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    patchOrgTodo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: components["parameters"]["OrgName"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["TodoPreference"];
+        responses: {
+            /** @description Preference saved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            default: components["responses"]["Problem"];
+        };
+    };
     uploadOrgAvatar: {
         parameters: {
             query?: never;
@@ -16596,6 +16788,64 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    getRepoTodo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["TodoView"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    putRepoTodo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["TodoBoard"];
+        responses: {
+            200: components["responses"]["TodoBoard"];
+            409: components["responses"]["Problem"];
+            default: components["responses"]["Problem"];
+        };
+    };
+    patchRepoTodo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User or organization name */
+                owner: components["parameters"]["RepoOwner"];
+                name: components["parameters"]["RepoName"];
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["TodoPreference"];
+        responses: {
+            /** @description Preference saved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             default: components["responses"]["Problem"];
         };
     };

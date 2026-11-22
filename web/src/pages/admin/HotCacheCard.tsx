@@ -51,7 +51,7 @@ function RepoLocationRow({ repo, asOf, primary, replicas }: { repo: HotRepo; asO
           {repo.ephemeral && <Badge tone="info">{t("storage.repos.ephemeral")}</Badge>}
         </span>
       </Td>
-      <Td className="ui-num">{formatBytes(repo.sizeBytes)}</Td>
+      <Td className="ui-num">{formatBytes(repo.totalSizeBytes)}</Td>
       <Td>
         {primary === ""
           ? t("storage.repos.where.localOnly")
@@ -191,8 +191,12 @@ export function HotCacheCard({ setting, caches }: { setting: StorageHotCache; ca
         {sum && (
           <>
             <div className="ui-kv-row">
+              <dt title={t("storage.hot.totalGit.hint")}>{t("storage.hot.totalGit")}</dt>
+              <dd>{formatBytes(sum.totalGitBytes)}</dd>
+            </div>
+            <div className="ui-kv-row">
               <dt>{t("storage.hot.repos")}</dt>
-              <dd>{t("storage.hot.reposValue", { repos: sum.repos, size: ofBudget(sum.bytes, sum.budget) })}</dd>
+              <dd>{t("storage.hot.reposValue", { repos: sum.repos, size: formatBytes(sum.bytes) })}</dd>
             </div>
             <div className="ui-kv-row">
               <dt>{t("storage.hot.repoTtl")}</dt>

@@ -68,8 +68,9 @@ WHERE (sqlc.arg(all_states)::boolean OR r.storage_state <> 'cold')
        OR (n.name_lower || '/' || r.name_lower) LIKE '%' || sqlc.arg(pattern)::text || '%' ESCAPE '\');
 
 -- name: HotRepoStats :one
--- Hot repositories, how many are pinned and the bytes they hold.
-SELECT count(*)::bigint AS repos,
-       count(*) FILTER (WHERE pinned)::bigint AS pinned,
-       COALESCE(sum(size_bytes), 0)::bigint AS bytes
-FROM repos WHERE storage_state = 'hot';
+-- Recorded Git bytes across the instance and for the hot subset.
+SELECT count(*) FILTER (WHERE storage_state = 'hot')::bigint AS repos,
+       count(*) FILTER (WHERE storage_state = 'hot' AND pinned)::bigint AS pinned,
+       COALESCE(sum(size_bytes) FILTER (WHERE storage_state = 'hot'), 0)::bigint AS bytes,
+       COALESCE(sum(size_bytes), 0)::bigint AS total_git_bytes
+FROM repos;

@@ -46,8 +46,8 @@ export function qs(params: Record<string, string | number | boolean | undefined>
 }
 
 /** URL of the raw file (streamed, not in the OpenAPI document). */
-export const rawUrl = (owner: string, name: string, ref: string, path: string) =>
-  `/api/v1${repoBase(owner, name)}/raw${qs({ ref, path })}`;
+export const rawUrl = (owner: string, name: string, ref: string, path: string, options?: { preview: true }) =>
+  `/api/v1${repoBase(owner, name)}/raw${qs({ ref, path, preview: options ? 1 : undefined })}`;
 
 /** URL of a source archive of a ref. */
 export const archiveUrl = (owner: string, name: string, ref: string, format: "zip" | "tar.gz") =>

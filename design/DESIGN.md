@@ -20,6 +20,14 @@ node ~/.claude/skills/variant-studio/scripts/studio.mjs start --project design -
 
 Variante approvata: **Ricerca compatta** (`001-share-chat`, A). Il popup riprende i token `--code-*` di `/code`: superficie della barra laterale, campo incassato, contorno di focus blu. Un solo campo precede l’elenco in linea con avatar, nome e account o tipo di destinatario. Accesso e cronologia stanno affiancati; sul telefono i controlli conservano un’area di tocco di almeno 44 px. Annulla e invio occupano i due lati del footer. La tastiera naviga i risultati senza inviare il modulo; l’accesso Lettore è informativo, non una scelta fittizia.
 
+### Anteprima file multimediali
+
+Variante approvata: **Scheda file** (`001-file-preview`, B). La vista mantiene il percorso e la barra delle azioni del file. Il contenuto è in primo piano, con formato e dimensione a lato su desktop e sotto su mobile. La scheda riprende `--surface`, `--bg` e `--line` della pagina codice. I controlli audio e video restano quelli del browser, senza riproduzione automatica; se l’anteprima non è disponibile, il download resta accessibile.
+
+### Todo condivisa
+
+Variante approvata: **Sezioni in fila** (`002-shared-todo`, A). Il riquadro sta nella colonna sinistra della radice Codice del repository e sotto Membri nella panoramica dell’organizzazione. Le categorie restano tutte visibili mentre il riquadro è aperto; la chiusura è una preferenza personale. Dettagli e stati in [todo.md](todo.md).
+
 I nomi seguono il contratto dello SDK plugin (docs/sdk.md, Styling): `--bg --surface --sunk --ink --ink2 --ink3`, `--h-<sezione>` e `--h-<sezione>-s`, `--ok --warn --err --info` con `-s`, font Figtree e JetBrains Mono.
 
 Il `tokens.css` del core non è nel workspace. Ho ricostruito i token così:

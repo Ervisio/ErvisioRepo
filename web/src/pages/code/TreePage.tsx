@@ -6,6 +6,7 @@ import { useT } from "../../i18n/useT.ts";
 import { Button, Card, EmptyState, Icon, Menu, MenuItem, MenuSeparator } from "../../ui/index.ts";
 import { useLayout } from "../../ui/shell/layout.ts";
 import { EmptyRepoCard } from "../repos/RepoPage.tsx";
+import { SharedTodo } from "../todo/SharedTodo.tsx";
 import { AuthorAvatar, AuthorName, Crumb, dirOf, Gate, RefSwitcher, RepoFrame, shortSha, When } from "./common.tsx";
 import { CodeLayout } from "./FileTree.tsx";
 import { Readme } from "./Readme.tsx";
@@ -107,9 +108,20 @@ function TreeBody({ repo, refName, path }: { repo: Repo; refName: string; path: 
       {files}
     </>
   );
-  if (!console_) return content;
+  const todo = <SharedTodo scope={{ owner, name }} />;
+  if (!console_) {
+    return (
+      <div className="repo-todo-container">
+        <div className="repo-todo-home">
+          {todo}
+          <div className="rp-main">{content}</div>
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className="rp-home">
+    <div className="rp-home repo-todo-home">
+      {todo}
       <div className="rp-main">{content}</div>
       <RepoSidebar repo={repo} refName={refName} hasReadme={!!tree.data?.readme} />
     </div>

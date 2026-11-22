@@ -6,8 +6,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.23.0] - 2026-11-22
+
 ### Added
 
+- Repository and organization members can manage a shared Todo from their overview: add and reorder categories and tasks, mark tasks done and collapse the panel without affecting other viewers.
+- Repository file pages preview browser-supported images, GIFs, audio and video. Playback uses native controls; Git LFS files keep their existing download flow.
 - Storage backups: **Admin > Storage** has **Sync now** on each data type with replicas (queues every object for a new copy; complete copies are only re-hashed) and **Verify everything** (re-hashes every object on the primary and every replica in the background, repairing bad copies). New endpoints `POST /admin/storage/policies/{policy}/resync` and `POST /admin/storage/verify`. A replica added to a data type that already holds objects now gets them copied at the next start (before, only new objects reached it). Git repository manifests are now copied to the replicas after every push, so a replica such as a Storage Box holds a complete, restorable copy of the git journal; the existing manifests are copied by **Sync now** on `git` or when a replica is added. Recommended setup: an S3 bucket as primary of every data type, the Storage Box (SFTP) as replica.
 - **Admin > Updates**: the running version, the releases published on GitHub since (checked every 6 hours, `updates.check` turns it off, `updates.repository` and `updates.dir` in `[updates]`), release notes, and on Docker an **Update** button and an **Automatic updates** switch (a new release is installed an hour after it is published). New endpoints `GET /admin/updates`, `POST /admin/updates/check`, `PUT /admin/updates/auto`, `POST /admin/updates/apply`. The Ervisio Console plugin is no longer needed to update; it stays available as an option.
 - Optional compose service `updater` (`docker:28-cli`, profile `updater`, `./setup.sh --updater yes`, default yes): the only container besides the runner with the Docker socket. The server hands it the version through `run/updater/request.json` and never gets the socket.
@@ -16,9 +20,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The sign-in page and all application layouts use the new, larger transparent ErvisioRepo mark, also used as the browser icon.
 - Code pages of a repository that is only on remote storage (cold) no longer wait for the whole hydration. Branches and tags come from the refs snapshot of the journal, file lists and READMEs from a new metadata cache (`git_browse_*` tables, keyed by object id, filled while the repository is on disk, pruned after 30 days, migration 00480) and, for repositories linked to or imported from GitHub, from the GitHub git API addressed by object id. Hydration starts in the background; other code reads wait at most 8 seconds and then answer 503 with `Retry-After: 10`, and the page shows the hydration progress (the existing `/hydration` stream) and reloads when it ends.
 - Re-running `setup.sh` no longer rewrites `.env` from scratch: `ERVISIO_VERSION`, the ports, `RUNNER_*`, extra profiles and custom keys are kept, and the earlier `--ervisio`, `--runner` and `--updater` answers are the defaults. It also writes `ERVISIO_DEPLOY_DIR`.
 - After upgrading, artifacts and logs older than 24 hours of runs not tied to a release are deleted within the hour. Set `actions.unreleased_retention = "0"` before upgrading to keep them.
+
+### Fixed
+
+- The admin user list shows saved profile avatars and links active accounts to their profiles. The management action is still available for each account.
+- On `git.ervisio.app`, Git authors and co-authors matching Claude’s canonical commit address link to the existing Claude profile, with a local fallback avatar. This is display-only; commits and permissions are unchanged.
+- Repository pages and lists show the total size of Git data, linked LFS objects, release assets, issue attachments and retained Actions logs, artifacts and caches. Replicas and temporary copies are excluded. Admin Storage still reports the Git-only aggregate, including cold repositories; Git sizes reconcile at startup and periodically.
 
 ## [1.22.1] - 2026-11-20
 

@@ -87,6 +87,9 @@ func (s *v1Server) GetUserProfile(ctx context.Context, req v1gen.GetUserProfileR
 	}
 	out := v1gen.GetUserProfile200JSONResponse{Username: pr.Username, Kind: v1gen.UserProfileKind(pr.Kind),
 		DisplayName: pr.DisplayName, AvatarUrl: pr.AvatarURL, CreatedAt: pr.CreatedAt}
+	if out.AvatarUrl == "" && s.browse != nil {
+		out.AvatarUrl = s.browse.ProfileAliasAvatar(pr.ID)
+	}
 	if pr.Description != "" {
 		out.Description = &pr.Description
 	}

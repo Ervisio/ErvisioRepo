@@ -31,10 +31,8 @@ type authorEntry struct {
 	at  time.Time
 }
 
-// Authors maps commit addresses to active users: a verified address of the
-// user, or the no-reply address of a web edit (<login>@NoReplyDomain or
-// <id>+<login>@NoReplyDomain). Keys of the result are the lower-cased
-// addresses that matched; at most two queries are made per call.
+// Authors maps commit addresses to active users for display only, using verified
+// addresses, local no-reply addresses or the instance's pinned Claude alias.
 func (s *Service) Authors(ctx context.Context, emails []string) (map[string]Account, error) {
 	out := map[string]Account{}
 	if s.q == nil || len(emails) == 0 {
@@ -43,6 +41,7 @@ func (s *Service) Authors(ctx context.Context, emails []string) (map[string]Acco
 	now := time.Now()
 	noreply := "@" + strings.ToLower(s.o.NoReplyDomain)
 	var verified, names []string
+	var wantClaude bool
 	byName := map[string][]string{} // login → addresses
 	seen := map[string]bool{}
 	s.authors.mu.Lock()
@@ -52,6 +51,10 @@ func (s *Service) Authors(ctx context.Context, emails []string) (map[string]Acco
 			continue
 		}
 		seen[k] = true
+		if s.claudeAuthor != nil && k == claudeAuthorEmail {
+			wantClaude = true
+			continue
+		}
 		if c, ok := s.authors.m[k]; ok && now.Sub(c.at) < authorCacheTTL {
 			if c.acc.Username != "" {
 				out[k] = c.acc
@@ -73,6 +76,15 @@ func (s *Service) Authors(ctx context.Context, emails []string) (map[string]Acco
 	}
 	s.authors.mu.Unlock()
 
+	if wantClaude {
+		acc, err := s.claudeAccount(ctx)
+		if err != nil {
+			return out, err
+		}
+		if acc.Username != "" {
+			out[claudeAuthorEmail] = acc
+		}
+	}
 	found := map[string]Account{}
 	if len(verified) > 0 {
 		rows, err := s.q.ListUsersByVerifiedEmails(ctx, verified)

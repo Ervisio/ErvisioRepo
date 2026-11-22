@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useT } from "../../i18n/useT.ts";
+import { BrandMark } from "../BrandMark.tsx";
 import { Icon } from "../Icon.tsx";
 import { NavLink, useNavItems } from "./nav.tsx";
 import { SearchTrigger } from "./SearchPalette.tsx";
@@ -12,7 +13,7 @@ export function FoglioShell({ children }: { children: ReactNode }) {
   return (
     <div className="fs">
       <header className="fs-bar">
-        <Link to="/" className="fs-mark"><i aria-hidden="true" />{t("brand.name")}</Link>
+        <Link to="/" className="fs-mark"><BrandMark />{t("brand.name")}</Link>
         <SearchTrigger className="ui-btn ui-btn-ghost ui-btn-sm sp-trigger" />
       </header>
       <nav className="fs-tabs" aria-label={t("nav.main")}>

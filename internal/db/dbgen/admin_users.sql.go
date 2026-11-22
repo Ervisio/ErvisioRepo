@@ -13,7 +13,7 @@ import (
 )
 
 const adminGetUser = `-- name: AdminGetUser :one
-SELECT u.id, n.name AS username, u.display_name, u.role, u.suspended_at, u.created_at,
+SELECT u.id, n.name AS username, u.display_name, u.avatar_url, u.role, u.suspended_at, u.created_at,
        COALESCE(e.address, '')::text AS email, (n.kind = 'bot')::boolean AS is_bot,
        (EXISTS (SELECT 1 FROM mfa_totp t WHERE t.user_id = u.id AND t.confirmed_at IS NOT NULL)
         OR EXISTS (SELECT 1 FROM webauthn_credentials w WHERE w.user_id = u.id))::boolean AS has_2fa,
@@ -28,6 +28,7 @@ type AdminGetUserRow struct {
 	ID           uuid.UUID
 	Username     string
 	DisplayName  string
+	AvatarUrl    string
 	Role         string
 	SuspendedAt  pgtype.Timestamptz
 	CreatedAt    pgtype.Timestamptz
@@ -44,6 +45,7 @@ func (q *Queries) AdminGetUser(ctx context.Context, username string) (AdminGetUs
 		&i.ID,
 		&i.Username,
 		&i.DisplayName,
+		&i.AvatarUrl,
 		&i.Role,
 		&i.SuspendedAt,
 		&i.CreatedAt,
@@ -133,7 +135,7 @@ func (q *Queries) AdminListInvites(ctx context.Context, arg AdminListInvitesPara
 }
 
 const adminListUsers = `-- name: AdminListUsers :many
-SELECT u.id, n.name AS username, u.display_name, u.role, u.suspended_at, u.created_at,
+SELECT u.id, n.name AS username, u.display_name, u.avatar_url, u.role, u.suspended_at, u.created_at,
        COALESCE(e.address, '')::text AS email, (n.kind = 'bot')::boolean AS is_bot,
        (EXISTS (SELECT 1 FROM mfa_totp t WHERE t.user_id = u.id AND t.confirmed_at IS NOT NULL)
         OR EXISTS (SELECT 1 FROM webauthn_credentials w WHERE w.user_id = u.id))::boolean AS has_2fa,
@@ -170,6 +172,7 @@ type AdminListUsersRow struct {
 	ID           uuid.UUID
 	Username     string
 	DisplayName  string
+	AvatarUrl    string
 	Role         string
 	SuspendedAt  pgtype.Timestamptz
 	CreatedAt    pgtype.Timestamptz
@@ -204,6 +207,7 @@ func (q *Queries) AdminListUsers(ctx context.Context, arg AdminListUsersParams) 
 			&i.ID,
 			&i.Username,
 			&i.DisplayName,
+			&i.AvatarUrl,
 			&i.Role,
 			&i.SuspendedAt,
 			&i.CreatedAt,

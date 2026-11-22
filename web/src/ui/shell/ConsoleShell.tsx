@@ -6,6 +6,7 @@ import { useOrg, useSession, type User } from "../../api/identity.ts";
 import { useUnreadCount } from "../../api/notifications.ts";
 import { useOwnerRepos, useRepo, type Repo } from "../../api/repos.ts";
 import { useT } from "../../i18n/useT.ts";
+import { BrandMark } from "../BrandMark.tsx";
 import { Icon } from "../Icon.tsx";
 import { Menu, MenuItem, MenuLabel, MenuSeparator } from "../Menu.tsx";
 import {
@@ -95,7 +96,7 @@ function TopRow({ onCreate }: { onCreate?: Create }) {
     <div className="tb-row">
       <SiteMenu />
       <Link to="/" className="tb-logo" title={t("brand.home")} aria-label={t("brand.home")}>
-        <span aria-hidden="true">E</span>
+        <BrandMark />
       </Link>
       <Where />
       <SearchTrigger className="tb-find" pill />

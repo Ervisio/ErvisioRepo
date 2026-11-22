@@ -26,14 +26,14 @@ function useRefLabels(owner: string, name: string): Map<string, RefLabel[]> {
 }
 
 /** One commit row (round 020): avatar, title, author and time, refs, short sha, copy, browse. */
-export function CommitRow({ repo, c, refs }: { repo: Repo; c: { sha: string; summary: string; message?: string; author: string; user?: CommitUser; date: string }; refs?: RefLabel[] }) {
+export function CommitRow({ repo, c, refs }: { repo: Repo; c: GitCommit; refs?: RefLabel[] }) {
   const t = useT("code");
   const [open, setOpen] = useState(false);
-  const body = c.message ? c.message.slice(c.summary.length).trim() : "";
+  const body = c.message.slice(c.summary.length).trim();
   const { owner, name } = repo;
   return (
     <li className="cm-row">
-      <AuthorAvatar name={c.author} user={c.user} size={36} />
+      <AuthorAvatar name={c.author.name} user={c.author.user} size={36} />
       <span className="cm-t">
         <span className="cm-l1">
           <Link className="cm-ttl" to="/$owner/$name/commit/$sha" params={{ owner, name, sha: c.sha }}>
@@ -47,7 +47,8 @@ export function CommitRow({ repo, c, refs }: { repo: Repo; c: { sha: string; sum
         </span>
         {open && <span className="cm-body">{body}</span>}
         <span className="cm-mt">
-          <AuthorName name={c.author} user={c.user} /> · <When iso={c.date} />
+          <AuthorName name={c.author.name} user={c.author.user} /> · <When iso={c.author.date} />
+          {c.claudeCoauthor && <ClaudeCoauthor user={c.claudeCoauthor} />}
           {refs?.map((r) => (
             <span key={`${r.tag ? "t" : "b"}-${r.name}`} className={r.tag ? "ui-chip ui-chip-ok ui-mono" : "ui-chip ui-chip-acc ui-mono"}>
               {r.name}
@@ -65,6 +66,18 @@ export function CommitRow({ repo, c, refs }: { repo: Repo; c: { sha: string; sum
         </Link>
       </span>
     </li>
+  );
+}
+
+function ClaudeCoauthor({ user }: { user: CommitUser }) {
+  const t = useT("code");
+  const name = t("commit.claude");
+  return (
+    <span className="cm-coauthor">
+      {t("commit.coauthor")}
+      <AuthorAvatar name={name} user={user} size={16} />
+      <AuthorName name={name} user={user} />
+    </span>
   );
 }
 
@@ -143,7 +156,7 @@ function CommitsBody({ repo, refName, path }: { repo: Repo; refName: string; pat
                   <h2 className="cm-day">{day}</h2>
                   <ul className="rp-list">
                     {cs.map((c) => (
-                      <CommitRow key={c.sha} repo={repo} c={{ sha: c.sha, summary: c.summary, message: c.message, author: c.author.name, user: c.author.user, date: c.author.date }} refs={refs.get(c.sha)} />
+                      <CommitRow key={c.sha} repo={repo} c={c} refs={refs.get(c.sha)} />
                     ))}
                   </ul>
                 </li>
@@ -195,6 +208,7 @@ function CommitBody({ repo, sha }: { repo: Repo; sha: string }) {
                   <div className="cd-mt">
                     <AuthorName name={c.author.name} user={c.author.user} title={c.author.email} />
                     <When iso={c.author.date} />
+                    {c.claudeCoauthor && <ClaudeCoauthor user={c.claudeCoauthor} />}
                     {committer && <span>{t("commit.committedBy", { name: c.committer.name })}</span>}
                     <span className="cd-sha">
                       <code className="ui-mono">{shortSha(c.sha)}</code>

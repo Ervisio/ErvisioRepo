@@ -312,7 +312,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger, ln net.Lis
 		deps.Git = git.HTTP
 		deps.Tiering = tiering.Admin
 		deps.Hydration = tiering.Hydrator
-		browse, err := setupBrowse(cfg, pool, gitTier, journal, tiering.Hydrator, log)
+		browse, err := setupBrowse(ctx, cfg, pool, gitTier, journal, tiering.Hydrator, log)
 		if err != nil {
 			return err
 		}
@@ -529,7 +529,7 @@ func (p pluginRunners) DeleteInstanceRunner(ctx context.Context, id uuid.UUID) e
 
 // setupBrowse builds the code browsing service. Web edits go through the
 // hook server, so that the journal records them like pushes.
-func setupBrowse(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, j *gitJournal, hydrator gitbrowse.Hydrator, log *slog.Logger) (*gitbrowse.Service, error) {
+func setupBrowse(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, j *gitJournal, hydrator gitbrowse.Hydrator, log *slog.Logger) (*gitbrowse.Service, error) {
 	var hooks *githooks.Server
 	if j != nil {
 		hooks = j.Hooks
@@ -548,6 +548,10 @@ func setupBrowse(cfg *config.Config, pool *pgxpool.Pool, t *gitstore.Tier, j *gi
 	s, err := gitbrowse.New(opt)
 	if err != nil {
 		return nil, fmt.Errorf("code browsing: %w", err)
+	}
+	if err := s.BindClaudeAuthor(ctx, cfg.Server.PublicURL); err != nil {
+		s.Close()
+		return nil, err
 	}
 	return s, nil
 }

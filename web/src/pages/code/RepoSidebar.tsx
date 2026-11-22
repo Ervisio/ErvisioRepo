@@ -7,7 +7,7 @@ import { currentLocale } from "../../i18n/locale.ts";
 import { useT } from "../../i18n/useT.ts";
 import { Badge, Icon, type IconName } from "../../ui/index.ts";
 import { Avatar } from "../../ui/shell/ConsoleShell.tsx";
-import { When } from "./common.tsx";
+import { formatBytes, When } from "./common.tsx";
 
 const SHOWN_CONTRIBUTORS = 12;
 const visibilityIcon: Record<Repo["visibility"], IconName> = { private: "lock", internal: "shield", public: "users" };
@@ -58,6 +58,10 @@ function About({ repo, hasReadme }: { repo: Repo; hasReadme: boolean }) {
           <span>
             {t("side.defaultBranch")} <b>{repo.defaultBranch}</b>
           </span>
+        </li>
+        <li title={tr("size.total.hint")}>
+          <Icon name="db" />
+          <span>{tr("size.totalValue", { size: formatBytes(repo.totalSizeBytes) })}</span>
         </li>
         <li>
           <Icon name="star" />

@@ -101,15 +101,22 @@ func (GCArgs) Kind() string { return "gitjournal_gc" }
 // JobsOption registers the journal workers and periodic jobs.
 func JobsOption(j *Journal) jobs.Option {
 	return func(r *jobs.Registry) {
+		river.AddWorker(r.Workers, &sizeWorker{j: j})
+		r.Periodic = append(r.Periodic, river.NewPeriodicJob(river.PeriodicInterval(reconcileSizeInterval),
+			func() (river.JobArgs, *river.InsertOpts) { return reconcileSizeArgs{}, nil },
+			&river.PeriodicJobOpts{RunOnStart: true}))
 		river.AddWorker(r.Workers, &syncWorker{j: j})
 		river.AddWorker(r.Workers, &sweepWorker{j: j})
+		r.Periodic = append(r.Periodic, river.NewPeriodicJob(river.PeriodicInterval(SweepInterval),
+			func() (river.JobArgs, *river.InsertOpts) { return SweepArgs{}, nil },
+			&river.PeriodicJobOpts{RunOnStart: true}))
+		if j.store == nil {
+			return
+		}
 		river.AddWorker(r.Workers, &compactWorker{j: j})
 		river.AddWorker(r.Workers, &maintenanceWorker{j: j})
 		river.AddWorker(r.Workers, &gcWorker{j: j})
 		r.Periodic = append(r.Periodic,
-			river.NewPeriodicJob(river.PeriodicInterval(SweepInterval),
-				func() (river.JobArgs, *river.InsertOpts) { return SweepArgs{}, nil },
-				&river.PeriodicJobOpts{RunOnStart: true}),
 			river.NewPeriodicJob(river.PeriodicInterval(GCInterval),
 				func() (river.JobArgs, *river.InsertOpts) { return GCArgs{}, nil }, nil))
 	}
@@ -166,6 +173,9 @@ func (j *Journal) Sync(ctx context.Context, repo uuid.UUID) error {
 		return err
 	}
 	defer l.Release()
+	if j.store == nil {
+		return j.flushLocal(ctx, repo, l.Path)
+	}
 	if err := j.flush(ctx, repo, l.Path, nil); err != nil {
 		return fmt.Errorf("sync %s: %w", repo, err)
 	}
@@ -269,7 +279,7 @@ func (j *Journal) Compact(ctx context.Context, repo uuid.UUID, force bool) error
 	}
 	j.log.InfoContext(ctx, "git journal compacted", "repo", repo, "generation", gen,
 		"segments", len(h.m.Segments), "size", size(m))
-	if err := j.recordSize(ctx, repo, m); err != nil {
+	if err := j.recordManifestSize(ctx, repo, m); err != nil {
 		return err
 	}
 	return j.pruneGenerations(ctx, repo, m)

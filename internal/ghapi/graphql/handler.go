@@ -34,6 +34,7 @@ import (
 // Repos is the subset of the repository service used by the resolvers.
 type Repos interface {
 	Get(ctx context.Context, who auth.Principal, owner, name string) (repos.Repo, error)
+	StorageFootprints(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]int64, error)
 	ListOwner(ctx context.Context, who auth.Principal, owner string, offset, limit int) ([]repos.Repo, error)
 	ListMine(ctx context.Context, who auth.Principal, offset, limit int) ([]repos.Repo, error)
 	ListCollaborators(ctx context.Context, who auth.Principal, owner, name string) ([]repos.Collaborator, error)

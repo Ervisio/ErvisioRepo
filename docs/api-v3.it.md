@@ -68,6 +68,8 @@ Legenda: **sì** supportato; **parziale** supportato con i limiti indicati;
 | `GET /licenses`, `GET /licenses/{license}` | sì | Inclusi: `mit`, `apache-2.0`, `gpl-3.0`, `bsd-3-clause`, `mpl-2.0`, `unlicense`. |
 | `GET/PUT /repos/{owner}/{repo}/topics`, `POST .../generate` | no | Topic e repository template non sono gestiti. |
 
+I campi `size` in REST e `diskUsage` in GraphQL riportano la stessa dimensione logica totale dell'interfaccia web, arrotondata per difetto in KiB. Vedi [dimensione totale del repository](install.it.md#cache-calda).
+
 ### Ricerca
 
 | Endpoint | Stato | Note |
